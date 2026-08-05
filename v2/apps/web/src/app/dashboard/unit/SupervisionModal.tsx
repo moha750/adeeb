@@ -1,9 +1,8 @@
 "use client";
 
-import { Button, Select, type SelectOption } from "@adeeb/design-system";
+import { Button, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { SignOut, UserPlus } from "@phosphor-icons/react";
 import { Avatar } from "../_components/Avatar";
-import { Modal } from "../_components/Modal";
 import type { MemberOption } from "../members/assignments/AssignmentModal";
 import { committeesLabel } from "./UnitMemberCard";
 import type { UnitMember, Target, Unit } from "./model";

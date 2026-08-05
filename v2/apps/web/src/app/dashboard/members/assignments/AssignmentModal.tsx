@@ -1,9 +1,8 @@
 "use client";
 
-import { Button, Select, type SelectOption } from "@adeeb/design-system";
+import { Button, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { UserPlus } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
-import { Modal } from "../../_components/Modal";
 import type { Holder, Position } from "../structure/model";
 
 export type MemberOption = { id: string; name: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null; heldRole?: string | null };

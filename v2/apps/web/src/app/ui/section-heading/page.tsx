@@ -1,7 +1,8 @@
 "use client";
 
 import { Container, Field, ModalSectionHeading } from "@adeeb/design-system";
-import { AddressBook, Books, Prohibit, ShareNetwork, Envelope, At, Phone, Hash } from "@phosphor-icons/react";
+import { AddressBook, Books, ShareNetwork, Envelope, At, Phone, Hash } from "@phosphor-icons/react";
+import { Prohibit } from "@/app/_components/glyphs";
 
 function Lab({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{children}</p>;

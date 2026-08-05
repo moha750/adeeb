@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Header, Footer, Container, LandingHeading, Reveal, Ambient } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading, Reveal, Ambient } from "@adeeb/design-system";
 import { StoryOpening } from "./_story/StoryOpening";
 import { WorksGallery } from "./_components/WorksGallery";
 import { BoardMembers } from "./_components/BoardMembers";
@@ -7,6 +7,8 @@ import { LatestActivities } from "./_components/LatestActivities";
 import { LatestNews } from "./_components/LatestNews";
 import { FaqSection } from "./_components/FaqSection";
 import { ContactForm } from "./_components/ContactForm";
+import { SiteHeader } from "./_components/SiteHeader";
+import { JoinCta } from "./_components/RegistrationClosed";
 
 // يُعاد توليد الصفحة كل 60 ثانية بأحدث البيانات من Supabase (ISR)
 export const revalidate = 60;
@@ -17,7 +19,7 @@ export default function Home() {
       {/* قصة أديب الافتتاحية — طبقة تسبق الموقع وتسلّم إليه، مرّةً واحدة لكل دخولٍ
           للموقع (تخطٍّ: ?story=skip · فرض إعادتها: ?story=force) */}
       <StoryOpening />
-      <Header />
+      <SiteHeader />
       {/* الخلفيّة تُعلَّق على المحتوى لا على المستند: القصّة تشغل آلاف البكسلات حين تعمل
           وتُخفى عند التخطّي، فتعليقُها على `body` يجعل تركيبتها تتبدّل بين الحالين. */}
       <main className="amb-host">
@@ -110,7 +112,7 @@ export default function Home() {
                 انضمّ إلى نادٍ يحتفي بالكلمة ويصنع المبدعين.
               </p>
               <div className="mt-6 flex justify-center">
-                <Link href="/join" className="abtn abtn-inverse abtn-lg">سجّل عضويتك</Link>
+                <JoinCta className="abtn abtn-inverse abtn-lg">سجّل عضويتك</JoinCta>
               </div>
             </Reveal>
           </Container>

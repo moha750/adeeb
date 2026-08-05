@@ -11,7 +11,10 @@ export { Card, CardMedia, CardBanner, CardBody, CardFooter, CardHeader, type Car
 export { Stat, type StatProps } from "./components/Stat";
 export { SectionHeading } from "./components/SectionHeading";
 export { LandingHeading } from "./components/LandingHeading";
+export { Modal } from "./components/Modal";
+export { Dialog } from "./components/Dialog";
 export { ModalSectionHeading, type ModalSectionHeadingProps } from "./components/ModalSectionHeading";
+export { Divider, type DividerProps } from "./components/Divider";
 export { Carousel } from "./components/Carousel";
 export { CarouselNav, type CarouselNavProps } from "./components/CarouselNav";
 export { Accordion } from "./components/Accordion";

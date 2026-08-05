@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { Badge, CarouselNav } from "@adeeb/design-system";
-import { Clock, MapPin, ArrowLeft } from "@phosphor-icons/react";
+import { Clock, MapPin } from "@phosphor-icons/react";
+import { ArrowLeft } from "@/app/_components/glyphs";
 
 export type ActCard = {
   id: string;

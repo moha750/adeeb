@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Alert, Badge, Button, Field, Select } from "@adeeb/design-system";
+import { Alert, Button, Field, Select } from "@adeeb/design-system";
 import { At, Envelope, Key, Lock, User } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
 import { updateCredentials, type CredResult } from "./actions";
-import { MEMBER_STATUS, type MemberStatus } from "@/lib/memberStatus";
 
-export type CredMember = { id: string; name: string; email: string; avatar: string | null; gender: "male" | "female" | null; status: MemberStatus };
+// بلا حالة: الشاشة لا تُطعَم إلّا الساري (`page.tsx`)، وشارةٌ تقول «نشط» في كلّ مرّة خبرٌ لا يُخبر.
+export type CredMember = { id: string; name: string; email: string; avatar: string | null; gender: "male" | "female" | null };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -75,7 +75,6 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
                 <b>{selected.name}</b>
                 <span className="lat">{selected.email}</span>
               </div>
-              <Badge tone={MEMBER_STATUS[selected.status].tone} variant="soft" dot>{MEMBER_STATUS[selected.status].label}</Badge>
             </div>
           ) : (
             <p className="cred-hint">اختر عضوًا لعرض بريده الحاليّ وتعديل بيانات دخوله.</p>

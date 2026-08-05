@@ -1,16 +1,8 @@
 "use client";
 
-import {
-  Card,
-  CardMedia,
-  CardBody,
-  CardHeader,
-  CardFooter,
-  Badge,
-  Button,
-  Container,
-} from "@adeeb/design-system";
-import { GraduationCap, ArrowLeft } from "@phosphor-icons/react";
+import { Card, CardMedia, CardBody, CardHeader, CardFooter, Badge, Button, Container, } from "@adeeb/design-system";
+import { GraduationCap } from "@phosphor-icons/react";
+import { ArrowLeft } from "@/app/_components/glyphs";
 import { MemberCard } from "../../dashboard/members/MemberCard";
 import type { MemberRow } from "../../dashboard/members/data";
 
@@ -28,11 +20,10 @@ const MEMBER: MemberRow = {
 const GRID_CASES = [6, 7, 8] as const;
 
 // نغمة كرت العضو تُشتقّ من حالته (TONE في MemberCard)، فالمعروض هنا هو
-// المسلك الحقيقيّ لا أصنافًا تُفرَض. أربع حالات ← ثلاث نغمات + خامل:
-//   .acard-tone-success معرَّف في الهوية ولا تستدعيه حالةٌ — صنفٌ يتيم.
+// المسلك الحقيقيّ لا أصنافًا تُفرَض. ثلاث حالات ← نغمتان + خامل:
+//   .acard-tone-success و.acard-tone-warning معرَّفان في الهوية ولا تستدعيهما حالةٌ — صنفان يتيمان.
 const MC_STATES: Array<{ status: MemberRow["status"]; label: string }> = [
   { status: "active",    label: "نشط — acard-tone-brand" },
-  { status: "pending",   label: "بانتظار الإكمال — acard-tone-warning" },
   { status: "suspended", label: "موقوف — acard-tone-danger" },
   { status: "inactive",  label: "غير نشط — بلا نغمة (الأساس الخامل)" },
 ];

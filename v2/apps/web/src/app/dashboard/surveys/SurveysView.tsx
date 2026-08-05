@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Stat, matchesSearch } from "@adeeb/design-system";
 import {
-  Archive, ArrowClockwise, ArrowCounterClockwise, ChartBar, ChatCenteredDots, CheckCircle, ClipboardText,
-  Eye, LinkSimple, MagnifyingGlass, PauseCircle, PencilSimple, Play, Plus, StopCircle, Trash,
-} from "@phosphor-icons/react";
+  Archive, ChartBar, ChatCenteredDots, ClipboardText, LinkSimple, PauseCircle, Play, StopCircle } from "@phosphor-icons/react";
+import {
+  ArrowClockwise, ArrowCounterClockwise, CheckCircle, Eye, MagnifyingGlass, PencilSimple, Plus,
+  Trash,
+} from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";

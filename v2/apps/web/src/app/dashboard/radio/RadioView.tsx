@@ -2,16 +2,14 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Field, Select, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
+import { Badge, Button, Field, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  MicrophoneStage, Playlist, PencilSimple, Plus, Trash, Megaphone, EyeSlash, Star,
-  MagnifyingGlass, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette, Archive, Broadcast,
-} from "@phosphor-icons/react";
+  MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette, Archive, Broadcast } from "@phosphor-icons/react";
+import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
-import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";

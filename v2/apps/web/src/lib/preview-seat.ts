@@ -75,8 +75,11 @@ export async function ensurePreviewUser(sb: Service): Promise<{ id: string } | {
   // حظرُ الدخول — تُلبَس هذه الهويّة ولا تُفتَح بها جلسة أبدًا
   await sb.auth.admin.updateUserById(id, { ban_duration: "876000h" });
 
+  // `joined_date` صراحةً: صار حدَّ العضويّة بعد توحيد الهويّة، وافتراضُه نُزع فلا تُمنح صمتًا.
+  // والدُّميةُ تُجلَس على المناصب فلا بدّ أن تُعَدّ عضوًا وإلّا سقطت من كشوف الأعضاء.
   const { error: pErr } = await sb.from("profiles").insert({
     id, full_name: PREVIEW_NAME, email: PREVIEW_EMAIL, account_status: "inactive", phone: PREVIEW_PHONE,
+    joined_date: new Date().toISOString().slice(0, 10),
   });
   if (pErr) return { error: pErr.message };
   return { id };

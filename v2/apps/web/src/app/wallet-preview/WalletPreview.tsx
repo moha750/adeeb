@@ -2,17 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, LandingHeading, Segmented } from "@adeeb/design-system";
-import {
-  ArrowCounterClockwise,
-  DeviceMobile,
-  Gift,
-  Info,
-  Minus,
-  Plus,
-  Sparkle,
-  Storefront,
-  Wallet,
-} from "@phosphor-icons/react";
+import { DeviceMobile, Gift, Sparkle, Storefront, Wallet } from "@phosphor-icons/react";
+import { ArrowCounterClockwise } from "@/app/_components/glyphs";
+import { Info, Minus, Plus } from "@/app/_components/glyphs";
 import { downloadBlob } from "@/lib/download";
 import { qrSvg } from "@/lib/qr";
 import { GOAL, isComplete, MEMBERS, memberById, num, REWARD, score, statusText, type DemoMember } from "./demo";

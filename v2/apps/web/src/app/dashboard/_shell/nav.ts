@@ -30,6 +30,10 @@ export const NAV: NavGroup[] = [
       { label: "عضويتي", icon: "me", href: "/dashboard" },
       // «الملف الشخصي» — سجلُّك لا موقعُك: صورتُك وجوّالُك ودراستُك وحساباتُك، تُحرَّر بيدك.
       { label: "الملف الشخصي", icon: "profile", href: "/dashboard/profile" },
+      // «الإعدادات» — حسابُك لا سجلُّك: بريدُ الدخول ومفتاحُه وجلساتُك. وموضعُها هنا **مع
+      // أختيها** لا في ذيل القائمة (حيث «النظام» و«أدوات»): تلك غرفُ النادي، وهذه غرفةُ نفسك —
+      // والصدرُ كلُّه «أنت»: عضويّتك ثمّ سجلُّك ثمّ بابُك، ثمّ مواقعُك من الهيكل.
+      { label: "الإعدادات", icon: "settings", href: "/dashboard/settings" },
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
@@ -40,7 +44,6 @@ export const NAV: NavGroup[] = [
     // بنودٌ مسطّحة كبقيّة الأقسام — الرأس «العضوية» يحمل التجميع، فلا حاجة لمجموعةٍ قابلة للطيّ.
     items: [
       { label: "أعضاء أديب", icon: "active", href: "/dashboard/members/active" },
-      { label: "أعضاء قيد الإكمال", icon: "pending", href: "/dashboard/members/pending" },
       { label: "أعضاء سابقون", icon: "suspended", href: "/dashboard/members/suspended" },
       { label: "من أشرف عليهم", icon: "supervise", href: "/dashboard/members/supervised" },
       { label: "الإنذارات", icon: "warn", href: "/dashboard/members/warnings" },

@@ -62,7 +62,8 @@ export function Header({
   logoSrc,
   nav = defaultNav,
   cta = "انضمّ إلينا",
-  ctaHref = "/join",
+  ctaHref,
+  onCta,
   loginHref = "/login",
   loginLabel = "بوّابة أَدِيب",
   moreLabel = "المزيد",
@@ -73,7 +74,11 @@ export function Header({
   nav?: NavItem[];
   /** الفعلُ الأوّل — لا ينزوي أبدًا: الأفعالُ أولى من الروابط حين يضيق الصفّ. */
   cta?: string;
+  /** وِجهةُ الفعل حين يكون رابطًا. ولا افتراضَ لها: بابُ التسجيل نُحر ٢٠٢٦-٠٨-٠٤، فلم يبقَ
+   *  للرأس وِجهةٌ يعرفها بنفسه — يعطيها المستهلك أو يعطي {@link onCta} بدلها. */
   ctaHref?: string;
+  /** فعلٌ يجري مكان الانتقال — إن مُرّر رُسم الفعلُ زرًّا لا رابطًا (وهو ما يفتح نافذة «التسجيل مغلق»). */
+  onCta?: () => void;
   loginHref?: string;
   /** مدخلُ الحساب — «بوّابة أَدِيب» بقرار المالك ٢٠٢٦-٠٨-٠٢ (كان «دخول»). */
   loginLabel?: string;
@@ -209,6 +214,21 @@ export function Header({
     </a>
   );
 
+  /**
+   * الفعلُ الأوّل — يُرسَم مرّتين (الشريط واللوح) بصنفين مختلفين، فيُبنى ههنا مرّةً واحدة:
+   * زرًّا إن كان له {@link onCta}، ورابطًا إن كانت له وِجهة. و`after` إغلاقُ اللوح بعد النقر.
+   */
+  const ctaEl = (className: string, after?: () => void) =>
+    onCta ? (
+      <button type="button" className={className} onClick={() => { after?.(); onCta(); }}>
+        {cta}
+      </button>
+    ) : (
+      <a href={ctaHref} className={className} onClick={after}>
+        {cta}
+      </a>
+    );
+
   // `data-open` على الجذر لا على اللوح وحده: الحالةُ حالةُ الرأس كلِّه — السطحُ
   // يمتلئ ما دامت القائمةُ مفتوحة، كما يمتلئ بالنزول.
   return (
@@ -255,9 +275,7 @@ export function Header({
               <a href={loginHref} className="abtn abtn-ghost abtn-sm">
                 {loginLabel}
               </a>
-              <a href={ctaHref} className="abtn abtn-primary abtn-sm">
-                {cta}
-              </a>
+              {ctaEl("abtn abtn-primary abtn-sm")}
               <button
                 ref={burgerRef}
                 type="button"
@@ -283,9 +301,7 @@ export function Header({
                 {/* **الزرُّ نفسُه الذي في الشريط حرفًا بحرف** (`abtn-primary abtn-sm`):
                     لا مقاسَ خاصّ ولا زاويةَ خاصّة — الزرُّ في المكتبة واحدٌ يُستعمل
                     كما هو، و`.shdr-sheet-cta` تخصّ **موضعَه في العمود** لا هيئتَه. */}
-                <a href={ctaHref} className="abtn abtn-primary abtn-sm shdr-sheet-cta" onClick={() => setOpen(false)}>
-                  {cta}
-                </a>
+                {ctaEl("abtn abtn-primary abtn-sm shdr-sheet-cta", () => setOpen(false))}
               </nav>
             </Container>
           </div>

@@ -1,7 +1,9 @@
 "use client";
 
 import { Button, Container } from "@adeeb/design-system";
-import { CheckCircle, XCircle, Info, Warning, Stack } from "@phosphor-icons/react";
+import { Stack } from "@phosphor-icons/react";
+import { CheckCircle } from "@/app/_components/glyphs";
+import { XCircle, Info, Warning } from "@/app/_components/glyphs";
 import { ToastProvider, useToast } from "../../dashboard/_components/ToastProvider";
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {

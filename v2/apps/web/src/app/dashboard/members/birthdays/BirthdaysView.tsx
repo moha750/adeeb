@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Accordion, Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
-import { Cake, CalendarDots, Confetti, DownloadSimple, MagnifyingGlass, UsersFour } from "@phosphor-icons/react";
+import { Cake, CalendarDots, Confetti, UsersFour } from "@phosphor-icons/react";
+import { DownloadSimple, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { Toolbar } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";

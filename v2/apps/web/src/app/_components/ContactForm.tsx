@@ -3,7 +3,8 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { createAdeebClient } from "@adeeb/core";
 import { Button, Field, Textarea, Card, CardBody } from "@adeeb/design-system";
-import { At, ChatText, Envelope, PencilSimple, TextT, User } from "@phosphor-icons/react";
+import { At, ChatText, Envelope, TextT, User } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 

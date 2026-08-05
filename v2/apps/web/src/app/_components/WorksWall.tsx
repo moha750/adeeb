@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { toLatinDigits } from "@adeeb/core";
-import { ArrowUpRight } from "@phosphor-icons/react";
+import { ArrowUpRight } from "@/app/_components/glyphs";
 import { WorkLightbox, type Work } from "./WorkLightbox";
 
 const COLS = 3;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDown, CaretUp, CaretUpDown } from "@phosphor-icons/react";
+import { CaretDown } from "@/app/_components/glyphs";
+import { CaretUp, CaretUpDown } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "./DropdownMenu";
 import { Skeleton } from "./Skeleton";
 

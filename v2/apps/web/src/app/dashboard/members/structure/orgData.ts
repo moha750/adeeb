@@ -37,7 +37,7 @@ export async function getOrgData(): Promise<OrgData> {
     sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, description, group_link").eq("is_active", true),
     sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name"),
     sb.from("user_roles").select("user_id, role_name, committee_id, department_id").eq("is_active", true),
-    sb.from("profiles").select("id, full_name, avatar_url, gender, account_status"),
+    sb.from("members").select("id, full_name, avatar_url, gender, account_status"),
     // الإشراف جدولُه — لا صفوفُ المناصب. عضو الإدارة مُسنَدٌ إلى إدارته، وإشرافُه على
     // لجان التنفيذيّ علاقةٌ أخرى (20260731).
     sb.from("committee_supervision").select("committee_id, unit_id, supervisor_id"),
@@ -63,6 +63,18 @@ export async function getOrgData(): Promise<OrgData> {
   // ومن أراد **ضمّ** معلَّقٍ إلى لجنته فبِركتُه أوسع من هذه بحكم القاعدة — تُبنى في شاشتها
   // من `profiles` مباشرةً بحالتها، لا تُوسَّع هذه فتصير بِركةً واحدةً لقاعدتين.
   const allowed = new Set((pool.data ?? []) as string[]);
+
+  // **الهيكلةُ تقول العضويّةَ السارية.** إنهاءُ العضوية يكتب الحالةَ في `profiles` ولا يمسّ
+  // `user_roles` (`_apply_termination`)، والمعلَّقُ يُضمّ إلى لجنته عضوًا قبل أن يُكمل تسجيله —
+  // فصفُّ الإسناد يبقى `is_active` في الحالتين، ولولا هذا الحدُّ لبقي الموقوف في كشف لجنته
+  // كأنّه لم يغادر ولحُسب المعلَّق حاضرًا.
+  //
+  // والنخلُ **في المصدر لا في الشاشات**: كلُّ من يقرأ هذه البِركة (الهيكلة · التعيينات ·
+  // إدارتي · قسمي · لجنتي) يرى الكشفَ نفسه والعددَ نفسه، فلا يُرصَّع مرشِّحٌ في كلِّ غرفة
+  // ثمّ تُنسى غرفة. ومن أراد غيرَ الساري فبابُه صريح: «الموقوفون» و«قيد الإكمال» يُبنيان
+  // من `getMembers` بحالتهما، والإنذاراتُ والشهاداتُ تقرآن سجلَّ من غادر عن قصد.
+  const serving = new Set((p.data ?? []).filter((x) => x.account_status === "active").map((x) => x.id));
+  const userRoles = (ur.data ?? []).filter((x) => serving.has(x.user_id));
   //
   // ويحمل كلٌّ منهم **موضعه الحاليّ**: اسمًا للعرض (`held`) واسمَ دورٍ للشرط (`heldRole`).
   // يُبنى ممّا جُلب أصلًا (لا استعلامَ زائد)، وصفٌّ واحدٌ لكلّ عضوٍ بحكم ثابت «منصبٌ واحد».
@@ -71,7 +83,7 @@ export async function getOrgData(): Promise<OrgData> {
   const deptAr = new Map((d.data ?? []).map((x) => [x.id, x.name_ar]));
   const held = new Map<string, string>();
   const heldRole = new Map<string, string>();
-  for (const row of ur.data ?? []) {
+  for (const row of userRoles) {
     if (held.has(row.user_id)) continue;
     const scope = row.committee_id != null ? comAr.get(row.committee_id) : row.department_id != null ? deptAr.get(row.department_id) : null;
     held.set(row.user_id, scope ? `${roleAr.get(row.role_name)} — ${scope}` : (roleAr.get(row.role_name) as string));
@@ -88,7 +100,7 @@ export async function getOrgData(): Promise<OrgData> {
     departments: d.data ?? [],
     committees: com.data ?? [],
     roles: r.data ?? [],
-    userRoles: ur.data ?? [],
+    userRoles,
     profiles: p.data ?? [],
     supervision: sup.data ?? [],
     members,

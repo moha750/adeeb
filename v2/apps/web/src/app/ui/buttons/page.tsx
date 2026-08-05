@@ -1,7 +1,9 @@
 "use client";
 
 import { Button, Container, IconButton } from "@adeeb/design-system";
-import { ArrowDown, ArrowUp, CopySimple, PaperPlaneTilt, PencilSimple, Plus, Trash } from "@phosphor-icons/react";
+import { CopySimple, PaperPlaneTilt } from "@phosphor-icons/react";
+import { ArrowDown } from "@/app/_components/glyphs";
+import { ArrowUp, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 
 const VARIANTS = ["primary", "ghost", "danger", "neutral", "inverse"] as const;
 const SIZES = ["sm", "md", "lg"] as const;

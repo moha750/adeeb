@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Stat, matchesSearch } from "@adeeb/design-system";
-import {
-  ArrowCounterClockwise, CalendarBlank, CalendarCheck, Eye, EyeSlash, MagnifyingGlass,
-  Megaphone, PencilSimple, Plus, Prohibit, Trash, UsersThree,
-} from "@phosphor-icons/react";
+import { CalendarBlank, CalendarCheck, Megaphone, UsersThree } from "@phosphor-icons/react";
+import { ArrowCounterClockwise } from "@/app/_components/glyphs";
+import { Eye, EyeSlash, MagnifyingGlass, PencilSimple, Plus, Prohibit, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";

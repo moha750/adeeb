@@ -35,7 +35,7 @@ export async function getBirthdays(
   const sb = createAdeebServiceClient(url, key);
 
   const [pRes, mdRes] = await Promise.all([
-    sb.from("profiles").select("id, full_name, avatar_url, gender").eq("account_status", "active"),
+    sb.from("members").select("id, full_name, avatar_url, gender").eq("account_status", "active"),
     sb.from("member_details").select("user_id, birth_date, favorite_color"),
   ]);
 

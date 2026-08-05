@@ -1,6 +1,7 @@
-import { Header, Footer, Container, LandingHeading } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading } from "@adeeb/design-system";
 import { getPublicActivities } from "./data";
 import { PublicActivityCard } from "./PublicActivityCard";
+import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -14,7 +15,7 @@ export default async function ActivitiesPage() {
 
   return (
     <>
-      <Header activeHref="/activities" />
+      <SiteHeader activeHref="/activities" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

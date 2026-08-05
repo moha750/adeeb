@@ -20,6 +20,9 @@ import { Breadcrumb } from "../../_shell/Breadcrumb";
  * **والقيادة تُعرَض ولا تُفعَّل:** قائد اللجنة ونائبها خارج سلطة المشرف عمدًا
  * (`membership_authority`)، فالأفعال تبقى في الجدول حيث تقول القاعدة نعم.
  *
+ * **والتواصل ليس تحكّمًا** (`contact`، كما في «لجنتي»): كرتُ كلّ عضوٍ يحمل زرَّ واتساب بجوار
+ * ملفّه — فالمشرف يعرف من تحته **ويكلّمهم**. ومن لا جوّالَ له لا زرَّ له.
+ *
  * وأيقونات Phosphor تستعمل `createContext` فتسكن هنا (عميليّ) لا في الصفحة الخادميّة.
  */
 export function SupervisedView({
@@ -62,7 +65,7 @@ export function SupervisedView({
       />
 
       {view === "member" ? (
-        <MembersView headless mode="reach" members={members} mayManageData={mayManageData} />
+        <MembersView headless mode="reach" contact members={members} mayManageData={mayManageData} />
       ) : committees.length === 0 ? (
         <EmptyState
           variant="soft"

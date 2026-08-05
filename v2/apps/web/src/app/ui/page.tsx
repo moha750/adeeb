@@ -15,7 +15,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
     pages: [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
       ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["loading", "شاشة التحميل"], ["empty", "الحالة الفارغة"],
-      ["section-heading", "عنوان القسم"], ["stat", "كرت الإحصاء"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
+      ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
       ["membership", "بطاقة العضويّة"], ["auth", "شاشة المصادقة"],
     ],
   },

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Alert, Button, Field, Select, type SelectOption } from "@adeeb/design-system";
-import { Certificate, DownloadSimple, FilePdf, IdentificationCard, NotePencil, SealCheck, UserCircle } from "@phosphor-icons/react";
+import { Alert, Button, Field, Select, type SelectOption, Modal } from "@adeeb/design-system";
+import { Certificate, FilePdf, IdentificationCard, NotePencil, SealCheck, UserCircle } from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
 import { Avatar } from "../../_components/Avatar";
-import { Modal } from "../../_components/Modal";
 import { useToast } from "../../_components/ToastProvider";
 import { downloadCertificate, downloadCertificatePdf } from "@/lib/certificates/letter";
 import { certDate } from "@/lib/certificates/text";

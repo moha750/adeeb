@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CaretDown, CaretLeft } from "@phosphor-icons/react";
+import { CaretDown } from "@/app/_components/glyphs";
+import { CaretLeft } from "@/app/_components/glyphs";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { crumbFor, type CrumbStep } from "./crumb";
 import { useNav } from "./nav-context";

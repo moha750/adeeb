@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
-import { AddressBook, ArrowCounterClockwise, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope, Eye, GraduationCap, Hash, IdentificationBadge, IdentificationCard, MagnifyingGlass, NotePencil, PencilSimple, Phone, Plus, Prohibit, ShareNetwork, ShieldWarning, Star, Trash, User, UsersThree, WarningCircle } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import {
+  AddressBook, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope,
+  GraduationCap, Hash, IdentificationBadge, IdentificationCard, NotePencil, Phone, ShareNetwork,
+  ShieldWarning, User, UsersThree,
+} from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwise, Eye, MagnifyingGlass, PencilSimple, Plus, Prohibit, Star, Trash,
+  WarningCircle,
+} from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
-import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { MemberCard } from "./MemberCard";
 import { IssueWarningModal } from "./warnings/IssueWarningModal";
@@ -28,7 +35,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, RECORD_NO_MAX, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { endMembership, restoreMembership, updateMember } from "./actions";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 
@@ -78,15 +85,14 @@ const memberSchema = z.object({
 type MemberForm = z.infer<typeof memberSchema>;
 
 // نغمة سطح الجدول/الكرت بالحالة — النشط بهوية العلامة (فولاذيّ) لا أخضر (الأغلبيّة الافتراضيّة)؛
-// الأخضر يبقى لشارة «نشط» عبر STATUS.tone فقط. قيد الإكمال/موقوف يحملان دلالتهما.
+// الأخضر يبقى لشارة «نشط» عبر STATUS.tone فقط. والموقوف يحمل دلالته.
 const SURFACE_TONE: Record<MemberStatus, "success" | "warning" | "danger" | undefined> = {
-  active: undefined, pending: "warning", suspended: "danger", inactive: undefined,
+  active: undefined, suspended: "danger", inactive: undefined,
 };
 // عنوان كل قسم حسب الحالة المثبّتة
 const SECTION: Record<"all" | MemberStatus, { title: string; noun: string }> = {
   all: { title: "كل الأعضاء", noun: "عضو" },
   active: { title: "أعضاء أديب", noun: "عضو" },
-  pending: { title: "أعضاء قيد الإكمال", noun: "عضو" },
   suspended: { title: "أعضاء سابقون", noun: "عضو سابق" },
   inactive: { title: "غير النشطين", noun: "عضو" },
 };
@@ -239,8 +245,9 @@ type ViewProps = {
   /** سطرُ الخلوّ حين يعرف المستدعي نطاقَه أدقَّ من الجدول («لا أعضاء في لجنتك بعد»). */
   emptyNote?: string;
   /**
-   * زرُّ «التواصل» (واتساب) في الكروت — لشاشات من يقود أهلَه لا لسجلّ الأعضاء العامّ:
-   * القائد يكلّم عضوه. ومن لا جوّالَ له لا زرَّ له (لا وعدَ برابطٍ لا رقم فيه).
+   * زرُّ «التواصل» (واتساب) في الكروت — لشاشات من يقود أهلَه أو يشرف عليهم («لجنتي» ·
+   * «من أشرف عليهم») لا لسجلّ الأعضاء العامّ: صاحبُ النطاق يكلّم من فيه. ومن لا جوّالَ له
+   * لا زرَّ له (لا وعدَ برابطٍ لا رقم فيه).
    */
   contact?: boolean;
   /** حدُّ الإنذارات — يمرّ من القاعدة إلى نافذة الإصدار (لا رقمَ محفورًا هنا). */
@@ -607,7 +614,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
 
             <ModalSectionHeading className="mdl-full" icon={<AddressBook />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
+            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
             <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (
@@ -640,7 +647,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
               <>
                 <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} required {...editForm.register("college")} />
                 <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} required {...editForm.register("major")} />
-                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} required {...editForm.register("recordNo")} />
+                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" maxLength={RECORD_NO_MAX} icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} required {...editForm.register("recordNo")} />
               </>
             ) : null}
 

@@ -3,7 +3,8 @@
 // عميليّ لأيقونات Phosphor وحدها (`createContext` ممنوعٌ في الخادميّ) — لا حالةَ فيه ولا حدث.
 
 import { Badge } from "@adeeb/design-system";
-import { Flag, Star } from "@phosphor-icons/react";
+import { Flag } from "@phosphor-icons/react";
+import { Star } from "@/app/_components/glyphs";
 import type { JourneyStop } from "./data";
 
 /**

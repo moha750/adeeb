@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, IconButton } from "@adeeb/design-system";
-import { ArrowCounterClockwise, MagnifyingGlassMinus, MagnifyingGlassPlus, Trash, UploadSimple } from "@phosphor-icons/react";
+import { Button, IconButton, Modal } from "@adeeb/design-system";
+import { MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-icons/react";
+import { ArrowCounterClockwise } from "@/app/_components/glyphs";
+import { Trash, UploadSimple } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
-import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
 import { removeMyAvatar, uploadMyAvatar } from "./actions";
 
@@ -286,7 +287,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
         open={confirmKill}
         onClose={() => setConfirmKill(false)}
         tone="danger"
-        icon={<Trash weight="bold" />}
+        icon={<Trash />}
         title="حذف صورتك؟"
         text="تُحذف نهائيًّا ولا نسخة منها، ويعود مكانها أيقونتك. ويمكنك رفع غيرها متى شئت."
         confirmLabel="حذف الصورة"

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowSquareOut, Copy } from "@phosphor-icons/react";
+import { Copy } from "@phosphor-icons/react";
+import { ArrowSquareOut } from "@/app/_components/glyphs";
 import { useToast } from "./ToastProvider";
 
 /**

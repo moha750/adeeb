@@ -2,17 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
+import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  Certificate, ChatCenteredText, DownloadSimple, Eye, FilePdf, MagnifyingGlass, NotePencil, Prohibit,
-  SealCheck, Users,
-} from "@phosphor-icons/react";
+  Certificate, ChatCenteredText, FilePdf, NotePencil, SealCheck, Users } from "@phosphor-icons/react";
+import { DownloadSimple, Eye, MagnifyingGlass, Prohibit } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
-import { Modal } from "../../_components/Modal";
 import { useToast } from "../../_components/ToastProvider";
 import { fmtDate } from "@/lib/date";
 import { downloadCertificate, downloadCertificatePdf } from "@/lib/certificates/letter";

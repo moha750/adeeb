@@ -1,4 +1,4 @@
-import { InstagramLogo, LinkedinLogo, TiktokLogo, XLogo } from "@phosphor-icons/react";
+import { InstagramLogo, LinkedinLogo, TiktokLogo, XLogo } from "@/app/_components/glyphs";
 import type { SocialKey } from "@/lib/membershipFields";
 
 /**

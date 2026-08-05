@@ -3,7 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ChartPanel, Field, Switch, matchesSearch } from "@adeeb/design-system";
-import { Hash, MagnifyingGlass, PencilSimple, Shapes, Sparkle, TextT } from "@phosphor-icons/react";
+import { Hash, Shapes, Sparkle, TextT } from "@phosphor-icons/react";
+import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import { STAT_ICONS, STAT_ICON_CATEGORIES, DEFAULT_STAT_ICON, asIconKey, StatIcon } from "@/app/_components/statIcons";
 import { formatThousands as fmt } from "@/app/_components/format";

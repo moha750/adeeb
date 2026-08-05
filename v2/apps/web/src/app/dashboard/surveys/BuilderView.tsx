@@ -4,9 +4,11 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, ChartPanel, Field, IconButton, Select, Switch, Textarea } from "@adeeb/design-system";
 import {
-  ArrowDown, ArrowUp, CalendarBlank, ChatCircleText, ChatText, CheckSquare, ClipboardText, Clock,
-  CopySimple, Eye, Gear, HandWaving, Hash, LockSimple, PencilSimple, Plus, Question, Sparkle, TextT, Trash, X,
+  CalendarBlank, ChatCircleText, ChatText, CheckSquare, ClipboardText, Clock, CopySimple, Gear,
+  HandWaving, Hash, LockSimple, Sparkle, TextT,
 } from "@phosphor-icons/react";
+import { ArrowDown } from "@/app/_components/glyphs";
+import { ArrowUp, Eye, PencilSimple, Plus, Question, Trash, X } from "@/app/_components/glyphs";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { useToast } from "../_components/ToastProvider";
 import type { SurveyDetail } from "./data";

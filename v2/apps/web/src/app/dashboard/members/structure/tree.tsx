@@ -4,7 +4,9 @@
 // ومعرض /ui/structure معًا (فلسفة المعرض: المكوّن الحقيقيّ نفسه، لا محاكاة).
 // التنسيق كلّه من عائلة `.org-*` في المكتبة (components.css) — لا تنسيق شارد هنا.
 import { Badge, matchesSearch } from "@adeeb/design-system";
-import { CaretDown, PencilSimple, Users, Warning } from "@phosphor-icons/react";
+import { Users } from "@phosphor-icons/react";
+import { CaretDown } from "@/app/_components/glyphs";
+import { PencilSimple, Warning } from "@/app/_components/glyphs";
 import { Avatar } from "../../_components/Avatar";
 import type { Holder, CommitteeNode, CouncilBody } from "./model";
 

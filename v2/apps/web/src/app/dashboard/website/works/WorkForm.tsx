@@ -4,8 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ChartPanel, Field } from "@adeeb/design-system";
 import {
-  Image as ImageIcon, LinkSimple, PencilSimple, Sparkle, Tag, TextT, Trash, UploadSimple,
-} from "@phosphor-icons/react";
+  Image as ImageIcon, LinkSimple, Sparkle, Tag, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { WorkEditData } from "./data";
 import { createWork, updateWork, uploadWorkImage, type WorkInput } from "./actions";

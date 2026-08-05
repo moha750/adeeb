@@ -113,9 +113,11 @@ export default function CursorPage() {
             <div className="rounded border border-line bg-surface p-6">
               <ul className="list-disc space-y-2 pe-5 text-content-muted">
                 <li>
-                  <strong className="text-content">اللوحة تُستثنى:</strong>{" "}
-                  <code className="font-latin">/dashboard</code> أداةُ عملٍ يوميّة، والمؤشّرُ المزخرف فيها ضريبةٌ لا
-                  هويّة. الواجهةُ العامّة وحدها.
+                  <strong className="text-content">الموقعُ كلُّه بلا استثناء:</strong> يُركَّب مرّةً في التخطيط
+                  الجذر عبر <code className="font-latin">SiteCursor</code> فيعمّ الواجهةَ العامّة{" "}
+                  <strong>واللوحةَ معًا</strong> (قرار المالك ٢٠٢٦-٠٨-٠٤). والمستثنى وحدَه هذا المعرضُ{" "}
+                  <code className="font-latin">/ui</code> — تُفحَص فيه المكوّناتُ مفردةً، ولمؤشّرِه صفحتُه هذه
+                  تُركّبه بنفسها.
                 </li>
                 <li>
                   <strong className="text-content">الفأرةُ وحدها:</strong>{" "}

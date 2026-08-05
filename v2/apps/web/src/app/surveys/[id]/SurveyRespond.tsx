@@ -4,9 +4,8 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Alert, Button, Card, CardBody, Checkbox, Field, FieldMark, Radio, Select, Textarea } from "@adeeb/design-system";
 import {
-  At, CalendarBlank, ChatText, CheckSquare, Clock, Envelope, Globe, Hash,
-  LinkSimple, ListBullets, NumberCircleOne, PencilSimple, Phone, Question, Star, TextT,
-} from "@phosphor-icons/react";
+  At, CalendarBlank, ChatText, CheckSquare, Clock, Envelope, Globe, Hash, LinkSimple, ListBullets, NumberCircleOne, Phone, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Question, Star } from "@/app/_components/glyphs";
 import type { QuestionType } from "@/app/dashboard/surveys/vocab";
 import { submitSurveyResponse } from "./actions";
 import { TurnstileWidget } from "./Turnstile";

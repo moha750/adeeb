@@ -101,7 +101,9 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
   const me = await getCurrentAdmin();
 
   const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes] = await Promise.all([
-    sb.from("profiles").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
+    // `members` لا `profiles`: الجدولُ صار بيتَ كلِّ صاحبِ حساب بعد توحيد الهويّة، والعرضُ
+    // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
+    sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("departments").select("id, name_ar"),

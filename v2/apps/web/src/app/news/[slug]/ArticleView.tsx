@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge, Card, CardBody, CardFooter, CardMedia } from "@adeeb/design-system";
-import { CalendarBlank, Camera, Clock, Eye, Heart, User } from "@phosphor-icons/react";
+import { CalendarBlank, Camera, Clock, Heart, User } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
 import { CATEGORY_META } from "../../dashboard/news/vocab";
 import type { PublicNews } from "../data";
 

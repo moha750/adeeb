@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ChartPanel, Field, Textarea } from "@adeeb/design-system";
-import { ChatText, PencilSimple, Question, TextT } from "@phosphor-icons/react";
+import { ChatText, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Question } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { FaqEditData } from "./data";
 import { createFaq, updateFaq, type FaqInput } from "./actions";

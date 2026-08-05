@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardBody, CardFooter, CardHeader } from "@adeeb/design-system";
-import { Question } from "@phosphor-icons/react";
+import { Question } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "../../_components/DropdownMenu";
 import type { FaqRow } from "./data";
 

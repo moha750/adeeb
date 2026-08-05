@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Badge, Stat, Segmented, ChartPanel, BarList, Donut, AreaChart, ColumnBars, type BarItem } from "@adeeb/design-system";
-import { Eye, Users, Timer, ArrowUUpLeft, Globe, Robot, DeviceMobile, ArrowBendUpLeft } from "@phosphor-icons/react";
+import { Users, Timer, Globe, Robot, DeviceMobile } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
+import { ArrowUUpLeft, ArrowBendUpLeft } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { EmptyState } from "../_components/EmptyState";
 import type { Analytics, Cat, RecentVisitor } from "./data";

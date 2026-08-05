@@ -4,8 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ChartPanel, Field, Textarea } from "@adeeb/design-system";
 import {
-  Buildings, ChatText, Image as ImageIcon, LinkSimple, PencilSimple, SealCheck, Sparkle, TextT, Trash, UploadSimple,
-} from "@phosphor-icons/react";
+  Buildings, ChatText, Image as ImageIcon, LinkSimple, SealCheck, Sparkle, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { SponsorEditData } from "./data";
 import { createSponsor, updateSponsor, uploadSponsorLogo, type SponsorInput } from "./actions";

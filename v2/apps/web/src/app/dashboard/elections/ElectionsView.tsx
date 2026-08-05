@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
-import { MagnifyingGlass, Plus, Scales, Megaphone, Trophy } from "@phosphor-icons/react";
+import { Scales, Megaphone, Trophy } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
+import { Plus } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Tabs } from "../_components/Tabs";

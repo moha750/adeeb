@@ -1,7 +1,8 @@
 "use client";
 
 import { Button, Field } from "@adeeb/design-system";
-import { Hash, MagnifyingGlass, SealCheck } from "@phosphor-icons/react";
+import { Hash, SealCheck } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
 
 /**
  * نموذج التحقّق — **`method="get"` لا فعلٌ خادميّ**: الرقم يذهب في العنوان فيعود الجواب،

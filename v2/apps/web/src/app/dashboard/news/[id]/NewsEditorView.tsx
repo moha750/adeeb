@@ -2,15 +2,18 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Checkbox, Field, Select, Textarea } from "@adeeb/design-system";
+import { Alert, Badge, Button, Checkbox, Field, Select, Textarea, Modal } from "@adeeb/design-system";
 import {
-  ArrowRight, Newspaper, PencilSimple, TextAlignLeft, Tag, UsersThree, ClipboardText,
-  Image as ImageIcon, Images, UploadSimple, Trash, PaperPlaneTilt, Megaphone, EyeSlash,
-  Archive, ArrowUUpLeft, ChatCircleDots, ClockCounterClockwise, Camera, Star,
-  CheckCircle, XCircle, WarningCircle, Users, FloppyDisk, LinkSimple, Hash,
+  Newspaper, TextAlignLeft, Tag, UsersThree, ClipboardText, Image as ImageIcon, Images,
+  PaperPlaneTilt, Megaphone, Archive, ChatCircleDots, ClockCounterClockwise, Camera, Users,
+  FloppyDisk, LinkSimple, Hash,
 } from "@phosphor-icons/react";
+import { ArrowRight } from "@/app/_components/glyphs";
+import {
+  PencilSimple, UploadSimple, Trash, EyeSlash, ArrowUUpLeft, Star, CheckCircle, XCircle,
+  WarningCircle,
+} from "@/app/_components/glyphs";
 import { Tabs } from "../../_components/Tabs";
-import { Modal } from "../../_components/Modal";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { EmptyState } from "../../_components/EmptyState";
 import { Avatar } from "../../_components/Avatar";

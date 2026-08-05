@@ -3,7 +3,8 @@
 // معرضُ كرت الاستبيان (المنقسم) — توثيقُ المكوّن النهائيّ بحالاته الحيّة، كنظير /ui/positions لكرت المنصب.
 // المصدر الحيّ هو dashboard/surveys/SurveyCard؛ هذا يعرضه بعيّناتٍ تغطّي كلّ ما يقوله سطر الحالة.
 import { Button, Card, CardFooter, Container } from "@adeeb/design-system";
-import { PencilSimple, Trash } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
+import { Trash } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "../../dashboard/_components/DropdownMenu";
 import { StatusBadge } from "../../dashboard/surveys/StatusBadge";
 import { SurveyStatusLine } from "../../dashboard/surveys/SurveyStatusLine";

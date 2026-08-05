@@ -3,6 +3,24 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "../lib/cn";
 
+/**
+ * فسحةٌ واحدة تخدم قياسين: تسامحُ «أفي آخر الصفحة؟» (حشوُ الحاوية وكسورُ البكسل لا تُبطل
+ * الحكم)، وهامشُ الحقل عن حافّة الشاشة العليا بعد النزول (فلا يلتصق بها).
+ */
+const BOTTOM_SLACK = 40;
+
+/**
+ * حاوية التمرير التي يعيش فيها الشريط — أقربُ أبٍ يفيض محتواه (اللوحة: `.ash-content`)،
+ * وإلّا فالوثيقة نفسها (سائر الصفحات). لا يُفترَض أحدهما: المكوّن يخدم السياقين.
+ */
+function scrollBoxOf(node: HTMLElement): Element {
+  for (let p = node.parentElement; p; p = p.parentElement) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy === "auto" || oy === "scroll") && p.scrollHeight > p.clientHeight) return p;
+  }
+  return document.scrollingElement ?? document.documentElement;
+}
+
 export interface SaveBarProps {
   /** هل ثمّة تغييرٌ لم يُحفَظ؟ — الشريط لا وجود له في DOM حين لا يكون. */
   open: boolean;
@@ -53,25 +71,50 @@ export function SaveBar({ open, message = "لديك تغييراتٌ لم تُح
   }, [el]);
 
   /**
-   * **ما كنتَ تكتبه يبقى مرئيًّا:** ظهورُ الشريط في لحظة الكتابة كان يغطّي الحقل نفسَه الذي
-   * أوجده — فيُرفع الحقلُ المركَّز فوقه أوّلَ ما يظهر. و`nearest` لا يحرّك الصفحة إلّا بقدر
-   * الحاجة (فلا تقفز على من كان حقلُه ظاهرًا أصلًا)، و`scroll-padding` يضمن ألّا يقف تحته.
+   * **ما كنتَ تكتبه يبقى مرئيًّا** — فظهورُ الشريط في لحظة الكتابة كان يغطّي الحقلَ الذي
+   * أوجده. والحكم على **موضع الحقل من المحتوى** لا على موضعك من التمرير:
+   *
+   * ١) **الحقلُ في آخر الصفحة** (في مدى الشاشة الأخيرة — أيْ في آخر قسمٍ أو كرت) ⇐ يُنزَل إلى
+   *    **آخرها** فيستقرّ الشريط في موضعه ويرتفع حقلُك فوقه كاملًا لا بالكاد. والشرطُ مقيسٌ لا
+   *    مقدَّر: يُنزَل إلى الآخر **ما دام الحقلُ سيبقى مرئيًّا هناك** — فلا يُنزَل نزولًا يُخرج
+   *    الحقلَ من أعلى الشاشة (كرتٌ أخيرٌ طويلٌ تكتب في رأسه).
+   *
+   * ٢) **وإلّا** ⇐ يُرفع الحقلُ بقدر الحاجة وحدها (`nearest`) — فلا تُخطَف الصفحةُ إلى آخرها
+   *    من تحت يد من يعدّل في رأسها. و`scroll-padding` يضمن ألّا يقف تحت الشريط.
+   *
+   * وبلا حقلٍ مركَّز (تغييرٌ بنقرةٍ لا بكتابة: مرساةُ لون · مبدّل) يُحكم بموضعك: من كان ملاصقًا
+   * للقاع يُردّ إليه، إذ الشريطُ بظهوره أزاح القاعَ عنه بقدره.
    */
   useEffect(() => {
     if (!el) return;
+    const box = scrollBoxOf(el);
+    const end = box.scrollHeight - box.clientHeight;
+    const toEnd = () => box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+
     const focused = document.activeElement;
-    if (focused instanceof HTMLElement && focused !== document.body) {
-      focused.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (!(focused instanceof HTMLElement) || focused === document.body) {
+      const added = el.offsetHeight + (Number.parseFloat(getComputedStyle(el).marginBottom) || 0);
+      if (end - box.scrollTop <= added + BOTTOM_SLACK) toEnd();
+      return;
     }
+
+    // موضع أعلى الحقل من **المحتوى** لا من الشاشة (فالحاوية قد تكون اللوحة لا النافذة)
+    const boxTop = box === document.scrollingElement || box === document.documentElement
+      ? 0
+      : box.getBoundingClientRect().top;
+    const fieldTop = focused.getBoundingClientRect().top - boxTop + box.scrollTop;
+
+    // في آخر شاشةٍ من المحتوى؟ ⇐ النزول إلى الآخر يُبقيه ظاهرًا (وفوقه فسحةٌ لا يلتصق بالحافّة)
+    if (fieldTop >= end + BOTTOM_SLACK) toEnd();
+    else focused.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [el]);
 
   if (!open) return null;
   return (
     <div ref={setEl} className={cn("asave", className)} role="status" aria-live="polite">
-      <span className="asave-msg">
-        <i className="asave-dot" aria-hidden />
-        {message}
-      </span>
+      {/* بلا علامةٍ لونيّة: ظهورُ الشريط نفسُه هو الإعلان، والنصّ يقوله صريحًا — فالنقطة
+          كانت زينةً تزيد عن حاجتها (قرار المالك ٢٠٢٦-٠٨-٠٤). */}
+      <span className="asave-msg">{message}</span>
       <span className="asave-acts">{children}</span>
     </div>
   );

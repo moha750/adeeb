@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Button, Container } from "@adeeb/design-system";
-import { ArrowsClockwise, Eye, PencilSimple, Plus, Trash, UsersThree } from "@phosphor-icons/react";
+import { UsersThree } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@/app/_components/glyphs";
+import { Eye, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../dashboard/_components/DataTable";
 import type { MenuGroup } from "../../dashboard/_components/DropdownMenu";
 import { Avatar } from "../../dashboard/_components/Avatar";
@@ -36,7 +38,7 @@ type DemoRow = {
 
 const STATUS: Record<DemoStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   active: { label: "نشط", tone: "success" },
-  pending: { label: "قيد الإكمال", tone: "warning" },
+  pending: { label: "بانتظار المراجعة", tone: "warning" },
   suspended: { label: "موقوف", tone: "danger" },
   inactive: { label: "غير نشط", tone: "neutral" },
 };

@@ -13,7 +13,7 @@ const ROLES = [
 
 const CAPS: { cat: string; items: [string, string][] }[] = [
   { cat: "الإدارة", items: [["إدارة الصلاحيات", "manage_permissions"], ["إدارة المناصب", "manage_positions"], ["توزيع أعضاء الوحدة", "assign_unit_members"]] },
-  { cat: "العضوية", items: [["عرض الأعضاء", "view_members"], ["المعلّقون", "view_pending_members"], ["الموقوفون", "view_suspended_members"], ["أعياد الميلاد", "view_birthdays"], ["الهيكلة", "view_org_structure"], ["بيانات الدخول", "manage_member_data"]] },
+  { cat: "العضوية", items: [["عرض الأعضاء", "view_members"], ["الموقوفون", "view_suspended_members"], ["أعياد الميلاد", "view_birthdays"], ["الهيكلة", "view_org_structure"], ["بيانات الدخول", "manage_member_data"]] },
   { cat: "الأنشطة", items: [["إدارة الفعاليات", "manage_activities"]] },
   { cat: "الاستبيانات", items: [["إدارة الاستبيانات", "manage_surveys"]] },
   { cat: "الانتخابات", items: [["إدارة الانتخابات", "manage_elections"]] },

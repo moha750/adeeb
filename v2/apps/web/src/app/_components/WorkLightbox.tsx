@@ -1,9 +1,9 @@
 "use client";
 
+import { Dialog } from "@adeeb/design-system";
 import { useId, useRef } from "react";
 import { toLatinDigits } from "@adeeb/core";
-import { X } from "@phosphor-icons/react";
-import { Dialog } from "../dashboard/_components/Dialog";
+import { X } from "@/app/_components/glyphs";
 
 export type Work = {
   id: string;

@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Container, Field, Select, Badge, ModalSectionHeading, Segmented } from "@adeeb/design-system";
-import { CheckCircle, Trash, Warning, User, PencilSimple, Envelope, At, Buildings, Star, Phone, CalendarBlank, UsersThree, Copy, Books, GraduationCap, BookOpen, Certificate, IdentificationCard, AddressBook, ShareNetwork, XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, Prohibit, WarningCircle, CalendarX } from "@phosphor-icons/react";
-import { Modal } from "../../dashboard/_components/Modal";
+import { Button, Container, Field, Select, Badge, ModalSectionHeading, Segmented, Modal } from "@adeeb/design-system";
+import {
+  User, Envelope, At, Buildings, Phone, CalendarBlank, UsersThree, Copy, Books, GraduationCap,
+  BookOpen, Certificate, IdentificationCard, AddressBook, ShareNetwork, CalendarX,
+} from "@phosphor-icons/react";
+import { CheckCircle } from "@/app/_components/glyphs";
+import {
+  Trash, Warning, PencilSimple, Star, XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, Prohibit,
+  WarningCircle,
+} from "@/app/_components/glyphs";
 import { ConfirmDialog } from "../../dashboard/_components/ConfirmDialog";
 import { Avatar } from "../../dashboard/_components/Avatar";
 

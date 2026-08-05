@@ -1,8 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { Button } from "@adeeb/design-system";
-import { Dialog } from "./Dialog";
+import { Button, Dialog } from "@adeeb/design-system";
 
 type Tone = "danger" | "warning" | "success";
 

@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Alert, Button, Select, Textarea, Field, type SelectOption } from "@adeeb/design-system";
+import { Alert, Button, Select, Textarea, Field, type SelectOption, Modal } from "@adeeb/design-system";
 import {
-  CalendarBlank, ChatCenteredText, DownloadSimple, NotePencil, Tag, User, UserCircle,
-  Warning, WhatsappLogo,
-} from "@phosphor-icons/react";
+  CalendarBlank, ChatCenteredText, NotePencil, Tag, User, UserCircle } from "@phosphor-icons/react";
+import { DownloadSimple, Warning, WhatsappLogo } from "@/app/_components/glyphs";
 import { Avatar } from "../../_components/Avatar";
-import { Modal } from "../../_components/Modal";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import { WARNING_CATEGORIES, ordinalWord, remainingText, warningTitle } from "@/lib/warnings/vocab";

@@ -86,7 +86,7 @@ export async function getViewAsTargets(): Promise<ViewAsTarget[]> {
   const [rRes, urRes, pRes, cRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
-    sb.from("profiles").select("id, full_name").eq("account_status", "active"),
+    sb.from("members").select("id, full_name").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
   if (rRes.error || urRes.error || pRes.error || cRes.error) return [];
@@ -133,7 +133,7 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
   const [rRes, urRes, pRes, cRes, dRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
-    sb.from("profiles").select("id").eq("account_status", "active"),
+    sb.from("members").select("id").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name, member_role_name").eq("is_active", true),
     sb.from("departments").select("id, name_ar").eq("is_active", true),
   ]);

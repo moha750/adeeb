@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { ColorField, Field, Textarea, Container } from "@adeeb/design-system";
-import { Asterisk, At, ChatText, Drop, Envelope, Hash, IdentificationBadge, Key, Lock, LockKey, MagnifyingGlass, PaintBucket, PencilSimple, Phone, Prohibit, User } from "@phosphor-icons/react";
+import {
+  Asterisk, At, ChatText, Drop, Envelope, Hash, IdentificationBadge, Key, Lock, LockKey,
+  PaintBucket, Phone, User,
+} from "@phosphor-icons/react";
+import { MagnifyingGlass, PencilSimple, Prohibit } from "@/app/_components/glyphs";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (

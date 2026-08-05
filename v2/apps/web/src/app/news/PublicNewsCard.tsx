@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Badge, Card, CardBody, CardHeader, CardMedia } from "@adeeb/design-system";
-import { Newspaper, Eye, Clock } from "@phosphor-icons/react";
+import { Newspaper, Clock } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
 import { newsHref } from "@/lib/news/link";
 import { CATEGORY_META } from "../dashboard/news/vocab";
 import type { PublicNews } from "./data";

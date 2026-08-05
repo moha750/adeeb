@@ -2311,6 +2311,8 @@
 .ash-crumb-grp[aria-expanded="true"] svg { transform: rotate(180deg); }
 
 .ash-phead h1 { font-size: 22px; font-weight: 900; color: var(--color-primary); margin-top: 2px; }
+/* تعريفُ الوحدة تحت اسمها — نصُّ `description` المكتوب في القاعدة لكلّ قسمٍ ومجلسٍ ولجنة.
+   يُقصَر عرضُه فلا يمتدّ سطرًا عريضًا يُتعب العين، وهو الجوابُ على «ما هذه الوحدة؟» في
 
 /* ============================================================
    جدول البيانات (Data Table) · اتجاه «الشبكة المحاطة بإطار»
@@ -2992,6 +2994,15 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .msh--danger .msh-ic { color: var(--danger-600); --surface-aurora: linear-gradient(135deg, color-mix(in oklab, var(--danger-500) 16%, var(--color-surface)), var(--color-surface) 62%); }
 .msh--danger h3 { color: var(--danger-700); }
 .msh--danger::after { background: linear-gradient(to left, var(--danger-200), transparent); }
+/* الفاصل بكلمة = المكوّن Divider (بادئة .adiv) — «أو» بين بديلين متساويين (شاشة الدخول).
+   خطّه خطُّ .msh نفسُه: عرضُ الحدّ الموحّد ولونُه، يتلاشى **خارجًا من الكلمة** في الجهتين.
+   والاتّجاهان فيزيائيّان لا منطقيّان (لا يعرف التدرّج logical): الموقع RTL كلُّه، فـ`::before`
+   هو المقطع الأيمن. ولو ظهر في سياق LTR يومًا انعكس التلاشي (يبقى الشكل، ويهاجر الخفوت). */
+.adiv { display: flex; align-items: center; gap: 10px; }
+.adiv::before, .adiv::after { content: ""; flex: 1 1 auto; height: var(--card-stroke-w); }
+.adiv::before { background: linear-gradient(to right, var(--card-stroke), transparent); }
+.adiv::after { background: linear-gradient(to left, var(--card-stroke), transparent); }
+.adiv-label { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--color-text-muted); }
 /* الشبكة + الخليّة (الحدّ الموحّد من الرمز، الزاوية radius-sm) */
 /* flex لا grid — الخليّة اليتيمة في صفّها تمتدّ عليه كلّه (كـ.mdl-grid، ودواء القاعدة ٦ نفسه).
    يلزم هنا خاصّةً: التواصل الاجتماعيّ يُصفّى إلى المملوء وحده (filledSocials)، فعددُه ١ أو ٣ يتيمٌ حقيقيّ
@@ -3861,6 +3872,7 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .org-modal { display: flex; flex-direction: column; gap: 14px; }
 .org-modal-cur { display: flex; flex-direction: column; gap: 6px; }
 .org-modal-warn { font-size: 12.5px; line-height: 1.6; color: var(--color-text-muted); }
+
 /* شريط شاغلٍ داخل نافذة الإسناد (أفتار + اسم) — نظيرُ `.asg-holder` الشارد، مُعاد في المكتبة */
 .asgm-holder { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .asgm-holder > span { min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4853,10 +4865,9 @@ html:not(.js) .ldr-boot { display: none; }
   box-shadow: var(--shadow-lg);
   animation: asave-rise var(--dur) var(--ease-standard) both;
 }
-.asave-msg { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); }
-/* دائرةٌ وظيفيّة (ق٢: 50% لا --radius على نقطةٍ صغيرة). واللون علامةٌ بجانب نصٍّ محايد
-   لا لونٌ في النصّ — كأسطورة المخطّطات (ق١٠/٣). */
-.asave-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--warning-600); }
+/* بلا علامةٍ لونيّة تسبق النصّ (قرار المالك ٢٠٢٦-٠٨-٠٤): كانت نقطةٌ صفراء تقول «معلَّق»،
+   وظهورُ الشريط نفسِه يقولها والنصُّ يصرّح بها — فحُذفت هي وصنفُها `.asave-dot`. */
+.asave-msg { font-weight: 700; color: var(--color-text); }
 /* الأزرار إلى الطرف الآخر، وتنزل سطرًا في الضيّق (الرسالة تحتفظ بسطرها) */
 .asave-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-inline-start: auto; }
 
@@ -4908,12 +4919,19 @@ html:not(.js) .ldr-boot { display: none; }
    `cursor` يُورَث، لكنّ ورقةَ أنماط المتصفّح **تُسنده على العناصر نفسها**
    (`a` تأخذ اليد، والحقلُ يأخذ الشعرة)، والمُسنَدُ يغلب الموروثَ مهما علا مصدرُه.
    فبالمضيف وحدَه يبقى مؤشّرُ المتصفّح ظاهرًا فوق كلّ رابطٍ وحقل — مؤشّران معًا. */
-.cur-host, .cur-host * { cursor: none; }
+/* **والصنفُ يُكرَّر عمدًا** (`.cur-host.cur-host`): خصوصيّةُ `‎.cur-host *` هي (0,1,0)
+   — تساوي `‎.st-skip { cursor: pointer }` في ورقة القصّة و`‎.cred-link` وأمثالِهما،
+   فيفوز المتأخّرُ في الترتيب. وأوراقُ المكوّنات (`story.css`) تُستورَد من مكوّناتها
+   فتُحمَّل **بعد** المكتبة، فكان مؤشّرُ النظام يظهر على زرَّي التخطّي والصوت — مؤشّران
+   معًا. وتكرارُ الصنف يرفعها إلى (0,2,0) فتغلب كلَّ قاعدةِ صنفٍ واحدٍ **بالقوّة لا
+   بالترتيب**، فلا تنكسر مع أوّل ورقةٍ تُضاف غدًا. ويبقى استثناءُ «ممنوع» فوقها
+   بـ(0,2,0) + سِمة. */
+.cur-host.cur-host, .cur-host.cur-host * { cursor: none; }
 /* **الدلالةُ لا تُبتلَع، لكنّها تُرسَم عندنا:** ما يُكتب فيه له شعرةُ كتابةٍ من
    الهوية (`.cur-caret` أدناه) لا من النظام — فلا يبقى في الموقع شكلُ مؤشّرٍ
    يرسمه المتصفّح. وما لا يُتاح يبقى على «ممنوع» النظام: صورةُ المنع اصطلاحٌ
    يعرفه المستخدم من نظامه، ورسمُ بديلٍ لها اختراعُ لغةٍ لا نقلُ هوية. */
-.cur-host :is([disabled], [aria-disabled="true"]) { cursor: not-allowed; }
+.cur-host.cur-host :is([disabled], [aria-disabled="true"]) { cursor: not-allowed; }
 
 .cur {
   position: fixed; inset: 0; z-index: var(--z-cursor); pointer-events: none;
@@ -4924,7 +4942,54 @@ html:not(.js) .ldr-boot { display: none; }
      الرقمَ وحدَه يتبعه المؤشّرُ كلُّه: مقاسُ الريشة، وهامشُها ونقطةُ أصلها
      (بالنِّسَب)، وقطرُ الهالة ومركزُها. */
   --nib: 40px;
+  /* وقفتا تدرّج الريشة — تنقلبان على السطح الداكن (انظر `[data-dark]` أدناه) */
+  --nib-a: var(--navy-800); --nib-b: var(--steel-400);
 }
+
+/* ── **الانقلابُ على السطح الداكن** (قرار المالك ٢٠٢٦-٠٨-٠٤): الريشةُ كحليّةٌ تذوب
+      على الداكن بعد نزع حدّها الأبيض، فيقيس المحرّكُ إضاءةَ ما تحت المؤشّر
+      (`isDark` في المكوّن) ويُعلن `data-dark` — فتنقلب **الأربعةُ معًا**: تدرّجُ
+      الريشة إلى الفاتح، والهالةُ والأثرُ والشعرةُ إلى لون السطح بشفافيّاتها.
+      **والنغمةُ لا تُنقَض:** الأحمرُ يبقى أحمرَ فوق زرّ حذفٍ داكن — ما ينقلب هو
+      **الحياد** (كحليُّ العلامة) لا الدلالة، فلا يقول اللونُ شيئًا يخالف معناه. */
+.cur[data-dark="true"] { --nib-a: var(--color-surface); --nib-b: var(--steel-200); }
+.cur[data-dark="true"] .cur-halo {
+  border-color: color-mix(in oklab, var(--color-surface) 55%, transparent);
+  background: color-mix(in oklab, var(--color-surface) 14%, transparent);
+}
+.cur[data-dark="true"][data-mode="hot"] .cur-halo { background: color-mix(in oklab, var(--color-surface) 22%, transparent); }
+.cur[data-dark="true"][data-press="true"] .cur-halo {
+  background: color-mix(in oklab, var(--color-surface) 30%, transparent);
+  border-color: color-mix(in oklab, var(--color-surface) 85%, transparent);
+}
+.cur[data-dark="true"] .cur-trail path { fill: var(--color-surface); }
+.cur[data-dark="true"] .cur-caret path { fill: var(--color-surface); }
+
+/* ── **حبرٌ يُملى من الصفحة** (`--cur-ink`): قسمٌ يعلنه فتلبس ريشتُه لونَه — كافتتاحيّة
+      القصّة تُذهّبها، وفصلُها الرابع (التجدّد) يُلغيه فترجع الريشةُ إلى حبر العلامة.
+      **وموضعُها بعد كتلة الداكن مقصود:** خصوصيّتُهما واحدة (0,2,0) فالمتأخّرُ يفوز —
+      والقصّةُ سوداءُ الأرضيّة، فلولا التأخّرُ لغلبها انقلابُ الداكن فابيضّت الريشةُ
+      بدل أن تُذهَّب. والوقفتان تُشتقّان من اللون الواحد: عمقٌ بمزجِه بالكحليّ الأغمق،
+      وضوءٌ بمزجِه بالسطح — فيبقى تدرّجُ الريشة تدرّجًا ولا يصير لونًا مسطّحًا. */
+.cur[data-ink="true"] {
+  --nib-a: color-mix(in oklab, var(--cur-ink) 78%, var(--navy-900));
+  --nib-b: color-mix(in oklab, var(--cur-ink) 72%, var(--color-surface));
+}
+/* **والحبرُ يعمّ المؤشّرَ كلَّه لا ريشتَه وحدها** (قرار المالك ٢٠٢٦-٠٨-٠٤): الهالةُ
+   حبرٌ حول السنّ والأثرُ حبرٌ خرج منه، فلا يستقيم أن يُذهَّب السنُّ ويبقيا على
+   لونٍ آخر. والشدّاتُ هي شدّاتُ الأساس نفسُها (خامل/هدف/ضغط) مسنَدةً إلى اللون
+   المُملى — تغييرُ لونٍ لا تغييرُ تصميم. */
+.cur[data-ink="true"] .cur-halo {
+  border-color: color-mix(in oklab, var(--cur-ink) 70%, transparent);
+  background: color-mix(in oklab, var(--cur-ink) 16%, transparent);
+}
+.cur[data-ink="true"][data-mode="hot"] .cur-halo { background: color-mix(in oklab, var(--cur-ink) 24%, transparent); }
+.cur[data-ink="true"][data-press="true"] .cur-halo {
+  background: color-mix(in oklab, var(--cur-ink) 32%, transparent);
+  border-color: color-mix(in oklab, var(--cur-ink) 92%, transparent);
+}
+.cur[data-ink="true"] .cur-trail path { fill: var(--cur-ink); }
+.cur[data-ink="true"] .cur-caret path { fill: var(--cur-ink); }
 .cur[data-on="true"] { opacity: 1; }
 /* وحيث يتولّى مؤشّرُ النظام (المنعُ وحدَه) تنسحب الطبقةُ — لا مؤشّران معًا */
 .cur[data-mode="off"] { opacity: 0; }
@@ -4948,8 +5013,11 @@ html:not(.js) .ldr-boot { display: none; }
       **ولونُها نغمةُ الحقل** (`--shadow-tone`) لا تدرّجُ العلامة: الحقلُ الخاطئ
       يحمرّ ومؤشّرُه معه، فلا يقول اللونُ شيئًا يخالف ما تحته. */
 .cur-caret {
-  height: calc(var(--nib) * 0.68); width: calc(var(--nib) * 0.24);
-  margin: calc(var(--nib) * -0.34) 0 0 calc(var(--nib) * -0.12);
+  /* **الارتفاع 58% من `--nib`** (كان 62% ثمّ 68%): المالكُ رآه كبيرًا فصُغِّر —
+     ومعه تصير الساقُ 2.3px (كانت 1.6 ثمّ 2.7)، أيْ **الوسطُ الذي طلبه** في
+     الثخانة يتحقّق بتصغير المرسم لا بتنحيف الساق. رقمٌ واحدٌ حلّ مسألتين. */
+  height: calc(var(--nib) * 0.58); width: calc(var(--nib) * 0.205);
+  margin: calc(var(--nib) * -0.29) 0 0 calc(var(--nib) * -0.1025);
   opacity: 0; transition: opacity var(--dur-fast);
 }
 .cur-caret path { fill: rgb(var(--shadow-tone)); }
@@ -5013,7 +5081,11 @@ html:not(.js) .ldr-boot { display: none; }
 /* شعرةٌ بلون السطح حول السنّ فيُرى على الداكن كما على الفاتح، ورِبٌّ يشقّه.
    (ثُخِّنت الشعرةُ وأُزيل الرِّبُّ يومًا لمطاردة الاهتزاز، ثمّ رُدّا حين أُوقف
    الدورانُ نهائيًّا — فالعلاجُ الذي لا يُصلح لا يُبقى ثمنُه.) */
-.cur-nib path:not(.cur-rib) { stroke: var(--color-surface); stroke-width: 1.4; stroke-linejoin: round; paint-order: stroke fill; }
+/* **بلا حدٍّ أبيضَ حول السنّ** (قرار المالك ٢٠٢٦-٠٨-٠٤): كان حدًّا بلون السطح
+   (1.4px تحت الملء) يفصل الريشةَ عمّا تمرّ عليه، فأُزيل — والسنُّ يقف بتدرّجه
+   وحدَه. وثمنُه معلوم: فوق سطحٍ داكنٍ (غلافُ كتاب · صورة) يخفت تمييزُه، فإن ظهر
+   ذلك يومًا فالعلاجُ ردُّ هذا السطر لا اختراعُ غيره. والرِّبُّ باقٍ — هو داخلَ
+   الشكل لا حولَه، فليس من المُزال. */
 .cur-rib { fill: none; stroke: var(--color-surface); stroke-width: 1.2; stroke-linecap: round; opacity: .45; }
 .cur[data-mode="hot"] .cur-nib { scale: 1.1; }
 
@@ -5037,6 +5109,21 @@ html:not(.js) .ldr-boot { display: none; }
       الذيل — لا في اللون. */
 svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacity var(--dur-fast); }
 .cur-trail path { fill: rgb(var(--shadow-tone)); fill-opacity: .62; stroke: none; }
+
+/* ── **ما يبقى للنظام في تجربة النصّ — يُخصَّص كذلك** (٢٠٢٦-٠٨-٠٤): بعد أن صار
+      شكلُ المؤشّر من الهوية، بقي في الحقل شيئان يرسمهما المتصفّح بلونه هو:
+      **شعرةُ الكتابة الوامضة** داخل الحقل، و**ظِلُّ التحديد** حين يُسحَب على النصّ.
+      وهما داخلَ العنصر لا فوقه، فلا تبلغهما طبقةُ المؤشّر مهما رُسم فيها.
+      • `caret-color` يصبغ الوامضةَ بلون الحقل الدلاليّ — فيحمرّ في الحقل الخاطئ
+        كما يحمرّ حدُّه وحلقتُه (ق٣)، ولا يبقى أسودَ النظام وحدَه بين ألوانها.
+      • `::selection` يجعل ظِلَّ التحديد كحليًّا شفّافًا لا أزرقَ النظام — ونصُّه
+        **يبقى بلونه** (`inherit`) لا يُقلَب أبيضَ، فالكحليُّ الشفّاف لا يُخفيه،
+        وقلبُه يكسر تباينَ النصوص الملوّنة (نغماتُ الكروت والشارات).
+      ونطاقُه المضيفُ نفسُه (`.cur-host`) لا الوثيقةُ كلُّها: تجربةٌ واحدةٌ حيث
+      المؤشّرُ حاضر، واللوحةُ تبقى على ألوان نظامها كما استُثنيت من المؤشّر. */
+.cur-host :is(input, textarea, [contenteditable="true"]) { caret-color: rgb(var(--shadow-tone)); }
+.cur-host ::selection { background: rgba(var(--shadow-tone), .22); color: inherit; }
+.cur-host ::-moz-selection { background: rgba(var(--shadow-tone), .22); color: inherit; }
 
 /* تقليلُ الحركة: التأخّرُ والتمطّطُ والأثرُ تُطفأ في المحرّك (لا تُحسَب أصلًا) —
    ويبقى هنا إطفاءُ الانتقالات. الشكلُ يبقى، الحركةُ وحدها تذهب. */

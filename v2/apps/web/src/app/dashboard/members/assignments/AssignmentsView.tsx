@@ -3,7 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Stat, matchesSearch } from "@adeeb/design-system";
-import { ArrowsClockwise, Briefcase, MagnifyingGlass, Trash, UserCheck, UserMinus } from "@phosphor-icons/react";
+import { Briefcase, UserCheck, UserMinus } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@/app/_components/glyphs";
+import { MagnifyingGlass, Trash } from "@/app/_components/glyphs";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";

@@ -124,8 +124,9 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
 
         {/* الوزن صفةُ **الموقع** لا صفةُ مكانٍ ولا أيقونةٍ على حدة: سياقُ الجذر
-            (`IconDefaults` في `app/layout.tsx`) يرسم أيقونات أديب كلَّها duotone —
-            فلا سياقَ محلّيّ هنا ولا `weight` مرصَّع في بندٍ ولا شيفرون. */}
+            (`IconDefaults` في `app/layout.tsx`) يرسم أيقونات أديب كلَّها duotone، وما
+            يُستثنى منها مسمًّى في `_components/glyphs.tsx` (الشيفرونُ منه) — فلا سياقَ
+            محلّيّ هنا ولا `weight` مرصَّع في بندٍ. */}
         <nav className="ash-nav" ref={navRef}>
           {nav.map((g, gi) => (
             <div className="ash-group" key={g.head ?? gi}>

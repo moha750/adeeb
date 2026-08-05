@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
-import { CheckCircle, Gift, Stamp, User, Warning } from "@phosphor-icons/react";
+import { Gift, Stamp, User } from "@phosphor-icons/react";
+import { CheckCircle } from "@/app/_components/glyphs";
+import { Warning } from "@/app/_components/glyphs";
 import { GOAL, isComplete, num, REWARD, score, statusText, type DemoMember } from "../../demo";
 import { useLiveCards, type LiveCard } from "../../useLiveCards";
 

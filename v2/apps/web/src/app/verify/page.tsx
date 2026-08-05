@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Header, Footer, Container, Card, CardBody, Alert, Badge, LandingHeading } from "@adeeb/design-system";
+import { Footer, Container, Card, CardBody, Alert, Badge, LandingHeading } from "@adeeb/design-system";
 import { VERIFY_HOST, certDate } from "@/lib/certificates/text";
 import { verifyCertificate } from "./data";
 import { VerifyForm } from "./VerifyForm";
+import { SiteHeader } from "../_components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "التحقّق من شهادة — نادي أديب",
@@ -25,7 +26,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <Header />
+      <SiteHeader />
       <main>
         <section className="py-16 md:py-24">
           <Container>

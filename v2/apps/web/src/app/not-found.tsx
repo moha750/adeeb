@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Header, Container, LandingHeading, Ambient } from "@adeeb/design-system";
+import { Container, LandingHeading, Ambient } from "@adeeb/design-system";
+import { SiteHeader } from "./_components/SiteHeader";
 
 /**
  * صفحة «غير موجود» بهوية أديب — تحلّ محلّ صفحة Next/Vercel الافتراضيّة.
@@ -23,7 +24,7 @@ export const metadata = {
 export default function NotFound() {
   return (
     <div className="flex min-h-svh flex-col">
-      <Header />
+      <SiteHeader />
       <main className="amb-host flex flex-1 items-center py-12">
         <Ambient />
         <Container className="max-w-2xl text-center">

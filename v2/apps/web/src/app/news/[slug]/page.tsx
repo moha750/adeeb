@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { Header, Footer, Container, LandingHeading } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading } from "@adeeb/design-system";
 import { getMoreNews, getPublicNewsItem } from "../data";
 import { PublicNewsCard } from "../PublicNewsCard";
 import { ArticleView } from "./ArticleView";
+import { SiteHeader } from "../../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -32,7 +33,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
 
   return (
     <>
-      <Header activeHref="/news" />
+      <SiteHeader activeHref="/news" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

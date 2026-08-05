@@ -1,55 +1,25 @@
 // أيقونات الهيكل — Phosphor (currentColor؛ الأحجام عبر CSS الحاوي)
 import {
-  Buildings,
-  IdentificationBadge,
-  MicrophoneStage,
-  Newspaper,
-  UsersThree,
-  ClipboardText,
-  FileText,
-  CalendarBlank,
-  Globe,
-  Gear,
-  Bell,
-  CaretDown,
-  CaretRight,
-  CaretDoubleRight,
-  Plus,
-  Lifebuoy,
-  List,
-  SidebarSimple,
-  ChartLineUp,
-  Scales,
-  BookOpen,
-  SignOut,
-  ImagesSquare,
-  ChartBar,
-  Handshake,
-  Question,
-  UserCheck,
-  HourglassMedium,
-  Prohibit,
-  Cake,
-  TreeStructure,
-  UserGear,
-  UsersFour,
-  SquaresFour,
-  Layout,
-  Key,
-  ShieldWarning,
-  Certificate,
-  QrCode,
-  EnvelopeSimpleOpen,
-  UserCircle,
+  Buildings, IdentificationBadge, MicrophoneStage, Newspaper, UsersThree, ClipboardText, FileText,
+  CalendarBlank, Globe, Gear, Bell, Lifebuoy, List, SidebarSimple, ChartLineUp, Scales, BookOpen,
+  SignOut, ImagesSquare, ChartBar, Handshake, Question, UserCheck, HourglassMedium, Prohibit, Cake,
+  TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
+  EnvelopeSimpleOpen, UserCircle, SlidersHorizontal,
 } from "@phosphor-icons/react";
+import { CaretDown, CaretRight, CaretDoubleRight, Plus } from "@/app/_components/glyphs";
 
-// بلا `weight`: الوزن من سياق الجذر وحده (`IconDefaults`) — لا استثناء لأيقونةٍ في الشريط
+// بلا `weight`: الوزن من سياق الجذر (`IconDefaults`) أو من قائمة المستثنَين (`glyphs`) —
+// لا تكتبه شاشةٌ ولا بندُ خريطة. وأيقوناتُ الوجهات هنا **معنًى** فتبقى duotone، وشيفروناتُها
+// و«إجراء سريع» **إشاراتٌ وأفعال** فتُستورد من قائمة الاستثناء.
 type P = { className?: string };
 
 // عضويتي — بطاقة الهويّة: عضويّة صاحب الجلسة نفسه (حلّت محلّ بيت «نظرة عامة»)
 export const IconMe = (p: P) => <IdentificationBadge aria-hidden {...p} />;
 // الملف الشخصي — الشخص نفسُه لا بطاقتُه: بياناتُه وصورتُه، فيفترق عن «عضويتي» (موقعُه في الهيكل)
 export const IconProfile = (p: P) => <UserCircle aria-hidden {...p} />;
+/* الإعدادات — **ليست `Gear`**: تلك مأخوذةٌ لـ«الصلاحيات»، وأيقونةٌ بمعنيين في شريطٍ واحد تكذب
+   (كما مُنعت `SquaresFour` عن غير «قسمي»). والمزالجُ ضبطٌ شخصيّ: تُدير حسابَك لا النظام. */
+export const IconSettings = (p: P) => <SlidersHorizontal aria-hidden {...p} />;
 export const IconUsers = (p: P) => <UsersThree aria-hidden {...p} />;
 export const IconClip = (p: P) => <ClipboardText aria-hidden {...p} />;
 export const IconDoc = (p: P) => <FileText aria-hidden {...p} />;
@@ -108,7 +78,7 @@ export const IconQr = (p: P) => <QrCode aria-hidden {...p} />;
 export const IconInbox = (p: P) => <EnvelopeSimpleOpen aria-hidden {...p} />;
 
 export const ICONS = {
-  me: IconMe, profile: IconProfile, users: IconUsers, clip: IconClip, doc: IconDoc,
+  me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
   cal: IconCal, globe: IconGlobe, gear: IconGear, chart: IconChart,
   vote: IconVote, book: IconBook, images: IconImages,
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,

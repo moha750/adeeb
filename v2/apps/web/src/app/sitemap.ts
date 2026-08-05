@@ -18,7 +18,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/activities`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE}/works`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE}/library`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${SITE}/join`, changeFrequency: "monthly", priority: 0.7 },
   ];
 
   const news = await getPublicNews();

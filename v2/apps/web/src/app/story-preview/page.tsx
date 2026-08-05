@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Container, Header } from "@adeeb/design-system";
+import { Container } from "@adeeb/design-system";
 import { StoryOpening } from "../_story/StoryOpening";
+import { SiteHeader } from "../_components/SiteHeader";
 
 /* معاينة معزولة لقصة أديب الافتتاحية: القصة + هيدر حقيقي (هدف التسليم)
    ومحتوى بديل تحتها للتحقق من نهاية الـpin واستمرار التمرير الطبيعي.
@@ -15,7 +16,7 @@ export default function StoryPreviewPage() {
   return (
     <>
       <StoryOpening force />
-      <Header />
+      <SiteHeader />
       <main>
         <section className="py-20 text-center md:py-28">
           <Container>

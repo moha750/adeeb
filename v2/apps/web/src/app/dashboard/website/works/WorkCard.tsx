@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardFooter, CardHeader, CardMedia } from "@adeeb/design-system";
-import { ArrowUpRight } from "@phosphor-icons/react";
+import { ArrowUpRight } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "../../_components/DropdownMenu";
 import type { WorkRow } from "./data";
 

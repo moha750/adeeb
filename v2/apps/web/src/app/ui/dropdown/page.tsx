@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { Button, Container } from "@adeeb/design-system";
-import {
-  ArrowsClockwise,
-  Copy,
-  Eye,
-  LinkSimple,
-  PencilSimple,
-  Star,
-  Trash,
-  UserMinus,
-} from "@phosphor-icons/react";
+import { Copy, LinkSimple, UserMinus } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@/app/_components/glyphs";
+import { Eye, PencilSimple, Star, Trash } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "../../dashboard/_components/DropdownMenu";
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {

@@ -4,10 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ChartPanel, Field, Select, Textarea } from "@adeeb/design-system";
 import {
-  Armchair, CalendarBlank, CalendarDots, ChatText, Clock, Flag, GenderFemale, GenderMale, Hash, HourglassMedium,
-  Image as ImageIcon, LinkSimple, MapPin, MapPinLine, PencilSimple,
-  Sparkle, TextT, Trash, UploadSimple, UsersThree,
-} from "@phosphor-icons/react";
+  Armchair, CalendarBlank, CalendarDots, ChatText, Clock, Flag, GenderFemale, GenderMale, Hash, HourglassMedium, Image as ImageIcon, LinkSimple, MapPin, MapPinLine, Sparkle, TextT, UsersThree } from "@phosphor-icons/react";
+import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { useToast } from "../_components/ToastProvider";
 import type { EventEditData, OrganizerOption } from "./data";
 import { AUDIENCE_OPTIONS, TYPE_OPTIONS, type ActivityType } from "./vocab";

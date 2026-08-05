@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Accordion, Button, ModalSectionHeading } from "@adeeb/design-system";
-import { Compass, Question } from "@phosphor-icons/react";
-import { Modal } from "../_components/Modal";
+import { Accordion, Button, ModalSectionHeading, Modal } from "@adeeb/design-system";
+import { Compass } from "@phosphor-icons/react";
+import { Question } from "@/app/_components/glyphs";
 import { IconLife } from "./icons";
 
 // المحتوى مصدرٌ واحد هنا — نصوصٌ مُتحقّقة من واقع اللوحة (أقسام القائمة · حالات العضويّة)،
@@ -24,14 +24,14 @@ const GUIDES: { q: string; a: ReactNode }[] = [
   },
   {
     q: "متابعة الأعضاء وحالاتهم",
-    a: "من قسم «العضوية»: «نشط» للفاعلين، و«قيد الإكمال» لمن لم يُكمل بياناته، و«موقوف» للمعلّقين. افتح أيّ عضو لعرض ملفّه كاملًا.",
+    a: "من قسم «العضوية»: «نشط» للفاعلين، و«موقوف» لمن انتهت عضويّته. افتح أيّ عضو لعرض ملفّه كاملًا.",
   },
 ];
 
 const FAQS: { q: string; a: ReactNode }[] = [
   {
     q: "ماذا تعني حالات العضويّة؟",
-    a: "«نشط»: عضوٌ له سجلٌّ فاعل. «قيد الإكمال»: انضمّ ولمّا يُكمل بياناته بعد. «موقوف»: عضويّته معلّقة مؤقّتًا.",
+    a: "«نشط»: عضوٌ قائمة عضويّته. «موقوف»: عضويّةٌ منتهية. «غير نشط»: حسابٌ خامل لا يظهر إلّا في «كل الأعضاء». ومن نقص سجلُّه يُطالَب بإكماله عند دخوله لا بحالةٍ تُوسَم بها عضويّته.",
   },
   {
     q: "أين أجد بيانات دخول الأعضاء؟",

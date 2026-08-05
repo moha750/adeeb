@@ -1,7 +1,9 @@
 "use client";
 
 import { Select, type SelectOption, Container } from "@adeeb/design-system";
-import { CalendarBlank, ChatCircle, GraduationCap, MapPin, Microphone, Sparkle, Trophy, UserPlus } from "@phosphor-icons/react";
+import {
+  CalendarBlank, ChatCircle, GraduationCap, MapPin, Microphone, Sparkle, Trophy, UserPlus,
+} from "@phosphor-icons/react";
 
 const TYPES: SelectOption[] = [
   { value: "workshop", label: "ورشة", icon: <GraduationCap aria-hidden />, group: "تفاعليّة" },

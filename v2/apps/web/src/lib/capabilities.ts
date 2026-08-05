@@ -26,8 +26,11 @@ export const SECTION_CAP = {
   // وسلطةُ التحرير نفسُها ليست هنا أصلًا — تقولها القاعدة ببند «لكلٍّ بياناتُ نفسه»
   // في `can_edit_member_data`.
   "/dashboard/profile": "view_own_membership",
+  // **الإعدادات** — حسابُ صاحب الجلسة: بريدُ دخوله ومفتاحُه وجلساتُه. مفتاحُها مفتاحُ أختيها
+  // للعلّة نفسها: بابُ المرء إلى نفسه واحد. ولا يقع خلفها إلّا حسابُ حاملها — الجلسات تقرؤها
+  // القاعدة بـ`auth.uid()`، والأفعال كلُّها بجلسته لا بمفتاح خدمةٍ يتجاوز الحراسة.
+  "/dashboard/settings": "view_own_membership",
   "/dashboard/members/active": "view_members",
-  "/dashboard/members/pending": "view_pending_members",
   "/dashboard/members/suspended": "view_suspended_members",
   // غرفةُ من لا يرى السجلّ كلّه: عضو إدارة الموارد يرى **من يشرف عليهم** وحدهم
   "/dashboard/members/supervised": "view_supervised_members",

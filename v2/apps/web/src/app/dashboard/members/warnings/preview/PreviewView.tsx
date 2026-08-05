@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Alert, Badge, Card, CardBody, CardHeader, Segmented } from "@adeeb/design-system";
-import { ShieldWarning, Warning } from "@phosphor-icons/react";
+import { ShieldWarning } from "@phosphor-icons/react";
+import { Warning } from "@/app/_components/glyphs";
 import { WARNING_CATEGORIES, warningTitle } from "@/lib/warnings/vocab";
 import { renderWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage, type WarningLetter } from "@/lib/warnings/message";

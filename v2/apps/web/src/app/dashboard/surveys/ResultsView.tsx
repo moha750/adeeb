@@ -2,15 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AreaChart, Badge, BarList, Button, ChartPanel, ColumnBars, Donut, Stat, matchesSearch } from "@adeeb/design-system";
+import { AreaChart, Badge, BarList, Button, ChartPanel, ColumnBars, Donut, Stat, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  CalendarBlank, ChartBar, ChatCenteredDots, ClockCountdown, DeviceMobile, DownloadSimple, Eye, MagnifyingGlass, Percent, PencilSimple, User,
-} from "@phosphor-icons/react";
+  CalendarBlank, ChartBar, ChatCenteredDots, ClockCountdown, DeviceMobile, Percent, User } from "@phosphor-icons/react";
+import { DownloadSimple, Eye, MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
-import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
 import { downloadBlob } from "@/lib/download";
 import type { SurveyAggregates, QuestionAgg } from "@/lib/surveys/aggregate";

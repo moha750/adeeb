@@ -111,8 +111,8 @@ export default function MembershipGalleryPage() {
           </section>
 
           <section>
-            <Label>قيد الإكمال · لا منصب بعد (السلسلة تسقط كلّها)</Label>
-            <MembershipCard name="نورة الدوسري" role={null} status="pending" joined="21 يوليو 2026" duration="5 أيام" />
+            <Label>غير نشط · لا منصب بعد (السلسلة تسقط كلّها)</Label>
+            <MembershipCard name="نورة الدوسري" role={null} status="inactive" joined="21 يوليو 2026" duration="5 أيام" />
           </section>
 
           <section>

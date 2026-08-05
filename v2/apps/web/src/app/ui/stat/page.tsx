@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge, Container, Stat } from "@adeeb/design-system";
-import { Bank, Briefcase, Buildings, Eye, UserCheck, UserCircle, UserMinus, UsersThree } from "@phosphor-icons/react";
+import { Bank, Briefcase, Buildings, UserCheck, UserCircle, UserMinus, UsersThree } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
 
 function Lab({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{children}</p>;

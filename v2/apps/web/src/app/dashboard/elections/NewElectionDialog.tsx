@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Select, type SelectOption } from "@adeeb/design-system";
+import { Alert, Button, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { Buildings, Scales, UsersThree } from "@phosphor-icons/react";
-import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
 import { createElection } from "./actions";
 import type { ElectionCreateOptions } from "./data";

@@ -3,17 +3,15 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, BarList, Button, ChartPanel, Textarea, matchesSearch } from "@adeeb/design-system";
-import {
-  ArrowUUpLeft, CalendarBlank, Certificate, ChatText, CheckCircle, Clock, Copy,
-  MapPin, PencilSimple, Prohibit, WhatsappLogo,
-} from "@phosphor-icons/react";
+import { Alert, Badge, BarList, Button, ChartPanel, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { CalendarBlank, Certificate, ChatText, Clock, Copy, MapPin } from "@phosphor-icons/react";
+import { ArrowUUpLeft } from "@/app/_components/glyphs";
+import { CheckCircle, PencilSimple, Prohibit, WhatsappLogo } from "@/app/_components/glyphs";
 import { waHref } from "@/lib/whatsapp";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";
 import { Tabs } from "../_components/Tabs";
 import { EmptyState } from "../_components/EmptyState";
-import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import type { EventDetail, ReservationRow } from "./data";

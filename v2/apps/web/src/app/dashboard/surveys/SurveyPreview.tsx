@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { Button } from "@adeeb/design-system";
-import { Eye, X } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
+import { X } from "@/app/_components/glyphs";
 import { SurveyRespond, type PublicSurvey, type PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
 
 /**

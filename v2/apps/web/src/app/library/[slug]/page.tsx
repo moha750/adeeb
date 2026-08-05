@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Header, Footer, Container } from "@adeeb/design-system";
+import { Footer, Container } from "@adeeb/design-system";
 import type { BookReaderPage } from "@adeeb/design-system";
 import { createAdeebServerClient } from "@adeeb/core";
 import { KIND_META, yearLabel, type BookKind } from "../../dashboard/library/vocab";
 import { Reader } from "./Reader";
+import { SiteHeader } from "../../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -67,7 +68,7 @@ export default async function BookReaderPage({ params }: { params: Promise<{ slu
 
   return (
     <>
-      <Header activeHref="/library" />
+      <SiteHeader activeHref="/library" />
       <main>
         <section className="py-10 md:py-14">
           <Container>

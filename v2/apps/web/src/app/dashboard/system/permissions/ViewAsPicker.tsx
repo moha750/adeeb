@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Eye } from "@phosphor-icons/react";
+import { Eye } from "@/app/_components/glyphs";
 import { Alert, Button, Select } from "@adeeb/design-system";
 import { startViewAs } from "@/app/dashboard/_shell/view-as-actions";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Field, Select, Textarea } from "@adeeb/design-system";
 import {
-  At, CheckCircle, Envelope, Hash, IdentificationBadge, Key, MapPin, PencilSimple, Phone, User, UsersThree,
-} from "@phosphor-icons/react";
+  At, Envelope, Hash, IdentificationBadge, Key, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
+import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
 
@@ -27,6 +27,10 @@ const BOOK_ERRORS: Record<string, string> = {
   REASON_REQUIRED: "سبب الإلغاء مطلوب.",
   RESERVATION_NOT_FOUND: "لم نعثر على الحجز.",
   NOT_OWNER: "هذا الحجز ليس لك.",
+  // أخطاء `create_my_account_profile` — بابُ الزائر إلى صفّه
+  NAME_REQUIRED: "الاسم مطلوب.",
+  PHONE_INVALID: "رقم الجوّال غير صحيح — أدخله هكذا: 05xxxxxxxx.",
+  PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا — أعِد تحميل الصفحة.",
 };
 const bookError = (raw: string | null | undefined): string => {
   const code = Object.keys(BOOK_ERRORS).find((c) => (raw ?? "").includes(c));
@@ -84,11 +88,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
         return;
       }
 
-      const [{ data: prof }, { data: vis }] = await Promise.all([
-        sb.from("profiles").select("gender").eq("id", user.id).maybeSingle(),
-        sb.from("visitors").select("gender").eq("id", user.id).maybeSingle(),
-      ]);
-      const g = (prof?.gender ?? vis?.gender ?? null) as "male" | "female" | null;
+      // بيتٌ واحدٌ يُسأل بعد توحيد الهويّة (م١): `profiles` صار صفَّ كلِّ صاحبِ حساب —
+      // عضوًا كان أو زائرًا — و`visitors` حُنّط. ومن لا صفَّ له فحسابٌ بلا بيانات.
+      const { data: prof } = await sb.from("profiles").select("gender").eq("id", user.id).maybeSingle();
+      const g = (prof?.gender ?? null) as "male" | "female" | null;
       if (g) {
         setGender(g);
         setStep(genderAvailable(g) ? "ready" : "unavailable");
@@ -150,10 +153,16 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     setBusy(true);
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { setBusy(false); setStep("email"); return; }
-    const { error } = await sb.from("visitors").insert({
-      id: user.id, full_name: name.trim(), email: user.email ?? email.trim(), phone: phone.trim(), gender, city: city.trim() || null,
+    // بابُ الزائر إلى صفِّه: دالّةٌ مفوَّضة تكتب `joined_date` فارغًا — فيملك حسابًا ولا
+    // يملك أن يجعل نفسه عضوًا (الإدراجُ المباشر في `profiles` صار على قدرةٍ إداريّة).
+    const { error } = await sb.rpc("create_my_account_profile", {
+      p_full_name: name.trim(),
+      p_phone: phone.trim(),
+      p_gender: gender,
+      p_city: city.trim() || null,
+      p_accepts_marketing: true,
     });
-    if (error) { setBusy(false); setErr("تعذّر حفظ بياناتك — حاول مجدّدًا."); return; }
+    if (error) { setBusy(false); setErr(bookError(error.message)); return; }
     // بعد حفظ الملفّ نحجز مباشرةً (تدفّق واحد)
     const { error: bErr } = await sb.rpc("book_activity_seat", { p_activity_id: activityId });
     if (bErr) { setBusy(false); setErr(bookError(bErr.message)); return; }
@@ -188,7 +197,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     return (
       <Alert tone="success" title="حجزك مؤكّد" icon={<CheckCircle />}>
         <div className="flex flex-col gap-3">
-          <span>احتفظنا بمقعدك. سنتواصل معك عبر واتساب لتأكيد الحضور.</span>
+          <span>
+            احتفظنا بمقعدك. سنتواصل معك عبر واتساب لتأكيد الحضور، وحجزُك محفوظٌ في{" "}
+            <a className="font-bold underline" href="/me">حسابك</a>.
+          </span>
           {err ? <span className="text-danger text-sm">{err}</span> : null}
           {!showCancel ? (
             <div><Button variant="ghost-danger" size="sm" onClick={() => setShowCancel(true)}>إلغاء الحجز</Button></div>

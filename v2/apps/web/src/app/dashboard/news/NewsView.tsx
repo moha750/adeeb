@@ -2,18 +2,17 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Field, Select, Stat } from "@adeeb/design-system";
+import { Badge, Button, Field, Select, Stat, Modal } from "@adeeb/design-system";
 import {
-  Newspaper, Plus, PencilSimple, Trash, Megaphone, EyeSlash, Star, MagnifyingGlass,
-  UsersThree, Archive, ArrowUUpLeft, ChatCircleDots, Eye, Heart, Images, ClipboardText,
-  PaperPlaneTilt, WarningCircle,
-} from "@phosphor-icons/react";
+  Newspaper, Megaphone, UsersThree, Archive, ChatCircleDots, Heart, Images, ClipboardText, PaperPlaneTilt } from "@phosphor-icons/react";
+import {
+  Plus, PencilSimple, Trash, EyeSlash, Star, MagnifyingGlass, ArrowUUpLeft, Eye, WarningCircle,
+} from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { Tabs } from "../_components/Tabs";
-import { Modal } from "../_components/Modal";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { Avatar } from "../_components/Avatar";
 import { useToast } from "../_components/ToastProvider";

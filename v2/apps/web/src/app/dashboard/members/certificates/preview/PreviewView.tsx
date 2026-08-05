@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
-import { Certificate as CertIcon, DownloadSimple } from "@phosphor-icons/react";
+import { Certificate as CertIcon } from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
 import { downloadCertificate, renderCertificate } from "@/lib/certificates/letter";
 import type { Certificate } from "@/lib/certificates/text";
 import { Breadcrumb } from "../../../_shell/Breadcrumb";

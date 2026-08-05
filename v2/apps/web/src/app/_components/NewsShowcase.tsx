@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@adeeb/design-system";
-import { CalendarBlank, Eye, User, ArrowLeft } from "@phosphor-icons/react";
+import { CalendarBlank, User } from "@phosphor-icons/react";
+import { Eye, ArrowLeft } from "@/app/_components/glyphs";
 
 export type NewsCard = {
   id: string;

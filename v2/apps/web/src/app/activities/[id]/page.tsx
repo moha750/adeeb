@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { Header, Footer, Container } from "@adeeb/design-system";
+import { Footer, Container } from "@adeeb/design-system";
 import { getPublicActivity } from "../data";
 import { ActivityDetailView } from "./ActivityDetailView";
+import { SiteHeader } from "../../_components/SiteHeader";
 
 export const revalidate = 30;
 
@@ -21,7 +22,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <Header activeHref="/activities" />
+      <SiteHeader activeHref="/activities" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

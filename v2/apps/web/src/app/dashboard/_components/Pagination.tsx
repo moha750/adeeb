@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight } from "@/app/_components/glyphs";
 import { Select } from "@adeeb/design-system";
 
 /** حجم صفحة يعني «كلّ الصفوف في صفحة واحدة» — رقمٌ ضخم يجعل الحساب صفحةً واحدة بلا استثناء */

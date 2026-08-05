@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MagnifyingGlass, CaretDown, Check, X, Table, SquaresFour, ArrowCounterClockwise } from "@phosphor-icons/react";
+import { Table, SquaresFour } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
+import { CaretDown, Check, X, ArrowCounterClockwise } from "@/app/_components/glyphs";
 import { AnchoredPopover } from "@adeeb/design-system";
 
 export type FilterOption = { value: string; label: string };

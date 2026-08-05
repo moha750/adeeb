@@ -23,7 +23,7 @@ function Lab({ children }: { children: React.ReactNode }) {
 const memberTabs: TabItem[] = [
   { value: "all", label: "الكل", badge: "٢١٤" },
   { value: "active", label: "نشط", badge: "١٩٨" },
-  { value: "pending", label: "قيد الإكمال", badge: "١٢" },
+  { value: "inactive", label: "غير نشط", badge: "١٢" },
   { value: "suspended", label: "موقوف", badge: "٤" },
 ];
 
@@ -37,7 +37,7 @@ const plainTabs: TabItem[] = [
 const CONTENT: Record<string, { h: string; p: string }> = {
   all: { h: "كل الأعضاء", p: "عرض ٢١٤ عضوًا مسجّلًا في النادي عبر جميع الحالات." },
   active: { h: "الأعضاء النشطون", p: "١٩٨ عضوًا نشطًا يشاركون في الأنشطة الحاليّة." },
-  pending: { h: "قيد الإكمال", p: "١٢ عضوًا لم يُكملوا بيانات التسجيل بعد." },
+  inactive: { h: "غير النشطين", p: "١٢ حسابًا خاملًا لا يظهر إلّا في «كل الأعضاء»." },
   suspended: { h: "الحسابات الموقوفة", p: "٤ حسابات موقوفة مؤقّتًا بانتظار المراجعة." },
   overview: { h: "نظرة عامة", p: "ملخّص سريع للحالة والأرقام الأساسيّة." },
   details: { h: "التفاصيل", p: "بيانات موسّعة عن العنصر المحدّد." },

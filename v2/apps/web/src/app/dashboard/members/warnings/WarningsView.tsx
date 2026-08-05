@@ -2,17 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Accordion, Alert, Badge, Button, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
-import {
-  DownloadSimple, Eye, MagnifyingGlass, NotePencil, Prohibit, ShieldWarning,
-  UserMinus, Warning, WarningOctagon, WhatsappLogo,
-} from "@phosphor-icons/react";
+import { Accordion, Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { NotePencil, ShieldWarning, UserMinus, WarningOctagon } from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
+import { Eye, MagnifyingGlass, Prohibit, Warning, WhatsappLogo } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
-import { Modal } from "../../_components/Modal";
 import { useToast } from "../../_components/ToastProvider";
 import { fmtDate, fmtDateOnly } from "@/lib/date";
 import { WARNING_CATEGORIES, categoryLabel, dots, remainingText, toneOf, warningTitle } from "@/lib/warnings/vocab";

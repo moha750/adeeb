@@ -3,15 +3,15 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Field, Select, Textarea, Segmented } from "@adeeb/design-system";
+import { Badge, Button, Field, Select, Textarea, Segmented, Modal } from "@adeeb/design-system";
 import {
-  ArrowRight, Megaphone, EyeSlash, UploadSimple, Trash, PencilSimple, Plus, Playlist,
-  MicrophoneStage, Hash, LinkSimple, TextAlignLeft, CalendarBlank, Clock, Archive,
-  MusicNotes, User, FileText,
+  Megaphone, Playlist, MicrophoneStage, Hash, LinkSimple, TextAlignLeft, CalendarBlank, Clock,
+  Archive, MusicNotes, User, FileText,
 } from "@phosphor-icons/react";
+import { ArrowRight } from "@/app/_components/glyphs";
+import { EyeSlash, UploadSimple, Trash, PencilSimple, Plus } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { EmptyState } from "../../_components/EmptyState";
-import { Modal } from "../../_components/Modal";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";

@@ -2,7 +2,9 @@
 
 import { Button, Container } from "@adeeb/design-system";
 import { EmptyState } from "../../dashboard/_components/EmptyState";
-import { MagnifyingGlass, Users, Tray, Plus, ArrowClockwise } from "@phosphor-icons/react";
+import { Users, Tray } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
+import { Plus, ArrowClockwise } from "@/app/_components/glyphs";
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {
   return (

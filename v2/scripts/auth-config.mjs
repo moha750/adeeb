@@ -6,11 +6,13 @@
  * مصدرُ الإعداد، ويُطبَّق بـ Management API. غيّر القيمة هنا ثمّ ارفعها.
  *
  * **التشغيل** (من `v2/`):
- *   SUPABASE_ACCESS_TOKEN=sbp_… RESEND_API_KEY=re_… node scripts/auth-config.mjs
+ *   SUPABASE_ACCESS_TOKEN=sbp_… RESEND_API_KEY=re_… GOOGLE_OAUTH_SECRET=GOCSPX-… node scripts/auth-config.mjs
  *   node scripts/auth-config.mjs --dry     ← يعرض الفرق ولا يكتب شيئًا
  *
  * والمفاتيح **من البيئة لا من ملفّ**: لا يُكتب سرٌّ في المستودع ولا يُطبع في مخرَج.
- * وبلا `RESEND_API_KEY` يُطبَّق كلُّ شيءٍ عدا SMTP — فترتيبُ الخطوات لا يحبس بعضها بعضًا.
+ * وكلُّ سرٍّ يحرس بابَه وحده: بلا `RESEND_API_KEY` يُطبَّق كلُّ شيءٍ عدا SMTP، وبلا
+ * `GOOGLE_OAUTH_SECRET` عدا الدخول بقوقل، وبلا `APPLE_OAUTH_SECRET` عدا الدخول بأبل
+ * (‏يولّده `scripts/apple-secret.mjs`) — فترتيبُ الخطوات لا يحبس بعضها بعضًا.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -22,10 +24,20 @@ const API = `https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth`;
 
 const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
 const resendKey = process.env.RESEND_API_KEY?.trim();
+const googleSecret = process.env.GOOGLE_OAUTH_SECRET?.trim();
+const appleSecret = process.env.APPLE_OAUTH_SECRET?.trim();
 const dry = process.argv.includes("--dry");
 
 if (!token) {
   console.error("✗ لا توكن: صدّر SUPABASE_ACCESS_TOKEN (‏Supabase → Account → Access Tokens).");
+  process.exit(1);
+}
+
+// **التوكن يُستبدَل لا يُنسَخ**: من لصق `sbp_…` كما هو في السطر ردّته `fetch` بخطأٍ خامٍ عن
+// ByteString لا يُفهم منه أنّ العلّة حرفُ حذفٍ في الأمر. فيُفحص هنا ويُسمَّى العطبُ باسمه.
+if (!/^sbp_[A-Za-z0-9_-]+$/.test(token)) {
+  console.error("✗ التوكن ليس توكنًا: يبدأ بـ`sbp_` ويتلوه لاتينيٌّ وأرقام.");
+  console.error("  (إن نسختَ سطر الأمر كما هو فاستبدل `sbp_…` بتوكنك من Supabase → Account → Access Tokens.)");
   process.exit(1);
 }
 
@@ -45,6 +57,7 @@ const REDIRECTS = [
 ];
 
 const template = readFileSync(join(HERE, "..", "emails", "recovery.html"), "utf8");
+const emailChangeTemplate = readFileSync(join(HERE, "..", "emails", "email-change.html"), "utf8");
 
 /** القيم المقصودة — كلُّ سطرٍ منها له نظيرٌ في الكود يعتمد عليه. */
 const desired = {
@@ -64,6 +77,25 @@ const desired = {
 
   mailer_subjects_recovery: "استعادة كلمة المرور — نادي أديب",
   mailer_templates_recovery_content: template,
+
+  // **تغيير بريد الدخول** — يطلبه العضو من «الإعدادات»، ولا يسري حتى يفتح الرابط. وبلا هذين
+  // السطرين يخرج نصُّ Supabase الإنجليزيّ الافتراضيّ إلى صندوق عضوٍ عربيّ.
+  mailer_subjects_email_change: "تأكيد بريد الدخول الجديد — نادي أديب",
+  mailer_templates_email_change_content: emailChangeTemplate,
+
+  // **التأكيد المزدوج**: الرسالة تُرسَل إلى العنوانين — القديم يعلم بما يجري (فلا يُسلَب
+  // حسابٌ من جلسةٍ مسروقة بصمت)، والجديد يُثبت ملكيّته. وهو افتراض Supabase؛ يُعلَن هنا
+  // صراحةً كي لا يُطفأ بنقرةٍ في اللوحة بلا أثرٍ في diff.
+  mailer_secure_email_change_enabled: true,
+
+  // **قفلُ الدخول الاجتماعيّ** — خطّافُ ما‑قبل‑الإنشاء. الدخول بقوقل/أبل مفتوحٌ لمن له
+  // حسابٌ في أديب وحده: القائمُ **يُربَط** بحسابه (تطابقُ البريد المؤكَّد) فلا يبلغ الخطّاف،
+  // ومن لا حساب له يُردّ قبل أن يُكتب صفُّه. وبه لا يعود OAuth بابَ تسجيلٍ ذاتيّ.
+  //
+  // ونظيرُه في القاعدة `public.hook_block_oauth_signup` (ترحيل ٢٠٢٦-٠٨-٠٥) — لا يُفعَّل
+  // أحدُهما بلا الآخر: الدالّةُ بلا هذين السطرين حبرٌ لا يُنادى، وهما بلا الدالّة يكسران الإنشاء.
+  hook_before_user_created_enabled: true,
+  hook_before_user_created_uri: "pg-functions://postgres/public/hook_block_oauth_signup",
 };
 
 /** SMTP: يُضاف إن وُجد المفتاح وحده — وبدونه يبقى الإرسالُ على مرسِل Supabase المحدود. */
@@ -78,11 +110,63 @@ if (resendKey) {
   });
 }
 
+/**
+ * **الدخول بقوقل** — بابٌ للقائمين وحدهم، يحرسه الخطّافُ أعلاه.
+ *
+ * والمعرِّفُ هنا لا في البيئة: ليس سرًّا أصلًا، يظهر في رابط شاشة الموافقة لكلّ داخل،
+ * وموضعُه في الملفّ يجعل تبديلَ عميلٍ بعميلٍ **مرئيًّا في diff**. والسرُّ وحده من البيئة.
+ *
+ * والثلاثةُ تُضاف معًا أو لا يُضاف شيء: `enabled` بلا سرٍّ صحيحٍ بابٌ يفتح على
+ * `invalid_client` عند أوّل ضغطة — وذاك عطبٌ يظهر للعضو لا لنا.
+ */
+if (googleSecret) {
+  Object.assign(desired, {
+    external_google_enabled: true,
+    external_google_client_id: "873958636887-2mc27n5cl9pns515q4l8egpng1fiml7s.apps.googleusercontent.com",
+    external_google_secret: googleSecret,
+  });
+}
+
+/**
+ * **الدخول بأبل** — كقوقل في البنية، ويفارقها في شيءٍ واحد: سرُّه **رمزٌ ينتهي**
+ * (‏JWT موقَّعٌ بمفتاح `.p8`، سقفُه ستّة أشهر عند أبل). يولّده `scripts/apple-secret.mjs`.
+ *
+ * ولأنّ انتهاءه يقتل الدخول **صامتًا**، يُقرأ تاريخُه هنا قبل الرفع: المنتهي يُردّ، والقريبُ
+ * من الانتهاء يُطبع تحذيرُه. فلا يُرفع سرٌّ ميّتٌ ولا يمضي الشهرُ الأخير بلا إنذار.
+ */
+if (appleSecret) {
+  const claims = (() => {
+    try { return JSON.parse(Buffer.from(appleSecret.split(".")[1] ?? "", "base64url").toString()); }
+    catch { return null; }
+  })();
+  if (!claims?.exp) {
+    console.error("✗ سرُّ أبل ليس رمزًا صالحًا: ولّده بـ`node scripts/apple-secret.mjs` وانسخه كاملًا.");
+    process.exit(1);
+  }
+  const msLeft = claims.exp * 1000 - Date.now();
+  const daysLeft = Math.floor(msLeft / 86400000);
+  if (msLeft <= 0) {
+    // `ceil` للمنقضي لا `floor`: الأخير يجعل يومًا واحدًا «يومين» (تقريبٌ للأسفل في السالب).
+    console.error(`✗ سرُّ أبل منتهٍ منذ ${Math.ceil(-msLeft / 86400000)} يومًا — ولّد غيره قبل الرفع.`);
+    process.exit(1);
+  }
+  if (daysLeft <= 30) console.warn(`⚠️  سرُّ أبل ينتهي بعد ${daysLeft} يومًا — جدّده قريبًا.`);
+
+  Object.assign(desired, {
+    external_apple_enabled: true,
+    external_apple_client_id: "club.adeeb.signin", // Services ID — معرّفٌ لا سرّ
+    external_apple_secret: appleSecret,
+  });
+}
+
+/** أسرارٌ تُقرأ **مقنَّعةً** من الخادم — تُستثنى من الطباعة ومن مقارنة التحقّق (انظر أسفلَه). */
+const SECRETS = new Set(["smtp_pass", "external_google_secret", "external_apple_secret"]);
+
 /** لا يُطبع سرٌّ ولا قالبٌ كامل — المفتاح يُقنَّع، والقالب يُقاس بطولِه. */
 const show = (k, v) => {
   if (v == null) return "—";
   // بصمةُ المفتاح (64) تأتي من القراءة، والمفتاحُ نفسُه (36) منّا — فيبدوان مختلفَين أبدًا.
-  if (k === "smtp_pass") return `${String(v).slice(0, 6)}…(${String(v).length} محرفًا${String(v).length === 64 ? " — بصمة" : ""})`;
+  if (SECRETS.has(k)) return `${String(v).slice(0, 6)}…(${String(v).length} محرفًا${String(v).length === 64 ? " — بصمة" : ""})`;
   if (typeof v === "string" && v.length > 90) return `«${v.length} محرفًا»`;
   return String(v);
 };
@@ -117,12 +201,12 @@ await call("PATCH", desired);
 
 // **التحقّق بالقراءة لا بالردّ:** رمزُ ٢٠٠ يقول «قُبل الطلب» لا «حُفظت القيمة».
 //
-// و`smtp_pass` وحده يخرج من الفحص: القراءةُ تُرجع **بصمةً** له (‏64 محرفًا) لا قيمتَه —
-// فمقارنتُه بما أرسلناه تفشل دائمًا ولو حُفظ. (وهذا هو الصواب: مفتاحٌ يُقرأ نصًّا مفتاحٌ
-// مسروق.) وصحّتُه تُقاس بأثرها: رسالةٌ تصل.
+// والأسرارُ وحدها تخرج من الفحص (`SECRETS`): القراءةُ تُرجع **بصمةً** لها لا قيمتَها —
+// فمقارنتُها بما أرسلناه تفشل دائمًا ولو حُفظت. (وهذا هو الصواب: مفتاحٌ يُقرأ نصًّا مفتاحٌ
+// مسروق.) وصحّتُها تُقاس بأثرها: رسالةٌ تصل، وزرُّ قوقل يفتح شاشةَ موافقةٍ لا `invalid_client`.
 const after = await call("GET");
 const stuck = Object.keys(desired).filter(
-  (k) => k !== "smtp_pass" && String(after[k] ?? "") !== String(desired[k]),
+  (k) => !SECRETS.has(k) && String(after[k] ?? "") !== String(desired[k]),
 );
 if (stuck.length) {
   console.error(`\n✗ لم تُحفظ: ${stuck.join(", ")}`);

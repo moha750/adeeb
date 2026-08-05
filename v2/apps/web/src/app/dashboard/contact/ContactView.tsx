@@ -1,17 +1,15 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Alert, Badge, Button, Stat, Textarea, matchesSearch } from "@adeeb/design-system";
+import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  Archive, ArrowUUpLeft, ChatCircleText, Copy, Envelope, EnvelopeOpen, EnvelopeSimpleOpen,
-  Eye, MagnifyingGlass, NotePencil, PaperPlaneTilt, Flag,
-} from "@phosphor-icons/react";
+  Archive, ChatCircleText, Copy, Envelope, EnvelopeOpen, EnvelopeSimpleOpen, NotePencil, PaperPlaneTilt, Flag } from "@phosphor-icons/react";
+import { ArrowUUpLeft, Eye, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { Avatar } from "../_components/Avatar";
 import { EmptyState } from "../_components/EmptyState";
-import { Modal } from "../_components/Modal";
 import { useToast } from "../_components/ToastProvider";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 import { fmtDate } from "@/lib/date";

@@ -125,7 +125,64 @@ export function Cursor({ scopeRef, className }: CursorProps) {
     // مقاسُ الضغط وهدفُه وسرعتُه — يُضرَب في مقاس الهالة الجاري فيتراكب مع اللزوجة
     let pk = 1, pkT = 1, pkv = 0;
     let lastHot: Element | null = null;
+    let lastEl: Element | null = null;
     const pts: { x: number; y: number; t: number }[] = [];
+
+    /* **المؤشّرُ يقيس ما تحته فينقلب عليه** (قرار المالك ٢٠٢٦-٠٨-٠٤): الريشةُ كحليّةٌ
+       فتذوب على الأسطح الداكنة. والبديلُ عن وسمِ كلّ سطحٍ داكنٍ بسمةٍ يدويّة —
+       واثنا عشر صنفًا في المكتبة وحدها تُطلى بتدرّج العلامة، فضلًا عن الأقسام
+       والأغلفة — أن **يُقاس السطحُ لحظةَ المرور**: يُصعَد من العنصر إلى أوّل جَدٍّ
+       له لونٌ غيرُ شفّاف، وتُحسب إضاءتُه (Rec.709) فيُعلَن `data-dark`.
+       والتدرّجُ يُقرأ من صورته لا من لونه: `background: linear-gradient(...)` يجعل
+       `backgroundColor` **شفّافًا** والتدرّجَ في `backgroundImage` — فتُلتقط أوّلُ
+       وقفةٍ لونيّةٍ منه، وإلّا مرّت الأسطحُ المتدرّجة كلُّها على أنّها فاتحة.
+       **وحدُّه معلوم:** الصورةُ النقطيّة (غلافُ كتابٍ مصوَّر) لا لونَ لها يُقاس،
+       فيُقرأ ما خلفها. ذاك ثمنُ ألّا يُوسَم شيءٌ يدويًّا. */
+    const isDark = (el: Element | null) => {
+      for (let n: Element | null = el; n && n !== document.documentElement; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        let c: string | null = null;
+        const bi = cs.backgroundImage;
+        if (bi && bi !== "none") c = bi.match(/rgba?\(([^)]+)\)/)?.[1] ?? null;
+        if (!c) {
+          const bg = cs.backgroundColor;
+          // الشفّافُ لا يُحتسَب: `rgba(…, 0)` سطحٌ لا يُرى، فيُصعَد فوقه
+          if (bg && !/[\s,]0\)$/.test(bg)) c = bg.match(/rgba?\(([^)]+)\)/)?.[1] ?? null;
+        }
+        if (c) {
+          const [r, g, b] = c.split(",").map((v) => parseFloat(v));
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+        }
+      }
+      return false;
+    };
+
+    /* **الحبرُ يُلتقط بالهندسة لا بالهدف** (تصحيحٌ ٢٠٢٦-٠٨-٠٤): أوّلُ بناءٍ قرأ
+       `--cur-ink` من العنصر الذي تحت المؤشّر — ففشل في القصّة، وهي أوّلُ مستعمِلٍ
+       له: `#adeeb-story` كلُّه `pointer-events: none` («مشهدٌ لا واجهة»)، فلا
+       يُلتقط منه شيءٌ إلا زرُّ التخطّي، ويقع الهدفُ على `body` خارج القصّة — فلا
+       يُذهَّب المؤشّرُ إلّا فوق زرّ، وذاك ما رآه المالك.
+       فصار الالتقاطُ **بالمساحة**: تُجرَد العناصرُ الموسومة `[data-cursor-ink]`
+       ويُنظَر أيُّها يحوي نقطةَ المؤشّر — والمساحةُ لا يحجبها `pointer-events`.
+       والجردُ عند أوّل حركةٍ وعند التمرير لا في كلّ إطار (قياسُ المستطيلات إعادةُ
+       تخطيط)، والتمريرُ لازمٌ هنا لأنّ المشهد يتبدّل تحت مؤشّرٍ ساكن. */
+    let inkEls: Element[] = [];
+    const scanInk = () => { inkEls = Array.from((scopeRef?.current ?? document).querySelectorAll("[data-cursor-ink]")); };
+    const readInk = () => {
+      /* **والمتأخّرُ يفوز** لا الأوّل: الوسمُ يُكتب على المدى الواسع (القصّةُ كلُّها)
+         ثمّ يُنقَض في مدًى داخلَه (فصلُها الأخير حيث يظهر الشعار)، والداخلُ متأخّرٌ
+         في ترتيب الوثيقة — فلا يُكسَر الدوران عند أوّل تطابق، بل يُمضى إلى آخره.
+         هذا هو تعاقبُ CSS نفسُه مطبَّقًا على المساحة: الأخصُّ يغلب الأعمّ. */
+      let ink = "";
+      for (const n of inkEls) {
+        const r = n.getBoundingClientRect();
+        if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) {
+          ink = getComputedStyle(n).getPropertyValue("--cur-ink").trim();
+        }
+      }
+      root.style.setProperty("--cur-ink", ink);
+      root.dataset.ink = ink ? "true" : "false";
+    };
 
     const apply = (hot: Element | null) => {
       const mode = !hot
@@ -147,18 +204,27 @@ export function Cursor({ scopeRef, className }: CursorProps) {
     const move = (e: PointerEvent) => {
       tx = e.clientX; ty = e.clientY;
       // كلُّ متتبّعٍ يبدأ من موضع الدخول لا من الصفر، وإلّا انطلق نحو المؤشّر عبر الشاشة
-      // كلُّ متتبّعٍ يبدأ من موضع الدخول لا من الصفر، وإلّا انطلق نحو المؤشّر عبر الشاشة
       if (!seen) {
         hx = tx; hy = ty; px = tx; py = ty; sx = tx; sy = ty;
-        seen = true; root.dataset.on = "true";
+        seen = true; root.dataset.on = "true"; scanInk();
       }
       // الطبقةُ `pointer-events: none` فالهدفُ هو العنصرُ الحقيقيّ تحتها.
-      const hot = (e.target as Element | null)?.closest?.(HOT) ?? null;
+      const el = (e.target as Element | null) ?? null;
+      const hot = el?.closest?.(HOT) ?? null;
       // `getComputedStyle` عند **تبدّل** الهدف لا عند كلّ حركة.
       if (hot !== lastHot) { lastHot = hot; apply(hot); }
+      // وقياسُ الإضاءة عند تبدّل **العنصر** — أدقُّ من الهدف: السطحُ يتبدّل بين
+      // فقرةٍ وقسمٍ وإن لم يكن أيٌّ منهما هدفًا يُنقر.
+      if (el !== lastEl) { lastEl = el; root.dataset.dark = isDark(el) ? "true" : "false"; }
+      /* والحبرُ يُملى من الصفحة لا يُقرَّر في المكوّن: أيُّ قسمٍ يُوسَم `data-cursor-ink`
+         ويعلن `--cur-ink` يفرض لونَ المؤشّر فيه — والمكوّنُ لا يعرف قصّةً ولا فصلًا،
+         يقرأ رمزًا كما يقرأ النغمة (ق٥). */
+      if (inkEls.length) readInk();
     };
 
-    const leave = () => { root.dataset.on = "false"; seen = false; lastHot = null; pts.length = 0; apply(null); };
+    const leave = () => { root.dataset.on = "false"; seen = false; lastHot = null; lastEl = null; pts.length = 0; apply(null); };
+    // المشهدُ يتبدّل تحت مؤشّرٍ ساكن، فالتمريرُ يُعيد القراءة — والجردُ معه (القصّةُ تُركَّب بعد التحميل)
+    const scrolled = () => { if (!seen) return; scanInk(); if (inkEls.length) readInk(); };
 
     /* **النقرُ تفاعلُ الهالة نفسِها — لا عنصرَ يُولَد عندها** (قرار المالك: أُزيلت
        نقطةُ الحبر): تنكمش الهالةُ تحت الضغط ثمّ **تتفتّح** عند الرفع فترتدّ إلى
@@ -231,6 +297,7 @@ export function Cursor({ scopeRef, className }: CursorProps) {
     raf = requestAnimationFrame(frame);
 
     src.addEventListener("pointermove", move as EventListener);
+    window.addEventListener("scroll", scrolled, true);
     src.addEventListener("pointerdown", down as EventListener);
     window.addEventListener("pointerup", up);
     host.addEventListener("pointerleave", leave);
@@ -239,6 +306,7 @@ export function Cursor({ scopeRef, className }: CursorProps) {
     return () => {
       cancelAnimationFrame(raf);
       src.removeEventListener("pointermove", move as EventListener);
+      window.removeEventListener("scroll", scrolled, true);
       src.removeEventListener("pointerdown", down as EventListener);
       window.removeEventListener("pointerup", up);
       host.removeEventListener("pointerleave", leave);
@@ -264,8 +332,8 @@ export function Cursor({ scopeRef, className }: CursorProps) {
       <svg className="cur-nib" viewBox="0 0 28 28">
         <defs>
           <linearGradient id={`cur-q-${uid}`} x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0" stopColor="var(--navy-800)" />
-            <stop offset="1" stopColor="var(--steel-400)" />
+            <stop offset="0" stopColor="var(--nib-a)" />
+            <stop offset="1" stopColor="var(--nib-b)" />
           </linearGradient>
         </defs>
         {/* سنُّ الريشة: طرفُها عند (2,26) هو نقطةُ الإصابة، وجسمُها يمتدّ لأعلى اليمين */}

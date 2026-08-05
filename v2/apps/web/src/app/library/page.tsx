@@ -1,7 +1,8 @@
-import { Header, Footer, Container, LandingHeading } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading } from "@adeeb/design-system";
 import { createAdeebServerClient } from "@adeeb/core";
 import { KIND_META, yearLabel, type BookKind } from "../dashboard/library/vocab";
 import { LibraryShelf, type ShelfBook } from "./LibraryShelf";
+import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -58,7 +59,7 @@ export default async function LibraryPage() {
 
   return (
     <>
-      <Header activeHref="/library" />
+      <SiteHeader activeHref="/library" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

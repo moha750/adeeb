@@ -9,10 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Alert, Button, Card, CardBody, CardHeader, ColorField, Field, SaveBar, Select } from "@adeeb/design-system";
 import {
-  AddressBook, At, BookOpen, Books, Buildings, CalendarBlank, Certificate, Envelope, FloppyDiskBack,
-  GenderIntersex, GraduationCap, Hash, IdentificationCard, Palette, PencilSimple, Phone, ShareNetwork,
-  User, UserCircle,
-} from "@phosphor-icons/react";
+  AddressBook, At, BookOpen, Books, Buildings, CalendarBlank, Certificate, Envelope, FloppyDiskBack, GenderIntersex, GraduationCap, Hash, IdentificationCard, Palette, Phone, ShareNetwork, User, UserCircle } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 import { Cell } from "../_components/Cell";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { Section } from "../_components/Section";
@@ -22,6 +20,7 @@ import { useUnsavedGuard } from "../_components/useUnsavedGuard";
 import { color } from "@adeeb/design-system/tokens";
 import {
   DEGREES, DEGREE_VALUES, PHONE_HINT, PHONE_RE, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabelOf,
+  RECORD_NO_MAX,
 } from "@/lib/membershipFields";
 import { AvatarEditor } from "./AvatarEditor";
 import { updateMyProfile } from "./actions";
@@ -157,8 +156,9 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
               {profile.tripleName ? <Cell full noCopy label="الاسم الثلاثيّ" icon={<PencilSimple />} value={profile.tripleName} /> : null}
               <Cell lat label="رقم الهويّة" icon={<IdentificationCard />} value={profile.nationalId} />
               <Cell noCopy label="الجنس" icon={<GenderIntersex />} value={profile.gender === "male" ? "ذكر" : profile.gender === "female" ? "أنثى" : null} />
+              {/* لا «تاريخ انضمام» هنا: تلك حقيقةُ **عضويّة** لا هويّة، وبطاقةُ «عضويتي» تقولها
+                  ومعها مدّةُ العضوية — فذِكرُها هنا تكرارٌ لِما يملكه تبويبٌ آخر (٢٠٢٦-٠٨-٠٤). */}
               <Cell noCopy label="تاريخ الميلاد" icon={<CalendarBlank />} value={profile.birthDate} />
-              <Cell noCopy label="تاريخ الانضمام" icon={<CalendarBlank />} value={profile.joined} />
             </Section>
             <Section icon={<Envelope />} title="بريد الدخول">
               {/* البريد هويّة مصادقة تُزامَن مع auth.users — يُغيَّر من «بيانات الدخول» لا من هنا */}
@@ -187,6 +187,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
             <CardBody>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
+                  className="sm:col-span-2"
                   label="رقم الجوّال"
                   type="tel"
                   charset="digits"
@@ -238,7 +239,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                   <>
                     <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={errors.college?.message} required {...register("college")} />
                     <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={errors.major?.message} required {...register("major")} />
-                    <Field className="sm:col-span-2" label="الرقم الأكاديميّ" charset="digits" icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={errors.recordNo?.message} required {...register("recordNo")} />
+                    <Field className="sm:col-span-2" label="الرقم الأكاديميّ" charset="digits" maxLength={RECORD_NO_MAX} icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={errors.recordNo?.message} required {...register("recordNo")} />
                   </>
                 ) : null}
               </div>
@@ -321,7 +322,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
         open={guard.pending !== null}
         onClose={guard.stay}
         tone="warning"
-        icon={<FloppyDiskBack weight="bold" />}
+        icon={<FloppyDiskBack />}
         title="تغييراتٌ لم تُحفَظ"
         text="غادرتَ الآن ضاع ما عدّلته. احفظه أوّلًا أو غادِر بلا حفظ."
         confirmLabel="غادِر بلا حفظ"

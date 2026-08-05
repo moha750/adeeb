@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge, Card, CardBody, CardFooter, CardHeader } from "@adeeb/design-system";
-import { ArrowUpRight, Handshake } from "@phosphor-icons/react";
+import { Handshake } from "@phosphor-icons/react";
+import { ArrowUpRight } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "../../_components/DropdownMenu";
 import type { SponsorRow } from "./data";
 

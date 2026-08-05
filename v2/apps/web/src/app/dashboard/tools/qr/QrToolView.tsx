@@ -2,32 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
-  Button,
-  ChartPanel,
-  ColorField,
-  Field,
-  Segmented,
-  Select,
-  Switch,
-} from "@adeeb/design-system";
+  Alert, Button, ChartPanel, ColorField, Field, Segmented, Select, Switch, } from "@adeeb/design-system";
 import { color } from "@adeeb/design-system/tokens";
 import {
-  DownloadSimple,
-  Drop,
-  Eye,
-  FileSvg,
-  Globe,
-  ImageSquare,
-  LinkSimple,
-  PaintBucket,
-  QrCode,
-  Sparkle,
-  Square,
-  TextAa,
-  Trash,
-  UploadSimple,
+  Drop, FileSvg, Globe, ImageSquare, LinkSimple, PaintBucket, QrCode, Sparkle, Square, TextAa,
 } from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
+import { Eye, Trash, UploadSimple } from "@/app/_components/glyphs";
 import {
   contrast,
   effectiveEcc,
@@ -233,7 +214,7 @@ export function QrToolView() {
               label="الرابط أو النصّ"
               icon={<LinkSimple />}
               innerIcon={<Globe />}
-              placeholder="https://adeeb.club/join"
+              placeholder="https://adeeb.club"
               dir="ltr"
               value={text}
               onChange={(e) => setText(e.target.value)}

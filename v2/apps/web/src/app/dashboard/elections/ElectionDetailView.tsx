@@ -3,14 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Select, Stat, Textarea } from "@adeeb/design-system";
-import {
-  ArrowRight, FileArrowDown, Note, PencilSimple, Play, Prohibit,
-  Scales, StopCircle, UsersThree, CheckCircle,
-} from "@phosphor-icons/react";
+import { Alert, Badge, Button, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
+import { FileArrowDown, Note, Play, Scales, StopCircle, UsersThree } from "@phosphor-icons/react";
+import { ArrowRight } from "@/app/_components/glyphs";
+import { PencilSimple, Prohibit, CheckCircle } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
-import { Modal } from "../_components/Modal";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { CandidateRow, ElectionDetail } from "./data";

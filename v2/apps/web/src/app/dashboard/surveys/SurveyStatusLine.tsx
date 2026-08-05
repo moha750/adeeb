@@ -4,7 +4,10 @@
 // الاستبيان وعدّادٌ حيّ («يفتح بعد ٣ أيّام» · «يُغلق بعد ٥ أيّام» · «متاحٌ دائمًا» · «انتهى في …»).
 // يُكمّل الشارة لا يكرّرها (الشارة = الحالة، وهذا = الفعل والوقت). التاريخ الدقيق في التلميح.
 import { useEffect, useState } from "react";
-import { FileDashed, FlagCheckered, Hourglass, Infinity as InfinityIcon, LockSimple, PauseCircle, Timer, Trash } from "@phosphor-icons/react";
+import {
+  FileDashed, FlagCheckered, Hourglass, Infinity as InfinityIcon, LockSimple, PauseCircle, Timer,
+} from "@phosphor-icons/react";
+import { Trash } from "@/app/_components/glyphs";
 import { fmtDateAndTime, fmtDayMonth } from "./format";
 import type { SurveyRow } from "./data";
 

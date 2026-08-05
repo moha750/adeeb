@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, CardMedia, Checkbox, CountBadge, Field, Radio, Select, Switch, Textarea, Modal } from "@adeeb/design-system";
 import {
-  Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, CardMedia,
-  Checkbox, CountBadge, Field, Radio, Select, Switch, Textarea,
-} from "@adeeb/design-system";
-import { At, Bell, Envelope, Eye, Key, Lock, NoteBlank, PencilSimple, ShieldCheck, Sparkle, Trash, User, UsersThree } from "@phosphor-icons/react";
+  At, Bell, Envelope, Key, Lock, NoteBlank, ShieldCheck, Sparkle, User, UsersThree,
+} from "@phosphor-icons/react";
+import { Eye, PencilSimple, Trash } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
 import { DataTable, type Column } from "../_components/DataTable";
 import { DropdownMenu, type MenuGroup } from "../_components/DropdownMenu";
 import { EmptyState } from "../_components/EmptyState";
-import { Modal } from "../_components/Modal";
 import { Pagination } from "../_components/Pagination";
 import { Skeleton } from "../_components/Skeleton";
 import { Tabs } from "../_components/Tabs";
@@ -41,14 +40,14 @@ const noDetails = { joinedRaw: "", college: null, major: null, degree: null, deg
 const sampleMembers: MemberRow[] = [
   { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
   { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
-  { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, gender: "female", dept: "الموارد", committee: null, role: "عضو", status: "pending", joined: "27 يونيو 2026", ...noDetails },
+  { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, gender: "female", dept: "الموارد", committee: null, role: "عضو", status: "inactive", joined: "27 يونيو 2026", ...noDetails },
   { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر" },
 ];
 
 const TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   active: "success", pending: "warning", suspended: "danger", inactive: "neutral",
 };
-const TONE_LBL: Record<string, string> = { active: "نشط", pending: "قيد الإكمال", suspended: "موقوف", inactive: "غير نشط" };
+const TONE_LBL: Record<string, string> = { active: "نشط", suspended: "موقوف", inactive: "غير نشط" };
 
 const tableCols: Column<MemberRow>[] = [
   {
@@ -102,7 +101,7 @@ export default function ComponentsGallery() {
   const tabItems = [
     { value: "all", label: "الكل", badge: "٢١٤" },
     { value: "active", label: "نشط", badge: "١٩٨" },
-    { value: "pending", label: "قيد الإكمال", badge: "١٢" },
+    { value: "inactive", label: "غير نشط", badge: "١٢" },
     { value: "suspended", label: "موقوف", badge: "٤" },
   ];
 

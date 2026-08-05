@@ -4,11 +4,10 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Field } from "@adeeb/design-system";
-import {
-  UploadSimple, DotsSixVertical, Star, Trash, PencilSimple, Megaphone, EyeSlash,
-  ArrowRight, Books, BookmarkSimple, Eye,
-} from "@phosphor-icons/react";
+import { Badge, Button, Field, Modal } from "@adeeb/design-system";
+import { Megaphone, Books, BookmarkSimple } from "@phosphor-icons/react";
+import { UploadSimple } from "@/app/_components/glyphs";
+import { DotsSixVertical, Star, Trash, PencilSimple, EyeSlash, ArrowRight, Eye } from "@/app/_components/glyphs";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
@@ -16,7 +15,6 @@ import {
   SortableContext, rectSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Modal } from "../../_components/Modal";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { EmptyState } from "../../_components/EmptyState";
 import { DropdownMenu, type MenuGroup } from "../../_components/DropdownMenu";

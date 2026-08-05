@@ -109,7 +109,7 @@ function PreviewFrame({
     >
       <main className="amb-host">
         <Ambient />
-        <Header nav={nav} activeHref={active} className={headerClass} />
+        <Header nav={nav} activeHref={active} className={headerClass} ctaHref="#" />
         <Body />
       </main>
     </div>

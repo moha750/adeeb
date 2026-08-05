@@ -1,7 +1,8 @@
-import { Header, Footer, Container, LandingHeading, Ambient } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading, Ambient } from "@adeeb/design-system";
 import { createAdeebServerClient } from "@adeeb/core";
 import type { Work } from "../_components/WorkLightbox";
 import { WorksBrowser } from "./WorksBrowser";
+import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -24,7 +25,7 @@ export default async function WorksPage() {
 
   return (
     <>
-      <Header activeHref="/works" />
+      <SiteHeader activeHref="/works" />
       <main className="amb-host">
         <Ambient />
         <section className="py-16 md:py-24">

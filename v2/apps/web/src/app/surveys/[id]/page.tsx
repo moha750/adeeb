@@ -115,7 +115,9 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
         </StateScreen>
       );
     }
-    const { data: profile } = await sb.from("profiles").select("account_status").eq("id", user.id).maybeSingle();
+    // `members` لا `profiles`: بعد توحيد الهويّة (م١) صار للزائر صفٌّ في الجدول وحالُه
+    // `active` — فقياسُ الحالِ وحدَه كان سيفتح استبيانَ الأعضاء لكلّ صاحبِ حساب.
+    const { data: profile } = await sb.from("members").select("account_status").eq("id", user.id).maybeSingle();
     if (profile?.account_status !== "active") {
       return (
         <StateScreen title="لعضويّات أديب النشطة" tone="warning">

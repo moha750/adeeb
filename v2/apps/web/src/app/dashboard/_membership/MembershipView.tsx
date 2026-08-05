@@ -6,7 +6,10 @@
 
 import { useState } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
-import { Binoculars, Certificate as CertificateIcon, DownloadSimple, FilePdf, Path, ShieldWarning, Signpost } from "@phosphor-icons/react";
+import {
+  Binoculars, Certificate as CertificateIcon, FilePdf, Path, ShieldWarning, Signpost,
+} from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import { categoryLabel, dots, remainingText, warningTitle } from "@/lib/warnings/vocab";

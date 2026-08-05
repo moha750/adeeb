@@ -3,7 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ModalSectionHeading, Stat } from "@adeeb/design-system";
-import { ArrowsClockwise, Buildings, Trash, UserMinus, UserPlus, UsersFour } from "@phosphor-icons/react";
+import { Buildings, UserMinus, UserPlus, UsersFour } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@/app/_components/glyphs";
+import { Trash } from "@/app/_components/glyphs";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";

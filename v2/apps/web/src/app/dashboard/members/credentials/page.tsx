@@ -28,8 +28,12 @@ export default async function CredentialsPage() {
     );
   }
 
+  // السارون وحدهم يُفتَح لهم باب: مفتاحُ من غادر لا يُبدَّل، ومن لم يُكمل تسجيله بابُه
+  // «قيد الإكمال» لا هذا. والقاعدة واحدةٌ في اللوحة كلّها — لا كشفَ أعضاءٍ إلا للعضويّة
+  // السارية، إلّا تبويبًا يُسمّي حالتَه في عنوانه.
   const lite: CredMember[] = members
-    .map((m) => ({ id: m.id, name: m.name, email: m.email, avatar: m.avatar, gender: m.gender, status: m.status }))
+    .filter((m) => m.status === "active")
+    .map((m) => ({ id: m.id, name: m.name, email: m.email, avatar: m.avatar, gender: m.gender }))
     .sort((a, b) => a.name.localeCompare(b.name, "ar"));
 
   return (

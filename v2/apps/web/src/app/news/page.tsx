@@ -1,6 +1,7 @@
-import { Header, Footer, Container, LandingHeading } from "@adeeb/design-system";
+import { Footer, Container, LandingHeading } from "@adeeb/design-system";
 import { getPublicNews } from "./data";
 import { PublicNewsCard } from "./PublicNewsCard";
+import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
 
@@ -14,7 +15,7 @@ export default async function NewsPage() {
 
   return (
     <>
-      <Header activeHref="/news" />
+      <SiteHeader activeHref="/news" />
       <main>
         <section className="py-16 md:py-24">
           <Container>

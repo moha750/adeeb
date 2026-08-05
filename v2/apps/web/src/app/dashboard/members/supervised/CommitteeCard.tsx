@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Card } from "@adeeb/design-system";
-import { ArrowSquareOut } from "@phosphor-icons/react";
+import { ArrowSquareOut } from "@/app/_components/glyphs";
 import { Person, Vacant } from "../structure/tree";
 import type { Holder } from "../structure/model";
 import { membersLabel, type MyCommittee } from "./model";

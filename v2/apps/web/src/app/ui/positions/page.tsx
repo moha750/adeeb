@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button, Container } from "@adeeb/design-system";
-import { ArrowsClockwise, Trash } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@/app/_components/glyphs";
+import { Trash } from "@/app/_components/glyphs";
 import { PositionCard } from "../../dashboard/members/assignments/PositionCard";
 import { AssignmentModal, type AssignState, type MemberOption } from "../../dashboard/members/assignments/AssignmentModal";
 import type { MenuGroup } from "../../dashboard/_components/DropdownMenu";

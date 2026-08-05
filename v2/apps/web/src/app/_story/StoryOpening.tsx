@@ -155,7 +155,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
   return (
     <>
       {!force && <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />}
-      <div id="adeeb-story" ref={rootRef}>
+      <div id="adeeb-story" ref={rootRef} data-cursor-ink>
         {/* الطبقات الثابتة */}
         <div className="st-bg" aria-hidden="true" />
         <div className="st-grain" aria-hidden="true" />

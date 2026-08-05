@@ -54,6 +54,8 @@ export default async function MyCommitteePage() {
     );
   }
 
+  // `org.userRoles` منخولةٌ بالعضويّة السارية في مصدرها (`getOrgData`) — فالشجرةُ والجدولُ
+  // والعددُ هنا للحاضرين وحدهم، بلا مرشِّحٍ يُعاد في هذه الشاشة.
   const node = committeeNodes(org.committees, org.roles, org.userRoles, org.profiles, org.supervision).get(scope.committee.id);
   if (!node) {
     return (
@@ -71,7 +73,7 @@ export default async function MyCommitteePage() {
 
   // أهلُ اللجنة بأعينهم — من عقدتها نفسها لا بحكمٍ يُعاد حسابه (القيادةُ معهم: بياناتُهم
   // تُرى كما تُرى بيانات العضو، والسلطة عليهم محجوبةٌ في القاعدة أصلًا). والمشرفان يبقيان
-  // خارج السجلّ: هما في إدارتهما لا في اللجنة.
+  // خارج السجلّ: هما في إدارتهما لا في اللجنة. والسريان مقضيٌّ في العقدة فوق، فلا يُعاد هنا.
   const mine = new Set([node.leader?.userId, node.deputy?.userId, ...node.members.map((m) => m.userId)].filter(Boolean) as string[]);
 
   return <CommitteeView committee={node} dept={deptName} members={members.filter((m) => mine.has(m.id))} />;

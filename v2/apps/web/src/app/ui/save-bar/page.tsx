@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button, Card, CardBody, CardHeader, Container, Field, SaveBar } from "@adeeb/design-system";
-import { At, Envelope, Hash, PencilSimple, Phone, User } from "@phosphor-icons/react";
+import { At, Envelope, Hash, Phone, User } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 // (الأيقونات كلّها من عائلة النظام — لا رسمَ خاصًّا لمعرض)
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {

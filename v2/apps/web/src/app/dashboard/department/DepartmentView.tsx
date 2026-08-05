@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Segmented, Stat, matchesSearch } from "@adeeb/design-system";
-import { ArrowSquareOut, Buildings, UserMinus, UsersFour } from "@phosphor-icons/react";
+import { Buildings, UserMinus, UsersFour } from "@phosphor-icons/react";
+import { ArrowSquareOut } from "@/app/_components/glyphs";
 import { EmptyState } from "../_components/EmptyState";
 import { Toolbar } from "../_components/Toolbar";
 import { Committee } from "../members/structure/tree";

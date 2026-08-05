@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Badge, CountBadge, Container } from "@adeeb/design-system";
-import { Check, Clock } from "@phosphor-icons/react";
+import { Clock } from "@phosphor-icons/react";
+import { Check } from "@/app/_components/glyphs";
 
 const TONES = ["neutral", "info", "success", "warning", "danger"] as const;
 const TL: Record<string, string> = { neutral: "عام", info: "معلومة", success: "منشور", warning: "تحذير", danger: "خطأ" };

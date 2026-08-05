@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, WarningCircle, Info, Warning, X } from "@phosphor-icons/react";
+import { Check } from "@/app/_components/glyphs";
+import { WarningCircle, Info, Warning, X } from "@/app/_components/glyphs";
 
 type Tone = "success" | "error" | "info" | "warning";
 type ToastData = { id: number; tone: Tone; message: string; duration: number };
