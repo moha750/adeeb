@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Container, LandingHeading, Segmented } from "@adeeb/design-system";
 import { DeviceMobile, Gift, Sparkle, Storefront, Wallet } from "@phosphor-icons/react";
 import { ArrowCounterClockwise } from "@/app/_components/glyphs";
@@ -216,10 +216,24 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
    */
   const { cards, merge } = useLiveCards(initial);
   const [busy, setBusy] = useState(false);
+  const [gbusy, setGbusy] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
   const [passError, setPassError] = useState<{ message: string; missing?: MissingEnv[] } | null>(null);
+
+  /**
+   * أعلى جهازِ أبل نحن؟ — يقرّر **أيُّ زرٍّ يبرز** لا أكثر؛ والزرّان معروضان في الحالين.
+   *
+   * **و`useSyncExternalStore` لا حالةٌ في أثر**: `navigator` لا وجود له في الخادم، فقراءتُه
+   * في الرسم تكسر التصييرَ الأوّل، وضبطُ حالةٍ في أثرٍ يرسم مرّتين بلا داعٍ. وهذه الدالّة
+   * موضوعةٌ لهذا بعينه: لقطةٌ للخادم وأخرى للمتصفّح، وقيمةٌ لا تتغيّر بعدُ فلا مشترك لها.
+   */
+  const onApple = useSyncExternalStore(
+    () => () => {},
+    () => isApple(),
+    () => true,
+  );
 
   const base = memberById(memberId);
   const serial = serialFor(base, mode);
@@ -351,6 +365,32 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
     }
   }
 
+  /**
+   * **إضافةٌ إلى Google Wallet — رابطٌ لا ملفّ**: نسأل الخادم أن يوقّع رابط الحفظ ثمّ
+   * ننتقل إليه. ولا يُوقَّع في المتصفّح بحالٍ: التوقيعُ بمفتاح حساب الخدمة، ومفتاحٌ يبلغ
+   * المتصفّح مفتاحٌ مسروق.
+   *
+   * **ولا يُفتَح في تبويبةٍ جديدة**: نافذةٌ تُفتَح بعد `await` يحجبها المتصفّح غالبًا
+   * (فُقد تسلسلُ الضغطة)، فتذهب الإضافةُ صامتةً ويظنّ الضاغطُ أنّ الزرّ معطوب.
+   */
+  async function addToGoogle() {
+    setGbusy(true);
+    setPassError(null);
+    try {
+      const res = await fetch(`/wallet-preview/gwallet?member=${memberId}&mode=${mode}`, { cache: "no-store" });
+      const body = (await res.json()) as { url?: string; error?: string; missing?: MissingEnv[] };
+      if (!res.ok || !body.url) {
+        setPassError({ message: body.error ?? "تعذّر توليد رابط قوقل.", missing: body.missing });
+        return;
+      }
+      window.location.href = body.url;
+    } catch {
+      setPassError({ message: "تعذّر الاتّصال بالخادم لتوليد رابط قوقل." });
+    } finally {
+      setGbusy(false);
+    }
+  }
+
   return (
     <main className="py-14">
       <Container>
@@ -413,9 +453,21 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
 
               <WalletCard member={member} mode={mode} />
 
-              <Button className="mt-4 w-full" onClick={addToWallet} loading={busy}>
+              {/* **زرّان لا زرٌّ واحد**: النظامان معروضان معًا، والأبرزُ ما يوافق الجهاز —
+                  فالمالك يعرض على شاشةٍ ويضيف في جوّاله، وقد يكون الجوّالان معه. */}
+              <Button className="mt-4 w-full" variant={onApple ? "primary" : "ghost"} onClick={addToWallet} loading={busy}>
                 <Wallet />
                 أضِف إلى Apple Wallet
+              </Button>
+
+              <Button
+                className="mt-2 w-full"
+                variant={onApple ? "ghost" : "primary"}
+                onClick={addToGoogle}
+                loading={gbusy}
+              >
+                <Wallet />
+                أضِف إلى Google Wallet
               </Button>
 
               {passError ? (

@@ -327,8 +327,10 @@ function distToSeg(px: number, py: number, ax: number, ay: number, bx: number, b
  * @param total  عدد الخانات (صفّان متساويان)
  * @param w      عرض الشريط بالبكسل — أبل تشترط 375 (و750 للمضاعف)
  */
-export function stampStrip(filled: number, total: number, w: number): Buffer {
-  const h = Math.round(w * (144 / 375)); // نسبةُ شريط بطاقة المتجر كما تحدّدها أبل
+export function stampStrip(filled: number, total: number, w: number, hIn?: number): Buffer {
+  // نسبةُ شريط بطاقة المتجر كما تحدّدها أبل — **إلّا أن يُطلَب ارتفاعٌ صريح**، إذ صورةُ
+  // واجهة قوقل أعرضُ (١٠٣٢×٣٣٦). فالرسّامُ واحدٌ والنسبةُ نسبتان.
+  const h = hIn ?? Math.round(w * (144 / 375));
   const rgba = Buffer.alloc(w * h * 4);
 
   paintSurface(rgba, w, h);
@@ -336,13 +338,22 @@ export function stampStrip(filled: number, total: number, w: number): Buffer {
 
   const cols = Math.ceil(total / 2);
   const rows = 2;
-  const d = M.disc * w;
+  /**
+   * **العرضُ المكافئ الذي تُقاس عليه الأحجام** — لا العرضُ نفسُه.
+   *
+   * النِّسَبُ في `M` مُعايَرةٌ على شريط أبل (٣٧٥×١٤٤). فلو قِيست على عرض صورةِ واجهةِ قوقل
+   * (١٠٣٢×٣٣٦، أعرضُ نسبةً) لَكبر قطرُ الختم بنحو خُمسٍ عن ارتفاعه المتاح، فيزدحم الصفّان
+   * ويكادان يمسّان الحافّتين. والمكافئُ يأخذ **الأضيقَ** من القيدين فيبقى الختمُ متّزنًا
+   * في المقاسين، وتُوزَّع الزيادةُ العرضيّة فراغًا بين الأعمدة لا حجمًا في الأقراص.
+   */
+  const base = Math.min(w, (h * 375) / 144);
+  const d = M.disc * base;
   const R = d / 2;
-  const border = M.border * w;
-  const halo = M.halo * w;
+  const border = M.border * base;
+  const halo = M.halo * base;
   const cell = (w - 2 * M.pad * w - (cols - 1) * M.gapX * w) / cols;
   // الصفّان مركزيّان رأسيًّا في الشريط — لا تعلوهما ترويسةٌ هنا، فالمركزُ هو الاتّزان.
-  const blockH = rows * d + (rows - 1) * M.gapY * w;
+  const blockH = rows * d + (rows - 1) * M.gapY * base;
   const top = (h - blockH) / 2;
   const SS = 3; // معاينةٌ فائقة للحوافّ (٩ عيّنات للبكسل)
   const ico = M.check * d;
@@ -355,7 +366,7 @@ export function stampStrip(filled: number, total: number, w: number): Buffer {
     const col = cols - 1 - (i % cols);
     const row = Math.floor(i / cols);
     const cx = M.pad * w + col * (cell + M.gapX * w) + cell / 2;
-    const cy = top + row * (d + M.gapY * w) + R;
+    const cy = top + row * (d + M.gapY * base) + R;
     const on = i < filled;
 
     // نمسح مربّعَ الختم وحده لا الصورة كلّها — أرخصُ وأدقّ.
@@ -432,8 +443,8 @@ export function stampStrip(filled: number, total: number, w: number): Buffer {
  *
  * **ومن اليمين إلى اليسار** كأختام البطاقة: iOS يعكس الحقول ولا يعكس الصور.
  */
-export function pointsLadder(points: number, costs: readonly number[], w: number): Buffer {
-  const h = Math.round(w * (144 / 375)); // نسبةُ الشريط نفسُها — النظامان بمقاسٍ واحد
+export function pointsLadder(points: number, costs: readonly number[], w: number, hIn?: number): Buffer {
+  const h = hIn ?? Math.round(w * (144 / 375)); // نسبةُ الشريط نفسُها — والصريحُ لواجهة قوقل
   const rgba = Buffer.alloc(w * h * 4);
 
   paintSurface(rgba, w, h);

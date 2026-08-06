@@ -40,6 +40,7 @@ import {
   serialFor,
   TOP_COST,
 } from "../demo";
+import { patchObject } from "../google";
 import { getCard, setCard, tokensFor } from "../store";
 
 export const runtime = "nodejs";
@@ -136,7 +137,28 @@ export async function POST(req: Request): Promise<Response> {
 
   const tokens = await tokensFor(serial);
   const topic = process.env.WALLET_PASS_TYPE_ID;
-  const results = topic ? await pushToDevices(tokens, topic) : [];
+
+  /**
+   * **المحفظتان تُبلَّغان معًا وبالتوازي**: أبل بدفعةٍ صامتة يجلب بعدها الجهازُ نسخته،
+   * وقوقل بـ`PATCH` على الكائن عندها. ولا تنتظر إحداهما الأخرى — بطؤُهما يُجمَع لا يُخفى.
+   *
+   * **وفشلُ إحداهما لا يُسقط الأخرى**: من حمل البطاقة في أندرويد لا يخسر تحديثَه لأنّ
+   * أبل تعثّرت، والعكس.
+   */
+  const holder = memberBySerial(serial);
+  const mode = modeOfSerial(serial);
+  const origin = new URL(req.url).origin;
+
+  const [results, google] = await Promise.all([
+    topic ? pushToDevices(tokens, topic) : Promise.resolve([]),
+    holder && mode
+      ? patchObject(
+          { ...holder, stamps: card.stamps, cycles: card.cycles, points: card.points, redemptions: card.redemptions },
+          mode,
+          origin,
+        )
+      : Promise.resolve(null),
+  ]);
 
   return NextResponse.json(
     {
@@ -151,6 +173,8 @@ export async function POST(req: Request): Promise<Response> {
       updatedAt: card.updatedAt,
       devices: tokens.length,
       pushed: results.filter((r) => r.status === 200).length,
+      // خبرُ قوقل مستقلٌّ عن خبر أبل — محفظتان لا واحدة
+      google,
       // الفاشلة وحدها تُعرَض — والناجحة يكفيها عددُها
       failures: results.filter((r) => r.status !== 200).map((r) => ({ status: r.status, reason: r.reason })),
     },
