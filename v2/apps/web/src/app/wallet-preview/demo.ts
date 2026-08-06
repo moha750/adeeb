@@ -1,9 +1,15 @@
 /**
  * بيانات المعاينة — **وهميّةٌ كلُّها**، لا صفٌّ منها من القاعدة ولا اتّصال بها.
  *
- * والنموذج **بطاقةُ أختام** لا نظامَ نقاط: عشرُ مشاركات، وعند العاشرة تُصرَف المكافأة
- * ويعود العدّاد صفرًا. لا رتبَ ولا أرصدةَ تُنفَق ولا عروضَ متفاوتة — قرارُ المالك بعد
- * أن رأى الأوّل مبالغًا فيه.
+ * **ونظامان يُحاكَيان جنبًا إلى جنب** ليقارن المالك بينهما على جهازه لا في ذهنه
+ * (٢٠٢٦-٠٨-٠٤، وكان الأوّل وحده):
+ *
+ * · **الأختام** — عشرُ مشاركات، كلُّ فعلٍ ختمٌ واحد مهما كان، وعند العاشرة تُصرَف
+ *   المكافأة ويعود العدّاد صفرًا. **هدفٌ واحدٌ ودورةٌ تتكرّر.**
+ * · **النقاط** — رصيدٌ يُجمَع **بمعدّلاتٍ متفاوتة** (الحضورُ دون التنظيم دون التقديم)
+ *   ثمّ يُصرَف على **متجرٍ فيه مكافآتٌ متفاوتة الثمن**. لا هدفَ واحدٌ ولا تصفير.
+ *
+ * والفرقُ بينهما ليس في الرقم بل في السؤال: **أنكافئ الحضورَ أم الجهد؟**
  */
 
 /** عدد المشاركات التي تكتمل بها البطاقة. */
@@ -23,6 +29,64 @@ export const REWARD = {
   terms: "يُستلَم من الفرع بعرض البطاقة · لمرّةٍ واحدة لكلّ بطاقةٍ مكتملة",
 };
 
+/* ── نظام النقاط ────────────────────────────────────────────────────────── */
+
+/**
+ * **أفعالٌ تُكسِب نقاطًا — وقيمتُها تتفاوت بتفاوت الجهد.** وهذا جوهرُ الفرق عن الأختام:
+ * هناك يستوي من حضر ومن نظّم؛ وهنا يفترقان.
+ *
+ * والقيمُ **مقترحةٌ للعرض لا مُقرَّرة** — يضبطها المالك بعد أن يرى أثرها على الشاشة.
+ */
+export const EARN = [
+  { key: "meeting", label: "حضورُ اجتماع", points: 5 },
+  { key: "attend", label: "حضورُ فعاليّة", points: 10 },
+  { key: "organize", label: "المشاركةُ في التنظيم", points: 30 },
+  { key: "present", label: "تقديمٌ أو إلقاء", points: 50 },
+] as const;
+
+export type EarnAction = (typeof EARN)[number];
+
+/** فعلُ كسبٍ بمفتاحه — `null` للمجهول، فلا يُبدَّل بأوّل القائمة (يأتي من الشبكة). */
+export const earnByKey = (key: string): EarnAction | null => EARN.find((e) => e.key === key) ?? null;
+
+/**
+ * **متجرُ المكافآت** — نقاطٌ تُصرَف على ما يختاره صاحبُها، لا مكافأةٌ واحدةٌ تُنتظَر.
+ *
+ * والرعاةُ **مُختلَقون** كما في `REWARD` — لا نضع اسم جهةٍ حقيقيّة في عرضٍ لم تتّفق عليه.
+ * والسُّلَّمُ يبدأ بمتناوَلٍ قريبٍ (حلوى) وينتهي بما يُسعى إليه فصلًا كاملًا (دورة).
+ */
+export const CATALOG = [
+  { key: "sweet", cost: 100, title: "حلوى اليوم", sponsor: "مقهى «سَطْر»" },
+  { key: "drink", cost: 300, title: "مشروبٌ من اختيارك", sponsor: "مقهى «سَطْر»" },
+  { key: "book", cost: 600, title: "كتابٌ من رفّ الشهر", sponsor: "مكتبة «مِداد»" },
+  { key: "course", cost: 1200, title: "مقعدٌ في دورةٍ تدريبيّة", sponsor: "نادي أَدِيب" },
+] as const;
+
+export type Reward = (typeof CATALOG)[number];
+
+/** مكافأةٌ بمفتاحها — `null` للمجهول (تأتي من الشبكة). */
+export const rewardByKey = (key: string): Reward | null => CATALOG.find((r) => r.key === key) ?? null;
+
+/** ما يبلغه الرصيد — أغلى مكافأةٍ يقدر عليها الآن، و`null` إن لم يبلغ أرخصَها. */
+export const affordable = (points: number): Reward[] => CATALOG.filter((r) => points >= r.cost);
+
+/** أقربُ مكافأةٍ لم يبلغها بعد — و`null` إن بلغ أعلى السُّلَّم. */
+export const nextReward = (points: number): Reward | null => CATALOG.find((r) => points < r.cost) ?? null;
+
+/** أقصى ما في المتجر — سقفُ السُّلَّم المرسوم على البطاقة. */
+export const TOP_COST = CATALOG[CATALOG.length - 1].cost;
+
+/**
+ * حالةُ بطاقة النقاط سطرًا واحدًا — كما في `statusText` للأختام: مصدرٌ واحدٌ للبطاقة
+ * والصفحة وشاشة المسح.
+ */
+export function pointsStatusText(points: number): string {
+  const next = nextReward(points);
+  if (!next) return "يكفي أعلى المكافآت";
+  const left = next.cost - points;
+  return `بقيت ${num(left)} نقطة لـ«${next.title}»`;
+}
+
 /* ── الأعضاء ────────────────────────────────────────────────────────────── */
 
 export type DemoMember = {
@@ -41,8 +105,12 @@ export type DemoMember = {
   stamps: number;
   /** كم بطاقةً أكملها من قبل — يقول للراعي إنّ الولاء يتكرّر. */
   cycles: number;
-  /** رقم البطاقة — المرسوم في الباركود والمقروء بالعين. */
+  /** رقم بطاقة **الأختام** — المرسوم في الباركود والمقروء بالعين. */
   serial: string;
+  /** رصيدُ النقاط في نظام النقاط (المحاكاة الموازية). */
+  points: number;
+  /** كم مكافأةً صرفها من المتجر. */
+  redemptions: number;
 };
 
 /**
@@ -61,6 +129,8 @@ export const MEMBERS: DemoMember[] = [
     stamps: 10,
     cycles: 2,
     serial: "ADEEB-CARD-2026-0117",
+    points: 640,
+    redemptions: 2,
   },
   {
     id: "m2",
@@ -70,6 +140,8 @@ export const MEMBERS: DemoMember[] = [
     stamps: 6,
     cycles: 1,
     serial: "ADEEB-CARD-2026-0233",
+    points: 240,
+    redemptions: 1,
   },
   {
     id: "m3",
@@ -79,18 +151,46 @@ export const MEMBERS: DemoMember[] = [
     stamps: 2,
     cycles: 0,
     serial: "ADEEB-CARD-2026-0341",
+    points: 55,
+    redemptions: 0,
   },
 ];
 
 /** عضوٌ بمعرّفه — أوّلُ القائمة إن لم يُطابِق شيء. */
 export const memberById = (id: string): DemoMember => MEMBERS.find((m) => m.id === id) ?? MEMBERS[0];
 
+/* ── النظامان ورقماهما ─────────────────────────────────────────────────── */
+
+/** أيُّ النظامين. */
+export type Mode = "stamps" | "points";
+
 /**
- * عضوٌ برقم بطاقته — **`null` إن لم يوجد**، بخلاف الذي قبله.
+ * **رقمُ بطاقة النقاط مشتقٌّ من رقم الأختام** بتبديل كلمةٍ واحدة (`CARD` ← `PTS`).
+ *
+ * **ولماذا رقمان لا رقم؟** البطاقةُ في المحفظة تُعرَّف برقمها: لو حملت البطاقتان رقمًا
+ * واحدًا لَحلّت إحداهما محلّ الأخرى في الجهاز — والمرادُ أن تعيشا معًا فيقارن المالك
+ * بالعين لا بالذاكرة.
+ *
+ * **والاشتقاقُ لا الاختراع**: رقمٌ ثانٍ مستقلٌّ يعني قائمتين تُصانان، وسطرًا يُنسى.
+ */
+export const pointsSerial = (m: DemoMember): string => m.serial.replace("-CARD-", "-PTS-");
+
+/** أيُّ نظامٍ يخصّ هذا الرقم؟ — `null` لما لا يُشبه رقمًا من عندنا. */
+export function modeOfSerial(serial: string): Mode | null {
+  if (serial.includes("-CARD-")) return "stamps";
+  if (serial.includes("-PTS-")) return "points";
+  return null;
+}
+
+/**
+ * عضوٌ برقم بطاقته — **بأيّ النظامين**، و**`null` إن لم يوجد** بخلاف `memberById`.
  * تسأله خدمةُ التحديث برقمٍ يأتي من الجهاز، فالمجهولُ يُردّ بـ٤٠٤ لا يُبدَّل بأوّل القائمة.
  */
 export const memberBySerial = (serial: string): DemoMember | null =>
-  MEMBERS.find((m) => m.serial === serial) ?? null;
+  MEMBERS.find((m) => m.serial === serial || pointsSerial(m) === serial) ?? null;
+
+/** رقمُ البطاقة لعضوٍ في نظامٍ بعينه — المصدرُ الواحد لكلّ من يبني حزمةً أو رابطًا. */
+export const serialFor = (m: DemoMember, mode: Mode): string => (mode === "points" ? pointsSerial(m) : m.serial);
 
 /** هل اكتملت البطاقة فاستحقّت المكافأة؟ */
 export const isComplete = (stamps: number): boolean => stamps >= GOAL;

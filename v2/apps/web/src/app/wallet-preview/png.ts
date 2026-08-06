@@ -415,3 +415,127 @@ export function stampStrip(filled: number, total: number, w: number): Buffer {
 
   return encodePng(w, h, rgba);
 }
+
+/* ── سُلَّمُ النقاط ──────────────────────────────────────────────────────── */
+
+/**
+ * **سطحُ بطاقة النقاط**: سُلَّمٌ أفقيٌّ فيه محطّاتُ المتجر الأربع، ومسارٌ يمتلئ نحوها.
+ *
+ * **ولا رقمَ مرسومًا هنا**: لا رَاسِمَ خطوطٍ على الخادم (لا `sharp` ولا خطّ)، فالأرقامُ
+ * تُترَك لحقول أبل — هي تعرف الخطّ والاتّجاه. والصورةُ تقول ما لا يقوله الرقم: **أين
+ * أنتَ من السُّلَّم**.
+ *
+ * **والمحطّاتُ متساويةُ التباعد وإن تفاوتت أثمانُها** (١٠٠ · ٣٠٠ · ٦٠٠ · ١٢٠٠): لو رُسمت
+ * على مقياسٍ حقيقيّ لَتكدّست الثلاثُ الأولى في خُمس الشريط وبقي أربعةُ أخماسٍ خواءً بين
+ * الثالثة والرابعة. فالتعبئةُ **قِطَعيّة**: كلُّ قطعةٍ تمثّل مدى ثمنٍ واحد، فتمتلئ بنسبة
+ * ما قُطع منه. فالعينُ ترى قربَها من المحطّة التالية صادقًا، وهو ما يهمّ صاحبَها.
+ *
+ * **ومن اليمين إلى اليسار** كأختام البطاقة: iOS يعكس الحقول ولا يعكس الصور.
+ */
+export function pointsLadder(points: number, costs: readonly number[], w: number): Buffer {
+  const h = Math.round(w * (144 / 375)); // نسبةُ الشريط نفسُها — النظامان بمقاسٍ واحد
+  const rgba = Buffer.alloc(w * h * 4);
+
+  paintSurface(rgba, w, h);
+  paintPattern(rgba, w, h);
+
+  const n = costs.length;
+  const pad = 0.1 * w;
+  const track = w - 2 * pad;
+  const cy = h * 0.5;
+  const rail = Math.max(2, 0.018 * h); // نصفُ سُمك المسار
+  const R = 0.052 * w; // نصفُ قطر المحطّة
+  const gap = track / (n - 1);
+  const SS = 3;
+
+  /** موضعُ الرصيد على السُّلَّم بالقِطَع (٠…n‑1) — انظر رأس الدالّة. */
+  const pos = ((): number => {
+    if (points >= costs[n - 1]) return n - 1;
+    let i = 0;
+    while (i < n && points >= costs[i]) i += 1;
+    // بين المحطّة `i-1` والمحطّة `i` — والقطعةُ الأولى تبدأ من الصفر لا من محطّة
+    const lo = i === 0 ? 0 : costs[i - 1];
+    const hi = costs[i];
+    const t = hi > lo ? (points - lo) / (hi - lo) : 0;
+    return i === 0 ? t : i - 1 + t;
+  })();
+
+  /** مركزُ المحطّة رقم `i` بالبكسل — من اليمين. */
+  const cxOf = (i: number): number => w - pad - i * gap;
+  const head = cxOf(pos); // رأسُ التعبئة
+
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      let cRailOff = 0;
+      let cRailOn = 0;
+
+      for (let sy = 0; sy < SS; sy += 1) {
+        for (let sx = 0; sx < SS; sx += 1) {
+          const px = x + (sx + 0.5) / SS;
+          const py = y + (sy + 0.5) / SS;
+          if (Math.abs(py - cy) > rail) continue;
+          if (px < w - pad - track - rail || px > w - pad + rail) continue;
+          // `pos > 0` شرطٌ لازم: عند الصفر يقع الرأسُ على أوّل المسار، فتُطالِب
+          // التعبئةُ بغطاء الطرف الأيمن وحدَه — نقطةٌ شاردةٌ تُقرأ رصيدًا وليست رصيدًا.
+          if (pos > 0 && px >= head) cRailOn += 1;
+          else cRailOff += 1;
+        }
+      }
+
+      const i4 = (y * w + x) * 4;
+      const tot = SS * SS;
+      // المسارُ الخاوي خيطٌ باهت، والمقطوعُ منه أبيضُ صريح
+      if (cRailOff) over(rgba, i4, WHITE, (cRailOff / tot) * 0.22);
+      if (cRailOn) over(rgba, i4, WHITE, (cRailOn / tot) * 0.95);
+    }
+  }
+
+  // المحطّات فوق المسار — المبلوغةُ قرصٌ أبيضُ بهالة، والبعيدةُ حلقةٌ خاوية
+  for (let i = 0; i < n; i += 1) {
+    const cx = cxOf(i);
+    const on = points >= costs[i];
+    const halo = on ? 0.024 * w : 0;
+    const border = 0.011 * w;
+
+    const x0 = Math.max(0, Math.floor(cx - R - halo - 1));
+    const x1 = Math.min(w, Math.ceil(cx + R + halo + 1));
+    const y0 = Math.max(0, Math.floor(cy - R - halo - 1));
+    const y1 = Math.min(h, Math.ceil(cy + R + halo + 1));
+
+    for (let y = y0; y < y1; y += 1) {
+      for (let x = x0; x < x1; x += 1) {
+        let cHalo = 0;
+        let cFill = 0;
+        let cRing = 0;
+        let cCore = 0;
+
+        for (let sy = 0; sy < SS; sy += 1) {
+          for (let sx = 0; sx < SS; sx += 1) {
+            const px = x + (sx + 0.5) / SS;
+            const py = y + (sy + 0.5) / SS;
+            const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+
+            if (dist > R) {
+              if (on && dist <= R + halo) cHalo += 1;
+              continue;
+            }
+            cFill += 1;
+            if (on) {
+              // قلبٌ كحليٌّ داخل القرص الأبيض — يفصل المحطّة عن المسار الممتلئ
+              if (dist <= R * 0.42) cCore += 1;
+            } else if (dist > R - border) cRing += 1;
+          }
+        }
+
+        const i4 = (y * w + x) * 4;
+        const tot = SS * SS;
+        if (cHalo) over(rgba, i4, WHITE, (cHalo / tot) * 0.14);
+        if (cFill) over(rgba, i4, WHITE, (cFill / tot) * (on ? 1 : 0.08));
+        if (cRing) over(rgba, i4, WHITE, (cRing / tot) * 0.42);
+        if (cCore) over(rgba, i4, NAVY_700, cCore / tot);
+      }
+    }
+  }
+
+  return encodePng(w, h, rgba);
+}

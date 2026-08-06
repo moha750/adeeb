@@ -11,7 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { buildPkpass, missingEnv } from "../build";
-import { memberById } from "../demo";
+import { memberById, type Mode, serialFor } from "../demo";
 import { getCard } from "../store";
 
 // التوقيع والضغط يحتاجان `node:crypto` و`node:zlib` — لا تعمل على الحافة.
@@ -32,13 +32,21 @@ export async function GET(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const base = memberById(url.searchParams.get("member") ?? "");
+  const mode: Mode = url.searchParams.get("mode") === "points" ? "points" : "stamps";
+  const serial = serialFor(base, mode);
   // القاعدة هي الحقيقة؛ وقيمُ `demo.ts` ارتدادٌ إن تعذّرت القراءة فلا تسقط المعاينة.
-  const card = await getCard(base.serial);
-  const member = { ...base, stamps: card?.stamps ?? base.stamps, cycles: card?.cycles ?? base.cycles };
+  const card = await getCard(serial);
+  const member = {
+    ...base,
+    stamps: card?.stamps ?? base.stamps,
+    cycles: card?.cycles ?? base.cycles,
+    points: card?.points ?? base.points,
+    redemptions: card?.redemptions ?? base.redemptions,
+  };
 
   let archive: Buffer;
   try {
-    archive = await buildPkpass(member, url.origin);
+    archive = await buildPkpass(member, url.origin, mode);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "تعذّر توقيع البطاقة." }, { status: 500 });
   }
@@ -46,7 +54,7 @@ export async function GET(req: Request): Promise<Response> {
   return new NextResponse(new Uint8Array(archive), {
     headers: {
       "Content-Type": "application/vnd.apple.pkpass",
-      "Content-Disposition": `attachment; filename="${member.serial}.pkpass"`,
+      "Content-Disposition": `attachment; filename="${serial}.pkpass"`,
       // معاينةٌ ببياناتٍ متغيّرة — لا تُخزَّن في وسيطٍ ولا في المتصفّح.
       "Cache-Control": "no-store",
     },

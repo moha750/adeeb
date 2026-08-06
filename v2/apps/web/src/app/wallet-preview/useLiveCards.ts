@@ -17,7 +17,17 @@ import { useCallback, useEffect, useState } from "react";
  * دالّةٍ بلا مُشاهد. ويُسأل فورَ العودة إليها كي لا يرى العائدُ رقمًا متقادمًا.
  */
 
-export type LiveCard = { stamps: number; cycles: number; updatedAt: string };
+/**
+ * حالةُ بطاقةٍ واحدة كما تتابعها الصفحة — **وفيها عدّادا النظامين** كما في صفّ القاعدة:
+ * بطاقةُ الأختام تقرأ `stamps`/`cycles`، وبطاقةُ النقاط تقرأ `points`/`redemptions`.
+ */
+export type LiveCard = {
+  stamps: number;
+  cycles: number;
+  points: number;
+  redemptions: number;
+  updatedAt: string;
+};
 
 /** كلّ كم يُسأل الخادم وهو ظاهر — ثلاثُ ثوانٍ: أسرعُ من انتباه العين، وأرخصُ من التدفّق. */
 const EVERY_MS = 3000;

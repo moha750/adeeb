@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Alert, Container } from "@adeeb/design-system";
-import { memberBySerial } from "../../demo";
+import { memberBySerial, modeOfSerial } from "../../demo";
 import { getAllCards } from "../../store";
 import { ScanView } from "./ScanView";
 
@@ -20,19 +20,22 @@ import { ScanView } from "./ScanView";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "بطاقة عضو — معاينة أَدِيب",
+  title: "بطاقة عضو · معاينة أَدِيب",
   robots: { index: false, follow: false },
 };
 
 export default async function ScanPage({ params }: { params: Promise<{ serial: string }> }) {
   const { serial } = await params;
 
-  const holder = memberBySerial(decodeURIComponent(serial));
+  const decoded = decodeURIComponent(serial);
+  const holder = memberBySerial(decoded);
+  // **الرقمُ يقول أيَّ نظامٍ يخصّ** — فالصفحةُ واحدةٌ والنظامان يفترقان في أفعالها.
+  const mode = modeOfSerial(decoded);
 
   // **رقمٌ مجهول ⇒ شاشةٌ صريحة لا صفحةُ ٤٠٤ العامّة.** من يمسح رمزًا عند بابٍ مزدحم
   // يحتاج جملةً تقول له ما العمل، لا صفحةَ خطأ. (و`notFound()` هنا يخرج بـ٢٠٠ على كلّ
   // حال: الصفحة ديناميّةٌ فيبدأ بثُّها قبل النداء، فلا يُغيَّر الرمز بعده.)
-  if (!holder) {
+  if (!holder || !mode) {
     return (
       <main className="py-10">
         <Container>
@@ -48,5 +51,5 @@ export default async function ScanPage({ params }: { params: Promise<{ serial: s
   }
 
   // الحالةُ كلُّها لا حالةُ هذه البطاقة وحدها: المتابعُ يقرأ الجدول دفعةً، فتُمرَّر كما هي.
-  return <ScanView holder={holder} initial={await getAllCards()} />;
+  return <ScanView holder={holder} mode={mode} initial={await getAllCards()} />;
 }

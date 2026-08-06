@@ -1,6 +1,11 @@
 /**
- * سطحُ البطاقة صورةً — `GET /wallet-preview/strip?stamps=7` يردّ `strip.png` **بالبايتات
- * نفسِها التي تدخل الحزمة**.
+ * سطحُ البطاقة صورةً — يردّ `strip.png` **بالبايتات نفسِها التي تدخل الحزمة**:
+ *
+ * · `?stamps=7` — أختامُ بطاقة الأختام.
+ * · `?points=240` — سُلَّمُ بطاقة النقاط.
+ *
+ * **ولا وسيطَ ثالثٌ يسمّي النظام**: الوسيطُ الحاضرُ يسمّيه بنفسه، فلا يُطلَب سطحٌ بنظامٍ
+ * وعدّادِ نظامٍ آخر.
  *
  * وهذا هو ما يجعل المعاينة معاينةً حقًّا: الصفحة لا تحاكي السطحَ بـCSS ثمّ يرسمه الخادم
  * مرّةً أخرى للجهاز (فيفترقان يومًا في تفصيلٍ صغير)، بل **تعرض الصورة عينَها**. فما على
@@ -14,17 +19,30 @@
  */
 
 import { NextResponse } from "next/server";
-import { GOAL } from "../demo";
-import { stampStrip } from "../png";
+import { CATALOG, GOAL, TOP_COST } from "../demo";
+import { pointsLadder, stampStrip } from "../png";
 
 // الرسمُ والضغط يحتاجان `node:zlib` — لا يعملان على الحافة.
 export const runtime = "nodejs";
 
-export function GET(req: Request): Response {
-  const raw = Number(new URL(req.url).searchParams.get("stamps"));
-  const stamps = Number.isFinite(raw) ? Math.min(GOAL, Math.max(0, Math.trunc(raw))) : 0;
+/** عددٌ من وسيطٍ في مدًى — والمعتلُّ صفرٌ لا خطأ، فالسطحُ لا يُفشِل بطاقةً لأجل رابطٍ رديء. */
+const clamp = (raw: string | null, max: number): number => {
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.min(max, Math.max(0, Math.trunc(n))) : 0;
+};
 
-  return new NextResponse(new Uint8Array(stampStrip(stamps, GOAL, 750)), {
+export function GET(req: Request): Response {
+  const q = new URL(req.url).searchParams;
+
+  const png = q.has("points")
+    ? pointsLadder(
+        clamp(q.get("points"), TOP_COST),
+        CATALOG.map((r) => r.cost),
+        750,
+      )
+    : stampStrip(clamp(q.get("stamps"), GOAL), GOAL, 750);
+
+  return new NextResponse(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "public, max-age=31536000, immutable",

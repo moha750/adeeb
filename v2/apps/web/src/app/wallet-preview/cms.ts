@@ -55,8 +55,8 @@ export type SigningMaterial = {
 export function signDetached(payload: Buffer, mat: SigningMaterial): Buffer {
   const [certDer] = pemToDer(mat.certPem);
   const [wwdrDer] = pemToDer(mat.wwdrPem);
-  if (!certDer) throw new Error("شهادة Pass Type ID غير مقروءة — تأكّد أنّها بصيغة PEM كاملة.");
-  if (!wwdrDer) throw new Error("شهادة أبل الوسيطة (WWDR) غير مقروءة — تأكّد أنّها بصيغة PEM كاملة.");
+  if (!certDer) throw new Error("شهادة Pass Type ID غير مقروءة. تأكّد أنّها بصيغة PEM كاملة.");
+  if (!wwdrDer) throw new Error("شهادة أبل الوسيطة (WWDR) غير مقروءة. تأكّد أنّها بصيغة PEM كاملة.");
 
   let key: KeyObject;
   try {
@@ -64,7 +64,7 @@ export function signDetached(payload: Buffer, mat: SigningMaterial): Buffer {
       mat.keyPassphrase ? { key: mat.keyPem, passphrase: mat.keyPassphrase } : { key: mat.keyPem },
     );
   } catch {
-    throw new Error("تعذّر فتح المفتاح الخاصّ — تحقّق من الصيغة ومن عبارة المرور.");
+    throw new Error("تعذّر فتح المفتاح الخاصّ. تحقّق من الصيغة ومن عبارة المرور.");
   }
 
   const digest = createHash("sha256").update(payload).digest();

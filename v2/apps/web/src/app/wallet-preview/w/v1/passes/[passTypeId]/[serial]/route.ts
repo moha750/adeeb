@@ -13,7 +13,7 @@
 
 import { NextResponse } from "next/server";
 import { buildPkpass, missingEnv } from "@/app/wallet-preview/build";
-import { memberBySerial } from "@/app/wallet-preview/demo";
+import { memberBySerial, modeOfSerial } from "@/app/wallet-preview/demo";
 import { authOk, getCard, noteFetch } from "@/app/wallet-preview/store";
 
 export const runtime = "nodejs";
@@ -32,7 +32,8 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   }
 
   const base = memberBySerial(serial);
-  if (!base) {
+  const mode = modeOfSerial(serial);
+  if (!base || !mode) {
     await noteFetch(serial, `404 · رقمٌ مجهول · ${ua}`);
     return new NextResponse(null, { status: 404 });
   }
@@ -42,7 +43,13 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   }
 
   const card = await getCard(serial);
-  const member = { ...base, stamps: card?.stamps ?? base.stamps, cycles: card?.cycles ?? base.cycles };
+  const member = {
+    ...base,
+    stamps: card?.stamps ?? base.stamps,
+    cycles: card?.cycles ?? base.cycles,
+    points: card?.points ?? base.points,
+    redemptions: card?.redemptions ?? base.redemptions,
+  };
 
   // زمنُ آخر تغييرٍ بدقّة الثانية — ترويسات HTTP لا تحمل أدقّ منها، والمقارنة بغيرها
   // تجعل نسخةً حديثةً تبدو أقدمَ من نفسها فتُعاد بلا داعٍ.
@@ -58,13 +65,14 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
 
   let archive: Buffer;
   try {
-    archive = await buildPkpass(member, new URL(req.url).origin);
+    archive = await buildPkpass(member, new URL(req.url).origin, mode);
   } catch (e) {
     await noteFetch(serial, `500 · ${e instanceof Error ? e.message.slice(0, 60) : "?"} · ${ua}`);
     return new NextResponse(null, { status: 500 });
   }
 
-  await noteFetch(serial, `200 · أختام=${member.stamps} · since=${since ?? "—"} · ${ua}`);
+  const counter = mode === "points" ? `نقاط=${member.points}` : `أختام=${member.stamps}`;
+  await noteFetch(serial, `200 · ${counter} · since=${since ?? "—"} · ${ua}`);
 
   return new NextResponse(new Uint8Array(archive), {
     headers: {

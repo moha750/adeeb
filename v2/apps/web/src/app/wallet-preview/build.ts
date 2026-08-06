@@ -2,9 +2,9 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { signDetached } from "./cms";
-import { GOAL, type DemoMember } from "./demo";
+import { CATALOG, GOAL, type Mode, serialFor, type DemoMember } from "./demo";
 import { passJson } from "./pass";
-import { brandIcon, stampStrip } from "./png";
+import { brandIcon, pointsLadder, stampStrip } from "./png";
 import { authTokenFor } from "./store";
 import { zip, type ZipEntry } from "./zip";
 
@@ -19,7 +19,7 @@ import { zip, type ZipEntry } from "./zip";
 /** متغيّرات البيئة الخمسة، ووصفُ كلٍّ منها كما يُعرَض عند نقصانه. */
 export const ENV = {
   WALLET_PASS_TYPE_ID: "معرّف نوع البطاقة (pass.club.adeeb.…) من بوّابة أبل",
-  WALLET_TEAM_ID: "معرّف الفريق (Team ID) — عشرة محارف",
+  WALLET_TEAM_ID: "معرّف الفريق (Team ID)، عشرة محارف",
   WALLET_PASS_CERT_PEM: "شهادة Pass Type ID بصيغة PEM",
   WALLET_PASS_KEY_PEM: "المفتاح الخاصّ للشهادة بصيغة PEM",
   WALLET_WWDR_PEM: "شهادة أبل الوسيطة WWDR (G4) بصيغة PEM",
@@ -64,8 +64,18 @@ async function fetchLogo(origin: string): Promise<Buffer | null> {
  *               التطوير والإنتاج بلا عنوانٍ محفور.
  * @throws إن تعذّر التوقيع (شهادةٌ ناقصةٌ أو معطوبة) — والمستدعي يترجمه إلى ردّ.
  */
-export async function buildPkpass(member: DemoMember, origin: string): Promise<Buffer> {
+export async function buildPkpass(member: DemoMember, origin: string, mode: Mode = "stamps"): Promise<Buffer> {
   const logo = await fetchLogo(origin);
+
+  /** سطحُ البطاقة بمقاسٍ ما — النظامُ يقرّر أيُّ راسمٍ يرسمه، والمقاسُ واحد. */
+  const surface = (w: number): Buffer =>
+    mode === "points"
+      ? pointsLadder(
+          member.points,
+          CATALOG.map((r) => r.cost),
+          w,
+        )
+      : stampStrip(member.stamps, GOAL, w);
 
   const files: ZipEntry[] = [
     {
@@ -77,7 +87,9 @@ export async function buildPkpass(member: DemoMember, origin: string): Promise<B
             teamIdentifier: process.env.WALLET_TEAM_ID!,
             hasLogo: logo !== null,
             webServiceURL: webServiceUrl(origin),
-            authenticationToken: authTokenFor(member.serial),
+            // الرمزُ مشتقٌّ من الرقم، والرقمُ يختلف بالنظام — فلكلّ بطاقةٍ رمزُها
+            authenticationToken: authTokenFor(serialFor(member, mode)),
+            mode,
           }),
           null,
           2,
@@ -91,9 +103,10 @@ export async function buildPkpass(member: DemoMember, origin: string): Promise<B
     { name: "icon.png", data: brandIcon(29) },
     { name: "icon@2x.png", data: brandIcon(58) },
     { name: "icon@3x.png", data: brandIcon(87) },
-    // شريط الأختام — 375×144 ومضاعفُه، كما تشترط أبل لبطاقة المتجر.
-    { name: "strip.png", data: stampStrip(member.stamps, GOAL, 375) },
-    { name: "strip@2x.png", data: stampStrip(member.stamps, GOAL, 750) },
+    // سطحُ البطاقة — 375×144 ومضاعفُه، كما تشترط أبل لبطاقة المتجر. وهو أختامٌ أو
+    // سُلَّمُ نقاطٍ بحسب النظام، والمقاسُ واحدٌ فيهما.
+    { name: "strip.png", data: surface(375) },
+    { name: "strip@2x.png", data: surface(750) },
   ];
 
   if (logo) files.push({ name: "logo.png", data: logo }, { name: "logo@2x.png", data: logo });

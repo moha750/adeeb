@@ -52,18 +52,40 @@ export function authOk(serial: string, header: string | null): boolean {
 
 /* ── البطاقات ───────────────────────────────────────────────────────────── */
 
-export type CardState = { serial: string; stamps: number; cycles: number; updatedAt: string };
+/**
+ * حالةُ صفٍّ واحد — **وفيه عدّادا النظامين معًا** وإن استعمل كلُّ صفٍّ نصفَه:
+ * صفوفُ الأختام (`…-CARD-…`) تستعمل `stamps`/`cycles`، وصفوفُ النقاط (`…-PTS-…`)
+ * تستعمل `points`/`redemptions`. فالرقمُ يقول لأيّ نظامٍ هو، ولا عمودَ يُحمَّل معنيين.
+ */
+export type CardState = {
+  serial: string;
+  stamps: number;
+  cycles: number;
+  points: number;
+  redemptions: number;
+  updatedAt: string;
+};
+
+/** أعمدةُ الصفّ كما تُقرأ في كلّ استعلامٍ هنا — مكتوبةٌ مرّةً فلا تفترق قراءتان. */
+const COLS = "serial, stamps, cycles, points, redemptions, updated_at";
+
+/** صفٌّ من القاعدة إلى `CardState` — مصدرٌ واحدٌ للتحويل. */
+type Row = { serial: string; stamps: number; cycles: number; points: number; redemptions: number; updated_at: string };
+const toState = (r: Row): CardState => ({
+  serial: r.serial,
+  stamps: r.stamps,
+  cycles: r.cycles,
+  points: r.points,
+  redemptions: r.redemptions,
+  updatedAt: r.updated_at,
+});
 
 /** حالةُ بطاقةٍ واحدة — أو `null` إن تعذّرت القراءة (فتتولّى الصفحةُ حالتَها المحلّيّة). */
 export async function getCard(serial: string): Promise<CardState | null> {
   const sb = service();
   if (!sb) return null;
-  const { data } = await sb
-    .from("wallet_preview_cards")
-    .select("serial, stamps, cycles, updated_at")
-    .eq("serial", serial)
-    .maybeSingle();
-  return data ? { serial: data.serial, stamps: data.stamps, cycles: data.cycles, updatedAt: data.updated_at } : null;
+  const { data } = await sb.from("wallet_preview_cards").select(COLS).eq("serial", serial).maybeSingle();
+  return data ? toState(data) : null;
 }
 
 /**
@@ -74,25 +96,36 @@ export async function getCard(serial: string): Promise<CardState | null> {
  * تسأل الخادم؛ فلولا زمنٌ تُقارَن به لَجاء جوابٌ متأخّرٌ يحمل حالةً أقدمَ فيمحو ما فعله
  * للتوّ. فالأحدثُ يفوز، والقديمُ يُهمَل.
  */
-export async function getAllCards(): Promise<Record<string, { stamps: number; cycles: number; updatedAt: string }>> {
+export async function getAllCards(): Promise<Record<string, Omit<CardState, "serial">>> {
   const sb = service();
   if (!sb) return {};
-  const { data } = await sb.from("wallet_preview_cards").select("serial, stamps, cycles, updated_at");
+  const { data } = await sb.from("wallet_preview_cards").select(COLS);
   return Object.fromEntries(
-    (data ?? []).map((c) => [c.serial, { stamps: c.stamps, cycles: c.cycles, updatedAt: c.updated_at }]),
+    (data ?? []).map((c) => {
+      const { serial, ...rest } = toState(c);
+      return [serial, rest];
+    }),
   );
 }
 
-/** يكتب الحالة الجديدة. `updated_at` صريحٌ لأنّ `If-Modified-Since` يُقاس عليه. */
-export async function setCard(serial: string, stamps: number, cycles: number): Promise<CardState | null> {
+/**
+ * يكتب الحالة الجديدة. `updated_at` صريحٌ لأنّ `If-Modified-Since` يُقاس عليه.
+ *
+ * **والرقعةُ جزئيّة** (`Partial`) لأنّ الصفّ يخدم نظامين: كاتبُ الأختام لا يمسّ النقاط
+ * ولا العكس. ولو كُتبت الأربعةُ دائمًا لَصفّر كلُّ ختمٍ رصيدَ بطاقةٍ أخرى.
+ */
+export async function setCard(
+  serial: string,
+  patch: Partial<Pick<CardState, "stamps" | "cycles" | "points" | "redemptions">>,
+): Promise<CardState | null> {
   const sb = service();
   if (!sb) return null;
   const { data } = await sb
     .from("wallet_preview_cards")
-    .upsert({ serial, stamps, cycles, updated_at: new Date().toISOString() }, { onConflict: "serial" })
-    .select("serial, stamps, cycles, updated_at")
+    .upsert({ serial, ...patch, updated_at: new Date().toISOString() }, { onConflict: "serial" })
+    .select(COLS)
     .maybeSingle();
-  return data ? { serial: data.serial, stamps: data.stamps, cycles: data.cycles, updatedAt: data.updated_at } : null;
+  return data ? toState(data) : null;
 }
 
 /* ── الأجهزة ────────────────────────────────────────────────────────────── */

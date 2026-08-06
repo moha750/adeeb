@@ -5,13 +5,30 @@ import { Alert, Badge, Button, Card, CardBody, CardHeader, Container } from "@ad
 import { Gift, Stamp, User } from "@phosphor-icons/react";
 import { CheckCircle } from "@/app/_components/glyphs";
 import { Warning } from "@/app/_components/glyphs";
-import { GOAL, isComplete, num, REWARD, score, statusText, type DemoMember } from "../../demo";
+import {
+  affordable,
+  CATALOG,
+  EARN,
+  GOAL,
+  isComplete,
+  type Mode,
+  num,
+  pointsStatusText,
+  REWARD,
+  score,
+  serialFor,
+  statusText,
+  TOP_COST,
+  type DemoMember,
+} from "../../demo";
 import { useLiveCards, type LiveCard } from "../../useLiveCards";
 
 /** جوابُ المزامنة كما يردّه الخادم — يُعرَض كما هو، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncResult = {
   stamps: number;
   cycles: number;
+  points: number;
+  redemptions: number;
   devices: number;
   pushed: number;
   failures: { status: number; reason?: string }[];
@@ -27,55 +44,84 @@ type SyncResult = {
  * **والحالةُ تُقرأ في الخادم عند كلّ فعل** (نرسل `action` لا رقمًا) — فماسحان في وقتٍ
  * واحدٍ لا يمحو أحدُهما ختمَ الآخر.
  */
-export function ScanView({ holder, initial }: { holder: DemoMember; initial: Record<string, LiveCard> }) {
+export function ScanView({ holder, mode, initial }: { holder: DemoMember; mode: Mode; initial: Record<string, LiveCard> }) {
   /**
    * الحالة **متابَعةٌ لحظةً بلحظة**: من ختم في صفحة المعاينة (أو ماسحٌ آخر) رأيتَه هنا
    * بلا تحديث — وهو ما يمنع ماسحًا من الختم على رقمٍ متقادمٍ أمام عينيه.
    */
+  const serial = serialFor(holder, mode);
   const { cards, merge } = useLiveCards(initial);
-  const state = cards[holder.serial] ?? { stamps: holder.stamps, cycles: holder.cycles, updatedAt: "" };
+  const state = cards[serial] ?? {
+    stamps: holder.stamps,
+    cycles: holder.cycles,
+    points: holder.points,
+    redemptions: holder.redemptions,
+    updatedAt: "",
+  };
   const [busy, setBusy] = useState(false);
   /** ما تمّ آخرًا — **الفعلُ نفسُه لا يُشتقّ من الأرقام**: مقارنةُ الدورات بقيمة البداية
    *  تكذب بعد فعلين، فيُقال «خُتم» وقد سُلّمت المكافأة. */
-  const [done, setDone] = useState<{ act: "stamp" | "claim"; res: SyncResult } | null>(null);
+  const [done, setDone] = useState<{ act: string; res: SyncResult } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const complete = isComplete(state.stamps);
+  const can = affordable(state.points);
 
   /**
    * **الشاشةُ تسبق الشبكة**: يُرسَم أثرُ الضغطة فورًا ثمّ يُسأل الخادم — لأنّ ردَّه ينتظر
    * دفعةَ APNs، فالانتظارُ عند بابٍ مزدحمٍ يُقرأ عطلًا لا بطئًا. وإن أخفق الطلبُ رُدَّت
    * الحالةُ السابقة بزمنٍ جديد، فيفوز الرجوعُ على ما رُسم تفاؤلًا.
+   *
+   * **والأثرُ المتوقَّع يُحسَب هنا كما يحسبه الخادم** — نسختان لقاعدةٍ واحدة، وهو ثمنُ
+   * ألّا ينتظر الماسحُ الشبكةَ. وجوابُ الخادم يحلّ محلَّه بعد حين، فإن اختلفا فازَ هو.
    */
-  async function act(action: "stamp" | "claim") {
+  async function act(action: string) {
     const before = state;
-    const after =
-      action === "claim"
-        ? { stamps: 0, cycles: state.cycles + 1 }
-        : { stamps: Math.min(GOAL, state.stamps + 1), cycles: state.cycles };
+    const [verb, key = ""] = action.split(":");
+
+    let after: Omit<LiveCard, "updatedAt">;
+    if (verb === "earn") {
+      const gain = EARN.find((e) => e.key === key)?.points ?? 0;
+      after = { ...state, points: Math.min(TOP_COST, state.points + gain) };
+    } else if (verb === "redeem") {
+      const cost = CATALOG.find((r) => r.key === key)?.cost ?? 0;
+      after = { ...state, points: Math.max(0, state.points - cost), redemptions: state.redemptions + 1 };
+    } else if (action === "claim") {
+      after = { ...state, stamps: 0, cycles: state.cycles + 1 };
+    } else {
+      after = { ...state, stamps: Math.min(GOAL, state.stamps + 1) };
+    }
 
     setBusy(true);
     setError(null);
-    merge({ [holder.serial]: { ...after, updatedAt: new Date().toISOString() } });
+    merge({ [serial]: { ...after, updatedAt: new Date().toISOString() } });
 
     try {
       const res = await fetch("/wallet-preview/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serial: holder.serial, action }),
+        body: JSON.stringify({ serial, action }),
         cache: "no-store",
       });
       const body = (await res.json()) as SyncResult & { error?: string; updatedAt?: string };
       if (!res.ok) {
-        merge({ [holder.serial]: { ...before, updatedAt: new Date().toISOString() } });
+        merge({ [serial]: { ...before, updatedAt: new Date().toISOString() } });
         setError(body.error ?? "تعذّر إتمام العمليّة.");
         return;
       }
       // بزمنِ الخادم — فالمتابعُ يقارن به ولا يمحو ما جرى للتوّ (`useLiveCards`)
-      merge({ [holder.serial]: { stamps: body.stamps, cycles: body.cycles, updatedAt: body.updatedAt ?? new Date().toISOString() } });
+      merge({
+        [serial]: {
+          stamps: body.stamps,
+          cycles: body.cycles,
+          points: body.points,
+          redemptions: body.redemptions,
+          updatedAt: body.updatedAt ?? new Date().toISOString(),
+        },
+      });
       setDone({ act: action, res: body });
     } catch {
-      merge({ [holder.serial]: { ...before, updatedAt: new Date().toISOString() } });
+      merge({ [serial]: { ...before, updatedAt: new Date().toISOString() } });
       setError("تعذّر الاتّصال بالخادم.");
     } finally {
       setBusy(false);
@@ -97,9 +143,9 @@ export function ScanView({ holder, initial }: { holder: DemoMember; initial: Rec
               title={holder.name}
               subtitle={`${holder.department} · ${holder.committee}`}
               actions={
-                <Badge tone={complete ? "success" : "info"}>
+                <Badge tone={mode === "points" ? (can.length > 0 ? "success" : "info") : complete ? "success" : "info"}>
                   {/* كتلةٌ واحدةٌ لا ثلاث — الفاصلُ المحاطُ بمسافتين ينقلب في الجملة العربيّة */}
-                  <span className="font-latin">{score(state.stamps)}</span>
+                  <span className="font-latin">{mode === "points" ? num(state.points) : score(state.stamps)}</span>
                 </Badge>
               }
             />
@@ -107,21 +153,81 @@ export function ScanView({ holder, initial }: { holder: DemoMember; initial: Rec
               {/* سطحُ البطاقة **بالبايتات نفسِها** التي تدخل الحزمة — لا محاكاةٌ تشبهها */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/wallet-preview/strip?stamps=${state.stamps}`}
-                alt={`${num(state.stamps)} من ${num(GOAL)} مشاركات`}
+                src={
+                  mode === "points"
+                    ? `/wallet-preview/strip?points=${state.points}`
+                    : `/wallet-preview/strip?stamps=${state.stamps}`
+                }
+                alt={mode === "points" ? `${num(state.points)} نقطة` : `${num(state.stamps)} من ${num(GOAL)} مشاركات`}
                 className="mb-4 block w-full rounded-[var(--radius-sm)]"
               />
 
-              <p className="text-sm">
-                {statusText(state.stamps)} · بطاقاتٌ أكملها:{" "}
-                <span className="font-latin">{num(state.cycles)}</span>
-              </p>
-              <p className="mt-1 font-latin text-xs text-content-muted">{holder.serial}</p>
+              {mode === "points" ? (
+                <p className="text-sm">
+                  {pointsStatusText(state.points)} · مكافآتٌ صرفها:{" "}
+                  <span className="font-latin">{num(state.redemptions)}</span>
+                </p>
+              ) : (
+                <p className="text-sm">
+                  {statusText(state.stamps)} · بطاقاتٌ أكملها:{" "}
+                  <span className="font-latin">{num(state.cycles)}</span>
+                </p>
+              )}
+              <p className="mt-1 font-latin text-xs text-content-muted">{serial}</p>
             </CardBody>
           </Card>
 
-          {/* الفعلُ واحدٌ يُشتقّ من الحالة — انظر رأس الملفّ */}
-          {complete ? (
+          {mode === "points" ? (
+            <>
+              {/* **الماسحُ يختار الفعل هنا** بخلاف الأختام: في النقاط لا يكفي «حضر» —
+                  فالقيمةُ تتفاوت بتفاوت الجهد، ولا يُشتقّ ذلك من حالة البطاقة.
+                  وهذا في ذاته فرقٌ يراه المالك: بابٌ أبطأُ وقرارٌ على الماسح. */}
+              <Card className="mb-6">
+                <CardHeader icon={<Stamp />} title="سجّل مشاركته" subtitle="القيمةُ بحسب الجهد" />
+                <CardBody>
+                  <div className="grid gap-2">
+                    {EARN.map((e) => (
+                      <Button
+                        key={e.key}
+                        size="lg"
+                        variant={e.key === "attend" ? "primary" : "ghost"}
+                        className="w-full justify-between"
+                        loading={busy}
+                        onClick={() => act(`earn:${e.key}`)}
+                      >
+                        <span>{e.label}</span>
+                        <span className="font-latin">+{num(e.points)}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardBody>
+              </Card>
+
+              {can.length > 0 ? (
+                <Card tone="success" className="mb-6">
+                  <CardHeader icon={<Gift />} title="رصيدُه يكفي" subtitle="اصرف ما يختاره" />
+                  <CardBody>
+                    <div className="grid gap-2">
+                      {can.map((r) => (
+                        <Button
+                          key={r.key}
+                          size="lg"
+                          variant="success"
+                          className="w-full justify-between"
+                          loading={busy}
+                          onClick={() => act(`redeem:${r.key}`)}
+                        >
+                          <span>{r.title}</span>
+                          <span className="font-latin">−{num(r.cost)}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </CardBody>
+                </Card>
+              ) : null}
+            </>
+          ) : complete ? (
+            /* الفعلُ واحدٌ يُشتقّ من الحالة — انظر رأس الملفّ */
             <Card tone="success" className="mb-6">
               <CardHeader icon={<Gift />} title="بطاقةٌ مكتملة" subtitle={REWARD.sponsor} />
               <CardBody>
@@ -149,17 +255,23 @@ export function ScanView({ holder, initial }: { holder: DemoMember; initial: Rec
           {done && !error ? (
             <Alert
               tone="success"
-              title={done.act === "claim" ? "سُلِّمت المكافأة" : "خُتم الحضور"}
+              title={
+                done.act.startsWith("redeem") || done.act === "claim"
+                  ? "سُلِّمت المكافأة"
+                  : done.act.startsWith("earn")
+                    ? "سُجّلت مشاركته"
+                    : "خُتم الحضور"
+              }
               icon={<CheckCircle />}
             >
               {done.res.devices === 0 ? (
-                "حُفظ — ولا جهازَ أضاف هذه البطاقة إلى محفظته بعد."
+                "حُفظ، ولا جهازَ أضاف هذه البطاقة إلى محفظته بعد."
               ) : done.res.failures.length > 0 ? (
                 <>تعذّر تنبيه جهازه: {done.res.failures[0].reason ?? done.res.failures[0].status}</>
               ) : (
                 <>
                   دُفع إلى <span className="font-latin">{num(done.res.pushed)}</span>{" "}
-                  {done.res.pushed === 1 ? "جهاز" : "أجهزة"} — تتحدّث بطاقتُه خلال ثوانٍ
+                  {done.res.pushed === 1 ? "جهاز" : "أجهزة"}، تتحدّث بطاقتُه خلال ثوانٍ
                 </>
               )}
             </Alert>
