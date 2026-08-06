@@ -106,7 +106,7 @@ export function loyaltyClass(mode: Mode, origin: string): Record<string, unknown
     programName: mode === "points" ? "نقاط أَدِيب" : "بطاقة ولاء أَدِيب",
     reviewStatus: "underReview",
     hexBackgroundColor: HEX_BACKGROUND,
-    programLogo: image(`${origin}/brand/logo-square.png`, "شعار نادي أَدِيب"),
+    programLogo: image(`${origin}/wallet-preview/icon`, "شعار نادي أَدِيب"),
     // بابُ الرمز في وجه البطاقة — لا يُترَك لقوقل تختار له عنوانًا
     homepageUri: link(`${origin}/wallet-preview`, "معاينة البطاقة"),
   };
