@@ -193,12 +193,28 @@ function WalletCard({ member, mode }: { member: DemoMember; mode: Mode }) {
 type MissingEnv = { name: string; need: string };
 
 /**
- * أجهاز أبل هو؟ — يقرّر مسارَ التسليم لا شيئًا آخر (انظر `addToWallet`).
- * والشقّ الثاني لأيباد الحديث: يزعم أنّه «MacIntel» ويفضحه وجودُ اللمس.
+ * **على أيّ جنسٍ من الأجهزة نحن؟** — ثلاثةٌ لا اثنان، والثالثُ هو المهمّ.
+ *
+ * · `apple` — أيفون/أيباد: يُعرَض زرُّ Apple Wallet وحده.
+ * · `android` — يُعرَض زرُّ Google Wallet وحده.
+ * · `desktop` — **يُعرَض الاثنان**: لا جوّالَ هنا يُحكَم عليه، وصاحبُ الشاشة سيُضيف
+ *   البطاقة من جهازٍ آخر لا نعرف جنسَه. وإخفاءُ أحدهما هنا يحجب نصفَ ما نعرضه.
+ *
+ * **ولماذا لا يُعرَض الاثنان دائمًا؟** لأنّ زرَّ محفظةٍ لا يملكها صاحبُ الجهاز عيبٌ لا
+ * ميزة: مستخدمُ أندرويد لا يعنيه Apple Wallet، وضغطُه يُنزّل له ملفًّا لا يفتحه شيء.
+ *
+ * وشقُّ أيباد الحديث في الكاشف: يزعم أنّه «MacIntel» ويفضحه وجودُ اللمس.
  */
-const isApple = (): boolean =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+type Platform = "apple" | "android" | "desktop";
+
+const detectPlatform = (): Platform => {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+    return "apple";
+  }
+  if (/Android/.test(ua)) return "android";
+  return "desktop";
+};
 
 /** خلاصةُ آخر مزامنة — تُعرَض كما قالها الخادم، فالدفعةُ الصامتة لا تُصدَّق بلا خبر. */
 type SyncState = { devices: number; pushed: number; failures: { status: number; reason?: string }[]; error?: string };
@@ -229,10 +245,11 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
    * في الرسم تكسر التصييرَ الأوّل، وضبطُ حالةٍ في أثرٍ يرسم مرّتين بلا داعٍ. وهذه الدالّة
    * موضوعةٌ لهذا بعينه: لقطةٌ للخادم وأخرى للمتصفّح، وقيمةٌ لا تتغيّر بعدُ فلا مشترك لها.
    */
-  const onApple = useSyncExternalStore(
+  const platform = useSyncExternalStore(
     () => () => {},
-    () => isApple(),
-    () => true,
+    detectPlatform,
+    // في الخادم: «حاسوب» — فيخرج التصييرُ الأوّل بالزرّين، وهو الأوسعُ لا الأضيق.
+    (): Platform => "desktop",
   );
 
   const base = memberById(memberId);
@@ -343,7 +360,7 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
    */
   async function addToWallet() {
     const url = `/wallet-preview/pkpass?member=${memberId}&mode=${mode}`;
-    if (isApple()) {
+    if (platform === "apple") {
       window.location.href = url;
       return;
     }
@@ -453,22 +470,26 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
 
               <WalletCard member={member} mode={mode} />
 
-              {/* **زرّان لا زرٌّ واحد**: النظامان معروضان معًا، والأبرزُ ما يوافق الجهاز —
-                  فالمالك يعرض على شاشةٍ ويضيف في جوّاله، وقد يكون الجوّالان معه. */}
-              <Button className="mt-4 w-full" variant={onApple ? "primary" : "ghost"} onClick={addToWallet} loading={busy}>
-                <Wallet />
-                أضِف إلى Apple Wallet
-              </Button>
+              {/* **زرُّ المحفظة التي يملكها صاحبُ الجهاز وحدها** — إلّا على الحاسوب،
+                  فيُعرَض الاثنان (انظر `detectPlatform`). */}
+              {platform !== "android" ? (
+                <Button className="mt-4 w-full" onClick={addToWallet} loading={busy}>
+                  <Wallet />
+                  أضِف إلى Apple Wallet
+                </Button>
+              ) : null}
 
-              <Button
-                className="mt-2 w-full"
-                variant={onApple ? "ghost" : "primary"}
-                onClick={addToGoogle}
-                loading={gbusy}
-              >
-                <Wallet />
-                أضِف إلى Google Wallet
-              </Button>
+              {platform !== "apple" ? (
+                <Button
+                  className={platform === "desktop" ? "mt-2 w-full" : "mt-4 w-full"}
+                  variant={platform === "desktop" ? "ghost" : "primary"}
+                  onClick={addToGoogle}
+                  loading={gbusy}
+                >
+                  <Wallet />
+                  أضِف إلى Google Wallet
+                </Button>
+              ) : null}
 
               {passError ? (
                 <Alert tone="danger" title="لم تخرج البطاقة" className="mt-4">
