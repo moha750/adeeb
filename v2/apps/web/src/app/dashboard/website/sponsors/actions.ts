@@ -40,7 +40,7 @@ export type SponsorInput = {
 /** التحقّق المشترك — نفس قيود القاعدة برسائل عربيّة (لا نثق بالعميل). */
 function validate(input: SponsorInput): string | null {
   if (!clean(input.name)) return "اسم الراعي مطلوب.";
-  if (!clean(input.logoUrl)) return "شعار الراعي مطلوب — ارفع صورةً أوّلًا.";
+  if (!clean(input.logoUrl)) return "شعار الراعي مطلوب. ارفع صورةً أوّلًا.";
   return null;
 }
 
@@ -160,7 +160,7 @@ export async function uploadSponsorLogo(formData: FormData): Promise<UploadResul
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم يُرفَق شعار." };
   if (file.size > MAX_BYTES) return { ok: false, message: "حجم الشعار يتجاوز ٥ ميغابايت." };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة — استخدم JPG أو PNG أو WEBP أو GIF." };
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم JPG أو PNG أو WEBP أو GIF." };
 
   const path = `${PREFIX}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
   const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });

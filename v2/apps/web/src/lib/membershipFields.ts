@@ -36,7 +36,7 @@ export const hasAcademicFields = (degree: string | null | undefined): boolean =>
  * (profiles_phone_check و member_details_phone_check). غيّرها هنا ⇐ عدّل القيد بترحيل مقابل.
  */
 export const PHONE_RE = /^05[0-9]{8}$/;
-export const PHONE_HINT = "رقم جوّال غير صالح — الصيغة: 05xxxxxxxx";
+export const PHONE_HINT = "رقم جوّال غير صالح. الصيغة: 05xxxxxxxx";
 
 /* ══ أطوال الحقول الرقميّة ═══════════════════════════════════════════════════════
  * الرقمُ الأقصى لكلّ حقلٍ رقميّ — **مصدرٌ واحد يخدم طبقتين**: `maxLength` على المُدخَل
@@ -112,16 +112,16 @@ export function socialHandle(key: SocialKey, raw: string | null | undefined): So
   const s = SOCIAL[key];
   let h: string;
   if (URLISH.test(t) || HOSTISH.test(t)) {
-    if (!s.host.test(t)) return { ok: false, reason: "هذا رابط منصّة أخرى — الصق رابط هذا الحساب أو اكتب معرّفه." };
+    if (!s.host.test(t)) return { ok: false, reason: "هذا رابط منصّة أخرى. الصق رابط هذا الحساب أو اكتب معرّفه." };
     const m = s.path.exec(t);
-    if (!m?.[1]) return { ok: false, reason: "تعذّر استخراج المعرّف من الرابط — اكتبه مباشرةً." };
+    if (!m?.[1]) return { ok: false, reason: "تعذّر استخراج المعرّف من الرابط. اكتبه مباشرةً." };
     h = m[1];
   } else {
     h = t.replace(/^@+|@+$/g, ""); // @ في الطرفين: الناس يكتبونها هنا وهناك
   }
 
   if (!h) return { ok: true, handle: null };
-  if (!SOCIAL_HANDLE_RE.test(h)) return { ok: false, reason: "معرّف غير صالح — اكتب معرّف الحساب لا اسم صاحبه." };
+  if (!SOCIAL_HANDLE_RE.test(h)) return { ok: false, reason: "معرّف غير صالح. اكتب معرّف الحساب لا اسم صاحبه." };
   return { ok: true, handle: h };
 }
 
@@ -134,3 +134,32 @@ export const socialLabel = (key: SocialKey, handle: string): string => (SOCIAL[k
 /** الرمز → التسمية؛ يرتدّ إلى الرمز الخام إن ورد ما ليس في المفردات (فلا يختفي الحقل صامتًا). */
 export const DEGREE_LABEL: Record<string, string> = Object.fromEntries(DEGREES.map((d) => [d.value, d.label]));
 export const formatDegree = (v: string | null | undefined): string | null => (v ? DEGREE_LABEL[v] ?? v : null);
+
+/**
+ * **أسبابُ إنهاء العضوية المتكرّرة** — بألفاظ المالك (٢٠٢٦-٠٨-٠٧): تُختار من قائمةٍ بدل أن
+ * تُكتب كلَّ مرّة، فيتّحد لفظُ السبب في السجلّ ويُقرأ كشفُ السابقين مجموعًا لا تسعَ صياغاتٍ
+ * لمعنًى واحد (وفي القاعدة اليوم «خروج… دون إبلاغ إدارة الموارد» و«…لجنة الموارد» سببان
+ * مختلفان لواقعةٍ واحدة).
+ *
+ * **والنصّ هو القيمة، لا رمزٌ يُترجَم عند العرض:** `termination_reason` عمودُ نصٍّ حرّ فيه
+ * ثلاثٌ وأربعون واقعةً قديمة كُتبت بأيدي أصحابها، فلو صارت الأسباب رموزًا لانقسم الكشف
+ * نصفَين: نصفًا يُترجَم ونصفًا خامًا. والقائمةُ توحّد ما يأتي ولا تُعيد كتابة ما مضى.
+ *
+ * **وهي تُعين الكتابة ولا تحلّ محلّها:** الاختيار يملأ صندوقَ السبب، والصندوقُ يبقى ظاهرًا
+ * يُحرَّر بعده (يُزاد عليه تفصيلُ الواقعة أو يُكتب سببٌ ليس فيها). فالمحفوظُ دائمًا ما في
+ * الصندوق لا ما في القائمة.
+ */
+export const TERMINATION_REASONS: readonly string[] = [
+  "الغياب المُستمر عن مهام اللجنة الموكلة",
+  "مُخالفة أنظمة وسياسات النادي المذكورة بالدستور",
+  "إساءة التعامل أو التطاول على الإدارة",
+  "طلب العضو إنهاء العضوية",
+  "عدم استكمال مُتطلبات الانضمام",
+  "عدم تفعيل الحساب خلال المُهلة المُحددة",
+  "لأسباب أكاديمية أو شخصية",
+  "تسريب معلومات أو ملفات داخلية",
+  "عدم التجاوب مع قادة اللجنة أو الإدارة",
+];
+
+/** هل هذا النصّ سببٌ من القائمة كما هو؟ — تُسأل ليُعرَف أيُّ خيارٍ يظهر مختارًا بعد التحرير. */
+export const isPresetReason = (v: string): boolean => TERMINATION_REASONS.includes(v.trim());

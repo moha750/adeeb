@@ -8,7 +8,7 @@
 //   • أبوابُ المصادقة (دخول · استعادة · رمزُ الحجز): **GoTrue** يسأل Cloudflare بنفسه، فيُمرَّر
 //     الرمزُ إليه في `options.captchaToken` ولا نتحقّق منه نحن. وحمايتُه أصدق: الحارسُ عند
 //     الطرَف نفسِه، فلا يُلتَفّ عليه بنداءٍ مباشرٍ بالمفتاح العلنيّ.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -34,6 +34,8 @@ export function TurnstileWidget({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  // هل التحدّي معروضٌ الآن؟ (في `interaction-only` الجوابُ «لا» عند عامّة الزوّار)
+  const [shown, setShown] = useState(false);
   const onTokenRef = useRef(onToken);
   // تحديثُ المرجع **في أثر** لا في الرسم: الكتابةُ أثناء الرسم أثرٌ جانبيّ يمنعه React.
   // وموضعُه قبل أثر التركيب مقصود — الآثارُ تجري بترتيبها، فيصل النداءُ محدَّثًا قبل أن يُركَّب.
@@ -47,9 +49,20 @@ export function TurnstileWidget({
       if (cancelled || widgetIdRef.current || !containerRef.current || !window.turnstile) return;
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
+        // **الصندوق لا يُصبَغ** — جوفُه إطارٌ من كلاودفلير (cross-origin) لا تبلغه أوراقُنا.
+        // فالمتاحُ ثلاثةُ مقابضَ لا رابع، وهذه ضبطُها كي لا يشذَّ عن الصفحة:
+        //   • `interaction-only`: لا يظهر أصلًا إلّا حين يُطلب تحدٍّ حقيقيّ (والرمزُ يجري خفيةً في العادة).
+        //   • `light`: الافتراضُ `auto` يتبع نظامَ الجهاز، فيرى صاحبُ الوضع الداكن صندوقًا أسودَ في صفحةٍ فاتحة.
+        //   • `ar-eg`: هكذا تُسمّى العربيّةُ في قائمة كلاودفلير (`ar` وحدها لا تُطابَق).
+        appearance: "interaction-only",
+        theme: "light",
+        language: "ar-eg",
         callback: (token: string) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(null),
         "error-callback": () => onTokenRef.current(null),
+        // ظهورُ التحدّي واختفاؤه: نرفع الوسمَ فيأخذ الغلافُ حيّزَه، وننزعه فيعود إلى العدم بلا فجوة
+        "before-interactive-callback": () => setShown(true),
+        "after-interactive-callback": () => setShown(false),
       });
     };
 
@@ -77,9 +90,13 @@ export function TurnstileWidget({
   useEffect(() => {
     if (resetSignal > 0 && widgetIdRef.current && window.turnstile) {
       onTokenRef.current(null);
+      // نطويه مع الضبط: لو حُلّ التالي خفيةً لم يأتِ `after-interactive` فيبقى غلافٌ فارغٌ حافرًا
+      setShown(false);
       window.turnstile.reset(widgetIdRef.current);
     }
   }, [resetSignal]);
 
-  return <div ref={containerRef} className="flex justify-center" />;
+  // كلاودفلير تُبقي للودجة صندوقًا بمقاسه (300×72) وإن لم تَرسم فيه شيئًا، فيَحفِر في النموذج
+  // فجوةً بلا ساكن. فنطويه نحن ما دام خفيًّا، ونبسطه حين يُنادى بالتحدّي.
+  return <div ref={containerRef} className={shown ? "flex justify-center" : "hidden"} />;
 }

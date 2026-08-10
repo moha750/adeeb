@@ -32,15 +32,15 @@ export default function LoadingGalleryPage() {
   return (
     <main className="py-16">
       <Container className="max-w-4xl">
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Loader</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Loader</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض شاشة التحميل</h1>
         <p className="mt-3 max-w-2xl leading-relaxed text-content-muted">
           الشعارُ نفسُه هو المؤشّر لا دائرةٌ تدور: شعارٌ شبحٌ باهت يبقى، ووهجٌ بتدرّج العلامة يصعد فيه من أسفله
-          إلى أعلاه — مقنَّعًا بشكل الشعار فلا يفيض عن حدوده. حركتُه CSS خالصة، فتعمل قبل وصول جافاسكربت.
+          إلى أعلاه، مقنَّعًا بشكل الشعار فلا يفيض عن حدوده. حركتُه CSS خالصة، فتعمل قبل وصول جافاسكربت.
         </p>
 
         <Sec
-          title="الرأسيّ — شاشةُ بدء الموقع"
+          title="الرأسيّ: شاشةُ بدء الموقع"
           note="يملأ شاشةً فارغة، ويُستعمل في شاشة البدء وفي حدّ التحميل للجذر."
         >
           <Frame>
@@ -49,7 +49,7 @@ export default function LoadingGalleryPage() {
         </Sec>
 
         <Sec
-          title="الأفقيّ — تحميلُ التنقّل في اللوحة"
+          title="الأفقيّ: تحميلُ التنقّل في اللوحة"
           note="متنُ اللوحة عريضٌ قصير، فالرأسيّ يمدّه ويقفز به. هذا ما يظهر عند التنقّل بين التبويبات ويبقى الشريط الجانبيّ."
         >
           <Frame>
@@ -59,7 +59,7 @@ export default function LoadingGalleryPage() {
 
         <Sec
           title="المقاس"
-          note="العرضُ وحده يُمرَّر (size)، والارتفاعُ يتبعه بنسبة الأصل — فلا يُشوَّه الشعار أبدًا."
+          note="العرضُ وحده يُمرَّر (size)، والارتفاعُ يتبعه بنسبة الأصل، فلا يُشوَّه الشعار أبدًا."
         >
           <div className="flex flex-wrap items-end gap-6">
             {[72, 110, 150].map((s) => (

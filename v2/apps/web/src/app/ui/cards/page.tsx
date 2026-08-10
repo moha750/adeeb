@@ -12,8 +12,9 @@ const MEMBER: MemberRow = {
   joined: "١٢ يناير ٢٠٢٥", joinedRaw: "2025-01-12",
   college: null, major: null, degree: null, degreeRaw: null, recordNo: null,
   twitter: null, instagram: null, tiktok: null, linkedin: null,
-  endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true,
+  endReason: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true,
   canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null,
+  roleName: "committee_member", canMove: true,
 };
 
 // ٦ = صفّان تامّان · ٧ = يبقى واحد فيمتدّ · ٨ = يبقى اثنان فيقتسمان
@@ -23,9 +24,9 @@ const GRID_CASES = [6, 7, 8] as const;
 // المسلك الحقيقيّ لا أصنافًا تُفرَض. ثلاث حالات ← نغمتان + خامل:
 //   .acard-tone-success و.acard-tone-warning معرَّفان في الهوية ولا تستدعيهما حالةٌ — صنفان يتيمان.
 const MC_STATES: Array<{ status: MemberRow["status"]; label: string }> = [
-  { status: "active",    label: "نشط — acard-tone-brand" },
-  { status: "suspended", label: "موقوف — acard-tone-danger" },
-  { status: "inactive",  label: "غير نشط — بلا نغمة (الأساس الخامل)" },
+  { status: "active",    label: "نشط، acard-tone-brand" },
+  { status: "suspended", label: "موقوف، acard-tone-danger" },
+  { status: "inactive",  label: "غير نشط، بلا نغمة (الأساس الخامل)" },
 ];
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -39,16 +40,16 @@ export default function CardsPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Cards
+          Design System, Cards
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض البطاقات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          حدّ + ظلّ ناعم · مرور (تكبير + حدّ ملوّن) عبر <code className="font-latin">interactive</code> · قابلة للتركيب.
+          حدّ + ظلّ ناعم، مرور (تكبير + حدّ ملوّن) عبر <code className="font-latin">interactive</code>، قابلة للتركيب.
         </p>
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>التركيب (Media · Header · Body · Footer · أفقية)</Label>
+            <Label>التركيب (Media، Header، Body، Footer، أفقية)</Label>
             <div className="card-grid">
               <Card interactive>
                 <CardMedia />
@@ -93,24 +94,24 @@ export default function CardsPage() {
           </section>
 
           <section>
-            <Label>رأس البطاقة — سلّم الشدّة (CardHeader variant)</Label>
+            <Label>رأس البطاقة: سلّم الشدّة (CardHeader variant)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              <code className="font-latin">chip</code> (قرص على سطح الكرت) ·
-              <code className="font-latin"> soft</code> (شريطٌ بتدرّجٍ خفيفٍ من الهوية بنصٍّ داكن — للبيانات/المخطّطات) ·
-              <code className="font-latin"> solid</code> (شريطٌ ممتلئٌ بنصٍّ أبيض — للإبراز).
+              <code className="font-latin">chip</code> (قرص على سطح الكرت)، 
+              <code className="font-latin"> soft</code> (شريطٌ بتدرّجٍ خفيفٍ من الهوية بنصٍّ داكن، للبيانات/المخطّطات)، 
+              <code className="font-latin"> solid</code> (شريطٌ ممتلئٌ بنصٍّ أبيض، للإبراز).
             </p>
             <div className="card-grid">
               <Card>
-                <CardHeader icon={<GraduationCap aria-hidden />} title="chip — بقرص" subtitle="على سطح الكرت" />
-                <CardBody className="pt-3"><p className="text-sm text-content-muted">القرص المتدرّج على سطح الكرت الفاتح — هادئ.</p></CardBody>
+                <CardHeader icon={<GraduationCap aria-hidden />} title="chip، بقرص" subtitle="على سطح الكرت" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">القرص المتدرّج على سطح الكرت الفاتح، هادئ.</p></CardBody>
               </Card>
               <Card>
-                <CardHeader variant="soft" icon={<GraduationCap aria-hidden />} title="soft — منسّم" subtitle="تدرّج خفيف" />
-                <CardBody className="pt-3"><p className="text-sm text-content-muted">تدرّجٌ قطريّ خفيفٌ من زوج الهوية (فولاذيّ→كحليّ) + شعرةٌ سفليّة، نصٌّ داكن — مميّزٌ وهادئ.</p></CardBody>
+                <CardHeader variant="soft" icon={<GraduationCap aria-hidden />} title="soft، منسّم" subtitle="تدرّج خفيف" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">تدرّجٌ قطريّ خفيفٌ من زوج الهوية (فولاذيّ→كحليّ) + شعرةٌ سفليّة، نصٌّ داكن، مميّزٌ وهادئ.</p></CardBody>
               </Card>
               <Card>
-                <CardHeader variant="solid" icon={<GraduationCap aria-hidden />} title="solid — صلب" subtitle="شريطٌ ممتلئ" />
-                <CardBody className="pt-3"><p className="text-sm text-content-muted">شريطٌ ممتلئٌ بتدرّج الهوية، نصٌّ أبيض وقرصٌ زجاجيّ — إبرازٌ قويّ.</p></CardBody>
+                <CardHeader variant="solid" icon={<GraduationCap aria-hidden />} title="solid، صلب" subtitle="شريطٌ ممتلئ" />
+                <CardBody className="pt-3"><p className="text-sm text-content-muted">شريطٌ ممتلئٌ بتدرّج الهوية، نصٌّ أبيض وقرصٌ زجاجيّ، إبرازٌ قويّ.</p></CardBody>
               </Card>
             </div>
           </section>
@@ -124,15 +125,15 @@ export default function CardsPage() {
           </section>
 
           <section>
-            <Label>كرت الشخص (نمط acard-profile) — النغمات</Label>
+            <Label>كرت الشخص (نمط acard-profile): النغمات</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
               النظير الرأسيّ للبطاقة الموحّدة، يُركَّب من
               <code className="font-latin"> Card</code> +
               <code className="font-latin"> CardBanner</code> + أفتارٍ محتضَن
               (<code className="font-latin">.acard-av</code>). النغمة تُعلَن مرّةً على الكرت
-              (<code className="font-latin">--card-t</code> ·
-              <code className="font-latin"> --card-tx</code> ·
-              <code className="font-latin"> --card-grad</code>) فتتلوّن أجزاء الشخص الحاضرة وحدها — القاعدتان ٤ و٥.
+              (<code className="font-latin">--card-t</code>، 
+              <code className="font-latin"> --card-tx</code>، 
+              <code className="font-latin"> --card-grad</code>) فتتلوّن أجزاء الشخص الحاضرة وحدها، القاعدتان ٤ و٥.
             </p>
             <div className="card-grid">
               {MC_STATES.map((s) => (
@@ -152,10 +153,10 @@ export default function CardsPage() {
               عمدًا بالحالات الثلاث. بـ.card-grid نفسها لا بشبكة مقلّدة: المعرض
               مرجعٌ يُقلَّد، فإن قلّد Tailwind علّم الخطأ. */}
           <section>
-            <Label>القاعدة ٦ — الصفّ الأخير لا يترك فراغًا</Label>
+            <Label>القاعدة ٦: الصفّ الأخير لا يترك فراغًا</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
               أيّ صفّ ناقص يمتلئ بما فيه: كرتٌ واحد يأخذ العرض كلّه، وكرتان يقتسمانه.
-              ضيّق النافذة — يتغيّر عدد الأعمدة والقاعدة تصمد، بلا استعلام وسائط:
+              ضيّق النافذة، يتغيّر عدد الأعمدة والقاعدة تصمد، بلا استعلام وسائط:
               <code className="font-latin"> display:flex</code> +
               <code className="font-latin"> flex:1 1 252px</code>.
               (Grid لا يستطيعها: <code className="font-latin">auto-fill</code> يجعل عدد الأعمدة

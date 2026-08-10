@@ -25,12 +25,12 @@ export default function SegmentedPage() {
         <h1 className="mt-1 font-display text-4xl font-black text-content">الشريط المقطعيّ</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           تحكّمٌ لا سطح: خلفيّة غائرة وحدٌّ خاصّ، والعنصر الفعّال يرتفع بسطحٍ أبيض وظلٍّ صغير. مصدرٌ واحد
-          لتبويبات النافذة ومبدّل مدى التحليلات — وضع الأزرار (حالة) أو الروابط (تنقّل).
+          لتبويبات النافذة ومبدّل مدى التحليلات: وضع الأزرار (حالة) أو الروابط (تنقّل).
         </p>
 
         <div className="mt-12 space-y-12">
           <section>
-            <Lab>وضع الأزرار — حالة عبر onValueChange</Lab>
+            <Lab>وضع الأزرار: حالة عبر onValueChange</Lab>
             <Segmented aria-label="الحالة" value={status} onValueChange={setStatus}
               items={[{ value: "active", label: "نشط" }, { value: "pending", label: "معلّق" }, { value: "suspended", label: "موقوف" }]} />
             <p className="mt-3 font-latin text-xs text-content-muted" dir="ltr">value: {status}</p>
@@ -43,7 +43,7 @@ export default function SegmentedPage() {
           </section>
 
           <section>
-            <Lab>وضع الروابط — كلّ عنصرٍ رابطٌ عبر href (الفعّال بـ aria-current)</Lab>
+            <Lab>وضع الروابط: كلّ عنصرٍ رابطٌ عبر href (الفعّال بـ aria-current)</Lab>
             <Segmented aria-label="مدى المدّة" value="30" items={RANGES} />
             <p className="mt-3 text-content-muted">
               في التحليلات يُمرَّر <code className="font-latin text-xs">linkAs={"{Link}"}</code> فيصير كلّ عنصرٍ رابطًا يغيّر

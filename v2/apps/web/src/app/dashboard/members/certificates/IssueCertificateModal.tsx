@@ -128,7 +128,7 @@ export function IssueCertificateModal({
         open={open}
         onClose={close}
         size="md"
-        title={`صدرت الشهادة — ${issued.holderName}`}
+        title={`صدرت الشهادة: ${issued.holderName}`}
         description={`رقمها المرجعيّ ${issued.serial}. نزّلها وسلّمها صاحبَها.`}
         footer={
           <>
@@ -144,7 +144,7 @@ export function IssueCertificateModal({
         }
       >
         <Alert tone="success" title="مسجَّلةٌ في السجلّ">
-          {issued.positionTitle} — من {certDate(issued.periodFrom)} إلى {certDate(issued.periodTo)}.
+          {issued.positionTitle}، من {certDate(issued.periodFrom)} إلى {certDate(issued.periodTo)}.
           وصاحبُها يراها في «عضويتي» ويعيد تنزيلها متى شاء.
         </Alert>
       </Modal>
@@ -159,7 +159,7 @@ export function IssueCertificateModal({
       size="md"
       busy={pending}
       title="إصدار شهادة خبرة"
-      description="راجِع ما سيُرسَم على الورقة — فهي تُقدَّم لجهةٍ خارج النادي ولا تُصحَّح بعد خروجها."
+      description="راجِع ما سيُرسَم على الورقة، فهي تُقدَّم لجهةٍ خارج النادي ولا تُصحَّح بعد خروجها."
       footer={
         <>
           <Button variant="primary" size="md" loading={pending} disabled={!ready} onClick={submit}>
@@ -182,14 +182,14 @@ export function IssueCertificateModal({
 
       {target && !target.joinedDate ? (
         <Alert tone="danger" title="لا تاريخَ انضمامٍ مسجَّل">
-          الشهادة تبدأ من يوم الانضمام — سجّله في بيانات العضو أوّلًا.
+          الشهادة تبدأ من يوم الانضمام. سجّله في بيانات العضو أوّلًا.
         </Alert>
       ) : null}
 
       {target?.issuedCount ? (
         <Alert tone="warning" title="له شهادةٌ سابقة">
           صدرت لهذا العضو {target.issuedCount === 1 ? "شهادةٌ واحدة" : `${target.issuedCount} شهادات`} من قبل.
-          والإصدارُ الجديد لا يُبطل ما سبق — أبطِله بيدك إن أردت.
+          والإصدارُ الجديد لا يُبطل ما سبق، أبطِله بيدك إن أردت.
         </Alert>
       ) : null}
 
@@ -201,7 +201,7 @@ export function IssueCertificateModal({
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
-        helper="الثلاثيّ إن وُجد — وهو ما يُطبع في الورقة ويُحفظ في السجلّ."
+        helper="الثلاثيّ إن وُجد، وهو ما يُطبع في الورقة ويُحفظ في السجلّ."
       />
 
       <Field
@@ -212,12 +212,12 @@ export function IssueCertificateModal({
         value={position}
         onChange={(e) => setPosition(e.target.value)}
         required
-        helper="يُكتب في: «تشهد عائلة أديب بخبرة وكفاءة …» — بلا تأنيثٍ للرتبة، كما في ورقة النادي."
+        helper="يُكتب في: «تشهد عائلة أديب بخبرة وكفاءة …»، بلا تأنيثٍ للرتبة، كما في ورقة النادي."
       />
 
       {target?.joinedDate ? (
         <Alert tone="info" title="الفترة">
-          من {certDate(target.joinedDate)} إلى {certDate(today)} — من يوم الانضمام إلى يوم الإصدار،
+          من {certDate(target.joinedDate)} إلى {certDate(today)}، من يوم الانضمام إلى يوم الإصدار،
           تكتبها القاعدة ولا تُحرَّر هنا.
         </Alert>
       ) : null}

@@ -20,7 +20,7 @@ const GUIDES: { q: string; a: ReactNode }[] = [
   },
   {
     q: "إدارة محتوى الصفحة الرئيسيّة",
-    a: "من قسم «المحتوى» تُضيف وتُرتّب وتحذف الأعمال والإحصاءات والرعاة والأسئلة الشائعة والمكتبة — كلٌّ من مجلده.",
+    a: "من قسم «المحتوى» تُضيف وتُرتّب وتحذف الأعمال والإحصاءات والرعاة والأسئلة الشائعة والمكتبة، كلٌّ من مجلده.",
   },
   {
     q: "متابعة الأعضاء وحالاتهم",
@@ -73,16 +73,10 @@ export function HelpCenter() {
         size="md"
         footer={<Button variant="ghost" onClick={() => setOpen(false)}>إغلاق</Button>}
       >
-        <div className="space-y-6">
-          <section>
-            <ModalSectionHeading icon={<Compass />} title="أدلّة سريعة" />
-            <Accordion items={GUIDES} />
-          </section>
-          <section>
-            <ModalSectionHeading icon={<Question />} title="أسئلة شائعة" />
-            <Accordion items={FAQS} />
-          </section>
-        </div>
+        <ModalSectionHeading icon={<Compass />} title="أدلّة سريعة" />
+        <Accordion items={GUIDES} />
+        <ModalSectionHeading icon={<Question />} title="أسئلة شائعة" />
+        <Accordion items={FAQS} />
       </Modal>
     </>
   );

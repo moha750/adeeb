@@ -42,24 +42,24 @@ export default function AvatarPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Avatar
+          Design System, Avatar
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">
           معرض الصورة الرمزيّة
         </h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية · صورة مع رجوع للأحرف الأولى · خمسة أحجام ومؤشّر حالة.
+          مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية، صورة مع رجوع للأحرف الأولى، خمسة أحجام ومؤشّر حالة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="الأحجام">
-            <Lab>xs · sm · md · lg · xl</Lab>
+            <Lab>xs, sm, md, lg, xl</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
                 <div key={s} className="flex flex-col items-center gap-2">
                   <Avatar name="محمّد إسماعيل" size={s} />
                   <span className="font-latin text-xs font-bold uppercase tracking-[0.12em] text-content-muted">
-                    {s} · {SIZE_LABEL[s]}
+                    {s}، {SIZE_LABEL[s]}
                   </span>
                 </div>
               ))}
@@ -67,7 +67,7 @@ export default function AvatarPage() {
           </Sec>
 
           <Sec title="صورة مقابل الأحرف الأولى">
-            <Lab>src موجود ← الصورة · بلا src ← الأحرف الأولى من الاسم</Lab>
+            <Lab>src موجود ← الصورة، بلا src ← الأحرف الأولى من الاسم</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
                 <Avatar key={s} name="نادي أديب" src={IMG} size={s} />
@@ -80,8 +80,8 @@ export default function AvatarPage() {
             </div>
           </Sec>
 
-          <Sec title="أيقونة الجنس — رجوعٌ قبل الأحرف">
-            <Lab>بلا src وبجنسٍ معلوم ← أيقونة الذكر/الأنثى (فوق تدرّج الهوية) · المجهول يبقى بالأحرف</Lab>
+          <Sec title="أيقونة الجنس: رجوعٌ قبل الأحرف">
+            <Lab>بلا src وبجنسٍ معلوم ← أيقونة الذكر/الأنثى (فوق تدرّج الهوية)، المجهول يبقى بالأحرف</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
                 <Avatar key={s} name="عبدالله القحطاني" gender="male" size={s} />
@@ -95,7 +95,7 @@ export default function AvatarPage() {
           </Sec>
 
           <Sec title="مؤشّر الحالة">
-            <Lab>online · away · busy · offline</Lab>
+            <Lab>online, away, busy, offline</Lab>
             <div className="flex flex-wrap items-end gap-8">
               {STATUSES.map((st) => (
                 <div key={st} className="flex flex-col items-center gap-2">
@@ -114,7 +114,7 @@ export default function AvatarPage() {
           </Sec>
 
           <Sec title="الرجوع الافتراضيّ">
-            <Lab>اسم من كلمة واحدة ← حرف واحد · بلا اسم ← «؟»</Lab>
+            <Lab>اسم من كلمة واحدة ← حرف واحد، بلا اسم ← «؟»</Lab>
             <div className="flex flex-wrap items-center gap-6">
               <Avatar name="أديب" size="lg" />
               <Avatar size="lg" />

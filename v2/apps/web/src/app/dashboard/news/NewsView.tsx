@@ -127,7 +127,7 @@ export function NewsView({
               label: gaps.length ? `ينقصه: ${gaps.join("، ")}` : "نشر",
               icon: gaps.length ? <WarningCircle /> : <Megaphone />,
               onSelect: () => gaps.length
-                ? toast.error(`لا يُنشَر خبرٌ ناقص — ينقصه ${gaps.join("، ")}.`)
+                ? toast.error(`لا يُنشَر خبرٌ ناقص: ينقصه ${gaps.join("، ")}.`)
                 : run(() => setNewsStatus(n.id, "publish")),
             },
         { label: n.isFeatured ? "إلغاء التمييز" : "تمييز في الواجهة", icon: <Star />, onSelect: () => run(() => toggleFeatured(n.id, !n.isFeatured)) },
@@ -154,7 +154,7 @@ export function NewsView({
           ) : null}
           <span className="text-content-muted" style={{ marginInlineStart: 8 }}>
             {CATEGORY_META[n.category].label}
-            {n.committeeName ? ` · ${n.committeeName}` : ""}
+            {n.committeeName ? `، ${n.committeeName}` : ""}
           </span>
           {n.rejectionReason && n.workflow === "in_progress" ? (
             <span className="text-danger" style={{ display: "block", fontSize: ".82em", marginTop: 2 }}>
@@ -231,7 +231,7 @@ export function NewsView({
       icon={<Newspaper />}
       title={isChief ? "لا أخبار بعد" : "لا تكاليف لك"}
       description={isChief
-        ? "أنشئ أوّل خبر — يُحفظ مسودّةً، ثمّ تكلّف كاتبه وتراجعه قبل النشر."
+        ? "أنشئ أوّل خبر: يُحفظ مسودّةً، ثمّ تكلّف كاتبه وتراجعه قبل النشر."
         : "حين يكلّفك رئيس التحرير بخبر ظهر هنا، ورأيتَ ما تملك تحريره منه."}
       action={createBtn ?? undefined}
     />
@@ -328,7 +328,7 @@ export function NewsView({
               placeholder="مشاركة أدِيب في…"
               value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
               error={formErr ?? undefined}
-              helper="عنوانٌ مبدئيّ يكفي — يُحرّر لاحقًا في المحرّر." required
+              helper="عنوانٌ مبدئيّ يكفي، يُحرّر لاحقًا في المحرّر." required
             />
             <Select
               label="القسم" icon={<ClipboardText />} options={CATEGORY_OPTIONS} value={form.category}

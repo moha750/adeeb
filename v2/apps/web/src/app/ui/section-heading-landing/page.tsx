@@ -23,19 +23,19 @@ export default function LandingHeadingsPage() {
   return (
     <main className="py-16">
       <Container className="max-w-4xl">
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Landing · Section Heading</p>
-        <h1 className="mt-1 font-display text-4xl font-black text-content">الرأس المُذهّب — LandingHeading</h1>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Landing, Section Heading</p>
+        <h1 className="mt-1 font-display text-4xl font-black text-content">الرأس المُذهّب، LandingHeading</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          فئةٌ كبيرة تتلاشى (يخرج منها العنوان) · عنوانٌ بتدرّج الهوية على تظليلٍ مستدير · شعرة · جملةٌ واصفة اختياريّة. بلا أرقام
+          فئةٌ كبيرة تتلاشى (يخرج منها العنوان)، عنوانٌ بتدرّج الهوية على تظليلٍ مستدير، شعرة، جملةٌ واصفة اختياريّة. بلا أرقام
           ولا باترن. الفئة قصيرةٌ لأنّها كبيرة. المصدر الوحيد: مكوّن <span className="font-latin" dir="ltr">LandingHeading</span>.
         </p>
 
         <div className="mt-12 space-y-8">
           <section>
-            <Lab>محاذاة البداية — قسمان متتاليان (الإيقاع)</Lab>
+            <Lab>محاذاة البداية: قسمان متتاليان (الإيقاع)</Lab>
             <div className="space-y-4">
               <Light>
-                <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه المواهب — من القصّة إلى التصميم." />
+                <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه المواهب، من القصّة إلى التصميم." />
               </Light>
               <Light>
                 <LandingHeading eyebrow="أنشطة" title="برامجنا وأنشطتنا" deck="ورشٌ وبرامجُ نوعيّة على مدار الموسم." />
@@ -44,7 +44,7 @@ export default function LandingHeadingsPage() {
           </section>
 
           <section>
-            <Lab>متراكز — للأقسام المتمركزة</Lab>
+            <Lab>متراكز: للأقسام المتمركزة</Lab>
             <Light>
               <LandingHeading eyebrow="فريق" title="أهل الدفّة" deck="المجلس الذي يقود النادي ويرعى مسيرته." align="center" />
             </Light>

@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
+import { positionLine } from "@/lib/positionLabel";
 import type { RawCouncil, RawDept, RawCommittee, RawRole, RawUserRole, RawProfile, RawSupervision } from "./model";
 
 export type OrgData = {
@@ -86,7 +87,7 @@ export async function getOrgData(): Promise<OrgData> {
   for (const row of userRoles) {
     if (held.has(row.user_id)) continue;
     const scope = row.committee_id != null ? comAr.get(row.committee_id) : row.department_id != null ? deptAr.get(row.department_id) : null;
-    held.set(row.user_id, scope ? `${roleAr.get(row.role_name)} — ${scope}` : (roleAr.get(row.role_name) as string));
+    held.set(row.user_id, positionLine(roleAr.get(row.role_name), scope) ?? "");
     heldRole.set(row.user_id, row.role_name);
   }
 

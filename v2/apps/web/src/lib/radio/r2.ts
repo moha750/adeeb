@@ -15,7 +15,7 @@ const ACCOUNT = process.env.R2_ACCOUNT_ID?.trim();
 const ACCESS_KEY = process.env.R2_ACCESS_KEY_ID?.trim();
 const SECRET = process.env.R2_SECRET_ACCESS_KEY?.trim();
 const BUCKET = process.env.R2_BUCKET?.trim() || "adeeb-radio";
-/** عنوان القراءة العامّ — يبقى خفيًّا عن الجمهور خلف رابط التتبّع (`/radio/e/{id}.mp3`). */
+/** عنوان القراءة العامّ للدلو — منه يُبَثّ الصوت وتُعرض الشعارات مباشرةً. */
 const PUBLIC_BASE = process.env.R2_PUBLIC_BASE?.trim().replace(/\/+$/, "") ?? "";
 
 const ENDPOINT = ACCOUNT ? `https://${ACCOUNT}.r2.cloudflarestorage.com` : "";
@@ -25,9 +25,9 @@ export const R2_READY = Boolean(ACCOUNT && ACCESS_KEY && SECRET);
 /** هل يكفي الإعداد للقراءة العامّة؟ (عرض الشعارات وبثّ الصوت) */
 export const R2_PUBLIC_READY = Boolean(PUBLIC_BASE);
 
-export const R2_MISSING = "إعداد مخزن الوسائط ناقص — أضِف مفاتيح R2 إلى apps/web/.env.local.";
+export const R2_MISSING = "إعداد مخزن الوسائط ناقص. أضِف مفاتيح R2 إلى apps/web/.env.local.";
 export const R2_PUBLIC_MISSING =
-  "العنوان العامّ للمخزن غير مضبوط — فعِّل Public Development URL على الدلو ثمّ املأ R2_PUBLIC_BASE.";
+  "العنوان العامّ للمخزن غير مضبوط. فعِّل Public Development URL على الدلو ثمّ املأ R2_PUBLIC_BASE.";
 
 let cached: AwsClient | null = null;
 function client(): AwsClient | null {
@@ -44,8 +44,12 @@ function client(): AwsClient | null {
 /* ══ مفاتيح الكائنات — تُشتقّ ولا تُكتب بأيدٍ متفرّقة ═════════════════ */
 
 export const showLogoKey = (showId: string, ext: string) => `shows/${showId}/logo.${ext}`;
-export const episodeAudioKey = (showId: string, episodeId: string, ext: string) =>
-  `shows/${showId}/episodes/${episodeId}/audio.${ext}`;
+/**
+ * للحلقة نسختان في المخزن، والنسخةُ جزءٌ من المفتاح لا لاحقةٌ تُلصق —
+ * فلا يدهس رفعُ إحداهما أختَها، ويكشف المفتاحُ وحدَه ما يحمله.
+ */
+export const episodeAudioKey = (showId: string, episodeId: string, variant: "music" | "plain", ext: string) =>
+  `shows/${showId}/episodes/${episodeId}/audio-${variant}.${ext}`;
 export const episodeCoverKey = (showId: string, episodeId: string, ext: string) =>
   `shows/${showId}/episodes/${episodeId}/cover.${ext}`;
 /** كلّ وسائط البرنامج تحت بادئةٍ واحدة — فحذفه يمسحها دفعةً. */

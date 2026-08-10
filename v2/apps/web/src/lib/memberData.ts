@@ -75,7 +75,7 @@ export async function writeMemberData(
   if (tErr) return { ok: false, message: `تعذّر التحقّق من حالة العضو: ${tErr.message}` };
   if (!target) return { ok: false, message: "لا وجود لهذا العضو." };
   if (target.account_status === "suspended") {
-    return { ok: false, message: "عضويّة منتهية — لا تُعدَّل بياناتها. أعِد العضوية أوّلًا ثمّ عدّلها." };
+    return { ok: false, message: "عضويّة منتهية: لا تُعدَّل بياناتها. أعِد العضوية أوّلًا ثمّ عدّلها." };
   }
 
   // ── التحقّق ──────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ export async function writeMemberData(
 
   const favoriteColor = clean(fields.favoriteColor);
   if (favoriteColor && !HEX_RE.test(favoriteColor)) {
-    return { ok: false, message: "لون غير صالح — الصيغة: ‎#rrggbb." };
+    return { ok: false, message: "لون غير صالح. الصيغة: ‎#rrggbb." };
   }
 
   const college = clean(fields.college);
@@ -119,7 +119,7 @@ export async function writeMemberData(
   const socials: Record<string, string | null> = {};
   for (const key of SOCIAL_KEYS) {
     const res = socialHandle(key, fields[key]);
-    if (!res.ok) return { ok: false, message: `${socialLabelOf(key)} — ${res.reason}` };
+    if (!res.ok) return { ok: false, message: `${socialLabelOf(key)}: ${res.reason}` };
     socials[socialColumn(key)] = res.handle;
   }
 
@@ -147,7 +147,7 @@ export async function writeMemberData(
     return {
       ok: false,
       message:
-        "حُفظت البيانات الأساسيّة. أمّا البيانات الأكاديميّة والتواصل الاجتماعيّ فلا سجلّ تفاصيل لهذا الحساب يحملها — يُنشأ عند إكمال بيانات الالتحاق.",
+        "حُفظت البيانات الأساسيّة. أمّا البيانات الأكاديميّة والتواصل الاجتماعيّ فلا سجلّ تفاصيل لهذا الحساب يحملها، يُنشأ عند إكمال بيانات الالتحاق.",
     };
   }
 

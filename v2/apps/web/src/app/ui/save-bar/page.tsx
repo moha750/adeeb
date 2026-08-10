@@ -45,14 +45,14 @@ export default function SaveBarGallery() {
     <Container className="py-14">
       <h1 className="font-display text-4xl font-black text-content">شريط الحفظ اللاصق</h1>
       <p className="mt-3 max-w-2xl text-content-muted">
-        غيّر حقلًا من الحقول أدناه فيظهر الشريط، ثمّ مرّر الصفحة — يلازم أسفلها. وهو للشاشات
+        غيّر حقلًا من الحقول أدناه فيظهر الشريط، ثمّ مرّر الصفحة، يلازم أسفلها. وهو للشاشات
         الطويلة التي يدخلها صاحبها ليمسّ حقلًا واحدًا ويخرج، لا للنموذج القصير الذي يُملأ من
         أوّله إلى آخره (ذاك زرُّه في ذيله).
       </p>
 
       <div className="mt-12 space-y-14">
         <Sec title="الحالتان">
-          <Lab>ساكنٌ ⇐ لا شريط · متغيّرٌ ⇐ شريطٌ يعلن ويحفظ</Lab>
+          <Lab>ساكنٌ ⇐ لا شريط، متغيّرٌ ⇐ شريطٌ يعلن ويحفظ</Lab>
           <div className="flex flex-col gap-4">
             <Card>
               <CardHeader variant="soft" icon={<User />} title="بياناتك" subtitle="عدّل حقلًا ليظهر الشريط" />
@@ -72,14 +72,14 @@ export default function SaveBarGallery() {
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardHeader variant="soft" icon={<User />} title={`بطاقةٌ ${i}`} subtitle="حشوٌ ليطول التمرير" />
-                <CardBody><p className="text-content-muted">محتوًى لا يعني شيئًا — غرضُه أن تطول الصفحة فيُرى الشريط ملازمًا.</p></CardBody>
+                <CardBody><p className="text-content-muted">محتوًى لا يعني شيئًا، غرضُه أن تطول الصفحة فيُرى الشريط ملازمًا.</p></CardBody>
               </Card>
             ))}
 
             {/* **حقلٌ في الذيل** — هنا تُختبَر مسألة الحجب: الشريط يظهر فوق آخر ما في الصفحة،
                 فيجب أن يبقى هذا الحقل مرئيًّا وأنت تكتب فيه (حجزُ المكان + رفعُ المركَّز). */}
             <Card>
-              <CardHeader variant="soft" icon={<PencilSimple />} title="آخرُ حقلٍ في الصفحة" subtitle="اكتب فيه وأنت في ذيل الصفحة — يجب ألّا يحجبه الشريط" />
+              <CardHeader variant="soft" icon={<PencilSimple />} title="آخرُ حقلٍ في الصفحة" subtitle="اكتب فيه وأنت في ذيل الصفحة، يجب ألّا يحجبه الشريط" />
               <CardBody>
                 <Field label="اسم الشهرة" icon={<User />} innerIcon={<PencilSimple />} placeholder="كنيتك بين إخوانك"
                   value={nick} onChange={(e) => setNick(e.target.value)} optional />

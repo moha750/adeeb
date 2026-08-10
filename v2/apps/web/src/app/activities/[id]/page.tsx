@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const a = await getPublicActivity(id);
   return {
-    title: a ? `${a.name} — أديب` : "فعاليّة — أديب",
+    title: a ? `${a.name}، أديب` : "فعاليّة، أديب",
     description: a?.description ?? "احجز مقعدك في فعاليّات نادي أديب.",
   };
 }

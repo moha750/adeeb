@@ -92,7 +92,7 @@ export async function deleteEvent(eventId: string): Promise<EventResult> {
     .eq("activity_id", eventId);
   if (cErr) return { ok: false, message: `تعذّر فحص الحجوزات: ${cErr.message}` };
   if (count && count > 0) {
-    return { ok: false, message: `لهذه الفعاليّة ${count} حجزًا — لا تُحذف. ألغِها بدل الحذف لحفظ سجلّ الحجوزات.` };
+    return { ok: false, message: `لهذه الفعاليّة ${count} حجزًا، لا تُحذف. ألغِها بدل الحذف لحفظ سجلّ الحجوزات.` };
   }
 
   const { error: dErr } = await sb.from("activities").delete().eq("id", eventId);
@@ -133,7 +133,7 @@ function validateEvent(input: EventInput): string | null {
   if (input.totalSeats != null && (!Number.isInteger(input.totalSeats) || input.totalSeats <= 0)) return "إجمالي المقاعد رقمٌ موجب (أو اتركه فارغًا لتسجيلٍ غير محدود).";
   // مقاعد الجنسين: إمّا كلاهما (تقسيم/جنس واحد) أو لا شيء — ولا تقسيم بلا إجمالي
   if (input.maleSeats != null || input.femaleSeats != null) {
-    if (input.totalSeats == null) return "لا تقسيم بلا إجمالي — حدّد الإجمالي أو اترك مقاعد الجنسين فارغة.";
+    if (input.totalSeats == null) return "لا تقسيم بلا إجمالي. حدّد الإجمالي أو اترك مقاعد الجنسين فارغة.";
     if (input.maleSeats == null || input.femaleSeats == null) return "حدّد مقاعد الرجال والنساء معًا، أو اتركهما فارغين.";
     if (!Number.isInteger(input.maleSeats) || input.maleSeats < 0 || !Number.isInteger(input.femaleSeats) || input.femaleSeats < 0) return "مقاعد الجنسين يجب أن تكون أرقامًا صحيحة غير سالبة.";
     if (input.maleSeats + input.femaleSeats !== input.totalSeats) return "مجموع مقاعد الرجال والنساء يجب أن يساوي الإجمالي.";
@@ -232,7 +232,7 @@ export async function uploadEventCover(formData: FormData): Promise<UploadResult
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم تُرفَق صورة." };
   if (file.size > MAX_COVER_BYTES) return { ok: false, message: "حجم الصورة يتجاوز ٥ ميغابايت." };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة — استخدم JPG أو PNG أو WEBP أو GIF." };
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم JPG أو PNG أو WEBP أو GIF." };
 
   const path = `${COVER_PREFIX}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
   const { error } = await sb.storage.from(COVER_BUCKET).upload(path, file, { contentType: file.type, upsert: false });

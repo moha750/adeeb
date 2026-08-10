@@ -47,7 +47,7 @@ export function HeatGrid({
   // الذروة — أكبر خليّةٍ (لإبرازها ولوصف aria).
   let pR = -1, pC = -1, pV = -1;
   values.forEach((row, ri) => row.forEach((v, ci) => { if (v > pV) { pV = v; pR = ri; pC = ci; } }));
-  const peakLabel = pV > 0 ? `الذروة: ${rows[pR]} · ${cols[pC]} — ${nf(pV)}` : "";
+  const peakLabel = pV > 0 ? `الذروة: ${rows[pR]}، ${cols[pC]}، ${nf(pV)}` : "";
 
   return (
     <div className="chart-heatgrid-wrap" role="img" aria-label={`خريطة حرارة: النشاط حسب ${rows.length} صفًّا و${cols.length} عمودًا${peakLabel ? "؛ " + peakLabel : ""}`}>
@@ -62,7 +62,7 @@ export function HeatGrid({
               const pct = cellPct(v, top);
               const cls = "chart-heatgrid-cell" + (pct >= 62 ? " hot" : "") + (ri === pR && ci === pC && pV > 0 ? " peak" : "");
               return (
-                <span key={ci} className={cls} title={`${r} · ${cols[ci]} — ${nf(v)}`} style={{ background: mix(tone, pct) }}>
+                <span key={ci} className={cls} title={`${r}، ${cols[ci]}، ${nf(v)}`} style={{ background: mix(tone, pct) }}>
                   {v ? formatValue(v) : ""}
                 </span>
               );

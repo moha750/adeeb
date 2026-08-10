@@ -36,7 +36,7 @@ export default async function MyCommitteePage() {
       <>
         <Head />
         <Alert tone="warning" title="لا لجنة تقودها">
-          هذه الشاشة لقادة اللجان التنفيذيّة ونوّابهم — كشفُ اللجنة عرضًا. ولا يظهر لك كشفٌ
+          هذه الشاشة لقادة اللجان التنفيذيّة ونوّابهم: كشفُ اللجنة عرضًا. ولا يظهر لك كشفٌ
           لأنّك لا تشغل مقعد قيادةٍ في لجنة.
         </Alert>
       </>
@@ -62,7 +62,7 @@ export default async function MyCommitteePage() {
       <>
         <Head name={scope.committee.name} />
         <Alert tone="warning" title="لجنةٌ غير مفعّلة">
-          {scope.committee.name} لا تظهر في الهيكلة الحيّة — راجِع حالتها في «هيكلة أديب».
+          {scope.committee.name} لا تظهر في الهيكلة الحيّة. راجِع حالتها في «هيكلة أديب».
         </Alert>
       </>
     );

@@ -83,7 +83,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
     const file = files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) { toast.error("اختر ملفَّ صورة."); return; }
-    if (file.size > MAX_SOURCE) { toast.error("الصورة أكبر من ١٥ ميغابايت — اختر أصغر منها."); return; }
+    if (file.size > MAX_SOURCE) { toast.error("الصورة أكبر من ١٥ ميغابايت. اختر أصغر منها."); return; }
 
     const url = URL.createObjectURL(file);
     const el = new Image();
@@ -95,7 +95,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
     };
     el.onerror = () => {
       URL.revokeObjectURL(url);
-      toast.error("تعذّر قراءة هذه الصورة — جرّب صيغة JPG أو PNG أو WEBP.");
+      toast.error("تعذّر قراءة هذه الصورة. جرّب صيغة JPG أو PNG أو WEBP.");
     };
     el.src = url;
   };
@@ -231,7 +231,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
             </Button>
           ) : null}
         </span>
-        <span className="fld-help">صورةٌ مربّعة تُقصّ هنا قبل الرفع — تظهر في اللوحة وفي كشوف أعضاء أديب.</span>
+        <span className="fld-help">صورةٌ مربّعة تُقصّ هنا قبل الرفع، تظهر في اللوحة وفي كشوف أعضاء أديب.</span>
       </div>
 
       <input
@@ -249,6 +249,8 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
         title="قصّ صورتك"
         description="اسحب الصورة لتضبط موضعها، وكبّرها بالعجلة أو بالزرّين. ما يظهر في المربّع هو ما يُحفظ."
         size="sm"
+        // جسمٌ متوسّط: اللوح وأزرارُه بمقاسهما الطبيعيّ في وسط النافذة، لا ممتدَّين على الصفّ
+        className="mdl-center"
         footer={
           <>
             <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
@@ -256,29 +258,27 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
           </>
         }
       >
-        <div className="flex flex-col items-center gap-3">
-          <canvas
-            ref={setCanvas}
-            className="touch-none cursor-move"
-            style={{ width: VIEW, height: VIEW, maxWidth: "100%" }}
-            onPointerDown={onDown}
-            onPointerMove={onMove}
-            onPointerUp={onUp}
-            onPointerCancel={onUp}
-            aria-label="معاينة قصّ الصورة"
-            role="img"
-          />
-          <div className="flex items-center gap-2">
-            <IconButton size="md" aria-label="تصغير" title="تصغير" onClick={() => zoomBy(1 / 1.2)}>
-              <MagnifyingGlassMinus aria-hidden />
-            </IconButton>
-            <IconButton size="md" aria-label="تكبير" title="تكبير" onClick={() => zoomBy(1.2)}>
-              <MagnifyingGlassPlus aria-hidden />
-            </IconButton>
-            <IconButton size="md" aria-label="إعادة الضبط" title="إعادة الضبط" onClick={reset}>
-              <ArrowCounterClockwise aria-hidden />
-            </IconButton>
-          </div>
+        <canvas
+          ref={setCanvas}
+          className="touch-none cursor-move"
+          style={{ width: VIEW, height: VIEW, maxWidth: "100%" }}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
+          aria-label="معاينة قصّ الصورة"
+          role="img"
+        />
+        <div className="flex items-center gap-2">
+          <IconButton size="md" aria-label="تصغير" title="تصغير" onClick={() => zoomBy(1 / 1.2)}>
+            <MagnifyingGlassMinus aria-hidden />
+          </IconButton>
+          <IconButton size="md" aria-label="تكبير" title="تكبير" onClick={() => zoomBy(1.2)}>
+            <MagnifyingGlassPlus aria-hidden />
+          </IconButton>
+          <IconButton size="md" aria-label="إعادة الضبط" title="إعادة الضبط" onClick={reset}>
+            <ArrowCounterClockwise aria-hidden />
+          </IconButton>
         </div>
       </Modal>
 

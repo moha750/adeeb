@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AreaChart, Badge, BarList, Button, ChartPanel, ColumnBars, Donut, Stat, matchesSearch, Modal } from "@adeeb/design-system";
+import { AreaChart, Badge, BarList, Button, SectionCard, ColumnBars, Donut, Stat, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   CalendarBlank, ChartBar, ChatCenteredDots, ClockCountdown, DeviceMobile, Percent, User } from "@phosphor-icons/react";
 import { DownloadSimple, Eye, MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
@@ -38,7 +38,7 @@ function deviceDist(rows: ResponseRow[]): { label: string; value: number }[] {
 }
 
 /** مدرّج أوقات الإجابة — ستّ فئاتٍ ثابتة؛ n عدد المشاركات المؤقّتة (بلا زمنٍ تُستثنى). */
-function timeDist(rows: ResponseRow[]): { n: number; bars: { value: number; tick: string; title: string }[] } {
+function timeDist(rows: ResponseRow[]): { n: number; bars: { value: number; tick: string; label: string }[] } {
   const counts = TIME_BUCKETS.map(() => 0);
   let n = 0;
   for (const r of rows) {
@@ -49,7 +49,7 @@ function timeDist(rows: ResponseRow[]): { n: number; bars: { value: number; tick
     if (idx < 0) idx = TIME_BUCKETS.length - 1;
     counts[idx]++;
   }
-  return { n, bars: TIME_BUCKETS.map((b, i) => ({ value: counts[i], tick: b.label, title: `${b.label}: ${counts[i]}` })) };
+  return { n, bars: TIME_BUCKETS.map((b, i) => ({ value: counts[i], tick: b.label, label: b.label })) };
 }
 
 /** المشاركات عبر الزمن — تقطيعٌ يتكيّف مع المدى (يوميّ ≤٤٥ يومًا · أسبوعيّ ≤سنة · شهريّ)، بملء الفجوات صفرًا. */
@@ -96,6 +96,7 @@ function ChoiceBars({ items, answered }: { items: { label: string; count: number
   return (
     <BarList
       total={answered}
+      unit={{ one: "إجابة", two: "إجابتان", few: "إجابات" }}
       empty="لا خيارات."
       items={items.map((it) => ({
         label: it.label,
@@ -110,7 +111,7 @@ function ChoiceBars({ items, answered }: { items: { label: string; count: number
 function QuestionCard({ q }: { q: QuestionAgg }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <ChartPanel
+    <SectionCard
       headerVariant="chip"
       title={q.text}
       actions={
@@ -149,7 +150,7 @@ function QuestionCard({ q }: { q: QuestionAgg }) {
           ) : null}
         </>
       )}
-    </ChartPanel>
+    </SectionCard>
   );
 }
 
@@ -180,7 +181,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
   const statusMeta = STATUS_META[agg.status as SurveyStatus] ?? STATUS_META.draft;
 
   // مقاييس التحليلات — مشتقّةٌ من الخصائص المجلوبة سلفًا (لا قاعدة، لا طلب). معدّل التحويل «تقريبيّ»:
-  // total_views يعدّ كلّ فتحٍ للصفحة (معايناتٌ · تكرار · روبوتات) فالنسبة مؤشّرٌ لا رقمٌ قاطع.
+  // total_views يعدّ كلّ فتحٍ للصفحة (معايناتٌ، تكرار، روبوتات) فالنسبة مؤشّرٌ لا رقمٌ قاطع.
   const analytics = useMemo(() => {
     const views = agg.totals.views;
     const conv = views > 0 ? Math.min(100, Math.round((agg.totals.responses / views) * 100)) : null;
@@ -291,20 +292,20 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
                 <Stat icon={<Percent />} value={analytics.conv == null ? "—" : `${analytics.conv}٪`} label="معدّل تحويل تقريبيّ" />
                 <Stat icon={<CalendarBlank />} value={analytics.last} label="آخر مشاركة" />
               </div>
-              <ChartPanel title="المشاركات عبر الزمن">
-                <AreaChart seriesA="مشاركة" data={analytics.over} />
-              </ChartPanel>
+              <SectionCard title="المشاركات عبر الزمن">
+                <AreaChart labels={analytics.over.map((o) => o.label)} series={[{ name: "مشاركة", values: analytics.over.map((o) => o.a) }]} />
+              </SectionCard>
               <div className="st-grid2">
-                <ChartPanel title="الأجهزة" icon={<DeviceMobile />}>
-                  <Donut items={analytics.devices} centerLabel="مشاركة" empty="لا بيانات جهاز." />
-                </ChartPanel>
-                <ChartPanel title="توزيع أوقات الإجابة">
+                <SectionCard title="الأجهزة" icon={<DeviceMobile />}>
+                  <Donut items={analytics.devices} unit={{ one: "مشاركة", two: "مشاركتان", few: "مشاركات" }} empty="لا بيانات جهاز." />
+                </SectionCard>
+                <SectionCard title="توزيع أوقات الإجابة">
                   {analytics.time.n === 0 ? (
                     <p className="chart-empty">لا أوقات مسجّلة.</p>
                   ) : (
                     <ColumnBars bars={analytics.time.bars} barMaxWidth={44} />
                   )}
-                </ChartPanel>
+                </SectionCard>
               </div>
             </>
           )}
@@ -336,7 +337,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
         open={detail !== null}
         onClose={() => setDetail(null)}
         title={detail?.name ?? "مشاركة مجهولة"}
-        description={detail ? `${detail.date} · ${fmtDur(detail.seconds)}` : undefined}
+        description={detail ? `${detail.date}، ${fmtDur(detail.seconds)}` : undefined}
         size="md"
         footer={<Button variant="ghost" size="md" onClick={() => setDetail(null)}>إغلاق</Button>}
       >

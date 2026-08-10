@@ -17,7 +17,7 @@ import { SiteHeader } from "./_components/SiteHeader";
  */
 
 export const metadata = {
-  title: "الصفحة غير موجودة — أديب",
+  title: "الصفحة غير موجودة، أديب",
   description: "الرابط الذي طلبته لا يقود إلى صفحةٍ في موقع نادي أديب.",
 };
 

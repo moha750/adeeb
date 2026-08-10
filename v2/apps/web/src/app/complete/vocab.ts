@@ -50,7 +50,7 @@ export const completeSchema = z
       }
     }
     if (v.favorite_color?.trim() && !HEX_RE.test(v.favorite_color.trim())) {
-      ctx.addIssue({ code: "custom", path: ["favorite_color"], message: "لونٌ غير صالح — الصيغة #RRGGBB" });
+      ctx.addIssue({ code: "custom", path: ["favorite_color"], message: "لونٌ غير صالح. الصيغة #RRGGBB" });
     }
     // معرّفات التواصل — نفس المُطبِّع وقيد member_details_social_handle_check
     for (const k of SOCIAL_KEYS) {

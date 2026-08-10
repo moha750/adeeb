@@ -31,14 +31,14 @@ export function ActivityDetailView({ a }: { a: PublicActivity }) {
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-content-muted">
         {a.unlimited ? (
-          <span>التسجيل متاح للجميع — بلا عدد محدّد</span>
+          <span>التسجيل متاح للجميع، بلا عدد محدّد</span>
         ) : a.splitByGender ? (
           <>
             <span>مقاعد الرجال المتبقّية <b className="font-latin text-content">{a.maleRemaining}</b> / <b className="font-latin text-content">{a.maleSeats}</b></span>
             <span>مقاعد النساء المتبقّية <b className="font-latin text-content">{a.femaleRemaining}</b> / <b className="font-latin text-content">{a.femaleSeats}</b></span>
           </>
         ) : (
-          <span>المقاعد المتبقّية <b className="font-latin text-content">{a.totalRemaining}</b> / <b className="font-latin text-content">{a.totalSeats}</b> — مفتوح للجنسين</span>
+          <span>المقاعد المتبقّية <b className="font-latin text-content">{a.totalRemaining}</b> / <b className="font-latin text-content">{a.totalSeats}</b>، مفتوح للجنسين</span>
         )}
       </div>
 

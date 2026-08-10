@@ -125,7 +125,7 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
     if (preview) { setDone(true); return; }
     // درع Turnstile: لا نُرسل بلا رمزٍ صالح (غالبًا يجهز خفيةً في ثوانٍ)
     if (shieldOn && !tsToken) {
-      setFormError("جارٍ التأكّد أنّك لست روبوتًا — انتظر لحظةً ثمّ أعد الإرسال.");
+      setFormError("جارٍ التأكّد أنّك لست روبوتًا، انتظر لحظةً ثمّ أعد الإرسال.");
       return;
     }
     startSubmit(async () => {

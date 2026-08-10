@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { XLogo } from "@/app/_components/glyphs";
 import { LinkedinLogo } from "@/app/_components/glyphs";
-import { CarouselNav } from "@adeeb/design-system";
+import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
 
 export type Member = {
@@ -16,6 +16,8 @@ export type Member = {
   unit_name: string | null;
   twitter_account: string | null;
   linkedin_account: string | null;
+  /** عنوانُ صفحته العلنيّة `/m/<slug>` — فارغٌ لمن لم يبلغ حدَّ النشر. */
+  public_slug: string | null;
 };
 
 const FIG: Record<string, string> = {
@@ -62,6 +64,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   const [motion, setMotion] = useState(true);
   const [vw, setVw] = useState(1200);
 
+  const stageRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const startCur = useRef(0);
@@ -90,11 +93,15 @@ export function BoardCarousel({ members }: { members: Member[] }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // الدوران لا يبدأ قبل أن يصل الزائرُ إلى القسم: كان يمشي منذ تحميل الصفحة فيجد
+  // الزائرُ بطاقةً في وسط الدورة لا أوّلَ المجلس. وعودةُ القسم تُعيد المؤقّت من أوّله،
+  // فتُمهَل البطاقةُ الحاضرةُ مدّتَها كاملة.
+  const inView = useInView(stageRef);
   useEffect(() => {
-    if (hover || cooldown || dragging || !motion || n <= 1) return;
+    if (!inView || hover || cooldown || dragging || !motion || n <= 1) return;
     const id = setInterval(() => setCurrent((c) => (c + 1) % n), 3200);
     return () => clearInterval(id);
-  }, [hover, cooldown, dragging, motion, n]);
+  }, [inView, hover, cooldown, dragging, motion, n]);
 
   const bump = () => {
     setCooldown(true);
@@ -177,6 +184,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   return (
     <div>
       <div
+        ref={stageRef}
         className="bc-stage"
         style={{ height: stageH }}
         onMouseEnter={() => setHover(true)}
@@ -216,7 +224,20 @@ export function BoardCarousel({ members }: { members: Member[] }) {
                   <div className="bc-grad" />
                   <div className="bc-info">
                     <div>
-                      <div className="bc-nm">{toLatinDigits(m.full_name)}</div>
+                      {/* الاسمُ يقود إلى صفحته العلنيّة — اسمٌ بلا مقصدٍ لا يُنقَر.
+                          والنقرُ يُوقَف عن الشريط فلا يُحسَب سحبًا للبطاقة. */}
+                      {m.public_slug ? (
+                        <a
+                          className="bc-nm"
+                          href={`/m/${encodeURIComponent(m.public_slug)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ pointerEvents: a === 0 ? "auto" : "none" }}
+                        >
+                          {toLatinDigits(m.full_name)}
+                        </a>
+                      ) : (
+                        <div className="bc-nm">{toLatinDigits(m.full_name)}</div>
+                      )}
                       {m.role_name ? (
                         <div className="bc-rl">
                           {m.unit_name ? `${m.role_name} ${m.unit_name}` : m.role_name}

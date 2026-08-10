@@ -59,15 +59,15 @@ export default function ToolbarPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Toolbar</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Toolbar</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض شريط الأدوات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          شريط أدوات Aurora يعلو الجداول والقوائم: حقل بحث · مرشّحات منسدلة مع إعادة تعيين · مبدّل عرض (جدول/كروت). وعند تحديد صفوف يتحوّل إلى شريط إجراءات جماعيّة. جرّب كلّ حالة حيّة.
+          شريط أدوات Aurora يعلو الجداول والقوائم: حقل بحث، مرشّحات منسدلة مع إعادة تعيين، مبدّل عرض (جدول/كروت). وعند تحديد صفوف يتحوّل إلى شريط إجراءات جماعيّة. جرّب كلّ حالة حيّة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="بحث فقط">
-            <Lab>search · onSearch — أدنى شكل للشريط</Lab>
+            <Lab>search، onSearch: أدنى شكل للشريط</Lab>
             <Toolbar
               searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
               search={search1}
@@ -76,7 +76,7 @@ export default function ToolbarPage() {
           </Sec>
 
           <Sec title="بحث ومرشّحات">
-            <Lab>filters · filterValues · onFilter · onReset — زرّ «إعادة تعيين» يظهر عند اختيار أيّ مرشّح</Lab>
+            <Lab>filters، filterValues، onFilter، onReset: زرّ «إعادة تعيين» يظهر عند اختيار أيّ مرشّح</Lab>
             <Toolbar
               searchPlaceholder="ابحث…"
               search={search2}
@@ -89,7 +89,7 @@ export default function ToolbarPage() {
           </Sec>
 
           <Sec title="مبدّل العرض">
-            <Lab>view · onViewChange — يظهر المبدّل (جدول/كروت) فقط إن مُرِّر onViewChange</Lab>
+            <Lab>view، onViewChange: يظهر المبدّل (جدول/كروت) فقط إن مُرِّر onViewChange</Lab>
             <Toolbar
               searchPlaceholder="ابحث…"
               search={search3}
@@ -101,7 +101,7 @@ export default function ToolbarPage() {
           </Sec>
 
           <Sec title="الشريط الكامل">
-            <Lab>بحث + مرشّحات + مبدّل عرض — الشريط النحيل الكامل (تهذيب القائمة فقط: بحث/تصفية/عرض)</Lab>
+            <Lab>بحث + مرشّحات + مبدّل عرض: الشريط النحيل الكامل (تهذيب القائمة فقط: بحث/تصفية/عرض)</Lab>
             <Toolbar
               searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
               search={search4}
@@ -116,7 +116,7 @@ export default function ToolbarPage() {
           </Sec>
 
           <Sec title="وضع التحديد الجماعيّ">
-            <Lab>selectedCount &gt; 0 · bulkActions · onClearSelection — يستبدل الشريط بإجراءات جماعيّة</Lab>
+            <Lab>selectedCount &gt; 0، bulkActions، onClearSelection: يستبدل الشريط بإجراءات جماعيّة</Lab>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setSelected((n) => n + 1)}>حدّد صفًّا (+1)</Button>
               <Button variant="ghost" size="sm" onClick={() => setSelected(5)}>حدّد 5</Button>

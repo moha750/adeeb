@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ChartPanel, Field, Switch, matchesSearch } from "@adeeb/design-system";
+import { Button, SectionCard, Field, Switch, matchesSearch } from "@adeeb/design-system";
 import { Hash, Shapes, Sparkle, TextT } from "@phosphor-icons/react";
 import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
@@ -67,9 +67,9 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="الإحصائيّة">
+        <SectionCard headerVariant="chip" icon={<Sparkle />} title="الإحصائيّة">
           <div className="form-grid">
-            <Field className="form-full" label="اسم الإحصائيّة" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: ورش تدريبية · عضو · ظهور إعلامي" value={label} onChange={(e) => setLabel(e.target.value)} required />
+            <Field className="form-full" label="اسم الإحصائيّة" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: ورش تدريبية، عضو، ظهور إعلامي" value={label} onChange={(e) => setLabel(e.target.value)} required />
             <Field type="number" charset="digits" label="الرقم" icon={<Hash />} innerIcon={<Hash />} placeholder="مثال: 350" value={count} onChange={(e) => setCount(e.target.value)} helper="حجم الكرت في الملخّص يتناسب مع الرقم." required />
             <div className="form-full">
               <Switch row label="إظهار «+» بعد الرقم" description="لأرقام «وأكثر» (مثل ٣٥٠+). يظهر مباشرةً في ملخّص المسيرة." checked={plus} onChange={(e) => setPlus(e.target.checked)} />
@@ -80,23 +80,23 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
               </div>
             ) : null}
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<Shapes />} title="الأيقونة">
+        <SectionCard headerVariant="chip" icon={<Shapes />} title="الأيقونة">
           <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-content-muted">
             <span>المختارة:</span>
             <span className="inline-flex items-center gap-1.5 rounded bg-secondary/10 px-2 py-1 text-content ring-1 ring-secondary/40">
               <span className="inline-flex h-4 w-4 items-center justify-center [&>svg]:h-full [&>svg]:w-full"><StatIcon name={icon} /></span>
               <b>{STAT_ICONS[icon]?.label ?? "—"}</b>
             </span>
-            <span>· تظهر في كرت الإحصائيّة داخل «ملخص المسيرة».</span>
+            <span>، تظهر في كرت الإحصائيّة داخل «ملخص المسيرة».</span>
           </div>
 
           <Field
             label="ابحث عن أيقونة"
             icon={<MagnifyingGlass />}
             innerIcon={<MagnifyingGlass />}
-            placeholder="اكتب اسمًا: جائزة · كتاب · ساعات · فعاليّة…"
+            placeholder="اكتب اسمًا: جائزة، كتاب، ساعات، فعاليّة…"
             value={iconQuery}
             onChange={(e) => setIconQuery(e.target.value)}
           />
@@ -117,7 +117,7 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
               ))
             )}
           </div>
-        </ChartPanel>
+        </SectionCard>
       </div>
     </>
   );

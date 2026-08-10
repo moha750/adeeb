@@ -9,7 +9,7 @@ import {
   ShieldWarning, User, UsersThree,
 } from "@phosphor-icons/react";
 import {
-  ArrowCounterClockwise, Eye, MagnifyingGlass, PencilSimple, Plus, Prohibit, Star, Trash,
+  ArrowCounterClockwise, ArrowsClockwise, Eye, MagnifyingGlass, PencilSimple, Plus, Prohibit, Star, Trash,
   WarningCircle,
 } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
@@ -26,6 +26,7 @@ import { EmptyState } from "../_components/EmptyState";
 import { Skeleton } from "../_components/Skeleton";
 import { useToast } from "../_components/ToastProvider";
 import { Cell } from "../_components/Cell";
+import { positionLine } from "@/lib/positionLabel";
 import { Section } from "../_components/Section";
 import { SOCIAL_ICON } from "../_components/socialIcons";
 import { MEMBER_STATUS } from "@/lib/memberStatus";
@@ -34,9 +35,12 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
-import type { MemberRow, MemberStatus } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, RECORD_NO_MAX, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
+import type { MemberRow, MemberStatus, MoveTarget } from "./data";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { endMembership, restoreMembership, updateMember } from "./actions";
+// النقل إسنادٌ لا فعلٌ ثانٍ: البابُ نفسه الذي يفتحه تبويب التعيينات (`assign_position`)، وهي
+// تُخلي الموضع القديم وتكتب الجديد في معاملةٍ واحدة. فلا فعلَ خادميّ ثالثٌ يفترق عنهما يومًا.
+import { assignPosition } from "./structure/actions";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 
 // الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
@@ -106,16 +110,20 @@ const Ico = {
   restore: <ArrowCounterClockwise />,
   warn: <ShieldWarning />,
   cert: <Certificate />,
+  move: <ArrowsClockwise />,
 };
 
 /** أدنى طول لسبب الإنهاء — نفس عتبة `terminate_membership` في القاعدة (خمسة أحرف). */
 const REASON_MIN = 5;
 
+/** خيارات سبب الإنهاء: نصُّ السبب هو قيمتُه — يُملأ به الصندوق ثمّ يُحرَّر (`lib/membershipFields`). */
+const REASON_OPTIONS = TERMINATION_REASONS.map((r) => ({ value: r, label: r }));
+
 const columns: Column<MemberRow>[] = [
   {
     key: "member", header: "العضو", width: "minmax(220px, 2.2fr)", sortable: true,
     render: (m) => {
-      const rc = [m.role, m.committee].filter(Boolean).join(" ") || "غير متوفّر";
+      const rc = positionLine(m.role, m.committee) ?? "غير متوفّر";
       return (
         <div className="dt-mem">
           <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="sm" />
@@ -137,14 +145,19 @@ const columns: Column<MemberRow>[] = [
   { key: "joined", header: "تاريخ الانضمام", width: "1.1fr", sortable: true, render: (m) => <span className="txt">{m.joined}</span> },
 ];
 
-// تبويب الموقوفين: العضو + تاريخ إنهاء العضوية + سببه (بدل الجوّال/البريد/الانضمام).
+// تبويب الموقوفين: العضو + تاريخ إنهاء العضوية + من أنهاها + سببه (بدل الجوّال/البريد/الانضمام).
 // دالّة لا ثابت: عمود السبب يحمل مستدعيًا يفتح نافذته، فيُبنى بمعرفته.
 const makeSuspendedColumns = (onReason: (m: MemberRow) => void): Column<MemberRow>[] => [
   columns[0],
-  { key: "endDate", header: "تاريخ إنهاء العضوية", width: "1.2fr", render: (m) => (m.endDate ? <span className="txt">{m.endDate}</span> : <span className="txt na">غير مسجّل</span>) },
+  { key: "endDate", header: "تاريخ إنهاء العضوية", width: "1.1fr", render: (m) => (m.endDate ? <span className="txt">{m.endDate}</span> : <span className="txt na">غير مسجّل</span>) },
+  // من أنهاها — من سجلّ النشاط لا من الملفّ. ومن أُنهي قبل السجلّ (زمنُ V1) لا فاعلَ له: «غير مسجّل».
+  {
+    key: "endBy", header: "من أنهى العضوية", width: "minmax(140px, 1.3fr)",
+    render: (m) => (m.endBy ? <span className="txt txt-clip" title={m.endBy}>{m.endBy}</span> : <span className="txt na">غير مسجّل</span>),
+  },
   // السبب جملة حرّة: سطرٌ واحد و«…»، والتلميح يكشف كاملها، والنقر يفتحها في نافذتها.
   {
-    key: "endReason", header: "سبب إنهاء العضوية", width: "minmax(240px, 2.6fr)",
+    key: "endReason", header: "سبب إنهاء العضوية", width: "minmax(200px, 2.2fr)",
     render: (m) => (m.endReason
       ? <button type="button" className="txt txt-clip txt-more" title={m.endReason} onClick={() => onReason(m)}>{m.endReason}</button>
       : <span className="txt na">غير مذكور</span>),
@@ -173,7 +186,7 @@ type ModalState =
 // استثناء: اللجنة والقسم والكلّية والتخصّص والرقم الأكاديميّ تُخفى إن خلَت — لأنّ خلوّها يعني أنّ الدور/الدرجة
 // لا يحملها أصلًا لا أنّ البيانات ناقصة: الإدارة العليا بلا لجنة ولا قسم، و«ثانوية عامة»/«موظف» بلا كلّية ولا
 // تخصّص ولا رقم أكاديميّ — يفرض خلوّها قيدُ member_details_academic_fields_check، فالخلوّ فحصٌ كافٍ هنا.
-function ProfileBody({ member }: { member: MemberRow }) {
+function ProfileBody({ member, onMove }: { member: MemberRow; onMove?: () => void }) {
   // المنصّات المملوءة فقط — وثلاثٌ منها تترك الأخيرة نصفَ صفّ في شبكة العمودين، فتُمدّ لصفّ كامل
   // التخزين معياريّ (معرّف مجرّد يحرسه member_details_social_handle_check)، فالعرض يزيّن ولا يرقّع:
   // socialLabel يضيف @ للثلاث ويترك لينكدإن، و socialUrl يبني الرابط بلا فحص صيغ.
@@ -187,15 +200,25 @@ function ProfileBody({ member }: { member: MemberRow }) {
   const terminated = member.status === "suspended" && !!(member.endReason || member.endDate);
   return (
     <>
-      <div className="pvb-name">{member.name}</div>
-      <div className="pvb-role">{[member.role, member.committee].filter(Boolean).join(" · ") || "غير متوفّر"}</div>
-      <div className="pvb-badges"><Badge tone={MEMBER_STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{MEMBER_STATUS[member.status].label}</Badge></div>
+      {/* الرأس كتلةٌ واحدة: إيقاعُه الداخليّ أضيق من فجوة الجسم، فلو تفرّق أبناؤه لفرّقت بينهم */}
+      <div className="pvb-head">
+        <div className="pvb-name">{member.name}</div>
+        <div className="pvb-role">{positionLine(member.role, member.committee) ?? "غير متوفّر"}</div>
+        <div className="pvb-badges"><Badge tone={MEMBER_STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{MEMBER_STATUS[member.status].label}</Badge></div>
+      </div>
       <div className="pva-sections">
         <Section icon={<IdentificationCard />} title="بيانات العضويّة">
           <Cell label="الدور" icon={<Star />} value={member.role} />
           <Cell label="تاريخ الانضمام" icon={<CalendarBlank />} value={member.joined} />
           {member.dept ? <Cell full label="القسم" icon={<Buildings />} value={member.dept} /> : null}
-          {member.committee ? <Cell full label="اللجنة" icon={<UsersThree />} value={member.committee} /> : null}
+          {/* رُكنُ اللجنة يقول فعلَها لمن يملكه: من فتح الملفّ فرأى لجنته يطلب تغييرها من حيث
+              رآها لا من قائمة النقاط. وبلا سلطةٍ يعود الرُّكن نسخًا كسائر الخلايا. */}
+          {member.committee ? (
+            <Cell
+              full label="اللجنة" icon={<UsersThree />} value={member.committee}
+              action={onMove ? { icon: <ArrowsClockwise />, label: "نقل إلى لجنة أخرى", onClick: onMove } : undefined}
+            />
+          ) : null}
         </Section>
         <Section icon={<AddressBook />} title="بيانات التواصل">
           <Cell full lat label="البريد الإلكترونيّ" icon={<Envelope />} value={member.email} />
@@ -219,6 +242,8 @@ function ProfileBody({ member }: { member: MemberRow }) {
           <Section end icon={<Prohibit />} title="إنهاء العضويّة">
             <Cell full label="سبب الإنهاء" icon={<WarningCircle />} value={member.endReason} />
             <Cell full label="تاريخ الإنهاء" icon={<CalendarX />} value={member.endDate} />
+            {/* اسمٌ لا يُنسخ — ورُكنُه خالٍ (القاعدة ٨). ومن أُنهي قبل سجلّ النشاط لا فاعلَ له فتقول «غير متوفّر». */}
+            <Cell full noCopy label="من أنهى العضوية" icon={<User />} value={member.endBy} />
           </Section>
         ) : null}
       </div>
@@ -252,12 +277,17 @@ type ViewProps = {
   contact?: boolean;
   /** حدُّ الإنذارات — يمرّ من القاعدة إلى نافذة الإصدار (لا رقمَ محفورًا هنا). */
   warningLimit?: number;
+  /**
+   * وجهاتُ النقل — اللجان التي تُصرّح بمقعد «عضو لجنة». تُمرَّر من الشاشة الخادميّة، وبلاها
+   * يسقط البند: نافذةٌ بلا وجهةٍ وعدٌ فارغ. والسلطةُ على الصفّ (`canMove`) شرطٌ آخر معها.
+   */
+  moveTargets?: MoveTarget[];
 };
 
-export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3 }: ViewProps) {
+export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3, moveTargets = [] }: ViewProps) {
   // منبعٌ واحد للسلطة: في العرض المحض تُقرأ صفرًا فتغيب الأفعال كلُّها من الجدول والكرت والنافذة
   const members = useMemo(
-    () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false, canCertify: false })) : input),
+    () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false, canCertify: false, canMove: false })) : input),
     [input, readOnly],
   );
   const mayManageData = mayManage && !readOnly;
@@ -275,12 +305,16 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   // إنهاء العضوية وإعادتها — نافذتان مستقلّتان: الأولى تطلب سببًا (نصٌّ يُحفظ ويُعرَض بعدها)،
   // والثانية تأكيدٌ مجرّد. والقاعدة هي الحَكَم في الحالين؛ هذه أوراقُها لا حكمُها.
   const [ending, setEnding] = useState<MemberRow | null>(null);
+  // حالةٌ واحدة: نصُّ السبب. والقائمة تكتب فيه، والخيارُ المختار يُشتقّ منه — فلا رقمان لسؤال.
   const [endReason, setEndReason] = useState("");
   const [endErr, setEndErr] = useState<string | null>(null);
   const [restoring, setRestoring] = useState<MemberRow | null>(null);
   // إصدار إنذار — نافذة الغرفة نفسها (مصدرٌ واحد)، مثبّتةً على صاحب الصفّ فلا يُختار غيره
   const [warning, setWarning] = useState<MemberRow | null>(null);
   const [certifying, setCertifying] = useState<MemberRow | null>(null);
+  // النقل إلى لجنةٍ أخرى — نافذةٌ مستقلّة كأخواتها، ومعها اللجنةُ المختارة.
+  const [moving, setMoving] = useState<MemberRow | null>(null);
+  const [moveTo, setMoveTo] = useState("");
   const [acting, startAct] = useTransition();
   // نموذج الإضافة/التعديل عبر React Hook Form + Zod
   const editForm = useForm<MemberForm>({
@@ -291,7 +325,9 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const [pageSize, setPageSize] = useState(50);
   const [view, changeView] = usePersistentView("members-view");
 
-  const section = mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION[lockedStatus ?? "all"];
+  // الحالةُ المثبّتة تسبق اسمَ الشاشة في المفردات: كشفُ «من غادر» داخل «من أشرف عليهم» ناسُه
+  // «عضو سابق» لا «عضو» — والعنوانُ نفسه لا يُرسَم هناك أصلًا (`headless`).
+  const section = lockedStatus ? SECTION[lockedStatus] : mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION.all;
   // نغمة الطبقة البصريّة: شاشة أحاديّة الحالة → الطاولة كلّها بنغمة الحالة؛ العرض المختلط → نغمة كلّ صفّ حسب حالته
   const tableTone = lockedStatus ? SURFACE_TONE[lockedStatus] : undefined;
   const rowToneFn = lockedStatus
@@ -408,10 +444,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
 
   const openEnd = (m: MemberRow) => { setEndReason(""); setEndErr(null); setEnding(m); };
   const submitEnd = () => {
-    const reason = ending ? endReason.trim() : "";
-    if (reason.length < REASON_MIN) { setEndErr(`اذكر سبب إنهاء العضوية (${REASON_MIN} أحرف فأكثر).`); return; }
     const target = ending;
     if (!target) return;
+    // المحفوظُ ما في الصندوق دائمًا — اختِير من القائمة أو كُتب باليد أو زِيد عليه
+    const reason = endReason.trim();
+    if (reason.length < REASON_MIN) { setEndErr(`اذكر سبب إنهاء العضوية (${REASON_MIN} أحرف فأكثر).`); return; }
     startAct(async () => {
       const r = await endMembership({ userId: target.id, reason });
       if (r.ok) { toast.success(`أُنهيت عضوية «${target.name}».`); setEnding(null); router.refresh(); } else toast.error(r.message);
@@ -423,6 +460,19 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
     startAct(async () => {
       const r = await restoreMembership({ userId: target.id });
       if (r.ok) { toast.success(`أُعيدت عضوية «${target.name}».`); setRestoring(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+
+  // النقل إلى لجنةٍ أخرى — إسنادُ مقعد «عضو لجنة» في الوجهة، و`assign_position` تُخلي لجنتَه
+  // القديمة في المعاملة نفسها. فلا خطوتان («أخرِجه» ثمّ «أدخِله») يقع بينهما عضوٌ بلا لجنة.
+  const openMove = (m: MemberRow) => { setMoveTo(""); setMoving(m); };
+  const submitMove = () => {
+    const target = moving;
+    if (!target || !moveTo) return;
+    const to = moveTargets.find((c) => String(c.id) === moveTo);
+    startAct(async () => {
+      const r = await assignPosition({ userId: target.id, roleName: "committee_member", committeeId: Number(moveTo) });
+      if (r.ok) { toast.success(`نُقل «${target.name}» إلى ${to?.name ?? "اللجنة الجديدة"}.`); setMoving(null); router.refresh(); } else toast.error(r.message);
     });
   };
 
@@ -447,6 +497,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
           ...(m.status === "suspended"
             ? (m.canEnd ? [{ label: "إعادة العضوية", icon: Ico.restore, onSelect: () => setRestoring(m) }] : [])
             : (m.canEdit ? [{ label: "تعديل البيانات", icon: Ico.edit, onSelect: () => openEdit(m) }] : [])),
+          // النقل بين اللجان ترتيبٌ إداريّ لا عقوبة، فبندُه في «إجراءات» لا في منطقة الخطر.
+          // ويقع على **عضو لجنةٍ سارٍ** وحده (`canMove` تحمل الشرط كلَّه من القاعدة والدور معًا).
+          ...(m.canMove && moveTargets.length > 0
+            ? [{ label: "نقل إلى لجنة أخرى", icon: Ico.move, onSelect: () => openMove(m) }]
+            : []),
           // الإنذار فعلٌ على العضو نفسه، فبندُه هنا لا في غرفةٍ أخرى — ويتبع الصفَّ لا صاحبَ الشاشة.
           ...(m.canWarn && m.status === "active"
             ? [{ label: "إصدار إنذار", icon: Ico.warn, onSelect: () => setWarning(m) }]
@@ -606,29 +661,33 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
         }
       >
         {modal?.mode === "view" && member ? (
-          <ProfileBody member={member} />
+          // النافذةُ تُغلَق قبل نافذة النقل — لا نافذتان فوق بعض
+          <ProfileBody
+            member={member}
+            onMove={member.canMove && moveTargets.length > 0 ? () => { close(); openMove(member); } : undefined}
+          />
         ) : (
-          <form id="member-form" className="mdl-grid" onSubmit={onSubmitMember} noValidate>
-            <ModalSectionHeading className="mdl-full" icon={<IdentificationBadge />} title="البيانات الأساسيّة" />
-            <Field className="mdl-full" label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" error={editForm.formState.errors.name?.message} required {...editForm.register("name")} />
+          <form id="member-form" className="form-grid" onSubmit={onSubmitMember} noValidate>
+            <ModalSectionHeading icon={<IdentificationBadge />} title="البيانات الأساسيّة" />
+            <Field className="form-full" label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" error={editForm.formState.errors.name?.message} required {...editForm.register("name")} />
 
-            <ModalSectionHeading className="mdl-full" icon={<AddressBook />} title="بيانات التواصل" />
+            <ModalSectionHeading icon={<AddressBook />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="mdl-full" label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
-            <Field className="mdl-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
+            <Field className="form-full" label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
+            <Field className="form-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (
-              <Alert className="mdl-full" tone="warning" title="لا سجلّ تفاصيل لهذا العضو">
-                البيانات الأكاديميّة والتواصل الاجتماعيّ لن تُحفظ له — سجلّها يُنشأ عند إكمال بيانات الالتحاق. أمّا الاسم ورقم الجوّال فيُحفظان.
+              <Alert className="form-full" tone="warning" title="لا سجلّ تفاصيل لهذا العضو">
+                البيانات الأكاديميّة والتواصل الاجتماعيّ لن تُحفظ له: سجلّها يُنشأ عند إكمال بيانات الالتحاق. أمّا الاسم ورقم الجوّال فيُحفظان.
               </Alert>
             ) : null}
 
-            <ModalSectionHeading className="mdl-full" icon={<Books />} title="البيانات الأكاديميّة" />
+            <ModalSectionHeading icon={<Books />} title="البيانات الأكاديميّة" />
             <Controller
               control={editForm.control}
               name="degree"
               render={({ field }) => (
-                <Select className="mdl-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} required />
+                <Select className="form-full" label="الدرجة العلمية" icon={<Certificate />} options={DEGREES} value={field.value ?? ""} onValueChange={field.onChange} error={editForm.formState.errors.degree?.message} required />
               )}
             />
             {/* إنقاصُ الدرجة عن جامعيّة محوٌ لا رجعة فيه: الفعل الخادميّ يكتب null في الثلاثة، ولا نسخة
@@ -636,8 +695,8 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
                 الشرط يقارن درجة القاعدة بالمختارة: يظهر حين كانت جامعيّة فصارت غير جامعيّة — لا عند فتح
                 النافذة على عضوٍ غير جامعيّ أصلًا (لا شيء عنده ليُمحى). */}
             {member && hasAcademicFields(member.degreeRaw) && !hasAcademicFields(editForm.watch("degree")) ? (
-              <Alert className="mdl-full" tone="danger" title="ستُمحى بياناته الأكاديميّة عند الحفظ">
-                كلّيته وتخصّصه ورقمه الأكاديميّ تُحذف نهائيًّا — لا نسخة منها ولا استرجاع. وإن أعدت درجته جامعيّةً لاحقًا، فأدخِلها من جديد.
+              <Alert className="form-full" tone="danger" title="ستُمحى بياناته الأكاديميّة عند الحفظ">
+                كلّيته وتخصّصه ورقمه الأكاديميّ تُحذف نهائيًّا، لا نسخة منها ولا استرجاع. وإن أعدت درجته جامعيّةً لاحقًا، فأدخِلها من جديد.
               </Alert>
             ) : null}
 
@@ -647,11 +706,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
               <>
                 <Field label="الكلّية" icon={<GraduationCap />} innerIcon={<Buildings />} placeholder="مثال: كلّية الآداب" error={editForm.formState.errors.college?.message} required {...editForm.register("college")} />
                 <Field label="التخصّص" icon={<BookOpen />} innerIcon={<Books />} placeholder="مثال: اللغة العربيّة" error={editForm.formState.errors.major?.message} required {...editForm.register("major")} />
-                <Field className="mdl-full" label="الرقم الأكاديميّ" charset="digits" maxLength={RECORD_NO_MAX} icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} required {...editForm.register("recordNo")} />
+                <Field className="form-full" label="الرقم الأكاديميّ" charset="digits" maxLength={RECORD_NO_MAX} icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="مثال: 443001234" error={editForm.formState.errors.recordNo?.message} required {...editForm.register("recordNo")} />
               </>
             ) : null}
 
-            <ModalSectionHeading className="mdl-full" icon={<ShareNetwork />} title="التواصل الاجتماعيّ" />
+            <ModalSectionHeading icon={<ShareNetwork />} title="التواصل الاجتماعيّ" />
             {/* الأربعة على نسق واحد فتُبنى من SOCIAL_KEYS — لا أربع نسخ تفترق يومًا.
                 onBlur يُطبّع ما لُصق فورًا (رابط ⇐ معرّف · @معرّف ⇐ معرّف)، فيرى المدير الصيغة المخزَّنة
                 لا ما كتبه. وما ليس معرّفًا لا يُطبَّع صامتًا: يبقى كما هو ويقول Zod سببه. */}
@@ -683,7 +742,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
       <Modal
         open={reason !== null}
         onClose={() => setReason(null)}
-        title={reason ? `سبب إنهاء العضوية — ${reason.name}` : "سبب إنهاء العضوية"}
+        title={reason ? `سبب إنهاء العضوية: ${reason.name}` : "سبب إنهاء العضوية"}
         size="sm"
         className="pvb-modal mdl-tone-danger"
         hero={reason ? <Avatar name={reason.name} src={reason.avatar ?? undefined} gender={reason.gender} size="2xl" status="busy" className="pvb-av" /> : undefined}
@@ -692,12 +751,15 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
       >
         {reason ? (
           <>
-            <div className="pvb-name">{reason.name}</div>
-            <div className="pvb-role">{reason.endAgo ? `عضوية منتهية ${reason.endAgo}` : "عضوية منتهية"}</div>
+            <div className="pvb-head">
+              <div className="pvb-name">{reason.name}</div>
+              <div className="pvb-role">{reason.endAgo ? `عضوية منتهية ${reason.endAgo}` : "عضوية منتهية"}</div>
+            </div>
             <div className="pva-sections">
               <Section end icon={<Prohibit />} title="سبب إنهاء العضوية">
                 <Cell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={reason.endReason} />
                 <Cell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value={reason.endDate} />
+                <Cell full noCopy label="من أنهى العضوية" icon={<User />} value={reason.endBy} />
               </Section>
             </div>
           </>
@@ -712,7 +774,9 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
         busy={acting}
         title={ending ? `إنهاء عضوية «${ending.name}»؟` : "إنهاء العضوية"}
         description="تُنقَل العضويّة إلى «الأعضاء السابقين»، ولا تُحرَّر بياناتها بعدها حتّى تُعاد."
-        size="sm"
+        // متوسّطة لا صغيرة: الأسباب جملٌ تامّة، وفي الضيّقة يُقصّ نصفُ الجملة في الحقل المغلق —
+        // ولا يُقدَم على فعلٍ هدّامٍ بسببٍ لا يُقرأ كاملًا لحظةَ الإرسال.
+        size="md"
         className="mdl-tone-danger"
         footer={
           <>
@@ -721,20 +785,58 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
           </>
         }
       >
-        <div className="mdl-grid">
-          <Textarea
-            className="mdl-full"
-            label="سبب إنهاء العضوية"
-            icon={<Prohibit />}
-            innerIcon={<NotePencil />}
-            placeholder="مثال: انقطاع عن الحضور شهرين بلا عذر"
-            rows={4}
-            required
-            value={endReason}
-            error={endErr ?? undefined}
-            onChange={(e) => { setEndReason(e.target.value); if (endErr) setEndErr(null); }}
-          />
-        </div>
+        {/* الأسبابُ المتكرّرة **معينةً على الكتابة لا بديلًا عنها**: الاختيار يملأ الصندوق
+            أسفله وحسب، والصندوقُ هو المحفوظ — يُزاد عليه تفصيلُ الواقعة أو يُمحى ويُكتب غيره.
+            والخيارُ المختار يُشتقّ من النصّ: فإن حُرِّر لم يعد يطابق سببًا، فتفرغ القائمة صادقةً. */}
+        <Select
+          label="أسباب متكرّرة"
+          icon={<Prohibit />}
+          tone="danger"
+          optional
+          helper="اختر سببًا فيُكتب أدناه، ولك أن تزيد عليه أو تكتب غيره."
+          options={REASON_OPTIONS}
+          value={isPresetReason(endReason) ? endReason.trim() : ""}
+          onValueChange={(v) => { setEndReason(v); setEndErr(null); }}
+        />
+        <Textarea
+          label="سبب إنهاء العضوية"
+          icon={<Prohibit />}
+          innerIcon={<NotePencil />}
+          placeholder="مثال: انقطاع عن الحضور شهرين بلا عذر"
+          rows={4}
+          required
+          value={endReason}
+          error={endErr ?? undefined}
+          onChange={(e) => { setEndReason(e.target.value); if (endErr) setEndErr(null); }}
+        />
+      </Modal>
+
+      {/* نقلٌ إلى لجنةٍ أخرى — نغمةٌ محايدة: ترتيبٌ إداريّ لا عقوبة ولا استبدالُ شاغل.
+          والوجهةُ تُنخل من لجنته الحاليّة (لا يُعرَض عليك نقلُه إلى حيث هو). */}
+      <Modal
+        open={moving !== null}
+        onClose={() => setMoving(null)}
+        busy={acting}
+        title={moving ? `نقل «${moving.name}» إلى لجنة أخرى` : "نقل إلى لجنة أخرى"}
+        description="يخرج من لجنته الحاليّة ويُضمّ إلى المختارة في خطوةٍ واحدة. ولا يمسّ ذلك حالتَه ولا بياناته."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" size="md" onClick={() => setMoving(null)} disabled={acting}>إلغاء</Button>
+            <Button variant="primary" size="md" loading={acting} disabled={!moveTo} onClick={submitMove}>نقل</Button>
+          </>
+        }
+      >
+        <Select
+          label="اللجنة الجديدة"
+          icon={<UsersThree />}
+          searchable
+          options={moveTargets.filter((c) => c.id !== moving?.committeeId).map((c) => ({ value: String(c.id), label: c.name }))}
+          value={moveTo}
+          onValueChange={setMoveTo}
+          helper={moving?.committee ? `لجنته الآن: ${moving.committee}` : undefined}
+          required
+        />
       </Modal>
 
       <ConfirmDialog

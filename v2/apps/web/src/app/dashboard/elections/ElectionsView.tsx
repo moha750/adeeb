@@ -23,6 +23,15 @@ function statusBadge(e: ElectionRow) {
   return <Badge tone={meta.tone} variant="soft" dot live={meta.live}>{meta.label}</Badge>;
 }
 
+/**
+ * موعدُ الإغلاق التلقائيّ للطور **الجاري** — الترشّح في طوره والتصويت في طوره،
+ * وفارغُه بابٌ يُغلق بيد المشرف (كنّاسة القاعدة لا تلمس ما لا موعد له).
+ */
+const deadlineOf = (e: ElectionRow): string | null =>
+  e.status === "candidacy_open" ? e.candidacyEnd
+    : e.status === "voting_open" ? e.votingEnd
+      : null;
+
 // نغمة الصفّ حسب حالته — الملغى خطر، والمنتظِر فعلًا (ترشّح/تصويت مغلق) تحذير
 const SURFACE_TONE: Partial<Record<ElectionRow["status"], "success" | "warning" | "danger">> = {
   cancelled: "danger",
@@ -38,7 +47,7 @@ const LIFECYCLE_TABS: { value: string; label: string; match: (e: ElectionRow) =>
   { value: "cancelled", label: "ملغاة", match: (e) => e.status === "cancelled", empty: "لا انتخابات ملغاة." },
 ];
 
-export function ElectionsView({ elections, createOptions }: { elections: ElectionRow[]; createOptions: ElectionCreateOptions }) {
+export function ElectionsView({ elections, createOptions, readOnly = false }: { elections: ElectionRow[]; createOptions: ElectionCreateOptions | null; readOnly?: boolean }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [fv, setFv] = useState<Record<string, string>>({});
@@ -106,13 +115,19 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
   const columns: Column<ElectionRow>[] = useMemo(() => [
     {
       key: "position", header: "المنصب والنطاق", width: "minmax(220px, 2.4fr)", sortable: true,
-      render: (e) => <span className="txt"><b>{e.roleLabel}</b> · {e.scopeLabel}</span>,
+      render: (e) => <span className="txt"><b>{e.roleLabel}</b>{e.scopeLabel ? ` ${e.scopeLabel}` : ""}</span>,
     },
     ...(tab === "live"
       ? [{ key: "status", header: "الحالة", width: "1.1fr", render: (e: ElectionRow) => statusBadge(e) }]
       : []),
     { key: "candidates", header: "المرشّحون", width: "0.9fr", align: "center", sortable: true, render: (e) => <span className="txt num">{e.candidates}</span> },
     { key: "votes", header: "الأصوات", width: "0.8fr", align: "center", sortable: true, render: (e) => <span className="txt num">{e.votes}</span> },
+    ...(tab === "live"
+      ? [{
+        key: "deadline", header: "يُغلق تلقائيًّا", width: "minmax(150px, 1.3fr)",
+        render: (e: ElectionRow) => { const d = deadlineOf(e); return <span className="txt">{d ?? "بيد المشرف"}</span>; },
+      }]
+      : []),
     { key: "created", header: "أُنشئ", width: "1.1fr", sortable: true, render: (e) => <span className="txt">{e.created}</span> },
   ], [tab]);
 
@@ -121,7 +136,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
   const completedCount = elections.filter((e) => e.status === "completed").length;
   const filtering = !!search.trim() || !!fv.role;
 
-  const createCta = (
+  const createCta = readOnly ? null : (
     <Button variant="primary" size="md" onClick={() => setNewOpen(true)}><Plus size={18} />انتخاب جديد</Button>
   );
 
@@ -197,7 +212,7 @@ export function ElectionsView({ elections, createOptions }: { elections: Electio
         rowTone={(e) => SURFACE_TONE[e.status]}
       />
 
-      <NewElectionDialog open={newOpen} onClose={() => setNewOpen(false)} options={createOptions} />
+      {createOptions ? <NewElectionDialog open={newOpen} onClose={() => setNewOpen(false)} options={createOptions} /> : null}
     </>
   );
 }

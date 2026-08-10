@@ -29,14 +29,17 @@ export function SupervisedView({
   unit,
   committees,
   members,
+  departed,
   mayManageData,
 }: {
   unit: MyUnit | null;
   committees: MyCommittee[];
   members: MemberRow[];
+  /** من غادر لجانَه **أثناء ولايته** — الحدُّ الزمنيّ في `lib/mySupervision` لا هنا. */
+  departed: MemberRow[];
   mayManageData: boolean;
 }) {
-  const [view, setView] = useState<"committee" | "member">("committee");
+  const [view, setView] = useState<"committee" | "member" | "departed">("committee");
 
   // الأعداد تُشتقّ من اللجان نفسها لا تُمرَّر — فلا رقمان لسؤالٍ واحد يفترقان يومًا
   const people = new Set(committees.flatMap((c) => c.members.map((m) => m.userId))).size;
@@ -57,14 +60,33 @@ export function SupervisedView({
         <Stat icon={<UserMinus />} value={gaps} label="لجنة تنقصها قيادة" tone={gaps ? "danger" : "success"} />
       </div>
 
+      {/* محورٌ واحدٌ لا محوران: **أيّ كشفٍ أرى من نطاقي** — لجانُه، ثمّ أهلُها، ثمّ من غادرها.
+          ولذا سُمّيت الثلاثة أسماءً متناظرة (كانت «حسب اللجنة»/«حسب العضو» فصارت اسمَين
+          كثالثهما): «السابقون» لا تُقال «حسب…»، فلو بقيت الصيغة القديمة لدُسّ محورُ الحالة
+          في مبدّل طريقة العرض. */}
       <Segmented
-        aria-label="طريقة العرض"
+        aria-label="أيّ كشف"
         value={view}
-        onValueChange={(v) => setView(v as "committee" | "member")}
-        items={[{ value: "committee", label: "حسب اللجنة" }, { value: "member", label: "حسب العضو" }]}
+        onValueChange={(v) => setView(v as "committee" | "member" | "departed")}
+        items={[
+          { value: "committee", label: "اللجان" },
+          { value: "member", label: "الأعضاء" },
+          { value: "departed", label: "السابقون" },
+        ]}
       />
 
-      {view === "member" ? (
+      {view === "departed" ? (
+        // جدول الإنهاء نفسه (`lockedStatus` يبدّل الأعمدة إلى: التاريخ · من أنهى · السبب)،
+        // ولا `contact` هنا: من غادر لا يُدعى إلى واتساب اللجنة.
+        <MembersView
+          headless
+          mode="reach"
+          lockedStatus="suspended"
+          members={departed}
+          mayManageData={mayManageData}
+          emptyNote="لم يغادر أحدٌ من لجانك منذ أُسنِدت إليك."
+        />
+      ) : view === "member" ? (
         <MembersView headless mode="reach" contact members={members} mayManageData={mayManageData} />
       ) : committees.length === 0 ? (
         <EmptyState
@@ -73,7 +95,7 @@ export function SupervisedView({
           title="لا لجان تحت إشرافك بعد"
           description={
             unit
-              ? `يوزّع قائد ${unit.name} اللجان من «توزيع الإشراف» — وتظهر هنا حالما تُسنَد إليك أولاها.`
+              ? `يوزّع قائد ${unit.name} اللجان من «توزيع الإشراف»، وتظهر هنا حالما تُسنَد إليك أولاها.`
               : "لا يظهر لك إشرافٌ لأنّك لست من أعضاء الإدارات الإشرافيّة."
           }
         />

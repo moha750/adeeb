@@ -73,7 +73,7 @@ export function CommitteeView({
           readOnly
           contact
           members={members}
-          emptyNote="لا أعضاء في لجنتك بعد — يُسنَدون من «تعيين المناصب»."
+          emptyNote="لا أعضاء في لجنتك بعد، يُسنَدون من «تعيين المناصب»."
         />
       ) : (
         <>

@@ -77,7 +77,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
       variant="aurora"
       icon={<ChartBar />}
       title="لا إحصاءات بعد"
-      description="أضِف أوّل إحصائيّة — تظهر مباشرةً في «ملخص المسيرة» بحجمٍ يتناسب مع رقمها."
+      description="أضِف أوّل إحصائيّة، تظهر مباشرةً في «ملخص المسيرة» بحجمٍ يتناسب مع رقمها."
       action={createBtn}
     />
   );

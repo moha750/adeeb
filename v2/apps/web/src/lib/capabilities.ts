@@ -30,6 +30,15 @@ export const SECTION_CAP = {
   // للعلّة نفسها: بابُ المرء إلى نفسه واحد. ولا يقع خلفها إلّا حسابُ حاملها — الجلسات تقرؤها
   // القاعدة بـ`auth.uid()`، والأفعال كلُّها بجلسته لا بمفتاح خدمةٍ يتجاوز الحراسة.
   "/dashboard/settings": "view_own_membership",
+  // **المهامّ** — غرفةٌ بوجهين وقفلٍ واحد: العضوُ يرى ما كُلِّف به، والقائدُ يرى مهامَّ لجنته
+  // ويُسنِد ويؤشّر. وقفلُها `view_own_membership` كأختيها أعلاه للعلّة نفسها — **بابُ المرء
+  // إلى نفسه واحد**: ما كُلِّفتَ به شأنُك أنت، يراه كلُّ من له منصبٌ قائم.
+  //
+  // وليس هذا نقضًا لقاعدة «لكلّ تبويبٍ قفلُه»: تلك تمنع مفتاحًا يفتح غرفًا **مختلفة**، وهذه
+  // غرفةٌ واحدة يتّسع فيها ما يراه صاحبُها. وسلطةُ الإسناد والتأشير **ليست هنا أصلًا** —
+  // تقولها القاعدة بـ`can_manage_tasks_of` (القدرة `manage_tasks` + موقعُه من الوحدة)، فمن
+  // بلغ الغرفة بلا سلطةٍ رأى مهامَّه ولم يرَ زرًّا.
+  "/dashboard/tasks": "view_own_membership",
   "/dashboard/members/active": "view_members",
   "/dashboard/members/suspended": "view_suspended_members",
   // غرفةُ من لا يرى السجلّ كلّه: عضو إدارة الموارد يرى **من يشرف عليهم** وحدهم
@@ -63,7 +72,14 @@ export const SECTION_CAP = {
   // من يرى بريد الزائر يردّ عليه، فلا معنى لقارئٍ لا يُجيب في غرفةٍ كلُّ عملها الجواب.
   "/dashboard/contact": "manage_contact",
   "/dashboard/surveys": "manage_surveys",
-  "/dashboard/elections": "manage_elections",
+  // **الانتخابات — غرفة الإدارة والاطّلاع**: قفلُها `view_election_candidates`، فيدخلها المديرون
+  // (`manage_elections`) والمطّلِعُ (عضو الموارد). المديرُ يرى الأزرار، والمطّلِعُ للقراءة —
+  // يتفرّع داخلها بـ`manage_elections`. وأمّا فعلُ العضو (ترشّحٌ/تصويت) فأبوابُه الثلاثة أدناه.
+  "/dashboard/elections": "view_election_candidates",
+  // أبواب العضو الثلاثة — لكلٍّ غرضٌ واحد، وتظهر حين يصير فعلُها متاحًا (إشارةُ myScope.elections):
+  "/dashboard/elections/run": "run_for_election",     // الترشُّح — لمن يترشّح
+  "/dashboard/elections/my": "run_for_election",      // سِجلّ ترشُّحي — لمن له ترشّح
+  "/dashboard/elections/vote": "view_own_membership", // التصويت — لكلّ ناخب
   "/dashboard/website/works": "manage_works",
   "/dashboard/website/achievements": "manage_achievements",
   "/dashboard/website/sponsors": "manage_sponsors",

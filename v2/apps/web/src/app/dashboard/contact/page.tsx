@@ -9,7 +9,7 @@ import { ContactView } from "./ContactView";
  * قفلُ الباب `manage_contact` (في `lib/capabilities.ts`)، والصفوف كلُّها تُقرأ بمفتاح
  * الخدمة — فالتفويض عند الباب لا في الاستعلام.
  */
-export const metadata = { title: "رسائل التواصل — بوّابة أديب" };
+export const metadata = { title: "رسائل التواصل، بوّابة أديب" };
 
 export default async function ContactPage() {
   const denied = await denyUnless("/dashboard/contact");

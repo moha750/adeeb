@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette, Archive, Broadcast } from "@phosphor-icons/react";
+  MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette,
+  Archive, Broadcast, Waveform, SlidersHorizontal } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
@@ -14,9 +15,9 @@ import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
-import type { MemberOption, ShowRow } from "./data";
-import { SHOW_STATUS_META, TONE_OPTIONS, slugify, type ShowTone } from "./vocab";
-import { createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow } from "./actions";
+import type { MemberOption, ShowRow, StationData } from "./data";
+import { SHOW_STATUS_META, TONE_OPTIONS, formatLead, parseLead, slugify, type ShowTone } from "./vocab";
+import { createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow, saveStation } from "./actions";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 
 type FormState = {
@@ -27,9 +28,11 @@ const EMPTY_FORM: FormState = {
   title: "", slug: "", tagline: "", description: "", tone: "brand", hostId: "", committeeId: "",
 };
 
+type StationForm = { name: string; tagline: string; description: string; lead: string };
+
 export function RadioView({
-  shows, members, committees,
-}: { shows: ShowRow[]; members: MemberOption[]; committees: MemberOption[] }) {
+  shows, members, committees, station,
+}: { shows: ShowRow[]; members: MemberOption[]; committees: MemberOption[]; station: StationData | null }) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
@@ -42,6 +45,39 @@ export function RadioView({
   const [form, setForm] = useState<{ edit: ShowRow | null; state: FormState; slugTouched: boolean } | null>(null);
   const [formErr, setFormErr] = useState<Partial<Record<keyof FormState, string>>>({});
   const [confirmKill, setConfirmKill] = useState<ShowRow | null>(null);
+
+  // إعدادات المحطّة: نافذةٌ واحدة، وفيها الإزاحة التي يرثها كلّ حلقةٍ لم تُصرّح بغيرها.
+  const [stForm, setStForm] = useState<StationForm | null>(null);
+  const [stErr, setStErr] = useState<Partial<Record<keyof StationForm, string>>>({});
+  const openStation = () => {
+    if (!station) { toast.error("تعذّر جلب إعدادات المحطّة."); return; }
+    setStForm({
+      name: station.name,
+      tagline: station.tagline ?? "",
+      description: station.description ?? "",
+      lead: formatLead(station.musicLeadSeconds),
+    });
+    setStErr({});
+  };
+  const submitStation = () => {
+    if (!stForm) return;
+    const errs: Partial<Record<keyof StationForm, string>> = {};
+    if (!stForm.name.trim()) errs.name = "اسم المحطّة مطلوب.";
+    const lead = parseLead(stForm.lead);
+    if (lead === null || Number.isNaN(lead)) errs.lead = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
+    setStErr(errs);
+    if (Object.keys(errs).length || lead === null || Number.isNaN(lead)) return;
+
+    startPending(async () => {
+      const r = await saveStation({
+        name: stForm.name,
+        tagline: stForm.tagline || null,
+        description: stForm.description || null,
+        musicLeadSeconds: lead,
+      });
+      if (r.ok) { toast.success(r.message); setStForm(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
 
   const filters: FilterDef[] = useMemo(() => [
     { key: "status", label: "الحالة", options: [
@@ -104,7 +140,7 @@ export function RadioView({
     const s = form.state;
     const errs: Partial<Record<keyof FormState, string>> = {};
     if (!s.title.trim()) errs.title = "اسم البرنامج مطلوب.";
-    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب — أحرف لاتينيّة وأرقام.";
+    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب: أحرف لاتينيّة وأرقام.";
     if (!s.hostId) errs.hostId = "اختر مقدّم البرنامج.";
     setFormErr(errs);
     if (Object.keys(errs).length) return;
@@ -188,7 +224,7 @@ export function RadioView({
   const createBtn = <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>;
   const emptyState = shows.length === 0 ? (
     <EmptyState variant="aurora" icon={<MicrophoneStage />} title="لا برامج بعد"
-      description="أنشئ أوّل برنامج — يُحفظ مسودّةً، ثمّ تفتحه لترفع شعاره وتضيف حلقاته." action={createBtn} />
+      description="أنشئ أوّل برنامج: يُحفظ مسودّةً، ثمّ تفتحه لترفع شعاره وتضيف حلقاته." action={createBtn} />
   ) : filtering ? (
     <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا برامج مطابقة"
       description="لم نعثر على برامج تطابق بحثك أو المرشّح."
@@ -212,7 +248,10 @@ export function RadioView({
           <Breadcrumb />
           <h1>إذاعة أدِيب</h1>
         </div>
-        <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>
+        <div className="form-head-actions">
+          <Button variant="ghost" size="md" onClick={openStation}><SlidersHorizontal size={18} />إعدادات المحطّة</Button>
+          <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>
+        </div>
       </div>
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
@@ -260,10 +299,10 @@ export function RadioView({
               value={form.state.title} onChange={(e) => onTitle(e.target.value)} error={formErr.title} required />
             <Field className="form-full" label="المعرّف (رابط البرنامج)" icon={<LinkSimple />} innerIcon={<Hash />} placeholder="hamesh" charset="latin"
               value={form.state.slug} onChange={(e) => onSlug(e.target.value)} error={formErr.slug}
-              helper="يظهر في رابط البرنامج العامّ — ولا يُغيَّر بعد النشر." required />
+              helper="يظهر في رابط البرنامج العامّ، ولا يُغيَّر بعد النشر." required />
             <Select className="form-full" label="المقدّم" icon={<User />} options={memberOptions} value={form.state.hostId}
               onValueChange={(v) => patchForm({ hostId: v })} error={formErr.hostId}
-              helper="عضوٌ نشطٌ واحد — يُختم مقدّمًا لكلّ حلقةٍ جديدة." required />
+              helper="عضوٌ نشطٌ واحد، يُختم مقدّمًا لكلّ حلقةٍ جديدة." required />
             <Select label="النغمة" icon={<Palette />} options={TONE_OPTIONS} value={form.state.tone}
               onValueChange={(v) => patchForm({ tone: v as ShowTone })} required />
             <Select label="اللجنة المنتجة" icon={<UsersThree />} options={committeeOptions} value={form.state.committeeId}
@@ -272,9 +311,45 @@ export function RadioView({
               placeholder="حوارٌ أسبوعيّ عن الكتابة وأهلها"
               value={form.state.tagline} onChange={(e) => patchForm({ tagline: e.target.value })} optional />
             <Textarea className="form-full" label="الوصف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-              placeholder="وصفٌ يظهر في صفحة البرنامج وفي المنصّات…" rows={3}
+              placeholder="وصفٌ يظهر في صفحة البرنامج…" rows={3}
               value={form.state.description} onChange={(e) => patchForm({ description: e.target.value })}
-              helper="مطلوبٌ قبل النشر — المنصّات ترفض برنامجًا بلا وصف." optional />
+              helper="مطلوبٌ قبل النشر: لا تُنشَر صفحةُ برنامجٍ بلا وصف." optional />
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={stForm !== null}
+        onClose={() => setStForm(null)}
+        title="إعدادات المحطّة"
+        description="تعمّ الإذاعة كلَّها: اسمُها وتعريفُها، وإزاحةُ المقدّمة الموسيقيّة التي ترثها الحلقات."
+        busy={pending}
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" size="md" onClick={() => setStForm(null)} disabled={pending}>إلغاء</Button>
+            <Button variant="primary" size="md" onClick={submitStation} loading={pending}>حفظ</Button>
+          </>
+        }
+      >
+        {stForm ? (
+          <div className="form-grid">
+            <Field className="form-full" label="اسم المحطّة" icon={<Broadcast />} innerIcon={<PencilSimple />}
+              placeholder="إذاعة أدِيب" value={stForm.name}
+              onChange={(e) => setStForm((f) => (f ? { ...f, name: e.target.value } : f))}
+              error={stErr.name} required />
+            <Field className="form-full" label="إزاحة المقدّمة الموسيقيّة (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
+              placeholder="10.633" charset="latin" value={stForm.lead}
+              onChange={(e) => setStForm((f) => (f ? { ...f, lead: e.target.value } : f))}
+              error={stErr.lead}
+              helper="بها يقفز المستمع بين النسختين في اللحظة نفسها. ترثها كلّ حلقةٍ لم تُصرّح بإزاحتها، فتغييرُها يغيّر مبدّلها جميعًا."
+              required />
+            <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
+              placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}
+              onChange={(e) => setStForm((f) => (f ? { ...f, tagline: e.target.value } : f))} optional />
+            <Textarea className="form-full" label="الوصف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
+              placeholder="وصفٌ يظهر في صدر صفحة الإذاعة…" rows={3} value={stForm.description}
+              onChange={(e) => setStForm((f) => (f ? { ...f, description: e.target.value } : f))} optional />
           </div>
         ) : null}
       </Modal>

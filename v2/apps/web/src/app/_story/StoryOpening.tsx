@@ -187,7 +187,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
         <StationBreak i={0} />
 
         {/* ---------- الفصل الأول — البذرة ---------- */}
-        <section className="st-scene st-ch1" aria-label="الفصل الأول — البذرة">
+        <section className="st-scene st-ch1" aria-label="الفصل الأول: البذرة">
           <div className="st-letters" aria-hidden="true">
             {LETTERS.map((l, i) => (
               <span
@@ -214,7 +214,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
         <StationBreak i={1} />
 
         {/* ---------- الفصل الثاني — الأثر (مسار أفقي) ---------- */}
-        <section className="st-scene st-ch2" aria-label="الفصل الثاني — الأثر">
+        <section className="st-scene st-ch2" aria-label="الفصل الثاني: الأثر">
           <div className="st-ch2-head">
             <h2 className="st-kicker">حكـايةٌ تتناقلها الألسن</h2>
             <p className="st-ch-text">أكثر من 15 مُشاركـة ومعرض ومحفل</p>
@@ -248,7 +248,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
         <StationBreak i={2} />
 
         {/* ---------- الفصل الثالث — التتويج ---------- */}
-        <section className="st-scene st-ch3" aria-label="الفصل الثالث — التتويج">
+        <section className="st-scene st-ch3" aria-label="الفصل الثالث: التتويج">
           <div className="st-rays" aria-hidden="true" />
           <canvas className="st-canvas" aria-hidden="true" />
           <div className="st-ch3-inner">
@@ -279,7 +279,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
         <StationBreak i={3} />
 
         {/* ---------- الفصل الرابع — التجدّد ---------- */}
-        <section className="st-scene st-ch4" aria-label="الفصل الرابع — التجدّد">
+        <section className="st-scene st-ch4" aria-label="الفصل الرابع: التجدّد">
           <div className="st-ch4-inner">
             <div className="st-ch4-logos">
               {/* eslint-disable-next-line @next/next/no-img-element */}

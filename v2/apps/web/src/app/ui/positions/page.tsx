@@ -67,18 +67,18 @@ export default function PositionsPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Position Card</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Position Card</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">كرت المنصب</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           عرضُ منصبٍ قياديّ وحالته في تبويب «تعيين المناصب». المنصبُ هو البطل، وشارةُ
           المجلس والعضويّة مدموجةً («عضو المجلس …» / «تابع للمجلس …»)، ثمّ شريطُ شاغلٍ أو نداءُ «شاغر». النغمةُ تقول الحالة:
-          <b> brand</b> = مشغول (هادئ فولاذيّ) · <b>danger</b> = شاغر (يطلب الإسناد) — يبني على أساس
+          <b> brand</b> = مشغول (هادئ فولاذيّ)، <b>danger</b> = شاغر (يطلب الإسناد)، يبني على أساس
           <code className="font-latin"> .acard</code> ونظام النغمة (ق٤/٥)، أنماطُه <code className="font-latin">.pcard-*</code> بالمكتبة.
         </p>
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>الحالات (مشغول · شاغر · عضو المجلس / تابع للمجلس · تنفيذيّ/إداريّ)</Label>
+            <Label>الحالات (مشغول، شاغر، عضو المجلس / تابع للمجلس، تنفيذيّ/إداريّ)</Label>
             <div className="card-grid">
               {SAMPLE.map((p) => (
                 <PositionCard key={p.key} position={p} actions={ACTIONS} onAssign={noop} />
@@ -89,9 +89,9 @@ export default function PositionsPage() {
           <section>
             <Label>المفرد والمتعدّد (منصبٌ يقبل أكثر من شاغل)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              التفرّد ليس قرارَ الواجهة: تقوله <code className="font-latin">roles.holder_uniqueness</code> في القاعدة —
-              <b> global</b> واحدٌ في النادي · <b>per_committee</b> واحدٌ لكلّ لجنة · <b>per_department</b> واحدٌ لكلّ قسم ·
-              <b> multi</b> يقبل الزيادة. في المتعدّد: لكلّ شاغلٍ شريطُه وقائمتُه (بلا «استبدال» — يُضاف ويُزال)،
+              التفرّد ليس قرارَ الواجهة: تقوله <code className="font-latin">roles.holder_uniqueness</code> في القاعدة:
+              <b> global</b> واحدٌ في النادي، <b>per_committee</b> واحدٌ لكلّ لجنة، <b>per_department</b> واحدٌ لكلّ قسم، 
+              <b> multi</b> يقبل الزيادة. في المتعدّد: لكلّ شاغلٍ شريطُه وقائمتُه (بلا «استبدال»، يُضاف ويُزال)،
               ونداءُ الزيادة يبقى مفتوحًا مهما امتلأ.
             </p>
             <div className="card-grid">
@@ -102,9 +102,9 @@ export default function PositionsPage() {
           </section>
 
           <section>
-            <Label>القاعدة ٦ — الصفّ الأخير لا يترك فراغًا (شاغرٌ يتيم يمتدّ)</Label>
+            <Label>القاعدة ٦: الصفّ الأخير لا يترك فراغًا (شاغرٌ يتيم يمتدّ)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              نفس <code className="font-latin">.card-grid</code>: ضيّق النافذة فيتغيّر عدد الأعمدة والقاعدة تصمد —
+              نفس <code className="font-latin">.card-grid</code>: ضيّق النافذة فيتغيّر عدد الأعمدة والقاعدة تصمد،
               الصفّ الناقص يمتلئ بما فيه.
             </p>
             <div className="card-grid">
@@ -117,10 +117,10 @@ export default function PositionsPage() {
           </section>
 
           <section>
-            <Label>محرّر الإسناد — النافذة المنغّمة (إسناد · استبدال · إزالة · إضافة لمتعدّد)</Label>
+            <Label>محرّر الإسناد: النافذة المنغّمة (إسناد، استبدال، إزالة، إضافة لمتعدّد)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
-              النغمةُ تقول شدّة الفعل: إسنادٌ لشاغرٍ <b>محايد</b> · استبدالٌ لمشغول <b>warning</b> · إزالة <b>danger</b>.
-              رأسٌ بسياق المنصب ومنتقي عضوٍ بأفتار (بحث) — يبني على
+              النغمةُ تقول شدّة الفعل: إسنادٌ لشاغرٍ <b>محايد</b>، استبدالٌ لمشغول <b>warning</b>، إزالة <b>danger</b>.
+              رأسٌ بسياق المنصب ومنتقي عضوٍ بأفتار (بحث)، يبني على
               <code className="font-latin"> Modal</code> + القاعدة ٩. (وتوزيعُ الإشراف بابُه الآخر: <code className="font-latin">/ui/supervisors</code>.)
             </p>
             <div className="flex flex-wrap gap-3">

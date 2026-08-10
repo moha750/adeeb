@@ -12,6 +12,7 @@ import { WARNING_CATEGORIES, ordinalWord, remainingText, warningTitle } from "@/
 import { downloadWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage } from "@/lib/warnings/message";
 import { waHref } from "@/lib/whatsapp";
+import { positionLine } from "@/lib/positionLabel";
 import { issueWarning } from "./actions";
 import type { WarningTarget } from "./data";
 
@@ -76,7 +77,7 @@ export function IssueWarningModal({
     : occurred > today
       ? "تاريخ الواقعة لا يكون في المستقبل."
       : floor && occurred < floor
-        ? `انضمّ العضو في ${floor} — لا واقعة قبل عضويّته.`
+        ? `انضمّ العضو في ${floor}، لا واقعة قبل عضويّته.`
         : undefined;
 
   const ready = !!target && !!category && reason.trim().length >= 5 && !dateError;
@@ -152,7 +153,7 @@ export function IssueWarningModal({
   const memberOptions: SelectOption[] = targets.map((t) => ({
     value: t.id,
     label: t.name,
-    hint: [t.roleAr, t.committee].filter(Boolean).join(" — ") || undefined,
+    hint: positionLine(t.roleAr, t.committee) ?? undefined,
     group: t.activeCount > 0 ? "عليهم إنذارات سارية" : "بلا إنذارات",
     icon: <Avatar name={t.name} src={t.avatar ?? undefined} gender={t.gender} size="xs" />,
   }));
@@ -168,7 +169,7 @@ export function IssueWarningModal({
         onClose={close}
         size="md"
         className={issued.terminated ? "mdl-tone-danger" : undefined}
-        title={`سُجِّل ${warningTitle(issued.ordinal)} — ${issued.target.name}`}
+        title={`سُجِّل ${warningTitle(issued.ordinal)}: ${issued.target.name}`}
         description="بقي أن يبلغ صاحبَه: نزّل الخطاب، ثمّ افتح محادثته وأرفقه بالرسالة."
         footer={
           <>
@@ -214,7 +215,7 @@ export function IssueWarningModal({
         busy={pending}
         className={isFinal ? "mdl-tone-danger" : undefined}
         title="إصدار إنذار"
-        description="الإنذار سجلٌّ يبقى — اذكر سببه كما تكتبه في الخطاب."
+        description="الإنذار سجلٌّ يبقى، اذكر سببه كما تكتبه في الخطاب."
         footer={
           <>
             <Button
@@ -244,7 +245,7 @@ export function IssueWarningModal({
         />
 
         {target ? (
-          <Alert tone={isFinal ? "danger" : target.activeCount > 0 ? "warning" : "info"} title={`${target.name} — ${remainingText(target.activeCount, limit)}`}>
+          <Alert tone={isFinal ? "danger" : target.activeCount > 0 ? "warning" : "info"} title={`${target.name}: ${remainingText(target.activeCount, limit)}`}>
             {isFinal
               ? `عليه ${target.activeCount} من ${limit}. تسجيلُ هذا الإنذار يبلغ الحدّ، فتُسحب عضويّته فورًا.`
               : `عليه ${target.activeCount} من ${limit}. هذا سيكون ${warningTitle(nextOrdinal)}.`}
@@ -265,7 +266,7 @@ export function IssueWarningModal({
           label="سبب الإنذار"
           icon={<ChatCenteredText />}
           innerIcon={<NotePencil />}
-          placeholder="اكتب ما وقع بدقّة — هذا النصّ يُطبع في الخطاب ويُرسَل للعضو."
+          placeholder="اكتب ما وقع بدقّة، هذا النصّ يُطبع في الخطاب ويُرسَل للعضو."
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={4}
@@ -289,9 +290,9 @@ export function IssueWarningModal({
           disabled={!target}
           helper={
             !target
-              ? "اختر العضو أوّلًا — من انضمامه يُحسب أقدمُ تاريخٍ مقبول."
+              ? "اختر العضو أوّلًا، من انضمامه يُحسب أقدمُ تاريخٍ مقبول."
               : floor
-                ? `إن اختلف عن تاريخ التسجيل — بين ${floor} واليوم.`
+                ? `إن اختلف عن تاريخ التسجيل، بين ${floor} واليوم.`
                 : "إن اختلف عن تاريخ التسجيل."
           }
         />

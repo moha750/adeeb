@@ -9,9 +9,13 @@ import { Breadcrumb } from "../_shell/Breadcrumb";
  *
  * ولا نطاقَ «reach» هنا بعد اليوم: «من أشرف عليهم» صارت شاشةً قائمةً بنفسها تُبنى على
  * **الإشراف** (`committee_supervision`) لا على السلطة، فترشيحُها ليس ترشيحَ حالةٍ يُحشر في هذه.
+ *
+ * **ولا تُقسَم هذه الغرفة بالإشراف**: «أعضاء سابقون» سجلُّ النادي كلِّه لمن يملك مفتاحه، ومن
+ * يشرف على لجانٍ فكشفُ من غادرها **أثناء ولايته** يسكن غرفتَه هو («من أشرف عليهم») حالةً
+ * ثالثة — لا هذه الغرفةَ بمدًى ضيّق: اسمٌ واحدٌ لمعنيين أوّلُ الكذب.
  */
 export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberStatus }) {
-  const [{ members, warningLimit, error }, me] = await Promise.all([getMembers(), getCurrentAdmin()]);
+  const [{ members, warningLimit, moveTargets, error }, me] = await Promise.all([getMembers(), getCurrentAdmin()]);
 
   if (error) {
     return (
@@ -37,6 +41,8 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
       // «تعديل البيانات» — فالقاعدة تردّه، والوعدُ المردود لا يُعرَض.
       mayManageData={caps.includes("manage_member_data")}
       warningLimit={warningLimit}
+      // وجهاتُ النقل — والبندُ نفسه يتبع سلطةَ الصفّ (`canMove`) لا هذه القائمة
+      moveTargets={moveTargets}
     />
   );
 }

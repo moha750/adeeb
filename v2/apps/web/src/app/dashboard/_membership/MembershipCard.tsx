@@ -15,26 +15,34 @@ export type MembershipCardProps = {
   status: MemberStatus;
   avatar?: string | null;
   gender?: "male" | "female" | null;
-  /** سلسلة الانتماء من الأعلى: مجلس ← قسم ← لجنة. الفارغة تُسقِط الصفّ كلّه. */
-  chain?: readonly string[];
   joined: string;
   duration: string;
 };
 
 /**
  * **بطاقة العضويّة** — بطاقةُ هويّةٍ لا لوحةَ بيانات: نصفٌ علويٌّ بتدرّج الهوية ونقشها يحمل
- * الشعار والصورة والاسم والموضع، ونصفٌ سفليٌّ فاتحٌ يحمل الحقائق الثلاث (منذ متى · كم صارت · وحالتها).
+ * الصورةَ والاسمَ والموضع، ونصفٌ سفليٌّ فاتحٌ يحمل الحقائق الثلاث (منذ متى · كم صارت · وحالتها).
  *
  * القسمة مقصودة: الغامق للهويّة والفاتح للبيانات — فالشارة والقيم تعيش على سطحٍ صُمّمت له
- * (`Badge` الناعمة تُقرأ فوق الفاتح ولا تصير مُلصَقًا فوق التدرّج)، والشرائح الزجاجيّة تبقى للغامق
- * كما في ترويسات المجالس ونمط `acard-header-solid` — كلٌّ في موضعه من الهويّة.
+ * (`Badge` الناعمة تُقرأ فوق الفاتح ولا تصير مُلصَقًا فوق التدرّج).
+ *
+ * **والموضعُ يُقال بوحدته** (٢٠٢٦-٠٨-١٠، قرار المالك): «قائد لجنة الفعاليات» و«عضو لجنة
+ * السفراء» لا «قائد» و«عضو» مجرّدتين — فالرتبةُ ووحدتُها مضافٌ ومضافٌ إليه، تُوصلان بمسافة
+ * عبر `positionLine` (المصدر الواحد). وقبلها كانت الرتبةُ تخرج عاريةً لأنّ `roleTitle` لا
+ * يُلحق الوحدةَ إلّا لدورٍ له لجنةٌ أمّ، فلم يكن يُعرف قائدُ أيِّ لجنةٍ هو.
+ *
+ * **ولا سلسلةَ انتماءٍ فوق الوحدة** (٢٠٢٦-٠٨-٠٨): لا مجلسَ ولا قسمَ فوق اللجنة — ذاك مقولٌ
+ * في كرت «مسيرتي» تحتها وفي شجرة الهيكلة، ولا يُقال ثلاثَ مرّاتٍ في شاشةٍ واحدة.
+ *
+ * **ولا شعارَ عليها** (٢٠٢٦-٠٨-٠٨، قرار المالك): البطاقةُ داخل لوحةِ أديب، والشعارُ في ترويستها
+ * فوقها — فوسمُ المالكِ لا يُعاد على متاعه في بيته.
  *
  * أنماطها `.mcard-*` بالمكتبة (`components.css`) ومعرضها `/ui/membership` — لا تنسيقَ شاردًا.
  *
  * واللمعة عبورٌ لا يُبتر: المرور يُشعلها، و`animationend` وحده يُطفئها. لو عُلّقت بـ`:hover`
  * لأُلغيت الحركة لحظةَ خروج المؤشّر فيختفي الشريط واقفًا في وسط السطح — وهذا ما يُقبِّحها.
  */
-export function MembershipCard({ name, role, status, avatar, gender, chain = [], joined, duration }: MembershipCardProps) {
+export function MembershipCard({ name, role, status, avatar, gender, joined, duration }: MembershipCardProps) {
   const st = MEMBER_STATUS[status];
   const [sheen, setSheen] = useState(false);
   return (
@@ -44,27 +52,13 @@ export function MembershipCard({ name, role, status, avatar, gender, chain = [],
       // حدث الحركة يُطلَق على العنصر الأصل حاملًا اسم عنصره الزائف — فيُميَّز عن حركات المحتوى.
       onAnimationEnd={(e) => { if (e.animationName === "mcard-sheen") setSheen(false); }}
     >
+      {/* الهيرو الآن صفٌّ واحدٌ لا غير: صورةٌ واسمٌ وموضع. ذهبت شرائحُ الانتماء ثمّ ذهب الشعار،
+          فلم يبقَ ما يُوازَن — ولذلك لم يعد `space-between` بل تدفّقًا من جهة البدء. */}
       <div className="mcard-hero">
-        <div className="mcard-top">
-          {/* الشعار الأبيض — النسخة المخصّصة للأسطح الغامقة، لا تلوينَ لملوّن.
-              ولا شريحةَ «بطاقة عضويّة» بجانبه: وسمٌ يقوله الشكلُ والشعارُ والتبويب، وكان
-              يزاحم شرائح السلسلة بنفس زجاجها ووزنها — فيستوي الوسمُ والبيانات في العين. */}
-          <img className="mcard-logo" src="/brand/logo-horizontal-white.svg" alt="نادي أديب" />
-        </div>
-        <div className="mcard-id">
-          <Avatar name={name} src={avatar ?? undefined} gender={gender} size="2xl" status={st.dot} className="mcard-av" />
-          <div className="mcard-who">
-            <h2 className="mcard-name">{name}</h2>
-            <p className="mcard-role">{role ?? "لا منصب حاليّ"}</p>
-          </div>
-          {/* سلسلة الانتماء في الطرف المقابل — «من أنت» في جانبٍ و«أين تجلس» في الآخر، فيتوازن
-              السطح العريض بمحتوًى حقيقيّ لا بحشو. وبلا محرف فصلٍ محايد: (›) في سياقٍ عربيّ يأخذ
-              اتّجاه الفقرة فيقفز طرفًا، فيقلب قراءة السلسلة — والترتيب والتجاور يقولانها. */}
-          {chain.length ? (
-            <ol className="mcard-chain">
-              {chain.map((c) => <li key={c}>{c}</li>)}
-            </ol>
-          ) : null}
+        <Avatar name={name} src={avatar ?? undefined} gender={gender} size="2xl" status={st.dot} className="mcard-av" />
+        <div className="mcard-who">
+          <h2 className="mcard-name">{name}</h2>
+          <p className="mcard-role">{role ?? "لا منصب حاليّ"}</p>
         </div>
       </div>
       <dl className="mcard-facts">

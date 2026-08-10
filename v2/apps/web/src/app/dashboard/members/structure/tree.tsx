@@ -85,11 +85,11 @@ export function Committee({ c, q, open, onToggle, edit, onMeta }: {
             <>
               <div className="org-subrow">
                 <span className="org-sublbl">مشرف الموارد</span>
-                {c.hrOverseer ? <Person h={c.hrOverseer} role /> : <span className="org-ov-vac">— يُسنَد من «تعيين المناصب»</span>}
+                {c.hrOverseer ? <Person h={c.hrOverseer} role /> : <span className="org-ov-vac">يُسنَد من «تعيين المناصب»</span>}
               </div>
               <div className="org-subrow">
                 <span className="org-sublbl">مشرف الضمان</span>
-                {c.qaOverseer ? <Person h={c.qaOverseer} role /> : <span className="org-ov-vac">— يُسنَد من «تعيين المناصب»</span>}
+                {c.qaOverseer ? <Person h={c.qaOverseer} role /> : <span className="org-ov-vac">يُسنَد من «تعيين المناصب»</span>}
               </div>
             </>
           ) : null}

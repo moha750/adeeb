@@ -18,7 +18,7 @@ export function PublicNewsCard({ n }: { n: PublicNews }) {
           className="acard-header-clip"
           icon={<Newspaper aria-hidden />}
           title={n.title}
-          subtitle={n.authors.length ? `${n.dateLabel} · ${n.authors[0]}` : n.dateLabel}
+          subtitle={n.authors.length ? `${n.dateLabel}، ${n.authors[0]}` : n.dateLabel}
         />
         <CardBody className="pt-3">
           <div className="flex flex-col gap-2">

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ChartPanel, Field } from "@adeeb/design-system";
+import { Button, SectionCard, Field } from "@adeeb/design-system";
 import {
   Image as ImageIcon, LinkSimple, Sparkle, Tag, TextT } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
@@ -77,21 +77,21 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل العمل">
+        <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل العمل">
           <div className="form-grid">
             <Field className="form-full" label="عنوان العمل" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: قصيدة «حيثُ تُولَد الكلمة»" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <Field label="التصنيف" icon={<Tag />} innerIcon={<PencilSimple />} placeholder="مثال: شعر · تصميم · قصّة" value={category} onChange={(e) => setCategory(e.target.value)} optional />
+            <Field label="التصنيف" icon={<Tag />} innerIcon={<PencilSimple />} placeholder="مثال: شعر، تصميم، قصّة" value={category} onChange={(e) => setCategory(e.target.value)} optional />
             <Field label="رابط العمل" icon={<LinkSimple />} innerIcon={<LinkSimple />} placeholder="https://…" charset="latin" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} helper="إن تُرك فارغًا فُتِح العمل في عارضٍ داخليّ (صورته)." optional />
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="صورة العمل (مطلوبة)">
+        <SectionCard headerVariant="chip" icon={<ImageIcon />} title="صورة العمل (مطلوبة)">
           <div className="flex flex-col gap-3 items-start">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={image} alt="صورة العمل" className="w-full max-h-56 object-cover rounded" />
             ) : (
-              <div className="text-sm text-content-muted">لا صورة بعد — ارفع صورةً (JPG · PNG · WEBP · GIF، حتّى ٥ ميغابايت). الصورة هي وجه العمل في المعرض.</div>
+              <div className="text-sm text-content-muted">لا صورة بعد. ارفع صورةً (JPG، PNG، WEBP، GIF، حتّى ٥ ميغابايت). الصورة هي وجه العمل في المعرض.</div>
             )}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
@@ -105,7 +105,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
             </div>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickFile} />
           </div>
-        </ChartPanel>
+        </SectionCard>
       </div>
     </>
   );

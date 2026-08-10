@@ -50,7 +50,7 @@ function validate(input: BookInput): { error: string } | { slug: string } {
   if (!clean(input.title)) return { error: "عنوان المنشور مطلوب." };
   if (!KIND_VALUES.includes(input.kind)) return { error: "نوع منشور غير معروف." };
   const slug = slugify(input.slug ?? "");
-  if (!slug) return { error: "المعرّف (السلاگ) مطلوب — أحرف لاتينيّة وأرقام." };
+  if (!slug) return { error: "المعرّف (السلاگ) مطلوب: أحرف لاتينيّة وأرقام." };
   return { slug };
 }
 
@@ -85,7 +85,7 @@ export async function createBook(input: BookInput): Promise<BookResult> {
     .select("id")
     .single();
   if (error || !data) {
-    if (error && isDup(error.message)) return { ok: false, message: "هذا المعرّف مستخدَم — اختر غيره." };
+    if (error && isDup(error.message)) return { ok: false, message: "هذا المعرّف مستخدَم. اختر غيره." };
     return { ok: false, message: `تعذّر إنشاء المنشور: ${error?.message ?? "بلا تفاصيل"}` };
   }
 
@@ -107,7 +107,7 @@ export async function updateBook(id: string, input: BookInput): Promise<BookResu
     .update({ ...bookColumns(input, v.slug), updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) {
-    if (isDup(error.message)) return { ok: false, message: "هذا المعرّف مستخدَم — اختر غيره." };
+    if (isDup(error.message)) return { ok: false, message: "هذا المعرّف مستخدَم. اختر غيره." };
     return { ok: false, message: error.message };
   }
 
@@ -129,7 +129,7 @@ export async function setBookStatus(id: string, op: "publish" | "unpublish"): Pr
       .select("id", { count: "exact", head: true })
       .eq("book_id", id);
     if (cErr) return { ok: false, message: `تعذّر فحص الصفحات: ${cErr.message}` };
-    if (!count || count === 0) return { ok: false, message: "لا يُنشَر منشورٌ بلا صفحات — أضِف صفحاته أولًا." };
+    if (!count || count === 0) return { ok: false, message: "لا يُنشَر منشورٌ بلا صفحات. أضِف صفحاته أولًا." };
 
     const { data: cur } = await sb.from("library_books").select("published_at").eq("id", id).maybeSingle();
     const patch: Record<string, unknown> = { status: "published", updated_at: new Date().toISOString() };
@@ -146,7 +146,7 @@ export async function setBookStatus(id: string, op: "publish" | "unpublish"): Pr
     .eq("id", id);
   if (error) return { ok: false, message: `تعذّر إلغاء النشر: ${error.message}` };
   revalidatePath("/dashboard/library", "layout");
-  return { ok: true, message: "أُلغي النشر — عاد مسودّةً." };
+  return { ok: true, message: "أُلغي النشر، عاد مسودّةً." };
 }
 
 export async function toggleBookFeatured(id: string, value: boolean): Promise<BookResult> {
@@ -207,7 +207,7 @@ export async function createPageUploadUrl(
   if (!sb) return { ok: false, message: ENV_MISSING };
 
   const ext = EXT_BY_MIME[mime];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة — استخدم WEBP أو JPG أو PNG." };
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
 
   const path = `${bookId}/pages/${crypto.randomUUID()}.${ext}`;
   const { data, error } = await sb.storage.from(BUCKET).createSignedUploadUrl(path);

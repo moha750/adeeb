@@ -64,7 +64,7 @@ export async function setSeatAuthority(input: {
   if (targetRole === "club_president" && mode === "none") {
     const others = (rows ?? []).filter((r) => r.role_name !== roleName && ((r.target_roles as string[]) ?? []).includes("club_president"));
     if (targets.has("club_president") && others.length === 0) {
-      return { ok: false, message: "لا يمكن نزع آخر من يبلغ مقعد رئيس النادي — لن يُسنَد بعدها أبدًا." };
+      return { ok: false, message: "لا يمكن نزع آخر من يبلغ مقعد رئيس النادي. لن يُسنَد بعدها أبدًا." };
     }
   }
 
@@ -103,7 +103,7 @@ export async function setBlockedRole(input: {
   const { data: mine, error: gErr } = await sb
     .from("position_authority").select("target_roles, own_unit_roles, blocked_roles").eq("role_name", roleName).maybeSingle();
   if (gErr) return { ok: false, message: `تعذّر الجلب: ${gErr.message}` };
-  if (!mine) return { ok: false, message: "هذا المنصب لا يُسنِد شيئًا — امنحه مقعدًا أوّلًا." };
+  if (!mine) return { ok: false, message: "هذا المنصب لا يُسنِد شيئًا. امنحه مقعدًا أوّلًا." };
 
   const blocked = new Set<string>((mine.blocked_roles as string[]) ?? []);
   if (on) blocked.add(blockedRole); else blocked.delete(blockedRole);
@@ -159,7 +159,7 @@ export async function setMembershipBlocked(input: {
   const { data: mine, error: gErr } = await sb
     .from("membership_authority").select("blocked_roles").eq("role_name", roleName).maybeSingle();
   if (gErr) return { ok: false, message: `تعذّر الجلب: ${gErr.message}` };
-  if (!mine) return { ok: false, message: "هذا المنصب لا يبلغ أحدًا — امنحه مدًى أوّلًا." };
+  if (!mine) return { ok: false, message: "هذا المنصب لا يبلغ أحدًا. امنحه مدًى أوّلًا." };
 
   const blocked = new Set<string>((mine.blocked_roles as string[]) ?? []);
   if (on) blocked.add(blockedRole); else blocked.delete(blockedRole);

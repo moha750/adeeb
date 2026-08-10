@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ChartPanel, Field, Textarea } from "@adeeb/design-system";
+import { Button, SectionCard, Field, Textarea } from "@adeeb/design-system";
 import {
   Buildings, ChatText, Image as ImageIcon, LinkSimple, SealCheck, Sparkle, TextT } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
@@ -79,22 +79,22 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل الراعي">
+        <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل الراعي">
           <div className="form-grid">
             <Field className="form-full" label="اسم الراعي" icon={<Buildings />} innerIcon={<PencilSimple />} placeholder="مثال: مؤسّسة كذا" value={name} onChange={(e) => setName(e.target.value)} required />
-            <Field label="الوسم" icon={<SealCheck />} innerIcon={<PencilSimple />} placeholder="مثال: راعٍ ذهبيّ · شريك استراتيجيّ" value={badge} onChange={(e) => setBadge(e.target.value)} optional />
+            <Field label="الوسم" icon={<SealCheck />} innerIcon={<PencilSimple />} placeholder="مثال: راعٍ ذهبيّ، شريك استراتيجيّ" value={badge} onChange={(e) => setBadge(e.target.value)} optional />
             <Field label="الرابط" icon={<LinkSimple />} innerIcon={<LinkSimple />} placeholder="https://…" charset="latin" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} optional />
             <Textarea className="form-full" label="نبذة" icon={<TextT />} innerIcon={<ChatText />} placeholder="سطرٌ يعرّف بالراعي أو بطبيعة الشراكة" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} optional />
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="الشعار (مطلوب)">
+        <SectionCard headerVariant="chip" icon={<ImageIcon />} title="الشعار (مطلوب)">
           <div className="flex flex-col gap-3 items-start">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt="شعار الراعي" className="max-h-32 rounded bg-white/60 object-contain p-2 ring-1 ring-navy-950/5" />
             ) : (
-              <div className="text-sm text-content-muted">لا شعار بعد — ارفع صورةً (JPG · PNG · WEBP · GIF، حتّى ٥ ميغابايت). يُفضّل شعارٌ بخلفيّة شفّافة.</div>
+              <div className="text-sm text-content-muted">لا شعار بعد. ارفع صورةً (JPG، PNG، WEBP، GIF، حتّى ٥ ميغابايت). يُفضّل شعارٌ بخلفيّة شفّافة.</div>
             )}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
@@ -108,7 +108,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
             </div>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickFile} />
           </div>
-        </ChartPanel>
+        </SectionCard>
       </div>
     </>
   );

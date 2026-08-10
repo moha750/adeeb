@@ -58,7 +58,7 @@ const rowToneFor = (s: SurveyRow): "neutral" | "success" | "warning" | "danger" 
 // الموضع بالعلمين ثمّ الحالة (الأسبقيّة: محذوف ← مؤرشف ← حالة): الأرشيف والمحذوفات عَلَمان لا حالتان.
 const LIFECYCLE_TABS: { value: string; label: string; match: (s: SurveyRow) => boolean; empty: string; canCreate?: boolean }[] = [
   { value: "active", label: "نشطة", match: (s) => !s.deleted && !s.archived && (s.status === "active" || s.status === "paused"), empty: "لا استبيانات نشطة الآن.", canCreate: true },
-  { value: "draft", label: "مسودّات", match: (s) => !s.deleted && !s.archived && s.status === "draft", empty: "لا مسودّات — ابدأ استبيانًا جديدًا.", canCreate: true },
+  { value: "draft", label: "مسودّات", match: (s) => !s.deleted && !s.archived && s.status === "draft", empty: "لا مسودّات. ابدأ استبيانًا جديدًا.", canCreate: true },
   { value: "closed", label: "منتهية", match: (s) => !s.deleted && !s.archived && s.status === "closed", empty: "لا استبيانات منتهية بعد." },
   { value: "archived", label: "الأرشيف", match: (s) => !s.deleted && s.archived, empty: "الأرشيف فارغ." },
   { value: "deleted", label: "المحذوفات", match: (s) => s.deleted, empty: "سلّة المحذوفات فارغة." },

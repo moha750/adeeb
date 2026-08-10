@@ -220,9 +220,9 @@ export async function updateSurvey(surveyId: number, input: SurveyInput): Promis
   for (const q of input.questions) {
     if (q.id != null) {
       const cur = existingById.get(q.id);
-      if (!cur) return { ok: false, message: "أحد الأسئلة لم يعد موجودًا — حدّث الصفحة وأعد المحاولة." };
+      if (!cur) return { ok: false, message: "أحد الأسئلة لم يعد موجودًا. حدّث الصفحة وأعد المحاولة." };
       if ((answerCount.get(q.id) ?? 0) > 0 && cur.question_type !== q.type) {
-        return { ok: false, message: `السؤال «${q.text.slice(0, 40)}» له إجابات مخزّنة — لا يتغيّر نوعه. أضِف سؤالًا جديدًا بدله.` };
+        return { ok: false, message: `السؤال «${q.text.slice(0, 40)}» له إجابات مخزّنة، لا يتغيّر نوعه. أضِف سؤالًا جديدًا بدله.` };
       }
     }
   }
@@ -311,7 +311,7 @@ export async function setSurveyStatus(surveyId: number, op: StatusOp): Promise<S
 
   revalidatePath("/dashboard/surveys", "layout");
   const msg = op === "reopen"
-    ? `أُعيد فتح «${survey.title}» — نشطٌ الآن بلا موعد نهاية؛ اضبط موعدًا جديدًا من التحرير إن شئت.`
+    ? `أُعيد فتح «${survey.title}»: نشطٌ الآن بلا موعد نهاية؛ اضبط موعدًا جديدًا من التحرير إن شئت.`
     : `${spec.label}: تمّ لـ«${survey.title}».`;
   return { ok: true, message: msg };
 }

@@ -29,12 +29,12 @@ export default function CursorPage() {
 
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Cursor
+          Design System, Cursor
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">مؤشّر أديب</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           <strong>هالةٌ لزجة تحفّ ريشة، ومنها أثرُ حبرٍ يجفّ.</strong> الهالةُ تلحق المؤشّرَ بتأخّر، وتتمطّط في
-          اتّجاه اندفاعك وتنضغط عموديًّا عليه فيثبت حجمُها كالسائل. واللزوجةُ صفةُ الهالة نفسِها — لا قطرةَ في
+          اتّجاه اندفاعك وتنضغط عموديًّا عليه فيثبت حجمُها كالسائل. واللزوجةُ صفةُ الهالة نفسِها، لا قطرةَ في
           مركزها، فالريشةُ هي ما تحفّه.
         </p>
         <p className="mt-2 max-w-2xl text-content-muted">
@@ -53,7 +53,7 @@ export default function CursorPage() {
 
         <div className="mt-12 space-y-14">
           <Sec title="المؤشّر">
-            <Lab>مرّره على الأزرار والروابط والبلاطات · اكتب في الحقل · واضغط</Lab>
+            <Lab>مرّره على الأزرار والروابط والبلاطات، اكتب في الحقل، واضغط</Lab>
             <div ref={stage} className="relative overflow-hidden rounded border border-line bg-surface p-8">
               {live ? null : <Cursor scopeRef={stage} />}
 
@@ -66,7 +66,7 @@ export default function CursorPage() {
 
               <div className="mt-6 flex flex-wrap items-center gap-6">
                 <a href="#" className="font-bold text-primary underline-offset-4 hover:underline">رابطٌ في نصّ</a>
-                <Input className="w-64" placeholder="اكتب هنا — تعود شعرةُ النظام" aria-label="حقل تجربة" />
+                <Input className="w-64" placeholder="اكتب هنا، تعود شعرةُ النظام" aria-label="حقل تجربة" />
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -101,7 +101,7 @@ export default function CursorPage() {
               <Switch
                 row
                 label="طبّقه على الصفحة كلّها"
-                description="ينسحب مؤشّرُ المسرح ما دام يعمل — فلا يُرسم اثنان"
+                description="ينسحب مؤشّرُ المسرح ما دام يعمل، فلا يُرسم اثنان"
                 checked={live}
                 onChange={(e) => setLive(e.currentTarget.checked)}
               />
@@ -116,20 +116,20 @@ export default function CursorPage() {
                   <strong className="text-content">الموقعُ كلُّه بلا استثناء:</strong> يُركَّب مرّةً في التخطيط
                   الجذر عبر <code className="font-latin">SiteCursor</code> فيعمّ الواجهةَ العامّة{" "}
                   <strong>واللوحةَ معًا</strong> (قرار المالك ٢٠٢٦-٠٨-٠٤). والمستثنى وحدَه هذا المعرضُ{" "}
-                  <code className="font-latin">/ui</code> — تُفحَص فيه المكوّناتُ مفردةً، ولمؤشّرِه صفحتُه هذه
+                  <code className="font-latin">/ui</code>: تُفحَص فيه المكوّناتُ مفردةً، ولمؤشّرِه صفحتُه هذه
                   تُركّبه بنفسها.
                 </li>
                 <li>
                   <strong className="text-content">الفأرةُ وحدها:</strong>{" "}
-                  <code className="font-latin">pointer: fine</code> — على اللمس لا طبقةَ تُرسَم ولا مستمعَ يُركَّب.
+                  <code className="font-latin">pointer: fine</code>، على اللمس لا طبقةَ تُرسَم ولا مستمعَ يُركَّب.
                 </li>
                 <li>
-                  <strong className="text-content">تقليلُ الحركة:</strong> يُلغي التأخّرَ والتمطّطَ والأثر — لا
+                  <strong className="text-content">تقليلُ الحركة:</strong> يُلغي التأخّرَ والتمطّطَ والأثر، لا
                   تُحسَب أصلًا، فيبقى الشكلُ وتذهب الحركة.
                 </li>
                 <li>
                   <strong className="text-content">الدلالةُ تبقى لكنّها تُرسَم عندنا:</strong> فوق الحقول تنسحب
-                  الريشةُ وهالتُها وتحلّ محلَّهما <strong>شعرةُ كتابةٍ من الهوية</strong> بنغمة الحقل — فلا يبقى في
+                  الريشةُ وهالتُها وتحلّ محلَّهما <strong>شعرةُ كتابةٍ من الهوية</strong> بنغمة الحقل، فلا يبقى في
                   الموقع شكلُ مؤشّرٍ يرسمه المتصفّح. ويبقى <strong>«ممنوع»</strong> على المعطَّل من النظام وحده:
                   صورةُ المنع اصطلاحٌ يعرفه المستخدم من نظامه، ورسمُ بديلٍ لها اختراعُ لغةٍ لا نقلُ هوية.
                 </li>

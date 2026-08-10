@@ -1,7 +1,7 @@
 // يُستورَد من مكوّنات خادميّة وحدها (page.tsx) — المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { asPriority, asStatus, type ContactPriority, type ContactStatus } from "@/lib/contact/vocab";
+import { asStatus, type ContactStatus } from "@/lib/contact/vocab";
 
 /** رسالةُ زائرٍ كما تُقرأ في اللوحة — صفٌّ من `contact_messages` بأسماء الواجهة. */
 export type ContactRow = {
@@ -11,7 +11,6 @@ export type ContactRow = {
   subject: string | null;
   message: string;
   status: ContactStatus;
-  priority: ContactPriority;
   notes: string | null;
   replyMessage: string | null;
   repliedAt: string | null;
@@ -33,13 +32,13 @@ export async function getContactMessages(): Promise<ContactData> {
   const sb = createAdeebServiceClient(url, key);
   const { data, error } = await sb
     .from("contact_messages")
-    .select("id, name, email, subject, message, status, priority, notes, reply_message, replied_at, replied_by, created_at")
+    .select("id, name, email, subject, message, status, notes, reply_message, replied_at, replied_by, created_at")
     .order("created_at", { ascending: false });
   if (error) return { rows: [], error: error.message };
 
   type Raw = {
     id: string; name: string; email: string; subject: string | null; message: string;
-    status: string | null; priority: string | null; notes: string | null;
+    status: string | null; notes: string | null;
     reply_message: string | null; replied_at: string | null; replied_by: string | null; created_at: string;
   };
   const raw = (data ?? []) as Raw[];
@@ -62,7 +61,6 @@ export async function getContactMessages(): Promise<ContactData> {
       subject: r.subject,
       message: r.message,
       status: asStatus(r.status),
-      priority: asPriority(r.priority),
       notes: r.notes,
       replyMessage: r.reply_message,
       repliedAt: r.replied_at,

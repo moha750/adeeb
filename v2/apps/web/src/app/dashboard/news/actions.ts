@@ -21,15 +21,15 @@ const cleanList = (v: string[] | null | undefined): string[] =>
 
 /** حرّاس القاعدة تُترجَم لرسائل عربيّة — فلا يرى المستخدم اسم قيدٍ إنجليزيّ. */
 function guardMessage(msg: string): string | null {
-  if (/news_publish_guard/.test(msg)) return "لا يُنشَر خبرٌ ناقص — أكمِل الملخّص والغلاف واسم الكاتب.";
+  if (/news_publish_guard/.test(msg)) return "لا يُنشَر خبرٌ ناقص. أكمِل الملخّص والغلاف واسم الكاتب.";
   if (/news_category_check/.test(msg)) return "قسمٌ غير معروف.";
   if (/news_gallery_photographers_aligned/.test(msg)) return "عدد مصوّري المعرض لا يطابق عدد صوره.";
-  if (/news_tags_clean/.test(msg)) return "فيه وسمٌ فارغ — احذفه.";
+  if (/news_tags_clean/.test(msg)) return "فيه وسمٌ فارغ. احذفه.";
   if (/news_slug_present/.test(msg)) return "المعرّف مطلوب.";
   if (/news_assigned_fields_known/.test(msg)) return "حقلٌ غير معروف في التكليف.";
-  if (/duplicate key|unique/i.test(msg)) return "هذا المعرّف مستخدَم — اختر غيره.";
+  if (/duplicate key|unique/i.test(msg)) return "هذا المعرّف مستخدَم. اختر غيره.";
   if (/news_denied/.test(msg)) return DENIED;
-  if (/news_notes_required/.test(msg)) return "اكتب ما ينبغي تعديله — الإعادة بلا ملاحظة لا تُفيد الكاتب.";
+  if (/news_notes_required/.test(msg)) return "اكتب ما ينبغي تعديله. الإعادة بلا ملاحظة لا تُفيد الكاتب.";
   if (/news_bad_transition/.test(msg)) return "هذا الخبر ليس في مرحلةٍ تقبل هذا الفعل.";
   if (/news_title_required/.test(msg)) return "عنوان الخبر مطلوب.";
   if (/news_empty_comment/.test(msg)) return "التعليق فارغ.";
@@ -166,7 +166,7 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
   touch();
   return {
     ok: true,
-    message: rejected.length ? "حُفظ ما تملكه — وتُجوهِلت حقولٌ لم تُكلَّف بها." : "حُفظت التغييرات.",
+    message: rejected.length ? "حُفظ ما تملكه، وتُجوهِلت حقولٌ لم تُكلَّف بها." : "حُفظت التغييرات.",
     id,
   };
 }
@@ -261,7 +261,7 @@ export async function deleteNews(id: string): Promise<Result> {
 
   const { data: n } = await sb.from("news").select("title, workflow_status").eq("id", id).maybeSingle();
   if (n?.workflow_status === "published") {
-    return { ok: false, message: "لا يُحذف خبرٌ منشور — أرشِفه أوّلًا (رابطه منشورٌ في الخارج)." };
+    return { ok: false, message: "لا يُحذف خبرٌ منشور. أرشِفه أوّلًا (رابطه منشورٌ في الخارج)." };
   }
 
   await removePrefix(id);

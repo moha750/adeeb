@@ -73,7 +73,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
       variant="aurora"
       icon={<Question />}
       title="لا أسئلة بعد"
-      description="أضِف أوّل سؤال — يظهر مباشرةً في قسم «الأسئلة الشائعة» بالصفحة الرئيسية."
+      description="أضِف أوّل سؤال، يظهر مباشرةً في قسم «الأسئلة الشائعة» بالصفحة الرئيسية."
       action={createBtn}
     />
   );

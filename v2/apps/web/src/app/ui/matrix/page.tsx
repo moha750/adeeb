@@ -48,11 +48,11 @@ export default function MatrixPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Matrix</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Matrix</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">المصفوفة وقائمة الاختيار</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           بدائيّتان لعلاقةٍ ثنائيّة (صفّ × عمود). <b>المصفوفة</b> تُقرأ في الاتجاهين: رأسُ الأعمدة لاصقٌ
-          أعلى، وعمودُ الصفوف لاصقٌ في الصدر، و<b>صليبٌ مُضاء</b> يتبع الخليّة المارّ عليها — بلا هذا
+          أعلى، وعمودُ الصفوف لاصقٌ في الصدر، و<b>صليبٌ مُضاء</b> يتبع الخليّة المارّ عليها، بلا هذا
           يضيع البصر في اثني عشر عمودًا. و<b>قائمة الاختيار</b> نظيرُ الشريط المقطعيّ حين تكثر الخيارات:
           <code className="font-latin"> .seg</code> صفٌّ يضيق باثني عشر، وهذه عمودٌ يتّسع.
           أنماطُهما <code className="font-latin">.mtx-*</code> و<code className="font-latin">.olist-*</code> بالمكتبة.
@@ -60,7 +60,7 @@ export default function MatrixPage() {
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>مصفوفة قابلة للتحرير · خليّتها مربّع اختيار</Label>
+            <Label>مصفوفة قابلة للتحرير، خليّتها مربّع اختيار</Label>
             <Matrix
               aria-label="مصفوفة تجريبيّة"
               corner="القدرة"
@@ -71,7 +71,7 @@ export default function MatrixPage() {
                 <Checkbox
                   checked={has(row.key, col.key)}
                   onChange={(e) => flip(row.key, col.key, e.currentTarget.checked)}
-                  aria-label={`${row.key} — ${col.label}`}
+                  aria-label={`${row.key}، ${col.label}`}
                 />
               )}
             />

@@ -141,7 +141,7 @@ export function ScanView({ holder, mode, initial }: { holder: DemoMember; mode: 
             <CardHeader
               icon={<User />}
               title={holder.name}
-              subtitle={`${holder.department} · ${holder.committee}`}
+              subtitle={`${holder.department}، ${holder.committee}`}
               actions={
                 <Badge tone={mode === "points" ? (can.length > 0 ? "success" : "info") : complete ? "success" : "info"}>
                   {/* كتلةٌ واحدةٌ لا ثلاث — الفاصلُ المحاطُ بمسافتين ينقلب في الجملة العربيّة */}
@@ -164,12 +164,12 @@ export function ScanView({ holder, mode, initial }: { holder: DemoMember; mode: 
 
               {mode === "points" ? (
                 <p className="text-sm">
-                  {pointsStatusText(state.points)} · مكافآتٌ صرفها:{" "}
+                  {pointsStatusText(state.points)}، مكافآتٌ صرفها:{" "}
                   <span className="font-latin">{num(state.redemptions)}</span>
                 </p>
               ) : (
                 <p className="text-sm">
-                  {statusText(state.stamps)} · بطاقاتٌ أكملها:{" "}
+                  {statusText(state.stamps)}، بطاقاتٌ أكملها:{" "}
                   <span className="font-latin">{num(state.cycles)}</span>
                 </p>
               )}

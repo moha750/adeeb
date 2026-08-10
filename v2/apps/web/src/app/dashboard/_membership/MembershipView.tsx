@@ -5,9 +5,9 @@
 // كما تفعل `EventsView` و`MembersView` — لا أيقونةَ تُستورَد في `page.tsx`.
 
 import { useState } from "react";
-import { Alert, Badge, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
+import { Alert, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
 import {
-  Binoculars, Certificate as CertificateIcon, FilePdf, Path, ShieldWarning, Signpost,
+  Certificate as CertificateIcon, FilePdf, Path, ShieldWarning, Signpost,
 } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { EmptyState } from "../_components/EmptyState";
@@ -56,28 +56,9 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
         status={m.status}
         avatar={m.avatar}
         gender={m.gender}
-        chain={m.chain}
         joined={m.joined}
         duration={m.duration}
       />
-
-      {/* الإشراف تكليفٌ لا منصب — فله سطرُه، ولا يُحشر في السلسلة ولا في المسيرة. */}
-      {m.supervising.length ? (
-        <Card>
-          <CardHeader
-            variant="soft"
-            icon={<Binoculars />}
-            title="لجانٌ تشرف عليها"
-            subtitle="تكليفٌ من إدارتك — يدور ويتبدّل، ولا يجعلك عضوًا فيها"
-          />
-          <CardBody>
-            <div className="chip-row">
-              {/* الفولاذيّ في الشارة اسمُه `info` — لا `brand` (تلك نغمة الكرت والإحصائيّة) */}
-              {m.supervising.map((c) => <Badge key={c} tone="info" variant="soft">{c}</Badge>)}
-            </div>
-          </CardBody>
-        </Card>
-      ) : null}
 
       {/* إنذاراتي — لا تظهر إلّا لمن عليه إنذارٌ سارٍ. والشفافيّة قرارُ المالك: يرى السبب كما كُتب،
           فلا يبقى يسأل «كم عليّ؟» — والعاقبةُ مقولةٌ صراحةً قبل أن تقع. */}
@@ -87,14 +68,14 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
             variant="soft"
             icon={<ShieldWarning />}
             title="إنذاراتي"
-            subtitle={`${dots(m.warnings.length, m.warningLimit)} · ${remainingText(m.warnings.length, m.warningLimit)}`}
+            subtitle={`${dots(m.warnings.length, m.warningLimit)}، ${remainingText(m.warnings.length, m.warningLimit)}`}
           />
           <CardBody>
             {m.warnings.map((w) => (
               <Alert
                 key={w.id}
                 tone={w.ordinal >= m.warningLimit ? "danger" : "warning"}
-                title={`${warningTitle(w.ordinal)} · ${categoryLabel(w.category)} · ${w.date}`}
+                title={`${warningTitle(w.ordinal)}، ${categoryLabel(w.category)}، ${w.date}`}
               >
                 {w.reason}
               </Alert>
@@ -111,14 +92,14 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
             variant="soft"
             icon={<CertificateIcon />}
             title="شهاداتي"
-            subtitle="شهادات الخبرة الصادرة لك — نزّلها متى احتجتها"
+            subtitle="شهادات الخبرة الصادرة لك، نزّلها متى احتجتها"
           />
           <CardBody>
             {m.certificates.map((c) => (
-              <Alert key={c.id} tone="success" title={`${c.positionTitle} · ${c.serial}`}>
+              <Alert key={c.id} tone="success" title={`${c.positionTitle}، ${c.serial}`}>
                 {/* `viewbar` من المكتبة: صفٌّ يتباعد طرفاه ويلتفّ في الضيّق — ولا سطر CSS جديد */}
                 <div className="viewbar">
-                  <span>من {certDate(c.periodFrom)} إلى {certDate(c.periodTo)} — صدرت في {c.date}</span>
+                  <span>من {certDate(c.periodFrom)} إلى {certDate(c.periodTo)}، صدرت في {c.date}</span>
                   <span className="chip-row">
                     <Button variant="ghost" size="sm" loading={busy === c.id} onClick={() => void download(c, "pdf")}>
                       <FilePdf aria-hidden /> PDF

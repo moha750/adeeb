@@ -246,7 +246,7 @@
 
 /* ============================================================
    إحصائيّات الزوّار — تخطيط الشاشة فقط (.st-*)
-   كلّ الرسوم والعدّادات صارت مكوّنات هوية في المكتبة (Segmented · ChartPanel · BarList ·
+   كلّ الرسوم والعدّادات صارت مكوّنات هوية في المكتبة (Segmented · SectionCard · BarList ·
    Donut · AreaChart · ColumnBars · Stat · DataTable). لم يبقَ هنا إلا سقالة التخطيط
    (تكديس رأسيّ · صفّ أدوات · شبكة ثنائيّة) — لا رسمَ بيانيًّا شاردًا، فنُزع وسم data-needs.
    ============================================================ */
@@ -268,21 +268,19 @@
 /* ============================================================
    الاستبيانات — بنّاء ونتائج (svy): عائلةُ تخطيطِ ميزةٍ مُعتمَدة (كـ cred و gal و pva).
    المكوّنات الحقيقيّة حُلّت إلى المكتبة: أزرار الأدوات → IconButton، وبطاقات الأقسام
-   → ChartPanel؛ والباقي تخطيطٌ رقيق يبقى هنا. كلّ القيم من الرموز.
+   → SectionCard؛ والباقي تخطيطٌ رقيق يبقى هنا. كلّ القيم من الرموز.
    تنبيه: لا نجمة تتبعها شرطة مائلة داخل تعليق — تُغلقه باكرًا.
    ============================================================ */
 /* تخطيط النماذج المشترك (بنّاء الاستبيانات · نموذج الفعاليّة) — مصدرٌ واحد لا يُنسَخ لكلّ نموذج. */
 .form-head-actions { display: flex; align-items: center; gap: 10px; }
 .form-build { display: flex; flex-direction: column; gap: 16px; }
-/* أقسام النموذج لوحاتُ ChartPanel — جسمها (‎.acard-body‎) يُكدّس محتواه رأسيًّا بفجوة موحّدة. */
+/* أقسام النموذج لوحاتُ SectionCard — جسمها (‎.acard-body‎) يُكدّس محتواه رأسيًّا بفجوة موحّدة. */
 .form-build .acard-body { display: flex; flex-direction: column; gap: 14px; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-full { grid-column: 1 / -1; }
-@media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } .form-full { grid-column: auto; } }
+/* (‎.form-grid‎/‎.form-full‎ انتقلا إلى المكتبة: صارا يقاسمان جسمَ النافذة فجوتَه من مصدرٍ واحد.) */
 .form-switches { display: flex; flex-direction: column; gap: 4px; }
 
 .svy-qs { display: flex; flex-direction: column; gap: 14px; }
-/* بطاقة السؤال متداخلة في جسم لوح ChartPanel — زاويتها متراكزة (الأب ناقص حشو الجسم 20px ≈ رمز sm) */
+/* بطاقة السؤال متداخلة في جسم لوح SectionCard — زاويتها متراكزة (الأب ناقص حشو الجسم 20px ≈ رمز sm) */
 .svy-q { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--color-surface); }
 .svy-q-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .svy-q-no { width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-primary); font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
@@ -296,7 +294,7 @@
 
 /* نتائج الاستبيان */
 .svy-r-list { display: flex; flex-direction: column; gap: 16px; }
-/* ترويسة السؤال وُحِّدت على ترويسة ChartPanel (العنوان + الميتا في actions) — حُذف ‎.svy-r-qhead‎. */
+/* ترويسة السؤال وُحِّدت على ترويسة SectionCard (العنوان + الميتا في actions) — حُذف ‎.svy-r-qhead‎. */
 .svy-r-qmeta { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--color-text-muted); white-space: nowrap; }
 .svy-r-nums { display: flex; gap: 18px; font-size: 13px; color: var(--color-text-muted); margin-bottom: 12px; }
 .svy-r-nums b { color: var(--color-primary); }

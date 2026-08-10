@@ -89,7 +89,7 @@ export function AssignmentModal({
       }
     >
       {p ? (
-        <div className="org-modal">
+        <>
           {/* الشاغل الحاليّ (استبدال/إزالة) */}
           {holder ? (
             <div className="org-modal-cur">
@@ -107,13 +107,13 @@ export function AssignmentModal({
               options={memberOptions}
               value={pick}
               onValueChange={onPick}
-              helper={p.prerequisite ? `المرشّحون: من يشغل «${p.prerequisiteAr}» الآن — فهذا المقعد انتقالٌ لا ضمٌّ من خارج.` : undefined}
+              helper={p.prerequisite ? `المرشّحون: من يشغل «${p.prerequisiteAr}» الآن، فهذا المقعد انتقالٌ لا ضمٌّ من خارج.` : undefined}
               required
             />
           ) : (
             <p className="org-modal-warn">سيُلغى تفعيل هذا المنصب. لا يُحذف السجلّ نهائيًّا، لكن قد يُسحب ترشّح العضو الانتخابيّ إن كان قائمًا.</p>
           )}
-        </div>
+        </>
       ) : null}
     </Modal>
   );

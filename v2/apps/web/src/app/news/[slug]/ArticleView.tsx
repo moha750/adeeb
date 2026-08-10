@@ -54,7 +54,7 @@ export function ArticleView({ n }: { n: PublicNews }) {
             <span className="inline-flex items-center gap-1.5"><CalendarBlank aria-hidden />{n.dateLabel}</span>
           ) : null}
           {n.authors.length ? (
-            <span className="inline-flex items-center gap-1.5"><User aria-hidden />{n.authors.join(" · ")}</span>
+            <span className="inline-flex items-center gap-1.5"><User aria-hidden />{n.authors.join("، ")}</span>
           ) : null}
           <span className="inline-flex items-center gap-1.5">
             <Clock aria-hidden /><span className="font-latin">{n.readMinutes}</span> دقائق قراءة
@@ -97,7 +97,7 @@ export function ArticleView({ n }: { n: PublicNews }) {
           <div className="card-grid">
             {n.gallery.map((src, i) => (
               <Card key={src}>
-                <CardMedia image={src} alt={`${n.title} — صورة ${i + 1}`} />
+                <CardMedia image={src} alt={`${n.title}، صورة ${i + 1}`} />
                 {n.galleryPhotographers[i] ? (
                   <CardBody className="pt-3">
                     <span className="inline-flex items-center gap-1.5 text-sm text-content-muted">

@@ -47,12 +47,12 @@ export default function SupervisorsPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Unit Member Card</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Unit Member Card</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">كرت عضو الوحدة</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           كرتُ <b>الانتماء</b> في قسم «أعضاء الإدارة» من تبويب «إدارتي»: من هو، وكم يحمل من لجان
-          خبرًا، وبابُ إخراجه. أمّا التوزيعُ فبابُه كرتُ المقعد في القسم الثاني وحده — كانت الشرائحُ
-          هنا تفعله أيضًا، ففعلٌ واحدٌ ببابين. النغمةُ تقول الحِمل: <b>brand</b> = يشرف على لجان ·{" "}
+          خبرًا، وبابُ إخراجه. أمّا التوزيعُ فبابُه كرتُ المقعد في القسم الثاني وحده، كانت الشرائحُ
+          هنا تفعله أيضًا، ففعلٌ واحدٌ ببابين. النغمةُ تقول الحِمل: <b>brand</b> = يشرف على لجان، {" "}
           <b>warning</b> = عضوٌ لم يُوزَّع بعد.
           يبني على أساس <code className="font-latin">.acard</code> ونظام النغمة (ق٤/٥)، أنماطُه{" "}
           <code className="font-latin">.ovcard-*</code> بالمكتبة.
@@ -60,7 +60,7 @@ export default function SupervisorsPage() {
 
         <div className="mt-12 space-y-12">
           <section>
-            <Label>أعضاء إدارة (حِملٌ ثقيل · مثنّى · مفرد · بلا لجنة)</Label>
+            <Label>أعضاء إدارة (حِملٌ ثقيل، مثنّى، مفرد، بلا لجنة)</Label>
             <div className="card-grid">
               {SAMPLE.map((s) => (
                 <UnitMemberCard key={s.userId} member={s} subtitle={committeesLabel(s.committees.length)} onExpel={noop} />
@@ -69,10 +69,10 @@ export default function SupervisorsPage() {
           </section>
 
           <section>
-            <Label>محرّر التوزيع — النافذة المنغّمة (تعيين · إسناد · استبدال · سحب · إخراج)</Label>
+            <Label>محرّر التوزيع: النافذة المنغّمة (تعيين، إسناد، استبدال، سحب، إخراج)</Label>
             <p className="mb-6 max-w-2xl text-content-muted">
               فعلان تنظيميّان (تعيينُ عضوٍ إداريٍّ في الإدارة وإخراجُه منها) واثنان تشغيليّان: اللجنةُ معلومة
-              فيُختار المشرف · والاثنان معلومان فالتأكيدُ وحده. والنغمةُ تقول شدّة الفعل — يبني على
+              فيُختار المشرف، والاثنان معلومان فالتأكيدُ وحده. والنغمةُ تقول شدّة الفعل، يبني على
               <code className="font-latin"> Modal</code> + القاعدة ٩.
             </p>
             <div className="flex flex-wrap gap-3">

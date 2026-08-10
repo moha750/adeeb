@@ -48,3 +48,26 @@ export function assignmentScope(homeCommitteeId: number | null, u: UnitPart): st
 export function positionLabel(r: RolePart, u: UnitPart = {}): { title: string; scope: string | null } {
   return { title: roleTitle(r), scope: assignmentScope(r.homeCommitteeId, u) };
 }
+
+/**
+ * الجملةُ كما تُقرأ — **مسافةٌ لا فاصل**: «عضو لجنة الإعلام»، لا «عضو · لجنة الإعلام».
+ *
+ * النقطةُ تفصل خبرين متجاورين، والرتبةُ ووحدتُها خبرٌ واحد: مضافٌ ومضافٌ إليه. فمن
+ * وضع نقطةً بينهما قطع القائدَ عن لجنته وجعلهما شيئين، والوصلُ أبلغ. وهذه هي الصيغةُ
+ * الوحيدة في اللوحة كلّها — كلُّ شاشةٍ تقول «مَن هذا وأين» تمرّ من هنا.
+ *
+ * تُرجع `null` إن لم يبقَ نصّ، فتختار الشاشةُ كلمةَ الغياب التي تليق بها
+ * («غير متوفّر» · «بلا موقع»).
+ */
+export function positionLine(title?: string | null, scope?: string | null): string | null {
+  const t = (title ?? "").trim();
+  let s = (scope ?? "").trim();
+  // لا تُكرَّر كلمةُ النوع عند الوصل: «منسّق قسم» + «قسم الإنتاج الإعلاميّ» → «منسّق قسم الإنتاج الإعلاميّ»
+  // (الأدوار مجرّدةٌ فلا تتلامس غالبًا؛ وهذه القاعدة تمسك حالةَ القسم حيث يحمل الدورُ والنطاقُ «قسم»
+  // معًا — قاعدةٌ واحدةٌ عند الحدّ لا استثناءٌ لكلّ دور). ولا تمسّ المفردَ (بلا نطاق) فيبقى واضحًا.
+  if (t && s) {
+    const seam = t.split(/\s+/).pop();
+    if (seam && s.startsWith(seam + " ")) s = s.slice(seam.length + 1).trim();
+  }
+  return [t, s].filter(Boolean).join(" ").trim() || null;
+}

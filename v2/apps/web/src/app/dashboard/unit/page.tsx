@@ -54,7 +54,7 @@ export default async function UnitPage() {
       <>
         <Head unit={scope.unit.name} />
         <Alert tone="warning" title="إدارةٌ لا تُصرّح بدور عضوها">
-          لا يُعرف من يُعدّ عضوًا في {scope.unit.name} — `member_role_name` فارغ في القاعدة.
+          لا يُعرف من يُعدّ عضوًا في {scope.unit.name}: `member_role_name` فارغ في القاعدة.
         </Alert>
       </>
     );

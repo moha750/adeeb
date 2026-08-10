@@ -29,8 +29,8 @@ export const IMAGE_EXT: Record<string, string> = {
 /** سقف الدلو نفسه ٥ م.ب — يُذكر هنا ليردّ الرفعة الخاطئة برسالةٍ مفهومة لا بخطأ خام. */
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
-export const BAD_MIME = "صيغة غير مدعومة — استخدم WEBP أو JPG أو PNG.";
-export const TOO_BIG = "الصورة أكبر من ٥ م.ب — اضغطها أو صدّرها WEBP.";
+export const BAD_MIME = "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG.";
+export const TOO_BIG = "الصورة أكبر من ٥ م.ب. اضغطها أو صدّرها WEBP.";
 
 /** مفتاحٌ فريد لكلّ رفعة: الاسم لا يُشتقّ من اسم الملفّ الأصليّ (قد يكون عربيًّا أو مكرّرًا). */
 export const coverKey = (newsId: string, ext: string) =>

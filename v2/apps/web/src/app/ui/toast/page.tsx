@@ -25,7 +25,7 @@ function Demo() {
   return (
     <div className="mt-12 space-y-14">
       <Sec title="النغمات">
-        <Lab>success · error · info · warning</Lab>
+        <Lab>success, error, info, warning</Lab>
         <div className="flex flex-wrap items-center gap-4">
           <Button variant="success" onClick={() => toast.success("حُفظت التغييرات بنجاح.")}>
             <CheckCircle aria-hidden /> نجاح
@@ -43,12 +43,12 @@ function Demo() {
       </Sec>
 
       <Sec title="السلوك">
-        <Lab>الخطأ يبقى حتى يُغلَق يدويًّا · البقيّة تختفي تلقائيًّا بعد ١٠ ثوانٍ</Lab>
+        <Lab>الخطأ يبقى حتى يُغلَق يدويًّا، البقيّة تختفي تلقائيًّا بعد ١٠ ثوانٍ</Lab>
         <div className="flex flex-wrap items-center gap-4">
-          <Button variant="danger" onClick={() => toast.error("إشعار خطأ ثابت — لا يُجدوَل، أغلقه بزرّ ×.")}>
+          <Button variant="danger" onClick={() => toast.error("إشعار خطأ ثابت: لا يُجدوَل، أغلقه بزرّ ×.")}>
             خطأ ثابت
           </Button>
-          <Button variant="ghost" onClick={() => toast.info("إشعار عابر — يختفي وحده وفق شريط التقدّم.")}>
+          <Button variant="ghost" onClick={() => toast.info("إشعار عابر: يختفي وحده وفق شريط التقدّم.")}>
             عابر افتراضيّ
           </Button>
         </div>
@@ -57,20 +57,20 @@ function Demo() {
       <Sec title="المدّة المخصّصة">
         <Lab>الخيار الثاني: opts.duration بالملّي ثانية</Lab>
         <div className="flex flex-wrap items-center gap-4">
-          <Button variant="ghost-success" onClick={() => toast.success("مدّة قصيرة — ثانيتان.", { duration: 2000 })}>
+          <Button variant="ghost-success" onClick={() => toast.success("مدّة قصيرة: ثانيتان.", { duration: 2000 })}>
             ٢ ثانية
           </Button>
-          <Button variant="ghost" onClick={() => toast.info("مدّة متوسّطة — خمس ثوانٍ.", { duration: 5000 })}>
+          <Button variant="ghost" onClick={() => toast.info("مدّة متوسّطة: خمس ثوانٍ.", { duration: 5000 })}>
             ٥ ثوانٍ
           </Button>
-          <Button variant="ghost-warning" onClick={() => toast.warning("مدّة طويلة — عشرون ثانية.", { duration: 20000 })}>
+          <Button variant="ghost-warning" onClick={() => toast.warning("مدّة طويلة: عشرون ثانية.", { duration: 20000 })}>
             ٢٠ ثانية
           </Button>
         </div>
       </Sec>
 
       <Sec title="المكدّس">
-        <Lab>سقف المكدّس ٥ إشعارات — يُزال الأقدم عند التجاوز</Lab>
+        <Lab>سقف المكدّس ٥ إشعارات، يُزال الأقدم عند التجاوز</Lab>
         <div className="flex flex-wrap items-center gap-4">
           <Button
             variant="primary"
@@ -80,7 +80,7 @@ function Demo() {
               toast.warning("الإشعار الثالث.");
               toast.info("الإشعار الرابع.");
               toast.success("الإشعار الخامس.");
-              toast.error("الإشعار السادس — يدفع الأقدم خارج المكدّس.");
+              toast.error("الإشعار السادس، يدفع الأقدم خارج المكدّس.");
             }}
           >
             <Stack aria-hidden /> أطلق ٦ دفعة واحدة
@@ -97,11 +97,11 @@ export default function ToastPage() {
       <main className="py-16">
         <Container>
           <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-            Design System · Toast
+            Design System, Toast
           </p>
           <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الإشعارات</h1>
           <p className="mt-2 max-w-xl text-content-muted">
-            إشعارات عابرة بأربع نغمات · شريط تقدّم للاختفاء التلقائيّ · مكدّس محدود بخمسة.
+            إشعارات عابرة بأربع نغمات، شريط تقدّم للاختفاء التلقائيّ، مكدّس محدود بخمسة.
           </p>
           <Demo />
         </Container>

@@ -8,7 +8,12 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "check": "node scripts/css-single-source.mjs",
+    "dev:start": "node scripts/dev-server.mjs start",
+    "dev:stop": "node scripts/dev-server.mjs stop",
+    "dev:restart": "node scripts/dev-server.mjs restart",
+    "dev:status": "node scripts/dev-server.mjs status",
+    "dev:logs": "node scripts/dev-server.mjs logs",
+    "check": "node scripts/css-single-source.mjs && node scripts/modal-spacing.mjs && node scripts/no-separators.mjs",
     "auth:config": "node scripts/auth-config.mjs",
     "web": "pnpm --filter web dev"
   },

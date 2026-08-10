@@ -17,12 +17,12 @@ type Booked = { id: string; gender: "male" | "female"; whatsappConfirmed: boolea
 
 // رموز أخطاء book/cancel (RAISE EXCEPTION) → عربيّة — تُلتقَط بالاحتواء.
 const BOOK_ERRORS: Record<string, string> = {
-  NOT_AUTHENTICATED: "انتهت الجلسة — أعد إدخال بريدك.",
+  NOT_AUTHENTICATED: "انتهت الجلسة. أعد إدخال بريدك.",
   ACTIVITY_NOT_FOUND: "لم نعثر على الفعاليّة.",
   ACTIVITY_NOT_PUBLISHED: "الفعاليّة غير متاحة للحجز.",
   ACTIVITY_CANCELLED: "أُلغيت هذه الفعاليّة.",
   ACTIVITY_PAST: "انتهى وقت هذه الفعاليّة.",
-  GENDER_REQUIRED: "لم نتعرّف على فئتك — أكمِل بياناتك.",
+  GENDER_REQUIRED: "لم نتعرّف على فئتك. أكمِل بياناتك.",
   ALREADY_BOOKED: "لديك حجزٌ مؤكّد في هذه الفعاليّة.",
   NO_SEATS_AVAILABLE_FOR_GENDER: "لا مقاعد متاحة لفئتك حاليًّا.",
   NO_SEATS_AVAILABLE: "اكتملت المقاعد.",
@@ -32,18 +32,18 @@ const BOOK_ERRORS: Record<string, string> = {
   NOT_OWNER: "هذا الحجز ليس لك.",
   // أخطاء `create_my_account_profile` — بابُ الزائر إلى صفّه
   NAME_REQUIRED: "الاسم مطلوب.",
-  PHONE_INVALID: "رقم الجوّال غير صحيح — أدخله هكذا: 05xxxxxxxx.",
-  PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا — أعِد تحميل الصفحة.",
+  PHONE_INVALID: "رقم الجوّال غير صحيح. أدخله هكذا: 05xxxxxxxx.",
+  PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا. أعِد تحميل الصفحة.",
 };
 const bookError = (raw: string | null | undefined): string => {
   const code = Object.keys(BOOK_ERRORS).find((c) => (raw ?? "").includes(c));
-  return code ? BOOK_ERRORS[code] : "تعذّر إتمام العمليّة — حاول مجدّدًا.";
+  return code ? BOOK_ERRORS[code] : "تعذّر إتمام العمليّة. حاول مجدّدًا.";
 };
 const authError = (raw: string): string => {
   const m = raw.toLowerCase();
-  if (m.includes("rate") || m.includes("too many")) return "محاولات كثيرة — انتظر قليلًا ثمّ أعِد المحاولة.";
-  if (m.includes("expired") || m.includes("invalid")) return "الرمز غير صحيح أو انتهت صلاحيّته — اطلب رمزًا جديدًا.";
-  return "تعذّرت العمليّة — حاول مجدّدًا.";
+  if (m.includes("rate") || m.includes("too many")) return "محاولات كثيرة. انتظر قليلًا ثمّ أعِد المحاولة.";
+  if (m.includes("expired") || m.includes("invalid")) return "الرمز غير صحيح أو انتهت صلاحيّته. اطلب رمزًا جديدًا.";
+  return "تعذّرت العمليّة. حاول مجدّدًا.";
 };
 
 export function BookingWidget({ activityId, unlimited, splitByGender, targetGender, totalRemaining, maleRemaining, femaleRemaining }: { activityId: string; unlimited: boolean; splitByGender: boolean; targetGender: "male" | "female" | null; totalRemaining: number; maleRemaining: number | null; femaleRemaining: number | null }) {
@@ -236,7 +236,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
       {step === "email" ? (
         <>
-          <p className="text-sm text-content-muted">أدخل بريدك ليصلك رمز تأكيد — بلا كلمة مرور.</p>
+          <p className="text-sm text-content-muted">أدخل بريدك ليصلك رمز تأكيد، بلا كلمة مرور.</p>
           <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           {TURNSTILE_SITE_KEY ? (
             <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
@@ -272,7 +272,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
       {step === "ready" ? (
         <>
-          <p className="text-sm text-content-muted">أنت مسجّل الدخول — احجز مقعدك بضغطة.</p>
+          <p className="text-sm text-content-muted">أنت مسجّل الدخول، احجز مقعدك بضغطة.</p>
           <Button variant="primary" size="md" loading={busy} onClick={book}>احجز مقعدي</Button>
         </>
       ) : null}

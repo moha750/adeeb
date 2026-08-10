@@ -17,7 +17,11 @@ import { useToast } from "./ToastProvider";
  * فإن تصدّر النصّ في فقرة عربيّة أخذ اتّجاهها وانتقل يمينًا، فيُقرأ `mohammad_1@`. والعزل وحده لا
  * المحاذاة: <bdi> يلفّ القيمة inline فتبقى الخليّة RTL محاذيةً يمينًا كما هي.
  */
-export function Cell({ label, value, icon, lat, full, href, noCopy }: { label: string; value: string | null; icon: React.ReactNode; lat?: boolean; full?: boolean; href?: string; noCopy?: boolean }) {
+export function Cell({ label, value, icon, lat, full, href, noCopy, action }: {
+  label: string; value: string | null; icon: React.ReactNode; lat?: boolean; full?: boolean; href?: string; noCopy?: boolean;
+  /** فعلٌ يحلّ محلّ النسخ في الرُّكن (زرّ بأيقونته) — للقيمة التي تُغيَّر لا تُنسَخ («اللجنة» ← نقل). */
+  action?: { icon: React.ReactNode; label: string; onClick: () => void };
+}) {
   const toast = useToast();
   const [done, setDone] = useState(false);
   const empty = value == null || value === "";
@@ -40,7 +44,12 @@ export function Cell({ label, value, icon, lat, full, href, noCopy }: { label: s
       ) : (
         <div className={"pva-val" + (lat ? " lat" : "")}>{lat ? <bdi dir="ltr">{value}</bdi> : value}</div>
       )}
-      {empty || noCopy ? null : href ? (
+      {action ? (
+        // الرُّكن خانةٌ واحدة، فالفعل يحلّ محلّ النسخ لا يزاحمه (`.pva-open` مقاسُه وحالتُه نفسُها)
+        <button type="button" className="pva-open" onClick={action.onClick} aria-label={action.label} title={action.label}>
+          {action.icon}
+        </button>
+      ) : empty || noCopy ? null : href ? (
         // القيمة رابطٌ، فرُكن الخليّة يقول ذلك: أيقونة «فتح خارجيّ» تُعلن أنّ الضغط يُحوّل للمنصّة.
         // وهي رابطٌ لا زينة — هدفٌ ثانٍ أوسع للنقر، وتسميتها تصف الوجهة فلا تكرّر «رابط» على قارئ الشاشة.
         <a className="pva-open" href={href} target="_blank" rel="noreferrer" aria-label={`فتح ${label}`} title={`فتح ${label}`}>

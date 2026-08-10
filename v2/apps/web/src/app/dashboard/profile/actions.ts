@@ -113,13 +113,13 @@ export async function uploadMyAvatar(formData: FormData): Promise<AvatarResult> 
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم تُرفَق صورة." };
   if (file.size > MAX_BYTES) return { ok: false, message: "حجم الصورة يتجاوز ٢ ميغابايت." };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة — استخدم WEBP أو JPG أو PNG." };
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
 
   // العضويّة المنتهية سجلٌّ مغلق لا يُحرَّر — الحكم نفسه الذي يحرس بقيّة الحقول (`lib/memberData`)
   const { data: target, error: tErr } = await sb.from("profiles").select("account_status, avatar_url").eq("id", me.id).maybeSingle();
   if (tErr) return { ok: false, message: `تعذّر التحقّق من حسابك: ${tErr.message}` };
   if (!target) return { ok: false, message: "لا سجلّ لحسابك في «الأعضاء»." };
-  if (target.account_status === "suspended") return { ok: false, message: "عضويّة منتهية — لا تُعدَّل بياناتها." };
+  if (target.account_status === "suspended") return { ok: false, message: "عضويّة منتهية: لا تُعدَّل بياناتها." };
 
   // الاسم بمعرّف صاحبه وطابعٍ زمنيّ — فلا يتصادم ملفّان، ولا يُظلَّل المرفوع بنسخة الوسيط المخبّأة
   const path = `${me.id}-${Date.now()}.${ext}`;
@@ -158,7 +158,7 @@ export async function removeMyAvatar(): Promise<ProfileResult> {
   const { data: target, error: tErr } = await sb.from("profiles").select("account_status, avatar_url").eq("id", me.id).maybeSingle();
   if (tErr) return { ok: false, message: `تعذّر التحقّق من حسابك: ${tErr.message}` };
   if (!target) return { ok: false, message: "لا سجلّ لحسابك في «الأعضاء»." };
-  if (target.account_status === "suspended") return { ok: false, message: "عضويّة منتهية — لا تُعدَّل بياناتها." };
+  if (target.account_status === "suspended") return { ok: false, message: "عضويّة منتهية: لا تُعدَّل بياناتها." };
   if (!target.avatar_url) return { ok: false, message: "لا صورة لحسابك أصلًا." };
 
   const { error: wErr } = await sb.from("profiles").update({ avatar_url: null }).eq("id", me.id);

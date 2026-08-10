@@ -32,7 +32,7 @@ export function ViewAsBar({ targetName, realName }: { targetName: string | null;
       }
       className="mb-4"
     >
-      ترى اللوحة وتنفّذ فيها بصلاحيّة <b>{targetName?.trim() || "عضو"}</b> — لا بصلاحيّتك
+      ترى اللوحة وتنفّذ فيها بصلاحيّة <b>{targetName?.trim() || "عضو"}</b>، لا بصلاحيّتك
       {realName?.trim() ? ` (${realName.trim()})` : ""}. وكلّ إجراءٍ تُتمّه الآن يُنسَب إليه في السجلّ.
     </Alert>
   );

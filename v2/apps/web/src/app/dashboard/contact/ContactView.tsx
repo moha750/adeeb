@@ -3,8 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
-  Archive, ChatCircleText, Copy, Envelope, EnvelopeOpen, EnvelopeSimpleOpen, NotePencil, PaperPlaneTilt, Flag } from "@phosphor-icons/react";
-import { ArrowUUpLeft, Eye, MagnifyingGlass } from "@/app/_components/glyphs";
+  ChatCircleText, Copy, Envelope, EnvelopeOpen, EnvelopeSimpleOpen, NotePencil, PaperPlaneTilt } from "@phosphor-icons/react";
+import { Eye, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
@@ -13,19 +13,19 @@ import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 import { fmtDate } from "@/lib/date";
-import {
-  CONTACT_PRIORITIES, CONTACT_STATUSES, priorityLabel, priorityTone, statusLabel, statusTone,
-  type ContactPriority,
-} from "@/lib/contact/vocab";
-import { saveContactNotes, sendContactReply, setContactPriority, setContactStatus } from "./actions";
+import { CONTACT_STATUSES, statusLabel, statusTone } from "@/lib/contact/vocab";
+import { saveContactNotes, sendContactReply, setContactStatus } from "./actions";
 import type { ContactRow } from "./data";
 
 /**
  * **رسائل التواصل** — ما يكتبه الزائر في «تواصل معنا» بالصفحة الرئيسيّة، يصل هنا.
  *
  * كان النموذج يكتب في `contact_messages` ولا بابَ في البوّابة يقرؤها، فبقيت رسائلُ الناس
- * في القاعدة بلا قارئ. هذه هي الغرفة: تُقرأ، وتُرتَّب بالأولويّة، ويُردّ عليها **بريدًا
- * فعليًّا** يخرج من نطاق النادي (`send-contact-reply`) لا سطرًا يُخزَّن ويُنسى.
+ * في القاعدة بلا قارئ. هذه هي الغرفة: تُقرأ، ويُردّ عليها **بريدًا فعليًّا** يخرج من نطاق
+ * النادي (`send-contact-reply`) لا سطرًا يُخزَّن ويُنسى.
+ *
+ * ولا أولويّةَ ولا أرشفة: الأولى أداةُ ترتيب طابورٍ لا طابورَ له (رسالةٌ كلّ خمسة أسابيع)،
+ * والثانية إغلاقٌ بلا جواب لا واقعةَ له — فكلّ رسالةٍ حقيقيّة تُقرأ فتُجاب.
  *
  * وفتحُ الرسالة يُعلّمها مقروءةً من نفسه: العلامةُ أثرُ فعلٍ حقيقيّ لا زرٌّ يُنقر.
  */
@@ -48,7 +48,6 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
       rows.filter((r) => {
         if (!matchesSearch(search, `${r.name} ${r.email} ${r.subject ?? ""} ${r.message}`)) return false;
         if (filters.status && r.status !== filters.status) return false;
-        if (filters.priority && r.priority !== filters.priority) return false;
         return true;
       }),
     [rows, search, filters],
@@ -139,20 +138,13 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
       </Badge>
     ),
   };
-  const priorityCol: Column<ContactRow> = {
-    key: "priority", header: "الأولويّة", width: "120px",
-    // العاديّة لا تُشار إليها: الشارة للاستثناء، وإلّا صار الشائعُ ضجيجًا.
-    render: (r) => (r.priority === "normal"
-      ? <span className="txt">—</span>
-      : <Badge tone={priorityTone(r.priority)} variant="outline" icon={<Flag />}>{priorityLabel(r.priority)}</Badge>),
-  };
   const dateCol: Column<ContactRow> = {
     key: "date", header: "التاريخ", width: "1fr",
     render: (r) => <span className="txt">{fmtDate(r.createdAt)}</span>,
   };
 
   // الحالة تتصدّر: أوّلُ ما يُسأل عن رسالةٍ أَجُوبَت أم تنتظر — فتُقرأ الصفوف حالةً ثمّ صاحبًا.
-  const columns: Column<ContactRow>[] = [stateCol, senderCol, subjectCol, messageCol, priorityCol, dateCol];
+  const columns: Column<ContactRow>[] = [stateCol, senderCol, subjectCol, messageCol, dateCol];
 
   const rowActions = (r: ContactRow) => [
     {
@@ -161,28 +153,14 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
         { label: "نسخ البريد", icon: <Copy />, onSelect: () => void copyEmail(r) },
       ],
     },
-    {
-      items: CONTACT_PRIORITIES.filter((p) => p.value !== r.priority).map((p) => ({
-        label: `الأولويّة: ${p.label}`,
-        icon: <Flag />,
-        onSelect: () => run(() => setContactPriority(r.id, p.value as ContactPriority)),
-      })),
-    },
-    {
-      items: r.status === "archived"
-        ? [{ label: "إعادة إلى الصندوق", icon: <ArrowUUpLeft />, onSelect: () => run(() => setContactStatus(r.id, "read")) }]
-        : [
-            ...(r.status === "new"
-              ? [{ label: "تعليمها مقروءة", icon: <EnvelopeOpen />, onSelect: () => run(() => setContactStatus(r.id, "read")) }]
-              : []),
-            { label: "أرشفتها", icon: <Archive />, onSelect: () => run(() => setContactStatus(r.id, "archived")) },
-          ],
-    },
+    // تعليمُها مقروءةً بلا فتحٍ — للجديدة وحدها؛ وما بعدها لا رجعةَ فيه: القراءة واقعةٌ لا تُنقض.
+    ...(r.status === "new"
+      ? [{ items: [{ label: "تعليمها مقروءة", icon: <EnvelopeOpen />, onSelect: () => run(() => setContactStatus(r.id, "read")) }] }]
+      : []),
   ];
 
   const filterDefs: FilterDef[] = [
     { key: "status", label: "الحالة", options: CONTACT_STATUSES.map((s) => ({ value: s.value, label: s.label })) },
-    { key: "priority", label: "الأولويّة", options: CONTACT_PRIORITIES.map((p) => ({ value: p.value, label: p.label })) },
   ];
 
   const emptyState = rows.length === 0 ? (
@@ -251,7 +229,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
         title={detail ? detail.subject?.trim() || `رسالة من ${detail.name}` : ""}
         // البريد لا يُدسّ في نصّ الوصف: هو سلسلةُ نصٍّ عربيّة لا تحتمل خطًّا لاتينيًّا ولا عزلًا،
         // فيخرج شارةً في الجسد بخطّه واتّجاهه.
-        description={detail ? `${detail.name} · ${fmtDate(detail.createdAt)}` : undefined}
+        description={detail ? `${detail.name}، ${fmtDate(detail.createdAt)}` : undefined}
         footer={
           detail ? (
             <>
@@ -284,7 +262,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
             {detail.replyMessage ? (
               <Alert
                 tone="success"
-                title={`رُدّ عليها${detail.repliedBy ? ` — ${detail.repliedBy}` : ""}${detail.repliedAt ? ` · ${fmtDate(detail.repliedAt)}` : ""}`}
+                title={`رُدّ عليها${detail.repliedBy ? `، ${detail.repliedBy}` : ""}${detail.repliedAt ? `، ${fmtDate(detail.repliedAt)}` : ""}`}
               >
                 <span style={{ whiteSpace: "pre-wrap" }}>{detail.replyMessage}</span>
               </Alert>
@@ -305,7 +283,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
               label="ملاحظة داخليّة"
               icon={<NotePencil />}
               innerIcon={<NotePencil />}
-              placeholder="لأهل اللوحة وحدهم — لا تُرسَل إلى أحد."
+              placeholder="لأهل اللوحة وحدهم، لا تُرسَل إلى أحد."
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

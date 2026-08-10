@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge, Button, Container } from "@adeeb/design-system";
+import { Badge, Button, Card, CardFooter, CardHeader, Container } from "@adeeb/design-system";
 import { UsersThree } from "@phosphor-icons/react";
 import { ArrowsClockwise } from "@/app/_components/glyphs";
 import { Eye, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
-import { DataTable, type Column } from "../../dashboard/_components/DataTable";
+import { DataTable, type Column, type Group } from "../../dashboard/_components/DataTable";
 import type { MenuGroup } from "../../dashboard/_components/DropdownMenu";
 import { Avatar } from "../../dashboard/_components/Avatar";
 import { Pagination } from "../../dashboard/_components/Pagination";
@@ -53,6 +53,14 @@ const ROWS: DemoRow[] = [
   { id: "3", name: "فهد العتيبي", role: "عضو لجنة الإعلام", phone: "0567654321", email: "fahad@adeeb.club", joined: "2 يناير 2025", joinedRaw: "2025-01-02", status: "pending" },
   { id: "4", name: "ليلى المطيري", role: "منسّقة الفعاليّات", phone: "0533219876", email: "laila@adeeb.club", joined: "28 مايو 2023", joinedRaw: "2023-05-28", status: "suspended" },
   { id: "5", name: "عبدالله الشمري", role: "عضو", phone: "0544455667", email: "abdullah@adeeb.club", joined: "11 نوفمبر 2022", joinedRaw: "2022-11-11", status: "inactive" },
+];
+
+// مجموعاتُ العرض: الأعضاء مصنَّفين بحالتهم — كلُّ شريطٍ يحمل نغمة مجموعته، وواحدةٌ تبدأ مطويّة
+const GROUPS: Group<DemoRow>[] = [
+  { key: "active", label: "نشطون", hint: "عضوان", tone: "success", rows: ROWS.filter((r) => r.status === "active") },
+  { key: "pending", label: "بانتظار المراجعة", hint: "عضوٌ واحد", tone: "warning", rows: ROWS.filter((r) => r.status === "pending") },
+  { key: "suspended", label: "موقوفون", hint: "عضوٌ واحد", tone: "danger", rows: ROWS.filter((r) => r.status === "suspended") },
+  { key: "inactive", label: "غير نشطين", hint: "عضوٌ واحد", tone: "neutral", defaultOpen: false, rows: ROWS.filter((r) => r.status === "inactive") },
 ];
 
 // أعمدة تحاكي أعمدة شاشة الأعضاء: خليّة العضو (أفتار + اسم + دور)، جوّال، بريد، تاريخ، حالة (شارة)
@@ -119,15 +127,15 @@ export default function TablePage() {
     {
       header: "إجراءات",
       items: [
-        { label: "عرض الملف", icon: <Eye aria-hidden />, onSelect: () => setEvent(`عرض الملف — ${m.name}`) },
-        { label: "تعديل البيانات", icon: <PencilSimple aria-hidden />, onSelect: () => setEvent(`تعديل — ${m.name}`) },
-        { label: "تغيير الحالة", icon: <ArrowsClockwise aria-hidden />, onSelect: () => setEvent(`تغيير الحالة — ${m.name}`) },
+        { label: "عرض الملف", icon: <Eye aria-hidden />, onSelect: () => setEvent(`عرض الملف: ${m.name}`) },
+        { label: "تعديل البيانات", icon: <PencilSimple aria-hidden />, onSelect: () => setEvent(`تعديل: ${m.name}`) },
+        { label: "تغيير الحالة", icon: <ArrowsClockwise aria-hidden />, onSelect: () => setEvent(`تغيير الحالة: ${m.name}`) },
       ],
     },
     {
       header: "منطقة الخطر",
       danger: true,
-      items: [{ label: "حذف العضو", icon: <Trash aria-hidden />, danger: true, onSelect: () => setEvent(`حذف — ${m.name}`) }],
+      items: [{ label: "حذف العضو", icon: <Trash aria-hidden />, danger: true, onSelect: () => setEvent(`حذف: ${m.name}`) }],
     },
   ];
 
@@ -139,10 +147,10 @@ export default function TablePage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · DataTable</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, DataTable</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض جدول البيانات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          جدولٌ بشبكة CSS بمظهر Aurora — أعمدة مرنة، ترويسة فرز مُتحكَّم بها، تحديد صفوف، قائمة إجراءات (⋯)، نقر الصفّ،
+          جدولٌ بشبكة CSS بمظهر Aurora: أعمدة مرنة، ترويسة فرز مُتحكَّم بها، تحديد صفوف، قائمة إجراءات (⋯)، نقر الصفّ،
           نغمات للطاولة وللصفّ، تذييل ترقيم، حالة فارغة، وحالة تحميل بلبنات هيكل.
         </p>
 
@@ -158,17 +166,17 @@ export default function TablePage() {
 
         <div className="mt-12 space-y-14">
           <Sec title="أساسيّ">
-            <Lab>أعمدة بخلايا مخصّصة (render) — أفتار، أرقام لاتينيّة، وشارة حالة</Lab>
+            <Lab>أعمدة بخلايا مخصّصة (render): أفتار، أرقام لاتينيّة، وشارة حالة</Lab>
             <DataTable columns={columns} rows={ROWS} getRowId={(m) => m.id} />
           </Sec>
 
           <Sec title="قابل للفرز">
-            <Lab>ترويسة فرز مُتحكَّم بها — انقر عمودًا: تصاعديّ ← تنازليّ ← بلا فرز</Lab>
+            <Lab>ترويسة فرز مُتحكَّم بها، انقر عمودًا: تصاعديّ ← تنازليّ ← بلا فرز</Lab>
             <DataTable columns={columns} rows={sortedRows} getRowId={(m) => m.id} sort={sort} onToggleSort={toggleSort} />
           </Sec>
 
           <Sec title="قابل للتحديد">
-            <Lab>تحديد مُتحكَّم به (Set) — يُشارَك مع شريط أدوات؛ المُحدَّد الآن: {selected.size}</Lab>
+            <Lab>تحديد مُتحكَّم به (Set)، يُشارَك مع شريط أدوات؛ المُحدَّد الآن: {selected.size}</Lab>
             <DataTable
               columns={columns}
               rows={ROWS}
@@ -180,7 +188,7 @@ export default function TablePage() {
           </Sec>
 
           <Sec title="إجراءات الصفّ ونقره">
-            <Lab>عمود ⋯ (مجموعات ذات رؤوس + بند خطر) · نقر الصفّ يفتح الملفّ</Lab>
+            <Lab>عمود ⋯ (مجموعات ذات رؤوس + بند خطر)، نقر الصفّ يفتح الملفّ</Lab>
             <DataTable
               columns={columns}
               rows={ROWS}
@@ -191,7 +199,7 @@ export default function TablePage() {
           </Sec>
 
           <Sec title="نغمة الطاولة (tone)">
-            <Lab>الطاولة كاملةً بنغمة واحدة (حدّ/ترويسة/تزيبير) — success · warning · danger</Lab>
+            <Lab>الطاولة كاملةً بنغمة واحدة (حدّ/ترويسة/تزيبير): success، warning، danger</Lab>
             <div className="space-y-8">
               {(["success", "warning", "danger"] as const).map((t) => (
                 <div key={t}>
@@ -203,12 +211,34 @@ export default function TablePage() {
           </Sec>
 
           <Sec title="نغمة الصفّ (rowTone)">
-            <Lab>تِنت كلّ صفّ حسب حالته — نشط (success) · قيد الإكمال (warning) · موقوف (danger)</Lab>
+            <Lab>تِنت كلّ صفّ حسب حالته: نشط (success)، قيد الإكمال (warning)، موقوف (danger)</Lab>
             <DataTable columns={columns} rows={ROWS} getRowId={(m) => m.id} rowActions={actionsFor} rowTone={rowToneOf} />
           </Sec>
 
+          <Sec title="مجموعات (groups)">
+            <Lab>شريطٌ يشقّ الشبكة عرضًا **داخل الإطار الواحد**، يُطوى بالنقر ونغمتُه بحال مجموعته، بديلُ أكورديونٍ يلفّ جدولًا</Lab>
+            <DataTable columns={columns} groups={GROUPS} getRowId={(m) => m.id} rowActions={actionsFor} />
+          </Sec>
+
+          <Sec title="مجموعاتٌ لا تُطوى (staticGroups)">
+            <Lab>الشريطُ عنوانٌ محضٌ بلا دوّارة، حين يكون التقسيم قراءةً لا تصفّحًا</Lab>
+            <DataTable columns={columns} groups={GROUPS.slice(0, 2)} getRowId={(m) => m.id} staticGroups />
+          </Sec>
+
+          <Sec title="الجدولُ داخل سطحٍ مؤطَّر">
+            <Lab>قانونُ «سطحٌ مؤطَّرٌ لا يحمل سطحًا مؤطَّرًا»: في الكرت يخلع الجدولُ إطارَه وظلَّه ويبلغ حافّتيه، فرأسُ الكرت وحدَه يُعنون</Lab>
+            <Card>
+              <CardHeader variant="soft" icon={<UsersThree />} title="أعضاء اللجنة" subtitle="الجدولُ متنُ الكرت، لا سطحٌ ثانٍ داخله" />
+              <DataTable columns={columns} rows={ROWS.slice(0, 3)} getRowId={(m) => m.id} />
+              <CardFooter>
+                <span className="text-xs text-content-muted">٣ من ٥</span>
+                <Button variant="ghost" size="sm">عرض الكلّ</Button>
+              </CardFooter>
+            </Card>
+          </Sec>
+
           <Sec title="تذييل بالترقيم (footer)">
-            <Lab>تذييل مُلحق داخل بطاقة الجدول — مكوّن الترقيم يقطّع الصفوف</Lab>
+            <Lab>تذييل مُلحق داخل بطاقة الجدول، مكوّن الترقيم يقطّع الصفوف</Lab>
             <DataTable
               columns={columns}
               rows={pageRows}
@@ -246,7 +276,7 @@ export default function TablePage() {
           </Sec>
 
           <Sec title="حالة التحميل (loading)">
-            <Lab>صفوف هيكل بلبنات لمعان — عددها عبر skeletonRows</Lab>
+            <Lab>صفوف هيكل بلبنات لمعان، عددها عبر skeletonRows</Lab>
             <DataTable columns={columns} rows={[]} getRowId={(m) => m.id} loading skeletonRows={4} selectable rowActions={actionsFor} />
           </Sec>
         </div>

@@ -1,7 +1,7 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import { Card, CardBody, CardHeader } from "./Card";
 
-export interface ChartPanelProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
+export interface SectionCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   /** عنوان اللوحة. */
   title?: ReactNode;
   /** أيقونة بجانب العنوان. */
@@ -13,11 +13,15 @@ export interface ChartPanelProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
 }
 
 /**
- * لوحة مخطّط — **قاعدة الكروت نفسها بلا اجتهاد**: `Card` + `CardHeader` + `CardBody`.
+ * كرتُ قسمٍ معنون — **قاعدة الكروت نفسها بلا اجتهاد**: `Card` + `CardHeader` + `CardBody`.
+ *
+ * كان اسمه `ChartPanel` وهو يلفّ حقولَ نماذجَ في عشرة ملفّات (الأسئلة الشائعة · الأعمال · الرعاة ·
+ * الباركود · بناء الاستبيان · الفعاليّات)، فكان الاسمُ يكذب على قارئ الكود. أُعيدت تسميتُه
+ * ٢٠٢٦-٠٨-٠٩ بلا تغيير بكسلٍ واحد: هو كرتٌ بعنوان، يخدم المخطّطَ والنموذجَ سواء.
  * السطح والحدّ والظلّ والزاوية والحشو والرأس كلّها من نظام الكروت (مصدرٌ واحد)، لا صنفَ خاصّ.
  * رأسها الافتراضيّ `soft` (منسّمٌ هادئ)؛ يُتجاوَز بـ `headerVariant` عند الحاجة.
  */
-export function ChartPanel({ title, icon, actions, headerVariant = "soft", children, ...props }: ChartPanelProps) {
+export function SectionCard({ title, icon, actions, headerVariant = "soft", children, ...props }: SectionCardProps) {
   return (
     <Card {...props}>
       {(title != null || actions != null) && (

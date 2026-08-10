@@ -179,7 +179,7 @@ function lastPointsEvent(points: number, redemptions: number): { value: string; 
   const can = affordable(points);
   if (can.length > 0) {
     return {
-      value: `رصيدك ${num(points)} — يكفي «${can[can.length - 1].title}»`,
+      value: `رصيدك ${num(points)}، يكفي «${can[can.length - 1].title}»`,
       changeMessage: "رصيدك %@ 🎉 ويكفي مكافأةً من المتجر",
     };
   }
@@ -220,19 +220,19 @@ export function pointsFace(m: DemoMember): CardFace {
         value:
           `تكسب نقاطًا بكلّ مشاركةٍ مع أديب، وقيمتُها تتفاوت بتفاوت الجهد: ` +
           `الحضورُ دون التنظيم، والتنظيمُ دون التقديم. ` +
-          `ثمّ تصرف رصيدك على ما تختاره من المتجر أدناه — ولا يعود العدّاد صفرًا إلّا بما تصرفه.`,
+          `ثمّ تصرف رصيدك على ما تختاره من المتجر أدناه، ولا يعود العدّاد صفرًا إلّا بما تصرفه.`,
       },
       {
         key: "store",
         label: "متجر المكافآت",
         // سطرٌ لكلّ مكافأة، وعلامةٌ على ما يكفيه رصيدُه الآن
-        value: CATALOG.map((r) => `${m.points >= r.cost ? "✓" : "·"} ${num(r.cost)} — ${r.title} · ${r.sponsor}`).join(
+        value: CATALOG.map((r) => `${m.points >= r.cost ? "✓ " : ""}${num(r.cost)}، ${r.title}، ${r.sponsor}`).join(
           "\n",
         ),
       },
-      ...(next ? [{ key: "next", label: "المحطّة التالية", value: `${next.title} · ${num(next.cost)} نقطة` }] : []),
+      ...(next ? [{ key: "next", label: "المحطّة التالية", value: `${next.title}، ${num(next.cost)} نقطة` }] : []),
       ...(can.length > 0
-        ? [{ key: "ready", label: "يكفي رصيدُك الآن", value: can.map((r) => r.title).join(" · ") }]
+        ? [{ key: "ready", label: "يكفي رصيدُك الآن", value: can.map((r) => r.title).join("، ") }]
         : []),
       { key: "redemptions", label: "مكافآتٌ صرفتَها", value: num(m.redemptions) },
       {

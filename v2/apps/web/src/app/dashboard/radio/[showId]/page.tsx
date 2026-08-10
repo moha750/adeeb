@@ -31,5 +31,13 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
   }
   if (!data) notFound();
 
-  return <ShowEditorView show={data.show} episodes={data.episodes} platforms={data.platforms} members={members} />;
+  return (
+    <ShowEditorView
+      show={data.show}
+      episodes={data.episodes}
+      platforms={data.platforms}
+      members={members}
+      stationLead={data.stationLead}
+    />
+  );
 }

@@ -10,9 +10,9 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const n = await getPublicNewsItem(decodeURIComponent(slug));
-  if (!n) return { title: "خبر — أديب" };
+  if (!n) return { title: "خبر، أديب" };
   return {
-    title: `${n.title} — أديب`,
+    title: `${n.title}، أديب`,
     description: n.summary ?? "مستجدّات نادي أديب أوّلًا بأوّل.",
     openGraph: {
       title: n.title,

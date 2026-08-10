@@ -34,15 +34,15 @@ export default function PaginationPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Pagination</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Pagination</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الترقيم</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          شريط ترقيم Aurora: مُحدِّد لعدد الصفوف · مدى العناصر المعروضة · أسهم سابق/تالٍ · أرقام صفحات تُختصر بـ«…» عند كثرتها. جرّب الأزرار والمُحدِّد لتحريك كلّ حالة.
+          شريط ترقيم Aurora: مُحدِّد لعدد الصفوف، مدى العناصر المعروضة، أسهم سابق/تالٍ، أرقام صفحات تُختصر بـ«…» عند كثرتها. جرّب الأزرار والمُحدِّد لتحريك كلّ حالة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="صفحات قليلة">
-            <Lab>total = 300 · بلا «…» ما دام عدد الصفحات ≤ 7</Lab>
+            <Lab>total = 300، بلا «…» ما دام عدد الصفحات ≤ 7</Lab>
             <Pagination
               page={fewPage}
               pageSize={fewSize}
@@ -53,7 +53,7 @@ export default function PaginationPage() {
           </Sec>
 
           <Sec title="صفحات كثيرة">
-            <Lab>total = 480 · تظهر «…» حول الصفحة الحاليّة والطرفين</Lab>
+            <Lab>total = 480، تظهر «…» حول الصفحة الحاليّة والطرفين</Lab>
             <Pagination
               page={manyPage}
               pageSize={manySize}
@@ -64,7 +64,7 @@ export default function PaginationPage() {
           </Sec>
 
           <Sec title="خيارات حجم واسم عنصر مخصّصان">
-            <Lab>pageSizeOptions = [12, 24, 48] · noun = «عضو» · total = 137</Lab>
+            <Lab>pageSizeOptions = [12, 24, 48]، noun = «عضو»، total = 137</Lab>
             <Pagination
               page={membersPage}
               pageSize={membersSize}
@@ -77,7 +77,7 @@ export default function PaginationPage() {
           </Sec>
 
           <Sec title="بلا عناصر">
-            <Lab>total = 0 · المدى 0–0 والأسهم معطّلة وصفحة واحدة</Lab>
+            <Lab>total = 0، المدى 0–0 والأسهم معطّلة وصفحة واحدة</Lab>
             <Pagination
               page={emptyPage}
               pageSize={emptySize}

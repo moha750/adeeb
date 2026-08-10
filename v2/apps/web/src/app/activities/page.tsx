@@ -6,7 +6,7 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "برامجنا وأنشطتنا — أديب",
+  title: "برامجنا وأنشطتنا، أديب",
   description: "احجز مقعدك في ورش نادي أديب وبرامجه وحواراته القادمة.",
 };
 
@@ -26,7 +26,7 @@ export default async function ActivitiesPage() {
               align="center"
             />
             {items.length === 0 ? (
-              <p className="text-center text-content-muted">لا فعاليّات قادمة الآن — تابعنا لتصلك الجديدة.</p>
+              <p className="text-center text-content-muted">لا فعاليّات قادمة الآن. تابعنا لتصلك الجديدة.</p>
             ) : (
               <div className="card-grid" style={{ marginTop: 32 }}>
                 {items.map((a) => (

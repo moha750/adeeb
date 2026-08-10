@@ -94,7 +94,7 @@ export function CascadeView({ model }: { model: StructureModel }) {
 
         {/* عمود الأعضاء */}
         <div className="csc-col">
-          <div className="csc-colh">{com ? `الأعضاء · ${ar(com.total)}` : "الأعضاء"}</div>
+          <div className="csc-colh">{com ? `الأعضاء، ${ar(com.total)}` : "الأعضاء"}</div>
           {com ? (
             <div className="csc-leaf">
               {members(com).length ? members(com).map((m, i) => (

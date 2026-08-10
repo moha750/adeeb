@@ -104,7 +104,7 @@ export async function seatPreview(
 ): Promise<string | null> {
   await vacatePreviewSeats(sb, userId);
   // اسم الدُّمية يحمل منصبها — فيقول شريطُ المعاينة «بأيّ منصبٍ تنظر» بلا استعلامٍ إضافيّ
-  await sb.from("profiles").update({ full_name: `${PREVIEW_NAME} — ${seat.roleAr}` }).eq("id", userId);
+  await sb.from("profiles").update({ full_name: `${PREVIEW_NAME}، ${seat.roleAr}` }).eq("id", userId);
   // `role_id` لا يُكتب: تريغر `sync_role_key` يشتقّه من الاسم — والعمود مصيره الحذف (البند ١).
   const { error } = await sb.from("user_roles").insert({
     user_id: userId,
@@ -112,7 +112,7 @@ export async function seatPreview(
     committee_id: seat.committeeId,
     department_id: seat.departmentId,
     is_active: true,
-    notes: "مقعد معاينة مؤقّت — يُحذف بإنهاء المعاينة",
+    notes: "مقعد معاينة مؤقّت، يُحذف بإنهاء المعاينة",
   });
   return error?.message ?? null;
 }

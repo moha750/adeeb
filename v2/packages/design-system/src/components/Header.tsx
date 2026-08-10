@@ -34,6 +34,7 @@ const defaultNav: NavItem[] = [
   { label: "فعالياتنا وبرامجنا", href: "/activities" },
   { label: "منصة الأخبار", href: "/news" },
   { label: "المكتبة", href: "/library" },
+  { label: "الإذاعة", href: "/radio" },
   { label: "أهل الدفّة", href: "/#board" },
   { label: "تواصل معنا", href: "/#contact" },
 ];
@@ -236,7 +237,7 @@ export function Header({
       <div className="shdr-main">
         <Container>
           <div ref={barRef} className="shdr-bar">
-            <a ref={markRef} href="/" className="shdr-mark" aria-label="نادي أديب — الصفحة الرئيسة">
+            <a ref={markRef} href="/" className="shdr-mark" aria-label="نادي أديب، الصفحة الرئيسة">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="نادي أديب" />
             </a>

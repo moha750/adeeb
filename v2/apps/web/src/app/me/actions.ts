@@ -33,7 +33,7 @@ function service() {
  */
 export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
   const me = await getSessionAdmin();
-  if (!me) return { ok: false, message: "جلستك غير صالحة — سجّل دخولك من جديد." };
+  if (!me) return { ok: false, message: "جلستك غير صالحة. سجّل دخولك من جديد." };
 
   const parsed = myDataSchema.safeParse(raw);
   if (!parsed.success) {
@@ -47,12 +47,12 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
   const v = parsed.data;
 
   const sb = service();
-  if (!sb) return { ok: false, message: "إعداد الخادم ناقص — أبلغ الإدارة." };
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
 
   const { data: p, error: pErr } = await sb
     .from("profiles").select("joined_date").eq("id", me.id).maybeSingle();
-  if (pErr) return { ok: false, message: "تعذّرت قراءة بياناتك — حاول مجدّدًا." };
-  if (!p) return { ok: false, message: "لا بيانات لك بعد — أكمِلها أوّلًا." };
+  if (pErr) return { ok: false, message: "تعذّرت قراءة بياناتك. حاول مجدّدًا." };
+  if (!p) return { ok: false, message: "لا بيانات لك بعد. أكمِلها أوّلًا." };
   if (p.joined_date != null) {
     return { ok: false, message: "بياناتُك عضوًا تُحرَّر من ملفّك في بوّابة أديب." };
   }
@@ -61,7 +61,7 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
     .from("profiles")
     .update({ full_name: v.fullName, phone: v.phone, city: v.city?.trim() || null })
     .eq("id", me.id);
-  if (error) return { ok: false, message: "تعذّر حفظ بياناتك — حاول مجدّدًا." };
+  if (error) return { ok: false, message: "تعذّر حفظ بياناتك. حاول مجدّدًا." };
 
   revalidatePath("/me");
   return { ok: true, message: "حُفظت بياناتك." };

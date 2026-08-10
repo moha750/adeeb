@@ -101,7 +101,7 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
       {anomalies.length ? (
         <Alert tone="warning" title={`${anomalies.length} ملاحظة على الهيكلة`}
           actions={<button type="button" className="cred-link" onClick={() => setShowAnoms((v) => !v)}>{showAnoms ? "إخفاء" : "التفاصيل"}</button>}>
-          مناصب شاغرة أو لجان بلا قيادة — فصّلها وأسندها من البطاقات أدناه.
+          مناصب شاغرة أو لجان بلا قيادة. فصّلها وأسندها من البطاقات أدناه.
           {showAnoms ? <ul className="org-anoms">{anomalies.map((a, i) => <li key={i}>{a}</li>)}</ul> : null}
         </Alert>
       ) : null}

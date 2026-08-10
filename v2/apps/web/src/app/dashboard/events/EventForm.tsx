@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ChartPanel, Field, Select, Textarea } from "@adeeb/design-system";
+import { Button, SectionCard, Field, Select, Textarea } from "@adeeb/design-system";
 import {
   Armchair, CalendarBlank, CalendarDots, ChatText, Clock, Flag, GenderFemale, GenderMale, Hash, HourglassMedium, Image as ImageIcon, LinkSimple, MapPin, MapPinLine, Sparkle, TextT, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
@@ -49,7 +49,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
       : !maleFilled && !femaleFilled ? { tone: "muted" as const, text: "المقاعد مشتركة بين الجنسين، لا سقف لكلّ جنس." }
       : !maleFilled || !femaleFilled ? { tone: "warn" as const, text: "حدّد مقاعد الرجال والنساء معًا، أو اتركهما فارغين." }
       : (Number(maleSeats) || 0) + (Number(femaleSeats) || 0) === totalN ? { tone: "muted" as const, text: "تقسيمٌ صحيح بالنوع." }
-      : { tone: "warn" as const, text: `مجموع الجنسين ${(Number(maleSeats) || 0) + (Number(femaleSeats) || 0)} — يجب أن يساوي الإجمالي ${totalN}.` };
+      : { tone: "warn" as const, text: `مجموع الجنسين ${(Number(maleSeats) || 0) + (Number(femaleSeats) || 0)}، يجب أن يساوي الإجمالي ${totalN}.` };
 
   // مقاعد الجنسين مقفلة قبل تحديد الإجمالي؛ وإدخال أحدهما يُكمِل الآخر تلقائيًّا (الباقي من الإجمالي)
   const seatsLocked = totalN <= 0;
@@ -132,7 +132,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Sparkle />} title="تفاصيل الفعاليّة">
+        <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل الفعاليّة">
           <div className="form-grid">
             <Field className="form-full" label="اسم الفعاليّة" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: أمسية شعريّة" value={name} onChange={(e) => setName(e.target.value)} required />
             <Select label="نوع الفعاليّة" icon={<Sparkle />} options={TYPE_OPTIONS} value={type} onValueChange={(v) => setType(v as ActivityType)} required />
@@ -141,9 +141,9 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
             <Field label="المكان" icon={<MapPin />} innerIcon={<PencilSimple />} placeholder="مثال: مدرّج معمل كود" value={location} onChange={(e) => setLocation(e.target.value)} required />
             <Field label="رابط الموقع على الخرائط" icon={<LinkSimple />} innerIcon={<MapPinLine />} placeholder="https://maps.app.goo.gl/…" charset="latin" value={locationUrl} onChange={(e) => setLocationUrl(e.target.value)} required />
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<CalendarBlank />} title="الموعد والمقاعد">
+        <SectionCard headerVariant="chip" icon={<CalendarBlank />} title="الموعد والمقاعد">
           <div className="form-grid">
             <Field className="form-full" type="date" label="التاريخ" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="اختر التاريخ" value={date} onChange={(e) => setDate(e.target.value)} required />
             <Field type="time" label="وقت البداية" icon={<Clock />} innerIcon={<HourglassMedium />} placeholder="—" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
@@ -158,14 +158,14 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
             ) : null}
             {seatsHint ? <div className={"form-full text-sm " + (seatsHint.tone === "warn" ? "text-danger" : "text-content-muted")}>{seatsHint.text}</div> : null}
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<ImageIcon />} title="صورة الغلاف (اختياريّة)">
+        <SectionCard headerVariant="chip" icon={<ImageIcon />} title="صورة الغلاف (اختياريّة)">
           <div className="flex flex-col gap-3 items-start">
             {cover ? (
               <img src={cover} alt="غلاف الفعاليّة" className="w-full max-h-56 object-cover rounded" />
             ) : (
-              <div className="text-sm text-content-muted">لا غلاف بعد — ارفع صورةً (JPG · PNG · WEBP · GIF، حتّى ٥ ميغابايت).</div>
+              <div className="text-sm text-content-muted">لا غلاف بعد. ارفع صورةً (JPG، PNG، WEBP، GIF، حتّى ٥ ميغابايت).</div>
             )}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
@@ -179,7 +179,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
             </div>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickFile} />
           </div>
-        </ChartPanel>
+        </SectionCard>
       </div>
     </>
   );

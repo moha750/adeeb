@@ -21,7 +21,7 @@ function ColorSwatches() {
   return (
     <div className="grid gap-5 sm:grid-cols-2">
       <ColorField label="لون الحبر" icon={<Drop />} value={ink} onValueChange={setInk} required helper="اكتب الرقم، أو انقر مرساةً من الهوية." />
-      <ColorField label="لون الأرضيّة" icon={<PaintBucket />} value={plate} onValueChange={setPlate} presets={[]} optional helper="بلا مراسي — الصفّ يُخفى بتمرير presets فارغة." />
+      <ColorField label="لون الأرضيّة" icon={<PaintBucket />} value={plate} onValueChange={setPlate} presets={[]} optional helper="بلا مراسي: الصفّ يُخفى بتمرير presets فارغة." />
     </div>
   );
 }
@@ -32,16 +32,16 @@ export default function InputsPage() {
     <main className="py-16">
       <Container className="max-w-3xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Inputs
+          Design System, Inputs
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الحقول</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          أيقونة label بخلفية Aurora · أيقونة داخليّة تفاعليّة · نصّ تلميحيّ · خلفية Aurora للحقل · تركيز فولاذيّ + حلقة · حالات. كلّها مقدّسة.
+          أيقونة label بخلفية Aurora، أيقونة داخليّة تفاعليّة، نصّ تلميحيّ، خلفية Aurora للحقل، تركيز فولاذيّ + حلقة، حالات. كلّها مقدّسة.
         </p>
 
         <div className="mt-12 space-y-14">
           <section>
-            <Label>أساسي (Aurora + أيقونة داخليّة + نصّ تلميحيّ — انقر لترى التفاعل)</Label>
+            <Label>أساسي (Aurora + أيقونة داخليّة + نصّ تلميحيّ، انقر لترى التفاعل)</Label>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب اسمك الكامل" />
               <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="الاسم" />
@@ -65,7 +65,7 @@ export default function InputsPage() {
           </section>
 
           <section>
-            <Label>كلمة المرور (عين الكشف — تظهر تلقائيًّا مع type=&quot;password&quot;)</Label>
+            <Label>كلمة المرور (عين الكشف: تظهر تلقائيًّا مع type=&quot;password&quot;)</Label>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="كلمة المرور" type="password" dir="ltr" icon={<Lock />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-2026" autoComplete="new-password" required helper="اضغط العين لعرضها ثمّ لإغلاقها." />
               <Field label="تأكيد كلمة المرور" type="password" dir="ltr" icon={<LockKey />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-202" autoComplete="new-password" required error="الكلمتان غير متطابقتين." />
@@ -83,10 +83,10 @@ export default function InputsPage() {
           </section>
 
           <section>
-            <Label>همسة الطقم (بدّل لوحة المفاتيح للعربيّة واكتب في أيّهما — أو الصق نصًّا مختلطًا)</Label>
+            <Label>همسة الطقم (بدّل لوحة المفاتيح للعربيّة واكتب في أيّهما، أو الصق نصًّا مختلطًا)</Label>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" required helper="طقم latin — لا يقبل العربيّة." />
-              <Field label="الرقم الأكاديميّ" charset="digits" icon={<Hash />} innerIcon={<PencilSimple />} placeholder="44xxxxxxx" required helper="طقم digits — أرقامٌ لاتينيّة فقط." />
+              <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" required helper="طقم latin: لا يقبل العربيّة." />
+              <Field label="الرقم الأكاديميّ" charset="digits" icon={<Hash />} innerIcon={<PencilSimple />} placeholder="44xxxxxxx" required helper="طقم digits: أرقامٌ لاتينيّة فقط." />
             </div>
             <div className="mt-5">
               <Textarea label="المعرّف على المنصّات" charset="latin" icon={<At />} innerIcon={<IdentificationBadge />} placeholder="@adeeb_club" rows={3} optional helper="الهمسة نفسها في النصّ المتعدّد." />
@@ -94,7 +94,7 @@ export default function InputsPage() {
           </section>
 
           <section>
-            <Label>حقل اللون (المرسى يحلّ محلّ الأيقونة الأماميّة — انقره تُفتَح لوحة النظام)</Label>
+            <Label>حقل اللون (المرسى يحلّ محلّ الأيقونة الأماميّة، انقره تُفتَح لوحة النظام)</Label>
             <ColorSwatches />
           </section>
 

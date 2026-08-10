@@ -21,7 +21,7 @@ export function SpineView({ model }: { model: StructureModel }) {
       <span className="spn-spacer" />
       <Avatar name={c.leader?.name} gender={c.leader?.gender} size="xs" />
       <span className="spn-name">{c.name}</span>
-      <span className="spn-role">· {c.leader ? c.leader.name : "قائدٌ شاغر"}</span>
+      <span className="spn-role">، {c.leader ? c.leader.name : "قائدٌ شاغر"}</span>
       <span className="spn-trail">{c.leader ? <span className="spn-count">{ar(c.total)}</span> : <span className="spn-vac">شاغر</span>}</span>
     </div>
   );
@@ -34,7 +34,7 @@ export function SpineView({ model }: { model: StructureModel }) {
           <Caret on={open} />
           <Avatar name={d.head?.name} gender={d.head?.gender} size="xs" />
           <span className="spn-name">{d.name}</span>
-          <span className="spn-role">· {d.head ? d.head.name : "منسّقٌ شاغر"}</span>
+          <span className="spn-role">، {d.head ? d.head.name : "منسّقٌ شاغر"}</span>
           <span className="spn-trail"><span className="spn-count">{ar(d.committees.length)} لجان</span></span>
         </div>
         {open && d.committees.length ? <div className="spn-children">{d.committees.map(comRow)}</div> : null}
@@ -46,7 +46,7 @@ export function SpineView({ model }: { model: StructureModel }) {
     <div className="spn-head">
       <Avatar name={c.head?.name} gender={c.head?.gender} size="sm" />
       <span className="spn-title">{c.name}</span>
-      <span className="spn-sub">· {c.head ? c.head.name : "الرئاسة شاغرة"}</span>
+      <span className="spn-sub">، {c.head ? c.head.name : "الرئاسة شاغرة"}</span>
       <span className="spn-cnt">{tail}</span>
     </div>
   );

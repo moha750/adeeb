@@ -73,7 +73,7 @@ export type ReservationStage = "awaiting_whatsapp" | "confirmed_wa" | "attended"
 export const STAGE_META: Record<ReservationStage, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
   awaiting_whatsapp: { label: "بانتظار واتساب", tone: "neutral" },
   confirmed_wa: { label: "مؤكّد واتساب", tone: "info" },
-  attended: { label: "حاضر — صدرت الشهادة", tone: "success" },
+  attended: { label: "حاضر، صدرت الشهادة", tone: "success" },
   cert_sent: { label: "أُرسلت الشهادة", tone: "success" },
   no_show: { label: "لم يحضر", tone: "warning" },
   cancelled: { label: "ملغى", tone: "danger" },
@@ -99,14 +99,14 @@ export function reservationStage(f: {
  * الدالّة ترفع برمزٍ ثابت يصل في `error.message`؛ نلتقطه بالاحتواء (أمتن من المطابقة التامّة).
  */
 export const RESERVATION_ERRORS: Record<string, string> = {
-  NOT_AUTHENTICATED: "انتهت جلستك — سجّل الدخول ثانيةً.",
+  NOT_AUTHENTICATED: "انتهت جلستك. سجّل الدخول ثانيةً.",
   NOT_AUTHORIZED: "لا تملك صلاحية هذا الإجراء.",
   RESERVATION_NOT_FOUND: "لم يُعثر على الحجز.",
   RESERVATION_LOCKED: "لا يُلغى حجزٌ سُجِّل حضوره أو صدرت شهادته.",
   RESERVATION_CANCELLED: "هذا الحجز ملغى.",
   ACTIVITY_NOT_FOUND: "لم يُعثر على الفعاليّة.",
   ACTIVITY_CANCELLED: "الفعاليّة ملغاة.",
-  ACTIVITY_PAST: "انتهت الفعاليّة — لا يصحّ هذا الإجراء بعدها.",
+  ACTIVITY_PAST: "انتهت الفعاليّة، لا يصحّ هذا الإجراء بعدها.",
   OUTSIDE_ATTENDANCE_WINDOW: "تسجيل الحضور متاح ضمن نافذة الفعاليّة فقط (من ساعة قبل بدايتها إلى ساعة بعد نهايتها).",
   REASON_REQUIRED: "سبب الإلغاء مطلوب.",
   CERTIFICATE_NOT_ISSUED: "لم تصدر شهادة لهذا الحجز بعد.",
@@ -115,5 +115,5 @@ export const RESERVATION_ERRORS: Record<string, string> = {
 
 export const reservationErrorMessage = (raw: string | null | undefined): string => {
   const code = Object.keys(RESERVATION_ERRORS).find((c) => (raw ?? "").includes(c));
-  return code ? RESERVATION_ERRORS[code] : "تعذّر تنفيذ الإجراء — حاول مجدّدًا.";
+  return code ? RESERVATION_ERRORS[code] : "تعذّر تنفيذ الإجراء. حاول مجدّدًا.";
 };

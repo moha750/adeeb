@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Textarea, Segmented, Modal } from "@adeeb/design-system";
 import {
   Megaphone, Playlist, MicrophoneStage, Hash, LinkSimple, TextAlignLeft, CalendarBlank, Clock,
-  Archive, MusicNotes, User, FileText,
+  Archive, MusicNotes, User, FileText, YoutubeLogo, Waveform, SpeakerSimpleNone,
 } from "@phosphor-icons/react";
 import { ArrowRight } from "@/app/_components/glyphs";
 import { EyeSlash, UploadSimple, Trash, PencilSimple, Plus } from "@/app/_components/glyphs";
@@ -17,24 +17,31 @@ import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { EpisodeRow, MemberOption, PlatformRow, ShowRow } from "../data";
 import {
-  EPISODE_STATUS_META, PLATFORM_META, PLATFORM_VALUES, SHOW_STATUS_META,
-  episodeLabel, formatBytes, formatDuration, slugify, type Platform,
+  EPISODE_STATUS_META, LEAD_TOLERANCE_SECONDS, PLATFORM_META, PLATFORM_VALUES, SHOW_STATUS_META,
+  VARIANT_META, episodeLabel, formatBytes, formatDuration, formatLead, parseLead, slugify,
+  type AudioVariant, type Platform,
 } from "../vocab";
 import {
-  createAudioUploadUrl, createEpisode, createLogoUploadUrl, deleteEpisode, loadEpisode,
-  saveShowPlatforms, setEpisodeAudio, setEpisodeStatus, setShowLogo, setShowStatus, updateEpisode,
+  clearEpisodeAudio, createAudioUploadUrl, createEpisode, createLogoUploadUrl, deleteEpisode,
+  loadEpisode, saveShowPlatforms, setEpisodeAudio, setEpisodeStatus, setShowLogo, setShowStatus,
+  updateEpisode,
 } from "../actions";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 
 type EpForm = {
-  season: string; number: string; title: string; slug: string;
+  number: string; title: string; slug: string;
   summary: string; notes: string; transcript: string; hostId: string;
+  youtubeUrl: string; lead: string;
 };
 
-const emptyEp = (nextNumber: number, season: number, hostId: string): EpForm => ({
-  season: String(season), number: String(nextNumber), title: "", slug: "",
-  summary: "", notes: "", transcript: "", hostId,
+const emptyEp = (nextNumber: number, hostId: string): EpForm => ({
+  number: String(nextNumber), title: "", slug: "",
+  summary: "", notes: "", transcript: "", hostId, youtubeUrl: "", lead: "",
 });
+
+/** أمتّسقةٌ النسختان؟ فرقُ المدّتين ينبغي أن يساوي الإزاحة، فلا خاتمةَ موسيقيّةً عندنا. */
+const takesAligned = (e: EpisodeRow): boolean =>
+  !e.music || !e.plain || Math.abs(e.music.seconds - e.plain.seconds - e.leadSeconds) <= LEAD_TOLERANCE_SECONDS;
 
 /**
  * مدّة الملفّ الصوتيّ بالثواني — تُقرأ من الملفّ نفسه في المتصفّح.
@@ -54,18 +61,22 @@ function readDuration(file: File): Promise<number> {
 }
 
 export function ShowEditorView({
-  show, episodes, platforms, members,
-}: { show: ShowRow; episodes: EpisodeRow[]; platforms: PlatformRow[]; members: MemberOption[] }) {
+  show, episodes, platforms, members, stationLead,
+}: {
+  show: ShowRow; episodes: EpisodeRow[]; platforms: PlatformRow[];
+  members: MemberOption[]; stationLead: number;
+}) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
   const [tab, setTab] = useState<"episodes" | "identity">("episodes");
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingAudio, setUploadingAudio] = useState<string | null>(null);
+  const [uploadingAudio, setUploadingAudio] = useState<{ id: string; variant: AudioVariant } | null>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
-  const audioTarget = useRef<string | null>(null);
+  const audioTarget = useRef<{ id: string; variant: AudioVariant } | null>(null);
+  const [confirmDropPlain, setConfirmDropPlain] = useState<EpisodeRow | null>(null);
 
   const [links, setLinks] = useState<Record<string, string>>(
     () => Object.fromEntries(platforms.map((p) => [p.platform, p.url])),
@@ -100,20 +111,25 @@ export function ShowEditorView({
     }
   };
 
-  /* ── رفع صوت حلقة ── */
+  /* ── رفع نسخةٍ صوتيّة ── */
   const onAudio = async (file: File | undefined) => {
-    const episodeId = audioTarget.current;
-    if (!file || !episodeId) return;
-    setUploadingAudio(episodeId);
+    const target = audioTarget.current;
+    if (!file || !target) return;
+    const { id: episodeId, variant } = target;
+    setUploadingAudio(target);
     try {
       const duration = await readDuration(file);
-      if (!duration) { toast.error("تعذّرت قراءة مدّة الملفّ — تأكّد أنّه ملفّ صوتٍ سليم."); return; }
-      const ticket = await createAudioUploadUrl(show.id, episodeId, file.type, file.size);
+      if (!duration) { toast.error("تعذّرت قراءة مدّة الملفّ. تأكّد أنّه ملفّ صوتٍ سليم."); return; }
+      const ticket = await createAudioUploadUrl(show.id, episodeId, variant, file.type, file.size);
       if (!ticket.ok || !ticket.url || !ticket.path) { toast.error(ticket.message ?? "تعذّر الرفع."); return; }
       const up = await fetch(ticket.url, { method: "PUT", body: file, headers: { "content-type": file.type } });
       if (!up.ok) { toast.error("تعذّر رفع الصوت إلى المخزن."); return; }
-      const r = await setEpisodeAudio(episodeId, ticket.path, file.size, duration, file.type);
-      if (r.ok) { toast.success(`${r.message} (${formatDuration(duration)})`); router.refresh(); } else toast.error(r.message);
+      const r = await setEpisodeAudio(episodeId, variant, ticket.path, file.size, duration, file.type);
+      if (!r.ok) { toast.error(r.message); return; }
+      toast.success(r.message);
+      // الاتّساقُ يُقال بعد النجاح لا بدله: الملفّ محفوظٌ، والمراجعة على صاحبه.
+      if (r.warning) toast.warning(r.warning, { duration: 12000 });
+      router.refresh();
     } finally {
       setUploadingAudio(null);
       audioTarget.current = null;
@@ -130,14 +146,13 @@ export function ShowEditorView({
   });
 
   /* ── الحلقات ── */
-  const nextNumber = useMemo(() => {
-    const season = episodes.length ? Math.max(...episodes.map((e) => e.season)) : 1;
-    const inSeason = episodes.filter((e) => e.season === season);
-    return { season, number: inSeason.length ? Math.max(...inSeason.map((e) => e.number)) + 1 : 1 };
-  }, [episodes]);
+  const nextNumber = useMemo(
+    () => (episodes.length ? Math.max(...episodes.map((e) => e.number)) + 1 : 1),
+    [episodes],
+  );
 
   const openCreateEp = () => {
-    setEpForm({ edit: null, slugTouched: false, state: emptyEp(nextNumber.number, nextNumber.season, show.hostId) });
+    setEpForm({ edit: null, slugTouched: false, state: emptyEp(nextNumber, show.hostId) });
     setEpErr({});
   };
   // المحاور والتفريغ نصوصٌ قد تطول، فلا تُحمَّل مع كلّ صفوف الجدول — تُجلب عند فتح التحرير وحده.
@@ -148,10 +163,12 @@ export function ShowEditorView({
       setEpForm({
         edit: e, slugTouched: true,
         state: {
-          season: String(full.episode.season), number: String(full.episode.number),
+          number: String(full.episode.number),
           title: full.episode.title, slug: full.episode.slug,
           summary: full.episode.summary ?? "", notes: full.episode.notes ?? "",
           transcript: full.episode.transcript ?? "", hostId: full.episode.hostId,
+          youtubeUrl: full.episode.youtubeUrl ?? "",
+          lead: full.episode.leadSeconds === null ? "" : formatLead(full.episode.leadSeconds),
         },
       });
       setEpErr({});
@@ -171,17 +188,23 @@ export function ShowEditorView({
     const s = epForm.state;
     const errs: Partial<Record<keyof EpForm, string>> = {};
     if (!s.title.trim()) errs.title = "عنوان الحلقة مطلوب.";
-    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب — أحرف لاتينيّة وأرقام.";
-    if (!/^\d+$/.test(s.season) || Number(s.season) < 1) errs.season = "رقم الموسم يبدأ من ١.";
+    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب: أحرف لاتينيّة وأرقام.";
     if (!/^\d+$/.test(s.number) || Number(s.number) < 1) errs.number = "رقم الحلقة يبدأ من ١.";
+    if (s.youtubeUrl.trim() && !/^https:\/\/(www\.)?(youtube\.com\/|youtu\.be\/)/.test(s.youtubeUrl.trim())) {
+      errs.youtubeUrl = "يبدأ بـ https://youtube.com أو https://youtu.be.";
+    }
+    const lead = parseLead(s.lead);
+    if (lead !== null && Number.isNaN(lead)) errs.lead = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
     setEpErr(errs);
     if (Object.keys(errs).length) return;
 
     const input = {
-      showId: show.id, season: Number(s.season), number: Number(s.number),
+      showId: show.id, number: Number(s.number),
       title: s.title, slug: s.slug, summary: s.summary || null,
       notes: s.notes || null, transcript: s.transcript || null,
       hostId: s.hostId || null,
+      youtubeUrl: s.youtubeUrl.trim() || null,
+      leadSeconds: lead,
     };
     startPending(async () => {
       const r = epForm.edit ? await updateEpisode(epForm.edit.id, input) : await createEpisode(input);
@@ -194,19 +217,26 @@ export function ShowEditorView({
     if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
   });
 
-  const pickAudio = (e: EpisodeRow) => { audioTarget.current = e.id; audioRef.current?.click(); };
+  const pickAudio = (e: EpisodeRow, variant: AudioVariant) => {
+    audioTarget.current = { id: e.id, variant };
+    audioRef.current?.click();
+  };
 
   const epMenu = (e: EpisodeRow): MenuGroup[] => [
     { header: "إجراءات", items: [
       { label: "تعديل البيانات", icon: <PencilSimple />, onSelect: () => openEditEp(e) },
-      { label: e.hasAudio ? "استبدال الصوت" : "رفع الصوت", icon: <UploadSimple />, onSelect: () => pickAudio(e) },
+    ] },
+    { header: "الصوت", items: [
+      { label: e.music ? "استبدال النسخة بموسيقى" : "رفع النسخة بموسيقى", icon: <MusicNotes />, onSelect: () => pickAudio(e, "music") },
+      { label: e.plain ? "استبدال النسخة المجرّدة" : "رفع النسخة المجرّدة", icon: <SpeakerSimpleNone />, onSelect: () => pickAudio(e, "plain") },
+      ...(e.plain ? [{ label: "نزع النسخة المجرّدة", icon: <Trash />, onSelect: () => setConfirmDropPlain(e) }] : []),
     ] },
     { header: "الحالة", items: [
       ...(e.status === "published"
         ? [{ label: "إلغاء النشر", icon: <EyeSlash />, onSelect: () => runEpStatus(e, "unpublish") }]
         : [
-            { label: "نشر الآن", icon: <Megaphone />, disabled: !e.hasAudio, onSelect: () => runEpStatus(e, "publish") },
-            { label: "جدولة", icon: <Clock />, disabled: !e.hasAudio, onSelect: () => setSchedule({ ep: e, at: "" }) },
+            { label: "نشر الآن", icon: <Megaphone />, disabled: !e.music, onSelect: () => runEpStatus(e, "publish") },
+            { label: "جدولة", icon: <Clock />, disabled: !e.music, onSelect: () => setSchedule({ ep: e, at: "" }) },
           ]),
       ...(e.status === "archived" ? [] : [{ label: "أرشفة", icon: <Archive />, onSelect: () => runEpStatus(e, "archive") }]),
     ] },
@@ -221,18 +251,39 @@ export function ShowEditorView({
       render: (e) => (
         <span className="txt" title={e.summary ?? undefined}>
           <b>{e.title}</b>
-          <span className="text-content-muted num" style={{ marginInlineStart: 8 }}>{episodeLabel(e.season, e.number)}</span>
+          <span className="text-content-muted num" style={{ marginInlineStart: 8 }}>{episodeLabel(e.number)}</span>
         </span>
       ),
     },
     {
-      key: "audio", header: "الصوت", width: "1.1fr",
-      render: (e) => (e.hasAudio
-        ? <span className="txt num"><bdi dir="ltr">{formatDuration(e.durationSeconds)}</bdi> <span className="text-content-muted">· {formatBytes(e.audioBytes)}</span></span>
-        : <Badge tone="warning" variant="outline">بلا صوت</Badge>),
+      // النسختان في عمودٍ واحد: الحاضرةُ بمدّتها، والغائبةُ بشارةٌ تنادي.
+      key: "takes", header: "النسختان", width: "minmax(190px, 1.5fr)",
+      render: (e) => (
+        <span className="txt" style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {e.music
+            ? <span className="num" title={`${VARIANT_META.music.verb}، ${formatBytes(e.music.bytes)}`}>
+                <MusicNotes size={14} style={{ verticalAlign: "-2px" }} aria-hidden />{" "}
+                <bdi dir="ltr">{formatDuration(e.music.seconds)}</bdi>
+              </span>
+            : <Badge tone="warning" variant="outline">بلا موسيقى بعد</Badge>}
+          {e.plain
+            ? <span className="num text-content-muted" title={`${VARIANT_META.plain.verb}، ${formatBytes(e.plain.bytes)}`}>
+                <SpeakerSimpleNone size={14} style={{ verticalAlign: "-2px" }} aria-hidden />{" "}
+                <bdi dir="ltr">{formatDuration(e.plain.seconds)}</bdi>
+              </span>
+            : <span className="text-content-muted text-sm">بلا مجرّدة</span>}
+          {takesAligned(e) ? null : <Badge tone="danger" variant="outline">إزاحةٌ مختلّة</Badge>}
+        </span>
+      ),
+    },
+    {
+      key: "youtube", header: "يوتيوب", width: "0.8fr", align: "center",
+      render: (e) => (e.youtubeUrl
+        ? <a href={e.youtubeUrl} target="_blank" rel="noreferrer" className="text-content-muted" aria-label="الفيديو على يوتيوب"><YoutubeLogo size={18} /></a>
+        : <span className="text-content-muted">—</span>),
     },
     { key: "status", header: "الحالة", width: "0.9fr", render: (e) => <Badge tone={EPISODE_STATUS_META[e.status].tone} dot>{EPISODE_STATUS_META[e.status].label}</Badge> },
-    { key: "plays", header: "الاستماع", width: "0.9fr", align: "center", render: (e) => <span className="txt num">{e.plays + e.downloads}</span> },
+    { key: "plays", header: "الاستماع", width: "0.8fr", align: "center", render: (e) => <span className="txt num">{e.plays}</span> },
   ], []);
 
   const tabs = [
@@ -273,11 +324,15 @@ export function ShowEditorView({
             rowActions={epMenu}
             emptyState={
               <EmptyState variant="aurora" icon={<Playlist />} title="لا حلقات بعد"
-                description="أنشئ الحلقة الأولى — تُحفظ مسودّةً، ثمّ ترفع صوتها فتُقرأ مدّته آليًّا، ثمّ تنشرها."
+                description="أنشئ الحلقة الأولى: تُحفظ مسودّةً، ثمّ ترفع نسختيها فتُقرأ مدّتاهما آليًّا، ثمّ تنشرها."
                 action={<Button variant="primary" size="md" onClick={openCreateEp}><Plus size={18} />حلقة جديدة</Button>} />
             }
           />
-          {uploadingAudio ? <div className="mt-3 text-content-muted text-sm">يُرفع الصوت… لا تُغلق الصفحة.</div> : null}
+          {uploadingAudio ? (
+            <div className="mt-3 text-content-muted text-sm">
+              تُرفع {VARIANT_META[uploadingAudio.variant].verb}… لا تُغلق الصفحة.
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="form-grid">
@@ -295,7 +350,7 @@ export function ShowEditorView({
                 <UploadSimple size={30} className="text-content-muted" />
               )}
               <div className="text-content-muted text-sm">
-                شعار البرنامج — مربّع ٣٠٠٠×٣٠٠٠ (لا يقلّ عن ١٤٠٠، وإلّا رفضته المنصّات). اسحبه هنا أو اختره من جهازك.
+                شعار البرنامج: مربّعٌ لا يقلّ عن ١٤٠٠×١٤٠٠. اسحبه هنا أو اختره من جهازك.
               </div>
               <Button variant="ghost" size="md" onClick={() => logoRef.current?.click()} loading={uploadingLogo}>
                 <UploadSimple size={18} />{show.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
@@ -334,7 +389,7 @@ export function ShowEditorView({
         open={epForm !== null}
         onClose={() => setEpForm(null)}
         title={epForm?.edit ? "تعديل الحلقة" : "حلقة جديدة"}
-        description={epForm?.edit ? undefined : "تُحفظ مسودّةً، ثمّ ترفع صوتها من قائمة الحلقة."}
+        description={epForm?.edit ? undefined : "تُحفظ مسودّةً، ثمّ ترفع نسختيها الصوتيّتين من قائمة الحلقة."}
         busy={pending}
         size="lg"
         footer={
@@ -349,25 +404,33 @@ export function ShowEditorView({
             <Field className="form-full" label="عنوان الحلقة" icon={<MicrophoneStage />} innerIcon={<PencilSimple />}
               placeholder="حين تكتب الكلمة نفسها" value={epForm.state.title}
               onChange={(e) => onEpTitle(e.target.value)} error={epErr.title} required />
-            <Field label="الموسم" icon={<CalendarBlank />} innerIcon={<Hash />} placeholder="1" charset="digits"
-              value={epForm.state.season} onChange={(e) => patchEp({ season: e.target.value })} error={epErr.season} required />
             <Field label="رقم الحلقة" icon={<Playlist />} innerIcon={<Hash />} placeholder="1" charset="digits"
               value={epForm.state.number} onChange={(e) => patchEp({ number: e.target.value })} error={epErr.number} required />
+            <Field label="إزاحة المقدّمة (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
+              placeholder={formatLead(stationLead)} charset="latin"
+              value={epForm.state.lead} onChange={(e) => patchEp({ lead: e.target.value })} error={epErr.lead}
+              helper={`اتركه فارغًا فيرث ${formatLead(stationLead)}ث من المحطّة. لا تملأه إلّا إن قُصّت مقدّمة هذه الحلقة على غير المقاس.`}
+              optional />
             <Field className="form-full" label="المعرّف (رابط الحلقة)" icon={<LinkSimple />} innerIcon={<Hash />}
               placeholder="ep-1" charset="latin" value={epForm.state.slug}
               onChange={(e) => setEpForm((f) => (f ? { ...f, slugTouched: true, state: { ...f.state, slug: e.target.value } } : f))}
               error={epErr.slug} required />
             <Select className="form-full" label="مقدّم هذه الحلقة" icon={<User />} options={memberOptions}
               value={epForm.state.hostId} onValueChange={(v) => patchEp({ hostId: v })}
-              helper="يُختم من مقدّم البرنامج — وغيِّره إن ناب عنه أحدٌ في هذه الحلقة." required />
+              helper="يُختم من مقدّم البرنامج، وغيِّره إن ناب عنه أحدٌ في هذه الحلقة." required />
+            <Field className="form-full" label="الفيديو على يوتيوب" icon={<YoutubeLogo />} innerIcon={<LinkSimple />}
+              placeholder="https://youtu.be/…" charset="latin"
+              value={epForm.state.youtubeUrl} onChange={(e) => patchEp({ youtubeUrl: e.target.value })}
+              error={epErr.youtubeUrl}
+              helper="رابطٌ يحيل من صفحة الحلقة. التجربةُ عندنا صوتيّة، فلا يُضمَّن المشغّل." optional />
             <Textarea className="form-full" label="الملخّص" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-              placeholder="سطرٌ أو سطران يظهران في البطاقة وفي المنصّات…" rows={2}
+              placeholder="سطرٌ أو سطران يظهران في بطاقة الحلقة وصفحتها…" rows={2}
               value={epForm.state.summary} onChange={(e) => patchEp({ summary: e.target.value })} optional />
             <Textarea className="form-full" label="المحاور والروابط" icon={<FileText />} innerIcon={<PencilSimple />}
               placeholder="محاور الحلقة وما ذُكر فيها من كتبٍ وروابط…" rows={4}
               value={epForm.state.notes} onChange={(e) => patchEp({ notes: e.target.value })} optional />
             <Textarea className="form-full" label="التفريغ النصّيّ" icon={<MusicNotes />} innerIcon={<PencilSimple />}
-              placeholder="نصّ الحلقة مفرَّغًا — وصوليّةٌ وبحثٌ وأرشيف…" rows={4}
+              placeholder="نصّ الحلقة مفرَّغًا، وصوليّةٌ وبحثٌ وأرشيف…" rows={4}
               value={epForm.state.transcript} onChange={(e) => patchEp({ transcript: e.target.value })} optional />
           </div>
         ) : null}
@@ -378,7 +441,7 @@ export function ShowEditorView({
         open={schedule !== null}
         onClose={() => setSchedule(null)}
         title="جدولة النشر"
-        description="تُنشر الحلقة تلقائيًّا في الموعد، وتظهر في الخلاصة بعده بدقائق."
+        description="تُنشر الحلقة تلقائيًّا في الموعد فتظهر في الموقع."
         busy={pending}
         size="sm"
         footer={
@@ -407,7 +470,7 @@ export function ShowEditorView({
         tone="danger"
         icon={<Trash />}
         title="حذف الحلقة؟"
-        text={confirmKill ? `ستُحذف «${confirmKill.title}» وملفّها الصوتيّ نهائيًّا. لا استرجاع بعده.` : undefined}
+        text={confirmKill ? `ستُحذف «${confirmKill.title}» وملفّاها الصوتيّان نهائيًّا. لا استرجاع بعده.` : undefined}
         confirmLabel="حذف"
         loading={pending}
         onConfirm={() => {
@@ -415,6 +478,26 @@ export function ShowEditorView({
           startPending(async () => {
             const r = await deleteEpisode(confirmKill.id);
             if (r.ok) { toast.success(r.message); setConfirmKill(null); router.refresh(); } else toast.error(r.message);
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDropPlain !== null}
+        onClose={() => setConfirmDropPlain(null)}
+        tone="danger"
+        icon={<Trash />}
+        title="نزع النسخة المجرّدة؟"
+        text={confirmDropPlain
+          ? `سيُحذف ملفّ «${confirmDropPlain.title}» بلا موسيقى، فيختفي المبدّل من صفحتها ولا يبقى إلّا الاستماع بموسيقى.`
+          : undefined}
+        confirmLabel="نزع"
+        loading={pending}
+        onConfirm={() => {
+          if (!confirmDropPlain) return;
+          startPending(async () => {
+            const r = await clearEpisodeAudio(confirmDropPlain.id, "plain");
+            if (r.ok) { toast.success(r.message); setConfirmDropPlain(null); router.refresh(); } else toast.error(r.message);
           });
         }}
       />

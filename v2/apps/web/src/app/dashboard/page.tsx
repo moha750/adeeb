@@ -12,7 +12,7 @@ import { Breadcrumb } from "./_shell/Breadcrumb";
  * خادميّة تجلب وتمرّر لا غير — العرض كلّه في `MembershipView` العميليّ (أيقونات Phosphor
  * تُنشئ `createContext`، وهو ممنوعٌ في مكوّنٍ خادميّ).
  */
-export const metadata = { title: "عضويتي — بوّابة أديب" };
+export const metadata = { title: "عضويتي، بوّابة أديب" };
 
 export default async function MyMembershipPage() {
   const denied = await denyUnless("/dashboard");

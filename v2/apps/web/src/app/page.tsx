@@ -28,7 +28,7 @@ export default function Home() {
         <section id="story" className="py-20 text-center md:py-28">
           <Container>
             <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">
-              ADEEB CLUB · KFU
+              ADEEB CLUB, KFU
             </p>
             <h1 className="mx-auto max-w-3xl font-display text-5xl font-black leading-tight text-content md:text-6xl">
               حيثُ تُولَدُ الكلمة
@@ -47,7 +47,7 @@ export default function Home() {
         <section id="works" className="py-20 md:py-28">
           <Container>
             <Reveal>
-              <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا — من القصّة إلى اللوحة والتصميم." />
+              <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا، من القصّة إلى اللوحة والتصميم." />
               <WorksGallery />
             </Reveal>
           </Container>

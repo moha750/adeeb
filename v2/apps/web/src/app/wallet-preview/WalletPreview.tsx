@@ -558,7 +558,7 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
                     </div>
 
                     <p className="mt-4 text-xs text-content-muted">
-                      {pointsStatusText(member.points)} · مكافآتٌ صرفها:{" "}
+                      {pointsStatusText(member.points)}، مكافآتٌ صرفها:{" "}
                       <span className="font-latin">{num(member.redemptions)}</span>
                     </p>
                   </>
@@ -583,7 +583,7 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
                     </div>
 
                     <p className="mt-4 text-xs text-content-muted">
-                      {statusText(member.stamps)} · بطاقاتٌ أكملها:{" "}
+                      {statusText(member.stamps)}، بطاقاتٌ أكملها:{" "}
                       <span className="font-latin">{num(member.cycles)}</span>
                     </p>
                   </>
@@ -644,7 +644,7 @@ export function WalletPreview({ initial }: { initial: Record<string, LiveCard> }
                           <div className="min-w-0">
                             <b className="block truncate">{r.title}</b>
                             <span className="text-xs text-content-muted">
-                              <span className="font-latin">{num(r.cost)}</span> نقطة · {r.sponsor}
+                              <span className="font-latin">{num(r.cost)}</span> نقطة، {r.sponsor}
                             </span>
                           </div>
                           <Button

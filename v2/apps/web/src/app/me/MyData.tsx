@@ -12,15 +12,15 @@ import { saveMyData, type MyDataInput } from "./actions";
 import type { MyAccount } from "./data";
 
 const RPC_ERRORS: Record<string, string> = {
-  NOT_AUTHENTICATED: "انتهت جلستك — سجّل دخولك من جديد.",
-  PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا — أعِد تحميل الصفحة.",
+  NOT_AUTHENTICATED: "انتهت جلستك. سجّل دخولك من جديد.",
+  PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا. أعِد تحميل الصفحة.",
   NAME_REQUIRED: "الاسم مطلوب.",
   GENDER_REQUIRED: "اختر فئتك.",
-  PHONE_INVALID: "رقم الجوّال غير صحيح — أدخله هكذا: 05xxxxxxxx.",
+  PHONE_INVALID: "رقم الجوّال غير صحيح. أدخله هكذا: 05xxxxxxxx.",
 };
 const rpcError = (raw: string | null | undefined): string => {
   const code = Object.keys(RPC_ERRORS).find((c) => (raw ?? "").includes(c));
-  return code ? RPC_ERRORS[code] : "تعذّر حفظ بياناتك — حاول مجدّدًا.";
+  return code ? RPC_ERRORS[code] : "تعذّر حفظ بياناتك. حاول مجدّدًا.";
 };
 
 /**
@@ -54,7 +54,7 @@ export function MyData({ me }: { me: MyAccount }) {
     return (
       <div className="flex flex-col gap-4">
         <Alert tone="info" title="أنت عضوٌ في أديب">
-          بياناتُك ومسيرتُك في <Link className="font-bold underline" href="/dashboard">بوّابة أديب</Link> — وهناك تُحرَّر.
+          بياناتُك ومسيرتُك في <Link className="font-bold underline" href="/dashboard">بوّابة أديب</Link>، وهناك تُحرَّر.
         </Alert>
         <div className="flex flex-col gap-3">
           <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={me.fullName} disabled readOnly />
@@ -105,7 +105,7 @@ export function MyData({ me }: { me: MyAccount }) {
   return (
     <div className="flex flex-col gap-3">
       {!me.hasProfile ? (
-        <Alert tone="info">أكمِل بياناتك مرّةً واحدة — بها نحجز مقعدك ونتواصل معك.</Alert>
+        <Alert tone="info">أكمِل بياناتك مرّةً واحدة، بها نحجز مقعدك ونتواصل معك.</Alert>
       ) : null}
       {ok ? <Alert tone="success" onClose={() => setOk(null)}>{ok}</Alert> : null}
       {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
@@ -117,7 +117,7 @@ export function MyData({ me }: { me: MyAccount }) {
       <Field
         label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />}
         placeholder="you@example.com" value={me.email} disabled readOnly
-        helper="بريدُك هو مفتاحُ دخولك — لا يُبدَّل من هنا."
+        helper="بريدُك هو مفتاحُ دخولك، لا يُبدَّل من هنا."
       />
       <Field
         label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx"

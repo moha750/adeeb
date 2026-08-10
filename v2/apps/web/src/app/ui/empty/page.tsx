@@ -29,19 +29,19 @@ export default function EmptyPage() {
     <main className="py-16">
       <Container className="max-w-2xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Empty
+          Design System, Empty
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">
           معرض الحالة الفارغة
         </h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          كل الأنماط والحالات بالمكوّن الحقيقي — أيقونة وعنوان ووصف وإجراء.
+          كل الأنماط والحالات بالمكوّن الحقيقي: أيقونة وعنوان ووصف وإجراء.
         </p>
 
         <div className="mt-12 space-y-14">
           {/* الأنماط — بأيقونة وعنوان ووصف وإجراء */}
           <Sec title="الأنماط">
-            <Lab>Soft · لغياب النتائج</Lab>
+            <Lab>Soft، لغياب النتائج</Lab>
             <EmptyState
               variant="soft"
               icon={<MagnifyingGlass aria-hidden />}
@@ -55,7 +55,7 @@ export default function EmptyPage() {
             />
 
             <div className="mt-8" />
-            <Lab>Aurora · لغياب العناصر (ترحيبية)</Lab>
+            <Lab>Aurora، لغياب العناصر (ترحيبية)</Lab>
             <EmptyState
               variant="aurora"
               icon={<Users aria-hidden />}

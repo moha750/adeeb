@@ -4,6 +4,7 @@ out/
 dist/
 .turbo/
 *.log
+.dev-server.pid
 .env
 .env*.local
 .DS_Store

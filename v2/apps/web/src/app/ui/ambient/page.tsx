@@ -36,7 +36,7 @@ export default function AmbientPage() {
         <Ambient />
         <section className="py-20 text-center md:py-28">
           <Container>
-            <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">Design System · Ambient</p>
+            <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">Design System, Ambient</p>
             <h1 className="mx-auto max-w-3xl font-display text-5xl font-black leading-tight text-content md:text-6xl">
               حيثُ تُولَدُ الكلمة
             </h1>
@@ -50,7 +50,7 @@ export default function AmbientPage() {
               </Button>
             </div>
             <p className="mx-auto mt-10 max-w-xl rounded border border-line bg-surface/70 p-4 text-sm leading-relaxed text-content-muted">
-              بلاطةُ ضوءٍ بمقاس النافذة تتكرّر نزولًا ومسمَّرةٌ في مواضعها — تمرّ بها ولا تمرّ بك. وفوقها شبكةٌ كامنة
+              بلاطةُ ضوءٍ بمقاس النافذة تتكرّر نزولًا ومسمَّرةٌ في مواضعها، تمرّ بها ولا تمرّ بك. وفوقها شبكةٌ كامنة
               لا تظهر إلا حيث يقع الضوء، فتنكشف البنية بالإضاءة وتذوب بينها. ولأنّ المقاس النافذةُ لا الصفحة، فما تراه
               هنا هو نفسه في الهبوط حرفًا بحرف.
             </p>
@@ -59,7 +59,7 @@ export default function AmbientPage() {
 
         <section className="py-20 md:py-28">
           <Container>
-            <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا — من القصّة إلى اللوحة والتصميم." />
+            <LandingHeading eyebrow="معرض" title="أعمال وإبداعات" deck="نعرض ما تصنعه مواهبنا، من القصّة إلى اللوحة والتصميم." />
             <div className="card-grid mt-10">
               <Demo
                 icon={<PenNib weight={ICON_WEIGHT} aria-hidden />}

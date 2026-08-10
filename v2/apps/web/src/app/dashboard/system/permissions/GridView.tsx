@@ -48,7 +48,7 @@ export function GridView({ ctl }: { ctl: PermCtl }) {
             checked={ctl.has(roleName, capId)}
             disabled={ctl.busy === `${roleName}:${capId}`}
             onChange={(e) => ctl.toggle(roleName, cap, e.currentTarget.checked)}
-            aria-label={`${cap.nameAr} — ${role.roleAr}`}
+            aria-label={`${cap.nameAr}، ${role.roleAr}`}
           />
         );
       }}

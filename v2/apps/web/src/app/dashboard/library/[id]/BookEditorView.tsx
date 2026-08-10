@@ -107,7 +107,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
   const onFiles = async (list: FileList | null) => {
     if (!list || list.length === 0 || uploading > 0) return;
     const files = Array.from(list).filter((f) => /^image\/(webp|jpe?g|png)$/.test(f.type));
-    if (files.length === 0) { toast.error("اختر صور صفحات (WEBP · JPG · PNG)."); return; }
+    if (files.length === 0) { toast.error("اختر صور صفحات (WEBP، JPG، PNG)."); return; }
     const base = pages.reduce((m, p) => Math.max(m, p.pageNumber), 0);
     setUploading(files.length);
 
@@ -229,7 +229,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
         className="rounded border-2 border-dashed border-line bg-surface-2 p-8 flex flex-col items-center gap-3 text-center"
       >
         <UploadSimple size={30} className="text-content-muted" />
-        <div className="text-content-muted text-sm">اسحب صور الصفحات هنا، أو اخترها من جهازك — تُرتَّب بترتيب اختيارها، وتُعيد ترتيبها بالسحب.</div>
+        <div className="text-content-muted text-sm">اسحب صور الصفحات هنا، أو اخترها من جهازك. تُرتَّب بترتيب اختيارها، وتُعيد ترتيبها بالسحب.</div>
         <Button variant="ghost" size="md" onClick={() => fileRef.current?.click()} loading={uploading > 0}>
           <UploadSimple size={18} />اختر الصفحات
         </Button>
@@ -255,7 +255,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
         open={rename !== null}
         onClose={() => setRename(null)}
         title="تسمية الصفحة"
-        description="اسمٌ يظهر في فهرس القارئ (البسملة · المقدّمة · الفهرس…)."
+        description="اسمٌ يظهر في فهرس القارئ (البسملة، المقدّمة، الفهرس…)."
         busy={pending}
         size="sm"
         footer={

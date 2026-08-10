@@ -61,7 +61,7 @@ export function PositionCard({ position: p, actions, onAssign, hero = "role" }: 
 
       {!filled ? (
         <button type="button" className="pcard-vacant" onClick={onAssign}>
-          <UserPlus aria-hidden /> شاغر — إسناد
+          <UserPlus aria-hidden /> شاغر، إسناد
         </button>
       ) : !p.singleton ? (
         <button type="button" className="pcard-vacant" onClick={onAssign}>

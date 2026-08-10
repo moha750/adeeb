@@ -11,15 +11,15 @@ import { TYPE_META } from "@/lib/activities";
 import type { MyReservation } from "./data";
 
 const CANCEL_ERRORS: Record<string, string> = {
-  NOT_AUTHENTICATED: "انتهت جلستك — سجّل دخولك من جديد.",
+  NOT_AUTHENTICATED: "انتهت جلستك. سجّل دخولك من جديد.",
   RESERVATION_NOT_FOUND: "لم نعثر على الحجز.",
   NOT_OWNER: "هذا الحجز ليس لك.",
   REASON_REQUIRED: "سبب الإلغاء مطلوب.",
-  ACTIVITY_PAST: "انتهى وقت هذه الفعاليّة — لا يُلغى حجزُها.",
+  ACTIVITY_PAST: "انتهى وقت هذه الفعاليّة، لا يُلغى حجزُها.",
 };
 const cancelError = (raw: string | null | undefined): string => {
   const code = Object.keys(CANCEL_ERRORS).find((c) => (raw ?? "").includes(c));
-  return code ? CANCEL_ERRORS[code] : "تعذّر إلغاء الحجز — حاول مجدّدًا.";
+  return code ? CANCEL_ERRORS[code] : "تعذّر إلغاء الحجز. حاول مجدّدًا.";
 };
 
 /** كرتُ حجزٍ واحد — عنوانُ الفعاليّة ووقتُها، وحالُ الحجز شاراتٍ، والإلغاءُ في تذييله. */
@@ -30,7 +30,7 @@ function BookingCard({ r, onCancel }: { r: MyReservation; onCancel?: (r: MyReser
         className="acard-header-clip"
         icon={<CalendarBlank aria-hidden />}
         title={r.name}
-        subtitle={r.timeLabel ? `${r.dateLabel} · ${r.timeLabel}` : r.dateLabel}
+        subtitle={r.timeLabel ? `${r.dateLabel}، ${r.timeLabel}` : r.dateLabel}
       />
       <CardBody className="pt-3">
         <div className="flex flex-col gap-2">
@@ -136,22 +136,20 @@ export function MyBookings({ upcoming, past }: { upcoming: MyReservation[]; past
           </>
         }
       >
-        <div className="flex flex-col gap-3">
-          <p className="text-content-muted">
-            سيُخلى مقعدُك في «{target?.name}» ويُتاح لغيرك. ويمكنك الحجز ثانيةً ما دام فيها متّسع.
-          </p>
-          {err ? <Alert tone="danger">{err}</Alert> : null}
-          <Textarea
-            label="سبب الإلغاء"
-            icon={<PencilSimple />}
-            innerIcon={<PencilSimple />}
-            placeholder="اختياريّ"
-            rows={2}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            optional
-          />
-        </div>
+        <p className="text-content-muted">
+          سيُخلى مقعدُك في «{target?.name}» ويُتاح لغيرك. ويمكنك الحجز ثانيةً ما دام فيها متّسع.
+        </p>
+        {err ? <Alert tone="danger">{err}</Alert> : null}
+        <Textarea
+          label="سبب الإلغاء"
+          icon={<PencilSimple />}
+          innerIcon={<PencilSimple />}
+          placeholder="اختياريّ"
+          rows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          optional
+        />
       </Modal>
     </div>
   );

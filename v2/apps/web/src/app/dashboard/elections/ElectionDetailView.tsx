@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
-import { FileArrowDown, Note, Play, Scales, StopCircle, UsersThree } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
+import { CalendarBlank, Clock, FileArrowDown, Note, Play, Scales, StopCircle, UsersThree } from "@phosphor-icons/react";
 import { ArrowRight } from "@/app/_components/glyphs";
 import { PencilSimple, Prohibit, CheckCircle } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
@@ -13,9 +13,10 @@ import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { CandidateRow, ElectionDetail } from "./data";
 import type { ElectionResult } from "./actions";
-import { cancelElection, declareWinner, openVoting, reviewCandidate, transitionElection } from "./actions";
+import { cancelElection, declareWinner, openVoting, resolveCommitteeWinners, reviewCandidate, setDeadline, transitionElection } from "./actions";
 import { CANDIDATE_STATUS_META, STATUS_META } from "./vocab";
 import { Breadcrumb } from "../_shell/Breadcrumb";
+import { fromClubInput, toClubInput } from "@/lib/dates";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) بدل منتقي وقتٍ خام — voting_end = الآن + المدّة
 const DURATIONS = [
@@ -27,7 +28,9 @@ const DURATIONS = [
 
 type Confirm = { title: string; text: string; confirmLabel: string; tone: "warning" | "danger" | "success"; run: () => Promise<ElectionResult> };
 
-export function ElectionDetailView({ election }: { election: ElectionDetail }) {
+// الحقلُ يقرأ ويكتب بساعة النادي (الرياض) لا بساعة جهاز المشرف — المصدر `lib/dates`.
+
+export function ElectionDetailView({ election, readOnly = false }: { election: ElectionDetail; readOnly?: boolean }) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
@@ -40,6 +43,8 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
   const [days, setDays] = useState("7");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [deadlineOpen, setDeadlineOpen] = useState(false);
+  const [deadline, setDeadlineValue] = useState("");
 
   const run = (key: string, fn: () => Promise<ElectionResult>, onOk?: () => void) => {
     setActing(key);
@@ -62,6 +67,13 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
   const approvedCount = election.candidates.filter((c) => c.status === "approved").length;
   const statusMeta = STATUS_META[s];
 
+  // الطور الموقوت — بابٌ مفتوح وحده يقبل موعدًا، وهو الذي يقول أيّ عمودٍ يُضبط
+  const timedPhase: "candidacy" | "voting" | null =
+    s === "candidacy_open" ? "candidacy" : s === "voting_open" ? "voting" : null;
+  const deadlineRaw = timedPhase === "candidacy" ? election.candidacyEndRaw : timedPhase === "voting" ? election.votingEndRaw : null;
+  const deadlineLabel = timedPhase === "candidacy" ? "يُغلق باب الترشّح في" : "يُغلق التصويت في";
+  const openDeadline = () => { setDeadlineValue(toClubInput(deadlineRaw)); setDeadlineOpen(true); };
+
   const columns: Column<CandidateRow>[] = [
     { key: "number", header: "#", width: "56px", align: "center", render: (c) => <span className="txt num">{c.number}</span> },
     { key: "name", header: "المرشّح", width: "minmax(180px, 2fr)", render: (c) => <span className="txt"><b>{c.name}</b></span> },
@@ -82,6 +94,8 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
   const closeDetail = () => { if (!pending) { setDetail(null); setNote(""); } };
 
   const detailFooter = (c: CandidateRow) => {
+    // المطّلِع (عضو الموارد) يرى البيان والملفّ والأوزان — بلا زرِّ مراجعةٍ أو إعلان
+    if (readOnly) return <Button variant="ghost" size="md" onClick={closeDetail}>إغلاق</Button>;
     if (reviewable(c)) {
       return (
         <>
@@ -117,10 +131,20 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
       </div>
 
       {s === "completed" && election.winnerName ? (
-        <Alert tone="success" title="اكتمل الانتخاب">الفائز: <b>{election.winnerName}</b> — أُسنِد المنصب تلقائيًّا.</Alert>
+        <Alert tone="success" title="اكتمل الانتخاب">الفائز: <b>{election.winnerName}</b>، أُسنِد المنصب تلقائيًّا.</Alert>
       ) : null}
       {s === "cancelled" ? (
         <Alert tone="warning" title="أُلغي هذا الانتخاب">حُفظ المرشّحون والأصوات كما هي.</Alert>
+      ) : null}
+
+      {/* الموعد المضروب على الطور الجاري — كنّاسة القاعدة تُنفّذه كلّ دقيقة، ولا تلمس ما لا موعد له */}
+      {s === "candidacy_open" && election.candidacyEnd ? (
+        <Alert tone="info" title="باب الترشّح موقوت">
+          يُغلق تلقائيًّا في <b>{election.candidacyEnd}</b>، وإن قلّ المعتمَدون عن اثنين مُدّ أربعًا وعشرين ساعة مرّةً واحدة ثمّ أُلغي الانتخاب.
+        </Alert>
+      ) : null}
+      {s === "voting_open" && election.votingEnd ? (
+        <Alert tone="info" title="التصويت موقوت">يُغلق تلقائيًّا في <b>{election.votingEnd}</b>، ثمّ تُعلن الفائز.</Alert>
       ) : null}
 
       <div className="stat-grid" style={{ margin: "16px 0" }}>
@@ -129,8 +153,9 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
         <Stat icon={<Scales />} value={election.votes} label="الأصوات" />
       </div>
 
-      {/* شريط أفعال الدورة — يعرض ما يصحّ على الحالة فقط؛ القاعدة الحكَم النهائيّ */}
-      {phase !== "done" ? (
+      {/* شريط أفعال الدورة — يعرض ما يصحّ على الحالة فقط؛ القاعدة الحكَم النهائيّ.
+          يُحجب عن المطّلِع (readOnly): غرفةُ الموارد للقراءة لا للتصريف. */}
+      {phase !== "done" && !readOnly ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
           {s === "candidacy_open" ? (
             <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق باب الترشّح؟", text: "لن يُقبل مرشّحون جدد. يلزم مرشّحان معتمَدان على الأقلّ لفتح التصويت.", confirmLabel: "إغلاق الترشّح", tone: "warning", run: () => transitionElection(election.id, "candidacy_closed") })} loading={acting === "close_c"} disabled={pending}><StopCircle size={18} />إغلاق الترشّح</Button>
@@ -145,7 +170,17 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
             <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق التصويت؟", text: "سيتوقّف استقبال الأصوات، ثمّ تُعلن الفائز من النتائج.", confirmLabel: "إغلاق التصويت", tone: "warning", run: () => transitionElection(election.id, "voting_closed") })} loading={acting === "close_v"} disabled={pending}><StopCircle size={18} />إغلاق التصويت</Button>
           ) : null}
           {s === "voting_closed" ? (
-            <span className="txt" style={{ alignSelf: "center" }}>افتح مرشّحًا معتمَدًا من الجدول لإعلانه فائزًا (القاعدة تفرض الأعلى وزنًا).</span>
+            election.committeeId != null && election.siblingSeatReady ? (
+              <>
+                <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي اللجنة معًا؟", text: "يُحسَم مقعدا القيادة والنيابة معًا: إن فاز شخصٌ بهما أخذ مفضّله، وذهب الآخرُ للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي اللجنة", tone: "success", run: () => resolveCommitteeWinners(election.committeeId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي اللجنة معًا</Button>
+                <span className="txt" style={{ alignSelf: "center" }}>أو افتح مرشّحًا لإعلانه فائزًا لهذا المقعد وحده.</span>
+              </>
+            ) : (
+              <span className="txt" style={{ alignSelf: "center" }}>افتح مرشّحًا معتمَدًا من الجدول لإعلانه فائزًا (القاعدة تفرض الأعلى وزنًا).</span>
+            )
+          ) : null}
+          {timedPhase ? (
+            <Button variant="ghost" size="md" onClick={openDeadline} disabled={pending}><CalendarBlank size={18} />{deadlineRaw ? "تعديل موعد الإغلاق" : "ضبط موعد الإغلاق"}</Button>
           ) : null}
           <Button variant="danger" size="md" onClick={() => setCancelOpen(true)} disabled={pending}><Prohibit size={18} />إلغاء الانتخاب</Button>
         </div>
@@ -171,7 +206,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
         footer={detail ? detailFooter(detail) : null}
       >
         {detail ? (
-          <div style={{ display: "grid", gap: 12 }}>
+          <>
             <div>
               <b>بيان الترشّح</b>
               <p className="txt" style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{detail.statement}</p>
@@ -180,7 +215,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
               <a href={detail.fileUrl} target="_blank" rel="noreferrer" className="abtn abtn-ghost abtn-sm"><FileArrowDown size={16} />{detail.fileName ?? "ملفّ الترشّح"}</a>
             ) : null}
             {phase !== "candidacy" ? (
-              <div className="txt">الوزن: <b className="num">{detail.weight}</b> · الأصوات: <b className="num">{detail.votes}</b></div>
+              <div className="txt">الوزن: <b className="num">{detail.weight}</b>، الأصوات: <b className="num">{detail.votes}</b></div>
             ) : null}
             {detail.reviewNote ? <Alert tone="info" title="ملاحظة المراجعة السابقة">{detail.reviewNote}</Alert> : null}
             {reviewable(detail) ? (
@@ -195,7 +230,7 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
                 required
               />
             ) : null}
-          </div>
+          </>
         ) : null}
       </Modal>
 
@@ -215,6 +250,42 @@ export function ElectionDetailView({ election }: { election: ElectionDetail }) {
         }
       >
         <Select label="مدّة التصويت" icon={<Play />} options={DURATIONS} value={days} onValueChange={setDays} required />
+      </Modal>
+
+      {/* ضبط موعد الإغلاق — بابٌ واحد للطورين، والحالة تقول أيّهما يُضبط. القاعدة تُنفّذ الموعد كلّ دقيقة. */}
+      <Modal
+        open={deadlineOpen}
+        onClose={() => { if (!pending) setDeadlineOpen(false); }}
+        title="ضبط موعد الإغلاق"
+        description="عند الموعد يُغلق الباب من نفسه. اتركه فارغًا ليبقى الإغلاق بيدك."
+        size="sm"
+        busy={pending}
+        footer={
+          <>
+            {deadlineRaw ? (
+              <Button variant="danger" size="md" onClick={() => run("dl_clear", () => setDeadline(election.id, null), () => setDeadlineOpen(false))} loading={acting === "dl_clear"} disabled={pending}>إزالة الموعد</Button>
+            ) : null}
+            <Button variant="ghost" size="md" onClick={() => setDeadlineOpen(false)} disabled={pending}>إلغاء</Button>
+            <Button variant="primary" size="md" onClick={() => run("dl_save", () => setDeadline(election.id, fromClubInput(deadline)), () => setDeadlineOpen(false))} loading={acting === "dl_save"} disabled={pending || !deadline}>حفظ</Button>
+          </>
+        }
+      >
+        <Field
+          label={deadlineLabel}
+          type="datetime-local"
+          icon={<CalendarBlank />}
+          innerIcon={<Clock />}
+          placeholder="اختر تاريخًا وساعة"
+          helper="بتوقيت الرياض"
+          value={deadline}
+          onChange={(e) => setDeadlineValue(e.target.value)}
+          required
+        />
+        {timedPhase === "candidacy" && election.candidacyExtendedOnce ? (
+          <Alert tone="warning" title="استُهلكت فرصة التمديد">
+            مُدّ باب الترشّح مرّةً تلقائيًّا، فإن حلّ الموعد الجديد بأقلّ من مرشّحَين معتمَدين أُلغي الانتخاب تلقائيًّا.
+          </Alert>
+        ) : null}
       </Modal>
 
       {/* إلغاء الانتخاب — بسبب */}

@@ -107,7 +107,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
           <div className="dt-user-txt">
             <b>{r.holderName}</b>
             {/* الاسم في الملفّ اليوم إن خالف المرسوم — فالورقة لا تُصحَّح بعد خروجها */}
-            <span className="txt">{r.holderName === r.name ? r.positionTitle : `${r.name} · ${r.positionTitle}`}</span>
+            <span className="txt">{r.holderName === r.name ? r.positionTitle : `${r.name}، ${r.positionTitle}`}</span>
           </div>
         </div>
       ),
@@ -242,7 +242,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
         busy={pending}
         className="mdl-tone-danger"
         title="إبطال الشهادة"
-        description="لا تُمحى — تبقى في السجلّ مشطوبةً بسببها."
+        description="لا تُمحى، تبقى في السجلّ مشطوبةً بسببها."
         footer={
           <>
             <Button variant="danger" size="md" loading={pending} disabled={reason.trim().length < 5} onClick={submitRevoke}>
@@ -253,7 +253,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
         }
       >
         {revoking ? (
-          <Alert tone="danger" title={`${revoking.holderName} — ${revoking.serial}`}>
+          <Alert tone="danger" title={`${revoking.holderName}، ${revoking.serial}`}>
             الورقةُ التي بيده لا تُسترجع؛ الإبطالُ يُعلن في السجلّ أنّها لم تعد معتمدة.
           </Alert>
         ) : null}

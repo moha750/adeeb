@@ -70,7 +70,7 @@ export async function setCapability(input: {
       .eq("permission_id", permissionId);
     if (cErr) return { ok: false, message: `تعذّر التحقّق: ${cErr.message}` };
     if ((count ?? 0) <= 1) {
-      return { ok: false, message: "لا يمكن سحب آخر صلاحية «إدارة الصلاحيات» — ستُقفَل اللوحة عن الجميع." };
+      return { ok: false, message: "لا يمكن سحب آخر صلاحية «إدارة الصلاحيات». ستُقفَل اللوحة عن الجميع." };
     }
   }
 

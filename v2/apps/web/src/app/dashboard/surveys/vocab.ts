@@ -44,8 +44,8 @@ export type StatusOp = keyof typeof STATUS_OPS;
 export type AccessType = "public" | "members_only";
 
 export const ACCESS_TYPES: { value: AccessType; label: string }[] = [
-  { value: "public", label: "عامّ — يجيب أيّ زائر" },
-  { value: "members_only", label: "للأعضاء فقط — يتطلّب عضويّة نشطة" },
+  { value: "public", label: "عامّ: يجيب أيّ زائر" },
+  { value: "members_only", label: "للأعضاء فقط: يتطلّب عضويّة نشطة" },
 ];
 export const ACCESS_LABEL: Record<AccessType, string> = { public: "عامّ", members_only: "للأعضاء" };
 
@@ -109,14 +109,14 @@ export const MAX_TEXT_ANSWER = 10000;
  * الدالّة ترفع برمز ثابت (وقد يلحقه `:qid`) — الخادم يترجمه هنا قبل عرضه.
  */
 export const SUBMIT_ERRORS: Record<string, string> = {
-  invalid_answers: "تعذّر قراءة الإجابات — أعد المحاولة.",
+  invalid_answers: "تعذّر قراءة الإجابات. أعد المحاولة.",
   not_found: "هذا الاستبيان غير موجود.",
   not_active: "هذا الاستبيان غير متاح حاليًّا.",
   not_started: "لم يبدأ استقبال الإجابات بعد.",
   ended: "انتهت مدّة هذا الاستبيان.",
-  members_only: "هذا الاستبيان لأعضاء أديب — سجّل دخولك بعضويّة نشطة.",
+  members_only: "هذا الاستبيان لأعضاء أديب. سجّل دخولك بعضويّة نشطة.",
   already_answered: "سبق أن أجبت على هذا الاستبيان.",
-  foreign_question: "تعذّر التحقّق من الإجابات — حدّث الصفحة وأعد المحاولة.",
+  foreign_question: "تعذّر التحقّق من الإجابات. حدّث الصفحة وأعد المحاولة.",
   required_missing: "سؤال إلزاميّ بلا إجابة.",
   bad_answer: "إجابة غير صالحة لأحد الأسئلة.",
   empty_response: "لا إجابات لإرسالها.",
@@ -125,5 +125,5 @@ export const SUBMIT_ERRORS: Record<string, string> = {
 
 export const submitErrorMessage = (raw: string | null | undefined): string => {
   const code = (raw ?? "").split(":")[0];
-  return SUBMIT_ERRORS[code] ?? "تعذّر إرسال الإجابات — حاول مجدّدًا.";
+  return SUBMIT_ERRORS[code] ?? "تعذّر إرسال الإجابات. حاول مجدّدًا.";
 };

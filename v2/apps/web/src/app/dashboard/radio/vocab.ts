@@ -27,6 +27,40 @@ export const EPISODE_STATUS_META: Record<EpisodeStatus, { label: string; tone: "
   archived: { label: "مؤرشفة", tone: "neutral" },
 };
 
+/* ══ نسختا الصوت ═════════════════════════════════════════════════════ */
+
+// لكلّ حلقةٍ تجربتان: بموسيقى (الافتراضيّة، وبها وحدها يُسمَح بالنشر) وبلا موسيقى.
+// وليستا ملفّين متجاورين فحسب: بينهما إزاحةٌ ثابتة هي طولُ المقدّمة الموسيقيّة،
+// بها يقفز المستمع من نسخةٍ إلى أختها في اللحظة نفسها بلا انقطاع.
+export type AudioVariant = "music" | "plain";
+
+export const VARIANT_META: Record<AudioVariant, { label: string; verb: string }> = {
+  music: { label: "بموسيقى", verb: "النسخة بموسيقى" },
+  plain: { label: "بلا موسيقى", verb: "النسخة المجرّدة" },
+};
+export const VARIANT_VALUES: AudioVariant[] = ["music", "plain"];
+
+/**
+ * ما نتسامح به بين الإزاحة المعلنة و(مدّةُ الموسيقى ناقصَ مدّةِ المجرّدة).
+ *
+ * ثانيةٌ ونصف لا أقلّ: المدّتان تُخزَّنان ثوانيَ صحيحة، فتقريبُ كلٍّ منهما
+ * يخطئ نصفَ ثانية، ويبلغ خطأ الفرق ثانيةً كاملة في أسوأ حال. وما دون ذلك
+ * إنذارٌ كاذب، وما فوقه تصديرٌ خاطئ حقًّا (فالفرق يُقاس بالثواني لا بأجزائها).
+ */
+export const LEAD_TOLERANCE_SECONDS = 1.5;
+
+/** نصٌّ للإزاحة كما تُكتب وتُقرأ في الحقول: ثوانٍ بثلاث منازل بلا أصفارٍ زائدة. */
+export const formatLead = (seconds: number): string =>
+  String(Math.round(seconds * 1000) / 1000);
+
+/** يقرأ إزاحةً من حقلٍ نصّيّ. `null` للفارغ (أي: ارِث)، و`NaN` للخطأ. */
+export function parseLead(raw: string): number | null {
+  const t = raw.trim().replace(/[٫،]/g, ".");
+  if (!t) return null;
+  if (!/^\d+(\.\d{1,3})?$/.test(t)) return NaN;
+  return Number(t);
+}
+
 /* ══ نغمة البرنامج ═══════════════════════════════════════════════════ */
 
 // النغمة من نظام النغمات لا لونًا حرًّا — تعمّ بطاقة البرنامج وصفحته ومشغّله.
@@ -44,18 +78,12 @@ export const TONE_OPTIONS = TONE_VALUES.map((v) => ({ value: v, label: TONE_META
 
 /* ══ المنصّات ════════════════════════════════════════════════════════ */
 
-export type Platform =
-  | "spotify" | "apple" | "youtube" | "anghami" | "deezer"
-  | "amazon" | "castbox" | "x" | "instagram" | "tiktok";
+// الوجهةُ يوتيوب، وما بقي حضورٌ اجتماعيّ. ولا منصّاتِ بودكاست: لا مغذّي RSS عندنا،
+// فالحلقةُ لا تصل سبوتيفاي ولا آبل، وإدراجُهما هنا يَعِد بما لا نفي به.
+export type Platform = "youtube" | "x" | "instagram" | "tiktok";
 
 export const PLATFORM_META: Record<Platform, { label: string }> = {
-  spotify: { label: "سبوتيفاي" },
-  apple: { label: "آبل بودكاست" },
-  youtube: { label: "يوتيوب ميوزك" },
-  anghami: { label: "أنغامي" },
-  deezer: { label: "ديزر" },
-  amazon: { label: "أمازون ميوزك" },
-  castbox: { label: "كاست بوكس" },
+  youtube: { label: "يوتيوب" },
   x: { label: "إكس" },
   instagram: { label: "إنستغرام" },
   tiktok: { label: "تيك توك" },
@@ -86,5 +114,5 @@ export function formatBytes(bytes: number | null | undefined): string {
   return mb >= 10 ? `${Math.round(mb)} م.ب` : `${mb.toFixed(1)} م.ب`;
 }
 
-/** تسمية الموسم والحلقة كما تُقرأ في اللوحة والموقع. */
-export const episodeLabel = (season: number, number: number) => `م${season} · ح${number}`;
+/** تسمية الحلقة كما تُقرأ في اللوحة والموقع. ترقيمٌ متسلسلٌ واحد بلا مواسم. */
+export const episodeLabel = (number: number) => `الحلقة ${number}`;

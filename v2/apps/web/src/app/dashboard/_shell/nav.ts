@@ -1,6 +1,6 @@
 import type { IconKey } from "./icons";
 import { canOpen, type NavHref } from "@/lib/capabilities";
-import type { MyScope, SeatKind } from "@/lib/myScope";
+import type { ElectionSignal, MyScope, SeatKind } from "@/lib/myScope";
 
 export type NavLeaf = { label: string; href: NavHref; badge?: string };
 export type NavItem = {
@@ -11,6 +11,8 @@ export type NavItem = {
   children?: NavLeaf[]; // مجموعة قابلة للطيّ
   /** بندٌ لا يُعرض إلّا لصاحب غرفةٍ من هذا النوع — القفلُ وحده لا يكفي (`lib/myScope.ts`). */
   seat?: SeatKind;
+  /** بابُ انتخابٍ لا يُعرض إلّا حين تصدق إشارتُه — القفلُ وحده لا يكفي (`scope.elections`). */
+  election?: ElectionSignal;
 };
 export type NavGroup = { head?: string; items: NavItem[] };
 
@@ -34,9 +36,16 @@ export const NAV: NavGroup[] = [
       // أختيها** لا في ذيل القائمة (حيث «النظام» و«أدوات»): تلك غرفُ النادي، وهذه غرفةُ نفسك —
       // والصدرُ كلُّه «أنت»: عضويّتك ثمّ سجلُّك ثمّ بابُك، ثمّ مواقعُك من الهيكل.
       { label: "الإعدادات", icon: "settings", href: "/dashboard/settings" },
+      // «مهامّي» — ما كُلِّفتَ به. وموضعُها في صدر «أنت» لا في «العضوية»: المهمّةُ شأنُ صاحبها
+      // أوّلًا، ويراها القائدُ فيها لجنتَه كما يرى «لجنتي» كشفَها. بندٌ واحدٌ لوجهين.
+      { label: "مهامّي", icon: "tasks", href: "/dashboard/tasks" },
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
+      // أبواب الانتخابات — كلٌّ فعلٌ للعضو، يظهر حين يصير متاحًا (لا بابَ بلا غرفة).
+      { label: "الترشُّح", icon: "candidacy", href: "/dashboard/elections/run", election: "canRun" },
+      { label: "سِجلّ ترشُّحي", icon: "myruns", href: "/dashboard/elections/my", election: "hasCandidacy" },
+      { label: "التصويت", icon: "ballot", href: "/dashboard/elections/vote", election: "canVote" },
     ],
   },
   {
@@ -102,7 +111,7 @@ export const NAV: NavGroup[] = [
  * كتابة المسار في شريط العنوان.
  */
 export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
-  const has = (it: NavItem) => !it.seat || scope[it.seat] !== null;
+  const has = (it: NavItem) => (!it.seat || scope[it.seat] !== null) && (!it.election || scope.elections[it.election]);
   return NAV.map((g) => ({
     ...g,
     items: g.items.flatMap((it) => {
@@ -113,4 +122,24 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
       return it.href && canOpen(caps, it.href) && has(it) ? [it] : [];
     }),
   })).filter((g) => g.items.length > 0);
+}
+
+/**
+ * أيقونةُ مسارٍ من خريطة التنقّل نفسها — **مصدرٌ واحد**: الأيقونة التي يراها العضو في الشريط
+ * الجانبيّ هي التي تظهر بجانب المسار في التحليلات، فالتعرّف فوريّ ولا أيقونةَ تُخترَع لقائمة.
+ * الورقة ترث أيقونة مجموعتها (لا أيقونة لها في `NavLeaf`)، وإن لم يُطابق المسارُ بندًا بعينه
+ * جُرّب أطولُ بندٍ يبدأ به (‏`/dashboard/members` ← بند `‎/dashboard/members/active`‎).
+ * تُعيد المفتاح لا المكوّن: هذا ملفُّ بياناتٍ بلا JSX، والراسمُ `ICONS[key]` عند المستهلك.
+ */
+export function iconKeyForHref(href: string): IconKey | null {
+  let prefix: IconKey | null = null;
+  for (const g of NAV) {
+    for (const it of g.items) {
+      if (it.href === href) return it.icon;
+      for (const c of it.children ?? []) if (c.href === href) return it.icon;
+      const hrefs = [it.href, ...(it.children ?? []).map((c) => c.href)].filter(Boolean) as string[];
+      if (prefix === null && hrefs.some((h) => h.startsWith(href + "/"))) prefix = it.icon;
+    }
+  }
+  return prefix;
 }

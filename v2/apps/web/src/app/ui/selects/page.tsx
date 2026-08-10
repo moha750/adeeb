@@ -26,9 +26,9 @@ const CITIES: SelectOption[] = [
 // خيارٌ بتلميح (`hint`): واقعةٌ عن الخيار تحت اسمه — كموضع العضو حين يُسنَد إليه منصب.
 // التلميح يدخل البحث مع الاسم، فيُطلب الخيار بموضعه («التصميم») كما يُطلب باسمه.
 const PEOPLE: SelectOption[] = [
-  { value: "p1", label: "عبدالله القحطاني", hint: "عضو — لجنة التصميم" },
-  { value: "p2", label: "سارة المطيري", hint: "نائب — لجنة الرواة" },
-  { value: "p3", label: "محمّد العتيبي", hint: "قائد — لجنة التسويق" },
+  { value: "p1", label: "عبدالله القحطاني", hint: "عضو، لجنة التصميم" },
+  { value: "p2", label: "سارة المطيري", hint: "نائب، لجنة الرواة" },
+  { value: "p3", label: "محمّد العتيبي", hint: "قائد، لجنة التسويق" },
   { value: "p4", label: "نورة الدوسري" },
 ];
 
@@ -57,11 +57,11 @@ export default function SelectsPage() {
     <main className="py-16">
       <Container className="max-w-3xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Selects
+          Design System, Selects
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض القوائم</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          سهم في دائرة · لوحة بحدّ · مُختار كحليّ + صحّ · بحث + تجميع + أيقونات.
+          سهم في دائرة، لوحة بحدّ، مُختار كحليّ + صحّ، بحث + تجميع + أيقونات.
         </p>
 
         <div className="mt-12 space-y-14">
@@ -76,7 +76,7 @@ export default function SelectsPage() {
           <section>
             <Label>تلميحٌ تحت الخيار (سطرُ حالٍ لا وصف)</Label>
             <p className="-mt-2 mb-4 text-sm text-content-muted">
-              سطرٌ باهتٌ يقول واقعةً عن الخيار — ومن لا واقعة له يبقى اسمًا مجرّدًا. يبقى التلميح
+              سطرٌ باهتٌ يقول واقعةً عن الخيار، ومن لا واقعة له يبقى اسمًا مجرّدًا. يبقى التلميح
               ظاهرًا بعد الاختيار في الحقل المغلق، ويُطابِقه البحث كما يُطابِق الاسم.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
@@ -102,13 +102,13 @@ export default function SelectsPage() {
           </section>
 
           <section>
-            <Label>طول القائمة — قصيرة (بلا scroll) · طويلة (scroll عند اللزوم)</Label>
+            <Label>طول القائمة: قصيرة (بلا scroll)، طويلة (scroll عند اللزوم)</Label>
             <p className="-mt-2 mb-4 text-sm text-content-muted">
-              القصيرة تنسدل كاملة بلا شريط. الأطول تتوقّف عند ٣٠٪ من الشاشة فيظهر شريط التمرير الطافي — افتح كلًّا وقارِن.
+              القصيرة تنسدل كاملة بلا شريط. الأطول تتوقّف عند ٣٠٪ من الشاشة فيظهر شريط التمرير الطافي. افتح كلًّا وقارِن.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Select label="قصيرة — تنسدل كاملة" icon={<GraduationCap />} options={SHORT} />
-              <Select label="طويلة — scroll عند اللزوم" icon={<CalendarBlank />} options={YEARS} searchable />
+              <Select label="قصيرة: تنسدل كاملة" icon={<GraduationCap />} options={SHORT} />
+              <Select label="طويلة: scroll عند اللزوم" icon={<CalendarBlank />} options={YEARS} searchable />
             </div>
           </section>
         </div>

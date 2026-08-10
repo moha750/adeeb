@@ -41,6 +41,14 @@ export type MemberRow = {
   endDate: string;
   endAgo: string; // مدّة نسبيّة منذ الإنهاء («منذ ٣ أشهر»)
   /**
+   * من أنهى العضوية — نصًّا معروضًا: الاسم، ويُلحَق به «· بحدّ الإنذارات» حين كان السحبُ آليًّا.
+   *
+   * ومصدرُه `activity_log` لا `profiles`: **الفاعل لا عمودَ له في الملفّ**، وسطرُه يُكتب في معاملة
+   * الإنهاء نفسِها (`_apply_termination`) فهو أوثقُ ما يُقال. ومن أُنهيت عضويّته قبل هذا السجلّ
+   * (زمنُ V1) لا فاعلَ له، فيُقال «غير مسجّل» ولا يُخترَع اسم.
+   */
+  endBy: string | null;
+  /**
    * هل تبلغ سلطةُ قارئ الشاشة هذا الصفّ؟ — جوابان من القاعدة لا من هنا: `members_in_my_reach`
    * تقرأ الحَكَمين نفسَيهما اللذين تقرؤهما الأفعال (`can_end_membership` · `can_edit_member_data`).
    * فالزرّ يغيب حيث يمنع الباب — إخفاءٌ **فوق** منعٍ لا بدلًا منه.
@@ -68,7 +76,23 @@ export type MemberRow = {
   certCount: number;
   /** لجنتُه بمعرّفها — لقطةٌ تُكتب في الإنذار (اسمُها وحده لا يكفي للكتابة). */
   committeeId: number | null;
+  /**
+   * اسمُ دوره الخام لا تسميتُه المعروضة — الشروط تُقرأ به: «عضو» تسمّي `committee_member`
+   * و`hr_admin_member` و`qa_admin_member` معًا، فالمقارنة بالتسمية تخلط الثلاثة.
+   */
+  roleName: string | null;
+  /**
+   * وجوابٌ خامس: هل يبلغ القارئُ **نقلَ** هذا العضو إلى لجنةٍ أخرى؟ — شرطان من القاعدة
+   * لا من هنا: `can_assign_role(actor,'committee_member')` (أيملك المفتاح أصلًا) و
+   * `assignable_members` (أيطول هذا الشخصَ بعينه). ويُضاف إليهما شرطُ الشاشة الواحد:
+   * أن يكون **عضوَ لجنةٍ** الآن — فقائدُ اللجنة ونائبُها منصبان يُنقلان من «تعيين المناصب»،
+   * ولو نُقلا من هنا لسقطا عن قيادتهما صامتَين (`assign_position` تُخلي ما قبلها).
+   */
+  canMove: boolean;
 };
+
+/** لجنةٌ تُصرّح بمقعد «عضو لجنة» — وجهةُ النقل. تُقرأ من `member_role_name` لا من قائمةٍ محفورة. */
+export type MoveTarget = { id: number; name: string };
 
 // مدّة نسبيّة عربيّة — date-fns بلغة ar (مصانة)، مع تلميع للإيجاز والنحو:
 // حذف «تقريبًا» و«واحد/واحدة»، وتصحيح «يومان»→«يومين».
@@ -88,26 +112,26 @@ const agoPhrase = (iso: string | null): string => {
  * ويعود معهم **حدُّ الإنذارات** لأنّ بند «إصدار إنذار» يسكن قائمة العضو — والحدُّ من القاعدة
  * (`warning_limit`) لا رقمٌ محفورٌ في شاشة.
  */
-export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit: number; error: string | null }> {
+export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit: number; moveTargets: MoveTarget[]; error: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   // تنقية المفتاح من أيّ محرف دخيل من اللصق (مسافات/اقتباس/محارف خفيّة) — JWT لا يحوي إلا هذه المحارف
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
   if (!url || !key) {
-    return { members: [], warningLimit: 3, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
+    return { members: [], warningLimit: 3, moveTargets: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
   }
   const sb = createAdeebServiceClient(url, key);
 
   // هويّة القارئ — لتُسأل القاعدةُ عمّن تبلغه سلطتُه. بلا هويّة لا مدّ (آمنٌ افتراضًا).
   const me = await getCurrentAdmin();
 
-  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes, endRes, moveRes, mayMoveRes] = await Promise.all([
     // `members` لا `profiles`: الجدولُ صار بيتَ كلِّ صاحبِ حساب بعد توحيد الهويّة، والعرضُ
     // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
     sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
     sb.from("departments").select("id, name_ar"),
-    sb.from("committees").select("id, department_id, committee_name_ar"),
+    sb.from("committees").select("id, department_id, committee_name_ar, member_role_name, is_active"),
     sb.from("member_details").select("user_id, academic_record_number, academic_degree, college, major, twitter_account, instagram_account, tiktok_account, linkedin_account"),
     me ? sb.rpc("members_in_my_reach", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
     // ومن يبلغهم إنذارُه — مرآةٌ ثانية للسؤال نفسه بفعلٍ آخر (`can_issue_warning`)
@@ -115,10 +139,19 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     sb.rpc("warning_limit"),
     // ومن تبلغهم شهادتُه — المرآة نفسها التي تقرؤها غرفة الشهادات، فالاقتراح واحدٌ في الموضعين
     me ? sb.rpc("certificate_targets", { p_actor: me.id }) : Promise.resolve({ data: null, error: null }),
+    // ومن أنهى كلَّ عضويّة — سطرُ الإنهاء في السجلّ. `_apply_termination` وحدها تكتبه، وبابا الإنهاء
+    // كلاهما يمرّان بها: قرارُ صاحبِ سلطة (`authority`) وسحبٌ آليٌّ ببلوغ حدّ الإنذارات (`warning_threshold`).
+    sb.from("activity_log").select("user_id, target_id, details, created_at").eq("action_type", "terminate_membership").order("created_at", { ascending: false }),
+    // ومن يبلغهم **نقلُه** — البِركة نفسُها التي يقرؤها تبويب التعيينات (`assignable_members`)،
+    // مسؤولةً عن مقعد «عضو لجنة» بعينه. فلا حَكَمَ ثانٍ يُنسَخ في هذه الشاشة.
+    me ? sb.rpc("assignable_members", { p_actor: me.id, p_role_name: "committee_member" }) : Promise.resolve({ data: null, error: null }),
+    // وأيملك المفتاحَ أصلًا؟ — `committee_member` ليس من `own_unit_roles` لأحد، فالجواب واحدٌ
+    // في كلّ اللجان ويُسأل مرّةً بلا نطاق (ومن قُيّد بوحدته غدًا سقط البند عنه، وهو الاتّجاه الآمن).
+    me ? sb.rpc("can_assign_role", { p_actor: me.id, p_role_name: "committee_member", p_committee: null }) : Promise.resolve({ data: false, error: null }),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error || certRes.error;
-  if (firstErr) return { members: [], warningLimit: 3, error: firstErr.message };
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error || certRes.error || endRes.error || moveRes.error || mayMoveRes.error;
+  if (firstErr) return { members: [], warningLimit: 3, moveTargets: [], error: firstErr.message };
 
   const reach = new Map(
     ((reachRes.data ?? []) as Array<{ user_id: string; may_end: boolean; may_edit: boolean }>)
@@ -129,11 +162,23 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       .map((r) => [r.user_id, r] as const),
   );
 
+  // من يجوز نقلُه (سلطةً) — ويبقى شرطُ الشاشة (أن يكون عضو لجنةٍ الآن) يُطبَّق مع كلّ صفّ.
+  const movable = new Set((moveRes.data ?? []) as string[]);
+  const mayMove = mayMoveRes.data === true;
+
   const certifiable = new Map(
     ((certRes.data ?? []) as Array<{
       user_id: string; suggested_name: string; position_title: string | null; issued_count: number;
     }>).map((r) => [r.user_id, r] as const),
   );
+
+  // فاعلُ الإنهاء لكلّ عضو — الأحدث يفوز (الترتيب تنازليّ): من أُعيدت عضويّته ثمّ أُنهيت له سطران.
+  const endedBy = new Map<string, { actor: string; at: string; auto: boolean }>();
+  for (const r of (endRes.data ?? []) as Array<{ user_id: string; target_id: string; details: { source?: string } | null; created_at: string }>) {
+    if (!endedBy.has(r.target_id)) endedBy.set(r.target_id, { actor: r.user_id, at: r.created_at, auto: r.details?.source === "warning_threshold" });
+  }
+  // واسمُه من القائمة نفسها لا باستعلامٍ ثانٍ: لا يُنهي إلّا ذو دورٍ حيّ (شرطُ `can_end_membership`)، فهو فيها.
+  const nameById = new Map((pRes.data ?? []).map((p) => [p.id as string, p.full_name as string]));
 
   const roleByName = new Map((rRes.data ?? []).map((r) => [r.role_name, r]));
   const deptById = new Map((dRes.data ?? []).map((d) => [d.id, d.name_ar as string]));
@@ -157,6 +202,11 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     const role = br ? roleByName.get(br.role_name) : undefined;
     const deptId = br?.department_id ?? (br?.committee_id != null ? committeeDept.get(br.committee_id) ?? null : null);
     const md = detailsByUser.get(p.id);
+    // فاعلُ **هذا** الإنهاء بعينه: `terminated_at` يُمحى عند الإعادة (تريغر `set_terminated_at`)، فبلا
+    // ختمٍ لا فاعل؛ وسطرٌ أقدمُ من الختم أثرُ إنهاءٍ سابقٍ أُعيد بعده، فلا يُنسَب إلى الجاري.
+    const ended = p.terminated_at ? endedBy.get(p.id) : undefined;
+    const endedNow = ended && new Date(ended.at) >= new Date(String(p.terminated_at)) ? ended : undefined;
+    const endByName = endedNow ? nameById.get(endedNow.actor) ?? null : null;
     return {
       id: p.id,
       name: p.full_name,
@@ -192,6 +242,9 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       endReason: p.termination_reason ?? null,
       endDate: fmtDateOnly(p.terminated_at ? String(p.terminated_at).slice(0, 10) : null),
       endAgo: agoPhrase(p.terminated_at ?? null),
+      // «بحدّ الإنذارات» تُقال مع الاسم لا بدلًا منه: صاحبُه أصدر الإنذار الثالث، والسحبُ بعده
+      // حكمُ اللائحة لا قرارُه — فنسبتُه إليه وحده تُحمّله ما لم يفعل.
+      endBy: endByName && endedNow?.auto ? `${endByName}، بحدّ الإنذارات` : endByName,
       canEnd: reach.get(p.id)?.may_end ?? false,
       canEdit: reach.get(p.id)?.may_edit ?? false,
       canWarn: warnable.has(p.id),
@@ -201,8 +254,17 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       certPosition: certifiable.get(p.id)?.position_title ?? null,
       certCount: certifiable.get(p.id)?.issued_count ?? 0,
       committeeId: br?.committee_id ?? null,
+      roleName: br?.role_name ?? null,
+      canMove: mayMove && br?.role_name === "committee_member" && movable.has(p.id),
     };
   });
 
-  return { members, warningLimit: typeof limitRes.data === "number" ? limitRes.data : 3, error: null };
+  // وجهاتُ النقل — كلّ لجنةٍ حيّةٍ تُصرّح بمقعد «عضو لجنة» (`seat_declared_by_unit` تفحصه
+  // في القاعدة). فالإدارتان الإداريّتان تسقطان: مقعدُ عضوهما دورٌ آخر يُسنَد من «إدارتي».
+  const moveTargets: MoveTarget[] = (cRes.data ?? [])
+    .filter((c) => c.member_role_name === "committee_member" && c.is_active !== false)
+    .map((c) => ({ id: c.id as number, name: (c.committee_name_ar as string) ?? `لجنة #${c.id}` }))
+    .sort((a, b) => a.name.localeCompare(b.name, "ar"));
+
+  return { members, warningLimit: typeof limitRes.data === "number" ? limitRes.data : 3, moveTargets, error: null };
 }

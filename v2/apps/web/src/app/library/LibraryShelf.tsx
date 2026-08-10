@@ -73,7 +73,7 @@ export function LibraryShelf({ books }: { books: ShelfBook[] }) {
             </div>
             <div className="p-4">
               <span className="mb-1 block font-body text-xs font-bold text-secondary">
-                {b.kindLabel}{b.yearLabel ? ` · ${b.yearLabel}` : ""}
+                {b.kindLabel}{b.yearLabel ? `، ${b.yearLabel}` : ""}
               </span>
               <h3 className="font-display text-base font-bold leading-snug text-content">{b.title}</h3>
             </div>

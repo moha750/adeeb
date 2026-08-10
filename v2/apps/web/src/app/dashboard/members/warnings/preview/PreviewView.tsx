@@ -82,7 +82,7 @@ export function PreviewView() {
       </div>
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
-        كلّ ورقةٍ أدناه مولَّدةٌ بالرسّام نفسه الذي يعمل عند الإصدار، على قالبك — والاسم والسبب عيّنةٌ متخيَّلة.
+        كلّ ورقةٍ أدناه مولَّدةٌ بالرسّام نفسه الذي يعمل عند الإصدار، على قالبك، والاسم والسبب عيّنةٌ متخيَّلة.
         ونصُّ الورقة هو نصّ رسالة واتساب حرفًا بحرف.
       </Alert>
 
@@ -103,12 +103,12 @@ export function PreviewView() {
               variant="soft"
               icon={<Warning />}
               title={c.label}
-              subtitle={ordinal >= 3 ? "بالغُ الحدّ — يُعلن سحب العضويّة" : `${warningTitle(ordinal)} — يقول ما بقي`}
+              subtitle={ordinal >= 3 ? "بالغُ الحدّ: يُعلن سحب العضويّة" : `${warningTitle(ordinal)}: يقول ما بقي`}
             />
             <CardBody>
               {images[c.value] ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مولَّدةٌ في المتصفّح (blob) لا أصلٌ ثابت
-                <img src={images[c.value]} alt={`خطاب إنذار — ${c.label}`} className="w-full h-auto rounded" />
+                <img src={images[c.value]} alt={`خطاب إنذار، ${c.label}`} className="w-full h-auto rounded" />
               ) : (
                 <p className="txt">يُولَّد…</p>
               )}

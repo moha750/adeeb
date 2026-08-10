@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Accordion, Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import { NotePencil, ShieldWarning, UserMinus, WarningOctagon } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { Eye, MagnifyingGlass, Prohibit, Warning, WhatsappLogo } from "@/app/_components/glyphs";
@@ -13,6 +13,7 @@ import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
 import { fmtDate, fmtDateOnly } from "@/lib/date";
+import { positionLine } from "@/lib/positionLabel";
 import { WARNING_CATEGORIES, categoryLabel, dots, remainingText, toneOf, warningTitle } from "@/lib/warnings/vocab";
 import { downloadWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage } from "@/lib/warnings/message";
@@ -81,6 +82,9 @@ export function WarningsView({ data }: { data: WarningsData }) {
       .sort((a, b) => b.active - a.active || (a.head.name < b.head.name ? -1 : 1));
   }, [filtered]);
 
+  // هل ثمّة تنقيةٌ قائمة؟ — تفتح أشرطةَ «حسب العضو» المغلقةَ أصلًا (انظر موضعَ استعمالها)
+  const filtering = search.trim() !== "" || Object.values(filters).some(Boolean);
+
   const pageKey = `${search}|${pageSize}|${mode}|${JSON.stringify(filters)}`;
   const [prevKey, setPrevKey] = useState(pageKey);
   if (prevKey !== pageKey) { setPrevKey(pageKey); setPage(1); }
@@ -125,7 +129,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
       if (!res.ok) { toast.error(res.message); return; }
       toast.success(
         res.offerRestore
-          ? "أُلغي الإنذار. وعضويّة صاحبه ما زالت منتهية — أعِدها من تبويب «أعضاء سابقون»."
+          ? "أُلغي الإنذار. وعضويّة صاحبه ما زالت منتهية، أعِدها من تبويب «أعضاء سابقون»."
           : res.message,
       );
       setCancelling(null);
@@ -150,7 +154,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
         <Avatar name={r.name} src={r.avatar ?? undefined} gender={r.gender} size="sm" />
         <span className="dt-mm">
           <b>{r.name}</b>
-          <span>{[r.roleAr, r.committee].filter(Boolean).join(" — ") || "بلا موقع"}</span>
+          <span>{positionLine(r.roleAr, r.committee) ?? "بلا موقع"}</span>
         </span>
       </div>
     ),
@@ -212,7 +216,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
     <EmptyState
       variant="aurora"
       icon={<ShieldWarning />}
-      title="لا إنذارات — والحمد لله"
+      title="لا إنذارات، والحمد لله"
       description={mayIssue
         ? "لم يصدر إنذارٌ على أحدٍ في نطاقك بعد. وحين يلزم، يُصدَر من هنا فيُسجَّل ويُبلَّغ صاحبه."
         : "لم يصدر إنذارٌ بعد في نطاق اطّلاعك."}
@@ -271,20 +275,24 @@ export function WarningsView({ data }: { data: WarningsData }) {
       {filtered.length === 0 ? (
         <DataTable columns={columns(true)} rows={[]} getRowId={(r) => r.id} emptyState={emptyState} />
       ) : mode === "members" ? (
-        <Accordion
-          exclusive={false}
-          items={groups.map((g) => ({
-            q: `${g.head.name} · ${dots(g.active, limit)} · ${remainingText(g.active, limit)}`,
-            a: (
-              <DataTable
-                columns={columns(false)}
-                rows={g.list}
-                getRowId={(r) => r.id}
-                rowActions={rowActions}
-                rowTone={(r) => (r.status === "cancelled" ? "neutral" : toneOf(r.ordinal ?? 1, limit))}
-              />
-            ),
+        /* جدولٌ واحدٌ مجمَّع: اسمُ العضو شريطٌ يشقّ الشبكة، ونغمتُه حالُه من الحدّ — فيُقرأ
+           «مَن بلغ» بلمحةٍ قبل القراءة. كان أكورديونًا يلفّ جدولًا، أي إطارًا داخل إطار.
+           والأشرطةُ **مغلقةٌ** (قرار المالك): الشاشةُ تُقرأ «مَن عليه كم» لا «ما الإنذارات»،
+           فالأسماءُ ونقاطُها هي المتن، والتفصيلُ يُطلَب بنقرة. **إلّا عند بحثٍ أو ترشيح فتُفتح**،
+           فالباحثُ يطلب نتيجةً لا تصنيفًا، وشريطٌ مغلقٌ فوق نتيجته يجعل البحثَ يبدو معطوبًا. */
+        <DataTable
+          columns={columns(false)}
+          groups={groups.map((g) => ({
+            key: g.head.userId,
+            label: g.head.name,
+            hint: `${dots(g.active, limit)}، ${remainingText(g.active, limit)}`,
+            tone: g.active === 0 ? "neutral" : toneOf(g.active, limit),
+            defaultOpen: filtering,
+            rows: g.list,
           }))}
+          getRowId={(r) => r.id}
+          rowActions={rowActions}
+          rowTone={(r) => (r.status === "cancelled" ? "neutral" : toneOf(r.ordinal ?? 1, limit))}
         />
       ) : (
         <DataTable
@@ -306,8 +314,8 @@ export function WarningsView({ data }: { data: WarningsData }) {
         onClose={() => setDetail(null)}
         size="md"
         className={detail?.status === "cancelled" ? undefined : "mdl-tone-warning"}
-        title={detail ? `${warningTitle(detail.ordinal ?? 1)} — ${detail.name}` : ""}
-        description={detail ? `${categoryLabel(detail.category)} · ${fmtDate(detail.createdAt)}${detail.issuer ? ` · أصدره ${detail.issuer}` : ""}` : undefined}
+        title={detail ? `${warningTitle(detail.ordinal ?? 1)}: ${detail.name}` : ""}
+        description={detail ? `${categoryLabel(detail.category)}، ${fmtDate(detail.createdAt)}${detail.issuer ? `، أصدره ${detail.issuer}` : ""}` : undefined}
         footer={<Button variant="ghost" size="md" onClick={() => setDetail(null)}>إغلاق</Button>}
       >
         {detail ? (
@@ -324,7 +332,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
               </Alert>
             ) : null}
             {detail.status === "cancelled" ? (
-              <Alert tone="neutral" title={`أُلغي${detail.canceller ? ` بقرار ${detail.canceller}` : ""}${detail.cancelledAt ? ` — ${fmtDate(detail.cancelledAt)}` : ""}`}>
+              <Alert tone="neutral" title={`أُلغي${detail.canceller ? ` بقرار ${detail.canceller}` : ""}${detail.cancelledAt ? `، ${fmtDate(detail.cancelledAt)}` : ""}`}>
                 {detail.cancelReason ?? "بلا سبب مكتوب."}
               </Alert>
             ) : null}
@@ -339,7 +347,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
         size="sm"
         busy={pending}
         className="mdl-tone-danger"
-        title={cancelling ? `إلغاء ${warningTitle(cancelling.ordinal ?? 1)} — ${cancelling.name}` : ""}
+        title={cancelling ? `إلغاء ${warningTitle(cancelling.ordinal ?? 1)}: ${cancelling.name}` : ""}
         description="الملغى يبقى في السجلّ مشطوبًا، ويخرج من العدّ فتُعاد رتبةُ ما بعده."
         footer={
           <>
@@ -352,7 +360,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
       >
         {cancelling?.causedTermination ? (
           <Alert tone="warning" title="هذا الإنذار سحب العضويّة">
-            إلغاؤه لا يُعيدها تلقائيًّا — تُعاد بقرارٍ من تبويب «أعضاء سابقون».
+            إلغاؤه لا يُعيدها تلقائيًّا، تُعاد بقرارٍ من تبويب «أعضاء سابقون».
           </Alert>
         ) : null}
         <Textarea
@@ -364,7 +372,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
           onChange={(e) => setCancelReason(e.target.value)}
           rows={3}
           required
-          helper="خمسة أحرف فأكثر — يبقى في السجلّ."
+          helper="خمسة أحرف فأكثر، يبقى في السجلّ."
         />
       </Modal>
 

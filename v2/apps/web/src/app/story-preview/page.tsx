@@ -20,12 +20,12 @@ export default function StoryPreviewPage() {
       <main>
         <section className="py-20 text-center md:py-28">
           <Container>
-            <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">ADEEB CLUB · KFU</p>
+            <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">ADEEB CLUB, KFU</p>
             <h1 className="mx-auto max-w-3xl font-display text-5xl font-black leading-tight text-content md:text-6xl">
               حيثُ تُولَدُ الكلمة
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-content-muted">
-              محتوى بديل للمعاينة — هنا يبدأ الموقع الطبيعي بعد انتهاء القصة.
+              محتوى بديل للمعاينة: هنا يبدأ الموقع الطبيعي بعد انتهاء القصة.
             </p>
           </Container>
         </section>

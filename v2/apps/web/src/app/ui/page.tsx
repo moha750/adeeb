@@ -15,8 +15,8 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
     pages: [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
       ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["loading", "شاشة التحميل"], ["empty", "الحالة الفارغة"],
-      ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
-      ["membership", "بطاقة العضويّة"], ["auth", "شاشة المصادقة"],
+      ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["medal", "الوسام"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
+      ["membership", "بطاقة العضويّة"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"],
     ],
   },
   {
@@ -25,7 +25,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "البيانات",
-    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["structure", "شجرة الهيكلة"]],
+    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["charts/compare", "المخطّطات: الحالي مقابل المقترح"], ["structure", "شجرة الهيكلة"]],
   },
 ];
 
@@ -34,9 +34,9 @@ export default function UIKitPage() {
     <main className="py-16">
       <Container className="max-w-4xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System</p>
-        <h1 className="mt-1 font-display text-4xl font-black text-content">نظام تصميم أديب — المكوّنات</h1>
+        <h1 className="mt-1 font-display text-4xl font-black text-content">نظام تصميم أديب: المكوّنات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          منزل التصميم الواحد: كل مكوّن في صفحته الحيّة — المكوّن الحقيقيّ نفسه، تفاعليّ، وما تراه هو ما يُشحَن. اختر مكوّنًا:
+          منزل التصميم الواحد: كل مكوّن في صفحته الحيّة: المكوّن الحقيقيّ نفسه، تفاعليّ، وما تراه هو ما يُشحَن. اختر مكوّنًا:
         </p>
 
         <div className="mt-12 space-y-12">

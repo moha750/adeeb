@@ -28,18 +28,18 @@ export default function CarouselNavPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · CarouselNav
+          Design System, CarouselNav
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">أسهم التنقّل</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          زوجُ سهمَين يقودان عارضًا — لا زرٌّ مفرد: الاتّجاه والتسمية وترتيب الزوج كلّها من المكوّن، فلا يقرّرها كلّ
-          مستعمِل. <strong>موضعه وسط الشاشة دائمًا</strong> (القاعدة ١١) — لا خيار محاذاة يُمرَّر. يستعمله اليوم كاروسيل
+          زوجُ سهمَين يقودان عارضًا، لا زرٌّ مفرد: الاتّجاه والتسمية وترتيب الزوج كلّها من المكوّن، فلا يقرّرها كلّ
+          مستعمِل. <strong>موضعه وسط الشاشة دائمًا</strong> (القاعدة ١١)، لا خيار محاذاة يُمرَّر. يستعمله اليوم كاروسيل
           أهل الدفّة وكاروسيل الفعاليات و<code className="font-latin">Carousel</code> المكتبة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="الافتراضيّ">
-            <Lab>عارضٌ دائريّ — لا حافّة ولا تعطيل</Lab>
+            <Lab>عارضٌ دائريّ: لا حافّة ولا تعطيل</Lab>
             <div className="rounded border border-line bg-surface p-8">
               <p className="mb-6 text-center font-display text-xl font-bold text-content">
                 الشريحة {SLIDES[i]}
@@ -51,8 +51,8 @@ export default function CarouselNavPage() {
             </div>
           </Sec>
 
-          <Sec title="عند الحافّة — عارضٌ لا يدور">
-            <Lab>prevDisabled / nextDisabled · «غير متاح» طبقةٌ رماديّة بلا ظلّ (ق٧)</Lab>
+          <Sec title="عند الحافّة: عارضٌ لا يدور">
+            <Lab>prevDisabled / nextDisabled، «غير متاح» طبقةٌ رماديّة بلا ظلّ (ق٧)</Lab>
             <div className="rounded border border-line bg-surface p-8">
               <p className="mb-6 text-center font-display text-xl font-bold text-content">
                 الشريحة {SLIDES[j]}{" "}
@@ -68,7 +68,7 @@ export default function CarouselNavPage() {
           </Sec>
 
           <Sec title="التباعد عن العارض">
-            <Lab>className = &quot;mt-*&quot; وحدها — تباعدٌ لا محاذاة</Lab>
+            <Lab>className = &quot;mt-*&quot; وحدها: تباعدٌ لا محاذاة</Lab>
             <div className="rounded border border-line bg-surface p-8">
               <div className="grid h-24 place-items-center rounded border border-dashed border-line text-content-muted">
                 العارض
@@ -89,12 +89,12 @@ export default function CarouselNavPage() {
                 <tbody className="text-content">
                   {[
                     ["الموضع", "وسط الشاشة دائمًا (ق١١)"],
-                    ["الزاوية", "var(--radius) — زاويةُ الأساس لا دائرة (ق٢)"],
-                    ["الحدّ", "--card-stroke-w · --card-stroke (ق٤)"],
-                    ["الظلّ", "sm ساكنًا · md عند المرور (ق٥)"],
+                    ["الزاوية", "var(--radius)، زاويةُ الأساس لا دائرة (ق٢)"],
+                    ["الحدّ", "--card-stroke-w، --card-stroke (ق٤)"],
+                    ["الظلّ", "sm ساكنًا، md عند المرور (ق٥)"],
                     ["التركيز", "outline فولاذيّ كسائر أزرار الهوية"],
-                    ["السهم", "SVG بمقاسٍ ثابت — «السابق» يمينًا و«التالي» يسارًا"],
-                    ["المقاس", "44px — هدفُ لمسٍ في صفحةٍ عامّة"],
+                    ["السهم", "SVG بمقاسٍ ثابت، «السابق» يمينًا و«التالي» يسارًا"],
+                    ["المقاس", "44px، هدفُ لمسٍ في صفحةٍ عامّة"],
                   ].map(([k, v]) => (
                     <tr key={k} className="border-b border-line/60 align-top">
                       <td className="p-3 font-bold">{k}</td>

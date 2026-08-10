@@ -43,6 +43,11 @@ export type CommitteeNode = {
   kind: "operational" | "admin";
   desc: string | null;
   link: string | null;
+  /** اسم مقعد القيادة كما تُصرّح به الوحدة (`leader_role_name`) — **يُقال شاغرًا كان أو مشغولًا**:
+   *  «قائد اللجنة» اسمُ مقعدٍ لا وصفُ شخص، ومن لا يعرف الألقاب لا يتعلّمها من الأسماء وحدها. */
+  leaderRoleAr: string;
+  /** أمنتخَبٌ مقعدُها أم معيَّن (`roles.is_elected`) — تُقرأ منه لغةُ الشاغر: «لم يُنتخب» أو «لم يُعيَّن». */
+  leaderElected: boolean;
   leader: Holder | null;
   deputy: Holder | null;
   // لكلّ لجنة مشرفان مستقلّان — واحد من كلّ إدارة. يفرضه فهرس المقعد في
@@ -59,6 +64,9 @@ export type DepartmentNode = {
   name: string;
   desc: string | null;
   link: string | null;
+  /** اسم مقعد التنسيق وحالُه — كنظيرَيه في اللجنة (المقعد يُسمّى ولو خلا). */
+  headRoleAr: string;
+  headElected: boolean;
   head: Holder | null;
   committees: CommitteeNode[];
   total: number;
@@ -72,6 +80,7 @@ export type CouncilSeat = {
   roleName: string;
   roleAr: string;
   isHead: boolean;
+  isElected: boolean;
   voteWeight: number;
   holders: Holder[];
 };
@@ -165,6 +174,7 @@ export function committeeNodes(
 ): Map<number, CommitteeNode> {
   const holders = buildHolders(roles, committees, userRoles, profiles);
   const titleOf = roleTitler(roles, committees);
+  const roleByName = new Map(roles.map((r) => [r.role_name, r]));
   const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
 
   // مقاعد الإشراف: (اللجنة + دورُ عضو الإدارة المُشرِفة) ← مشرفُها. الدور يُقرأ من
@@ -211,6 +221,8 @@ export function committeeNodes(
       kind: c.council_id === "administrative" ? "admin" : "operational",
       desc: c.description ?? null,
       link: c.group_link ?? null,
+      leaderRoleAr: titleOf(c.leader_role_name),
+      leaderElected: !!roleByName.get(c.leader_role_name)?.is_elected,
       leader,
       deputy,
       hrOverseer,
@@ -251,6 +263,7 @@ export function buildStructure(
         roleName: r.role_name,
         roleAr: titleOf(r.role_name),
         isHead: r.role_name === c?.head_role_name,
+        isElected: !!r.is_elected,
         voteWeight: r.vote_weight,
         holders: byRole(r.role_name),
       }));
@@ -288,6 +301,8 @@ export function buildStructure(
       name: d.name_ar ?? `قسم #${d.id}`,
       desc: d.description ?? null,
       link: d.group_link ?? null,
+      headRoleAr: titleOf(R.deptHead),
+      headElected: !!roleByName.get(R.deptHead)?.is_elected,
       head,
       committees: comNodes,
       total: comNodes.reduce((s, c) => s + c.total, 0),

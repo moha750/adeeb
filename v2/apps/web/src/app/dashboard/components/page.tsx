@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { Eye, PencilSimple, Trash } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
+import { positionLine } from "@/lib/positionLabel";
 import { DataTable, type Column } from "../_components/DataTable";
 import { DropdownMenu, type MenuGroup } from "../_components/DropdownMenu";
 import { EmptyState } from "../_components/EmptyState";
@@ -36,12 +37,12 @@ const Ic = {
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
-const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", canEnd: true, canEdit: true, canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null };
+const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true, canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null, roleName: "committee_member", canMove: true };
 const sampleMembers: MemberRow[] = [
   { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
   { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
   { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, gender: "female", dept: "الموارد", committee: null, role: "عضو", status: "inactive", joined: "27 يونيو 2026", ...noDetails },
-  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر" },
+  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر", endBy: "بشائر فاروق الحداد" },
 ];
 
 const TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
@@ -55,7 +56,7 @@ const tableCols: Column<MemberRow>[] = [
     render: (m) => (
       <div className="dt-mem">
         <Avatar name={m.name} size="sm" />
-        <span className="dt-mm"><b>{m.name}</b><span>{[m.role, m.committee].filter(Boolean).join(" ") || "غير متوفّر"}</span></span>
+        <span className="dt-mm"><b>{m.name}</b><span>{positionLine(m.role, m.committee) ?? "غير متوفّر"}</span></span>
       </div>
     ),
   },
@@ -233,7 +234,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 4 · الاختيار — المتحرّك */}
-        <Sec id="choice" n={4} title="الاختيار ✦" subtitle="مربّع اختيار وراديو ومفتاح — بحركة الرسم + الارتداد المتّفق عليها. هذه هي الحركة نفسها في checkbox الجدول.">
+        <Sec id="choice" n={4} title="الاختيار ✦" subtitle="مربّع اختيار وراديو ومفتاح، بحركة الرسم + الارتداد المتّفق عليها. هذه هي الحركة نفسها في checkbox الجدول.">
           <div className="gal-block">
             <Lbl>مربّع الاختيار (رسم ✓ + ارتداد)</Lbl>
             <div className="gal-row" style={{ gap: 24 }}>
@@ -312,7 +313,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 7 · البطاقات */}
-        <Sec id="card" n={7} title="البطاقات" subtitle="بطاقة قابلة للتركيب — رأس/جسم/تذييل وأنماط وحركة مرور.">
+        <Sec id="card" n={7} title="البطاقات" subtitle="بطاقة قابلة للتركيب: رأس/جسم/تذييل وأنماط وحركة مرور.">
           <div className="gal-cards">
             <Card>
               <CardHeader icon={<span style={{ width: 20, height: 20, display: "inline-flex" }}>{Ic.users}</span>} title="الأعضاء" subtitle="إجمالي المسجّلين" />
@@ -327,7 +328,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 8 · التبويبات */}
-        <Sec id="tabs" n={8} title="التبويبات" subtitle="ثلاثة أنماط: سطر سفليّ، حبوب، مقسّم — مع شارات عدّ.">
+        <Sec id="tabs" n={8} title="التبويبات" subtitle="ثلاثة أنماط: سطر سفليّ، حبوب، مقسّم، مع شارات عدّ.">
           <div className="gal-block"><Lbl>سطر سفليّ (underline)</Lbl><Tabs variant="underline" items={tabItems} value={tabU} onValueChange={setTabU} /></div>
           <div className="gal-block"><Lbl>حبوب (pill)</Lbl><Tabs variant="pill" items={tabItems} value={tabP} onValueChange={setTabP} /></div>
           <div className="gal-block"><Lbl>مقسّم (segmented)</Lbl><Tabs variant="segmented" items={tabItems.slice(0, 3)} value={tabS} onValueChange={setTabS} /></div>
@@ -346,7 +347,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 10 · الهياكل */}
-        <Sec id="skel" n={10} title="الهياكل" subtitle="لبنات تحميل بلمعان منزلق — تُشكَّل بالأبعاد.">
+        <Sec id="skel" n={10} title="الهياكل" subtitle="لبنات تحميل بلمعان منزلق، تُشكَّل بالأبعاد.">
           <div className="gal-block gal-col" style={{ maxWidth: 420 }}>
             <div className="gal-row" style={{ gap: 12 }}>
               <Skeleton width={54} height={54} radius={15} />
@@ -362,7 +363,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 11 · المنبثقات */}
-        <Sec id="toast" n={11} title="التنبيهات المنبثقة" subtitle="أربع نغمات بشريط تقدّم — اضغط لتجربتها.">
+        <Sec id="toast" n={11} title="التنبيهات المنبثقة" subtitle="أربع نغمات بشريط تقدّم. اضغط لتجربتها.">
           <div className="gal-row">
             <Button variant="primary" onClick={() => toast.success("تمّ الحفظ بنجاح.")}>نجاح</Button>
             <Button variant="danger" onClick={() => toast.error("حدث خطأ ما.")}>خطأ</Button>
@@ -372,7 +373,7 @@ export default function ComponentsGallery() {
         </Sec>
 
         {/* 12 · القائمة المنسدلة */}
-        <Sec id="menu" n={12} title="القائمة المنسدلة" subtitle="قائمة إجراءات بمجموعات ومنطقة خطر — تُعرض في طبقة عائمة.">
+        <Sec id="menu" n={12} title="القائمة المنسدلة" subtitle="قائمة إجراءات بمجموعات ومنطقة خطر، تُعرض في طبقة عائمة.">
           <div className="gal-row">
             <DropdownMenu
               triggerClassName="dt-dots"
@@ -444,7 +445,7 @@ export default function ComponentsGallery() {
             ]}
           />
           <p style={{ fontSize: 12.5, color: "var(--color-text-muted)", marginTop: 10 }}>
-            ✦ جرّب تحديد صفّ أو «تحديد الكل» — لاحظ رسم علامة الصحّ وارتدادها، ونفس الحركة في القسم الرابع.
+            ✦ جرّب تحديد صفّ أو «تحديد الكل». لاحظ رسم علامة الصحّ وارتدادها، ونفس الحركة في القسم الرابع.
           </p>
         </Sec>
 

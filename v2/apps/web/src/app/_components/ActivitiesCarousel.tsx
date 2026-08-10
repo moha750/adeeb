@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Badge, CarouselNav } from "@adeeb/design-system";
+import { Badge, CarouselNav, useInView } from "@adeeb/design-system";
 import { Clock, MapPin } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
 
@@ -22,6 +22,12 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
   const peekRef = useRef<HTMLDivElement>(null);
   const cool = useRef(false); // توقّف مؤقّت للتلقائي بعد تفاعل يدويّ
   const coolT = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // لا يزحف الشريطُ إلّا والقسمُ في الشاشة: يُقرأ داخل المؤقّت عبر مرآةٍ ثابتة كي لا
+  // يُعاد بناءُ المستمعين والتوسيط كلّما دخل القسمُ أو خرج.
+  const inView = useInView(peekRef);
+  const inViewRef = useRef(false);
+  useEffect(() => { inViewRef.current = inView; }, [inView]);
 
   const stepOf = () => {
     const c = peekRef.current?.querySelector<HTMLElement>(".act-card");
@@ -64,7 +70,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
     let id: ReturnType<typeof setInterval> | null = null;
     if (!reduce && loop) {
       id = setInterval(() => {
-        if (hover || cool.current) return;
+        if (hover || cool.current || !inViewRef.current) return;
         peek.scrollBy({ left: -stepOf(), behavior: "smooth" });
       }, 4500);
     }

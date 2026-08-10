@@ -134,7 +134,7 @@ export function NewsEditorView({
   const onGallery = async (list: FileList | null) => {
     if (!list?.length) return;
     const files = Array.from(list).filter((x) => /^image\/(webp|jpe?g|png)$/.test(x.type));
-    if (!files.length) { toast.error("اختر صورًا (WEBP · JPG · PNG)."); return; }
+    if (!files.length) { toast.error("اختر صورًا (WEBP، JPG، PNG)."); return; }
     setUploading((u) => u + files.length);
     let done = 0;
     // تسلسلًا لا توازيًا: المصفوفتان (صورٌ ومصوّرون) تُقرآن وتُكتبان معًا، والتوازي يفقد صفًّا.
@@ -235,7 +235,7 @@ export function NewsEditorView({
               <Button
                 variant="primary" size="md" loading={pending}
                 onClick={() => gaps.length
-                  ? toast.error(`لا يُنشَر خبرٌ ناقص — ينقصه ${gaps.join("، ")}.`)
+                  ? toast.error(`لا يُنشَر خبرٌ ناقص: ينقصه ${gaps.join("، ")}.`)
                   : run(() => setNewsStatus(row.id, "publish"))}
               >
                 {gaps.length ? <WarningCircle size={18} /> : <Megaphone size={18} />}
@@ -273,12 +273,12 @@ export function NewsEditorView({
             <Field className="form-full" label="المعرّف (رابط الخبر)" icon={<LinkSimple />} innerIcon={<Hash />}
               placeholder="news-…"
               value={f.slug} onChange={(e) => edit({ slug: e.target.value })}
-              helper="يظهر في رابط الخبر العامّ — لا يُغيَّر بعد النشر (روابطه منشورةٌ في الخارج)." />
+              helper="يظهر في رابط الخبر العامّ، لا يُغيَّر بعد النشر (روابطه منشورةٌ في الخارج)." />
           ) : null}
 
           {may("summary") ? (
             <Textarea className="form-full" label="الملخّص" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-              rows={2} placeholder="سطران يُغريان بالقراءة — يظهران في بطاقة الخبر."
+              rows={2} placeholder="سطران يُغريان بالقراءة، يظهران في بطاقة الخبر."
               value={f.summary} onChange={(e) => edit({ summary: e.target.value })}
               helper="مطلوبٌ قبل النشر." />
           ) : <ReadOnly label="الملخّص" value={row.summary ?? "—"} />}
@@ -287,14 +287,14 @@ export function NewsEditorView({
             <Textarea className="form-full" label="المتن" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
               rows={16} placeholder="نصّ الخبر…"
               value={f.content} onChange={(e) => edit({ content: e.target.value })}
-              helper={`${wordCount(f.content)} كلمة · نحو ${readingMinutes(f.content)} دقيقة قراءة`} />
+              helper={`${wordCount(f.content)} كلمة، نحو ${readingMinutes(f.content)} دقيقة قراءة`} />
           ) : <ReadOnly label="المتن" value={row.content ?? "—"} multiline />}
 
           {may("authors") ? (
             <Field className="form-full" label="الكتّاب" icon={<Users />} innerIcon={<PencilSimple />}
               placeholder="الحَوراء أحمد الملبو، نوره عامر الدوسري"
               value={f.authors} onChange={(e) => edit({ authors: e.target.value })}
-              helper="افصل بينهم بفاصلة — أوّلهم هو الكاتب المعروض في البطاقة." />
+              helper="افصل بينهم بفاصلة، أوّلهم هو الكاتب المعروض في البطاقة." />
           ) : <ReadOnly label="الكتّاب" value={row.authors.join("، ") || "—"} />}
 
           {may("category") ? (
@@ -345,11 +345,11 @@ export function NewsEditorView({
               </div>
             ) : may("image_url") ? (
               <EmptyState variant="soft" icon={<ImageIcon />} title="بلا غلاف"
-                description="الغلاف مطلوبٌ قبل النشر — يظهر في بطاقة الخبر وفي الصفحة الرئيسية."
+                description="الغلاف مطلوبٌ قبل النشر، يظهر في بطاقة الخبر وفي الصفحة الرئيسية."
                 action={<Button variant="primary" size="md" onClick={() => coverInput.current?.click()} loading={uploading > 0}>
                   <UploadSimple size={18} />رفع الغلاف
                 </Button>} />
-            ) : <p className="text-content-muted">لا غلاف — ولم تُكلَّف برفعه.</p>}
+            ) : <p className="text-content-muted">لا غلاف، ولم تُكلَّف برفعه.</p>}
             <input ref={coverInput} type="file" accept="image/webp,image/jpeg,image/png" hidden
               onChange={(e) => { onCover(e.target.files); e.target.value = ""; }} />
           </section>
@@ -402,7 +402,7 @@ export function NewsEditorView({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b>{a.writerName}</b>
                     <div className="text-content-muted" style={{ fontSize: ".85em" }}>
-                      {a.fields.map((x) => FIELD_META[x as FieldKey]?.label ?? x).join(" · ") || "بلا حقول"}
+                      {a.fields.map((x) => FIELD_META[x as FieldKey]?.label ?? x).join("، ") || "بلا حقول"}
                     </div>
                     {a.notes ? <div style={{ fontSize: ".85em", marginTop: 4 }}>{a.notes}</div> : null}
                   </div>
@@ -412,7 +412,7 @@ export function NewsEditorView({
             </div>
           ) : (
             <EmptyState variant="soft" icon={<UsersThree />} title="بلا طاقم"
-              description="كلّف كاتبًا — يُفتح له الخبر في غرفته، ويحرّر ما أسندتَه إليه وحده." />
+              description="كلّف كاتبًا: يُفتح له الخبر في غرفته، ويحرّر ما أسندتَه إليه وحده." />
           )}
         </div>
       ) : null}
@@ -422,7 +422,7 @@ export function NewsEditorView({
         <div style={{ display: "grid", gap: 14 }}>
           <div style={{ display: "grid", gap: 8 }}>
             <Textarea label="تعليق داخليّ" icon={<ChatCircleDots />} innerIcon={<PencilSimple />} rows={3}
-              placeholder="ملاحظةٌ للطاقم — لا يراها الجمهور."
+              placeholder="ملاحظةٌ للطاقم، لا يراها الجمهور."
               value={comment} onChange={(e) => setComment(e.target.value)} />
             <div>
               <Button variant="primary" size="md" loading={pending} disabled={!comment.trim()}
@@ -456,7 +456,7 @@ export function NewsEditorView({
             </div>
           ) : (
             <EmptyState variant="soft" icon={<ChatCircleDots />} title="لا تعليقات"
-              description="غرفةٌ هادئة — اكتب أوّل ملاحظةٍ للطاقم." />
+              description="غرفةٌ هادئة. اكتب أوّل ملاحظةٍ للطاقم." />
           )}
         </div>
       ) : null}
@@ -539,41 +539,39 @@ export function NewsEditorView({
           </>
         }
       >
-        <div style={{ display: "grid", gap: 16 }}>
-          <div>
-            <label className="fld-label" style={{ display: "block", marginBottom: 8 }}>الكتّاب</label>
-            <div style={{ maxHeight: 220, overflowY: "auto", display: "grid", gap: 6 }}>
-              {members.map((m) => (
-                <Checkbox key={m.value} checked={aWriters.includes(m.value)}
-                  onChange={(e) => setAWriters((prev) => e.target.checked
-                    ? [...prev, m.value]
-                    : prev.filter((x) => x !== m.value))}>
-                  {m.label}
-                </Checkbox>
-              ))}
-            </div>
+        <div>
+          <label className="fld-label" style={{ display: "block", marginBottom: 8 }}>الكتّاب</label>
+          <div style={{ maxHeight: 220, overflowY: "auto", display: "grid", gap: 6 }}>
+            {members.map((m) => (
+              <Checkbox key={m.value} checked={aWriters.includes(m.value)}
+                onChange={(e) => setAWriters((prev) => e.target.checked
+                  ? [...prev, m.value]
+                  : prev.filter((x) => x !== m.value))}>
+                {m.label}
+              </Checkbox>
+            ))}
           </div>
-
-          <div>
-            <label className="fld-label" style={{ display: "block", marginBottom: 8 }}>
-              الحقول التي يملكها الكاتب
-            </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 6 }}>
-              {FIELD_VALUES.map((k) => (
-                <Checkbox key={k} checked={aFields.includes(k)}
-                  onChange={(e) => setAFields((prev) => e.target.checked
-                    ? [...prev, k]
-                    : prev.filter((x) => x !== k))}>
-                  {FIELD_META[k].label}
-                </Checkbox>
-              ))}
-            </div>
-          </div>
-
-          <Textarea label="ملاحظة التكليف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />} rows={3}
-            placeholder="ما المطلوب من الكاتب تحديدًا…"
-            value={aNotes} onChange={(e) => setANotes(e.target.value)} optional />
         </div>
+
+        <div>
+          <label className="fld-label" style={{ display: "block", marginBottom: 8 }}>
+            الحقول التي يملكها الكاتب
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 6 }}>
+            {FIELD_VALUES.map((k) => (
+              <Checkbox key={k} checked={aFields.includes(k)}
+                onChange={(e) => setAFields((prev) => e.target.checked
+                  ? [...prev, k]
+                  : prev.filter((x) => x !== k))}>
+                {FIELD_META[k].label}
+              </Checkbox>
+            ))}
+          </div>
+        </div>
+
+        <Textarea label="ملاحظة التكليف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />} rows={3}
+          placeholder="ما المطلوب من الكاتب تحديدًا…"
+          value={aNotes} onChange={(e) => setANotes(e.target.value)} optional />
       </Modal>
 
       {/* ── نافذة الإعادة ── */}
@@ -581,7 +579,7 @@ export function NewsEditorView({
         open={returnOpen}
         onClose={() => setReturnOpen(false)}
         title="إعادة إلى الكاتب"
-        description="الملاحظة شرطٌ لا خيار — الإعادة بلا سببٍ لا تُفيد الكاتب."
+        description="الملاحظة شرطٌ لا خيار: الإعادة بلا سببٍ لا تُفيد الكاتب."
         busy={pending}
         size="md"
         footer={

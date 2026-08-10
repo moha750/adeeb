@@ -108,22 +108,27 @@ export async function getShows(): Promise<{ shows: ShowRow[]; error: string | nu
 
 /* ══ محرّر البرنامج: رأسه وحلقاته ومنصّاته ═══════════════════════════ */
 
+/** نسخةٌ صوتيّةٌ مرفوعة. `null` يعني: لم تُرفع بعد. */
+export type AudioTake = { seconds: number; bytes: number };
+
 export type EpisodeRow = {
   id: string;
-  season: number;
   number: number;
   title: string;
   slug: string;
   summary: string | null;
   status: EpisodeStatus;
-  durationSeconds: number | null;
-  audioBytes: number | null;
-  hasAudio: boolean;
+  music: AudioTake | null;
+  plain: AudioTake | null;
+  /** الإزاحة **بعد** حلّ الوراثة: تجاوزُ الحلقة إن وُجد، وإلّا رقمُ المحطّة. */
+  leadSeconds: number;
+  /** أهي مكتوبةٌ في الحلقة نفسها؟ يميّز الموروثَ من المُعلَن في الواجهة. */
+  leadOverridden: boolean;
+  youtubeUrl: string | null;
   hostName: string;
   publishAt: string | null;
   publishedAt: string | null;
   plays: number;
-  downloads: number;
 };
 
 export type PlatformRow = { id: string; platform: Platform; url: string };
@@ -132,6 +137,8 @@ export type ShowEditor = {
   show: ShowRow;
   episodes: EpisodeRow[];
   platforms: PlatformRow[];
+  /** إزاحةُ المحطّة الموروثة — تُعرض في نموذج الحلقة نائبةً عن الفارغ. */
+  stationLead: number;
 };
 
 export async function getShowEditor(id: string): Promise<{ data: ShowEditor | null; error: string | null }> {
@@ -143,15 +150,17 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
   const show = shows.find((s) => s.id === id);
   if (!show) return { data: null, error: null };
 
-  const [eRes, pRes] = await Promise.all([
+  const [eRes, pRes, stRes] = await Promise.all([
     sb.from("radio_episodes")
-      .select("id, season, number, title, slug, summary, status, duration_seconds, audio_bytes, audio_path, host_member_id, publish_at, published_at, plays, downloads")
+      .select("id, number, title, slug, summary, status, audio_music_path, audio_music_bytes, audio_music_seconds, audio_plain_path, audio_plain_bytes, audio_plain_seconds, music_lead_seconds, youtube_url, host_member_id, publish_at, published_at, plays")
       .eq("show_id", id)
-      .order("season", { ascending: false })
       .order("number", { ascending: false }),
     sb.from("radio_show_platforms").select("id, platform, url").eq("show_id", id).order("order", { ascending: true }),
+    sb.from("radio_station").select("music_lead_seconds").eq("id", 1).maybeSingle(),
   ]);
   if (eRes.error) return { data: null, error: eRes.error.message };
+
+  const stationLead = Number(stRes.data?.music_lead_seconds ?? 0);
 
   const hostIds = [...new Set((eRes.data ?? []).map((e) => e.host_member_id).filter(Boolean))];
   const { data: hosts } = hostIds.length
@@ -161,83 +170,29 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
 
   const episodes: EpisodeRow[] = (eRes.data ?? []).map((e) => ({
     id: e.id,
-    season: e.season,
     number: e.number,
     title: e.title,
     slug: e.slug,
     summary: e.summary ?? null,
     status: e.status as EpisodeStatus,
-    durationSeconds: e.duration_seconds ?? null,
-    audioBytes: e.audio_bytes ?? null,
-    hasAudio: Boolean(e.audio_path),
+    music: e.audio_music_path && e.audio_music_seconds && e.audio_music_bytes
+      ? { seconds: e.audio_music_seconds, bytes: Number(e.audio_music_bytes) } : null,
+    plain: e.audio_plain_path && e.audio_plain_seconds && e.audio_plain_bytes
+      ? { seconds: e.audio_plain_seconds, bytes: Number(e.audio_plain_bytes) } : null,
+    leadSeconds: e.music_lead_seconds === null ? stationLead : Number(e.music_lead_seconds),
+    leadOverridden: e.music_lead_seconds !== null,
+    youtubeUrl: e.youtube_url ?? null,
     hostName: nameById.get(e.host_member_id) ?? "—",
     publishAt: e.publish_at ?? null,
     publishedAt: e.published_at ?? null,
     plays: e.plays ?? 0,
-    downloads: e.downloads ?? 0,
   }));
 
   const platforms: PlatformRow[] = (pRes.data ?? []).map((p) => ({
     id: p.id, platform: p.platform as Platform, url: p.url,
   }));
 
-  return { data: { show, episodes, platforms }, error: null };
-}
-
-/* ══ حلقةٌ واحدة (نموذج التحرير) ════════════════════════════════════ */
-
-export type EpisodeEditData = {
-  id: string;
-  showId: string;
-  season: number;
-  number: number;
-  title: string;
-  slug: string;
-  summary: string | null;
-  notes: string | null;
-  transcript: string | null;
-  hostId: string;
-  status: EpisodeStatus;
-  publishAt: string | null;
-  audioPath: string | null;
-  audioUrl: string | null;
-  audioBytes: number | null;
-  durationSeconds: number | null;
-};
-
-export async function getEpisode(id: string): Promise<{ episode: EpisodeEditData | null; error: string | null }> {
-  const sb = service();
-  if (!sb) return { episode: null, error: ENV_MISSING };
-
-  const { data, error } = await sb
-    .from("radio_episodes")
-    .select("id, show_id, season, number, title, slug, summary, notes, transcript, host_member_id, status, publish_at, audio_path, audio_bytes, duration_seconds")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) return { episode: null, error: error.message };
-  if (!data) return { episode: null, error: null };
-
-  return {
-    episode: {
-      id: data.id,
-      showId: data.show_id,
-      season: data.season,
-      number: data.number,
-      title: data.title,
-      slug: data.slug,
-      summary: data.summary ?? null,
-      notes: data.notes ?? null,
-      transcript: data.transcript ?? null,
-      hostId: data.host_member_id,
-      status: data.status as EpisodeStatus,
-      publishAt: data.publish_at ?? null,
-      audioPath: data.audio_path ?? null,
-      audioUrl: publicUrl(data.audio_path),
-      audioBytes: data.audio_bytes ?? null,
-      durationSeconds: data.duration_seconds ?? null,
-    },
-    error: null,
-  };
+  return { data: { show, episodes, platforms, stationLead }, error: null };
 }
 
 /* ══ خيارات النماذج ══════════════════════════════════════════════════ */
@@ -275,11 +230,8 @@ export type StationData = {
   description: string | null;
   logoPath: string | null;
   logoUrl: string | null;
-  feedAuthor: string;
-  feedOwnerEmail: string | null;
-  itunesCategory: string;
-  copyright: string | null;
-  explicit: boolean;
+  /** طولُ المقدّمة الموسيقيّة. المصدرُ الواحد للمبدّل في كلّ حلقةٍ لا تُصرّح بغيره. */
+  musicLeadSeconds: number;
 };
 
 export async function getStation(): Promise<{ station: StationData | null; error: string | null }> {
@@ -287,7 +239,7 @@ export async function getStation(): Promise<{ station: StationData | null; error
   if (!sb) return { station: null, error: ENV_MISSING };
   const { data, error } = await sb
     .from("radio_station")
-    .select("name, tagline, description, logo_path, feed_author, feed_owner_email, itunes_category, copyright, explicit")
+    .select("name, tagline, description, logo_path, music_lead_seconds")
     .eq("id", 1)
     .maybeSingle();
   if (error) return { station: null, error: error.message };
@@ -299,11 +251,7 @@ export async function getStation(): Promise<{ station: StationData | null; error
       description: data.description ?? null,
       logoPath: data.logo_path ?? null,
       logoUrl: publicUrl(data.logo_path),
-      feedAuthor: data.feed_author,
-      feedOwnerEmail: data.feed_owner_email ?? null,
-      itunesCategory: data.itunes_category,
-      copyright: data.copyright ?? null,
-      explicit: data.explicit,
+      musicLeadSeconds: Number(data.music_lead_seconds),
     },
     error: null,
   };

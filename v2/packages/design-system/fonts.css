@@ -22,3 +22,11 @@
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium.ttf") format("truetype"); unicode-range:U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
+
+/* ===== أعلام الدول (Twemoji Country Flags) — رسمُ العلم لا يأتي من النظام =====
+   ويندوز (Segoe UI Emoji) **لا يحمل رسوم الأعلام أصلًا** فيعرض حرفَي رمز الدولة، وهو ما يقع على
+   نحو ٩٪ من زيارات الموقع. فنستضيف خطًّا مُجزَّأً للأعلام وحدها (٧٦ كيلوبايت) ونُسنده إلى بلاطة
+   العلم وحدها بالصنف `.cflag` — لا إلى نصٍّ آخر.
+   وبإعلانه أوّلًا يوحّد الشكل على كلّ نظام (أعلامٌ مسطّحة) بدل أن يختلف بين أبل وأندرويد.
+   المصدر: Twemoji (Twitter) برخصة CC-BY 4.0 — الإسناد واجبٌ ومكتوبٌ هنا. */
+@font-face{ font-family:"Twemoji Country Flags"; src:url("./fonts/twemoji-country-flags.woff2") format("woff2"); font-display:swap; unicode-range:U+1F1E6-1F1FF; }

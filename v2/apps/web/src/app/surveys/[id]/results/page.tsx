@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { QUESTION_TYPE_LABEL } from "@/app/dashboard/surveys/vocab";
 
-export const metadata: Metadata = { title: "نتائج الاستبيان — نادي أديب" };
+export const metadata: Metadata = { title: "نتائج الاستبيان، نادي أديب" };
 
 const pct = (n: number, total: number): number => (total ? Math.round((n / total) * 100) : 0);
 
@@ -95,7 +95,7 @@ export default async function PublicSurveyResultsPage({ params }: { params: Prom
                 </div>
               ) : q.kind === "number" ? (
                 <p className="text-content">
-                  المتوسّط <b className="num">{q.avg ?? "—"}</b> · الأدنى <b className="num">{q.min ?? "—"}</b> · الأعلى <b className="num">{q.max ?? "—"}</b>
+                  المتوسّط <b className="num">{q.avg ?? "—"}</b>، الأدنى <b className="num">{q.min ?? "—"}</b>، الأعلى <b className="num">{q.max ?? "—"}</b>
                 </p>
               ) : (
                 <p className="text-sm text-content-muted"><b className="num">{q.answered}</b> إجابة نصيّة.</p>

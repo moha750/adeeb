@@ -25,6 +25,16 @@ import { createAdeebServiceClient } from "@adeeb/core";
  */
 export type MySeat = { id: number; name: string };
 
+/** إشاراتُ ظهور أبواب الانتخابات للعضو — بوليةٌ لا مقعد: البابُ يظهر حين يصير فعلُه متاحًا. */
+export type ElectionSignals = {
+  /** له انتخابٌ مفتوحٌ للترشّح ولم يترشّح فيه بعد ⇒ «الترشُّح». */
+  canRun: boolean;
+  /** له ترشّحٌ قائم (يتابعه/يعدّله/يسحبه/يرى سجلّه) ⇒ «سِجلّ ترشُّحي». */
+  hasCandidacy: boolean;
+  /** له تصويتٌ مفتوحٌ لم يصوّت فيه ⇒ «التصويت». */
+  canVote: boolean;
+};
+
 export type MyScope = {
   /** إدارةٌ إداريّة يقودها — «إدارتي»: يضمّ أعضاءها ويوزّع إشرافهم. */
   unit: MySeat | null;
@@ -32,12 +42,17 @@ export type MyScope = {
   department: MySeat | null;
   /** لجنةٌ تنفيذيّة له فيها مقعد قيادة (قائدًا أو نائبًا) — «لجنتي»: عرضٌ محض. */
   committee: MySeat | null;
+  /** أبواب الانتخابات: تظهر حين يصير فعلُها متاحًا (كالمقاعد: لا بابَ بلا غرفة). */
+  elections: ElectionSignals;
 };
 
-export const NO_SCOPE: MyScope = { unit: null, department: null, committee: null };
+export const NO_ELECTIONS: ElectionSignals = { canRun: false, hasCandidacy: false, canVote: false };
+export const NO_SCOPE: MyScope = { unit: null, department: null, committee: null, elections: NO_ELECTIONS };
 
-/** هل لهذا النطاق غرفةٌ من هذا النوع؟ (تقرؤه خريطة التنقّل بلا أن تعرف بنيته.) */
-export type SeatKind = keyof MyScope;
+/** مقاعدُ الهيكل الثلاثة — تقرؤها خريطة التنقّل بلا أن تعرف بنيتها. */
+export type SeatKind = "unit" | "department" | "committee";
+/** إشارةُ بابِ انتخابٍ — تُقرأ من `scope.elections`. */
+export type ElectionSignal = keyof ElectionSignals;
 
 export const getMyScope = cache(async function getMyScope(userId: string): Promise<MyScope> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -48,11 +63,13 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
 
   // أربعة استعلامات صغيرة: صفوفُ صاحب الجلسة وحده، وثلاثة كتالوجات بأحد عشر صفًّا.
   // (هذا يُقرأ في **كل** صفحة من اللوحة لأنّ القائمة تحتاجه — فلا يجلب الهيكلة كلّها.)
-  const [seatsRes, comRes, deptRes, roleRes] = await Promise.all([
+  const [seatsRes, comRes, deptRes, roleRes, sigRes] = await Promise.all([
     sb.from("user_roles").select("role_name, committee_id, department_id").eq("user_id", userId).eq("is_active", true),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name").eq("is_active", true),
     sb.from("departments").select("id, name_ar").eq("is_active", true),
     sb.from("roles").select("role_name, membership_kind"),
+    // إشارات أبواب الانتخابات — استعلامٌ واحد يلفّ أهليّة الترشّح/التصويت والترشّح القائم
+    sb.rpc("get_member_election_signals", { p_user: userId }),
   ]);
   if (seatsRes.error || comRes.error || deptRes.error || roleRes.error) return NO_SCOPE;
 
@@ -62,7 +79,12 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
   const deptName = new Map((deptRes.data ?? []).map((d) => [d.id, d.name_ar ?? `قسم #${d.id}`]));
   const comById = new Map(committees.map((c) => [c.id, c]));
 
-  const scope: MyScope = { unit: null, department: null, committee: null };
+  // إشارات الانتخابات — إن تعثّرت لا تُسقط النطاق كلّه (تبقى الأبواب مخفيّة)
+  const sig = (sigRes.data as { can_run: boolean; has_candidacy: boolean; can_vote: boolean }[] | null)?.[0];
+  const scope: MyScope = {
+    unit: null, department: null, committee: null,
+    elections: { canRun: !!sig?.can_run, hasCandidacy: !!sig?.has_candidacy, canVote: !!sig?.can_vote },
+  };
 
   // الصفّ الواحد قد يحمل الوجهين (قسمًا ولجنة) — فيُقرأ الوجهان، ولا يُقصي أحدُهما الآخر
   for (const s of seats) {

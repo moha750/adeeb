@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   // بلا `template`: الصفحات تكتب لاحقتها بنفسها («… — أديب») فلا تتكرّر اللاحقة مرّتين.
   title: "نادي أَدِيب",
-  description: "نادٍ ثقافيّ إبداعيّ بجامعة الملك فيصل — أنشطةٌ وورشٌ وإصداراتٌ ومجتمعٌ من المبدعين.",
+  description: "نادٍ ثقافيّ إبداعيّ بجامعة الملك فيصل: أنشطةٌ وورشٌ وإصداراتٌ ومجتمعٌ من المبدعين.",
 };
 
 export default function RootLayout({
@@ -30,7 +30,19 @@ export default function RootLayout({
             (لتفعيل حركات .js [data-reveal])، فتختلف سمة <html> بين الخادم والعميل. الخاصّية تُسكِت
             تحذير سمات <html> وحدها لا شجرتها — فلا تُخفى تعارضاتٌ حقيقيّة أخرى. */}
         <script
-          dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
+          dangerouslySetInnerHTML={{
+            __html:
+              "document.documentElement.classList.add('js');" +
+              // فحصُ أعلام الدول: أنظمةٌ لا تحمل رسومَها (ويندوز) ترسم زوج المؤشّر الإقليميّ حرفين،
+              // فيصير عرضُ العَلَم ضِعفَ عرض المحرف الواحد. عندئذٍ وحدَه يُسنَد خطُّ الأعلام المستضاف
+              // (‎[data-flags="off"]‎)، ويبقى نظامُ الجهاز صاحبَ الرسم حيث يُحسنه (أبل · أندرويد).
+              "try{var p=document.createElement('span');" +
+              "p.style.cssText='position:absolute;left:-9999px;top:0;font-size:32px;line-height:1;white-space:nowrap';" +
+              "p.textContent='\uD83C\uDDF8\uD83C\uDDE6';document.body.appendChild(p);" +
+              "var w2=p.getBoundingClientRect().width;p.textContent='\uD83C\uDDF8';" +
+              "var w1=p.getBoundingClientRect().width;p.remove();" +
+              "if(w1>0&&w2>=w1*1.8)document.documentElement.setAttribute('data-flags','off');}catch(e){}",
+          }}
         />
         {/* شاشةُ البدء **قبل** المحتوى: تُرسَم خادميًّا فتظهر مع أوّل بايت، وتنزاح حين
             يجهز الموقع. وهي غير `loading.tsx` — تلك للتنقّل داخل الموقع لا للدخول إليه.

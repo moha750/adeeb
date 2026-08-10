@@ -1,5 +1,5 @@
 import { Alert } from "@adeeb/design-system";
-import { getCommitteeOptions, getMemberOptions, getShows } from "./data";
+import { getCommitteeOptions, getMemberOptions, getShows, getStation } from "./data";
 import { RadioView } from "./RadioView";
 import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "./_guard";
@@ -12,10 +12,11 @@ export default async function RadioPage() {
 
   if (!(await getRadioManager())) return <RadioDenied />;
 
-  const [{ shows, error }, members, committees] = await Promise.all([
+  const [{ shows, error }, members, committees, { station }] = await Promise.all([
     getShows(),
     getMemberOptions(),
     getCommitteeOptions(),
+    getStation(),
   ]);
 
   if (error) {
@@ -32,5 +33,5 @@ export default async function RadioPage() {
     );
   }
 
-  return <RadioView shows={shows} members={members} committees={committees} />;
+  return <RadioView shows={shows} members={members} committees={committees} station={station} />;
 }

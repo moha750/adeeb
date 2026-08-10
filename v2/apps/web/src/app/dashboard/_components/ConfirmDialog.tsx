@@ -16,6 +16,11 @@ type Props = {
   confirmLabel: string;
   onConfirm: () => void;
   cancelLabel?: string;
+  /**
+   * فعلُ الزرّ الثاني حين يكون **طريقًا آخر** لا مجرّد إغلاق (نافذةُ نجاحٍ تخيّر بين وجهتين).
+   * تُترك فارغةً في التأكيد العاديّ فيرتدّ إلى `onClose`؛ ومخارجُ النافذة (× وESC) تبقى على `onClose` دائمًا.
+   */
+  onCancel?: () => void;
   /** إشعار بزرّ واحد (بلا إلغاء) — للنجاح مثلًا */
   single?: boolean;
   loading?: boolean;
@@ -26,7 +31,7 @@ type Props = {
  * سطح Aurora بلون النغمة + أيقونة متحرّكة بمعناها (نجاح يُرسَم · تحذير يتأرجح · خطر يرتجف) + أزرار ممتدّة.
  */
 export function ConfirmDialog({
-  open, onClose, tone, icon, title, text, confirmLabel, onConfirm, cancelLabel = "إلغاء", single, loading,
+  open, onClose, tone, icon, title, text, confirmLabel, onConfirm, cancelLabel = "إلغاء", onCancel, single, loading,
 }: Props) {
   const titleId = useId();
   const descId = useId();
@@ -48,7 +53,7 @@ export function ConfirmDialog({
       </div>
       <div className="mdl-foot">
         <Button variant={tone} size="md" loading={loading} onClick={onConfirm}>{confirmLabel}</Button>
-        {single ? null : <Button variant={`ghost-${tone}`} size="md" onClick={onClose} disabled={loading}>{cancelLabel}</Button>}
+        {single ? null : <Button variant={`ghost-${tone}`} size="md" onClick={onCancel ?? onClose} disabled={loading}>{cancelLabel}</Button>}
       </div>
     </Dialog>
   );

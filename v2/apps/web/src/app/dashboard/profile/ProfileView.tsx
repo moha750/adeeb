@@ -128,12 +128,22 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
 
   return (
     <div className="mpage">
+      {/* صفحتُه العلنيّة: البابُ يُعرَض له أوّلًا، فمن لا يرى صفحتَه لا ينشرها ولا يُتمّها. */}
+      {profile.publicSlug ? (
+        <Alert tone="info" title="لك صفحةٌ علنيّة">
+          صورتُك وسيرتُك وأوسمتُك تظهر فيها.{" "}
+          <a className="font-bold underline" href={`/m/${encodeURIComponent(profile.publicSlug)}`} target="_blank" rel="noreferrer">
+            افتحها وانشرها
+          </a>
+        </Alert>
+      ) : null}
+
       <Card>
         <CardHeader
           variant="soft"
           icon={<UserCircle />}
           title="صورتك"
-          subtitle="وجهُك في اللوحة — تظهر في كشوف الأعضاء وفي كلّ شاشةٍ تذكرك"
+          subtitle="وجهُك في اللوحة، تظهر في كشوف الأعضاء وفي كلّ شاشةٍ تذكرك"
         />
         <CardBody>
           <AvatarEditor name={profile.name} gender={profile.gender} avatar={profile.avatar} />
@@ -147,7 +157,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
           variant="soft"
           icon={<IdentificationCard />}
           title="هويّتك في أديب"
-          subtitle="بياناتٌ تُثبتها إدارة الموارد البشريّة — لتصحيح شيءٍ منها راجِعها"
+          subtitle="بياناتٌ تُثبتها إدارة الموارد البشريّة، لتصحيح شيءٍ منها راجِعها"
         />
         <CardBody>
           <div className="pva-sections">
@@ -172,7 +182,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
         <div className="mpage">
           {!profile.hasDetails ? (
             <Alert tone="warning" title="لا سجلّ تفاصيل لحسابك">
-              دراستُك وحساباتُك ولونُك لن تُحفظ — سجلّها يُنشأ عند إكمال بيانات الالتحاق. راجِع إدارة
+              دراستُك وحساباتُك ولونُك لن تُحفظ: سجلّها يُنشأ عند إكمال بيانات الالتحاق. راجِع إدارة
               الموارد البشريّة، أمّا رقم الجوّال فيُحفظ.
             </Alert>
           ) : null}
@@ -231,7 +241,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                 {/* إنقاصُ الدرجة عن جامعيّة محوٌ لا رجعة فيه — يُقال قبل الحفظ لا بعده */}
                 {hasAcademicFields(profile.degree) && !academic ? (
                   <Alert className="sm:col-span-2" tone="danger" title="ستُمحى بياناتك الأكاديميّة عند الحفظ">
-                    كلّيتك وتخصّصك ورقمك الأكاديميّ تُحذف نهائيًّا — لا نسخة منها ولا استرجاع. وإن أعدت
+                    كلّيتك وتخصّصك ورقمك الأكاديميّ تُحذف نهائيًّا، لا نسخة منها ولا استرجاع. وإن أعدت
                     درجتك جامعيّةً لاحقًا فأدخِلها من جديد.
                   </Alert>
                 ) : null}
@@ -251,7 +261,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
               variant="soft"
               icon={<ShareNetwork />}
               title="حساباتك"
-              subtitle="تُعرَض في ملفّك عند الإدارة — اكتب المعرّف أو الصق رابط الحساب"
+              subtitle="تُعرَض في ملفّك عند الإدارة، اكتب المعرّف أو الصق رابط الحساب"
             />
             <CardBody>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -298,7 +308,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                     value={field.value || COLOR_START}
                     onValueChange={field.onChange}
                     disabled={!profile.hasDetails}
-                    helper={field.value ? undefined : "لا لونَ محفوظًا بعد — اختر واحدًا ثمّ احفظ."}
+                    helper={field.value ? undefined : "لا لونَ محفوظًا بعد، اختر واحدًا ثمّ احفظ."}
                     optional
                   />
                 )}

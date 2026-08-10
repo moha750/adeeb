@@ -74,7 +74,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
       render: (w) => (
         <span className="txt">
           <b>{w.title}</b>
-          {w.category ? <span className="text-content-muted"> · {w.category}</span> : null}
+          {w.category ? <span className="text-content-muted">، {w.category}</span> : null}
         </span>
       ),
     },
@@ -96,7 +96,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
       variant="aurora"
       icon={<ImagesSquare />}
       title="لا أعمال بعد"
-      description="أضِف أوّل عمل — يظهر مباشرةً في معرض «أعمال وإبداعات» على الصفحة الرئيسية."
+      description="أضِف أوّل عمل، يظهر مباشرةً في معرض «أعمال وإبداعات» على الصفحة الرئيسية."
       action={createBtn}
     />
   );

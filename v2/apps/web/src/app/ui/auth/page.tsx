@@ -40,13 +40,13 @@ export default function AuthGalleryPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Auth</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Auth</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">شاشة المصادقة</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          <b>اللوح المنقسم:</b> سطحُ <code className="font-latin">Card</code> واحدٌ — نصفُه لوحٌ بتدرّج
-          العلامة يحمل نقشَ الهويّة من رأسه (‏1326px عرضًا — مقاسٌ ثابت يفيض عن اللوح وتُقصّ أطرافُه،
+          <b>اللوح المنقسم:</b> سطحُ <code className="font-latin">Card</code> واحدٌ: نصفُه لوحٌ بتدرّج
+          العلامة يحمل نقشَ الهويّة من رأسه (‏1326px عرضًا، مقاسٌ ثابت يفيض عن اللوح وتُقصّ أطرافُه،
           فلا ينكمش حين يضيق) وشعارَ النادي
-          الأبيضَ الحقيقيّ، ونصفُه النموذج. الحدُّ والظلُّ والزاويةُ وAurora من مصدرها الواحد — لا سطحَ
+          الأبيضَ الحقيقيّ، ونصفُه النموذج. الحدُّ والظلُّ والزاويةُ وAurora من مصدرها الواحد، لا سطحَ
           يُعاد كتابتُه. تخدم <a className="text-primary underline" href="/login">شاشة الدخول</a> وشاشةَ
           «لا صلاحية» معًا، وتنهار لعمودٍ واحد دون ٦٤٠px.
         </p>

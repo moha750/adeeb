@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Accordion, Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
+import { Badge, Button, Stat, matchesSearch } from "@adeeb/design-system";
 import { Cake, CalendarDots, Confetti, UsersFour } from "@phosphor-icons/react";
 import { DownloadSimple, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
@@ -185,7 +185,7 @@ export function BirthdaysView({
       title={scope === "supervised" ? "لا مواليد في نطاق إشرافك" : "لا مواليد مسجّلة بعد"}
       description={
         scope === "supervised"
-          ? "لا يظهر هنا إلّا مواليد من تشرف عليهم — فإن لم تُسنَد إليك لجانٌ بعد، أو لم يسجّل أعضاؤها تواريخهم، بقيت الشاشة فارغة."
+          ? "لا يظهر هنا إلّا مواليد من تشرف عليهم، فإن لم تُسنَد إليك لجانٌ بعد، أو لم يسجّل أعضاؤها تواريخهم، بقيت الشاشة فارغة."
           : "لا يوجد أعضاء نشطون بتاريخ ميلاد مسجّل حاليًّا."
       }
     />
@@ -243,12 +243,25 @@ export function BirthdaysView({
       ) : byMonth.length === 0 ? (
         <DataTable columns={monthColumns} rows={[]} getRowId={(r) => r.id} emptyState={emptyState} />
       ) : (
-        <Accordion
-          exclusive={false}
-          items={byMonth.map((g) => ({
-            q: `شهر ${MONTHS[g.month]} · ${birthdaysText(g.rows.length)}`,
-            a: <DataTable columns={monthColumns} rows={g.rows} getRowId={(r) => r.id} />,
+        /* جدولٌ واحدٌ مجمَّع: الشهرُ شريطٌ يشقّ الشبكة، وشهرُ اليومِ منغَّمٌ بالنجاح ليُلتقط بالعين.
+           كان أكورديونًا يلفّ جدولًا، أي إطارًا داخل إطار.
+           ويُفتح شهرُ اليوم وحدَه: هذا عرضُ التصفّح (المسطّحُ المرقَّم في «الأقرب»)، فاثنا عشر
+           شهرًا مفتوحةً تُغرق ما يهمّ الآن — والنغمةُ والفتحُ يقولان الشيءَ نفسه. */
+        <DataTable
+          columns={monthColumns}
+          groups={byMonth.map((g) => ({
+            key: String(g.month),
+            // «(الشهر الحالي)» نصًّا لا نغمةً وحدَها: الأخضرُ والفتحُ يقولانها لمن يرى اللون،
+            // والكلمةُ تقولها للجميع (مبدأ ق١٠: لا تُقرأ الهويّة باللون وحده).
+            label: `شهر ${MONTHS[g.month]}${g.month === today.m0 ? " (الشهر الحالي)" : ""}`,
+            hint: birthdaysText(g.rows.length),
+            tone: g.month === today.m0 ? ("success" as const) : undefined,
+            // شهرُ اليوم وحدَه مفتوحٌ في التصفّح — **إلّا أن يكون هناك بحث، فتُفتح كلُّها**:
+            // الباحثُ يطلب نتيجةً لا تصنيفًا، وشريطٌ مغلقٌ فوق نتيجته يجعل البحثَ يبدو معطوبًا.
+            defaultOpen: search.trim() !== "" || g.month === today.m0,
+            rows: g.rows,
           }))}
+          getRowId={(r) => r.id}
         />
       )}
     </>

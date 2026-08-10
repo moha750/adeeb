@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { CaretDown } from "@/app/_components/glyphs";
 import { CaretUp, CaretUpDown } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "./DropdownMenu";
@@ -22,9 +22,27 @@ export type Column<T> = {
   skeleton?: React.ReactNode;
 };
 
-type Props<T> = {
-  columns: Column<T>[];
+/**
+ * مجموعةُ صفوفٍ تحت شريطٍ يشقّ الشبكة عرضًا — **داخل إطار الجدول الواحد**.
+ *
+ * منقولةٌ عن `MatrixGroup` بالمكتبة: قرارٌ اتّخذه النظامُ مرّةً للمصفوفة ولم ينله الجدول، فبقيت
+ * الشاشاتُ المجمَّعة تلفّ الجدولَ بأكورديون — إطارٌ داخل إطار (ق٢ · ق٤ · ق٥).
+ */
+export type Group<T> = {
+  key: string;
+  /** عنوانُ المجموعة (اسمُ عضوٍ · شهر) */
+  label: React.ReactNode;
+  /** طرفُ الشريط: عدٌّ أو حال («●●○ · بقي إنذارٌ واحد») */
+  hint?: React.ReactNode;
   rows: T[];
+  /** نغمةُ الشريط بحال مجموعته (بلغَ الحدَّ ← خطر) */
+  tone?: "success" | "warning" | "danger" | "neutral";
+  /** مفتوحةٌ ابتداءً — الافتراض `true` */
+  defaultOpen?: boolean;
+};
+
+type Base<T> = {
+  columns: Column<T>[];
   getRowId: (row: T) => string;
   selectable?: boolean;
   /** تحديد مُتحكَّم به (لمشاركته مع شريط الأدوات)؛ إن غاب فداخليّ */
@@ -47,7 +65,12 @@ type Props<T> = {
   tone?: "success" | "warning" | "danger" | "neutral";
   /** نغمة كلّ صفّ حسب حالته (تِنت الخلايا + أفتار بلون الحالة) */
   rowTone?: (row: T) => "success" | "warning" | "danger" | "neutral" | undefined;
+  /** أشرطةُ المجموعات لا تُطوى (عرضٌ محضٌ كـ`.mtx-group`) — الافتراض: تُطوى */
+  staticGroups?: boolean;
 };
+
+/** إمّا صفوفٌ مسطّحة وإمّا مجموعاتٌ تحملها — لا الاثنان، والمترجمُ هو الحارس. */
+type Props<T> = Base<T> & ({ rows: T[]; groups?: never } | { groups: Group<T>[]; rows?: never });
 
 const alignClass = (a?: Column<unknown>["align"]) => (a === "center" ? " center" : a === "end" ? " end" : "");
 
@@ -67,14 +90,37 @@ function TableCheck({ checked, indeterminate, onChange, label }: {
   );
 }
 
-export function DataTable<T>({ columns, rows, getRowId, selectable, selected, onSelectedChange, rowActions, onRowClick, sort, onToggleSort, footer, emptyState, loading, skeletonRows = 5, tone, rowTone }: Props<T>) {
+export function DataTable<T>({ columns, rows, groups, getRowId, selectable, selected, onSelectedChange, rowActions, onRowClick, sort, onToggleSort, footer, emptyState, loading, skeletonRows = 5, tone, rowTone, staticGroups }: Props<T>) {
   const [internal, setInternal] = useState<Set<string>>(new Set());
+  // المطويّةُ لا المفتوحة: الافتراضُ فتحٌ، فجدولٌ يُفتح على فراغٍ تحت ترويسته يبدو معطوبًا.
+  const shutByIntent = () => new Set((groups ?? []).filter((g) => g.defaultOpen === false).map((g) => g.key));
+  const [shut, setShut] = useState<Set<string>>(shutByIntent);
+
+  // **نيّةُ المستدعي تُبطِل الطيَّ حين تتبدّل** — ولا يكفي أن تُقرأ مرّةً عند التركيب.
+  // العلّة: شاشةٌ فوق جدولها بحثٌ تُنقّي الصفوف ثمّ تعيد بناء المجموعات؛ فلو بقي الطيُّ على
+  // حاله لرأى الباحثُ شريطًا **مغلقًا** فيه عدّادٌ ولا نتيجةَ تحته، فيظنّ البحث معطوبًا.
+  // فالمستدعي يرفع `defaultOpen` عند وجود مرشِّح، وهذا يلتقط تبدُّلَ نيّته ويعيد الضبط.
+  // ولا يمسّ طيًّا طواه المستخدم بيده: بصمةُ النيّة لا تتغيّر بنقرةٍ منه، بل بتغيّر المُدخَل.
+  // (ضبطُ حالةٍ أثناء الرندر — نمط «معلومة من رندر سابق»، لا effect؛ كنظيره في `BirthdaysView`.)
+  const intent = (groups ?? []).map((g) => `${g.key}:${g.defaultOpen === false ? 0 : 1}`).join("|");
+  const [prevIntent, setPrevIntent] = useState(intent);
+  if (prevIntent !== intent) { setPrevIntent(intent); setShut(shutByIntent()); }
+
   const sel = selected ?? internal;
   const commit = (next: Set<string>) => (onSelectedChange ? onSelectedChange(next) : setInternal(next));
 
-  const ids = rows.map(getRowId);
+  // كتلُ العرض: المجموعاتُ كما جاءت، أو كتلةٌ واحدةٌ بلا شريطٍ للجدول المسطّح — فمسارُ الرسم واحد.
+  const blocks: Group<T>[] = groups ?? [{ key: "", label: null, rows: rows ?? [] }];
+  // إزاحةُ كلّ كتلة في القائمة كاملةً — فترقيمُ الصفوف (`render(row, index)`) يبقى متّصلًا
+  // ولا يتزحزح بطيّ مجموعةٍ فوقه.
+  const offsets = blocks.reduce<number[]>((acc, b, i) => [...acc, i === 0 ? 0 : acc[i - 1] + blocks[i - 1].rows.length], []);
+  const allRows = blocks.flatMap((b) => b.rows);
+
+  const ids = allRows.map(getRowId);
   const allOn = ids.length > 0 && ids.every((id) => sel.has(id));
   const someOn = !allOn && ids.some((id) => sel.has(id));
+  const toggleGroup = (k: string) =>
+    setShut((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
 
   // عمود مرن (fr) → يُحاط بـ minmax(max-content, …) كي لا يقلّ عن محتواه (بلا اقتطاع «…») ويتمدّد على الشاشات العريضة؛
   // فإن ضاقت الحاوية عن مجموع المحتوى ظهر تمرير أفقيّ. الأعمدة الثابتة (px) تبقى كما هي.
@@ -140,11 +186,30 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
             </div>
           ))}
         </div>
-      ) : rows.length === 0 && emptyState ? (
+      ) : allRows.length === 0 && emptyState ? (
         <div className="dt-empty">{emptyState}</div>
       ) : (
+      blocks.map((b, bi) => {
+        const open = !shut.has(b.key);
+        const band = groups ? (
+          <span className="dt-gr-in">
+            {staticGroups ? null : <span className="dt-gr-ic"><CaretDown aria-hidden /></span>}
+            <span className="dt-gr-lb">{b.label}</span>
+            {b.hint ? <span className="dt-gr-hint">{b.hint}</span> : null}
+          </span>
+        ) : null;
+        const bandClass = "dt-group" + (b.tone ? ` dt-tone-${b.tone}` : "");
+        return (
+          <Fragment key={b.key}>
+            {band && (staticGroups ? (
+              <div className={bandClass}>{band}</div>
+            ) : (
+              <button type="button" className={bandClass} aria-expanded={open} onClick={() => toggleGroup(b.key)}>{band}</button>
+            ))}
+            {/* `.dt-body` لكلّ كتلة — تناوبُ الصفوف (zebra) يُستأنف داخل مجموعته فلا يتعلّق بما قبله */}
+            {open && (
       <div className="dt-body">
-        {rows.map((row, i) => {
+        {b.rows.map((row, i) => {
           const id = getRowId(row);
           const rt = rowTone?.(row);
           // نغمة قائمة الإجراءات = نغمة الصفّ، أو نغمة الطاولة إن كانت دلاليّة (لا العلامة)
@@ -162,7 +227,7 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
               )}
               {columns.map((c) => (
                 <div key={c.key} className={"dt-c" + alignClass(c.align) + (c.wrap ? " dt-wrap" : "")}>
-                  {c.render ? c.render(row, i) : <span className="txt">{String((row as Record<string, unknown>)[c.key] ?? "")}</span>}
+                  {c.render ? c.render(row, offsets[bi] + i) : <span className="txt">{String((row as Record<string, unknown>)[c.key] ?? "")}</span>}
                 </div>
               ))}
               {rowActions && (
@@ -174,6 +239,10 @@ export function DataTable<T>({ columns, rows, getRowId, selectable, selected, on
           );
         })}
       </div>
+            )}
+          </Fragment>
+        );
+      })
       )}
         </div>
       </div>

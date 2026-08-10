@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert, Button, ChartPanel, ColorField, Field, Segmented, Select, Switch, } from "@adeeb/design-system";
+  Alert, Button, SectionCard, ColorField, Field, Segmented, Select, Switch, } from "@adeeb/design-system";
 import { color } from "@adeeb/design-system/tokens";
 import {
   Drop, FileSvg, Globe, ImageSquare, LinkSimple, PaintBucket, QrCode, Sparkle, Square, TextAa,
@@ -41,8 +41,8 @@ const SHAPE = { dots: "fluid", eye: "rounded", pupil: "rounded" } as const satis
 
 const SIZES = [
   { value: "512", label: "٥١٢ بكسل", hint: "للشاشة والمنشورات الرقميّة" },
-  { value: "1024", label: "١٠٢٤ بكسل", hint: "للطباعة الصغيرة (ملصق · بطاقة)" },
-  { value: "2048", label: "٢٠٤٨ بكسل", hint: "للطباعة الكبيرة (لوحة · رول‑أب)" },
+  { value: "1024", label: "١٠٢٤ بكسل", hint: "للطباعة الصغيرة (ملصق، بطاقة)" },
+  { value: "2048", label: "٢٠٤٨ بكسل", hint: "للطباعة الكبيرة (لوحة، رول‑أب)" },
 ];
 
 const LOGO_SIZES = [
@@ -146,12 +146,12 @@ export function QrToolView() {
    * أرضيّتُها تصميمُ من يستعمله، فتُقال الحقيقة ولا يُختلق رقم.
    */
   const guard = useMemo(() => {
-    if (bare) return { tone: "info" as const, text: "الخلفيّة شفّافة — التباين رهنُ السطح الذي تضعه عليه، فتحقّق منه بعينك." };
+    if (bare) return { tone: "info" as const, text: "الخلفيّة شفّافة، التباين رهنُ السطح الذي تضعه عليه، فتحقّق منه بعينك." };
     const worst = Math.min(...inkColors(spec).map((c) => contrast(c, bg)));
     const n = worst.toFixed(1);
-    if (worst < CONTRAST_FAIL) return { tone: "danger" as const, text: `التباين ${n}:١ — هذا الرمز لن يُمسح. أعتِم الحبر أو فتِّح الأرضيّة.` };
-    if (worst < CONTRAST_WARN) return { tone: "warning" as const, text: `التباين ${n}:١ — يُمسح على الشاشة وقد يُخفق مطبوعًا أو في ضوءٍ ضعيف.` };
-    return { tone: "success" as const, text: `التباين ${n}:١ — وافٍ للطباعة والمسح من بُعد.` };
+    if (worst < CONTRAST_FAIL) return { tone: "danger" as const, text: `التباين ${n}:١، هذا الرمز لن يُمسح. أعتِم الحبر أو فتِّح الأرضيّة.` };
+    if (worst < CONTRAST_WARN) return { tone: "warning" as const, text: `التباين ${n}:١، يُمسح على الشاشة وقد يُخفق مطبوعًا أو في ضوءٍ ضعيف.` };
+    return { tone: "success" as const, text: `التباين ${n}:١، وافٍ للطباعة والمسح من بُعد.` };
   }, [bare, bg, spec]);
 
   const onPickLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +159,7 @@ export function QrToolView() {
     e.target.value = "";
     if (!file) return;
     if (file.size > LOGO_MAX_BYTES) {
-      setLogoError("الملفّ أكبر من ٥١٢ كيلوبايت — الشعار يُضمَّن في كلّ نسخةٍ من الرمز، فاختر ملفًّا أخفّ.");
+      setLogoError("الملفّ أكبر من ٥١٢ كيلوبايت، الشعار يُضمَّن في كلّ نسخةٍ من الرمز، فاختر ملفًّا أخفّ.");
       return;
     }
     const reader = new FileReader();
@@ -203,13 +203,13 @@ export function QrToolView() {
       <Alert tone="info" title="الرمز آلةٌ تُقرأ قبل أن يكون شكلًا">
         اطبعه بضلعٍ لا يقلّ عن ٢ سم (٣ سم لِما يُمسح من بُعد)، واترك حوله الفراغَ المرسوم في
         الملفّ فلا تقصّه. وللطباعة اختر <b>SVG</b>: يكبر بلا تحبّب مهما بلغ القياس.
-        والشعارُ يرفع تصحيح الخطأ إلى <b>{effectiveEcc(spec)}</b> ويُفرِّغ ما تحته — فلا يخنق بيانات.
+        والشعارُ يرفع تصحيح الخطأ إلى <b>{effectiveEcc(spec)}</b> ويُفرِّغ ما تحته، فلا يخنق بيانات.
       </Alert>
 
       <div className="card-grid mt-4">
         {/* ── الضوابط ── */}
         <div className="flex flex-col gap-4">
-          <ChartPanel headerVariant="chip" icon={<QrCode />} title="ما يحمله الرمز">
+          <SectionCard headerVariant="chip" icon={<QrCode />} title="ما يحمله الرمز">
             <Field
               label="الرابط أو النصّ"
               icon={<LinkSimple />}
@@ -224,13 +224,13 @@ export function QrToolView() {
             <div className="mt-4">
               <Select label="مقاس التنزيل" icon={<DownloadSimple />} options={SIZES} value={size} onValueChange={setSize} />
             </div>
-          </ChartPanel>
+          </SectionCard>
 
-          <ChartPanel headerVariant="chip" icon={<Drop />} title="الحبر والأرضيّة">
+          <SectionCard headerVariant="chip" icon={<Drop />} title="الحبر والأرضيّة">
             <Switch
               row
               label="تدرّج بدل لونٍ صلب"
-              description="لونان يتدرّجان عبر الرمز — والحارس أدناه يقيس أضعفهما."
+              description="لونان يتدرّجان عبر الرمز، والحارس أدناه يقيس أضعفهما."
               checked={gradient}
               onChange={(e) => setGradient(e.target.checked)}
             />
@@ -265,7 +265,7 @@ export function QrToolView() {
               <Switch
                 row
                 label="بلا خلفيّة"
-                description="أرضيّةٌ شفّافة لوضعه على تصميمٍ فاتح — وعلى الداكن لا يُقرأ."
+                description="أرضيّةٌ شفّافة لوضعه على تصميمٍ فاتح، وعلى الداكن لا يُقرأ."
                 checked={bare}
                 onChange={(e) => setBare(e.target.checked)}
               />
@@ -275,14 +275,14 @@ export function QrToolView() {
             <div className="mt-4">
               <Alert tone={guard.tone} title="التباين مقيسٌ لا مظنون">{guard.text}</Alert>
             </div>
-          </ChartPanel>
+          </SectionCard>
 
-          <ChartPanel headerVariant="chip" icon={<Eye />} title="العيون">
+          <SectionCard headerVariant="chip" icon={<Eye />} title="العيون">
             <div className="flex flex-col gap-4">
               <Switch
                 row
                 label="لونٌ مستقلّ للعيون"
-                description="العيون الثلاث بنيةٌ يبحث عنها القارئ أوّلًا — تُلوَّن ولا تُنقَص."
+                description="العيون الثلاث بنيةٌ يبحث عنها القارئ أوّلًا، تُلوَّن ولا تُنقَص."
                 checked={eyeTinted}
                 onChange={(e) => setEyeTinted(e.target.checked)}
               />
@@ -293,15 +293,15 @@ export function QrToolView() {
                 </>
               ) : null}
             </div>
-          </ChartPanel>
+          </SectionCard>
 
-          <ChartPanel headerVariant="chip" icon={<ImageSquare />} title="الشعار في القلب">
+          <SectionCard headerVariant="chip" icon={<ImageSquare />} title="الشعار في القلب">
             <div className="flex flex-col gap-3 items-start">
               {logo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مضمَّنة (data URL) لا أصلٌ ثابت
                 <img src={logo} alt="الشعار المختار" className="max-h-20 w-auto rounded" />
               ) : (
-                <p className="txt">لا شعار — الرمز يخرج نظيفًا. وإن أضفته رُفع التصحيح إلى H وفُرِّغ ما تحته.</p>
+                <p className="txt">لا شعار: الرمز يخرج نظيفًا. وإن أضفته رُفع التصحيح إلى H وفُرِّغ ما تحته.</p>
               )}
               <div className="flex flex-wrap gap-2">
                 <Button variant="ghost" size="md" onClick={() => logoInput.current?.click()}>
@@ -324,13 +324,13 @@ export function QrToolView() {
                 </div>
               ) : null}
             </div>
-          </ChartPanel>
+          </SectionCard>
 
-          <ChartPanel headerVariant="chip" icon={<TextAa />} title="الإطار والنداء">
+          <SectionCard headerVariant="chip" icon={<TextAa />} title="الإطار والنداء">
             <Switch
               row
               label="إطارٌ ونداء تحته"
-              description="للملصقات — طوقٌ حول الرمز وشريطُ نصٍّ يدعو إلى مسحه."
+              description="للملصقات: طوقٌ حول الرمز وشريطُ نصٍّ يدعو إلى مسحه."
               checked={framed}
               onChange={(e) => setFramed(e.target.checked)}
             />
@@ -350,12 +350,12 @@ export function QrToolView() {
                 <ColorField label="لون النصّ" icon={<TextAa />} value={captionColor} onValueChange={setCaptionColor} />
               </div>
             ) : null}
-          </ChartPanel>
+          </SectionCard>
         </div>
 
         {/* ── المعاينة ── */}
         <div>
-          <ChartPanel headerVariant="chip" icon={<QrCode />} title="المعاينة — ما تراه هو ما يُنزَّل">
+          <SectionCard headerVariant="chip" icon={<QrCode />} title="المعاينة: ما تراه هو ما يُنزَّل">
             {preview.error ? (
               <Alert tone="warning" title="تعذّر توليد الرمز">{preview.error}</Alert>
             ) : preview.svg ? (
@@ -377,7 +377,7 @@ export function QrToolView() {
               وقبل الطباعة بالألف: امسحه بهاتفك من الشاشة، ثمّ اطبع نسخةً واحدة وامسحها. ما يُقرأ
               على الشاشة قد يُخفق على الورق.
             </p>
-          </ChartPanel>
+          </SectionCard>
         </div>
       </div>
     </>

@@ -1,9 +1,10 @@
 "use client";
 
 import { Button, Card, CardBanner } from "@adeeb/design-system";
-import { Phone, Envelope, CalendarBlank, FileText } from "@phosphor-icons/react";
+import { Phone, Envelope, CalendarBlank, FileText, User } from "@phosphor-icons/react";
 import { WhatsappLogo } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
+import { positionLine } from "@/lib/positionLabel";
 import { DropdownMenu, type MenuGroup } from "../_components/DropdownMenu";
 import type { MemberRow } from "./data";
 
@@ -27,7 +28,7 @@ const TONE: Record<string, "brand" | "warning" | "danger"> = { active: "brand", 
 
 export function MemberCard({ member, onOpen, actions, onRestore, onReason, contactHref }: Props) {
   const suspended = member.status === "suspended";
-  const roleLine = [member.role, member.committee].filter(Boolean).join(" ") || "غير متوفّر";
+  const roleLine = positionLine(member.role, member.committee) ?? "غير متوفّر";
   const tone = TONE[member.status];
   // القائمة تتبع نغمة الكرت — و«brand» هي مظهر القائمة الافتراضيّ (فولاذيّ) فلا تُمرَّر نغمةً،
   // كما في الجدول (SURFACE_TONE.active = undefined). نغمةٌ باسمٍ آخر للشيء نفسه تُفرِّق ما هو واحد.
@@ -58,6 +59,16 @@ export function MemberCard({ member, onOpen, actions, onRestore, onReason, conta
             <div className="acard-info-row">
               <span className="acard-ic"><CalendarBlank aria-hidden /></span>
               <span className="acard-info-txt"><span className="acard-info-label">تاريخ إنهاء العضوية</span><span className="acard-info-val">{member.endDate || "غير مسجّل"}</span></span>
+            </div>
+            {/* من أنهاها — من سجلّ النشاط. ومن أُنهي قبله (زمنُ V1) لا فاعلَ له: «غير مسجّل» لا اسمٌ مخترَع */}
+            <div className="acard-info-row">
+              <span className="acard-ic"><User aria-hidden /></span>
+              <span className="acard-info-txt">
+                <span className="acard-info-label">من أنهى العضوية</span>
+                {member.endBy
+                  ? <span className="acard-info-val" title={member.endBy}>{member.endBy}</span>
+                  : <span className="acard-info-val na">غير مسجّل</span>}
+              </span>
             </div>
             <div className="acard-info-row">
               <span className="acard-ic"><FileText aria-hidden /></span>

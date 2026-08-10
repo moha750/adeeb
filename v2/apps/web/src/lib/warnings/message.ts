@@ -66,7 +66,7 @@ export function salutation(l: Pick<WarningLetter, "name" | "gender" | "role" | "
 export const greeting = "السلام عليكم ورحمة الله وبركاته";
 
 /** التوقيع — يُكتب في الرسالة، وأمّا الورقة فتوقيعُها وختمُها مطبوعان في القالب. */
-export const signature = "إدارة الموارد البشرية | نادي أديب";
+export const signature = "إدارة الموارد البشرية، نادي أديب";
 
 /** هل بلغ هذا الإنذارُ الحدَّ فسُحبت به العضويّة؟ */
 const isFinal = (l: WarningLetter): boolean => l.activeCount >= l.limit;

@@ -41,7 +41,7 @@ export type WorkInput = {
 /** التحقّق المشترك — نفس قيود القاعدة برسائل عربيّة (لا نثق بالعميل). */
 function validateWork(input: WorkInput): string | null {
   if (!clean(input.title)) return "عنوان العمل مطلوب.";
-  if (!clean(input.imageUrl)) return "صورة العمل مطلوبة — ارفع صورةً أوّلًا.";
+  if (!clean(input.imageUrl)) return "صورة العمل مطلوبة. ارفع صورةً أوّلًا.";
   return null;
 }
 
@@ -165,7 +165,7 @@ export async function uploadWorkImage(formData: FormData): Promise<UploadResult>
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم تُرفَق صورة." };
   if (file.size > MAX_BYTES) return { ok: false, message: "حجم الصورة يتجاوز ٥ ميغابايت." };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة — استخدم JPG أو PNG أو WEBP أو GIF." };
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم JPG أو PNG أو WEBP أو GIF." };
 
   const path = `${PREFIX}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
   const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });

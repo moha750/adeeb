@@ -8,7 +8,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { fmtDateOnly, fmtDate } from "@/lib/date";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
-import { assignmentScope, roleTitle } from "@/lib/positionLabel";
+import { assignmentScope, positionLine, roleTitle } from "@/lib/positionLabel";
 
 /** محطّةٌ في المسيرة: الانضمام، أو تولّي منصب. */
 export type JourneyStop = {
@@ -26,11 +26,12 @@ export type Membership = {
   avatar: string | null;
   gender: "male" | "female" | null;
   status: MemberStatus;
-  // الموضع الحاليّ + سلسلة انتمائه من الأعلى (مجلس ← قسم ← لجنة، أو مجلس ← لجانه إن تعدّدت)
+  // الموضع الحاليّ **بوحدته** (٢٠٢٦-٠٨-١٠، قرار المالك): «قائد لجنة الفعاليات» لا «قائد» مجرّدة —
+  // فالرتبةُ ووحدتُها خبرٌ واحد يُقرأ بمسافة (`positionLine`).
+  // **ولا سلسلةَ انتماءٍ فوقها** (٢٠٢٦-٠٨-٠٨): لا مجلسَ ولا قسمًا فوق اللجنة؛ ذاك مقولٌ في
+  // `journey` وفي شجرة الهيكلة. وذهب معه `chainOf` وخريطةُ `committeeDept` التي لم تخدم سواه.
   role: string | null;
-  chain: string[];
-  // لجانٌ يشرف عليها — تكليفٌ لا منصب، فلا يدخل المسيرة ولا السلسلة (20260731)
-  supervising: string[];
+  // (الإشراف لا يُقال هنا — تكليفٌ لا منصب، ومكانُه تبويب «من أشرف عليهم» بكرتٍ كاملٍ لكلّ لجنة)
   // الزمن
   joined: string;
   duration: string; // «٦ أشهر و١٠ أيام»
@@ -101,16 +102,14 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   }
   const sb = createAdeebServiceClient(url, key);
 
-  const [pRes, urRes, rRes, dRes, cRes, coRes, supRes, wRes, wlRes, certRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, coRes, wRes, wlRes, certRes] = await Promise.all([
     sb.from("profiles").select("full_name, avatar_url, gender, account_status, joined_date").eq("id", me.id).maybeSingle(),
     // التعيينات كلّها لا النشطة وحدها — المسيرة تروي ما مضى كما تروي ما هو قائم
     sb.from("user_roles").select("role_name, department_id, committee_id, assigned_at, is_active").eq("user_id", me.id),
     sb.from("roles").select("role_name, role_name_ar, council_type, home_committee_id"),
     sb.from("departments").select("id, name_ar"),
-    sb.from("committees").select("id, department_id, committee_name_ar"),
+    sb.from("committees").select("id, committee_name_ar"),
     sb.from("councils").select("id, name_ar"),
-    // الإشراف علاقةٌ لا منصب — يُقرأ من جدوله، ولا يدخل صفوف التعيينات
-    sb.from("committee_supervision").select("committee_id").eq("supervisor_id", me.id),
     // إنذاراتُ صاحب الجلسة **السارية** وحدها — الملغى خرج من العدّ فلا يُعاد ذكرُه عليه.
     // ورتبتُها ترتيبُها الزمنيّ (كما تحسبها القاعدة)، فالفرزُ هنا هو نفسه هناك.
     sb.from("member_warnings").select("id, category, reason, created_at").eq("user_id", me.id).eq("status", "active").order("created_at"),
@@ -121,17 +120,16 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       .eq("user_id", me.id).eq("status", "valid").order("created_at", { ascending: false }),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || supRes.error || wRes.error || wlRes.error || certRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || coRes.error || wRes.error || wlRes.error || certRes.error;
   if (firstErr) return { membership: null, error: firstErr.message };
   const p = pRes.data;
-  if (!p) return { membership: null, error: "لا سجلّ لحسابك في «الأعضاء» — راجِع إدارة الموارد البشريّة." };
+  if (!p) return { membership: null, error: "لا سجلّ لحسابك في «الأعضاء». راجِع إدارة الموارد البشريّة." };
 
   const roleCouncil = new Map((rRes.data ?? []).map((r) => [r.role_name, r.council_type as string | null]));
   const roleHome = new Map((rRes.data ?? []).map((r) => [r.role_name, r.home_committee_id as number | null]));
   const councilName = new Map((coRes.data ?? []).map((c) => [c.id as string, c.name_ar as string | null]));
   const deptName = new Map((dRes.data ?? []).map((d) => [d.id as number, d.name_ar as string | null]));
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string | null]));
-  const committeeDept = new Map((cRes.data ?? []).map((c) => [c.id as number, c.department_id as number | null]));
 
   // اسم المنصب: الرتبة + وحدته الأمّ (مصدرٌ واحد في `lib/positionLabel`)
   const roleAr = new Map(
@@ -182,20 +180,15 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   const groupList = [...groups.values()];
   // الموضع الحاليّ = أعلى منصبٍ **قائم** بالترتيب القياسيّ (بالاسم لا برقم — أُعدم role_level)
   const current = groupList.filter((g) => g.active).sort((a, b) => roleRank(a.roleName) - roleRank(b.roleName))[0] ?? null;
-
   /**
-   * سلسلة الانتماء من الأعلى. المنصبُ في وحدةٍ واحدة يُقرأ نسبًا كاملًا (مجلس ← قسم ← لجنة)،
-   * والمنصبُ الممتدّ على وحداتٍ لا قسمَ واحدًا له — فتُسرَد وحداتُه تحت مجلسها بلا قسمٍ مُختلَق.
+   * وحدةُ المنصب القائم كما تُحسب في المسيرة — تُوصل برتبته على البطاقة: «قائد لجنة الفعاليات».
+   *
+   * **وحدةً واحدةً لا سردًا:** من امتدّ منصبه على وحداتٍ عدّة (عضو ضمانٍ في تسع لجان) تبقى
+   * رتبتُه عاريةً هنا وتُسرَد وحداتُه في «مسيرتي» — سطرُ الهويّة لا يحتمل تسعةَ أسماء.
+   * ولا تُستبدَل بالمجلس عند غيابها (خلافًا للمسيرة): الإدارةُ العليا يقول اسمُها موضعَها.
    */
-  const chainOf = (g: { roleName: string; items: Assignment[] }): string[] => {
-    const council = councilOf(g.roleName);
-    if (g.items.length === 1) {
-      const a = g.items[0];
-      const deptId = a.department_id ?? (a.committee_id != null ? committeeDept.get(a.committee_id) ?? null : null);
-      return [council, deptId != null ? deptName.get(deptId) ?? null : null, unitOf(a)].filter(Boolean) as string[];
-    }
-    return [council, ...g.items.map(unitOf)].filter(Boolean) as string[];
-  };
+  const curUnits = current ? [...new Set(current.items.map(unitOf).filter(Boolean) as string[])] : [];
+  const currentUnit = curUnits.length === 1 ? curUnits[0] : null;
 
   const journey: JourneyStop[] = [
     ...(p.joined_date
@@ -208,7 +201,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
         kind: "role" as const,
         title: roleAr.get(g.roleName) ?? g.roleName,
         // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر»
-        scope: units.length ? units.join(" · ") : councilOf(g.roleName),
+        scope: units.length ? units.join("، ") : councilOf(g.roleName),
         date: fmtDate(g.at),
         at: Date.parse(g.at ?? "") || 0,
         current: g.active,
@@ -222,11 +215,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       avatar: p.avatar_url ?? null,
       gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
       status: MEMBER_STATUS_OF[p.account_status] ?? "inactive",
-      supervising: (supRes.data ?? [])
-        .map((s) => committeeName.get(s.committee_id as number) ?? null)
-        .filter(Boolean) as string[],
-      role: current ? roleAr.get(current.roleName) ?? current.roleName : null,
-      chain: current ? chainOf(current) : [],
+      role: current ? positionLine(roleAr.get(current.roleName) ?? current.roleName, currentUnit) : null,
       joined: fmtDateOnly(p.joined_date),
       duration: membershipDuration(p.joined_date, Date.now()),
       journey,

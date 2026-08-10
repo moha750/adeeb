@@ -6,7 +6,7 @@ import { VerifyForm } from "./VerifyForm";
 import { SiteHeader } from "../_components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "التحقّق من شهادة — نادي أديب",
+  title: "التحقّق من شهادة، نادي أديب",
   description: "تأكّد من صحّة شهادة خبرةٍ صادرة عن نادي أديب برقمها المرجعيّ.",
 };
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
             <LandingHeading
               eyebrow="توثيق"
               title="التحقّق من شهادة"
-              deck={`امسح الباركود في الشهادة، أو اكتب رقمها المرجعيّ — فيقول لك ${VERIFY_HOST} أصحيحةٌ هي أم لا.`}
+              deck={`امسح الباركود في الشهادة، أو اكتب رقمها المرجعيّ، فيقول لك ${VERIFY_HOST} أصحيحةٌ هي أم لا.`}
               align="center"
             />
 
@@ -42,7 +42,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
                 <VerifyForm defaultCode={code} />
 
                 {result.state === "empty" ? null : result.state === "error" ? (
-                  <Alert tone="danger" title="تعذّر التحقّق">حدث خطأ في الاتّصال — أعِد المحاولة بعد قليل.</Alert>
+                  <Alert tone="danger" title="تعذّر التحقّق">حدث خطأ في الاتّصال. أعِد المحاولة بعد قليل.</Alert>
                 ) : result.state === "missing" ? (
                   <Alert tone="danger" title="لا شهادة بهذا الرقم">
                     راجِع الرقم كما هو مطبوعٌ في الورقة حرفًا برقم. وإن كان صحيحًا ولم يُعرَف، فالورقة ليست منّا.
@@ -62,7 +62,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
                       tone={result.state === "valid" ? "success" : "danger"}
                       title={result.holderName}
                     >
-                      {result.positionTitle} — للفترة من {certDate(result.periodFrom)} إلى {certDate(result.periodTo)}.
+                      {result.positionTitle}، للفترة من {certDate(result.periodFrom)} إلى {certDate(result.periodTo)}.
                       {result.state === "valid"
                         ? ` صدرت عن نادي أديب في ${certDate(result.issuedOn)}.`
                         : ` أُبطلت هذه الشهادة${result.revokedOn ? ` في ${certDate(result.revokedOn)}` : ""}، فلا يُعتدّ بها.`}

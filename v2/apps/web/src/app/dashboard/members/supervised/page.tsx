@@ -1,6 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
+import { getDepartedInMyWatch } from "@/lib/mySupervision";
 import { getMembers } from "../data";
 import { getOrgData } from "../structure/orgData";
 import { myCommittees } from "./model";
@@ -25,8 +26,9 @@ export default async function SupervisedMembersPage() {
   const me = await getCurrentAdmin();
   if (!me) return denied;
 
-  const [{ members, error }, org] = await Promise.all([getMembers(), getOrgData()]);
-  const failed = error ?? org.error;
+  // و«من غادر»: نطاقٌ ثانٍ محدودٌ بولايته لا بسجلّ اللجنة كلِّه (`lib/mySupervision`)
+  const [{ members, error }, org, departed] = await Promise.all([getMembers(), getOrgData(), getDepartedInMyWatch(me.id)]);
+  const failed = error ?? org.error ?? departed.error;
   if (failed) {
     return (
       <>
@@ -50,6 +52,9 @@ export default async function SupervisedMembersPage() {
       unit={unit}
       committees={list}
       members={members.filter((m) => ids.has(m.id))}
+      // من غادر لجانَه أثناء ولايته — قائمةٌ مستقلّة: نطاقُ اللجان أعلاه يُبنى من الهيكلة وهي
+      // تقول العضويّةَ السارية وحدها (`getOrgData`)، فمن غادر لا يقع فيها أصلًا.
+      departed={members.filter((m) => departed.ids.has(m.id))}
       mayManageData={me.caps.includes("manage_member_data")}
     />
   );

@@ -173,20 +173,16 @@ export function SettingsView({ settings }: { settings: MySettings }) {
           </>
         }
       >
-        <div className="mdl-grid">
-          <Field className="mdl-full" label="كلمة المرور الحاليّة" type="password" icon={<Lock />} innerIcon={<Key />}
-            placeholder="كلمتك الآن" value={current} onChange={(e) => setCurrent(e.target.value)} required />
-          <Field className="mdl-full" label="كلمة المرور الجديدة" type="password" icon={<Lock />} innerIcon={<Key />}
-            placeholder={`${PASSWORD_MIN} محارف على الأقلّ`} value={next} onChange={(e) => setNext(e.target.value)} required />
-          <Field className="mdl-full" label="تأكيد الجديدة" type="password" icon={<Lock />} innerIcon={<Key />}
-            placeholder="أعِد كتابتها" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-          {TURNSTILE_SITE_KEY ? (
-            <div className="mdl-full">
-              <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
-            </div>
-          ) : null}
-          {passErr ? <Alert className="mdl-full" tone="danger">{passErr}</Alert> : null}
-        </div>
+        <Field label="كلمة المرور الحاليّة" type="password" icon={<Lock />} innerIcon={<Key />}
+          placeholder="كلمتك الآن" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+        <Field label="كلمة المرور الجديدة" type="password" icon={<Lock />} innerIcon={<Key />}
+          placeholder={`${PASSWORD_MIN} محارف على الأقلّ`} value={next} onChange={(e) => setNext(e.target.value)} required />
+        <Field label="تأكيد الجديدة" type="password" icon={<Lock />} innerIcon={<Key />}
+          placeholder="أعِد كتابتها" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+        {TURNSTILE_SITE_KEY ? (
+          <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
+        ) : null}
+        {passErr ? <Alert tone="danger">{passErr}</Alert> : null}
       </Modal>
 
       {/* ── تغيير البريد ── */}
@@ -204,14 +200,12 @@ export function SettingsView({ settings }: { settings: MySettings }) {
           </>
         }
       >
-        <div className="mdl-grid">
-          <Field className="mdl-full" label="البريد الجديد" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />}
-            placeholder="you@adeeb.club" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Alert className="mdl-full" tone="info" title="حتى تفتح الرابط">
-            يبقى دخولك بالبريد الحاليّ <bdi dir="ltr" className="lat">{settings.email}</bdi>.
-          </Alert>
-          {mailErr ? <Alert className="mdl-full" tone="danger">{mailErr}</Alert> : null}
-        </div>
+        <Field label="البريد الجديد" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />}
+          placeholder="you@adeeb.club" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Alert tone="info" title="حتى تفتح الرابط">
+          يبقى دخولك بالبريد الحاليّ <bdi dir="ltr" className="lat">{settings.email}</bdi>.
+        </Alert>
+        {mailErr ? <Alert tone="danger">{mailErr}</Alert> : null}
       </Modal>
 
       <ConfirmDialog

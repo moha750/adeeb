@@ -18,7 +18,7 @@ const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "ماي�
 const fmtDT = (iso: string): string => {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}، ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -64,7 +64,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
 
   const sb = service();
   if (!sb) {
-    return <StateScreen title="الخدمة غير مهيّأة" tone="warning">تعذّر تجهيز الصفحة — حاول لاحقًا.</StateScreen>;
+    return <StateScreen title="الخدمة غير مهيّأة" tone="warning">تعذّر تجهيز الصفحة. حاول لاحقًا.</StateScreen>;
   }
 
   const [sRes, qRes, session] = await Promise.all([
@@ -73,7 +73,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
     createClient(),
   ]);
   if (sRes.error || qRes.error) {
-    return <StateScreen title="تعذّر التحميل" tone="warning">حدث خطأ أثناء جلب الاستبيان — حاول مجدّدًا.</StateScreen>;
+    return <StateScreen title="تعذّر التحميل" tone="warning">حدث خطأ أثناء جلب الاستبيان. حاول مجدّدًا.</StateScreen>;
   }
   const survey = sRes.data;
   if (!survey) notFound();
@@ -140,7 +140,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
     if (prior) {
       return (
         <StateScreen title="سبق أن شاركت" tone="success">
-          وصلتنا إجابتك على هذا الاستبيان — شكرًا لك.
+          وصلتنا إجابتك على هذا الاستبيان، شكرًا لك.
           {survey.show_results_to_participants ? (
             <>
               {" "}
@@ -160,7 +160,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
   const questions = toPublicQuestions(qRes.data ?? []);
 
   if (!questions.length) {
-    return <StateScreen title="هذا الاستبيان غير مكتمل" tone="info">لا أسئلة فيه بعد — عد لاحقًا.</StateScreen>;
+    return <StateScreen title="هذا الاستبيان غير مكتمل" tone="info">لا أسئلة فيه بعد. عد لاحقًا.</StateScreen>;
   }
 
   return <SurveyRespond survey={publicSurvey} questions={questions} />;

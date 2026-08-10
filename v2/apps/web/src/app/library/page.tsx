@@ -7,7 +7,7 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "مكتبة إرثٌ يُروى — أديب",
+  title: "مكتبة إرثٌ يُروى، أديب",
   description: "أرشيفٌ حيٌّ من منشورات نادي أديب: تقاريره ومجلّاته وكتيّباته، كلُّ صفحةٍ بأثرها.",
 };
 
@@ -63,7 +63,7 @@ export default async function LibraryPage() {
       <main>
         <section className="py-16 md:py-24">
           <Container>
-            <LandingHeading eyebrow="أرشيف" title="إرثٌ يُروى" deck="منشورات نادي أديب عبر المواسم — كلُّ صفحةٍ بأثرها." align="center" />
+            <LandingHeading eyebrow="أرشيف" title="إرثٌ يُروى" deck="منشورات نادي أديب عبر المواسم، كلُّ صفحةٍ بأثرها." align="center" />
             {error ? (
               <p className="mt-8 text-center text-danger">تعذّر جلب المكتبة: {error.message}</p>
             ) : shelf.length === 0 ? (

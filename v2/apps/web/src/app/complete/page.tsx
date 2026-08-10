@@ -6,7 +6,7 @@ import { getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { CompleteForm } from "./CompleteForm";
 
-export const metadata: Metadata = { title: "إكمال سجلّك — نادي أديب" };
+export const metadata: Metadata = { title: "إكمال سجلّك، نادي أديب" };
 export const dynamic = "force-dynamic";
 
 function service() {
@@ -40,7 +40,7 @@ export default async function CompletePage() {
           <Container className="max-w-2xl">
             <Card>
               <CardBody className="p-6">
-                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص — أبلغ الإدارة.</Alert>
+                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص. أبلغ الإدارة.</Alert>
               </CardBody>
             </Card>
           </Container>
@@ -68,7 +68,7 @@ export default async function CompletePage() {
             <LandingHeading
               eyebrow="عضويّة"
               title="أكمل سجلّك"
-              deck="سجلُّك عندنا ناقصٌ — وبعضُ ما ينقص لا يملكه إلّا أنت. أكمله مرّةً واحدة، ثمّ تابع."
+              deck="سجلُّك عندنا ناقصٌ، وبعضُ ما ينقص لا يملكه إلّا أنت. أكمله مرّةً واحدة، ثمّ تابع."
               align="center"
             />
             <div style={{ maxWidth: 720, margin: "32px auto 0" }}>

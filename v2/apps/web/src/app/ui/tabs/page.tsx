@@ -65,16 +65,16 @@ export default function TabsPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Tabs
+          Design System, Tabs
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض التبويبات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          ثلاثة أنماط — سطر سفليّ · حبوب · مقسّم — مع شارات عدّ ولوحة محتوى حيّة لكلّ تبويب.
+          ثلاثة أنماط: سطر سفليّ، حبوب، مقسّم، مع شارات عدّ ولوحة محتوى حيّة لكلّ تبويب.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="سطر سفليّ (underline)">
-            <Lab>النمط الافتراضيّ — خطّ متدرّج أسفل التبويب النشط</Lab>
+            <Lab>النمط الافتراضيّ: خطّ متدرّج أسفل التبويب النشط</Lab>
             <Tabs variant="underline" items={memberTabs} value={underline} onValueChange={setUnderline} />
             <Panel value={underline} />
           </Sec>
@@ -86,13 +86,13 @@ export default function TabsPage() {
           </Sec>
 
           <Sec title="مقسّم (segmented)">
-            <Lab>شريط مجزّأ داخل إطار واحد — مناسب لعدد محدود من الخيارات</Lab>
+            <Lab>شريط مجزّأ داخل إطار واحد، مناسب لعدد محدود من الخيارات</Lab>
             <Tabs variant="segmented" items={memberTabs.slice(0, 3)} value={segmented} onValueChange={setSegmented} />
             <Panel value={segmented} />
           </Sec>
 
           <Sec title="بلا شارات">
-            <Lab>الشارة اختياريّة — تبويبات نصّيّة صِرفة</Lab>
+            <Lab>الشارة اختياريّة: تبويبات نصّيّة صِرفة</Lab>
             <Tabs variant="underline" items={plainTabs} value={plain} onValueChange={setPlain} />
             <Panel value={plain} />
           </Sec>

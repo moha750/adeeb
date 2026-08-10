@@ -104,7 +104,7 @@ export function SupervisionModal({
         isDanger ? (
           <>
             <Button variant="ghost-danger" size="md" onClick={onClose} disabled={busy}>إلغاء</Button>
-            <Button variant="danger" size="md" loading={busy} onClick={onSubmit}>{confirmLabel}</Button>
+              <Button variant="danger" size="md" loading={busy} onClick={onSubmit}>{confirmLabel}</Button>
           </>
         ) : (
           <>
@@ -117,7 +117,7 @@ export function SupervisionModal({
       }
     >
       {state ? (
-        <div className="org-modal">
+        <>
           {person ? (
             <div className="org-modal-cur">
               <span className="org-sublbl">{personLabel}</span>
@@ -145,7 +145,7 @@ export function SupervisionModal({
                 </p>
               </>
             ) : (
-              <p className="org-modal-warn">لا مرشّح — أعضاء النادي كلّهم في هذه الإدارة.</p>
+              <p className="org-modal-warn">لا مرشّح: أعضاء النادي كلّهم في هذه الإدارة.</p>
             )
           ) : null}
 
@@ -163,14 +163,14 @@ export function SupervisionModal({
               />
             ) : (
               <p className="org-modal-warn">
-                لا عضو في {unit.name} بعد — عيّن عضوًا إداريًّا أوّلًا، فالتوزيع لا يقع إلّا على أعضائك.
+                لا عضو في {unit.name} بعد، عيّن عضوًا إداريًّا أوّلًا، فالتوزيع لا يقع إلّا على أعضائك.
               </p>
             )
           ) : null}
 
           {state.kind === "remove" ? (
             <p className="org-modal-warn">
-              يُسحب إشرافه على {state.committee.name} ويبقى عضوًا في {unit.name} — فالإشراف تكليفٌ يدور،
+              يُسحب إشرافه على {state.committee.name} ويبقى عضوًا في {unit.name}، فالإشراف تكليفٌ يدور،
               والانتماء لا يُمسّ إلّا بالإخراج.
             </p>
           ) : null}
@@ -182,7 +182,7 @@ export function SupervisionModal({
               وقد يُسحب ترشّحه الانتخابيّ إن كان قائمًا.
             </p>
           ) : null}
-        </div>
+        </>
       ) : null}
     </Modal>
   );

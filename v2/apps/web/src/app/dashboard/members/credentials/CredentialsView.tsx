@@ -20,7 +20,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
   const [pending, start] = useTransition();
 
   const selected = useMemo(() => members.find((m) => m.id === uid) ?? null, [members, uid]);
-  const options = useMemo(() => members.map((m) => ({ value: m.id, label: `${m.name} — ${m.email}` })), [members]);
+  const options = useMemo(() => members.map((m) => ({ value: m.id, label: `${m.name}، ${m.email}` })), [members]);
 
   // إعادة ضبط الحقول والنتيجة عند تبديل العضو
   useEffect(() => { setEmail(""); setPw(""); setPw2(""); setRes(null); }, [uid]);
@@ -158,7 +158,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
       </div>
 
       <Alert tone="warning" compact className="cred-note">
-        التغيير فوريّ ولا يمكن التراجع عنه. لا يُرسَل للعضو أيّ إشعار تلقائيّ — أبلِغه ببياناته الجديدة عبر قناة آمنة.
+        التغيير فوريّ ولا يمكن التراجع عنه. لا يُرسَل للعضو أيّ إشعار تلقائيّ، أبلِغه ببياناته الجديدة عبر قناة آمنة.
       </Alert>
     </div>
   );

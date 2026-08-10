@@ -27,16 +27,16 @@ const CIRCLES = [
 
 const HEIGHTS = [
   { h: 8, label: "8px" },
-  { h: 12, label: "12px · افتراضيّ" },
+  { h: 12, label: "12px، افتراضيّ" },
   { h: 18, label: "18px" },
   { h: 28, label: "28px" },
 ] as const;
 
 const RADII = [
-  { r: 0, label: "0 · حادّ" },
-  { r: 7, label: "7 · افتراضيّ" },
-  { r: 16, label: "16 · ناعم" },
-  { r: 999, label: "999 · كبسولة" },
+  { r: 0, label: "0، حادّ" },
+  { r: 7, label: "7، افتراضيّ" },
+  { r: 16, label: "16، ناعم" },
+  { r: 999, label: "999، كبسولة" },
 ] as const;
 
 export default function SkeletonPage() {
@@ -44,18 +44,18 @@ export default function SkeletonPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Skeleton
+          Design System, Skeleton
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">
           معرض هياكل التحميل
         </h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          لبنة تحميل بلمعان منزلق، تُشكَّل بالعرض والارتفاع والاستدارة — سطر أو دائرة أو بطاقة، بلا أنماط ثابتة.
+          لبنة تحميل بلمعان منزلق، تُشكَّل بالعرض والارتفاع والاستدارة: سطر أو دائرة أو بطاقة، بلا أنماط ثابتة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="الأشكال الأساسيّة">
-            <Lab>سطر · دائرة · بطاقة</Lab>
+            <Lab>سطر، دائرة، بطاقة</Lab>
             <div className="flex flex-wrap items-end gap-10">
               <div className="flex flex-col items-start gap-2">
                 <Skeleton width={220} />
@@ -79,7 +79,7 @@ export default function SkeletonPage() {
           </Sec>
 
           <Sec title="أسطر النصّ">
-            <Lab>عرض نسبيّ لمحاكاة فقرة — width كنسبة مئويّة</Lab>
+            <Lab>عرض نسبيّ لمحاكاة فقرة: width كنسبة مئويّة</Lab>
             <div className="max-w-md space-y-3">
               <Skeleton width="100%" />
               <Skeleton width="92%" />
@@ -95,7 +95,7 @@ export default function SkeletonPage() {
                 <div key={c.size} className="flex flex-col items-center gap-2">
                   <Skeleton width={c.size} height={c.size} radius={999} />
                   <span className="font-latin text-xs font-bold uppercase tracking-[0.12em] text-content-muted">
-                    {c.size}px · {c.label}
+                    {c.size}px, {c.label}
                   </span>
                 </div>
               ))}
@@ -103,7 +103,7 @@ export default function SkeletonPage() {
           </Sec>
 
           <Sec title="الارتفاعات">
-            <Lab>height متغيّر — من الأسطر الرفيعة إلى الكتل</Lab>
+            <Lab>height متغيّر: من الأسطر الرفيعة إلى الكتل</Lab>
             <div className="max-w-md space-y-6">
               {HEIGHTS.map((row) => (
                 <div key={row.h} className="flex flex-col gap-2">
@@ -140,7 +140,7 @@ export default function SkeletonPage() {
           </Sec>
 
           <Sec title="الصنف المساعد">
-            <Lab>className=&quot;sk-av&quot; — لبنة صورة رمزيّة جاهزة (‏36×36)</Lab>
+            <Lab>className=&quot;sk-av&quot;: لبنة صورة رمزيّة جاهزة (‏36×36)</Lab>
             <div className="flex flex-wrap items-center gap-6">
               <Skeleton className="sk-av" />
               <Skeleton className="sk-av" />
@@ -148,7 +148,7 @@ export default function SkeletonPage() {
             </div>
           </Sec>
 
-          <Sec title="تركيب واقعيّ — بطاقة عضو">
+          <Sec title="تركيب واقعيّ: بطاقة عضو">
             <Lab>دائرة + أسطر تُحاكي بطاقة تحميل</Lab>
             <div className="max-w-sm rounded border border-line bg-surface p-5">
               <div className="flex items-center gap-4">

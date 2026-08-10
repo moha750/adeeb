@@ -3,7 +3,7 @@ import { AuthShell } from "@adeeb/design-system";
 import { ResetForm } from "./ResetForm";
 
 export const metadata: Metadata = {
-  title: "تعيين كلمة مرور جديدة — بوّابة أديب",
+  title: "تعيين كلمة مرور جديدة، بوّابة أديب",
 };
 
 export default function ResetPasswordPage() {

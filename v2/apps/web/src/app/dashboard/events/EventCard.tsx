@@ -26,7 +26,7 @@ export function EventCard({ event, actions, tone, onOpen }: Props) {
         className="acard-header-clip"
         icon={<CalendarBlank aria-hidden />}
         title={event.name}
-        subtitle={event.timeLabel ? `${event.dateLabel} · ${event.timeLabel}` : event.dateLabel}
+        subtitle={event.timeLabel ? `${event.dateLabel}، ${event.timeLabel}` : event.dateLabel}
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge status={event.status} />

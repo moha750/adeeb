@@ -13,7 +13,7 @@ import { SettingsView } from "./SettingsView";
  * ومفتاحُها `view_own_membership` كأختيها — بابُ المرء إلى نفسه واحد، ولا يقع خلفه إلّا
  * حسابُ حامله: الجلسات تُقرأ بـ`auth.uid()` في القاعدة، والأفعال كلُّها بجلسته لا بمفتاح خدمة.
  */
-export const metadata = { title: "الإعدادات — بوّابة أديب" };
+export const metadata = { title: "الإعدادات، بوّابة أديب" };
 
 export default async function SettingsPage() {
   const denied = await denyUnless("/dashboard/settings");

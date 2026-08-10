@@ -53,7 +53,7 @@ export async function changeMyPassword(
   });
   if (authErr) {
     return authErr.message.toLowerCase().includes("captcha")
-      ? { ok: false, message: "تعذّر التأكّد أنّك لست روبوتًا — أعِد المحاولة." }
+      ? { ok: false, message: "تعذّر التأكّد أنّك لست روبوتًا. أعِد المحاولة." }
       : { ok: false, message: "كلمة المرور الحاليّة غير صحيحة." };
   }
 

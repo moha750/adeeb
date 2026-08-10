@@ -161,7 +161,7 @@ export function UnitView({
             variant="soft"
             icon={<UsersFour />}
             title="لا عضو في إدارتك بعد"
-            description="ابدأ بتعيين عضوٍ إداريٍّ في الإدارة — ثمّ وزّع إشرافه من قسم اللجان أدناه."
+            description="ابدأ بتعيين عضوٍ إداريٍّ في الإدارة، ثمّ وزّع إشرافه من قسم اللجان أدناه."
             action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>تعيين عضو إداريّ</Button>}
           />
         ) : (

@@ -48,10 +48,10 @@ async function loadBook(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const res = await loadBook(slug);
-  if (!res) return { title: "المكتبة — أديب" };
+  if (!res) return { title: "المكتبة، أديب" };
   const { book, pages } = res;
   return {
-    title: `${book.title} — مكتبة أديب`,
+    title: `${book.title}، مكتبة أديب`,
     description: book.summary ?? "منشورٌ من مكتبة «إرثٌ يُروى» في نادي أديب.",
     openGraph: { title: book.title, description: book.summary ?? undefined, images: pages[0] ? [pages[0].src] : undefined },
   };
@@ -73,7 +73,7 @@ export default async function BookReaderPage({ params }: { params: Promise<{ slu
         <section className="py-10 md:py-14">
           <Container>
             <div className="mb-6 text-center">
-              <div className="font-body text-sm font-bold text-secondary">{kindLabel}{yr ? ` · ${yr}` : ""}</div>
+              <div className="font-body text-sm font-bold text-secondary">{kindLabel}{yr ? `، ${yr}` : ""}</div>
               <h1 className="font-display text-2xl font-bold text-content md:text-3xl">{book.title}</h1>
               {book.summary ? <p className="mx-auto mt-2 max-w-2xl text-content-muted">{book.summary}</p> : null}
             </div>

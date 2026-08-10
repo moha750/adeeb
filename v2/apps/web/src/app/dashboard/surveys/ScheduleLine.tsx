@@ -67,7 +67,7 @@ export function ScheduleLine({ survey, className }: { survey: SurveyRow; classNa
   const rel = (x: Seg) => (now > 0 ? ` (${relative(x.at, now)})` : "");
   const primary = `${win.primary.verb} ${shortDate(win.primary.iso)}${rel(win.primary)}`;
   // التلميح: الأساسيّ ثمّ الثانويّ بالتاريخ الكامل — الطرفان معًا لمن أراد التفصيل
-  const title = [win.primary, ...win.extra].map((x) => `${x.verb} ${fullDate(x.iso)}${rel(x)}`).join("  ·  ");
+  const title = [win.primary, ...win.extra].map((x) => `${x.verb} ${fullDate(x.iso)}${rel(x)}`).join("، ");
 
   return (
     <span className={`flex min-w-0 items-center gap-1.5 text-content-muted ${className ?? ""}`} title={title}>

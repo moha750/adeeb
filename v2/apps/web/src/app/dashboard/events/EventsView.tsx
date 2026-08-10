@@ -193,7 +193,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
       variant="aurora"
       icon={<CalendarBlank />}
       title="لا فعاليّات بعد"
-      description="أنشئ أوّل فعاليّة — تُحفظ مسودّةً حتّى تنشرها."
+      description="أنشئ أوّل فعاليّة، تُحفظ مسودّةً حتّى تنشرها."
       action={createBtn}
     />
   ) : filtering ? (
@@ -297,7 +297,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
         tone="danger"
         icon={<Trash />}
         title="حذف الفعاليّة؟"
-        text={confirmKill ? `سيُحذف «${confirmKill.name}» نهائيًّا. لا استرجاع بعده. (الفعاليّات ذات الحجوزات لا تُحذف — تُلغى.)` : undefined}
+        text={confirmKill ? `سيُحذف «${confirmKill.name}» نهائيًّا. لا استرجاع بعده. (الفعاليّات ذات الحجوزات لا تُحذف، تُلغى.)` : undefined}
         confirmLabel="حذف"
         loading={pending}
         onConfirm={() => {

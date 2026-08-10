@@ -105,15 +105,15 @@ export default function ModalPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Modal</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Modal</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض النوافذ الحواريّة</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          نوافذ Aurora بسلوك يدويّ كامل: فخّ تركيز · قفل تمرير الخلفية · ESC · حركة دخول/خروج. اضغط الأزرار لفتح كلّ حالة.
+          نوافذ Aurora بسلوك يدويّ كامل: فخّ تركيز، قفل تمرير الخلفية، ESC، حركة دخول/خروج. اضغط الأزرار لفتح كلّ حالة.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="نافذة عاديّة">
-            <Lab>ترويسة (عنوان + وصف) · محتوى · تذييل بأزرار</Lab>
+            <Lab>ترويسة (عنوان + وصف)، محتوى، تذييل بأزرار</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="primary" size="md" onClick={() => setBasic(true)}>افتح النافذة</Button>
             </div>
@@ -131,14 +131,14 @@ export default function ModalPage() {
               }
             >
               <p className="text-content-muted">
-                هذا هو جسم النافذة — يقبل أيّ محتوى React: نصوصًا أو نماذج أو جداول. يُمرَّر عبر <code className="font-latin">children</code>،
+                هذا هو جسم النافذة، يقبل أيّ محتوى React: نصوصًا أو نماذج أو جداول. يُمرَّر عبر <code className="font-latin">children</code>،
                 والعنوان والوصف والتذييل خصائص مستقلّة.
               </p>
             </Modal>
           </Sec>
 
           <Sec title="أثناء التنفيذ (busy)">
-            <Lab>القاعدة ٧: الطلب انطلق للخادم فالإغلاق لا يُلغيه — تُغلق المخارج الثلاثة (إلغاء · × · ESC)</Lab>
+            <Lab>القاعدة ٧: الطلب انطلق للخادم فالإغلاق لا يُلغيه، تُغلق المخارج الثلاثة (إلغاء، ×، ESC)</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="primary" size="md" onClick={() => setBusyOpen(true)}>افتح ثمّ احفظ</Button>
             </div>
@@ -147,7 +147,7 @@ export default function ModalPage() {
               onClose={() => setBusyOpen(false)}
               busy={demoBusy}
               title="نافذة أثناء الحفظ"
-              description="اضغط «حفظ التغييرات» ثمّ جرّب الإلغاء أو × أو ESC — لن يستجيب شيء حتى ينتهي."
+              description="اضغط «حفظ التغييرات» ثمّ جرّب الإلغاء أو × أو ESC، لن يستجيب شيء حتى ينتهي."
               size="md"
               footer={
                 <>
@@ -167,13 +167,13 @@ export default function ModalPage() {
               }
             >
               <p className="text-content-muted">
-                أثناء التنفيذ يبقى الزرّ بلون الهوية مع دائرته، وتُعطَّل المخارج الثلاثة — فلا يَعِد «إلغاء» بما لا يملك.
+                أثناء التنفيذ يبقى الزرّ بلون الهوية مع دائرته، وتُعطَّل المخارج الثلاثة، فلا يَعِد «إلغاء» بما لا يملك.
               </p>
             </Modal>
           </Sec>
 
           <Sec title="الأحجام">
-            <Lab>size: sm · md · lg</Lab>
+            <Lab>size: sm, md, lg</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="ghost" size="md" onClick={() => setSized("sm")}>صغيرة (sm)</Button>
               <Button variant="ghost" size="md" onClick={() => setSized("md")}>متوسّطة (md)</Button>
@@ -193,8 +193,8 @@ export default function ModalPage() {
             </Modal>
           </Sec>
 
-          <Sec title="نافذة تأكيد — النغمات">
-            <Lab>ConfirmDialog · tone: danger · warning · success</Lab>
+          <Sec title="نافذة تأكيد: النغمات">
+            <Lab>ConfirmDialog, tone: danger, warning, success</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="danger" size="md" onClick={() => setConfirm("danger")}>خطر (danger)</Button>
               <Button variant="warning" size="md" onClick={() => setConfirm("warning")}>تحذير (warning)</Button>
@@ -214,8 +214,8 @@ export default function ModalPage() {
             ) : null}
           </Sec>
 
-          <Sec title="نافذة تأكيد — إشعار بزرّ واحد">
-            <Lab>ConfirmDialog · single (بلا زرّ إلغاء)</Lab>
+          <Sec title="نافذة تأكيد: إشعار بزرّ واحد">
+            <Lab>ConfirmDialog، single (بلا زرّ إلغاء)</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="success" size="md" onClick={() => setNotice(true)}>إشعار نجاح</Button>
             </div>
@@ -233,7 +233,7 @@ export default function ModalPage() {
           </Sec>
 
           <Sec title="نافذة نموذج">
-            <Lab>mdl-grid · Field · Select · mdl-full · mdl-fieldlabel · Segmented</Lab>
+            <Lab>form-grid, Field, Select, form-full, mdl-fieldlabel, Segmented</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="primary" size="md" onClick={() => setForm(true)}>افتح النموذج</Button>
             </div>
@@ -250,12 +250,12 @@ export default function ModalPage() {
                 </>
               }
             >
-              <div className="mdl-grid">
+              <div className="form-grid">
                 <Field label="الاسم" icon={<User />} innerIcon={<PencilSimple />} placeholder="اكتب الاسم" />
                 <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
                 <Select label="القسم" icon={<Buildings />} options={DEPT_OPTS} value={dept} onValueChange={setDept} />
                 <Select label="الدور" icon={<Star />} options={ROLE_OPTS} value={role} onValueChange={setRole} />
-                <div className="mdl-full">
+                <div className="form-full">
                   <span className="mdl-fieldlabel">الحالة</span>
                   <Segmented aria-label="الحالة" value={status} onValueChange={setStatus}
                     items={STATUSES.map((s) => ({ value: s.k, label: s.label }))} />
@@ -265,7 +265,7 @@ export default function ModalPage() {
           </Sec>
 
           <Sec title="نافذة مبوّبة">
-            <Lab>تبويبات (Segmented) · mdl-tabpanel · mdl-info · mdl-muted</Lab>
+            <Lab>تبويبات (Segmented)، mdl-info، mdl-muted</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="ghost" size="md" onClick={() => setTabbed(true)}>افتح المبوّبة</Button>
             </div>
@@ -280,23 +280,21 @@ export default function ModalPage() {
                 <Segmented aria-label="أقسام الملفّ" value={tab} onValueChange={(v) => setTab(v as "info" | "activity")}
                   items={[{ value: "info", label: "المعلومات" }, { value: "activity", label: "النشاط" }]} />
               </div>
-              <div className="mdl-tabpanel">
-                {tab === "info" ? (
-                  <dl className="mdl-info">
-                    <div className="mdl-info-row"><dt>القسم</dt><dd>الإعلام</dd></div>
-                    <div className="mdl-info-row"><dt>الدور</dt><dd>عضو</dd></div>
-                    <div className="mdl-info-row"><dt>تاريخ الانضمام</dt><dd>١٢ يناير ٢٠٢٥</dd></div>
-                    <div className="mdl-info-row"><dt>الحالة</dt><dd>نشط</dd></div>
-                  </dl>
-                ) : (
-                  <p className="mdl-muted">لا نشاط حديث لعرضه لهذا العضو.</p>
-                )}
-              </div>
+              {tab === "info" ? (
+                <dl className="mdl-info">
+                  <div className="mdl-info-row"><dt>القسم</dt><dd>الإعلام</dd></div>
+                  <div className="mdl-info-row"><dt>الدور</dt><dd>عضو</dd></div>
+                  <div className="mdl-info-row"><dt>تاريخ الانضمام</dt><dd>١٢ يناير ٢٠٢٥</dd></div>
+                  <div className="mdl-info-row"><dt>الحالة</dt><dd>نشط</dd></div>
+                </dl>
+              ) : (
+                <p className="mdl-muted">لا نشاط حديث لعرضه لهذا العضو.</p>
+              )}
             </Modal>
           </Sec>
 
           <Sec title="نافذة الملف الشخصيّ">
-            <Lab>pvb-modal · hero (غلاف + أفتار) · pvb-name/role/badges · pva-grid (خلايا + نسخ)</Lab>
+            <Lab>pvb-modal، hero (غلاف + أفتار)، pvb-head، pva-grid (خلايا + نسخ)</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="primary" size="md" onClick={() => setProfile(true)}>عرض الملف</Button>
             </div>
@@ -318,9 +316,11 @@ export default function ModalPage() {
                 </>
               }
             >
-              <div className="pvb-name">محمد بن إسماعيل</div>
-              <div className="pvb-role">عضو · لجنة الإعلام</div>
-              <div className="pvb-badges"><Badge tone="success" variant="soft" dot live>نشط</Badge></div>
+              <div className="pvb-head">
+                <div className="pvb-name">محمد بن إسماعيل</div>
+                <div className="pvb-role">عضو لجنة الإعلام</div>
+                <div className="pvb-badges"><Badge tone="success" variant="soft" dot live>نشط</Badge></div>
+              </div>
 
               <div className="pva-sections">
                 <PSec icon={<Books />} title="البيانات الأكاديميّة">
@@ -357,21 +357,23 @@ export default function ModalPage() {
           {/* نافذة السبب — الحاجة: السبب يُقصّ بـ«…» في الجدول والكرت (`.txt-clip` · `.acard-info-val`)،
               فيلزم كشفه كاملًا بلا فتح الملفّ كلّه. ترث هيئة الملفّ (غلاف + أفتار) وتلبس نغمتها. */}
           <Sec title="نافذة السبب">
-            <Lab>pvb-modal · mdl-tone-danger (النغمة على السطح والحدّ والغلاف والأفتار) · pva-sec--end</Lab>
+            <Lab>pvb-modal، mdl-tone-danger (النغمة على السطح والحدّ والغلاف والأفتار)، pva-sec--end</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Button variant="danger" size="md" onClick={() => setReasonB(true)}>عرض السبب</Button>
             </div>
             <Modal
               open={reasonB}
               onClose={() => setReasonB(false)}
-              title="سبب إنهاء العضوية — ريم صلاح الشامي"
+              title="سبب إنهاء العضوية: ريم صلاح الشامي"
               size="sm"
               className="pvb-modal mdl-tone-danger"
               hero={<Avatar name="ريم صلاح الشامي" size="2xl" status="busy" className="pvb-av" />}
               footer={<Button variant="ghost-danger" size="md" onClick={() => setReasonB(false)}>إغلاق</Button>}
             >
-              <div className="pvb-name">ريم صلاح الشامي</div>
-              <div className="pvb-role">عضوية منتهية منذ ١٣ يومًا</div>
+              <div className="pvb-head">
+                <div className="pvb-name">ريم صلاح الشامي</div>
+                <div className="pvb-role">عضوية منتهية منذ ١٣ يومًا</div>
+              </div>
               <div className="pva-sections">
                 {/* خليّتان عاديّتان لا تصميم خاصّ: قسم الإنهاء يجعل القيمة تلتفّ كاملةً أصلًا
                     (`.pva-sec--end .pva-val`)، فالسبب يُعرض كأيّ قيمة — بأيقونته وتسميته. */}

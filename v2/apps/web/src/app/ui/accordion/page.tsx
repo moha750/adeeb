@@ -22,11 +22,11 @@ export default function AccordionPage() {
     <main className="py-16">
       <Container className="max-w-2xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Accordion
+          Design System, Accordion
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الأكورديون</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          طيّ وفتح مبنيّ على عنصر <span className="font-latin">&lt;details&gt;</span> الأصليّ — سهل الوصول بلا
+          طيّ وفتح مبنيّ على عنصر <span className="font-latin">&lt;details&gt;</span> الأصليّ، سهل الوصول بلا
           جافاسكربت. انقر أيّ بند لفتحه أو إغلاقه؛ تبدأ كلّ البنود مغلقة.
         </p>
 
@@ -92,12 +92,12 @@ export default function AccordionPage() {
           </Sec>
 
           <Sec title="بند مفرد">
-            <Lab>أبسط استخدام — عنصر واحد</Lab>
+            <Lab>أبسط استخدام: عنصر واحد</Lab>
             <Accordion
               items={[
                 {
                   q: "هل يُشترط أن أكون كاتبًا محترفًا؟",
-                  a: "إطلاقًا — النادي يرحّب بكلّ المستويات، ويوفّر ورشًا لتطوير المهارات من الصفر.",
+                  a: "إطلاقًا، النادي يرحّب بكلّ المستويات، ويوفّر ورشًا لتطوير المهارات من الصفر.",
                 },
               ]}
             />

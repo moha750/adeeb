@@ -9,7 +9,7 @@ import { getMyAccount } from "./data";
 import { MyBookings } from "./MyBookings";
 import { MyData } from "./MyData";
 
-export const metadata: Metadata = { title: "حسابك — نادي أديب" };
+export const metadata: Metadata = { title: "حسابك، نادي أديب" };
 export const dynamic = "force-dynamic";
 
 /**
@@ -37,13 +37,13 @@ export default async function MePage() {
             <LandingHeading
               eyebrow="حسابك"
               title="مقاعدُك وبياناتُك"
-              deck="ما حجزتَه من برامج أديب، وما نعرفه عنك — في موضعٍ واحد."
+              deck="ما حجزتَه من برامج أديب، وما نعرفه عنك، في موضعٍ واحد."
               align="center"
             />
 
             {!account ? (
               <div style={{ maxWidth: 720, margin: "32px auto 0" }}>
-                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص — أبلغ الإدارة.</Alert>
+                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص. أبلغ الإدارة.</Alert>
               </div>
             ) : (
               <div className="flex flex-col gap-8" style={{ marginTop: 32 }}>

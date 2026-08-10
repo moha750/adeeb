@@ -14,7 +14,7 @@ import { ProfileView } from "./ProfileView";
  * خادميّة تجلب وتمرّر لا غير — العرض في `ProfileView` العميليّ (أيقونات Phosphor تُنشئ
  * `createContext`، وهو ممنوعٌ في مكوّنٍ خادميّ).
  */
-export const metadata = { title: "الملف الشخصي — بوّابة أديب" };
+export const metadata = { title: "الملف الشخصي، بوّابة أديب" };
 
 export default async function MyProfilePage() {
   const denied = await denyUnless("/dashboard/profile");

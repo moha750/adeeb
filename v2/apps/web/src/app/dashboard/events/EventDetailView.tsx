@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, BarList, Button, ChartPanel, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Alert, Badge, BarList, Button, SectionCard, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import { CalendarBlank, Certificate, ChatText, Clock, Copy, MapPin } from "@phosphor-icons/react";
 import { ArrowUUpLeft } from "@/app/_components/glyphs";
 import { CheckCircle, PencilSimple, Prohibit, WhatsappLogo } from "@/app/_components/glyphs";
@@ -149,7 +149,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
 
   const nameCol: Column<ReservationRow> = {
     key: "name", header: "المشارك", width: "minmax(160px, 1.8fr)",
-    render: (r) => <span className="txt"><b>{r.fullName ?? "—"}</b><span className="text-content-muted"> · {ACCOUNT_TYPE_LABEL[r.accountType]}</span></span>,
+    render: (r) => <span className="txt"><b>{r.fullName ?? "—"}</b><span className="text-content-muted">، {ACCOUNT_TYPE_LABEL[r.accountType]}</span></span>,
   };
   const contactCol: Column<ReservationRow> = {
     key: "contact", header: "التواصل", width: "minmax(150px, 1.3fr)",
@@ -221,7 +221,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
     const pendingWA = detail.reservations.filter(STAGE_TABS[0].match).length;
     const pendingCert = detail.reservations.filter(STAGE_TABS[2].match).length;
     switch (phase) {
-      case "draft": return { tone: "info" as const, title: "مسودّة", text: "لم تُنشَر بعد — انشرها من قائمة الفعاليّات ليبدأ الحجز." };
+      case "draft": return { tone: "info" as const, title: "مسودّة", text: "لم تُنشَر بعد. انشرها من قائمة الفعاليّات ليبدأ الحجز." };
       case "cancelled": return { tone: "danger" as const, title: "فعاليّة ملغاة", text: "حجوزاتها محفوظة للاطّلاع، ولا إجراءات عليها." };
       case "upcoming": return { tone: "info" as const, title: "التسجيل مفتوح", text: `${pendingWA} حجزًا بانتظار تأكيد واتساب.` };
       case "today": return { tone: "success" as const, title: "الحضور جارٍ", text: "سجّل الحاضرين الآن من تبويب «تسجيل الحضور»." };
@@ -256,10 +256,10 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
         ) : null}
         {seats ? (
           detail.unlimited
-            ? <span>التسجيل غير محدود — <b className="font-latin text-content">{seats.total_booked}</b> مسجّلًا</span>
+            ? <span>التسجيل غير محدود، <b className="font-latin text-content">{seats.total_booked}</b> مسجّلًا</span>
             : detail.splitByGender
-              ? <span>المقاعد — رجال <b className="font-latin text-content">{seats.male_booked}</b>/<b className="font-latin text-content">{seats.male_seats}</b> · نساء <b className="font-latin text-content">{seats.female_booked}</b>/<b className="font-latin text-content">{seats.female_seats}</b></span>
-              : <span>المقاعد (مفتوح للجنسين) — <b className="font-latin text-content">{seats.total_booked}</b>/<b className="font-latin text-content">{seats.total_seats}</b> محجوز</span>
+              ? <span>المقاعد: رجال <b className="font-latin text-content">{seats.male_booked}</b>/<b className="font-latin text-content">{seats.male_seats}</b>، نساء <b className="font-latin text-content">{seats.female_booked}</b>/<b className="font-latin text-content">{seats.female_seats}</b></span>
+              : <span>المقاعد (مفتوح للجنسين): <b className="font-latin text-content">{seats.total_booked}</b>/<b className="font-latin text-content">{seats.total_seats}</b> محجوز</span>
         ) : null}
       </div>
 
@@ -269,14 +269,14 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
         <EmptyState variant="soft" icon={<CalendarBlank />} title="لا حجوزات بعد" description="ستظهر رحلة الحجوزات هنا فور أن يحجز أحدٌ مقعده." />
       ) : (
         <>
-          <ChartPanel headerVariant="chip" icon={<CheckCircle />} title="مسار التقدّم" style={{ marginBottom: 18 }}>
-            <BarList items={funnel} max={reg} />
+          <SectionCard headerVariant="chip" icon={<CheckCircle />} title="مسار التقدّم" style={{ marginBottom: 18 }}>
+            <BarList items={funnel} max={reg} unit={{ one: "مشارك", two: "مشاركان", few: "مشاركون" }} />
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-muted" style={{ marginTop: 12 }}>
-              <span>المتسرّبون —</span>
+              <span>المتسرّبون:</span>
               <span>ملغى <b className="font-latin text-content">{s.cancelled_count}</b></span>
               <span>لم يحضر <b className="font-latin text-content">{s.no_show_count}</b></span>
             </div>
-          </ChartPanel>
+          </SectionCard>
 
           <div style={{ marginBottom: 14 }}>
             <Tabs items={tabItems} value={tab} onValueChange={(v) => changeTab(v as TabKey)} variant="pill" />
@@ -315,7 +315,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
         onClose={() => setCancelTarget(null)}
         busy={pending}
         title="إلغاء حجز"
-        description={cancelTarget ? `إلغاء حجز «${cancelTarget.fullName ?? "مشارك"}» — سببٌ يُحفَظ في السجلّ.` : undefined}
+        description={cancelTarget ? `إلغاء حجز «${cancelTarget.fullName ?? "مشارك"}»، سببٌ يُحفَظ في السجلّ.` : undefined}
         size="sm"
         footer={
           <>

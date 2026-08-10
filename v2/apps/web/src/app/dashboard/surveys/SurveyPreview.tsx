@@ -22,7 +22,7 @@ export function SurveyPreview({ survey, questions, onClose }: { survey: PublicSu
     <div className="fixed inset-0 z-50 overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label="معاينة الاستبيان">
       <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3">
         <span className="inline-flex items-center gap-2 text-sm font-bold text-content-muted">
-          <Eye aria-hidden /> معاينة — لن تُرسَل الإجابات
+          <Eye aria-hidden /> معاينة: لن تُرسَل الإجابات
         </span>
         <Button variant="ghost" size="sm" onClick={onClose}><X aria-hidden /> إغلاق المعاينة</Button>
       </div>

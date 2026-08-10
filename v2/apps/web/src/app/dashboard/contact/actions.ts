@@ -4,7 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
 import { SECTION_CAP } from "@/lib/capabilities";
-import type { ContactPriority, ContactStatus } from "@/lib/contact/vocab";
+import type { ContactStatus } from "@/lib/contact/vocab";
 
 export type ContactResult = { ok: boolean; message: string };
 
@@ -30,7 +30,7 @@ async function authorized() {
 
 const refresh = () => revalidatePath("/dashboard/contact");
 
-/** تغيير الحالة — قراءةً أو أرشفةً أو إعادةً إلى الصندوق. */
+/** تعليمُها مقروءة — الحالةُ الوحيدة التي تُكتب بيدٍ؛ و«أُجيب عنها» يكتبها الردُّ نفسه. */
 export async function setContactStatus(id: string, status: ContactStatus): Promise<ContactResult> {
   const { admin, deny } = await authorized();
   if (!admin) return deny!;
@@ -46,24 +46,6 @@ export async function setContactStatus(id: string, status: ContactStatus): Promi
 
   refresh();
   return { ok: true, message: "حُدِّثت الحالة." };
-}
-
-/** رفعُ الأولويّة أو خفضُها — ترتيبُ عملٍ داخليّ لا يراه الزائر. */
-export async function setContactPriority(id: string, priority: ContactPriority): Promise<ContactResult> {
-  const { admin, deny } = await authorized();
-  if (!admin) return deny!;
-
-  const sb = service();
-  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
-
-  const { error } = await sb
-    .from("contact_messages")
-    .update({ priority, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) return { ok: false, message: `تعذّر تحديث الأولويّة: ${error.message}` };
-
-  refresh();
-  return { ok: true, message: "حُدِّثت الأولويّة." };
 }
 
 /** ملاحظةٌ داخليّة على الرسالة — لأهل اللوحة وحدهم، لا تُرسَل إلى أحد. */
@@ -137,7 +119,7 @@ async function readFunctionError(error: unknown): Promise<string | null> {
     try {
       const j = (await ctx.json()) as { error?: string };
       if (j?.error === "RESEND_API_KEY not configured") {
-        return "مفتاح Resend غير مُهيّأ في دوالّ الحافة — لم يخرج البريد.";
+        return "مفتاح Resend غير مُهيّأ في دوالّ الحافة، لم يخرج البريد.";
       }
       if (j?.error) return `تعذّر إرسال الردّ: ${j.error}`;
     } catch {

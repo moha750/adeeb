@@ -3,7 +3,7 @@ import { Alert } from "@adeeb/design-system";
 import { getCertificates } from "./data";
 import { CertificatesView } from "./CertificatesView";
 
-export const metadata = { title: "شهادات الخبرة — بوّابة أديب" };
+export const metadata = { title: "شهادات الخبرة، بوّابة أديب" };
 
 export default async function CertificatesPage() {
   const denied = await denyUnless("/dashboard/members/certificates");

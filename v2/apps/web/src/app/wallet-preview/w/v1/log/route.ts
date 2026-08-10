@@ -20,7 +20,7 @@ export async function POST(req: Request): Promise<Response> {
     // **يُحفَظ صفوفًا لا في سجلّ الخادم وحده**: سجلُّ Vercel لا يُقرأ من حيث نشخّص،
     // وهذا أنفعُ ما تقوله أبل حين ترفض بطاقتَنا.
     await appendLog(logs);
-    for (const line of logs) console.warn("[wallet-preview · سجلّ أبل]", line);
+    for (const line of logs) console.warn("[wallet-preview، سجلّ أبل]", line);
   } catch {
     /* لا نردّ خطأً على مسارِ سجلّ — أبل تُهمله وتُعيد المحاولة بلا فائدة */
   }

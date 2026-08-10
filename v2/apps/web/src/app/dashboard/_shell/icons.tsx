@@ -4,7 +4,8 @@ import {
   CalendarBlank, Globe, Gear, Bell, Lifebuoy, List, SidebarSimple, ChartLineUp, Scales, BookOpen,
   SignOut, ImagesSquare, ChartBar, Handshake, Question, UserCheck, HourglassMedium, Prohibit, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
-  EnvelopeSimpleOpen, UserCircle, SlidersHorizontal,
+  EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
+  PenNib, ClockCounterClockwise, Checks,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Plus } from "@/app/_components/glyphs";
 
@@ -64,6 +65,9 @@ export const IconUnit = (p: P) => <Buildings aria-hidden {...p} />;
 export const IconDashboard = (p: P) => <Layout aria-hidden {...p} />;
 export const IconDept = (p: P) => <SquaresFour aria-hidden {...p} />;
 export const IconKey = (p: P) => <Key aria-hidden {...p} />;
+/* المهامّ — قائمةٌ بعلاماتِ صحّ: **ما أُنجز منها** لا مجرّد سردٍ لها. و`ClipboardText` ممنوعةٌ
+   (مأخوذةٌ للاستبيانات) و`FileText` كذلك (المستندات) — وأيقونةٌ بمعنيين في شريطٍ واحد تكذب. */
+export const IconTasks = (p: P) => <ListChecks aria-hidden {...p} />;
 // الإذاعة — المايكروفون: إذاعةٌ مسموعة لا مرئيّة، فالأيقونة من عالم الصوت لا البثّ
 export const IconMic = (p: P) => <MicrophoneStage aria-hidden {...p} />;
 // الأخبار — الصحيفة: غرفة تحريرٍ تكتب وتنشر، لا بوقُ إعلانٍ يُذيع
@@ -76,6 +80,12 @@ export const IconCertificate = (p: P) => <Certificate aria-hidden {...p} />;
 export const IconQr = (p: P) => <QrCode aria-hidden {...p} />;
 // رسائل التواصل — الظرف الوارد: بريدٌ يصل من خارج النادي فيُقرأ ويُجاب، لا ظرفٌ يُرسَل
 export const IconInbox = (p: P) => <EnvelopeSimpleOpen aria-hidden {...p} />;
+// الترشُّح — القلم: العضو يكتب بيان ترشّحه (لا الميزان، فذاك للغرفة والإدارة)
+export const IconCandidacy = (p: P) => <PenNib aria-hidden {...p} />;
+// سِجلّ ترشُّحي — الساعة الراجعة: خطُّ أحداث ترشّحه (قُدّم · طُلب تعديل · اعتُمد…)
+export const IconMyRuns = (p: P) => <ClockCounterClockwise aria-hidden {...p} />;
+// التصويت — علامتا الصحّ: إدلاءُ الصوت (فعلٌ لا إدارة)
+export const IconBallot = (p: P) => <Checks aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -84,7 +94,9 @@ export const ICONS = {
   stats: IconStats, handshake: IconHandshake, faq: IconFaq,
   active: IconActive, pending: IconPending, suspended: IconSuspended,
   cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, dept: IconDept, key: IconKey,
+  tasks: IconTasks,
   mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
   inbox: IconInbox,
+  candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
 } as const;
 export type IconKey = keyof typeof ICONS;

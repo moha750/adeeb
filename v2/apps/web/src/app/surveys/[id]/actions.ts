@@ -15,7 +15,7 @@ export type SubmitResult = { ok: boolean; message: string };
 async function verifyTurnstile(token: string | undefined): Promise<string | null> {
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
   if (!secret) return null; // الدرع غير مُفعَّل هنا
-  if (!token) return "تعذّر التحقّق من أنّك لست روبوتًا — حدّث الصفحة وأعد المحاولة.";
+  if (!token) return "تعذّر التحقّق من أنّك لست روبوتًا. حدّث الصفحة وأعد المحاولة.";
 
   const form = new URLSearchParams({ secret, response: token });
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -30,7 +30,7 @@ async function verifyTurnstile(token: string | undefined): Promise<string | null
     const data = (await resp.json()) as { success?: boolean };
     if (data.success === true) return null;
   } catch { /* تعذّر الوصول لـCloudflare — نرفض بأمان */ }
-  return "فشل التحقّق من أنّك لست روبوتًا — حدّث الصفحة وأعد المحاولة.";
+  return "فشل التحقّق من أنّك لست روبوتًا. حدّث الصفحة وأعد المحاولة.";
 }
 
 /**
@@ -61,7 +61,7 @@ export async function submitSurveyResponse(input: {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
-  if (!url || !key) return { ok: false, message: "إعداد الخادم ناقص — أبلغ الإدارة." };
+  if (!url || !key) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
   const sb = createAdeebServiceClient(url, key);
 
   const device = ["mobile", "tablet", "desktop"].includes(input.device ?? "") ? input.device : null;
@@ -76,5 +76,5 @@ export async function submitSurveyResponse(input: {
   });
   if (error) return { ok: false, message: submitErrorMessage(error.message) };
 
-  return { ok: true, message: "أُرسلت إجاباتك — شكرًا لمشاركتك." };
+  return { ok: true, message: "أُرسلت إجاباتك، شكرًا لمشاركتك." };
 }

@@ -77,10 +77,10 @@ export default function DropdownPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Dropdown</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Dropdown</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض القوائم المنسدلة</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          قائمة إجراءات (⋯) بمظهر Aurora — تموضع مُدرِك للحوافّ عبر Portal، تنقّل بلوحة المفاتيح، ومجموعاتٌ برؤوس
+          قائمة إجراءات (⋯) بمظهر Aurora: تموضع مُدرِك للحوافّ عبر Portal، تنقّل بلوحة المفاتيح، ومجموعاتٌ برؤوس
           وعناصرَ بأيقونات وحالاتٍ (danger / معطّل) ونغمات.
         </p>
 
@@ -96,7 +96,7 @@ export default function DropdownPage() {
 
         <div className="mt-12 space-y-14">
           <Sec title="النمط المعتمد">
-            <Lab>مجموعات برؤوس · أيقونات · عنصر معطّل · مجموعة خطر</Lab>
+            <Lab>مجموعات برؤوس، أيقونات، عنصر معطّل، مجموعة خطر</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Cell tag="Member actions">
                 <DropdownMenu groups={memberActions} ariaLabel="إجراءات العضو" />
@@ -114,7 +114,7 @@ export default function DropdownPage() {
           </Sec>
 
           <Sec title="النغمات (tone)">
-            <Lab>سطح الحالة + حدّ بلونها — يُطابق حالة الصفّ / العنصر</Lab>
+            <Lab>سطح الحالة + حدّ بلونها، يُطابق حالة الصفّ / العنصر</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Cell tag="default">
                 <DropdownMenu groups={toneActions("تغيير الحالة")} />
@@ -143,7 +143,7 @@ export default function DropdownPage() {
           </Sec>
 
           <Sec title="حالات العناصر">
-            <Lab>عنصر danger · عنصر معطّل (disabled)</Lab>
+            <Lab>عنصر danger، عنصر معطّل (disabled)</Lab>
             <div className="flex flex-wrap items-center gap-4">
               <Cell tag="danger item">
                 <DropdownMenu

@@ -16,7 +16,7 @@ export function PublicActivityCard({ a }: { a: PublicActivity }) {
           className="acard-header-clip"
           icon={<CalendarBlank aria-hidden />}
           title={a.name}
-          subtitle={a.timeLabel ? `${a.dateLabel} · ${a.timeLabel}` : a.dateLabel}
+          subtitle={a.timeLabel ? `${a.dateLabel}، ${a.timeLabel}` : a.dateLabel}
         />
         <CardBody className="pt-3">
           <div className="flex flex-col gap-2">
@@ -35,7 +35,7 @@ export function PublicActivityCard({ a }: { a: PublicActivity }) {
               <span className="text-sm text-content-muted">التسجيل متاح للجميع</span>
             ) : !a.full ? (
               a.splitByGender
-                ? <span className="text-sm text-content-muted">متبقٍّ — رجال <b className="font-latin text-content">{a.maleRemaining}</b> · نساء <b className="font-latin text-content">{a.femaleRemaining}</b></span>
+                ? <span className="text-sm text-content-muted">متبقٍّ: رجال <b className="font-latin text-content">{a.maleRemaining}</b>، نساء <b className="font-latin text-content">{a.femaleRemaining}</b></span>
                 : <span className="text-sm text-content-muted">متبقٍّ <b className="font-latin text-content">{a.totalRemaining}</b> مقعدًا (مفتوح للجنسين)</span>
             ) : null}
           </div>

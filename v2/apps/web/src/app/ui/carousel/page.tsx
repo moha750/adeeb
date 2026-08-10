@@ -42,9 +42,9 @@ function Slide({ tag, title, desc }: { tag: string; title: string; desc: string 
 }
 
 const DELAYS = [
-  { label: "سريع · ١٥٠٠ms", value: 1500 },
-  { label: "افتراضيّ · ٤٠٠٠ms", value: 4000 },
-  { label: "بطيء · ٨٠٠٠ms", value: 8000 },
+  { label: "سريع، ١٥٠٠ms", value: 1500 },
+  { label: "افتراضيّ، ٤٠٠٠ms", value: 4000 },
+  { label: "بطيء، ٨٠٠٠ms", value: 8000 },
 ];
 
 export default function CarouselPage() {
@@ -54,7 +54,7 @@ export default function CarouselPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Carousel
+          Design System, Carousel
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الكاروسيل</h1>
         <p className="mt-2 max-w-xl text-content-muted">
@@ -65,7 +65,7 @@ export default function CarouselPage() {
 
         <div className="mt-12 space-y-14">
           <Sec title="افتراضيّ">
-            <Lab>slideClassName الافتراضيّ · ١ / ٢ / ٣ شرائح حسب اتّساع الشاشة</Lab>
+            <Lab>slideClassName الافتراضيّ، ١ / ٢ / ٣ شرائح حسب اتّساع الشاشة</Lab>
             <Carousel>
               {SLIDES.map((s) => (
                 <Slide key={s.title} {...s} />
@@ -92,7 +92,7 @@ export default function CarouselPage() {
           </Sec>
 
           <Sec title="سرعة التشغيل التلقائيّ (autoplayDelay)">
-            <Lab>غيّر مدّة الانتظار بين الشرائح — المفتاح يُعيد بناء الكاروسيل بالمدّة الجديدة</Lab>
+            <Lab>غيّر مدّة الانتظار بين الشرائح، المفتاح يُعيد بناء الكاروسيل بالمدّة الجديدة</Lab>
             <div className="mb-6 flex flex-wrap items-center gap-3">
               {DELAYS.map((d) => (
                 <Button

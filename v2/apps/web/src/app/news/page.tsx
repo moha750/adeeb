@@ -6,8 +6,8 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "آخر الأخبار — أديب",
-  description: "مستجدّات نادي أديب أوّلًا بأوّل — تغطيات وشراكات وإنجازات وإعلانات.",
+  title: "آخر الأخبار، أديب",
+  description: "مستجدّات نادي أديب أوّلًا بأوّل: تغطيات وشراكات وإنجازات وإعلانات.",
 };
 
 export default async function NewsPage() {
@@ -26,7 +26,7 @@ export default async function NewsPage() {
               align="center"
             />
             {items.length === 0 ? (
-              <p className="text-center text-content-muted">لا أخبار منشورة بعد — تابعنا لتصلك الجديدة.</p>
+              <p className="text-center text-content-muted">لا أخبار منشورة بعد. تابعنا لتصلك الجديدة.</p>
             ) : (
               <div className="card-grid" style={{ marginTop: 32 }}>
                 {items.map((n) => (

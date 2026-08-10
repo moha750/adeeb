@@ -22,7 +22,7 @@ export default function ButtonsPage() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Buttons
+          Design System, Buttons
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الأزرار</h1>
         <p className="mt-2 max-w-xl text-content-muted">
@@ -32,7 +32,7 @@ export default function ButtonsPage() {
         <div className="mt-12 space-y-14">
           {/* الأنماط — بأيقونة */}
           <section>
-            <Label>الأنماط (متوسط · بأيقونة)</Label>
+            <Label>الأنماط (متوسط، بأيقونة)</Label>
             <div className="flex flex-wrap items-center gap-4">
               {VARIANTS.map((v) => (
                 <Button key={v} variant={v}>
@@ -101,7 +101,7 @@ export default function ButtonsPage() {
 
           {/* الزرّ الأيقونيّ — مربّع مضغوط للأدوات */}
           <section>
-            <Label>الزرّ الأيقونيّ (IconButton) · الأحجام والنغمات</Label>
+            <Label>الزرّ الأيقونيّ (IconButton)، الأحجام والنغمات</Label>
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 {SIZES.map((s) => (

@@ -30,7 +30,7 @@ export const STATUS_META: Record<BookStatus, { label: string; tone: "info" | "su
 
 /** يجمع الهجريّ والميلاديّ في سطر عرض واحد؛ يُخفى ما خلا. */
 export function yearLabel(hijri: number | null, gregorian: number | null): string {
-  if (hijri && gregorian) return `${hijri}هـ · ${gregorian}م`;
+  if (hijri && gregorian) return `${hijri}هـ، ${gregorian}م`;
   if (gregorian) return `${gregorian}م`;
   if (hijri) return `${hijri}هـ`;
   return "";

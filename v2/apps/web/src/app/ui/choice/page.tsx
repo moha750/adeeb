@@ -15,11 +15,11 @@ export default function ChoicePage() {
     <main className="py-16">
       <Container className="max-w-3xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Choice
+          Design System, Choice
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض عناصر الاختيار</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          تحديد متدرّج · مفتاح كلاسيكيّ · رسم + ارتداد. انقر لتجرّب الحركة.
+          تحديد متدرّج، مفتاح كلاسيكيّ، رسم + ارتداد. انقر لتجرّب الحركة.
         </p>
 
         <div className="mt-12 space-y-14">
@@ -43,7 +43,7 @@ export default function ChoicePage() {
           </section>
 
           <section>
-            <Label>مفتاح — إنلاين وصفّ إعدادات</Label>
+            <Label>مفتاح: إنلاين وصفّ إعدادات</Label>
             <div className="space-y-4">
               <Switch label="الوضع الليليّ" defaultChecked />
               <div className="divide-y divide-line rounded border border-line bg-surface px-5 shadow-sm">

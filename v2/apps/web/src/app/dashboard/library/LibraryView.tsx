@@ -103,7 +103,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
     const s = form.state;
     const errs: Partial<Record<keyof FormState, string>> = {};
     if (!s.title.trim()) errs.title = "العنوان مطلوب.";
-    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب — أحرف لاتينيّة وأرقام.";
+    if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب: أحرف لاتينيّة وأرقام.";
     setFormErr(errs);
     if (Object.keys(errs).length) return;
 
@@ -175,7 +175,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
   const createBtn = <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />منشور جديد</Button>;
   const emptyState = books.length === 0 ? (
     <EmptyState variant="aurora" icon={<Books />} title="لا منشورات بعد"
-      description="أنشئ أوّل منشور — يُحفظ مسودّةً، ثمّ تفتحه لتضع صفحاته." action={createBtn} />
+      description="أنشئ أوّل منشور: يُحفظ مسودّةً، ثمّ تفتحه لتضع صفحاته." action={createBtn} />
   ) : filtering ? (
     <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا منشورات مطابقة"
       description="لم نعثر على منشورات تطابق بحثك أو المرشّح."

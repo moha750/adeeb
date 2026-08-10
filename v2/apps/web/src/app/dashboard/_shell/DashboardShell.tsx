@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BurgerIcon, Button } from "@adeeb/design-system";
+import { BurgerIcon } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { navFor, type NavItem } from "./nav";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
-import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconPlus } from "./icons";
+import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe } from "./icons";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
@@ -119,9 +119,11 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         </div>
         <div className="ash-rule" aria-hidden />
 
-        {/* `inverse` لا `primary`: الأساسيُّ تدرّجُ الهوية نفسُه، فيذوب في لوحٍ مذهّب —
-            والمعكوسُ مصنوعٌ لهذا («يُعكَس ما يختفي على الداكن»). */}
-        <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button>
+        {/* زرُّ «إجراء سريع» مخفيٌّ حاليًّا حتى يُقرَّر ما يفعله؛ أنماطُه (`.ash-cta`) باقيةٌ
+            في المكتبة فيعود بردّ السطر وحده.
+            `inverse` لا `primary`: الأساسيُّ تدرّجُ الهوية نفسُه، فيذوب في لوحٍ مذهّب —
+            والمعكوسُ مصنوعٌ لهذا («يُعكَس ما يختفي على الداكن»).
+        <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button> */}
 
         {/* الوزن صفةُ **الموقع** لا صفةُ مكانٍ ولا أيقونةٍ على حدة: سياقُ الجذر
             (`IconDefaults` في `app/layout.tsx`) يرسم أيقونات أديب كلَّها duotone، وما

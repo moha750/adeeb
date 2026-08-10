@@ -1,17 +1,12 @@
 // يُستورَد فقط من مكوّنات خادميّة (page.tsx). المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
+import { positionLine } from "@/lib/positionLabel";
 import type { CandidateStatus, ElectionStatus } from "./vocab";
 
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-
-/** تاريخ عربيّ مختصر من ISO (الشهر Lyon والأرقام Eras تلقائيًّا — تكامل الخطّين). */
-export const fmtDateTime = (iso: string | null): string => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-};
+// التنسيق من `lib/dates` (مصدرٌ واحد بتوقيت النادي)، ويُعاد تصديره لمن كان يقرؤه من هنا.
+export { fmtDate as fmtDateTime, fmtStamp } from "@/lib/dates";
+import { fmtDate as fmtDateTime, fmtStamp } from "@/lib/dates";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -27,9 +22,9 @@ export type ElectionRow = {
   targetRoleName: string;
   /** تسمية الدور من roles.role_name_ar (مصدر واحد — لا محفورة). */
   roleLabel: string;
-  /** اسم اللجنة أو القسم المُستهدَف. */
-  scopeLabel: string;
-  /** هويّة الانتخاب المعروضة: «الدور · النطاق» (لا عنوان نصّيّ للانتخاب في القاعدة). */
+  /** اسم اللجنة أو القسم المُستهدَف — `null` لمنصبٍ لا نطاقَ له. */
+  scopeLabel: string | null;
+  /** هويّة الانتخاب المعروضة: الدورُ ونطاقُه موصولين (`positionLine`) — لا عنوان نصّيّ في القاعدة. */
   positionLabel: string;
   status: ElectionStatus;
   /** إجمالي المرشّحين (كلّ الحالات). */
@@ -43,6 +38,7 @@ export type ElectionRow = {
   archived: boolean;
   created: string;
   createdRaw: string;
+  /** موعدا الإغلاق التلقائيّ معروضَين (فارغُهما بابٌ يُغلق بيد المشرف). */
   candidacyEnd: string | null;
   votingEnd: string | null;
 };
@@ -93,13 +89,13 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
       ? (commLabel.get(e.target_committee_id) ?? `لجنة #${e.target_committee_id}`)
       : e.target_department_id != null
         ? (deptLabel.get(e.target_department_id) ?? `قسم #${e.target_department_id}`)
-        : "—";
+        : null;
     return {
       id: e.id,
       targetRoleName: e.target_role_name,
       roleLabel: rLabel,
       scopeLabel: scope,
-      positionLabel: `${rLabel} · ${scope}`,
+      positionLabel: positionLine(rLabel, scope) ?? rLabel,
       status: e.status as ElectionStatus,
       candidates: candTotal.get(e.id) ?? 0,
       approved: candApproved.get(e.id) ?? 0,
@@ -108,8 +104,8 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
       archived: !!e.archived_at,
       created: fmtDateTime(e.created_at),
       createdRaw: e.created_at ?? "",
-      candidacyEnd: e.candidacy_end ?? null,
-      votingEnd: e.voting_end ?? null,
+      candidacyEnd: fmtStamp(e.candidacy_end) || null,
+      votingEnd: fmtStamp(e.voting_end) || null,
     };
   });
 
@@ -125,11 +121,11 @@ export type ScopeOption = { id: number; label: string };
 export type ElectionCreateOptions = {
   /** الأدوار المنتخَبة (roles.is_elected) — مصدر واحد، مرتّبة بالوزن. */
   roles: ElectableRole[];
-  /** لجان شاغرة القيادة بلا انتخاب نشط (ولا انتخاب قسمٍ متداخل). */
+  /** لجان شاغرة القيادة بلا انتخاب نشط لمقعدها. */
   leaderCommittees: ScopeOption[];
-  /** لجان شاغرة النيابة بلا انتخاب نشط. */
+  /** لجان شاغرة النيابة بلا انتخاب نشط لمقعدها. */
   deputyCommittees: ScopeOption[];
-  /** أقسام شاغرة التنسيق بلا انتخاب نشط (ولا انتخاب لجنةٍ متداخل). */
+  /** أقسام شاغرة التنسيق بلا انتخاب نشط لمقعدها. */
   departments: ScopeOption[];
   error: string | null;
 };
@@ -138,8 +134,9 @@ const EMPTY_OPTS: Omit<ElectionCreateOptions, "error"> = { roles: [], leaderComm
 
 /**
  * ما يُمكن فتح انتخابٍ له الآن — يُرشّح المتاح لا يعطّله (Select بلا تعطيل فرديّ):
- * المنصب شاغرٌ فعلًا ولا انتخاب نشط له، مع احترام حصر النطاق المتداخل (قسم↔لجانه).
- * القاعدة تبقى الحكَم النهائيّ عند الإنشاء؛ هذا يمنع عرض ما سيُرفض.
+ * المقعد شاغرٌ فعلًا ولا انتخاب نشط **لهذا المقعد**. وهذان هما حارسا القاعدة نفسها
+ * (`enforce_vacant_target` و`elections_active_*_uniq`)، فلا تُصفّى هنا حالةٌ تقبلها.
+ * والتداخل مسموح: مقعدُ القسم يُفتح ولجانُه في انتخاب، والعكس.
  */
 export async function getElectionCreateOptions(): Promise<ElectionCreateOptions> {
   const sb = service();
@@ -147,7 +144,7 @@ export async function getElectionCreateOptions(): Promise<ElectionCreateOptions>
 
   const [rRes, cRes, dRes, eRes, occRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, vote_weight").eq("is_elected", true).order("vote_weight", { ascending: false }),
-    sb.from("committees").select("id, committee_name_ar, department_id").eq("is_active", true).eq("council_id", "executive"),
+    sb.from("committees").select("id, committee_name_ar").eq("is_active", true).eq("council_id", "executive"),
     sb.from("departments").select("id, name_ar").eq("is_active", true).order("display_order", { ascending: true }),
     sb.from("elections").select("target_role_name, target_committee_id, target_department_id").is("archived_at", null).in("status", ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"]),
     // role_name عمودٌ في user_roles (مُزامَن) — لا تضمين roles تفاديًا لالتباس المفتاحين
@@ -157,22 +154,15 @@ export async function getElectionCreateOptions(): Promise<ElectionCreateOptions>
   if (firstErr) return { ...EMPTY_OPTS, error: firstErr.message };
 
   const committees = cRes.data ?? [];
-  const deptOfCommittee = new Map<number, number | null>();
-  for (const c of committees) deptOfCommittee.set(c.id, c.department_id ?? null);
 
-  // الانتخابات النشطة — للحصر
+  // الانتخابات النشطة — بالمقعد وحده
   const activeLeaderComm = new Set<number>();
   const activeDeputyComm = new Set<number>();
   const activeHeadDept = new Set<number>();
-  const deptsWithChildElection = new Set<number>();
   for (const e of eRes.data ?? []) {
     if (e.target_role_name === "committee_leader" && e.target_committee_id != null) activeLeaderComm.add(e.target_committee_id);
     if (e.target_role_name === "deputy_committee_leader" && e.target_committee_id != null) activeDeputyComm.add(e.target_committee_id);
     if (e.target_role_name === "department_head" && e.target_department_id != null) activeHeadDept.add(e.target_department_id);
-    if (e.target_committee_id != null) {
-      const d = deptOfCommittee.get(e.target_committee_id);
-      if (d != null) deptsWithChildElection.add(d);
-    }
   }
 
   // الشواغر الحاليّة
@@ -192,15 +182,15 @@ export async function getElectionCreateOptions(): Promise<ElectionCreateOptions>
   }));
 
   const leaderCommittees: ScopeOption[] = committees
-    .filter((c) => !occLeader.has(c.id) && !activeLeaderComm.has(c.id) && !(c.department_id != null && activeHeadDept.has(c.department_id)))
+    .filter((c) => !occLeader.has(c.id) && !activeLeaderComm.has(c.id))
     .map((c) => ({ id: c.id, label: c.committee_name_ar }));
 
   const deputyCommittees: ScopeOption[] = committees
-    .filter((c) => !occDeputy.has(c.id) && !activeDeputyComm.has(c.id) && !(c.department_id != null && activeHeadDept.has(c.department_id)))
+    .filter((c) => !occDeputy.has(c.id) && !activeDeputyComm.has(c.id))
     .map((c) => ({ id: c.id, label: c.committee_name_ar }));
 
   const departments: ScopeOption[] = (dRes.data ?? [])
-    .filter((d) => !occHead.has(d.id) && !activeHeadDept.has(d.id) && !deptsWithChildElection.has(d.id))
+    .filter((d) => !occHead.has(d.id) && !activeHeadDept.has(d.id))
     .map((d) => ({ id: d.id, label: d.name_ar }));
 
   return { roles, leaderCommittees, deputyCommittees, departments, error: null };
@@ -229,14 +219,22 @@ export type ElectionDetail = {
   id: string;
   targetRoleName: string;
   roleLabel: string;
-  scopeLabel: string;
+  scopeLabel: string | null;
   positionLabel: string;
   status: ElectionStatus;
   archived: boolean;
+  /** موعدا الإغلاق التلقائيّ معروضَين (فارغُهما بابٌ يُغلق بيد المشرف). */
   candidacyEnd: string | null;
   votingEnd: string | null;
+  /** الموعدان خامَين (ISO) — لتعبئة حقل الضبط، فالمعروض للعين لا للحقل. */
+  candidacyEndRaw: string | null;
+  votingEndRaw: string | null;
+  /** استُهلكت فرصةُ التمديد التلقائيّ (٢٤ ساعة) — يُصارَح بها المشرف عند ضبط موعدٍ جديد. */
+  candidacyExtendedOnce: boolean;
   winnerCandidateId: string | null;
   winnerName: string | null;
+  committeeId: number | null;
+  siblingSeatReady: boolean; // المقعد الآخر في اللجنة نفسها مغلقُ التصويت وجاهزٌ للحسم التوأم
   candidates: CandidateRow[];
   votes: number;
 };
@@ -249,7 +247,7 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
   const sb = service();
   if (!sb) return { election: null, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
-  const eRes = await sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at, candidacy_end, voting_end, winner_candidate_id").eq("id", id).maybeSingle();
+  const eRes = await sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at, candidacy_end, voting_end, candidacy_extended_once, winner_candidate_id").eq("id", id).maybeSingle();
   if (eRes.error) return { election: null, error: eRes.error.message };
   if (!eRes.data) return { election: null, error: null };
   const e = eRes.data;
@@ -270,14 +268,14 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
     votesByCand.set(v.candidate_id, (votesByCand.get(v.candidate_id) ?? 0) + 1);
   }
 
-  // النطاق: لجنة أو قسم
-  let scopeLabel = "—";
+  // النطاق: لجنة أو قسم — و`null` لمنصبٍ لا نطاقَ له (لا تُخترع له علامةُ فراغ في البيانات)
+  let scopeLabel: string | null = null;
   if (e.target_committee_id != null) {
     const c = await sb.from("committees").select("committee_name_ar").eq("id", e.target_committee_id).maybeSingle();
-    scopeLabel = c.data?.committee_name_ar ?? "—";
+    scopeLabel = c.data?.committee_name_ar ?? null;
   } else if (e.target_department_id != null) {
     const d = await sb.from("departments").select("name_ar").eq("id", e.target_department_id).maybeSingle();
-    scopeLabel = d.data?.name_ar ?? "—";
+    scopeLabel = d.data?.name_ar ?? null;
   }
   const roleLabel = rRes.data?.role_name_ar ?? e.target_role_name;
 
@@ -309,19 +307,35 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
 
   const winnerName = e.winner_candidate_id ? (candidates.find((c) => c.id === e.winner_candidate_id)?.name ?? null) : null;
 
+  // جاهزيّةُ الحسم التوأم: المقعد الآخر في اللجنة نفسها مغلقُ التصويت بلا فائزٍ بعد
+  let siblingSeatReady = false;
+  if (e.target_committee_id != null && e.status === "voting_closed"
+      && (e.target_role_name === "committee_leader" || e.target_role_name === "deputy_committee_leader")) {
+    const other = e.target_role_name === "committee_leader" ? "deputy_committee_leader" : "committee_leader";
+    const sib = await sb.from("elections").select("id")
+      .eq("target_committee_id", e.target_committee_id).eq("target_role_name", other)
+      .eq("status", "voting_closed").is("archived_at", null).is("winner_candidate_id", null).maybeSingle();
+    siblingSeatReady = !!sib.data;
+  }
+
   return {
     election: {
       id: e.id,
       targetRoleName: e.target_role_name,
       roleLabel,
       scopeLabel,
-      positionLabel: `${roleLabel} · ${scopeLabel}`,
+      positionLabel: positionLine(roleLabel, scopeLabel) ?? roleLabel,
       status: e.status as ElectionStatus,
       archived: !!e.archived_at,
-      candidacyEnd: e.candidacy_end ?? null,
-      votingEnd: e.voting_end ?? null,
+      candidacyEnd: fmtStamp(e.candidacy_end) || null,
+      votingEnd: fmtStamp(e.voting_end) || null,
+      candidacyEndRaw: e.candidacy_end ?? null,
+      votingEndRaw: e.voting_end ?? null,
+      candidacyExtendedOnce: !!e.candidacy_extended_once,
       winnerCandidateId: e.winner_candidate_id ?? null,
       winnerName,
+      committeeId: e.target_committee_id ?? null,
+      siblingSeatReady,
       candidates,
       votes: (voteRes.data ?? []).length,
     },

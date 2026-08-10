@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, ChartPanel, Field, IconButton, Select, Switch, Textarea } from "@adeeb/design-system";
+import { Alert, Button, SectionCard, Field, IconButton, Select, Switch, Textarea } from "@adeeb/design-system";
 import {
   CalendarBlank, ChatCircleText, ChatText, CheckSquare, ClipboardText, Clock, CopySimple, Gear,
   HandWaving, Hash, LockSimple, Sparkle, TextT,
@@ -228,7 +228,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
       </div>
 
       <div className="form-build">
-        <ChartPanel headerVariant="chip" icon={<Gear />} title="إعدادات الاستبيان">
+        <SectionCard headerVariant="chip" icon={<Gear />} title="إعدادات الاستبيان">
           <div className="form-grid">
             <Field className="form-full" label="العنوان" icon={<ClipboardText />} innerIcon={<PencilSimple />} placeholder="مثال: تقييم فعاليّة الأمسية الأدبيّة" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Textarea className="form-full" label="الوصف" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="سطر يظهر تحت العنوان في صفحة الاستبيان" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} optional />
@@ -242,17 +242,17 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
             <Switch row label="شريط التقدّم" description="يظهر للمجيب كم أنجز من الأسئلة" checked={showProgress} onChange={(e) => setShowProgress(e.target.checked)} />
             <Switch row label="إظهار النتائج للمشاركين" description="بعد الإرسال يستطيع المجيب رؤية النتائج الإجماليّة" checked={showResults} onChange={(e) => setShowResults(e.target.checked)} />
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<ChatCircleText />} title="الرسائل">
+        <SectionCard headerVariant="chip" icon={<ChatCircleText />} title="الرسائل">
           <div className="form-grid">
             <Textarea label="رسالة الترحيب" icon={<HandWaving />} innerIcon={<ChatText />} placeholder="تظهر قبل الأسئلة" rows={2} value={welcome} onChange={(e) => setWelcome(e.target.value)} optional />
             <Textarea label="رسالة الشكر" icon={<Sparkle />} innerIcon={<ChatText />} placeholder="تظهر بعد الإرسال" rows={2} value={thankYou} onChange={(e) => setThankYou(e.target.value)} optional />
             <Textarea className="form-full" label="رسالة الإغلاق" icon={<LockSimple />} innerIcon={<ChatText />} placeholder="تظهر لمن يزور استبيانًا منتهيًا أو متوقّفًا" rows={2} value={closedMessage} onChange={(e) => setClosedMessage(e.target.value)} optional />
           </div>
-        </ChartPanel>
+        </SectionCard>
 
-        <ChartPanel headerVariant="chip" icon={<Question />} title={`الأسئلة (${questions.length})`}>
+        <SectionCard headerVariant="chip" icon={<Question />} title={`الأسئلة (${questions.length})`}>
           {questions.length === 0 ? (
             <Alert tone="info" title="لا أسئلة بعد">أضِف سؤالًا واحدًا على الأقلّ قبل النشر.</Alert>
           ) : null}
@@ -278,7 +278,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
                     options={typeOptions}
                     value={q.type}
                     disabled={q.answers > 0}
-                    helper={q.answers > 0 ? `له ${q.answers} إجابة مخزّنة — النوع لا يتغيّر` : undefined}
+                    helper={q.answers > 0 ? `له ${q.answers} إجابة مخزّنة، النوع لا يتغيّر` : undefined}
                     onValueChange={(v) => patch(q.key, { type: v as QuestionType })}
                     required
                   />
@@ -334,7 +334,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
               <Plus size={18} />إضافة سؤال
             </Button>
           </div>
-        </ChartPanel>
+        </SectionCard>
       </div>
 
       <ConfirmDialog
@@ -343,7 +343,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
         tone="danger"
         icon={<Trash />}
         title="حذف سؤال له إجابات؟"
-        text={confirmRemove ? `للسؤال «${confirmRemove.text.slice(0, 60)}» ${confirmRemove.answers} إجابة مخزّنة — ستُحذف كلّها نهائيًّا عند الحفظ.` : undefined}
+        text={confirmRemove ? `للسؤال «${confirmRemove.text.slice(0, 60)}» ${confirmRemove.answers} إجابة مخزّنة، ستُحذف كلّها نهائيًّا عند الحفظ.` : undefined}
         confirmLabel="حذف السؤال وإجاباته"
         onConfirm={() => {
           if (confirmRemove) setQuestions((qs) => qs.filter((x) => x.key !== confirmRemove.key));

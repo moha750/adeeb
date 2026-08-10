@@ -196,16 +196,16 @@ export function loyaltyObject(m: DemoMember, mode: Mode, origin: string): Record
 
     textModulesData: [
       { id: "status", header: "الحالة", body: points ? pointsStatusText(m.points) : statusText(m.stamps) },
-      { id: "unit", header: "القسم واللجنة", body: `${m.department} · ${m.committee}` },
+      { id: "unit", header: "القسم واللجنة", body: `${m.department}، ${m.committee}` },
       points
         ? {
             id: "store",
             header: "متجر المكافآت",
-            body: CATALOG.map((r) => `${m.points >= r.cost ? "✓" : "·"} ${num(r.cost)} — ${r.title}`).join(" · "),
+            body: CATALOG.map((r) => `${m.points >= r.cost ? "✓ " : ""}${num(r.cost)}، ${r.title}`).join("، "),
           }
         : { id: "reward", header: `مكافأة ${REWARD.sponsor}`, body: REWARD.title },
       points
-        ? { id: "next", header: "المحطّة التالية", body: next ? `${next.title} · ${num(next.cost)} نقطة` : "بلغتَ أعلى السُّلَّم" }
+        ? { id: "next", header: "المحطّة التالية", body: next ? `${next.title}، ${num(next.cost)} نقطة` : "بلغتَ أعلى السُّلَّم" }
         : { id: "cycles", header: "بطاقاتٌ أكملتَها", body: num(m.cycles) },
       {
         id: "notice",

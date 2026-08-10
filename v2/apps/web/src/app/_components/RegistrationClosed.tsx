@@ -22,7 +22,7 @@ export function RegistrationClosedModal({ open, onClose }: { open: boolean; onCl
       footer={<Button onClick={onClose}>حسنًا</Button>}
     >
       <p className="text-content-muted">
-        بابُ الانضمام إلى نادي أدِيب مغلقٌ في الوقت الحاليّ. تابِعنا لتعرف موعد فتحه في الموسم القادم — ويسعدنا أن نراك حينها.
+        بابُ الانضمام إلى نادي أدِيب مغلقٌ في الوقت الحاليّ. تابِعنا لتعرف موعد فتحه في الموسم القادم، ويسعدنا أن نراك حينها.
       </p>
     </Modal>
   );

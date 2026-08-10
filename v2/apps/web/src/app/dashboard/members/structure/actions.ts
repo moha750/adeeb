@@ -22,6 +22,8 @@ const mayAssign = (caps: readonly string[]) => caps.some((c) => MAY_ASSIGN.inclu
 const TOUCHED = [
   "/dashboard/members/structure", "/dashboard/members/assignments",
   "/dashboard/unit", "/dashboard/department", "/dashboard/committee",
+  // وكشوفُ الأعضاء معها: صفُّ العضو يحمل دورَه ولجنتَه، فالإسناد (والنقلُ من قائمته) يغيّر ما تعرضه.
+  "/dashboard/members/active", "/dashboard/members/suspended",
 ];
 const revalidateAll = () => TOUCHED.forEach((p) => revalidatePath(p));
 

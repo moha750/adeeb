@@ -14,7 +14,7 @@ import { Breadcrumb } from "../../../_shell/Breadcrumb";
  */
 const SAMPLES: { label: string; note: string; c: Certificate }[] = [
   {
-    label: "أنثى — عضو لجنة",
+    label: "أنثى، عضو لجنة",
     note: "نصّ ورقتك المعتمدة: المسمّى لا يُؤنَّث، والضمائر تُؤنَّث",
     c: {
       name: "سارة فاروق الحداد",
@@ -26,7 +26,7 @@ const SAMPLES: { label: string; note: string; c: Certificate }[] = [
     },
   },
   {
-    label: "ذكر — قائد إدارة",
+    label: "ذكر، قائد إدارة",
     note: "مسمّى الإدارات يحمل وحدتَه في اسمه فلا تُلحَق ثانيةً",
     c: {
       name: "عبدالله أحمد باجعيفر",
@@ -39,7 +39,7 @@ const SAMPLES: { label: string; note: string; c: Certificate }[] = [
   },
   {
     label: "امتحانُ الطول",
-    note: "اسمٌ رباعيّ ومسمّى مشرفٍ طويل — يُضغط المقاس ولا يطفح على الزخرفة",
+    note: "اسمٌ رباعيّ ومسمّى مشرفٍ طويل، يُضغط المقاس ولا يطفح على الزخرفة",
     c: {
       name: "عبدالرحمن عبدالعزيز محمد القحطاني",
       position: "مشرف إدارة الضمان والجودة على لجنة التقارير والأرشفة",
@@ -93,7 +93,7 @@ export function PreviewView() {
       </div>
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
-        كلّ ورقةٍ أدناه مولَّدةٌ على قالبك بالرسّام الذي سيعمل عند الإصدار — والأسماء والأرقام
+        كلّ ورقةٍ أدناه مولَّدةٌ على قالبك بالرسّام الذي سيعمل عند الإصدار، والأسماء والأرقام
         المرجعيّة متخيَّلة (لا تُعرَف في صفحة التحقّق).
         والنصّ نصُّ ورقتك حرفًا بحرف، ومذكَّرُه مشتقٌّ منه. والمواضع مقيسةٌ على بكسلات القالب:
         الاسم يجلس فوق المسطرة، والفترة والدعاء فوق المسطرة الثانية.
@@ -108,7 +108,7 @@ export function PreviewView() {
             <CardBody>
               {images[s.label] ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مولَّدةٌ في المتصفّح (blob) لا أصلٌ ثابت
-                <img src={images[s.label]} alt={`شهادة خبرة — ${s.label}`} className="w-full h-auto rounded" />
+                <img src={images[s.label]} alt={`شهادة خبرة، ${s.label}`} className="w-full h-auto rounded" />
               ) : (
                 <p className="txt">تُولَّد…</p>
               )}

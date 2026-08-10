@@ -20,11 +20,11 @@ export default function BadgesPage() {
     <main className="py-16">
       <Container className="max-w-3xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Badges
+          Design System, Badges
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض الشارات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          ناعم + نقطة · حبّة · ألوان دلالية حيّة · مؤشّرات (نقطة/أيقونة/live/إزالة).
+          ناعم + نقطة، حبّة، ألوان دلالية حيّة، مؤشّرات (نقطة/أيقونة/live/إزالة).
         </p>
 
         <div className="mt-12 space-y-12">
@@ -46,7 +46,7 @@ export default function BadgesPage() {
               </span>
             </div>
             <p className="mt-3 text-xs text-content-muted">
-              الزجاجيّ (<span dir="ltr" className="font-latin">glass</span>) شفّاف مضبَّب — يظهر على الأسطح الداكنة/الملوّنة فقط، لذا عُرِض على خلفيّة الهوية.
+              الزجاجيّ (<span dir="ltr" className="font-latin">glass</span>) شفّاف مضبَّب، يظهر على الأسطح الداكنة/الملوّنة فقط، لذا عُرِض على خلفيّة الهوية.
             </p>
           </section>
 

@@ -37,5 +37,5 @@ export const fmtDateAndTime = (iso: string | null | undefined): string => {
   const d = parse(iso);
   if (!d) return "";
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${fmtDate(iso)} · ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${fmtDate(iso)}، ${p(d.getHours())}:${p(d.getMinutes())}`;
 };

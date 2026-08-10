@@ -56,7 +56,7 @@ export function qrMatrix(text: string, ecc: Ecc = "M"): QrMatrix {
     q.addData(payload(text), "Byte");
     q.make();
   } catch {
-    throw new Error("النصّ أطول ممّا يسع رمزًا واحدًا — اختصره أو استعمل رابطًا قصيرًا.");
+    throw new Error("النصّ أطول ممّا يسع رمزًا واحدًا. اختصره أو استعمل رابطًا قصيرًا.");
   }
   return { n: q.getModuleCount(), isDark: (r, c) => q.isDark(r, c) };
 }

@@ -91,7 +91,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
       variant="aurora"
       icon={<Handshake />}
       title="لا رعاة بعد"
-      description="أضِف أوّل راعٍ — بشعاره ووسمه ورابطه. (القسم العلنيّ للرعاة يُبنى لاحقًا.)"
+      description="أضِف أوّل راعٍ، بشعاره ووسمه ورابطه. (القسم العلنيّ للرعاة يُبنى لاحقًا.)"
       action={createBtn}
     />
   );

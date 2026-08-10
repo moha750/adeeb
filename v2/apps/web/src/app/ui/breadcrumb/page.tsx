@@ -38,41 +38,41 @@ export default function BreadcrumbPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Breadcrumb</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Breadcrumb</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض فتات المسار</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          مقاطعُها تُشتقّ من خريطة التنقّل لا تُكتب في الشاشات — فكلُّ مقطعٍ إمّا رابطٌ يُنقر أو زنادٌ
+          مقاطعُها تُشتقّ من خريطة التنقّل لا تُكتب في الشاشات، فكلُّ مقطعٍ إمّا رابطٌ يُنقر أو زنادٌ
           يفتح أخواته، ولا مقطعَ يسمّي صفحةً ثمّ يمتنع. جرّب زناد المجموعة (▾) ونقلَ الروابط.
         </p>
 
         <div className="mt-12 space-y-14">
           <Sec title="بندٌ في مجموعة">
-            <Lab>/dashboard/library · بلا leaf — اسمُ الورقة من الخريطة، ورأسُ المجموعة زنادٌ يفتح أخواته السبع</Lab>
+            <Lab>/dashboard/library، بلا leaf: اسمُ الورقة من الخريطة، ورأسُ المجموعة زنادٌ يفتح أخواته السبع</Lab>
             <Frame><CrumbTrail steps={crumbFor("/dashboard/library", NAV)} /></Frame>
           </Sec>
 
           <Sec title="صفحةٌ تحت بند">
-            <Lab>/dashboard/library/12 · leaf = «أدبٌ يُروى» — البندُ يصير رابطًا، والورقةُ اسمُ السجلّ</Lab>
+            <Lab>/dashboard/library/12، leaf = «أدبٌ يُروى»: البندُ يصير رابطًا، والورقةُ اسمُ السجلّ</Lab>
             <Frame><CrumbTrail steps={crumbFor("/dashboard/library/12", NAV, "أدبٌ يُروى")} /></Frame>
           </Sec>
 
           <Sec title="بلا اسمٍ للورقة">
-            <Lab>/dashboard/events/9 · بلا leaf — شاشة «لا صلاحية» أو خطأِ جلبٍ على مسارٍ فرعيّ: البندُ يقف ورقةً، فلا تنتهي السلسلة برابط</Lab>
+            <Lab>/dashboard/events/9، بلا leaf: شاشة «لا صلاحية» أو خطأِ جلبٍ على مسارٍ فرعيّ: البندُ يقف ورقةً، فلا تنتهي السلسلة برابط</Lab>
             <Frame><CrumbTrail steps={crumbFor("/dashboard/events/9", NAV)} /></Frame>
           </Sec>
 
           <Sec title="خارج الخريطة">
-            <Lab>/dashboard/components · لا بندَ له ولا مجموعة — فالجذرُ والورقةُ وحدهما</Lab>
+            <Lab>/dashboard/components، لا بندَ له ولا مجموعة، فالجذرُ والورقةُ وحدهما</Lab>
             <Frame><CrumbTrail steps={crumbFor("/dashboard/components", NAV, "معرض المكوّنات")} /></Frame>
           </Sec>
 
           <Sec title="جذرُ اللوحة">
-            <Lab>/dashboard · الجذرُ هو الصفحةُ نفسها — فلا يُربَط بنفسه ويبقى نصًّا خامدًا</Lab>
+            <Lab>/dashboard، الجذرُ هو الصفحةُ نفسها، فلا يُربَط بنفسه ويبقى نصًّا خامدًا</Lab>
             <Frame><CrumbTrail steps={crumbFor("/dashboard", NAV)} /></Frame>
           </Sec>
 
           <Sec title="مجموعةٌ لم يبقَ منها إلّا بند">
-            <Lab>ترشيحُ القدرات قد يُسقط أخوات البند كلَّهنّ — فالزنادُ يعود نصًّا خامدًا، إذ منسدلٌ يعرض نفسك مسرحٌ لا خدمة</Lab>
+            <Lab>ترشيحُ القدرات قد يُسقط أخوات البند كلَّهنّ، فالزنادُ يعود نصًّا خامدًا، إذ منسدلٌ يعرض نفسك مسرحٌ لا خدمة</Lab>
             <Frame>
               <CrumbTrail
                 steps={crumbFor(

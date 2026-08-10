@@ -25,7 +25,7 @@ function serviceClient() {
  */
 export async function completeMyRecord(raw: CompleteInput): Promise<CompleteResult> {
   const me = await getSessionAdmin();
-  if (!me) return { ok: false, message: "جلستك غير صالحة — سجّل دخولك من جديد." };
+  if (!me) return { ok: false, message: "جلستك غير صالحة. سجّل دخولك من جديد." };
 
   const parsed = completeSchema.safeParse(raw);
   if (!parsed.success) {
@@ -39,13 +39,13 @@ export async function completeMyRecord(raw: CompleteInput): Promise<CompleteResu
   const v = parsed.data;
 
   const sb = serviceClient();
-  if (!sb) return { ok: false, message: "إعداد الخادم ناقص — أبلغ الإدارة." };
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
 
   // عضويّة منتهية سجلٌّ مغلق لا يُحرَّر — الحكم نفسه الذي يحرسه `lib/memberData`.
   const { data: profile, error: pErr } = await sb.from("profiles").select("account_status").eq("id", me.id).maybeSingle();
   if (pErr) return { ok: false, message: `تعذّر التحقّق من حسابك: ${pErr.message}` };
   if (profile?.account_status === "suspended") {
-    return { ok: false, message: "عضويّتك منتهية — تواصل مع الإدارة." };
+    return { ok: false, message: "عضويّتك منتهية. تواصل مع الإدارة." };
   }
 
   // member_details — الحقول الأكاديميّة تُفرَّغ لغير الجامعيّ، والتواصل مطبَّعٌ لمعرّفٍ مجرّد

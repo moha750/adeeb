@@ -74,17 +74,17 @@ export default function SurveyCardPage() {
   return (
     <main className="py-16">
       <Container>
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System · Survey Card</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Survey Card</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">كرت الاستبيان</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           بطاقةُ هويّةٍ للاستبيان (لا لوحةَ أداء): <b>رصيفٌ منغَّم</b> بالحالة وعدد المشاركات، والهويّةُ إلى جانبه
-          (العنوان بطلٌ · الوصول · <b>سطرُ حالةٍ مُخاطِبٌ بعدّادٍ حيّ</b>)، وذيلٌ يقول مَن أنشأه ومتى. يبني على
+          (العنوان بطلٌ، الوصول، <b>سطرُ حالةٍ مُخاطِبٌ بعدّادٍ حيّ</b>)، وذيلٌ يقول مَن أنشأه ومتى. يبني على
           <code className="font-latin"> .acard</code> ونظام النغمة (ق٤/٥)، أنماطُه <code className="font-latin">.scard-*</code> بالمكتبة.
-          النغمة تقول الحالة: <b>أخضر</b> = حيّ · <b>رماديّ</b> = منتهٍ · <b>أصفر</b> = موقوف · بلا نغمة = مسودّة/مجدول.
+          النغمة تقول الحالة: <b>أخضر</b> = حيّ، <b>رماديّ</b> = منتهٍ، <b>أصفر</b> = موقوف، بلا نغمة = مسودّة/مجدول.
         </p>
 
         <p className="mt-10 mb-4 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">
-          سطر الحالة عبر الأحوال — أيقونتُه في رقاقة Aurora بلون حالها (يفتح · يُغلق · متاحٌ دائمًا · انتهى · موقوف · مسودّة)
+          سطر الحالة عبر الأحوال، أيقونتُه في رقاقة Aurora بلون حالها (يفتح، يُغلق، متاحٌ دائمًا، انتهى، موقوف، مسودّة)
         </p>
         <div className="card-grid card-grid-2col">
           {SAMPLE.map(({ row, tone }) => <SurveyCard key={row.id} s={row} tone={tone} />)}

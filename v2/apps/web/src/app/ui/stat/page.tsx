@@ -22,8 +22,8 @@ export default function StatPage() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Component</p>
         <h1 className="mt-1 font-display text-4xl font-black text-content">كرت الإحصاء</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          سطح Aurora · أيقونة هويّة بتدرّج النغمة · رقم Eras · مؤشّر اتّجاه اختياريّ. مصدر واحد لكلّ كروت الإحصاء:
-          نظرة عامّة · الأعضاء · التحليلات · الهيكلة · تعيين المناصب.
+          سطح Aurora، أيقونة هويّة بتدرّج النغمة، رقم Eras، مؤشّر اتّجاه اختياريّ. مصدر واحد لكلّ كروت الإحصاء:
+          نظرة عامّة، الأعضاء، التحليلات، الهيكلة، تعيين المناصب.
         </p>
 
         <div className="mt-12 space-y-12">
@@ -38,7 +38,7 @@ export default function StatPage() {
           </section>
 
           <section>
-            <Lab>مع مؤشّر اتّجاه — الشارة تُمرَّر في trend</Lab>
+            <Lab>مع مؤشّر اتّجاه: الشارة تُمرَّر في trend</Lab>
             <div className="stat-grid">
               <Stat icon={<UsersThree />} value="800" label="إجمالي الأعضاء" tone="brand"
                 trend={<Badge tone="success" variant="soft" size="sm" icon={chevUp}>12%</Badge>} />
@@ -48,7 +48,7 @@ export default function StatPage() {
           </section>
 
           <section>
-            <Lab>سلوك الشبكة — ثلاثة كحدّ أقصى، واليتيم يمتدّ على الصفّ</Lab>
+            <Lab>سلوك الشبكة: ثلاثة كحدّ أقصى، واليتيم يمتدّ على الصفّ</Lab>
             <div className="stat-grid">
               <Stat icon={<Bank />} value="3" label="مجالس" />
               <Stat icon={<Buildings />} value="8" label="أقسام" />
@@ -58,7 +58,7 @@ export default function StatPage() {
           </section>
 
           <section>
-            <Lab>كرت وحيد — يملأ الصفّ</Lab>
+            <Lab>كرت وحيد: يملأ الصفّ</Lab>
             <div className="stat-grid">
               <Stat icon={<UsersThree />} value="180" label="عدد أعضاء أديب" />
             </div>

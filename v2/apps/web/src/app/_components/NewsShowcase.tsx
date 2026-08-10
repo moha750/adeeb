@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@adeeb/design-system";
+import { Badge, useInView } from "@adeeb/design-system";
 import { CalendarBlank, User } from "@phosphor-icons/react";
 import { Eye, ArrowLeft } from "@/app/_components/glyphs";
 
@@ -38,7 +38,6 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
   const active = useRef(0);
   const prog = useRef<HTMLElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const visible = useRef(true);
   const hover = useRef(false);
   const cool = useRef(false);
   const coolT = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,6 +94,17 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // لا يبدّل الخبرَ إلّا والقسمُ في الشاشة (المصدر الواحد لكلّ الأشرطة)
+  const inView = useInView(rootRef);
+  const visible = useRef(false);
+
+  // ووصولُ القسم يُعيد شريطَ التقدّم من أوّله: لولاه لَوجد الزائرُ الشريطَ ممتلئًا
+  // والخبرُ الأوّل ما يزال مكانه.
+  useEffect(() => {
+    visible.current = inView;
+    if (inView) restartProg();
+  }, [inView]);
+
   // التبديل التلقائيّ
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -109,18 +119,6 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
-
-  // إيقاف الدوران التلقائيّ حين يكون القسم خارج الشاشة (لمنع أي تحريك للصفحة)
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const io = new IntersectionObserver(
-      (es) => { visible.current = es[0]?.isIntersecting ?? true; },
-      { threshold: 0.15 },
-    );
-    io.observe(root);
-    return () => io.disconnect();
-  }, []);
 
   // شريط المصغّرات: السحب بالماوس + تلاشي الحافّتين عند الفيض فقط
   useEffect(() => {

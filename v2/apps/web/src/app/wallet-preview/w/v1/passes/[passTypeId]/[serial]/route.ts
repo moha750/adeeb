@@ -27,18 +27,18 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   const ua = (req.headers.get("user-agent") ?? "").slice(0, 40);
 
   if (!authOk(serial, req.headers.get("authorization"))) {
-    await noteFetch(serial, `401 · لا مصادقة · ${ua}`);
+    await noteFetch(serial, `401، لا مصادقة، ${ua}`);
     return new NextResponse(null, { status: 401 });
   }
 
   const base = memberBySerial(serial);
   const mode = modeOfSerial(serial);
   if (!base || !mode) {
-    await noteFetch(serial, `404 · رقمٌ مجهول · ${ua}`);
+    await noteFetch(serial, `404، رقمٌ مجهول، ${ua}`);
     return new NextResponse(null, { status: 404 });
   }
   if (missingEnv().length > 0) {
-    await noteFetch(serial, `500 · بيئةٌ ناقصة · ${ua}`);
+    await noteFetch(serial, `500، بيئةٌ ناقصة، ${ua}`);
     return new NextResponse(null, { status: 500 });
   }
 
@@ -58,7 +58,7 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   if (since) {
     const seen = new Date(since);
     if (!Number.isNaN(seen.getTime()) && modified <= seen) {
-      await noteFetch(serial, `304 · since=${since} · ${ua}`);
+      await noteFetch(serial, `304, since=${since}، ${ua}`);
       return new NextResponse(null, { status: 304 });
     }
   }
@@ -67,12 +67,12 @@ export async function GET(req: Request, { params }: Params): Promise<Response> {
   try {
     archive = await buildPkpass(member, new URL(req.url).origin, mode);
   } catch (e) {
-    await noteFetch(serial, `500 · ${e instanceof Error ? e.message.slice(0, 60) : "?"} · ${ua}`);
+    await noteFetch(serial, `500، ${e instanceof Error ? e.message.slice(0, 60) : "?"}، ${ua}`);
     return new NextResponse(null, { status: 500 });
   }
 
   const counter = mode === "points" ? `نقاط=${member.points}` : `أختام=${member.stamps}`;
-  await noteFetch(serial, `200 · ${counter} · since=${since ?? "—"} · ${ua}`);
+  await noteFetch(serial, `200، ${counter}, since=${since ?? "—"}، ${ua}`);
 
   return new NextResponse(new Uint8Array(archive), {
     headers: {

@@ -24,10 +24,10 @@ export default function AlertsPage() {
     <main className="py-16">
       <Container className="max-w-2xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
-          Design System · Alerts
+          Design System, Alerts
         </p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">معرض التنبيهات</h1>
-        <p className="mt-2 text-content-muted">بطاقة هوية هادئة · سطح Aurora + حدّ النغمة الموحّد + أيقونة منغّمة + نصّ محايد.</p>
+        <p className="mt-2 text-content-muted">بطاقة هوية هادئة، سطح Aurora + حدّ النغمة الموحّد + أيقونة منغّمة + نصّ محايد.</p>
 
         <div className="mt-12 space-y-12">
           <section>
@@ -46,7 +46,7 @@ export default function AlertsPage() {
             <div className="space-y-4">
               {open ? (
                 <Alert tone="info" title="معلومة" onClose={() => setOpen(false)}>
-                  تنبيه قابل للإغلاق — جرّب زرّ ×.
+                  تنبيه قابل للإغلاق. جرّب زرّ ×.
                 </Alert>
               ) : (
                 <button

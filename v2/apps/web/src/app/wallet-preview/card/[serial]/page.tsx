@@ -20,7 +20,7 @@ import { ScanView } from "./ScanView";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "بطاقة عضو · معاينة أَدِيب",
+  title: "بطاقة عضو، معاينة أَدِيب",
   robots: { index: false, follow: false },
 };
 
