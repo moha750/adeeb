@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getSessionAdmin } from "@/lib/auth";
 import { VIEW_AS_CAP, VIEW_AS_COOKIE } from "@/lib/view-as";
+import { positionLine } from "@/lib/positionLabel";
 import { ensurePreviewUser, seatPreview, seatScope, vacatePreviewSeats } from "@/lib/preview-seat";
 
 export type ViewAsResult = { ok: boolean; message: string };
@@ -78,21 +79,40 @@ export async function previewVacantPosition(input: { roleName: string; unitId: n
     return { ok: false, message: scope === "committee" ? "هذا المنصب يتطلّب تحديد لجنة." : "هذا المنصب يتطلّب تحديد قسم." };
   }
 
+  const committeeId = scope === "committee" ? input.unitId : null;
+  const departmentId = scope === "department" ? input.unitId : null;
+
+  /**
+   * اسمُ المقعد كما يُقرأ. وكان الشريطُ يقول «بمنصب «قائد»» فلا يُعرف أيُّ لجنة.
+   * والدُّميةُ تُجلَس على وحدةٍ بعينها، فهي **شخصٌ** حين تُعاين: وحدتُه من إسناده،
+   * ولا يُقرأ هنا وحدةٌ ملازمة (20260811).
+   */
+  const unitRes = committeeId != null
+    ? await sb.from("committees").select("committee_name_ar").eq("id", committeeId).maybeSingle()
+    : departmentId != null
+      ? await sb.from("departments").select("name_ar").eq("id", departmentId).maybeSingle()
+      : { data: null };
+  const unit = unitRes.data as { committee_name_ar?: string; name_ar?: string } | null;
+  const seatTitle = positionLine(
+    (role.role_name_ar as string) ?? (role.role_name as string),
+    unit?.committee_name_ar ?? unit?.name_ar ?? null,
+  ) ?? (role.role_name as string);
+
   const puppet = await ensurePreviewUser(sb);
   if ("error" in puppet) return { ok: false, message: `تعذّر تهيئة الشاغل المؤقّت: ${puppet.error}` };
 
   const seatErr = await seatPreview(sb, puppet.id, {
     roleName: role.role_name as string,
-    roleAr: (role.role_name_ar as string) ?? (role.role_name as string),
-    committeeId: scope === "committee" ? input.unitId : null,
-    departmentId: scope === "department" ? input.unitId : null,
+    roleAr: seatTitle,
+    committeeId,
+    departmentId,
   });
   // أشهرُ ردٍّ هنا حارسُ التفرّد على الجدول — أيْ أنّ المقعد لم يكن شاغرًا حقًّا
   if (seatErr) return { ok: false, message: `تعذّر إجلاس الشاغل المؤقّت: ${seatErr}` };
 
   await wearIdentity(puppet.id);
   revalidatePath("/dashboard", "layout");
-  return { ok: true, message: `تعاين اللوحة الآن بمنصب «${role.role_name_ar ?? role.role_name}».` };
+  return { ok: true, message: `تعاين اللوحة الآن بمنصب «${seatTitle}».` };
 }
 
 /**

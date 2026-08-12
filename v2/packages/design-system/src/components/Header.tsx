@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { AnchoredPopover } from "./AnchoredPopover";
 import { BurgerIcon } from "./BurgerIcon";
 import { Container } from "./Container";
+import { siteNav, type NavItem } from "../lib/nav";
 import { cn } from "../lib/cn";
 
 /* أيقونات الرأس مرسومةٌ هنا كسائر أيقونات المكتبة (`CarouselNav` · `Select`):
@@ -17,27 +18,10 @@ const IconChevron = (
   </svg>
 );
 
-type NavItem = { label: string; href: string };
-
-/**
- * تنقّلُ الموقع — بتسميات المالك ٢٠٢٦-٠٨-٠٢، **مرتّبةً بالأولويّة**: الذيلُ هو ما
- * ينسحب إلى «المزيد» حين يضيق الصفّ، فالأهمُّ أوّلًا.
- *
- * وهذه أوّلُ نسخةٍ **بمساراتٍ حقيقيّة** بدل مراسي الهبوط (`#activities`…) التي كانت
- * تكسر خارج الصفحة الرئيسة: يفتحها القارئُ من صفحة الأخبار فيُقذَف إلى الهبوط.
- * ويبقى مرسيان — «أهل الدفّة» و«تواصل معنا» — لأنّ وجهتَيهما **قسمان في الهبوط لا
- * صفحتان**؛ ولذلك كُتبا `/#board` و`/#contact` بالشرطة المائلة: من صفحةٍ أخرى يعود
- * القارئُ إلى الهبوط ثمّ ينزل إلى القسم، ومن الهبوط ينزل مباشرةً.
- */
-const defaultNav: NavItem[] = [
-  { label: "أعمالنا", href: "/works" },
-  { label: "فعالياتنا وبرامجنا", href: "/activities" },
-  { label: "منصة الأخبار", href: "/news" },
-  { label: "المكتبة", href: "/library" },
-  { label: "الإذاعة", href: "/radio" },
-  { label: "أهل الدفّة", href: "/#board" },
-  { label: "تواصل معنا", href: "/#contact" },
-];
+/* القائمةُ خرجت إلى `lib/nav` يوم صار للتذييل روابطُ — مصدرٌ واحدٌ يقرؤه الاثنان،
+   فلا نسختان تفترقان يومَ يُضاف رابط. وتسميتُها هنا `defaultNav` كما كانت: هي
+   **افتراضُ** الرأس، ويبقى للمستهلك أن يمرّر غيرها. */
+const defaultNav = siteNav;
 
 /** فجوةُ الروابط (`.shdr-nav` gap) وفجوةُ أقسام الصفّ (`.shdr-bar` gap) وحشوُ الكبسولة. */
 const LINK_GAP = 2;

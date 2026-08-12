@@ -2,6 +2,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
 
+
 /** إنذارٌ كما يراه القارئ — مرآة `warnings_for_reader` (الترشيح في القاعدة لا هنا). */
 export type WarningRow = {
   id: string;
@@ -11,8 +12,12 @@ export type WarningRow = {
   gender: "male" | "female" | null;
   phone: string | null;
   memberSuspended: boolean;
+  /** اللجنة كما في السجلّ — للترشيح في الكشف. أمّا العرض فمن `roleAr` و`scope`. */
   committee: string | null;
+  /** اسمُ المنصب: الرتبة + وحدتها الأمّ (`roleTitle`). */
   roleAr: string | null;
+  /** وحدةُ الإسناد التي تُقال معه، صامتةً إن كانت الأمّ نفسها (`assignmentScope`). */
+  scope: string | null;
   category: string;
   reason: string;
   occurredOn: string | null;
@@ -40,7 +45,9 @@ export type WarningTarget = {
   gender: "male" | "female" | null;
   committeeId: number | null;
   committee: string | null;
+  /** اسمُ المنصب ووحدتُه — كما في `WarningRow`. */
   roleAr: string | null;
+  scope: string | null;
   activeCount: number;
   /** يوم صيرورته عضوًا — أدنى ما يُقبل تاريخًا لواقعة (والحدّ محروسٌ في القاعدة). */
   joinedDate: string | null;
@@ -81,16 +88,27 @@ export async function getWarnings(): Promise<WarningsData> {
 
   type RawRow = {
     id: string; user_id: string; member_name: string; member_avatar: string | null; member_gender: string | null;
-    member_status: string; member_phone: string | null; committee_name: string | null; role_ar: string | null;
+    member_status: string; member_phone: string | null; committee_id: number | null; committee_name: string | null;
+    role_ar: string | null;
     category: string; reason: string; occurred_on: string | null; status: string; created_at: string;
     issuer_name: string | null; cancelled_at: string | null; cancel_reason: string | null; canceller_name: string | null;
     caused_termination: boolean; ordinal: number | null; active_count: number; may_manage: boolean;
   };
   type RawTarget = {
     user_id: string; name: string; phone: string | null; avatar: string | null; gender: string | null;
-    committee_id: number | null; committee_name: string | null; role_ar: string | null; active_count: number;
-    joined_date: string | null;
+    committee_id: number | null; committee_name: string | null;
+    role_ar: string | null;
+    active_count: number; joined_date: string | null;
   };
+
+  /**
+   * **شخصٌ لا مقعد**: رتبتُه كما تقولها القاعدة، ووحدتُه من خانة إسناده — والوحدةُ
+   * الملازمة لا تدخل هذا الطريق البتّة (20260811)، فلا إسكاتَ ولا استثناء.
+   */
+  const partsOf = (r: { role_ar: string | null; committee_name: string | null }) => ({
+    roleAr: r.role_ar,
+    scope: r.committee_name,
+  });
 
   const rows: WarningRow[] = ((wRes.data ?? []) as RawRow[]).map((r) => ({
     id: r.id,
@@ -101,7 +119,7 @@ export async function getWarnings(): Promise<WarningsData> {
     phone: r.member_phone,
     memberSuspended: r.member_status === "suspended",
     committee: r.committee_name,
-    roleAr: r.role_ar,
+    ...partsOf(r),
     category: r.category,
     reason: r.reason,
     occurredOn: r.occurred_on,
@@ -125,7 +143,7 @@ export async function getWarnings(): Promise<WarningsData> {
     gender: asGender(t.gender),
     committeeId: t.committee_id,
     committee: t.committee_name,
-    roleAr: t.role_ar,
+    ...partsOf(t),
     activeCount: t.active_count,
     joinedDate: t.joined_date,
   }));

@@ -17,12 +17,12 @@ export type PublicBadge = {
   threshold: number | null;
 };
 
-/** قطعُ المنصب خامًا. الجملةُ تُركَّب في `lib/positionLabel` فمصدرُها واحد. */
+/**
+ * قطعُ المنصب خامًا. الجملةُ تُركَّب في `lib/positionLabel` فمصدرُها واحد.
+ * ووحدةُ الشخص من خانة إسناده وحدها — لا وحدةَ ملازمة في مسمّى شخص (20260811).
+ */
 export type PublicPosition = {
   roleAr: string;
-  homeCommitteeId: number | null;
-  homeName: string | null;
-  committeeId: number | null;
   unitName: string | null;
   since: string | null;
 };

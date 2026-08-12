@@ -10,6 +10,7 @@
  * يبقى صادقًا ولو انتقل صاحبه بعده. **واللجنة لا تُذكر في النصّ** (قرار المالك): تبقى في السجلّ.
  */
 import { fmtDate } from "@/lib/date";
+import { positionLine } from "@/lib/positionLabel";
 import { CHARTER, countWord, observationSentence, ordinalWord } from "./vocab";
 
 export type Gender = "male" | "female" | null;
@@ -20,6 +21,9 @@ export type WarningLetter = {
   /**
    * منصبُه ولجنتُه **يوم صدور الإنذار** — لقطةٌ لا حالٌ راهنة. ومنهما يُبنى **سطر النداء وحده**
    * («قائدة لجنة التصميم/ زهراء العريفي»)؛ أمّا متن الخطاب فلا يذكر اللجنة البتّة (قرار المالك).
+   *
+   * وهما **قطعتا `lib/positionLabel`** بعينهما: `role` اسمُ المنصب (`roleTitle`)
+   * و`committee` وحدةُ الإسناد التي تُقال معه (`assignmentScope`).
    */
   role?: string | null;
   committee?: string | null;
@@ -47,19 +51,18 @@ const FEMININE: Record<string, string> = {
  * سطر النداء — **المسمّى كاملًا بلا فاصل** (قرار المالك): «قائدة لجنة التصميم زهراء العريفي» ·
  * «عضو لجنة الفعاليات حمد السبيعي». وبلا منصبٍ: «الأدِيب فلان» و«الأدِيبة فلانة».
  *
- * واللجنة تُلحَق **إن لم يحملها المسمّى أصلًا**: أدوارُ الإدارات تحمل وحدتها في اسمها
- * («قائد إدارة الموارد البشرية»)، فإلحاقُها ثانيةً تكرار. وأدوارُ اللجان رتبةٌ مجرّدة،
- * فتُلحَق بها لجنتُها — فيطّرد النداء في الحالين.
+ * **ووصلُ المسمّى ليس من عمل هذا الملفّ**: كان هنا وصلٌ ثانٍ يُلحق اللجنة بشرطِ
+ * `role.includes(unit)` — قاعدةٌ تخالف `positionLine` وتُصيب بالمصادفة. صار الوصلُ من
+ * المصدر الواحد، ولم يبقَ هنا إلّا ما يخصّ النداء وحده: **تأنيث الرتبة**.
  */
 export function salutation(l: Pick<WarningLetter, "name" | "gender" | "role" | "committee">): string {
-  const role = l.role?.trim();
+  const title = positionLine(l.role, l.committee);
   // بلا منصب: «الأدِيب» و«الأدِيبة» — نسبةٌ إلى النادي لا نداءٌ عامّ (قرار المالك)
-  if (!role) return `${g(l.gender, "الأدِيب", "الأدِيبة")} ${l.name}`;
-  const [head, ...rest] = role.split(" ");
-  const rank = l.gender === "female" ? [FEMININE[head] ?? head, ...rest].join(" ") : role;
-  const unit = l.committee?.trim();
-  const title = unit && !role.includes(unit) ? `${rank} ${unit}` : rank;
-  return `${title} ${l.name}`;
+  if (!title) return `${g(l.gender, "الأدِيب", "الأدِيبة")} ${l.name}`;
+  // الرتبةُ أوّلُ كلمةٍ في المسمّى، وهي وحدَها ما يُؤنَّث («قائد لجنة التصميم» ← «قائدة لجنة التصميم»)
+  const [head, ...rest] = title.split(" ");
+  const named = l.gender === "female" ? [FEMININE[head] ?? head, ...rest].join(" ") : title;
+  return `${named} ${l.name}`;
 }
 
 /** التحيّة — سطرٌ قائمٌ بذاته يعلو النداء (كما في البوست). */

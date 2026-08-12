@@ -7,6 +7,10 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
     pages: [["tokens", "الرموز والألوان"], ["ambient", "خلفيّة الشفق"]],
   },
   {
+    title: "هيكل الصفحة",
+    pages: [["header", "رأس الموقع"], ["footer", "تذييل الموقع"]],
+  },
+  {
     title: "الإدخال",
     pages: [["buttons", "الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"]],
   },

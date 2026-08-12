@@ -10,12 +10,13 @@ import { ApplyForm } from "../../../dashboard/elections/_member/ApplyForm";
 import type { ApplyContext } from "../../../dashboard/elections/member-data";
 
 const STMT = "أسعى إلى بناء تغطيةٍ إعلاميّةٍ أسبوعيّةٍ منتظمة تُبرز أنشطة النادي وتصل إلى كلّ الأعضاء عبر قنواتٍ متجدّدة. لديّ خبرةُ عامين في إدارة المحتوى، وأخطّط لفريقٍ صغيرٍ يغطّي الفعاليّات ويُصدر نشرةً شهريّة.";
-const BASE: ApplyContext = { ok: true, error: null, electionId: "e1", position: "قائد لجنة الإعلام", committeeId: 1, roleName: "committee_leader", status: "candidacy_open", existing: null, sibling: null, otherOpen: 1 };
+const BASE: ApplyContext = { ok: true, error: null, electionId: "e1", position: "قائد لجنة الإعلام", departmentId: 1, roleName: "committee_leader", status: "candidacy_open", existing: null, siblings: [], preferredElectionId: "e1", otherOpen: 1 };
 
 const STATES: { key: string; label: string; ctx: ApplyContext }[] = [
   { key: "new", label: "ترشّحٌ جديد", ctx: BASE },
   { key: "last", label: "جديد بلا فرصةٍ أخرى (نافذةٌ بزرّ)", ctx: { ...BASE, otherOpen: 0 } },
-  { key: "sibling", label: "جديد + مقعدٌ شقيق (أفضليّة)", ctx: { ...BASE, sibling: { electionId: "e2", position: "نائب لجنة الإعلام" } } },
+  { key: "sibling", label: "جديد + مقعدٌ شقيق (أفضليّة)", ctx: { ...BASE, siblings: [{ electionId: "e2", position: "نائب لجنة الإعلام" }] } },
+  { key: "siblings", label: "جديد + مقعدان في القسم (أفضليّة)", ctx: { ...BASE, siblings: [{ electionId: "e2", position: "نائب لجنة الإعلام" }, { electionId: "e3", position: "منسّق قسم الإنتاج الإعلامي" }] } },
   { key: "edit", label: "تعديل", ctx: { ...BASE, existing: { candidateId: "c1", statement: STMT, fileName: "خطة-الإعلام.pdf", fileUrl: "x", canEdit: true } } },
   { key: "readonly", label: "معتمَدٌ لا يُعدَّل", ctx: { ...BASE, existing: { candidateId: "c1", statement: STMT, fileName: "خطة-الإعلام.pdf", fileUrl: "x", canEdit: false } } },
 ];

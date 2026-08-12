@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getElectionManager } from "@/lib/elections/authz";
 import { createClient } from "@/lib/supabase/server";
 import type { BallotCandidate } from "./member-data";
+import { statementError } from "./vocab";
 
 export type ElectionResult = { ok: boolean; message: string; id?: string };
 
@@ -132,7 +133,10 @@ export async function reviewCandidate(
   return { ok: true, message: done };
 }
 
-/** انتقال حالةٍ صرف (إغلاق الترشّح · إعادة فتحه · إغلاق التصويت). */
+/**
+ * انتقال حالةٍ صرف (إغلاق الترشّح · إعادة فتحه · إغلاق التصويت).
+ * وإعادةُ الفتح ترفع موعدَ الإغلاق في القاعدة نفسها، وإلّا التقطته الكنّاسة بعد دقيقة فأغلقه ثانيةً.
+ */
 export async function transitionElection(electionId: string, newStatus: "candidacy_open" | "candidacy_closed" | "voting_closed"): Promise<ElectionResult> {
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
@@ -141,7 +145,12 @@ export async function transitionElection(electionId: string, newStatus: "candida
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر تغيير حالة الانتخاب.") };
 
   revalidatePath("/dashboard/elections", "layout");
-  return { ok: true, message: "تمّ." };
+  return {
+    ok: true,
+    message: newStatus === "candidacy_open"
+      ? "أُعيد فتح الترشّح، ورُفع موعد الإغلاق فيُغلق بيدك أو بموعدٍ جديد تضربه."
+      : "تمّ.",
+  };
 }
 
 /**
@@ -208,18 +217,18 @@ export async function declareWinner(electionId: string, candidateId: string): Pr
 }
 
 /**
- * الحسمُ التوأم لمقعدَي اللجنة معًا (القيادة والنيابة): إن فاز شخصٌ بالمقعدين أخذ مفضّله
- * وذهب الآخرُ للوصيف. القاعدة (`resolve_committee_election_winners`) تتولّى الترتيب والإسناد.
+ * حسمُ مقاعد القسم معًا (تنسيقُه وقيادةُ لجانه ونيابتُها): إن تصدّر شخصٌ أكثر من مقعد أخذ
+ * مفضّله وذهب الباقي للوصيف. القاعدة (`resolve_department_election_winners`) تتولّى الترتيب والإسناد.
  */
-export async function resolveCommitteeWinners(committeeId: number): Promise<ElectionResult> {
+export async function resolveDepartmentWinners(departmentId: number): Promise<ElectionResult> {
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
 
-  const { error } = await sb.rpc("resolve_committee_election_winners", { p_committee: committeeId });
-  if (error) return { ok: false, message: rpcMessage(error, "تعذّر إعلان فائزي اللجنة.") };
+  const { error } = await sb.rpc("resolve_department_election_winners", { p_department: departmentId });
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر إعلان فائزي القسم.") };
 
   revalidatePath("/dashboard/elections", "layout");
-  return { ok: true, message: "أُعلن فائزو اللجنة وأُسنِدت مناصبهم." };
+  return { ok: true, message: "أُعلن فائزو القسم وأُسنِدت مناصبهم." };
 }
 
 /** إلغاء انتخاب — بسببٍ يُحفظ؛ يُبقي المرشّحين والأصوات (لا حذف). */
@@ -244,13 +253,7 @@ const fileArgs = (f: CandidacyFile) => ({
   p_file_url: f?.url ?? null, p_file_name: f?.name ?? null, p_file_size_bytes: f?.size ?? null, p_file_mime: f?.mime ?? null,
 });
 
-function statementError(s: string): string | null {
-  if (s.length < 20) return "بيان الترشّح قصيرٌ جدًّا (٢٠ حرفًا على الأقلّ).";
-  if (s.length > 4000) return "بيان الترشّح طويلٌ جدًّا (٤٠٠٠ حرفٍ حدًّا أقصى).";
-  return null;
-}
-
-/** ترشّح العضو ببيانٍ عربيّ (٢٠–٤٠٠٠) وملفٍّ اختياريّ. التعمية تُذكّر: لا تكتب اسمك. */
+/** ترشّح العضو ببيانٍ عربيّ (١٠٠–٤٠٠٠) وملفٍّ اختياريّ. التعمية تُذكّر: لا تكتب اسمك. */
 export async function submitCandidacy(electionId: string, statement: string, file: CandidacyFile = null): Promise<ElectionResult> {
   const s = statement?.trim() ?? "";
   const bad = statementError(s);

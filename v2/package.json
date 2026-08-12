@@ -15,7 +15,8 @@
     "dev:logs": "node scripts/dev-server.mjs logs",
     "check": "node scripts/css-single-source.mjs && node scripts/modal-spacing.mjs && node scripts/no-separators.mjs",
     "auth:config": "node scripts/auth-config.mjs",
-    "web": "pnpm --filter web dev"
+    "web": "pnpm --filter web dev",
+    "r2:cors": "node scripts/r2-cors.mjs"
   },
   "devDependencies": {
     "turbo": "^2.3.3"

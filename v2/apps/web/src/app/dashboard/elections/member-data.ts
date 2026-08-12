@@ -14,18 +14,23 @@ function service() {
   return url && key ? createAdeebServiceClient(url, key) : null;
 }
 
+/** رتبةُ المقعد المنتخَب كما في `roles.role_name_ar` — مجرّدةً، ووحدتُها من الانتخاب نفسه. */
 async function roleLabelMap(sb: ReturnType<typeof createAdeebServiceClient>): Promise<Map<string, string>> {
   const { data } = await sb.from("roles").select("role_name, role_name_ar").eq("is_elected", true);
   const m = new Map<string, string>();
-  for (const r of (data ?? []) as { role_name: string; role_name_ar: string | null }[]) m.set(r.role_name, r.role_name_ar ?? r.role_name);
+  for (const r of (data ?? []) as { role_name: string; role_name_ar: string | null }[]) {
+    m.set(r.role_name, r.role_name_ar ?? r.role_name);
+  }
   return m;
 }
 
-const positionOf = (roleAr: string, committeeAr: string | null, departmentAr: string | null) =>
-  positionLine(roleAr, committeeAr ?? departmentAr) ?? roleAr;
+const positionOf = (rank: string | undefined, roleName: string, committeeAr: string | null, departmentAr: string | null) => {
+  const title = rank ?? roleName;
+  return positionLine(title, committeeAr ?? departmentAr) ?? title;
+};
 
 type ElectionRpcRow = { election_id: string; target_role_name: string; target_committee_id?: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidacy_end?: string | null; voting_end?: string | null; has_submission?: boolean; has_voted?: boolean };
-type CandidacyRpcRow = { candidate_id: string; election_id: string; target_role_name: string; target_committee_ar: string | null; target_department_ar: string | null; candidate_number: number; candidate_status: CandidateStatus; election_status: ElectionStatus; statement_ar: string; file_url: string | null; file_name: string | null; review_note_ar: string | null; can_withdraw: boolean; can_edit: boolean };
+type CandidacyRpcRow = { candidate_id: string; election_id: string; target_role_name: string; target_committee_id: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidate_number: number; candidate_status: CandidateStatus; election_status: ElectionStatus; statement_ar: string; file_url: string | null; file_name: string | null; review_note_ar: string | null; can_withdraw: boolean; can_edit: boolean };
 
 // الموعد مرّتين: نصًّا للعين (`…End`)، وخامًا للعدّاد الحيّ (`…EndRaw`).
 export type RunItem = { electionId: string; position: string; candidacyEnd: string; candidacyEndRaw: string | null; hasSubmission: boolean; committeeId: number | null; roleName: string };
@@ -61,9 +66,9 @@ export async function getRunElections(userId: string): Promise<MemberFetch<RunIt
   if (!session) return { items: [], error };
   const { data, error: e } = await session.rpc("get_eligible_elections_for_user", { p_user: userId });
   if (e) return { items: [], error: e.message };
-  const lbl = (rn: string) => labels.get(rn) ?? rn;
+  const lbl = (rn: string) => labels.get(rn);
   const items: RunItem[] = ((data ?? []) as ElectionRpcRow[]).map((r) => ({
-    electionId: r.election_id, position: positionOf(lbl(r.target_role_name), r.target_committee_ar, r.target_department_ar),
+    electionId: r.election_id, position: positionOf(lbl(r.target_role_name), r.target_role_name, r.target_committee_ar, r.target_department_ar),
     // التاريخ وحده في الكرت، والدقّةُ يحملها العدّاد تحته (الخامُ له)
     candidacyEnd: fmtDateTime(r.candidacy_end ?? null), candidacyEndRaw: r.candidacy_end ?? null,
     hasSubmission: !!r.has_submission,
@@ -78,9 +83,9 @@ export async function getVoteElections(userId: string): Promise<MemberFetch<Vote
   if (!session) return { items: [], error };
   const { data, error: e } = await session.rpc("get_votable_elections_for_user", { p_user: userId });
   if (e) return { items: [], error: e.message };
-  const lbl = (rn: string) => labels.get(rn) ?? rn;
+  const lbl = (rn: string) => labels.get(rn);
   const items: VoteItem[] = ((data ?? []) as ElectionRpcRow[]).map((r) => ({
-    electionId: r.election_id, position: positionOf(lbl(r.target_role_name), r.target_committee_ar, r.target_department_ar),
+    electionId: r.election_id, position: positionOf(lbl(r.target_role_name), r.target_role_name, r.target_committee_ar, r.target_department_ar),
     votingEnd: fmtDateTime(r.voting_end ?? null), votingEndRaw: r.voting_end ?? null, hasVoted: !!r.has_voted,
   }));
   return { items, error: null };
@@ -140,7 +145,7 @@ export async function getMyCandidacies(userId: string): Promise<MemberFetch<Cand
   if (!svc) return { items: [], error: "إعداد الخادم ناقص (مفتاح الخدمة)." };
   const session = await createClient();
   const labels = await roleLabelMap(svc);
-  const lbl = (rn: string) => labels.get(rn) ?? rn;
+  const lbl = (rn: string) => labels.get(rn);
 
   const { data, error: e } = await session.rpc("get_user_candidacies", { p_user: userId });
   if (e) return { items: [], error: e.message };
@@ -156,7 +161,7 @@ export async function getMyCandidacies(userId: string): Promise<MemberFetch<Cand
 
   const items: CandidacyJourney[] = rows.map((r, i) => {
     const isWinner = winnerOf.get(r.election_id) === r.candidate_id;
-    const position = positionOf(lbl(r.target_role_name), r.target_committee_ar, r.target_department_ar);
+    const position = positionOf(lbl(r.target_role_name), r.target_role_name, r.target_committee_ar, r.target_department_ar);
     const view = statusView(r.candidate_status, r.election_status, isWinner, position);
     const audit = ((trailRes[i]?.data ?? []) as AuditRow[]).slice().sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
     const trail: JourneyStep[] = audit.length ? audit.map(toStep) : [{ kind: "submit", label: "قُدّم الترشّح", date: "" }];
@@ -176,44 +181,56 @@ export async function getMyCandidacies(userId: string): Promise<MemberFetch<Cand
 }
 
 /** سياقُ صفحة إكمال الترشّح `/apply/[electionId]`: المنصبُ ونطاقُه، والترشّحُ القائمُ (وضعُ التعديل)،
- *  والمقعدُ الشقيق (ترشّحٌ نشطٌ آخر للعضو في اللجنة نفسها) لأجل الأفضليّة. تُقرأ بالخدمة، والفاعلُ userId. */
+ *  والمقاعدُ الشقيقة (ترشّحاتٌ نشطةٌ أخرى للعضو في **القسم نفسه**) لأجل الأفضليّة. تُقرأ بالخدمة، والفاعلُ userId. */
 export type ApplyContext = {
   ok: boolean;
   error: string | null;
   electionId: string;
   position: string;
-  committeeId: number | null;
+  /** قسمُ هذا المقعد — وحدةُ الجمع والأفضليّة (`set_seat_preference`). */
+  departmentId: number | null;
   roleName: string;
   status: ElectionStatus;
   /** ترشّحُ العضو القائمُ في هذا الانتخاب — حاضرٌ في وضع التعديل، وnull للترشّح الجديد. */
   existing: { candidateId: string; statement: string; fileName: string | null; fileUrl: string | null; canEdit: boolean } | null;
-  /** المقعد الشقيق في اللجنة نفسها (مقدَّمٌ له) — تظهر معه خانةُ الأفضليّة. */
-  sibling: { electionId: string; position: string } | null;
+  /** المقاعد الشقيقة في القسم نفسه (مقدَّمٌ لها) — تظهر معها خانةُ الأفضليّة. */
+  siblings: { electionId: string; position: string }[];
+  /** مفضَّلُه القائم بين مقاعد القسم (هذا المقعد إن لم يسمِّ شيئًا بعد). */
+  preferredElectionId: string;
   /** فرصُ ترشّحٍ أخرى مفتوحةٌ للعضو لم يقدّم لها (غيرُ هذا الانتخاب) — بها تُخيَّر نافذةُ النجاح. */
   otherOpen: number;
 };
 
+/** مقاعدُ العضو الحيّة تُقرأ كلُّها ثمّ تُنخل بالقسم، فمصدرُ الوحدات خريطتان تُقرآن مرّة. */
+const LIVE_ELECTION = ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"];
+const LIVE_CANDIDACY = ["pending", "approved", "needs_edit"];
+
 export async function getApplyContext(userId: string, electionId: string): Promise<ApplyContext> {
-  const base: ApplyContext = { ok: false, error: null, electionId, position: "", committeeId: null, roleName: "", status: "candidacy_open", existing: null, sibling: null, otherOpen: 0 };
+  const base: ApplyContext = { ok: false, error: null, electionId, position: "", departmentId: null, roleName: "", status: "candidacy_open", existing: null, siblings: [], preferredElectionId: electionId, otherOpen: 0 };
   const svc = service();
   if (!svc) return { ...base, error: "إعداد الخادم ناقص (مفتاح الخدمة)." };
-  const labels = await roleLabelMap(svc);
-  const lbl = (rn: string) => labels.get(rn) ?? rn;
+  const [labels, comRes, depRes] = await Promise.all([
+    roleLabelMap(svc),
+    svc.from("committees").select("id, committee_name_ar, department_id"),
+    svc.from("departments").select("id, name_ar"),
+  ]);
+  const lbl = (rn: string) => labels.get(rn);
+  const comById = new Map(((comRes.data ?? []) as { id: number; committee_name_ar: string; department_id: number | null }[]).map((c) => [c.id, c]));
+  const depById = new Map(((depRes.data ?? []) as { id: number; name_ar: string }[]).map((d) => [d.id, d.name_ar]));
+
+  /** قسمُ المقعد: قسمُه صراحةً (التنسيق) أو قسمُ لجنته — مرآةُ `election_department` في القاعدة. */
+  type Scoped = { target_role_name: string; target_committee_id: number | null; target_department_id: number | null };
+  const deptOf = (r: Scoped) => r.target_department_id ?? (r.target_committee_id != null ? comById.get(r.target_committee_id)?.department_id ?? null : null);
+  const scopeArOf = (r: Scoped) => (r.target_committee_id != null ? comById.get(r.target_committee_id)?.committee_name_ar ?? null : r.target_department_id != null ? depById.get(r.target_department_id) ?? null : null);
+  const positionOfRow = (r: Scoped) => positionOf(lbl(r.target_role_name), r.target_role_name, scopeArOf(r), null);
 
   const eRes = await svc.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at").eq("id", electionId).maybeSingle();
   if (eRes.error) return { ...base, error: eRes.error.message };
   if (!eRes.data || eRes.data.archived_at) return { ...base, error: "هذا الانتخاب غير موجودٍ أو مُؤرشَف." };
   const e = eRes.data;
 
-  let scopeAr: string | null = null;
-  if (e.target_committee_id != null) {
-    const c = await svc.from("committees").select("committee_name_ar").eq("id", e.target_committee_id).maybeSingle();
-    scopeAr = c.data?.committee_name_ar ?? null;
-  } else if (e.target_department_id != null) {
-    const d = await svc.from("departments").select("name_ar").eq("id", e.target_department_id).maybeSingle();
-    scopeAr = d.data?.name_ar ?? null;
-  }
-  const position = positionOf(lbl(e.target_role_name), scopeAr, null);
+  const departmentId = deptOf(e);
+  const position = positionOfRow(e);
 
   // الترشّح القائم في هذا الانتخاب (وضع التعديل). المعتمَد لا يُعدَّل (ترحيل 39)، والحقّ يسقط بإغلاق الترشّح.
   const meRes = await svc.from("election_candidates").select("id, statement_ar, file_name, file_url, status").eq("election_id", electionId).eq("user_id", userId).maybeSingle();
@@ -225,14 +242,21 @@ export async function getApplyContext(userId: string, electionId: string): Promi
     canEdit: e.status === "candidacy_open" && (meRes.data.status === "pending" || meRes.data.status === "needs_edit"),
   } : null;
 
-  // المقعد الشقيق: ترشّحٌ نشطٌ آخر للعضو، انتخابُه في اللجنة نفسها وحيٌّ.
-  let sibling: ApplyContext["sibling"] = null;
-  if (e.target_committee_id != null) {
-    const mineRes = await svc.from("election_candidates").select("election_id").eq("user_id", userId).in("status", ["pending", "approved", "needs_edit"]).neq("election_id", electionId);
-    const otherIds = ((mineRes.data ?? []) as { election_id: string }[]).map((r) => r.election_id);
+  // المقاعد الشقيقة: ترشّحاتُه النشطةُ الأخرى في مقاعدَ حيّةٍ من القسم نفسه (تنسيقًا كانت أو لجنة).
+  // ومعها مفضَّلُه القائم — يُعلَّم في الخانة فيبدّله إن شاء، ولا يُنسى ما اختار سابقًا.
+  const siblings: ApplyContext["siblings"] = [];
+  let preferredElectionId = electionId;
+  if (departmentId != null) {
+    const mineRes = await svc.from("election_candidates").select("election_id, preference_rank").eq("user_id", userId).in("status", LIVE_CANDIDACY);
+    const mine = (mineRes.data ?? []) as { election_id: string; preference_rank: number | null }[];
+    const otherIds = mine.map((r) => r.election_id).filter((id) => id !== electionId);
     if (otherIds.length) {
-      const sibRes = await svc.from("elections").select("id, target_role_name").eq("target_committee_id", e.target_committee_id).is("archived_at", null).in("status", ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"]).in("id", otherIds).maybeSingle();
-      if (sibRes.data) sibling = { electionId: sibRes.data.id as string, position: positionOf(lbl(sibRes.data.target_role_name as string), scopeAr, null) };
+      const sibRes = await svc.from("elections").select("id, target_role_name, target_committee_id, target_department_id").in("id", otherIds).is("archived_at", null).in("status", LIVE_ELECTION);
+      for (const s of (sibRes.data ?? []) as ({ id: string } & Scoped)[]) {
+        if (deptOf(s) !== departmentId) continue;
+        siblings.push({ electionId: s.id, position: positionOfRow(s) });
+        if (mine.find((m) => m.election_id === s.id)?.preference_rank === 1) preferredElectionId = s.id;
+      }
     }
   }
 
@@ -241,5 +265,5 @@ export async function getApplyContext(userId: string, electionId: string): Promi
   const eligRes = await session.rpc("get_eligible_elections_for_user", { p_user: userId });
   const otherOpen = ((eligRes.data ?? []) as ElectionRpcRow[]).filter((r) => r.election_id !== electionId && !r.has_submission).length;
 
-  return { ok: true, error: null, electionId, position, committeeId: e.target_committee_id ?? null, roleName: e.target_role_name, status: e.status as ElectionStatus, existing, sibling, otherOpen };
+  return { ok: true, error: null, electionId, position, departmentId, roleName: e.target_role_name, status: e.status as ElectionStatus, existing, siblings, preferredElectionId, otherOpen };
 }

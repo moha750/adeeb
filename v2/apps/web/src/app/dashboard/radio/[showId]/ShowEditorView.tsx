@@ -17,8 +17,8 @@ import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { EpisodeRow, MemberOption, PlatformRow, ShowRow } from "../data";
 import {
-  EPISODE_STATUS_META, LEAD_TOLERANCE_SECONDS, PLATFORM_META, PLATFORM_VALUES, SHOW_STATUS_META,
-  VARIANT_META, episodeLabel, formatBytes, formatDuration, formatLead, parseLead, slugify,
+  DURATION_TOLERANCE_SECONDS, EPISODE_STATUS_META, PLATFORM_META, PLATFORM_VALUES, SHOW_STATUS_META,
+  VARIANT_META, episodeLabel, formatBytes, formatDuration, formatTalkStart, parseTalkStart, slugify,
   type AudioVariant, type Platform,
 } from "../vocab";
 import {
@@ -31,22 +31,38 @@ import { Breadcrumb } from "../../_shell/Breadcrumb";
 type EpForm = {
   number: string; title: string; slug: string;
   summary: string; notes: string; transcript: string; hostId: string;
-  youtubeUrl: string; lead: string;
+  youtubeUrl: string; talkStart: string;
 };
 
 const emptyEp = (nextNumber: number, hostId: string): EpForm => ({
   number: String(nextNumber), title: "", slug: "",
-  summary: "", notes: "", transcript: "", hostId, youtubeUrl: "", lead: "",
+  summary: "", notes: "", transcript: "", hostId, youtubeUrl: "", talkStart: "",
 });
 
-/** أمتّسقةٌ النسختان؟ فرقُ المدّتين ينبغي أن يساوي الإزاحة، فلا خاتمةَ موسيقيّةً عندنا. */
+/** أمتّسقةٌ النسختان؟ هما تايم لاينٌ واحد، فحقُّ مدّتيهما التساوي. */
 const takesAligned = (e: EpisodeRow): boolean =>
-  !e.music || !e.plain || Math.abs(e.music.seconds - e.plain.seconds - e.leadSeconds) <= LEAD_TOLERANCE_SECONDS;
+  !e.music || !e.plain || Math.abs(e.music.seconds - e.plain.seconds) <= DURATION_TOLERANCE_SECONDS;
+
+/**
+ * الرفعُ إلى المخزن. يردّ رسالةَ عطبٍ أو `null` عند النجاح.
+ *
+ * ولمَ لا يُترك `fetch` عاريًا؟ لأنّ فشلَ الشبكة **يرمي** ولا يردّ `ok: false` —
+ * فيقفز فوق كلّ فحصٍ بعده، ويسقط الرفعُ صامتًا لا يرى صاحبُه شيئًا. وأشهرُ
+ * أسبابه أنّ الدلوَ لا يأذن لأصلنا (CORS)، وهو إعدادُ خادمٍ لا خطأُ ملفّ،
+ * فيُسمّى باسمه ويُدَلّ على دوائه.
+ */
+async function putToStore(url: string, file: File): Promise<string | null> {
+  try {
+    const res = await fetch(url, { method: "PUT", body: file, headers: { "content-type": file.type } });
+    return res.ok ? null : `ردّ المخزن ${res.status}. أعِد المحاولة.`;
+  } catch {
+    return "تعذّر الوصول إلى المخزن. غالبًا أنّ الدلو لا يأذن لهذا الأصل: شغّل «pnpm r2:cors» بتوكن R2 إداريّ.";
+  }
+}
 
 /**
  * مدّة الملفّ الصوتيّ بالثواني — تُقرأ من الملفّ نفسه في المتصفّح.
- * فلا يُدخلها إنسانٌ بيده: هي وحجمُ الملفّ ما تحمله الخلاصة إلى المنصّات،
- * وخطأٌ فيهما يظهر عند كلّ مشترك لا عندنا.
+ * فلا يُدخلها إنسانٌ بيده: عليها يقوم شريطُ المشغّل وبها يُفحص تساوي النسختين.
  */
 function readDuration(file: File): Promise<number> {
   return new Promise((resolve) => {
@@ -61,10 +77,10 @@ function readDuration(file: File): Promise<number> {
 }
 
 export function ShowEditorView({
-  show, episodes, platforms, members, stationLead,
+  show, episodes, platforms, members, stationTalkStart,
 }: {
   show: ShowRow; episodes: EpisodeRow[]; platforms: PlatformRow[];
-  members: MemberOption[]; stationLead: number;
+  members: MemberOption[]; stationTalkStart: number;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -102,8 +118,8 @@ export function ShowEditorView({
     try {
       const ticket = await createLogoUploadUrl(show.id, file.type, file.size);
       if (!ticket.ok || !ticket.url || !ticket.path) { toast.error(ticket.message ?? "تعذّر الرفع."); return; }
-      const up = await fetch(ticket.url, { method: "PUT", body: file, headers: { "content-type": file.type } });
-      if (!up.ok) { toast.error("تعذّر رفع الشعار إلى المخزن."); return; }
+      const failed = await putToStore(ticket.url, file);
+      if (failed) { toast.error(failed, { duration: 12000 }); return; }
       const r = await setShowLogo(show.id, ticket.path);
       if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
     } finally {
@@ -122,8 +138,8 @@ export function ShowEditorView({
       if (!duration) { toast.error("تعذّرت قراءة مدّة الملفّ. تأكّد أنّه ملفّ صوتٍ سليم."); return; }
       const ticket = await createAudioUploadUrl(show.id, episodeId, variant, file.type, file.size);
       if (!ticket.ok || !ticket.url || !ticket.path) { toast.error(ticket.message ?? "تعذّر الرفع."); return; }
-      const up = await fetch(ticket.url, { method: "PUT", body: file, headers: { "content-type": file.type } });
-      if (!up.ok) { toast.error("تعذّر رفع الصوت إلى المخزن."); return; }
+      const failed = await putToStore(ticket.url, file);
+      if (failed) { toast.error(failed, { duration: 12000 }); return; }
       const r = await setEpisodeAudio(episodeId, variant, ticket.path, file.size, duration, file.type);
       if (!r.ok) { toast.error(r.message); return; }
       toast.success(r.message);
@@ -168,7 +184,7 @@ export function ShowEditorView({
           summary: full.episode.summary ?? "", notes: full.episode.notes ?? "",
           transcript: full.episode.transcript ?? "", hostId: full.episode.hostId,
           youtubeUrl: full.episode.youtubeUrl ?? "",
-          lead: full.episode.leadSeconds === null ? "" : formatLead(full.episode.leadSeconds),
+          talkStart: full.episode.talkStartsAt === null ? "" : formatTalkStart(full.episode.talkStartsAt),
         },
       });
       setEpErr({});
@@ -193,8 +209,8 @@ export function ShowEditorView({
     if (s.youtubeUrl.trim() && !/^https:\/\/(www\.)?(youtube\.com\/|youtu\.be\/)/.test(s.youtubeUrl.trim())) {
       errs.youtubeUrl = "يبدأ بـ https://youtube.com أو https://youtu.be.";
     }
-    const lead = parseLead(s.lead);
-    if (lead !== null && Number.isNaN(lead)) errs.lead = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
+    const talkStart = parseTalkStart(s.talkStart);
+    if (talkStart !== null && Number.isNaN(talkStart)) errs.talkStart = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
     setEpErr(errs);
     if (Object.keys(errs).length) return;
 
@@ -204,7 +220,7 @@ export function ShowEditorView({
       notes: s.notes || null, transcript: s.transcript || null,
       hostId: s.hostId || null,
       youtubeUrl: s.youtubeUrl.trim() || null,
-      leadSeconds: lead,
+      talkStartsAt: talkStart,
     };
     startPending(async () => {
       const r = epForm.edit ? await updateEpisode(epForm.edit.id, input) : await createEpisode(input);
@@ -272,7 +288,7 @@ export function ShowEditorView({
                 <bdi dir="ltr">{formatDuration(e.plain.seconds)}</bdi>
               </span>
             : <span className="text-content-muted text-sm">بلا مجرّدة</span>}
-          {takesAligned(e) ? null : <Badge tone="danger" variant="outline">إزاحةٌ مختلّة</Badge>}
+          {takesAligned(e) ? null : <Badge tone="danger" variant="outline">مدّتان مختلفتان</Badge>}
         </span>
       ),
     },
@@ -406,10 +422,11 @@ export function ShowEditorView({
               onChange={(e) => onEpTitle(e.target.value)} error={epErr.title} required />
             <Field label="رقم الحلقة" icon={<Playlist />} innerIcon={<Hash />} placeholder="1" charset="digits"
               value={epForm.state.number} onChange={(e) => patchEp({ number: e.target.value })} error={epErr.number} required />
-            <Field label="إزاحة المقدّمة (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
-              placeholder={formatLead(stationLead)} charset="latin"
-              value={epForm.state.lead} onChange={(e) => patchEp({ lead: e.target.value })} error={epErr.lead}
-              helper={`اتركه فارغًا فيرث ${formatLead(stationLead)}ث من المحطّة. لا تملأه إلّا إن قُصّت مقدّمة هذه الحلقة على غير المقاس.`}
+            <Field label="بداية الحديث (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
+              placeholder={formatTalkStart(stationTalkStart)} charset="latin"
+              value={epForm.state.talkStart} onChange={(e) => patchEp({ talkStart: e.target.value })}
+              error={epErr.talkStart}
+              helper={`اتركه فارغًا فيرث ${formatTalkStart(stationTalkStart)}ث من المحطّة. لا تملأه إلّا إن اختلفت مقدّمة هذه الحلقة.`}
               optional />
             <Field className="form-full" label="المعرّف (رابط الحلقة)" icon={<LinkSimple />} innerIcon={<Hash />}
               placeholder="ep-1" charset="latin" value={epForm.state.slug}

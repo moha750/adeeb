@@ -2,11 +2,12 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Badge, Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, ColumnBars, type BarItem } from "@adeeb/design-system";
-import { Users, Timer, Globe, Robot, DeviceMobile } from "@phosphor-icons/react";
+import { Badge, Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, HeatGrid, type BarItem } from "@adeeb/design-system";
+import { Users, Timer, Globe, Robot, DeviceMobile, MapPin, UserPlus, Clock, SignOut } from "@phosphor-icons/react";
 import { Eye } from "@/app/_components/glyphs";
 import { ArrowUUpLeft, ArrowBendUpLeft } from "@/app/_components/glyphs";
-import { CountryFlag, countryName } from "@/lib/geo";
+import { deviceName } from "@/lib/devices";
+import { CountryFlag, cityName, cityOf, countryName } from "@/lib/geo";
 import { ICONS } from "../_shell/icons";
 import { iconKeyForHref } from "../_shell/nav";
 import { DataTable, type Column } from "../_components/DataTable";
@@ -26,6 +27,8 @@ const fmtDur = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s 
 // وحداتُ العدّ في قوائم التحليلات — تُصرَّف عربيًّا داخل `BarList`.
 const U_VIEW = { one: "مشاهدة", two: "مشاهدتان", few: "مشاهدات" };
 const U_VISIT = { one: "زيارة", two: "زيارتان", few: "زيارات" };
+const U_VISITOR = { one: "زائر", two: "زائران", few: "زوّار" };
+const U_SESSION = { one: "جلسة", two: "جلستان", few: "جلسات" };
 
 const RANGES: Array<[number, string]> = [[7, "٧ أيّام"], [30, "٣٠ يومًا"], [90, "٩٠ يومًا"], [3650, "الكلّ"]];
 
@@ -38,13 +41,65 @@ const toSeries = (cats: Cat[]): BarItem[] => cats.map((c) => ({ label: c.label, 
 const withCountries = (cats: Cat[]): BarItem[] =>
   cats.map((c) => ({ label: countryName(c.label), value: c.count, icon: <CountryFlag code={c.label} /> }));
 
-const withRouteIcons = (cats: Cat[]): BarItem[] =>
-  toSeries(cats).map((it) => {
-    const key = iconKeyForHref(it.label);
-    if (!key) return it;
-    const I = ICONS[key];
-    return { ...it, icon: <I /> };
-  });
+// المدن: تُدمَج رسومُ المزوّد المختلفة في هويّةٍ واحدة (`Hofuf` و`Al Hufuf` مدينةٌ واحدة) **ثمّ**
+// تُقتطَع اثنتا عشرة — والدالّة تُرجع أربعين كي يقع الدمجُ قبل الاقتطاع لا بعده.
+const mergeCities = (cats: Analytics["cities"]): BarItem[] => {
+  const by = new Map<string, BarItem>();
+  for (const c of cats) {
+    // الهويّة = المدينة **ودولتُها**: «طرابلس» في لبنان غيرُها في ليبيا.
+    const id = `${cityOf(c.label).id}|${c.country ?? ""}`;
+    const row = by.get(id);
+    if (row) row.value += c.count;
+    // الفاصلُ **شرطةٌ طويلة** بأمر المالك (٢٠٢٦-٠٨-١١): استثناءٌ منصوصٌ من قاعدته «لا شرطة طويلة
+    // في النصّ المرئيّ»، **لهذا الموضع وحده** — هي هنا تصل اسمين (مدينةٌ ودولتُها) لا تعترض جملة.
+    // لا تُقاس عليها، والقاعدةُ باقيةٌ في كلّ نصٍّ آخر. والعلمُ أيقونةُ الصفّ كما في «توزيع الدول».
+    else by.set(id, {
+      label: cityName(c.label),
+      value: c.count,
+      note: `— ${countryName(c.country)}`,
+      icon: <CountryFlag code={c.country} />,
+    });
+  }
+  return [...by.values()].sort((a, b) => b.value - a.value).slice(0, 12);
+};
+
+/**
+ * الصفحاتُ تُنادى بعناوينها: العنوانُ من `page_title` المخزَّن، ويُنقّى من لاحقة الموقع المكرّرة
+ * في كلّ سطر («تسجيل الدخول — نادي أديب» ← «تسجيل الدخول»). ويُدمَج ما تطابق عنوانُه: «/» و
+ * «/index.html» صفحةٌ واحدة. والمسارُ يبقى هويّةً: منه الأيقونة، وإليه يُرجَع إن خلا العنوان.
+ */
+const SITE_TAIL = /\s*[—–\-|]\s*[^—–\-|]*(أد[ِي]?يب|Adeeb)[^—–\-|]*$/u;
+/** أيقونةُ المسار من خريطة التنقّل — وما ليس بندًا في اللوحة (أكثرُ مسارات V1) بلا أيقونة. */
+const routeIcon = (href: string) => {
+  const key = iconKeyForHref(href);
+  if (!key) return undefined;
+  const I = ICONS[key];
+  return <I />;
+};
+const pageTitle = (p: { label: string; title: string | null }) => {
+  const t = (p.title ?? "").trim();
+  if (!t) return p.label;
+  const short = t.replace(SITE_TAIL, "").trim();
+  return short || t;
+};
+const mergePages = (pages: { label: string; title: string | null; count: number }[]): BarItem[] => {
+  const by = new Map<string, BarItem & { top: number }>();
+  for (const p of pages) {
+    const name = pageTitle(p);
+    const row = by.get(name);
+    if (row) {
+      row.value += p.count;
+      // الأيقونةُ من المسار الأكثر مشاهدةً بين ما اجتمع تحت العنوان الواحد.
+      if (p.count > row.top) { row.top = p.count; row.icon = routeIcon(p.label); }
+    } else {
+      by.set(name, { label: name, value: p.count, icon: routeIcon(p.label), top: p.count });
+    }
+  }
+  return [...by.values()]
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 12)
+    .map(({ top: _t, ...item }) => item);
+};
 
 // أعمدة جدول «أحدث الزوّار» — على DataTable الموحّد (لا قائمة .st-rv خاصّة).
 const recentCols: Column<RecentVisitor>[] = [
@@ -54,13 +109,13 @@ const recentCols: Column<RecentVisitor>[] = [
   { key: "sessions", header: "الجلسات", width: "0.8fr", align: "center", render: (v) => <span className="txt num">{nf(v.sessions)}</span> },
 ];
 
-// توزيع ٢٤ ساعة من بيانات ساعيّة متفرّقة — أعمدة ColumnBars بتسمية كلّ ٦ ساعات.
-const hourBars = (hourly: Analytics["hourly"]) => {
-  const map = new Map(hourly.map((h) => [h.hour, h.count]));
-  return Array.from({ length: 24 }, (_, h) => {
-    const c = map.get(h) ?? 0;
-    return { value: c, label: `الساعة ${h}:00`, tick: h % 6 === 0 ? String(h) : undefined };
-  });
+// مصفوفةُ الذروة: ٧ أيّام × ٢٤ ساعة من قائمةٍ مبعثرة (الخالي صفرٌ) — بتوقيت الرياض من القاعدة.
+const DOW_AR = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const HOURS_AR = Array.from({ length: 24 }, (_, h) => String(h));
+const heatMatrix = (heat: Analytics["hourly_heat"]) => {
+  const m = DOW_AR.map(() => Array.from({ length: 24 }, () => 0));
+  for (const c of heat) if (m[c.dow]) m[c.dow][c.hour] = c.count;
+  return m;
 };
 
 export function StatsView({ data, recent, days }: { data: Analytics; recent: RecentVisitor[]; days: number }) {
@@ -89,7 +144,11 @@ export function StatsView({ data, recent, days }: { data: Analytics; recent: Rec
         ))}
       </div>
 
-      <SectionCard title="الزيارات عبر الزمن">
+      {/* ترتيبُ الإحصاءات بكلمة المالك (٢٠٢٦-٠٨-١١): عشرةٌ بعينها وبترتيبها، **كلٌّ في صفٍّ
+          مستقلّ** — لا كرتين في صفّ. فالترتيبُ في الكود هو الترتيبُ في العين بلا وساطةِ شبكة. */}
+
+      {/* ١ */}
+      <SectionCard title="الزيارات اليوميّة">
         <AreaChart
           labels={data.daily.map((d) => fmtDate(d.date))}
           series={[
@@ -99,25 +158,55 @@ export function StatsView({ data, recent, days }: { data: Analytics; recent: Rec
         />
       </SectionCard>
 
-      <div className="st-grid2">
-        <SectionCard title="أعلى الصفحات"><BarList items={withRouteIcons(data.top_pages)} unit={U_VIEW} /></SectionCard>
-        <SectionCard title="الدول"><BarList items={withCountries(data.countries)} unit={U_VISIT} /></SectionCard>
-      </div>
+      {/* ٢ */}
+      <SectionCard title="توزيع الأجهزة" icon={<DeviceMobile />}>
+        <Donut items={data.devices.map((c) => ({ label: deviceName(c.label), value: c.count }))} unit={U_VISIT} />
+      </SectionCard>
 
-      <div className="st-grid2">
-        <SectionCard title="الأجهزة" icon={<DeviceMobile />}><Donut items={toSeries(data.devices)} unit={U_VISIT} /></SectionCard>
-        <SectionCard title="المتصفّحات"><BarList items={toSeries(data.browsers)} unit={U_VISIT} /></SectionCard>
-      </div>
+      {/* ٣ */}
+      <SectionCard title="توزيع الدول" icon={<Globe />}>
+        <BarList items={withCountries(data.countries)} unit={U_VISIT} />
+      </SectionCard>
 
-      <div className="st-grid2">
-        <SectionCard title="مصادر الزيارات"><BarList items={toSeries(data.referrers)} unit={U_VISIT}
-          empty={<EmptyState variant="soft" icon={<Globe aria-hidden />} title="زيارات مباشرة فقط" description="لا مصادر خارجيّة في هذه المدّة." />} /></SectionCard>
-        <SectionCard title="التوزيع الساعيّ"><ColumnBars bars={hourBars(data.hourly)} /></SectionCard>
-      </div>
+      {/* ٤ — المدينة تُكتب كما يرسلها مزوّد الموقع (لا ترجمةَ لها في القاعدة). */}
+      <SectionCard title="توزيع المدن" icon={<MapPin />}>
+        <BarList items={mergeCities(data.cities)} unit={U_VISIT}
+          empty={<EmptyState variant="soft" icon={<MapPin aria-hidden />} title="لا مدنَ بعد" description="لم يصل تحديدُ مدينةٍ في هذه المدّة." />} />
+      </SectionCard>
 
-      {/* كرتٌ برأسٍ منسّم كسائر لوحات هذه الصفحة (`SectionCard` هو الكرتُ نفسُه) — كان عنوانًا
-          شاردًا بأنماط مضمَّنة خارج المكتبة (ق١)، وهو الجوابُ الرابع في الموقع عن سؤالٍ واحد:
-          «كيف يُعنوَن جدول؟». والجدولُ ابنُ الكرت مباشرةً فيبلغ حافّتيه بلا إطارٍ ثانٍ. */}
+      {/* ٥ — العدّ **زائرٌ** لا زيارة، فوحدتُه تقول ذلك. */}
+      <SectionCard title="زوّارٌ جُدد مقابل عائدين" icon={<UserPlus />}>
+        <Donut unit={U_VISITOR} items={[
+          { label: "جُدد", value: data.visitor_types.new },
+          { label: "عائدون", value: data.visitor_types.returning },
+        ]} />
+      </SectionCard>
+
+      {/* ٦ — بُعدان لا بُعد: يومُ الأسبوع × الساعة، فيظهر فرقُ ذروةِ الخميس عن ذروةِ الأحد. */}
+      <SectionCard title="ساعات الذروة" icon={<Clock />}>
+        <HeatGrid rows={DOW_AR} cols={HOURS_AR} values={heatMatrix(data.hourly_heat)}
+          legendLow="أهدأ" legendHigh="أزحم" />
+      </SectionCard>
+
+      {/* ٧ */}
+      <SectionCard title="أعلى مصادر الإحالة">
+        <BarList items={toSeries(data.referrers)} unit={U_VISIT}
+          empty={<EmptyState variant="soft" icon={<Globe aria-hidden />} title="زيارات مباشرة فقط" description="لا مصادر خارجيّة في هذه المدّة." />} />
+      </SectionCard>
+
+      {/* ٨ */}
+      <SectionCard title="أكثر الصفحات مُشاهدة">
+        <BarList items={mergePages(data.top_pages)} unit={U_VIEW} />
+      </SectionCard>
+
+      {/* ٩ — الخروجُ يُعدّ بالجلسة: كم جلسةً انتهت عند هذه الصفحة. */}
+      <SectionCard title="صفحات الخروج" icon={<SignOut />}>
+        <BarList items={mergePages(data.exit_pages)} unit={U_SESSION}
+          empty={<EmptyState variant="soft" icon={<SignOut aria-hidden />} title="لا جلساتٍ منتهية" description="لم تكتمل جلسةٌ في هذه المدّة." />} />
+      </SectionCard>
+
+      {/* ١٠ — كرتٌ برأسٍ منسّم كسائر لوحات هذه الصفحة (`SectionCard` هو الكرتُ نفسُه)، والجدولُ
+          ابنُه المباشر فيبلغ حافّتيه بلا إطارٍ ثانٍ (ق١٢). */}
       <Card>
         <CardHeader variant="soft" icon={<Users />} title="أحدث الزوّار" />
         <DataTable columns={recentCols} rows={recent} getRowId={(v) => v.id}

@@ -8,7 +8,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { fmtDateOnly, fmtDate } from "@/lib/date";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
-import { assignmentScope, positionLine, roleTitle } from "@/lib/positionLabel";
+import { positionLine, positionParts } from "@/lib/positionLabel";
 
 /** محطّةٌ في المسيرة: الانضمام، أو تولّي منصب. */
 export type JourneyStop = {
@@ -131,17 +131,8 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   const deptName = new Map((dRes.data ?? []).map((d) => [d.id as number, d.name_ar as string | null]));
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string | null]));
 
-  // اسم المنصب: الرتبة + وحدته الأمّ (مصدرٌ واحد في `lib/positionLabel`)
-  const roleAr = new Map(
-    (rRes.data ?? []).map((r) => [
-      r.role_name,
-      roleTitle({
-        roleAr: (r.role_name_ar as string | null) ?? r.role_name,
-        homeCommitteeId: r.home_committee_id as number | null,
-        homeName: r.home_committee_id != null ? committeeName.get(r.home_committee_id) ?? null : null,
-      }),
-    ]),
-  );
+  // **شخصٌ لا مقعد**: رتبتُه كما هي، ووحدتُه من خانة إسناده وحدها (20260811)
+  const roleAr = new Map((rRes.data ?? []).map((r) => [r.role_name, (r.role_name_ar as string | null) ?? r.role_name]));
 
   type Assignment = { role_name: string; department_id: number | null; committee_id: number | null; assigned_at: string | null; is_active: boolean | null };
   const assignments = (urRes.data ?? []) as Assignment[];
@@ -161,17 +152,11 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     else groups.set(k, { roleName: a.role_name, at: a.assigned_at, active: !!a.is_active, items: [a] });
   }
 
-  /**
-   * وحدة التعيين: اللجنة، وإلّا القسم. و`null` لمن لا وحدة له (الإدارة العليا) —
-   * ولمن وحدتُه هي وحدة دوره الأمّ، فاسمُ منصبه يقولها (قائد إدارة الضمان مُسنَدٌ إليها).
-   */
+  /** وحدة التعيين: اللجنة، وإلّا القسم. و`null` لمن لا وحدة له (الإدارة العليا). */
   const unitOf = (a: Assignment): string | null =>
-    assignmentScope(roleHome.get(a.role_name) ?? null, {
-      committeeId: a.committee_id,
-      unitName: a.committee_id != null ? committeeName.get(a.committee_id) ?? null
-        : a.department_id != null ? deptName.get(a.department_id) ?? null
-          : null,
-    });
+    a.committee_id != null ? committeeName.get(a.committee_id) ?? null
+      : a.department_id != null ? deptName.get(a.department_id) ?? null
+        : null;
   const councilOf = (roleName: string): string | null => {
     const c = roleCouncil.get(roleName);
     return c ? councilName.get(c) ?? null : null;
@@ -196,12 +181,15 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       : []),
     ...groupList.map((g, i) => {
       const units = [...new Set(g.items.map(unitOf).filter(Boolean) as string[])];
+      const title = roleAr.get(g.roleName) ?? g.roleName;
+      // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر»
+      const rawScope = units.length ? units.join("، ") : councilOf(g.roleName);
+      // المحطّة تضع الرتبةَ في سطرٍ ونطاقَها تحته، فلا تصلهما — فالقطعتان من المصدر
+      // الواحد (`positionParts`) لا نصّان يُركَّبان هنا.
       return {
         key: `role-${i}`,
         kind: "role" as const,
-        title: roleAr.get(g.roleName) ?? g.roleName,
-        // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر»
-        scope: units.length ? units.join("، ") : councilOf(g.roleName),
+        ...positionParts(title, rawScope),
         date: fmtDate(g.at),
         at: Date.parse(g.at ?? "") || 0,
         current: g.active,

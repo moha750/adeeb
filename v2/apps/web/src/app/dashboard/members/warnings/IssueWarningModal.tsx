@@ -127,9 +127,9 @@ export function IssueWarningModal({
   const letterOf = (i: Issued) => ({
     name: i.target.name,
     gender: i.target.gender,
-    // لحظةَ الإصدار: حالُه هو لقطتُه
+    // لحظةَ الإصدار: حالُه هو لقطتُه — والقطعتان كما يعرفهما `lib/positionLabel`
     role: i.target.roleAr,
-    committee: i.target.committee,
+    committee: i.target.scope,
     ordinal: i.ordinal,
     category: i.category,
     reason: i.reason,
@@ -153,7 +153,7 @@ export function IssueWarningModal({
   const memberOptions: SelectOption[] = targets.map((t) => ({
     value: t.id,
     label: t.name,
-    hint: positionLine(t.roleAr, t.committee) ?? undefined,
+    hint: positionLine(t.roleAr, t.scope) ?? undefined,
     group: t.activeCount > 0 ? "عليهم إنذارات سارية" : "بلا إنذارات",
     icon: <Avatar name={t.name} src={t.avatar ?? undefined} gender={t.gender} size="xs" />,
   }));

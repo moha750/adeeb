@@ -4,18 +4,17 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { ROLE_ORDER } from "@/lib/roleOrder";
 import { DASHBOARD_CAPS } from "@/lib/capabilities";
 import { seatScope, type SeatScope } from "@/lib/preview-seat";
-import { roleTitle } from "@/lib/positionLabel";
+import { seatName } from "@/lib/positionLabel";
 import type { PermRole, Capability } from "./vocab";
 
-/** اسم المنصب = الرتبة + وحدته الأمّ — يميّز «قائد الموارد» من «قائد» اللجنة في قائمةٍ بلا إسناد. */
+/**
+ * **مقعدٌ لا شخص**: قائمةٌ بلا إسنادٍ يُقرأ منه، فتُسمّى المقاعد بوحدتها الملازمة —
+ * وبها وحدها يفترق «قائد إدارة الموارد البشرية» عن «قائد» اللجنة، وكلاهما رتبتُه «قائد».
+ */
 function titler(committees: { id: number; committee_name_ar: string }[]) {
   const home = new Map(committees.map((c) => [c.id, c.committee_name_ar]));
   return (r: { role_name: string; role_name_ar: string | null; home_committee_id: number | null }) =>
-    roleTitle({
-      roleAr: r.role_name_ar ?? r.role_name,
-      homeCommitteeId: r.home_committee_id,
-      homeName: r.home_committee_id != null ? home.get(r.home_committee_id) ?? null : null,
-    });
+    seatName(r.role_name_ar ?? r.role_name, r.home_committee_id != null ? home.get(r.home_committee_id) ?? null : null);
 }
 
 export type PermMatrix = {

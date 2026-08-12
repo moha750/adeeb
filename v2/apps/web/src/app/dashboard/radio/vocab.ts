@@ -30,8 +30,10 @@ export const EPISODE_STATUS_META: Record<EpisodeStatus, { label: string; tone: "
 /* ══ نسختا الصوت ═════════════════════════════════════════════════════ */
 
 // لكلّ حلقةٍ تجربتان: بموسيقى (الافتراضيّة، وبها وحدها يُسمَح بالنشر) وبلا موسيقى.
-// وليستا ملفّين متجاورين فحسب: بينهما إزاحةٌ ثابتة هي طولُ المقدّمة الموسيقيّة،
-// بها يقفز المستمع من نسخةٍ إلى أختها في اللحظة نفسها بلا انقطاع.
+// وهما **تايم لاينٌ واحد** لا ملفّان متجاوران: المنتج يصدّر التسلسل نفسَه بكتم
+// مسار الموسيقى، فتتساوى المدّتان عيّنةً بعيّنة وتبدأ المجرّدةُ بصمتٍ مكانَ
+// المقدّمة الموسيقيّة. فالتبديلُ `t ← t` دقيقٌ بلا حساب، والتطابقُ ضمانةٌ في
+// التصدير لا رقمًا يصونه إنسان.
 export type AudioVariant = "music" | "plain";
 
 export const VARIANT_META: Record<AudioVariant, { label: string; verb: string }> = {
@@ -41,20 +43,24 @@ export const VARIANT_META: Record<AudioVariant, { label: string; verb: string }>
 export const VARIANT_VALUES: AudioVariant[] = ["music", "plain"];
 
 /**
- * ما نتسامح به بين الإزاحة المعلنة و(مدّةُ الموسيقى ناقصَ مدّةِ المجرّدة).
+ * ما نتسامح به من فرقٍ بين مدّتَي النسختين، وحقُّهما التساوي.
  *
  * ثانيةٌ ونصف لا أقلّ: المدّتان تُخزَّنان ثوانيَ صحيحة، فتقريبُ كلٍّ منهما
- * يخطئ نصفَ ثانية، ويبلغ خطأ الفرق ثانيةً كاملة في أسوأ حال. وما دون ذلك
- * إنذارٌ كاذب، وما فوقه تصديرٌ خاطئ حقًّا (فالفرق يُقاس بالثواني لا بأجزائها).
+ * يخطئ نصفَ ثانية ويبلغ خطأ الفرق ثانيةً كاملة في أسوأ حال. وما فوقها تصديرٌ
+ * مقصوصٌ أو ملفٌّ رُفع في غير موضعه، وكلاهما يجعل المبدّل يكذب.
  */
-export const LEAD_TOLERANCE_SECONDS = 1.5;
+export const DURATION_TOLERANCE_SECONDS = 1.5;
 
-/** نصٌّ للإزاحة كما تُكتب وتُقرأ في الحقول: ثوانٍ بثلاث منازل بلا أصفارٍ زائدة. */
-export const formatLead = (seconds: number): string =>
+/**
+ * ثانيةُ بدء الحديث كما تُكتب وتُقرأ في الحقول: ثوانٍ بثلاث منازل بلا أصفارٍ زائدة.
+ * ولا يُستعمل الرقمُ في التبديل (فالزمن واحد)، بل في شيءٍ واحد: ألّا يجلس
+ * المستمعُ في صمتٍ إن بدأ بالنسخة المجرّدة قبل أن يبدأ الكلام.
+ */
+export const formatTalkStart = (seconds: number): string =>
   String(Math.round(seconds * 1000) / 1000);
 
-/** يقرأ إزاحةً من حقلٍ نصّيّ. `null` للفارغ (أي: ارِث)، و`NaN` للخطأ. */
-export function parseLead(raw: string): number | null {
+/** يقرأ ثانيةَ بدءٍ من حقلٍ نصّيّ. `null` للفارغ (أي: ارِث)، و`NaN` للخطأ. */
+export function parseTalkStart(raw: string): number | null {
   const t = raw.trim().replace(/[٫،]/g, ".");
   if (!t) return null;
   if (!/^\d+(\.\d{1,3})?$/.test(t)) return NaN;
@@ -107,12 +113,9 @@ export function formatDuration(seconds: number | null | undefined): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }
 
-/** حجمٌ مقروء بالميغابايت — رقمٌ واحد بعد الفاصلة يكفي لحلقةٍ صوتيّة. */
-export function formatBytes(bytes: number | null | undefined): string {
-  if (!bytes || bytes <= 0) return "";
-  const mb = bytes / (1024 * 1024);
-  return mb >= 10 ? `${Math.round(mb)} م.ب` : `${mb.toFixed(1)} م.ب`;
-}
+/** حجمٌ مقروء بالميغابايت — غادر إلى `lib/bytes` يوم احتاجه بابٌ ثانٍ، ويُعاد تصديرُه هنا
+ *  كي لا يتغيّر مستدعوه في الإذاعة. التعريفُ هناك وحده. */
+export { formatBytes } from "@/lib/bytes";
 
 /** تسمية الحلقة كما تُقرأ في اللوحة والموقع. ترقيمٌ متسلسلٌ واحد بلا مواسم. */
 export const episodeLabel = (number: number) => `الحلقة ${number}`;

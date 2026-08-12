@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, CardBody, CardHeader, Container, Footer, LandingHeading } from "@adeeb/design-system";
-import { MicrophoneStage, Playlist } from "@phosphor-icons/react/dist/ssr";
+import { Container, Footer } from "@adeeb/design-system";
+import { MicrophoneStage, Playlist, Play } from "@phosphor-icons/react/dist/ssr";
 import { SiteHeader } from "../../_components/SiteHeader";
-import { PLATFORM_META, episodeLabel, formatDuration } from "../../dashboard/radio/vocab";
 import { getPublicShowPage } from "../data";
+import { EpisodeRow } from "../_player/EpisodeRow";
+import { FoldedText } from "../_player/FoldedText";
+import type { Track } from "../_player/PlayerProvider";
 
 export const revalidate = 60;
 
@@ -22,76 +24,74 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
   const { show: slug } = await params;
   const page = await getPublicShowPage(slug);
   if (!page) notFound();
-  const { show, episodes, platforms } = page;
+  const { show, episodes } = page;
+
+  const playable = episodes.filter((e) => e.musicUrl);
+  const tracks: Track[] = playable.map((e) => ({
+    id: e.id,
+    title: e.title,
+    showTitle: show.title,
+    showSlug: show.slug,
+    episodeSlug: e.slug,
+    musicUrl: e.musicUrl!,
+    plainUrl: e.plainUrl,
+    talkStartsAt: e.talkStartsAt,
+    coverUrl: show.logoUrl,
+    seconds: e.musicSeconds,
+    tone: show.tone,
+  }));
 
   return (
     <>
       <SiteHeader activeHref="/radio" />
       <main>
-        <section className="py-16 md:py-24">
+        <section className={`rad rad-tone-${show.tone} py-10 md:py-14`}>
           <Container>
-            <LandingHeading
-              eyebrow="برنامج"
-              title={show.title}
-              deck={show.tagline ?? undefined}
-              align="center"
-            />
+            <Link href="/radio" className="text-sm text-content-muted">الإذاعة</Link>
 
-            {show.description ? (
-              <p className="mx-auto mt-6 max-w-2xl text-center leading-relaxed text-content-muted">
-                {show.description}
-              </p>
-            ) : null}
-
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm text-content-muted">
-              {show.hostName ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <MicrophoneStage aria-hidden />تقديم {show.hostName}
-                </span>
-              ) : null}
-              <span className="inline-flex items-center gap-1.5">
-                <Playlist aria-hidden /><span className="font-latin">{episodes.length}</span> حلقة
-              </span>
+            <div className="rad-hero rad-hero-lg">
+              <div className="rad-hero-logo">
+                {show.logoUrl
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={show.logoUrl} alt="" />
+                  : <MicrophoneStage size={40} aria-hidden />}
+              </div>
+              <div className="rad-hero-txt">
+                <h1 className="rad-hero-name">{show.title}</h1>
+                {show.tagline ? <p className="rad-hero-deck">{show.tagline}</p> : null}
+                <div className="rad-ep-sub" style={{ marginTop: 8 }}>
+                  {show.hostName ? <span>تقديم {show.hostName}</span> : null}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Playlist aria-hidden /><span className="font-latin">{episodes.length}</span> حلقة
+                  </span>
+                </div>
+                <div className="rad-hero-cta">{tracks[0] ? (
+                  <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="rad-cta">
+                    <Play size={18} weight="fill" aria-hidden />استمع لآخر حلقة
+                  </Link>
+                ) : null}</div>
+              </div>
             </div>
 
-            {platforms.length ? (
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                {platforms.map((p) => (
-                  <a key={p.platform} href={p.url} target="_blank" rel="noreferrer">
-                    <Badge tone="neutral" variant="soft">{PLATFORM_META[p.platform].label}</Badge>
-                  </a>
-                ))}
-              </div>
+            {show.description ? (
+              <div className="max-w-2xl"><FoldedText text={show.description} /></div>
             ) : null}
 
-            {episodes.length === 0 ? (
-              <p className="mt-10 text-center text-content-muted">لا حلقات منشورة بعد.</p>
+
+            <h2 className="mb-3 mt-10 font-display text-lg font-black">الحلقات</h2>
+            {playable.length === 0 ? (
+              <p className="text-content-muted">لا حلقات منشورة بعد.</p>
             ) : (
-              <div className="card-grid card-grid-2col" style={{ marginTop: 32 }}>
-                {episodes.map((e) => (
-                  <Link key={e.id} href={`/radio/${show.slug}/${e.slug}`} className="block">
-                    <Card interactive>
-                      <CardHeader
-                        className="acard-header-clip"
-                        icon={<Playlist aria-hidden />}
-                        title={e.title}
-                        subtitle={`${episodeLabel(e.number)}، ${e.dateLabel}`}
-                      />
-                      <CardBody className="pt-3">
-                        <div className="flex flex-col gap-2">
-                          {e.summary ? (
-                            <p className="line-clamp-3 text-sm leading-relaxed text-content-muted">{e.summary}</p>
-                          ) : null}
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-content-muted">
-                            {e.musicSeconds ? (
-                              <span className="font-latin"><bdi dir="ltr">{formatDuration(e.musicSeconds)}</bdi></span>
-                            ) : null}
-                            {e.plainUrl ? <Badge tone="neutral" variant="soft">نسختان</Badge> : null}
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </Link>
+              <div className="rad-eps">
+                {playable.map((e, i) => (
+                  <EpisodeRow
+                    key={e.id}
+                    track={tracks[i]}
+                    number={e.number}
+                    dateLabel={e.dateLabel}
+                    summary={e.summary}
+                    showName={null}
+                  />
                 ))}
               </div>
             )}

@@ -864,7 +864,10 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
             gender: warning.gender,
             committeeId: warning.committeeId,
             committee: warning.committee,
+            // القطعتان كما بناهما `getMembers`: `role` رتبتُه، و`committee` وحدةُ إسناده —
+            // وهما نفسُهما قطعتا سطر النداء في الخطاب.
             roleAr: warning.role,
+            scope: warning.committee,
             activeCount: warning.warnCount,
             joinedDate: warning.joinedRaw || null,
           }]}

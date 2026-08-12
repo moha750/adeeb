@@ -6,7 +6,7 @@ import { formatDegree } from "./vocab";
 import { roleRank } from "@/lib/roleOrder";
 import { fmtDateOnly } from "@/lib/date";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
-import { assignmentScope, roleTitle } from "@/lib/positionLabel";
+
 import { getCurrentAdmin } from "@/lib/auth";
 
 // الحالة ومفرداتها في `lib/memberStatus` (مصدرٌ واحد يشاركه العرض) — ويُعاد تصديرها من هنا
@@ -129,7 +129,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
     sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
-    sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
+    sb.from("roles").select("role_name, role_name_ar"),
     sb.from("departments").select("id, name_ar"),
     sb.from("committees").select("id, department_id, committee_name_ar, member_role_name, is_active"),
     sb.from("member_details").select("user_id, academic_record_number, academic_degree, college, major, twitter_account, instagram_account, tiktok_account, linkedin_account"),
@@ -215,18 +215,10 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       avatar: p.avatar_url ?? null,
       gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
       dept: deptId != null ? deptById.get(deptId) ?? null : null,
-      // اسمٌ ووحدة: الاسم يحمل وحدة الدور الأمّ، وخانةُ اللجنة تسكت إن كانت هي إيّاها
-      committee: assignmentScope(role?.home_committee_id ?? null, {
-        committeeId: br?.committee_id,
-        unitName: br?.committee_id != null ? committeeName.get(br.committee_id) ?? null : null,
-      }),
-      role: role
-        ? roleTitle({
-            roleAr: role.role_name_ar ?? role.role_name,
-            homeCommitteeId: role.home_committee_id,
-            homeName: role.home_committee_id != null ? committeeName.get(role.home_committee_id) ?? null : null,
-          })
-        : null,
+      // **شخصٌ لا مقعد**: رتبتُه كما هي، ووحدتُه من خانة إسناده وحدها — لا وحدةَ ملازمة
+      // في طريقه، فلا ازدواجيّةَ تُسكَت ولا قاعدةَ تُنسى.
+      committee: br?.committee_id != null ? committeeName.get(br.committee_id) ?? null : null,
+      role: role ? (role.role_name_ar ?? role.role_name) : null,
       status: MEMBER_STATUS_OF[p.account_status] ?? "inactive",
       joined: fmtDateOnly(p.joined_date),
       joinedRaw: p.joined_date ?? "",

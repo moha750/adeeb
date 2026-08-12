@@ -1,7 +1,7 @@
 // يُستورَد فقط من مكوّنات خادميّة (page.tsx). المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { positionLine } from "@/lib/positionLabel";
+import { positionLine, positionParts } from "@/lib/positionLabel";
 import type { CandidateStatus, ElectionStatus } from "./vocab";
 
 // التنسيق من `lib/dates` (مصدرٌ واحد بتوقيت النادي)، ويُعاد تصديره لمن كان يقرؤه من هنا.
@@ -53,7 +53,7 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
 
   const [eRes, rRes, cRes, dRes, candRes, voteRes] = await Promise.all([
     sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, winner_candidate_id, archived_at, candidacy_end, voting_end, created_at").order("created_at", { ascending: false }),
-    sb.from("roles").select("role_name, role_name_ar").eq("is_elected", true),
+    sb.from("roles").select("role_name, role_name_ar, home_committee_id").eq("is_elected", true),
     sb.from("committees").select("id, committee_name_ar"),
     sb.from("departments").select("id, name_ar"),
     sb.from("election_candidates").select("election_id, status"),
@@ -63,14 +63,13 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
   if (firstErr) return { elections: [], error: firstErr.message };
 
   // تسميات المنصب والنطاق — من مصادرها الواحدة.
-  // المناصب المنتخَبة كلّها بلا وحدةٍ أمّ (`roles.home_committee_id` فارغ)، فاسمُها رتبةٌ
-  // خالصة والنطاقُ يكمله. يوم يُنتخَب منصبٌ له أمّ، مرّ باسمه على `lib/positionLabel`.
-  const roleLabel = new Map<string, string>();
-  for (const r of rRes.data ?? []) roleLabel.set(r.role_name, r.role_name_ar ?? r.role_name);
   const commLabel = new Map<number, string>();
   for (const c of cRes.data ?? []) commLabel.set(c.id, c.committee_name_ar);
   const deptLabel = new Map<number, string>();
   for (const d of dRes.data ?? []) deptLabel.set(d.id, d.name_ar);
+  // المقعدُ يُسمّى برتبته ووحدةِ الانتخاب — والانتخابُ يحمل وحدتَه صراحةً (لجنةً أو قسمًا)
+  const roleLabel = new Map<string, string>();
+  for (const r of rRes.data ?? []) roleLabel.set(r.role_name, r.role_name_ar ?? r.role_name);
 
   // عدّادات المرشّحين والأصوات لكلّ انتخاب
   const candTotal = new Map<string, number>();
@@ -90,11 +89,14 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
       : e.target_department_id != null
         ? (deptLabel.get(e.target_department_id) ?? `قسم #${e.target_department_id}`)
         : null;
+    // الجدول يُبرز الرتبة ويُتبعها نطاقَها، فيأخذ القطعتين لا الجملة — ومن المصدر
+    // الواحد (`positionParts`) لا من نصٍّ يُركَّب هنا.
+    const part = positionParts(rLabel, scope);
     return {
       id: e.id,
       targetRoleName: e.target_role_name,
-      roleLabel: rLabel,
-      scopeLabel: scope,
+      roleLabel: part.title,
+      scopeLabel: part.scope,
       positionLabel: positionLine(rLabel, scope) ?? rLabel,
       status: e.status as ElectionStatus,
       candidates: candTotal.get(e.id) ?? 0,
@@ -234,7 +236,11 @@ export type ElectionDetail = {
   winnerCandidateId: string | null;
   winnerName: string | null;
   committeeId: number | null;
-  siblingSeatReady: boolean; // المقعد الآخر في اللجنة نفسها مغلقُ التصويت وجاهزٌ للحسم التوأم
+  /** قسمُ المقعد — وحدةُ الحسم (`resolve_department_election_winners`). */
+  departmentId: number | null;
+  /** مقاعدُ القسم التي تشارك هذا المقعد مرشّحًا: جاهزةً للحسم معه، أو حائلةً دونه لأنّ تصويتها لم يُغلق. */
+  jointPending: number;
+  jointBlocking: number;
   candidates: CandidateRow[];
   votes: number;
 };
@@ -253,7 +259,7 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
   const e = eRes.data;
 
   const [rRes, candRes, voteRes] = await Promise.all([
-    sb.from("roles").select("role_name_ar").eq("role_name", e.target_role_name).maybeSingle(),
+    sb.from("roles").select("role_name_ar, home_committee_id").eq("role_name", e.target_role_name).maybeSingle(),
     sb.from("election_candidates").select("id, candidate_number, user_id, statement_ar, file_url, file_name, status, review_note_ar, submitted_at").eq("election_id", id).order("candidate_number", { ascending: true }),
     sb.from("election_votes").select("candidate_id, vote_weight").eq("election_id", id),
   ]);
@@ -306,24 +312,29 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
   }));
 
   const winnerName = e.winner_candidate_id ? (candidates.find((c) => c.id === e.winner_candidate_id)?.name ?? null) : null;
+  const detailPart = positionParts(roleLabel, scopeLabel);
 
-  // جاهزيّةُ الحسم التوأم: المقعد الآخر في اللجنة نفسها مغلقُ التصويت بلا فائزٍ بعد
-  let siblingSeatReady = false;
-  if (e.target_committee_id != null && e.status === "voting_closed"
-      && (e.target_role_name === "committee_leader" || e.target_role_name === "deputy_committee_leader")) {
-    const other = e.target_role_name === "committee_leader" ? "deputy_committee_leader" : "committee_leader";
-    const sib = await sb.from("elections").select("id")
-      .eq("target_committee_id", e.target_committee_id).eq("target_role_name", other)
-      .eq("status", "voting_closed").is("archived_at", null).is("winner_candidate_id", null).maybeSingle();
-    siblingSeatReady = !!sib.data;
+  // حالُ الحسم في القسم: كم مقعدًا يشارك هذا المقعد مرشّحًا، جاهزًا أو لم يُغلق تصويتُه بعد.
+  // الحَكَم في القاعدة (`department_resolution_state`) فلا تُعاد القاعدةُ هنا نصًّا ثانيًا.
+  let departmentId: number | null = e.target_department_id ?? null;
+  let jointPending = 0;
+  let jointBlocking = 0;
+  if (e.status === "voting_closed") {
+    const st = await sb.rpc("department_resolution_state", { p_election: id });
+    const s = (st.data ?? null) as { department: number | null; blocking: number; pending: number } | null;
+    if (s) { departmentId = s.department; jointPending = s.pending; jointBlocking = s.blocking; }
+  } else if (departmentId == null && e.target_committee_id != null) {
+    const c = await sb.from("committees").select("department_id").eq("id", e.target_committee_id).maybeSingle();
+    departmentId = (c.data?.department_id as number | null) ?? null;
   }
 
   return {
     election: {
       id: e.id,
       targetRoleName: e.target_role_name,
-      roleLabel,
-      scopeLabel,
+      // مدموجتان قبل التسليم — كالكشف (`positionParts`)
+      roleLabel: detailPart.title,
+      scopeLabel: detailPart.scope,
       positionLabel: positionLine(roleLabel, scopeLabel) ?? roleLabel,
       status: e.status as ElectionStatus,
       archived: !!e.archived_at,
@@ -335,7 +346,9 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
       winnerCandidateId: e.winner_candidate_id ?? null,
       winnerName,
       committeeId: e.target_committee_id ?? null,
-      siblingSeatReady,
+      departmentId,
+      jointPending,
+      jointBlocking,
       candidates,
       votes: (voteRes.data ?? []).length,
     },

@@ -6,6 +6,7 @@ import { AreaChart, Badge, BarList, Button, SectionCard, ColumnBars, Donut, Stat
 import {
   CalendarBlank, ChartBar, ChatCenteredDots, ClockCountdown, DeviceMobile, Percent, User } from "@phosphor-icons/react";
 import { DownloadSimple, Eye, MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
+import { deviceName } from "@/lib/devices";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
@@ -33,7 +34,7 @@ const TIME_BUCKETS: { max: number; label: string }[] = [
 /** توزيع المشاركات على الأجهزة (فئات الحلقة) — بترتيبٍ ثابت، والمجهول فئةٌ صريحة. */
 function deviceDist(rows: ResponseRow[]): { label: string; value: number }[] {
   const c = new Map<string, number>();
-  for (const r of rows) { const k = r.device ?? "unknown"; c.set(k, (c.get(k) ?? 0) + 1); }
+  for (const r of rows) { const k = deviceName(r.device); c.set(k, (c.get(k) ?? 0) + 1); }
   return DEVICE_ORDER.filter((k) => c.has(k)).map((k) => ({ label: k === "unknown" ? "غير معروف" : DEVICE_LABEL[k] ?? k, value: c.get(k) ?? 0 }));
 }
 
@@ -210,7 +211,7 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
     },
     { key: "date", header: "التاريخ", width: "1.2fr", render: (r) => <span className="txt">{r.date}</span> },
     { key: "seconds", header: "المدّة", width: "0.7fr", align: "center", render: (r) => <span className="txt num">{fmtDur(r.seconds)}</span> },
-    { key: "device", header: "الجهاز", width: "0.8fr", render: (r) => (r.device ? <span className="txt">{r.device === "mobile" ? "جوّال" : r.device === "tablet" ? "لوحيّ" : "حاسوب"}</span> : <span className="txt na">—</span>) },
+    { key: "device", header: "الجهاز", width: "0.8fr", render: (r) => (r.device ? <span className="txt">{deviceName(r.device)}</span> : <span className="txt na">—</span>) },
     // عمودٌ لكلّ سؤال — الجدول مصفوفةٌ كاملة (كترويسة CSV): الترويسة عنوان السؤال والخليّة إجابته.
     // حرٌّ لا مقصوص (`wrap`): العنوان والإجابة يلتفّان على أسطر فيُقرآن كاملَين، وعرض العمود ثابتٌ فينمو الصفّ طولًا لا التمرير.
     ...agg.questions.map((q): Column<ResponseRow> => ({

@@ -6,7 +6,7 @@ import {
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { fmtDateOnly, fmtDate } from "@/lib/date";
 import { formatDegree, SOCIAL_KEYS, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
-import { positionLabel, positionLine } from "@/lib/positionLabel";
+import { positionLine } from "@/lib/positionLabel";
 import { ShareBar } from "./ShareBar";
 import type { PublicProfile } from "./data";
 
@@ -65,15 +65,9 @@ export function ProfileView({ me }: { me: PublicProfile }) {
             <Avatar name={me.name} src={me.avatar ?? undefined} gender={me.gender} size="2xl" />
             <div className="flex flex-col gap-2">
               <h1 className="font-display text-3xl font-black text-content">{me.name}</h1>
-              {me.positions.map((p, i) => {
-                const { title, scope } = positionLabel(
-                  { roleAr: p.roleAr, homeCommitteeId: p.homeCommitteeId, homeName: p.homeName },
-                  { committeeId: p.committeeId, unitName: p.unitName },
-                );
-                return (
-                  <p key={i} className="text-lg font-bold text-secondary">{positionLine(title, scope)}</p>
-                );
-              })}
+              {me.positions.map((p, i) => (
+                <p key={i} className="text-lg font-bold text-secondary">{positionLine(p.roleAr, p.unitName)}</p>
+              ))}
               {tenure ? <p className="text-sm text-content-muted">{tenure}</p> : null}
             </div>
             {me.bio ? <p className="max-w-xl leading-relaxed text-content">{me.bio}</p> : null}

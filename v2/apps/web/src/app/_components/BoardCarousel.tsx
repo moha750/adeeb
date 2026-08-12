@@ -5,14 +5,20 @@ import { XLogo } from "@/app/_components/glyphs";
 import { LinkedinLogo } from "@/app/_components/glyphs";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
+import { positionLine } from "@/lib/positionLabel";
 
+/**
+ * القطعتان كما تُخرجهما `get_board_members` خامًا — والجملةُ تُركَّب هنا بالقاعدة الواحدة
+ * (`lib/positionLabel`) لا بوصلٍ في JSX.
+ */
 export type Member = {
   id: string;
   full_name: string;
   avatar_url: string | null;
   gender: "male" | "female" | string | null;
-  role_name: string | null;
-  /** وحدةُ صاحب المنصب العامّ (لجنة/قسم) — تُدمج في سطر المنصب. فارغة لمن يُعرّف منصبه نفسه. */
+  /** الرتبة مجرّدةً كما في `roles.role_name_ar` — «قائد» · «نائب» · «منسّق». */
+  role_ar: string | null;
+  /** وحدةُ إسناده (لجنة/قسم) — منها وحدها يُعرف موضعه. */
   unit_name: string | null;
   twitter_account: string | null;
   linkedin_account: string | null;
@@ -200,6 +206,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
             const st = slideStyle(rel, SPACING, VISIBLE);
             const tw = socialUrl(m.twitter_account, "tw");
             const li = socialUrl(m.linkedin_account, "in");
+            const roleLine = positionLine(m.role_ar, m.unit_name);
             return (
               <div
                 key={m.id}
@@ -238,11 +245,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
                       ) : (
                         <div className="bc-nm">{toLatinDigits(m.full_name)}</div>
                       )}
-                      {m.role_name ? (
-                        <div className="bc-rl">
-                          {m.unit_name ? `${m.role_name} ${m.unit_name}` : m.role_name}
-                        </div>
-                      ) : null}
+                      {roleLine ? <div className="bc-rl">{roleLine}</div> : null}
                     </div>
                     {(tw || li) && (
                       <div className="bc-socs" style={{ pointerEvents: a === 0 ? "auto" : "none" }}>

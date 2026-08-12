@@ -7,12 +7,21 @@ export type Analytics = {
   kpis: { pageviews: number; visitors: number; sessions: number; avg_seconds: number; bounce_rate: number; members: number; countries: number };
   bots: number;
   daily: { date: string; pageviews: number; visitors: number }[];
-  top_pages: Cat[];
+  /** الصفحات مع عناوينها — المسارُ هويّة، والعنوانُ تسمية (أُضيف ٢٠٢٦-٠٨-١٢). */
+  top_pages: (Cat & { title: string | null })[];
   countries: Cat[];
   browsers: Cat[];
   devices: Cat[];
   referrers: Cat[];
   hourly: { hour: number; count: number }[];
+  /** ساعاتُ الذروة في بُعدين: يومُ الأسبوع (٠ الأحد) × الساعة، بتوقيت الرياض (أُضيف ٢٠٢٦-٠٨-١١). */
+  hourly_heat: { dow: number; hour: number; count: number }[];
+  /** المدن مع دولها — الاسمُ وحده ليس هويّة («طرابلس» في بلدين)، فالجمعُ على المدينة والدولة. */
+  cities: (Cat & { country: string | null })[];
+  /** جديدٌ مقابل عائد — **على الزائر لا المشاهدة**: من ظهر أوّلَ مرّةٍ داخل المدّة فجديد. */
+  visitor_types: { new: number; returning: number };
+  /** صفحات الخروج — آخرُ مشاهدةٍ في كلّ جلسة، مع عنوانها. */
+  exit_pages: (Cat & { title: string | null })[];
 };
 export type RecentVisitor = { id: string; lastSeen: string; pageviews: number; sessions: number; country: string | null; isMember: boolean };
 

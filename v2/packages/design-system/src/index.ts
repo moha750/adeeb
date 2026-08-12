@@ -50,4 +50,5 @@ export { Ambient } from "./components/Ambient";
 export { BurgerIcon } from "./components/BurgerIcon";
 export { Header } from "./components/Header";
 export { Footer } from "./components/Footer";
+export { siteNav, footerGroups, type NavItem } from "./lib/nav";
 export { Cursor, type CursorProps } from "./components/Cursor";

@@ -10,7 +10,7 @@
 // الترتيب بالاسم عبر roleRank — أُعدم role_level، فالهُويّة لا العدد.
 import { roleRank } from "@/lib/roleOrder";
 // اسم المنصب = الرتبة + وحدته الأمّ. مصدرٌ واحد لا تُركَّب الجملة في كلّ موضع.
-import { roleTitle } from "@/lib/positionLabel";
+import { positionParts, seatName } from "@/lib/positionLabel";
 
 export type RawCouncil = { id: string; name_ar: string | null; head_role_name: string; description: string | null; group_link: string | null };
 export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
@@ -32,7 +32,10 @@ export type Holder = {
   avatar: string | null;
   gender: "male" | "female" | null;
   roleName: string;
+  /** رتبتُه مجرّدةً كما في `roles.role_name_ar` — «عضو» · «قائد». */
   roleAr: string;
+  /** وحدةُ إسناده باسمها — تُقال معه **حين يُعرَض خارج وحدته** (المشرفان)، وتُسكت داخلها. */
+  unitName: string | null;
   committeeId: number | null;
   departmentId: number | null;
 };
@@ -119,8 +122,10 @@ const R = {
 } as const;
 
 /**
- * اسم المنصب بالعربيّة: الرتبة + وحدته الأمّ إن كانت له (`roles.home_committee_id`).
- * دالّةٌ واحدة يستعملها بناة الشجرة والمناصب والمقاعد — فلا تُركَّب الجملة في سبعة مواضع.
+ * اسم **المقعد**: رتبتُه ووحدتُه الملازمة إن كانت له. يُقال شاغرًا كان أو مشغولًا، فلا
+ * إسنادَ يُقرأ منه — وبه وحده يفترق «قائد إدارة الموارد البشرية» عن «قائد» اللجنة.
+ *
+ * ولا يُستعمل لشخص: وحدةُ الشخص من خانة إسناده (`Holder.unitName`).
  */
 function roleTitler(roles: RawRole[], committees: RawCommittee[]): (roleName: string) => string {
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
@@ -128,17 +133,14 @@ function roleTitler(roles: RawRole[], committees: RawCommittee[]): (roleName: st
   return (roleName: string) => {
     const r = roleByName.get(roleName);
     if (!r) return roleName;
-    return roleTitle({
-      roleAr: r.role_name_ar ?? r.role_name,
-      homeCommitteeId: r.home_committee_id,
-      homeName: r.home_committee_id != null ? committeeName.get(r.home_committee_id) ?? null : null,
-    });
+    return seatName(r.role_name_ar ?? r.role_name, r.home_committee_id != null ? committeeName.get(r.home_committee_id) ?? null : null);
   };
 }
 
-function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: RawUserRole[], profiles: RawProfile[]): Holder[] {
+function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: RawUserRole[], profiles: RawProfile[], departments: RawDept[] = []): Holder[] {
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
-  const titleOf = roleTitler(roles, committees);
+  const comName = new Map(committees.map((c) => [c.id, c.committee_name_ar]));
+  const depName = new Map(departments.map((d) => [d.id, d.name_ar]));
   const profileById = new Map(profiles.map((p) => [p.id, p]));
   const holders: Holder[] = [];
   for (const ur of userRoles) {
@@ -151,7 +153,11 @@ function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: R
       avatar: prof?.avatar_url ?? null,
       gender: prof?.gender === "male" || prof?.gender === "female" ? prof.gender : null,
       roleName: role.role_name,
-      roleAr: titleOf(role.role_name),
+      // **شخصٌ لا مقعد**: رتبتُه مجرّدةً، ووحدتُه من خانة إسناده — لا وحدةَ ملازمة في طريقه
+      roleAr: role.role_name_ar ?? role.role_name,
+      unitName: ur.committee_id != null ? comName.get(ur.committee_id) ?? null
+        : ur.department_id != null ? depName.get(ur.department_id) ?? null
+          : null,
       committeeId: ur.committee_id,
       departmentId: ur.department_id,
     });
@@ -192,7 +198,9 @@ export function committeeNodes(
       avatar: prof?.avatar_url ?? null,
       gender: prof?.gender === "male" || prof?.gender === "female" ? prof.gender : null,
       roleName: unit.member_role_name,
-      roleAr: titleOf(unit.member_role_name),
+      // يُعرَض داخل لجنةٍ ليس منها، فرتبتُه وحدها لا تكفي — وحدتُه تُقال معه
+      roleAr: roleByName.get(unit.member_role_name)?.role_name_ar ?? unit.member_role_name,
+      unitName: unit.committee_name_ar,
       committeeId: unit.id, // إدارتُه هو — لا اللجنة التي يشرف عليها
       departmentId: null,
     });
@@ -313,7 +321,7 @@ export function buildStructure(
   const executive = councilBody("executive", "المجلس التنفيذي");
 
   const anomalies: string[] = [];
-  for (const d of departmentNodes) if (!d.head) anomalies.push(`قسم «${d.name}» بلا منسّق قسم`);
+  for (const d of departmentNodes) if (!d.head) anomalies.push(`قسم «${d.name}» بلا منسّق`);
   for (const d of departmentNodes) for (const c of d.committees) if (!c.leader) anomalies.push(`لجنة «${c.name}» بلا قائد`);
   // المقاعد الشاغرة تُقرأ من الهيئة لا من قائمة محفورة
   for (const body of [administrative, executive])
@@ -424,7 +432,9 @@ export function buildPositions(
 
   const sortedDepts = [...departments].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
   for (const d of sortedDepts) {
-    const name = d.name_ar ?? `قسم #${d.id}`;
+    // كرتُ المنصب يضع الرتبةَ في سطرٍ ونطاقَها في سطر، فلا يصلهما نصًّا — فالقطعتان
+    // تُبنيان من المصدر الواحد (`positionParts`) لا من نصٍّ يُركَّب هنا.
+    const name = positionParts(ar("department_head"), d.name_ar ?? `قسم #${d.id}`).scope ?? (d.name_ar ?? `قسم #${d.id}`);
     out.push({ key: `head-${d.id}`, roleName: "department_head", roleAr: ar("department_head"), scope: name, council: "executive", committeeId: null, departmentId: d.id, holders: holdersOf("department_head", { departmentId: d.id }), singleton: isSingle("department_head"), elected: el("department_head"), ...traits("department_head") });
   }
 

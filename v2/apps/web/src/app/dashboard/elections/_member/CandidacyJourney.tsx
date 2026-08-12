@@ -6,16 +6,38 @@
 "use client";
 
 import { Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, FileButton } from "@adeeb/design-system";
-import { FileArrowDown, Note, Paperclip, Path, PencilSimple, Prohibit } from "@phosphor-icons/react";
+import { CaretDown, CaretUp, Clock, FileArrowDown, FileDashed, FlagCheckered, Note, Paperclip, Path, PencilSimple, Prohibit, Scales, Trophy, XCircle } from "@phosphor-icons/react";
 import { useToast } from "../../_components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
 import { JourneyBody } from "./JourneyBody";
 import { toneVars } from "./journeyTone";
 import type { CandidacyJourney as CJ } from "../member-data";
 
-export function CandidacyJourney({ c, onEdit, onWithdraw }: { c: CJ; onEdit: () => void; onWithdraw: () => void }) {
+/** أيقونةُ المآل في الرأس المطويّ — الرسمُ يقول ما تقوله الشارة، فيُفهم قبل القراءة. */
+const foldIcon = (c: CJ) =>
+  c.statusLabel === "فائز" ? <Trophy /> :
+  c.statusLabel === "مرفوض" ? <XCircle /> :
+  c.statusLabel === "منسحب" ? <Prohibit /> :
+  c.statusLabel === "لم يُوفَّق" ? <FlagCheckered /> :
+  c.statusLabel === "يحتاج تعديلًا" ? <PencilSimple /> :
+  c.statusLabel === "معتمَد" ? <Scales /> : <Clock />;
+
+/**
+ * `cycle` مرساةٌ زمنيّة اختياريّة (اسمُ الدورة) — من ترشّح للمنصب نفسِه مرّتين لا يفرّق بينهما بلا هذا.
+ *
+ * **`foldable` (معاينةٌ لم تُقَرّ) — رأسٌ واحدٌ بحالتين لا رأسان:** حين تكثر الترشّحات يصير
+ * كلُّ ترشّحٍ صفًّا مطويًّا؛ ومتى فُتح **ترقّى الصفُّ نفسُه هيرو** (تدرّجُ الهوية ونقشُها
+ * وميداليّةُ الرقم) وانفتح المحتوى تحته. فلا يزول المقبضُ من تحت اليد، ولا يتكرّر اسمُ المنصب
+ * في رأسين. وزرُّ الطيّ يسكن الرأسَ في حالتيه (`.acard-hfull` مطويًّا · `.cjr-hero-fold` مفتوحًا).
+ */
+export function CandidacyJourney({ c, cycle, foldable, open = true, onToggle, onEdit, onWithdraw }: {
+  c: CJ; cycle?: string;
+  foldable?: boolean; open?: boolean; onToggle?: () => void;
+  onEdit: () => void; onWithdraw: () => void;
+}) {
   const toast = useToast();
   const showControls = c.canEdit || c.canWithdraw;
+  const folded = !!foldable && !open;
 
   // فتحُ الملفّ المرفق برابطٍ موقَّعٍ مؤقّت (الملفّ ملكُ صاحبه في دلو election-files)
   const openFile = async () => {
@@ -30,21 +52,54 @@ export function CandidacyJourney({ c, onEdit, onWithdraw }: { c: CJ; onEdit: () 
     }
   };
 
+  // زرُّ الطيّ — نصُّه وسهمُه يقولان الحال، و`aria-expanded` يقولها لقارئ الشاشة
+  const foldBtn = (className: string, variant: "ghost" | "inverse-ghost") => (
+    <Button
+      className={className}
+      variant={variant}
+      size="sm"
+      aria-expanded={!folded}
+      onClick={(e) => { e.stopPropagation(); onToggle?.(); }}
+    >
+      {folded ? <CaretDown aria-hidden /> : <CaretUp aria-hidden />}
+      {folded ? "عرض الرحلة" : "طيُّ الرحلة"}
+    </Button>
+  );
+
+  // مطويًّا: الصفُّ وحدَه (وصفٌ ثمّ زرٌّ ممتدّ) — والصفُّ كلُّه هدفُ نقر
+  if (folded) {
+    return (
+      <Card interactive onClick={onToggle} style={toneVars(c.statusTone)}>
+        <div className="acard-header acard-header-soft acard-header-stack">
+          <span className="acard-chip">{foldIcon(c)}</span>
+          <div className="acard-htexts">
+            <h3 className="acard-htitle">{c.position}</h3>
+            <span className="acard-hsub">{cycle ? `${cycle}، رقمك الانتخابي ${c.number}` : `رقمك الانتخابي ${c.number}`}</span>
+          </div>
+          <div className="acard-hactions"><Badge tone={c.statusTone} dot>{c.statusLabel}</Badge></div>
+          {foldBtn("acard-hfull", "ghost")}
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <section className="cjr" style={toneVars(c.statusTone)}>
-      {/* ١ — هيرو المعلومات */}
+      {/* ١ — هيرو المعلومات: هو الصفُّ نفسُه وقد ترقّى، وزرُّ الطيّ في ذيله */}
       <div className="cjr-hero">
         <div className="cjr-hero-top">
           <span className="cjr-medal"><span className="cjr-medal-cap">رقمك الانتخابي</span><b>#{c.number}</b></span>
           <div className="cjr-hero-main">
             <span className="cjr-hero-eyebrow">المنصب المتقدَّم له</span>
             <h2 className="cjr-hero-title">{c.position}</h2>
+            {cycle ? <span className="cjr-hero-eyebrow">{cycle}</span> : null}
           </div>
           <div className="cjr-hero-status">
             <span className="cjr-hero-eyebrow">حالة ترشحك</span>
             <Badge variant="glass" dot>{c.statusLabel}</Badge>
           </div>
         </div>
+        {foldable ? foldBtn("cjr-hero-fold", "inverse-ghost") : null}
       </div>
 
       {/* رسالةُ الحالة تنبيهًا بنغمتها (تحت الهيرو، عرضًا كاملًا) */}
@@ -64,9 +119,10 @@ export function CandidacyJourney({ c, onEdit, onWithdraw }: { c: CJ; onEdit: () 
           <CardBody>
             <p className="cjr-stmt">{c.statement}</p>
             {c.fileName ? (
-              <FileButton block icon={<Paperclip />} label={c.fileName} hint="اضغط لتنزيل ملفّك" trailing={<FileArrowDown />} onClick={openFile} />
+              <FileButton block state="ready" icon={<Paperclip />} label={c.fileName} hint="اضغط لتنزيل ملفّك" trailing={<FileArrowDown />} onClick={openFile} />
             ) : (
-              <span className="cjr-nofile">لا ملفّ مرفق</span>
+              /* الفراغُ حالةٌ في المكوّن نفسِه لا نصٌّ شاردٌ بجانبه */
+              <FileButton block state="empty" icon={<FileDashed />} label="لا ملفَّ مرفوق" hint="بيانُك وحده ما يراه الناخبون" />
             )}
           </CardBody>
           {showControls ? (

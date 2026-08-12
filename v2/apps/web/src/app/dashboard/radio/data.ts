@@ -120,10 +120,10 @@ export type EpisodeRow = {
   status: EpisodeStatus;
   music: AudioTake | null;
   plain: AudioTake | null;
-  /** الإزاحة **بعد** حلّ الوراثة: تجاوزُ الحلقة إن وُجد، وإلّا رقمُ المحطّة. */
-  leadSeconds: number;
+  /** ثانيةُ بدء الحديث **بعد** حلّ الوراثة: تجاوزُ الحلقة إن وُجد، وإلّا رقمُ المحطّة. */
+  talkStartsAt: number;
   /** أهي مكتوبةٌ في الحلقة نفسها؟ يميّز الموروثَ من المُعلَن في الواجهة. */
-  leadOverridden: boolean;
+  talkStartOverridden: boolean;
   youtubeUrl: string | null;
   hostName: string;
   publishAt: string | null;
@@ -137,8 +137,8 @@ export type ShowEditor = {
   show: ShowRow;
   episodes: EpisodeRow[];
   platforms: PlatformRow[];
-  /** إزاحةُ المحطّة الموروثة — تُعرض في نموذج الحلقة نائبةً عن الفارغ. */
-  stationLead: number;
+  /** بدءُ الحديث الموروث من المحطّة — يُعرض في نموذج الحلقة نائبًا عن الفارغ. */
+  stationTalkStart: number;
 };
 
 export async function getShowEditor(id: string): Promise<{ data: ShowEditor | null; error: string | null }> {
@@ -152,15 +152,15 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
 
   const [eRes, pRes, stRes] = await Promise.all([
     sb.from("radio_episodes")
-      .select("id, number, title, slug, summary, status, audio_music_path, audio_music_bytes, audio_music_seconds, audio_plain_path, audio_plain_bytes, audio_plain_seconds, music_lead_seconds, youtube_url, host_member_id, publish_at, published_at, plays")
+      .select("id, number, title, slug, summary, status, audio_music_path, audio_music_bytes, audio_music_seconds, audio_plain_path, audio_plain_bytes, audio_plain_seconds, talk_starts_at, youtube_url, host_member_id, publish_at, published_at, plays")
       .eq("show_id", id)
       .order("number", { ascending: false }),
     sb.from("radio_show_platforms").select("id, platform, url").eq("show_id", id).order("order", { ascending: true }),
-    sb.from("radio_station").select("music_lead_seconds").eq("id", 1).maybeSingle(),
+    sb.from("radio_station").select("talk_starts_at").eq("id", 1).maybeSingle(),
   ]);
   if (eRes.error) return { data: null, error: eRes.error.message };
 
-  const stationLead = Number(stRes.data?.music_lead_seconds ?? 0);
+  const stationTalkStart = Number(stRes.data?.talk_starts_at ?? 0);
 
   const hostIds = [...new Set((eRes.data ?? []).map((e) => e.host_member_id).filter(Boolean))];
   const { data: hosts } = hostIds.length
@@ -179,8 +179,8 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
       ? { seconds: e.audio_music_seconds, bytes: Number(e.audio_music_bytes) } : null,
     plain: e.audio_plain_path && e.audio_plain_seconds && e.audio_plain_bytes
       ? { seconds: e.audio_plain_seconds, bytes: Number(e.audio_plain_bytes) } : null,
-    leadSeconds: e.music_lead_seconds === null ? stationLead : Number(e.music_lead_seconds),
-    leadOverridden: e.music_lead_seconds !== null,
+    talkStartsAt: e.talk_starts_at === null ? stationTalkStart : Number(e.talk_starts_at),
+    talkStartOverridden: e.talk_starts_at !== null,
     youtubeUrl: e.youtube_url ?? null,
     hostName: nameById.get(e.host_member_id) ?? "—",
     publishAt: e.publish_at ?? null,
@@ -192,7 +192,7 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
     id: p.id, platform: p.platform as Platform, url: p.url,
   }));
 
-  return { data: { show, episodes, platforms, stationLead }, error: null };
+  return { data: { show, episodes, platforms, stationTalkStart }, error: null };
 }
 
 /* ══ خيارات النماذج ══════════════════════════════════════════════════ */
@@ -230,8 +230,8 @@ export type StationData = {
   description: string | null;
   logoPath: string | null;
   logoUrl: string | null;
-  /** طولُ المقدّمة الموسيقيّة. المصدرُ الواحد للمبدّل في كلّ حلقةٍ لا تُصرّح بغيره. */
-  musicLeadSeconds: number;
+  /** ثانيةُ بدء الحديث. المصدرُ الواحد الذي ترثه كلّ حلقةٍ لا تُصرّح بغيره. */
+  talkStartsAt: number;
 };
 
 export async function getStation(): Promise<{ station: StationData | null; error: string | null }> {
@@ -239,7 +239,7 @@ export async function getStation(): Promise<{ station: StationData | null; error
   if (!sb) return { station: null, error: ENV_MISSING };
   const { data, error } = await sb
     .from("radio_station")
-    .select("name, tagline, description, logo_path, music_lead_seconds")
+    .select("name, tagline, description, logo_path, talk_starts_at")
     .eq("id", 1)
     .maybeSingle();
   if (error) return { station: null, error: error.message };
@@ -251,7 +251,7 @@ export async function getStation(): Promise<{ station: StationData | null; error
       description: data.description ?? null,
       logoPath: data.logo_path ?? null,
       logoUrl: publicUrl(data.logo_path),
-      musicLeadSeconds: Number(data.music_lead_seconds),
+      talkStartsAt: Number(data.talk_starts_at),
     },
     error: null,
   };

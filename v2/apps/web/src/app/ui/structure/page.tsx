@@ -12,7 +12,7 @@ function Lab({ children }: { children: React.ReactNode }) {
 }
 
 // ===== بيانات وهميّة — تُشكّل الأنماط ذاتها التي يبنيها model.ts من صفوف القاعدة =====
-const P = (name: string, roleAr: string, roleName = "committee_member"): Holder => ({ userId: name, name, avatar: null, gender: null, roleName, roleAr, committeeId: null, departmentId: null });
+const P = (name: string, roleAr: string, roleName = "committee_member"): Holder => ({ userId: name, name, avatar: null, gender: null, roleName, roleAr, unitName: null, committeeId: null, departmentId: null });
 const com = (id: number, name: string, kind: "operational" | "admin", leader: Holder | null, members: Holder[], deputy: Holder | null = null, hr: Holder | null = null, qa: Holder | null = null, desc: string | null = null): CommitteeNode =>
   ({ id, name, kind, desc, link: null, leaderRoleAr: kind === "admin" ? "قائد الإدارة" : "قائد اللجنة", leaderElected: kind !== "admin", leader, deputy, hrOverseer: hr, qaOverseer: qa, members, total: (leader ? 1 : 0) + (deputy ? 1 : 0) + members.length });
 const dept = (id: number, name: string, head: Holder | null, coms: CommitteeNode[], desc: string | null = null): DepartmentNode =>

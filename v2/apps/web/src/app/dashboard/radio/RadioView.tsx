@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette,
   Archive, Broadcast, Waveform, SlidersHorizontal } from "@phosphor-icons/react";
-import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass } from "@/app/_components/glyphs";
+import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass, UploadSimple } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
@@ -16,8 +16,11 @@ import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberOption, ShowRow, StationData } from "./data";
-import { SHOW_STATUS_META, TONE_OPTIONS, formatLead, parseLead, slugify, type ShowTone } from "./vocab";
-import { createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow, saveStation } from "./actions";
+import { SHOW_STATUS_META, TONE_OPTIONS, formatTalkStart, parseTalkStart, slugify, type ShowTone } from "./vocab";
+import {
+  createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow, saveStation,
+  createStationLogoUploadUrl, setStationLogo,
+} from "./actions";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 
 type FormState = {
@@ -28,7 +31,7 @@ const EMPTY_FORM: FormState = {
   title: "", slug: "", tagline: "", description: "", tone: "brand", hostId: "", committeeId: "",
 };
 
-type StationForm = { name: string; tagline: string; description: string; lead: string };
+type StationForm = { name: string; tagline: string; description: string; talkStart: string };
 
 export function RadioView({
   shows, members, committees, station,
@@ -46,16 +49,45 @@ export function RadioView({
   const [formErr, setFormErr] = useState<Partial<Record<keyof FormState, string>>>({});
   const [confirmKill, setConfirmKill] = useState<ShowRow | null>(null);
 
-  // إعدادات المحطّة: نافذةٌ واحدة، وفيها الإزاحة التي يرثها كلّ حلقةٍ لم تُصرّح بغيرها.
+  // إعدادات المحطّة، وفيها ثانيةُ بدء الحديث التي ترثها كلّ حلقةٍ لم تُصرّح بغيرها.
   const [stForm, setStForm] = useState<StationForm | null>(null);
   const [stErr, setStErr] = useState<Partial<Record<keyof StationForm, string>>>({});
+  const stLogoRef = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  /**
+   * رفعُ شعار المحطّة — نفسُ طريق شعار البرنامج: رابطٌ موقّع يرفع إليه المتصفّح
+   * مباشرةً، ثمّ يُثبَّت المسارُ في القاعدة. ولا يمرّ الملفُّ بخادمنا.
+   */
+  const onStationLogo = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const ticket = await createStationLogoUploadUrl(file.type, file.size);
+      if (!ticket.ok || !ticket.url || !ticket.path) { toast.error(ticket.message ?? "تعذّر الرفع."); return; }
+      let failed: string | null = null;
+      try {
+        const res = await fetch(ticket.url, { method: "PUT", body: file, headers: { "content-type": file.type } });
+        if (!res.ok) failed = `ردّ المخزن ${res.status}. أعِد المحاولة.`;
+      } catch {
+        // فشلُ الشبكة يرمي ولا يردّ `ok: false`، وأشهرُ أسبابه أنّ الدلو لا يأذن لأصلنا.
+        failed = "تعذّر الوصول إلى المخزن. غالبًا أنّ الدلو لا يأذن لهذا الأصل: شغّل «pnpm r2:cors» بتوكن R2 إداريّ.";
+      }
+      if (failed) { toast.error(failed, { duration: 12000 }); return; }
+      const r = await setStationLogo(ticket.path);
+      if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const openStation = () => {
     if (!station) { toast.error("تعذّر جلب إعدادات المحطّة."); return; }
     setStForm({
       name: station.name,
       tagline: station.tagline ?? "",
       description: station.description ?? "",
-      lead: formatLead(station.musicLeadSeconds),
+      talkStart: formatTalkStart(station.talkStartsAt),
     });
     setStErr({});
   };
@@ -63,17 +95,17 @@ export function RadioView({
     if (!stForm) return;
     const errs: Partial<Record<keyof StationForm, string>> = {};
     if (!stForm.name.trim()) errs.name = "اسم المحطّة مطلوب.";
-    const lead = parseLead(stForm.lead);
-    if (lead === null || Number.isNaN(lead)) errs.lead = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
+    const talkStart = parseTalkStart(stForm.talkStart);
+    if (talkStart === null || Number.isNaN(talkStart)) errs.talkStart = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
     setStErr(errs);
-    if (Object.keys(errs).length || lead === null || Number.isNaN(lead)) return;
+    if (Object.keys(errs).length || talkStart === null || Number.isNaN(talkStart)) return;
 
     startPending(async () => {
       const r = await saveStation({
         name: stForm.name,
         tagline: stForm.tagline || null,
         description: stForm.description || null,
-        musicLeadSeconds: lead,
+        talkStartsAt: talkStart,
       });
       if (r.ok) { toast.success(r.message); setStForm(null); router.refresh(); } else toast.error(r.message);
     });
@@ -322,7 +354,7 @@ export function RadioView({
         open={stForm !== null}
         onClose={() => setStForm(null)}
         title="إعدادات المحطّة"
-        description="تعمّ الإذاعة كلَّها: اسمُها وتعريفُها، وإزاحةُ المقدّمة الموسيقيّة التي ترثها الحلقات."
+        description="تعمّ الإذاعة كلَّها: اسمُها وتعريفُها، وثانيةُ بدء الحديث التي ترثها الحلقات."
         busy={pending}
         size="md"
         footer={
@@ -334,15 +366,37 @@ export function RadioView({
       >
         {stForm ? (
           <div className="form-grid">
+            <div className="form-full">
+              <div
+                onDragOver={(ev) => ev.preventDefault()}
+                onDrop={(ev) => { ev.preventDefault(); void onStationLogo(ev.dataTransfer.files?.[0]); }}
+                className="rounded border-2 border-dashed border-line bg-surface-2 p-6 flex flex-col items-center gap-3 text-center"
+              >
+                {station?.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={station.logoUrl} alt="شعار الإذاعة" className="h-24 w-24 rounded object-cover" />
+                ) : (
+                  <UploadSimple size={28} className="text-content-muted" />
+                )}
+                <div className="text-content-muted text-sm">
+                  شعار الإذاعة: مربّع ١٤٠٠×١٤٠٠. يظهر في صدر صفحة الإذاعة.
+                </div>
+                <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
+                  <UploadSimple size={18} />{station?.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
+                </Button>
+                <input ref={stLogoRef} type="file" accept="image/webp,image/jpeg,image/png" hidden
+                  onChange={(ev) => { void onStationLogo(ev.target.files?.[0]); ev.target.value = ""; }} />
+              </div>
+            </div>
             <Field className="form-full" label="اسم المحطّة" icon={<Broadcast />} innerIcon={<PencilSimple />}
               placeholder="إذاعة أدِيب" value={stForm.name}
               onChange={(e) => setStForm((f) => (f ? { ...f, name: e.target.value } : f))}
               error={stErr.name} required />
-            <Field className="form-full" label="إزاحة المقدّمة الموسيقيّة (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
-              placeholder="10.633" charset="latin" value={stForm.lead}
-              onChange={(e) => setStForm((f) => (f ? { ...f, lead: e.target.value } : f))}
-              error={stErr.lead}
-              helper="بها يقفز المستمع بين النسختين في اللحظة نفسها. ترثها كلّ حلقةٍ لم تُصرّح بإزاحتها، فتغييرُها يغيّر مبدّلها جميعًا."
+            <Field className="form-full" label="بداية الحديث (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
+              placeholder="10.633" charset="latin" value={stForm.talkStart}
+              onChange={(e) => setStForm((f) => (f ? { ...f, talkStart: e.target.value } : f))}
+              error={stErr.talkStart}
+              helper="نهايةُ المقدّمة الموسيقيّة. لا تمسّ دقّةَ التبديل (النسختان تايم لاينٌ واحد)، بل تمنع المستمعَ أن يجلس في صمتٍ إن بدأ بالنسخة المجرّدة."
               required />
             <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
               placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}

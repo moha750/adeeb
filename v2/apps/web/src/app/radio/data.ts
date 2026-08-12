@@ -21,14 +21,14 @@ export type PublicStation = {
   tagline: string | null;
   description: string | null;
   logoUrl: string | null;
-  /** طولُ المقدّمة الموسيقيّة. ترثه الحلقةُ ما لم تُصرّح بغيره. */
-  leadSeconds: number;
+  /** ثانيةُ بدء الحديث. ترثها الحلقةُ ما لم تُصرّح بغيرها. */
+  talkStartsAt: number;
 };
 
 export async function getPublicStation(): Promise<PublicStation> {
   const { data } = await anon()
     .from("radio_station")
-    .select("name, tagline, description, logo_path, music_lead_seconds")
+    .select("name, tagline, description, logo_path, talk_starts_at")
     .eq("id", 1)
     .maybeSingle();
   return {
@@ -36,7 +36,7 @@ export async function getPublicStation(): Promise<PublicStation> {
     tagline: data?.tagline ?? null,
     description: data?.description ?? null,
     logoUrl: publicUrl(data?.logo_path),
-    leadSeconds: Number(data?.music_lead_seconds ?? 0),
+    talkStartsAt: Number(data?.talk_starts_at ?? 0),
   };
 }
 
@@ -115,15 +115,18 @@ export type PublicEpisode = {
   plainUrl: string | null;
   musicSeconds: number | null;
   plainSeconds: number | null;
-  /** الإزاحة **بعد** الوراثة: بها يقفز المستمع بين النسختين في اللحظة نفسها. */
-  leadSeconds: number;
+  /**
+   * ثانيةُ بدء الحديث **بعد** الوراثة. النسختان تايم لاينٌ واحد فالتبديلُ لا يحتاجها،
+   * وإنّما يستعملها المشغّل لشيءٍ واحد: ألّا يبدأ المستمعُ المجرّدةَ في صمت.
+   */
+  talkStartsAt: number;
   youtubeUrl: string | null;
   publishedAt: string | null;
   dateLabel: string;
 };
 
 const EP_COLS =
-  "id, slug, number, title, summary, notes, transcript, host_member_id, audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds, music_lead_seconds, youtube_url, published_at";
+  "id, slug, number, title, summary, notes, transcript, host_member_id, audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds, talk_starts_at, youtube_url, published_at";
 
 type EpRaw = {
   id: string; slug: string; number: number; title: string;
@@ -131,10 +134,10 @@ type EpRaw = {
   host_member_id: string;
   audio_music_path: string | null; audio_music_seconds: number | null;
   audio_plain_path: string | null; audio_plain_seconds: number | null;
-  music_lead_seconds: number | null; youtube_url: string | null; published_at: string | null;
+  talk_starts_at: number | null; youtube_url: string | null; published_at: string | null;
 };
 
-const mapEpisode = (e: EpRaw, stationLead: number, hostName: string | null): PublicEpisode => ({
+const mapEpisode = (e: EpRaw, stationTalkStart: number, hostName: string | null): PublicEpisode => ({
   id: e.id,
   slug: e.slug,
   number: e.number,
@@ -147,7 +150,7 @@ const mapEpisode = (e: EpRaw, stationLead: number, hostName: string | null): Pub
   plainUrl: publicUrl(e.audio_plain_path),
   musicSeconds: e.audio_music_seconds ?? null,
   plainSeconds: e.audio_plain_seconds ?? null,
-  leadSeconds: e.music_lead_seconds === null ? stationLead : Number(e.music_lead_seconds),
+  talkStartsAt: e.talk_starts_at === null ? stationTalkStart : Number(e.talk_starts_at),
   youtubeUrl: e.youtube_url ?? null,
   publishedAt: e.published_at ?? null,
   dateLabel: fmtDate(e.published_at),
@@ -179,7 +182,7 @@ export async function getPublicShowPage(slug: string): Promise<{
 
   return {
     show,
-    episodes: (eps ?? []).map((e) => mapEpisode(e, station.leadSeconds, epHosts.get(e.host_member_id) ?? null)),
+    episodes: (eps ?? []).map((e) => mapEpisode(e, station.talkStartsAt, epHosts.get(e.host_member_id) ?? null)),
     platforms: (plats ?? []).map((p) => ({ platform: p.platform as Platform, url: p.url as string })),
   };
 }
@@ -193,4 +196,40 @@ export async function getPublicEpisode(showSlug: string, episodeSlug: string): P
   const episode = page.episodes.find((e) => e.slug === episodeSlug);
   if (!episode || !episode.musicUrl) return null;
   return { show: page.show, episode, siblings: page.episodes.filter((e) => e.id !== episode.id) };
+}
+
+/**
+ * أحدثُ الحلقات عبر البرامج كلِّها — صدرُ المحطّة يقول «ما الجديد» لا «ما البرامج».
+ * ويُحمَل معها اسمُ برنامجها ومعرّفُه، فالصفُّ يُشغَّل ويُحيل بلا استعلامٍ ثانٍ.
+ */
+export async function getLatestEpisodes(limit = 6): Promise<
+  { episode: PublicEpisode; showTitle: string; showSlug: string; showLogoUrl: string | null; showTone: ShowTone }[]
+> {
+  const sb = anon();
+  const [{ data: eps }, { data: shows }, station] = await Promise.all([
+    sb.from("radio_episodes").select(EP_COLS)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(limit).returns<(EpRaw & { show_id?: string })[]>(),
+    sb.from("radio_shows").select("id, title, slug, logo_path, tone"),
+    getPublicStation(),
+  ]);
+  if (!eps?.length || !shows?.length) return [];
+
+  // الحلقةُ لا تحمل معرّف برنامجها في `EP_COLS`، فيُجلب هنا دفعةً واحدة.
+  const { data: links } = await sb.from("radio_episodes").select("id, show_id").in("id", eps.map((e) => e.id));
+  const showIdOf = new Map((links ?? []).map((l) => [l.id, l.show_id as string]));
+  const showById = new Map(shows.map((s) => [s.id as string, s]));
+  const names = await hostNames(eps.map((e) => e.host_member_id));
+
+  return eps.flatMap((e) => {
+    const show = showById.get(showIdOf.get(e.id) ?? "");
+    if (!show) return [];
+    return [{
+      episode: mapEpisode(e, station.talkStartsAt, names.get(e.host_member_id) ?? null),
+      showTitle: show.title as string,
+      showSlug: show.slug as string,
+      showLogoUrl: publicUrl(show.logo_path as string | null),
+      showTone: show.tone as ShowTone,
+    }];
+  });
 }

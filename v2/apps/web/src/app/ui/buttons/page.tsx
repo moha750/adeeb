@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Container, IconButton } from "@adeeb/design-system";
-import { CopySimple, PaperPlaneTilt } from "@phosphor-icons/react";
+import { Button, Container, FileButton, IconButton } from "@adeeb/design-system";
+import { ArrowClockwise, CheckCircle, CopySimple, FileArrowDown, FileDashed, Paperclip, PaperPlaneTilt, Warning } from "@phosphor-icons/react";
 import { ArrowDown } from "@/app/_components/glyphs";
 import { ArrowUp, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 
@@ -117,6 +117,110 @@ export default function ButtonsPage() {
                 <IconButton aria-label="تكرار" title="تكرار"><CopySimple /></IconButton>
                 <IconButton tone="danger" aria-label="حذف" title="حذف"><Trash /></IconButton>
               </div>
+            </div>
+          </section>
+
+          {/* زرّ المرفق — هويّةٌ خاصّةٌ بالمرفقات: قرصٌ متدرّج وحدٌّ متقطّع */}
+          <section>
+            <Label>زرّ المرفق (FileButton)</Label>
+            <div className="flex flex-wrap items-start gap-4">
+              <FileButton
+                icon={<Paperclip />}
+                label="إرفاق ملفٍّ (اختياريّ)"
+                hint="PDF أو Word أو نصّ أو صورة"
+              />
+              <FileButton
+                icon={<Paperclip />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="اضغط لتنزيل ملفّك"
+                trailing={<FileArrowDown />}
+              />
+              <FileButton
+                disabled
+                icon={<Paperclip />}
+                label="إرفاق ملفٍّ (اختياريّ)"
+                hint="الفعل غير متاح"
+              />
+            </div>
+            {/* الممتدّ: يملأ حاويته، والعنوانُ الطويل يُقصَّر بالقطع لا بالفيض */}
+            <div className="mt-4 max-w-md">
+              <FileButton
+                block
+                icon={<Paperclip />}
+                label="ممتدٌّ block باسمِ ملفٍّ طويلٍ جدًّا يتجاوز عرضَ حاويته فيُقصَّر.pdf"
+                hint="اضغط لتنزيل ملفّك"
+                trailing={<FileArrowDown />}
+              />
+            </div>
+          </section>
+
+          {/* حالاتُ المرفق الستّ — الحدُّ يفرّق أوّلًا: متقطّعٌ لمكانٍ ينتظر، ومصمتٌ لشيءٍ وُجد */}
+          <section>
+            <Label>حالاتُ زرّ المرفق (state)</Label>
+            <div className="grid max-w-3xl gap-3 sm:grid-cols-2">
+              <FileButton
+                block
+                state="attach"
+                icon={<Paperclip />}
+                label="إرفاق ملفٍّ (اختياريّ)"
+                hint="attach : دعوةٌ للإرفاق، حدٌّ متقطّع"
+              />
+              <FileButton
+                block
+                state="ready"
+                icon={<Paperclip />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="ready : مرفقٌ حاضر، حدٌّ مصمت"
+                trailing={<FileArrowDown />}
+              />
+              <FileButton
+                block
+                state="uploading"
+                icon={<Paperclip />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="uploading : دائرةٌ مكان الأيقونة، بلا تعتيم"
+              />
+              <FileButton
+                block
+                state="success"
+                icon={<CheckCircle />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="success : رُفع الملفّ"
+                trailing={<FileArrowDown />}
+              />
+              <FileButton
+                block
+                state="error"
+                icon={<Warning />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="error : حجمُ الملفّ فوق خمسة ميغابايت"
+                trailing={<ArrowClockwise />}
+              />
+              <FileButton
+                block
+                state="empty"
+                icon={<FileDashed />}
+                label="لا ملفَّ مرفوق"
+                hint="empty : خبرٌ ساكنٌ لا يُضغط"
+              />
+            </div>
+            {/* السحبُ فوق الزرّ وزرُّ الإزالة — يملكهما المستدعي */}
+            <div className="mt-3 grid max-w-3xl gap-3 sm:grid-cols-2">
+              <FileButton
+                block
+                dragging
+                icon={<Paperclip />}
+                label="أفلِت الملفَّ هنا"
+                hint="dragging : ملفٌّ مسحوبٌ فوق الزرّ"
+              />
+              <FileButton
+                block
+                state="ready"
+                icon={<Paperclip />}
+                label="دليل الترشّح لمُنسّقي الأقسام.pdf"
+                hint="onRemove : زرُّ إزالةٍ يحلّ محلّ أيقونة الفعل"
+                onRemove={() => {}}
+              />
             </div>
           </section>
 

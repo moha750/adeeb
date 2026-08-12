@@ -6,11 +6,11 @@ import { getRadioManager } from "@/lib/radio/authz";
 import {
   AUDIO_EXT, AUDIO_MAX_BYTES, IMAGE_EXT, IMAGE_MAX_BYTES,
   R2_READY, R2_MISSING, deleteObject, deletePrefix, episodeAudioKey, episodePrefix,
-  presignUpload, showLogoKey, showPrefix,
+  presignUpload, showLogoKey, showPrefix, stationLogoKey,
 } from "@/lib/radio/r2";
 import {
-  LEAD_TOLERANCE_SECONDS, PLATFORM_VALUES, TONE_VALUES, VARIANT_META, VARIANT_VALUES,
-  formatDuration, formatLead, slugify, type AudioVariant, type Platform, type ShowTone,
+  DURATION_TOLERANCE_SECONDS, PLATFORM_VALUES, TONE_VALUES, VARIANT_META, VARIANT_VALUES,
+  formatDuration, slugify, type AudioVariant, type Platform, type ShowTone,
 } from "./vocab";
 
 /** `warning` نصٌّ يُقال بعد النجاح: العمل تمّ وفيه ما يستحقّ نظرةً. */
@@ -41,7 +41,8 @@ function guardMessage(msg: string): string | null {
   if (/radio_episodes_show_id_number_key/.test(msg)) return "رقم الحلقة مستخدَمٌ في هذا البرنامج.";
   if (/radio_episodes_plain_complete/.test(msg)) return "النسخة المجرّدة ناقصة. أعِد رفعها كاملةً.";
   if (/radio_episodes_youtube_url_check/.test(msg)) return "رابط يوتيوب غير صالح. يبدأ بـ https://youtube.com أو https://youtu.be.";
-  if (/lead_check/.test(msg)) return "الإزاحة ثوانٍ موجبةٌ أقلّ من عشر دقائق.";
+  if (/talk_start_check/.test(msg)) return "بداية الحديث ثوانٍ موجبةٌ أقلّ من عشر دقائق.";
+  if (/radio_episodes_takes_aligned/.test(msg)) return "النسختان مختلفتا المدّة. صدّرهما من التايم لاين نفسه بكتم مسار الموسيقى.";
   if (/slug_format/.test(msg)) return "المعرّف بأحرفٍ لاتينيّة وأرقامٍ وشُرَط فقط.";
   return null;
 }
@@ -224,6 +225,40 @@ export async function createAudioUploadUrl(
   return { ok: true, url, path };
 }
 
+export async function createStationLogoUploadUrl(mime: string, size: number): Promise<UploadTicket> {
+  const mgr = await getRadioManager();
+  if (!mgr) return { ok: false, message: DENIED };
+  if (!R2_READY) return { ok: false, message: R2_MISSING };
+
+  const ext = IMAGE_EXT[mime];
+  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
+  if (size > IMAGE_MAX_BYTES) return { ok: false, message: "الصورة أكبر من ٨ م.ب." };
+
+  const path = stationLogoKey(ext);
+  const url = await presignUpload(path);
+  if (!url) return { ok: false, message: R2_MISSING };
+  return { ok: true, url, path };
+}
+
+/** يُثبت شعارَ المحطّة بعد نجاح الرفع (والقديم يُمسح إن اختلف امتدادُه). */
+export async function setStationLogo(path: string): Promise<Result> {
+  const mgr = await getRadioManager();
+  if (!mgr) return { ok: false, message: DENIED };
+  const sb = service();
+  if (!sb) return { ok: false, message: ENV_MISSING };
+
+  const { data: cur } = await sb.from("radio_station").select("logo_path").eq("id", 1).maybeSingle();
+  const { error } = await sb
+    .from("radio_station")
+    .update({ logo_path: path, updated_at: new Date().toISOString() })
+    .eq("id", 1);
+  if (error) return fail(error.message, "تعذّر حفظ الشعار");
+  if (cur?.logo_path && cur.logo_path !== path) await deleteObject(cur.logo_path);
+
+  touch();
+  return { ok: true, message: "رُفع شعار المحطّة." };
+}
+
 /** يُثبت الشعار بعد نجاح الرفع (والقديم يُمسح إن اختلف امتداده). */
 export async function setShowLogo(showId: string, path: string): Promise<Result> {
   const mgr = await getRadioManager();
@@ -240,22 +275,13 @@ export async function setShowLogo(showId: string, path: string): Promise<Result>
   return { ok: true, message: "رُفع الشعار." };
 }
 
-/** الإزاحة النافذة لحلقةٍ: تجاوزُها إن صرّحت، وإلّا رقمُ المحطّة. */
-async function effectiveLead(
-  sb: ReturnType<typeof service> & object, override: number | null,
-): Promise<number> {
-  if (override !== null) return Number(override);
-  const { data } = await sb.from("radio_station").select("music_lead_seconds").eq("id", 1).maybeSingle();
-  return Number(data?.music_lead_seconds ?? 0);
-}
-
 /**
  * يُثبت نسخةً صوتيّةً ومعها **المدّة والحجم مقروءتين من الملفّ نفسه** في المتصفّح —
- * فلا يُدخلهما إنسانٌ بيده، وعليهما يقوم شريطُ المشغّل وحسابُ المبدّل.
+ * فلا يُدخلهما إنسانٌ بيده، وعليهما يقوم شريطُ المشغّل.
  *
- * وحين تجتمع النسختان يُفحص اتّساقُهما: فرقُ المدّتين يجب أن يساوي الإزاحة،
- * إذ لا خاتمةَ موسيقيّةً عندنا. واختلافُه علامةُ تصديرٍ خاطئ، فيُقال ولا يُمنع:
- * الحكمُ لمن يعرف الملفّ لا لنا.
+ * وحين تجتمع النسختان يُفحص اتّساقُهما: **مدّتاهما تتساويان**، فهما تايم لاينٌ
+ * واحدٌ صُدِّر مرّتين بكتم مسار الموسيقى في إحداهما. واختلافُهما علامةُ تصديرٍ
+ * مقصوص أو ملفٍّ رُفع في غير موضعه، وكلاهما يجعل المبدّل يكذب.
  */
 export async function setEpisodeAudio(
   episodeId: string, variant: AudioVariant, path: string, bytes: number, durationSeconds: number, mime: string,
@@ -269,7 +295,7 @@ export async function setEpisodeAudio(
 
   const { data: cur } = await sb
     .from("radio_episodes")
-    .select("audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds, music_lead_seconds")
+    .select("audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds")
     .eq("id", episodeId)
     .maybeSingle();
 
@@ -294,14 +320,10 @@ export async function setEpisodeAudio(
   const plain = variant === "plain" ? seconds : cur?.audio_plain_seconds ?? null;
 
   let warning: string | undefined;
-  if (music && plain) {
-    const lead = await effectiveLead(sb, cur?.music_lead_seconds ?? null);
-    const gap = music - plain;
-    if (Math.abs(gap - lead) > LEAD_TOLERANCE_SECONDS) {
-      warning =
-        `فرقُ المدّتين ${formatLead(gap)}ث والإزاحة المعلنة ${formatLead(lead)}ث. ` +
-        "راجِع الملفّ أو صحّح إزاحة هذه الحلقة، وإلّا انحرف المبدّل عند المستمع.";
-    }
+  if (music && plain && Math.abs(music - plain) > DURATION_TOLERANCE_SECONDS) {
+    warning =
+      `النسختان مختلفتا المدّة (${formatDuration(music)} و${formatDuration(plain)}) وحقُّهما التساوي. ` +
+      "صدّرهما من التايم لاين نفسه بكتم مسار الموسيقى، وإلّا انحرف المبدّل عند المستمع.";
   }
 
   touch();
@@ -347,8 +369,8 @@ export type EpisodeInput = {
   transcript?: string | null;
   hostId?: string | null;
   youtubeUrl?: string | null;
-  /** `null` = ارِث إزاحة المحطّة. لا يُملأ إلّا لحلقةٍ قُصّت مقدّمتُها على غير المقاس. */
-  leadSeconds?: number | null;
+  /** `null` = ارِث بدءَ الحديث من المحطّة. لا يُملأ إلّا لحلقةٍ اختلفت مقدّمتُها. */
+  talkStartsAt?: number | null;
 };
 
 const YOUTUBE_URL = /^https:\/\/(www\.)?(youtube\.com\/|youtu\.be\/)/;
@@ -360,9 +382,9 @@ function validateEpisode(input: EpisodeInput): { error: string } | { slug: strin
   if (!slug) return { error: "معرّف الحلقة مطلوب: أحرف لاتينيّة وأرقام." };
   const yt = clean(input.youtubeUrl);
   if (yt && !YOUTUBE_URL.test(yt)) return { error: "رابط يوتيوب يبدأ بـ https://youtube.com أو https://youtu.be." };
-  const lead = input.leadSeconds;
-  if (lead !== null && lead !== undefined && !(Number.isFinite(lead) && lead >= 0 && lead < 600)) {
-    return { error: "الإزاحة ثوانٍ موجبةٌ أقلّ من عشر دقائق." };
+  const talk = input.talkStartsAt;
+  if (talk !== null && talk !== undefined && !(Number.isFinite(talk) && talk >= 0 && talk < 600)) {
+    return { error: "بداية الحديث ثوانٍ موجبةٌ أقلّ من عشر دقائق." };
   }
   return { slug };
 }
@@ -376,7 +398,7 @@ const episodeColumns = (input: EpisodeInput, slug: string) => ({
   notes: clean(input.notes),
   transcript: clean(input.transcript),
   youtube_url: clean(input.youtubeUrl),
-  music_lead_seconds: input.leadSeconds ?? null,
+  talk_starts_at: input.talkStartsAt ?? null,
 });
 
 export async function createEpisode(input: EpisodeInput): Promise<Result> {
@@ -500,7 +522,7 @@ export async function loadEpisode(id: string): Promise<{
   episode?: {
     number: number; title: string; slug: string;
     summary: string | null; notes: string | null; transcript: string | null; hostId: string;
-    youtubeUrl: string | null; leadSeconds: number | null;
+    youtubeUrl: string | null; talkStartsAt: number | null;
   };
 }> {
   const mgr = await getRadioManager();
@@ -510,7 +532,7 @@ export async function loadEpisode(id: string): Promise<{
 
   const { data, error } = await sb
     .from("radio_episodes")
-    .select("number, title, slug, summary, notes, transcript, host_member_id, youtube_url, music_lead_seconds")
+    .select("number, title, slug, summary, notes, transcript, host_member_id, youtube_url, talk_starts_at")
     .eq("id", id)
     .maybeSingle();
   if (error) return { ok: false, message: error.message };
@@ -523,7 +545,7 @@ export async function loadEpisode(id: string): Promise<{
       summary: data.summary ?? null, notes: data.notes ?? null,
       transcript: data.transcript ?? null, hostId: data.host_member_id,
       youtubeUrl: data.youtube_url ?? null,
-      leadSeconds: data.music_lead_seconds === null ? null : Number(data.music_lead_seconds),
+      talkStartsAt: data.talk_starts_at === null ? null : Number(data.talk_starts_at),
     },
   };
 }
@@ -534,12 +556,12 @@ export type StationInput = {
   name: string;
   tagline?: string | null;
   description?: string | null;
-  musicLeadSeconds: number;
+  talkStartsAt: number;
 };
 
 /**
- * إعدادات المحطّة، وفيها **إزاحةُ المقدّمة الموسيقيّة**: رقمٌ واحد يرثه كلّ حلقة
- * فلا يُكتب مرّةً بعد مرّة. وتغييرُه يغيّر مبدّلَ كلّ حلقةٍ لم تُصرّح بإزاحتها.
+ * إعدادات المحطّة، وفيها **ثانيةُ بدء الحديث**: رقمٌ واحد ترثه كلّ حلقة فلا يُكتب
+ * مرّةً بعد مرّة. ولا يمسّ دقّةَ التبديل (الزمنُ مشترك)، بل موضعَ البدء في المجرّدة.
  */
 export async function saveStation(input: StationInput): Promise<Result> {
   const mgr = await getRadioManager();
@@ -548,9 +570,9 @@ export async function saveStation(input: StationInput): Promise<Result> {
   if (!sb) return { ok: false, message: ENV_MISSING };
 
   if (!clean(input.name)) return { ok: false, message: "اسم المحطّة مطلوب." };
-  const lead = input.musicLeadSeconds;
-  if (!(Number.isFinite(lead) && lead >= 0 && lead < 600)) {
-    return { ok: false, message: "الإزاحة ثوانٍ موجبةٌ أقلّ من عشر دقائق." };
+  const talk = input.talkStartsAt;
+  if (!(Number.isFinite(talk) && talk >= 0 && talk < 600)) {
+    return { ok: false, message: "بداية الحديث ثوانٍ موجبةٌ أقلّ من عشر دقائق." };
   }
 
   const { error } = await sb
@@ -559,7 +581,7 @@ export async function saveStation(input: StationInput): Promise<Result> {
       name: clean(input.name),
       tagline: clean(input.tagline),
       description: clean(input.description),
-      music_lead_seconds: lead,
+      talk_starts_at: talk,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

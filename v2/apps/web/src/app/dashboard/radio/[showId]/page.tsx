@@ -37,7 +37,7 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
       episodes={data.episodes}
       platforms={data.platforms}
       members={members}
-      stationLead={data.stationLead}
+      stationTalkStart={data.stationTalkStart}
     />
   );
 }

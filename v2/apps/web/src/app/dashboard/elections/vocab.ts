@@ -37,6 +37,21 @@ export const STATUS_OPS = {
 } as const;
 export type StatusOp = keyof typeof STATUS_OPS;
 
+/* ══ بيان الترشّح ════════════════════════════════════════════════════ */
+
+/** حدّا طول البيان — مصدرٌ واحد يقرؤه النموذج (عدّادًا وقفلًا ونغمةً) والفعل الخادميّ (تحقّقًا). */
+export const STATEMENT_MIN = 100;
+export const STATEMENT_MAX = 4000;
+
+const ar = (n: number) => String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+
+/** رسالةُ عطب البيان أو `null` إن استقام — نصٌّ واحد لا يفترق بين العميل والخادم. */
+export function statementError(s: string): string | null {
+  if (s.length < STATEMENT_MIN) return `بيان الترشّح قصيرٌ جدًّا (${ar(STATEMENT_MIN)} حرفٍ على الأقلّ).`;
+  if (s.length > STATEMENT_MAX) return `بيان الترشّح طويلٌ جدًّا (${ar(STATEMENT_MAX)} حرفٍ حدًّا أقصى).`;
+  return null;
+}
+
 /* ══ حالة المرشّح ════════════════════════════════════════════════════ */
 
 export type CandidateStatus = "pending" | "approved" | "rejected" | "needs_edit" | "withdrawn";

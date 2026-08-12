@@ -14,7 +14,7 @@
 // **ويوزّع** — الفعلان اللذان لا وجود لهما خارج الإدارة. فلا فرعَ في الشاشة يسأل «أإدارةٌ
 // هذه أم لجنة».
 import type { Holder, Position, RawCommittee, RawProfile, RawRole, RawSupervision, RawUserRole } from "../members/structure/model";
-import { roleTitle } from "@/lib/positionLabel";
+import { seatName } from "@/lib/positionLabel";
 
 /** الإدارة التي يقودها صاحبُ الجلسة — بدور عضوها الذي تُصرّح به هي. */
 export type Unit = {
@@ -66,19 +66,23 @@ export function adminUnit(
     desc: c.description ?? null,
     link: c.group_link ?? null,
     memberRoleName: c.member_role_name,
-    // «عضو» + وحدته الأمّ = «عضو إدارة الضمان والجودة» — الرتبة وحدها لا تقول من أيّ إدارة
+    // **مقعدٌ لا شخص**: اسمُ مقعد العضويّة في هذه الإدارة، يُقال شاغرًا كان أو مشغولًا،
+    // فيُسمّى بوحدته الملازمة — «عضو» وحدها لا تقول من أيّ إدارة.
     memberRoleAr: (() => {
       const r = roles.find((x) => x.role_name === c.member_role_name);
       if (!r) return c.member_role_name;
       const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
-      return roleTitle({ roleAr: r.role_name_ar ?? r.role_name, homeCommitteeId: r.home_committee_id, homeName: home });
+      return seatName(r.role_name_ar ?? r.role_name, home);
     })(),
     memberPrerequisite: roles.find((x) => x.role_name === c.member_role_name)?.prerequisite_role_name ?? null,
+    // وشرطُ العضويّة اسمُ منصبٍ كسائرها — يُسمّى بالقاعدة نفسها لا برتبةٍ عارية
     memberPrerequisiteAr: (() => {
       const req = roles.find((x) => x.role_name === c.member_role_name)?.prerequisite_role_name;
       if (!req) return null;
       const r = roles.find((x) => x.role_name === req);
-      return r?.role_name_ar ?? req;
+      if (!r) return req;
+      const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
+      return seatName(r.role_name_ar ?? r.role_name, home);
     })(),
   };
 }
@@ -147,6 +151,7 @@ export function buildSeats(
       gender: asGender(p?.gender),
       roleName: unit.memberRoleName,
       roleAr: unit.memberRoleAr,
+      unitName: unit.name,
       committeeId: unit.id, // إدارتُه هو — لا اللجنة التي يشرف عليها
       departmentId: null,
     }];

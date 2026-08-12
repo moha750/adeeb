@@ -11,7 +11,7 @@
 // فالإشراف يُقرأ من مصدره الواحد `committee_supervision` (20260731)، والسلطة تبقى طبقةً
 // **فوقه** تحكم الأفعال وحدها — عرضٌ فوق منعٍ لا بدلًا منه.
 import type { Holder, RawCommittee, RawDept, RawProfile, RawRole, RawSupervision, RawUserRole } from "../structure/model";
-import { roleTitle } from "@/lib/positionLabel";
+import { seatName } from "@/lib/positionLabel";
 
 /** وحدة المشرف — إدارتُه في المجلس الإداريّ (انتماؤه، لا لجانه). */
 export type MyUnit = { id: number; name: string };
@@ -70,11 +70,12 @@ export function myCommittees(
    */
   const serving = new Set(profiles.filter((p) => p.account_status === "active").map((p) => p.id));
 
+  // اسمُ المقعد (لا الشخص): يُقال شاغرًا كان أو مشغولًا، فمصدرُ وحدته الملازمةُ لا الإسناد
   const titleOf = (roleName: string): string => {
     const r = roleByName.get(roleName);
     if (!r) return roleName;
     const home = r.home_committee_id != null ? comById.get(r.home_committee_id)?.committee_name_ar ?? null : null;
-    return roleTitle({ roleAr: r.role_name_ar ?? r.role_name, homeCommitteeId: r.home_committee_id, homeName: home });
+    return seatName(r.role_name_ar ?? r.role_name, home);
   };
 
   const holderOf = (userId: string, roleName: string, committeeId: number | null): Holder => {
@@ -86,6 +87,7 @@ export function myCommittees(
       gender: asGender(p?.gender),
       roleName,
       roleAr: titleOf(roleName),
+      unitName: committeeId != null ? comById.get(committeeId)?.committee_name_ar ?? null : null,
       committeeId,
       departmentId: null,
     };

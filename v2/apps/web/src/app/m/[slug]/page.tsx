@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container, Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
-import { positionLabel, positionLine } from "@/lib/positionLabel";
+import { positionLine } from "@/lib/positionLabel";
 import { getPublicProfile, type PublicPosition } from "./data";
 import { ProfileView } from "./ProfileView";
 
@@ -12,11 +12,7 @@ export const revalidate = 300;
 function headline(positions: PublicPosition[]) {
   const p = positions[0];
   if (!p) return "عضوٌ في نادي أديب";
-  const { title, scope } = positionLabel(
-    { roleAr: p.roleAr, homeCommitteeId: p.homeCommitteeId, homeName: p.homeName },
-    { committeeId: p.committeeId, unitName: p.unitName },
-  );
-  return positionLine(title, scope) ?? "عضوٌ في نادي أديب";
+  return positionLine(p.roleAr, p.unitName) ?? "عضوٌ في نادي أديب";
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

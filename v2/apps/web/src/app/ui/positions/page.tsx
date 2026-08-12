@@ -10,7 +10,7 @@ import type { MenuGroup } from "../../dashboard/_components/DropdownMenu";
 import type { Holder, Position } from "../../dashboard/members/structure/model";
 
 // شاغلٌ وهميّ — لا أفتار (رجوعٌ للأحرف)، يكفي لعرض الشريط
-const H = (name: string): Holder => ({ userId: name, name, avatar: null, gender: null, roleName: "x", roleAr: "x", committeeId: null, departmentId: null });
+const H = (name: string): Holder => ({ userId: name, name, avatar: null, gender: null, roleName: "x", roleAr: "x", unitName: null, committeeId: null, departmentId: null });
 
 // منصبٌ وهميّ مُختصَر — القيم الافتراضيّة ثمّ ما يُهمّ العرض
 const P = (o: Partial<Position> & { key: string; roleAr: string; scope: string }): Position => ({
@@ -33,7 +33,7 @@ const SAMPLE: Position[] = [
   P({ key: "lead", roleAr: "قائد لجنة", scope: "لجنة الإعلام", elected: true, voteWeight: 3, holders: [H("خالد العتيبي")] }),
   P({ key: "dep", roleAr: "نائب قائد لجنة", scope: "لجنة الإعلام", elected: true, voteWeight: 2, holders: [H("سارة القحطاني")] }),
   P({ key: "hr", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, voteWeight: 1 }),
-  P({ key: "head", roleAr: "منسّق قسم", scope: "قسم التطوير", elected: true, voteWeight: 3 }),
+  P({ key: "head", roleAr: "منسّق", scope: "قسم التطوير", elected: true, voteWeight: 3 }),
   P({ key: "member", roleAr: "عضو مجلس إداريّ", scope: "المجلس الإداري", council: "administrative", councilMember: true, voteWeight: 1, holders: [H("نورة الدوسري")] }),
 ];
 

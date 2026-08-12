@@ -96,9 +96,10 @@ export function WarningsView({ data }: { data: WarningsData }) {
   const letterOf = (r: WarningRow) => ({
     name: r.name,
     gender: r.gender,
-    // النداء من **لقطة** الإنذار (منصبه ولجنتُه يومَها) لا من حاله اليوم — وهما لسطر النداء وحده
+    // النداء من **لقطة** الإنذار (منصبه ولجنتُه يومَها) لا من حاله اليوم — وهما لسطر النداء وحده،
+    // وهما القطعتان كما يعرفهما `lib/positionLabel` فيصلهما النداءُ بقاعدته الواحدة.
     role: r.roleAr,
-    committee: r.committee,
+    committee: r.scope,
     ordinal: r.ordinal ?? 1,
     category: r.category,
     reason: r.reason,
@@ -154,7 +155,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
         <Avatar name={r.name} src={r.avatar ?? undefined} gender={r.gender} size="sm" />
         <span className="dt-mm">
           <b>{r.name}</b>
-          <span>{positionLine(r.roleAr, r.committee) ?? "بلا موقع"}</span>
+          <span>{positionLine(r.roleAr, r.scope) ?? "بلا موقع"}</span>
         </span>
       </div>
     ),

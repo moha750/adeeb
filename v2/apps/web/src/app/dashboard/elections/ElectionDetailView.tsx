@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
-import { CalendarBlank, Clock, FileArrowDown, Note, Play, Scales, StopCircle, UsersThree } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, FileButton, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
+import { CalendarBlank, Clock, FileArrowDown, FileDashed, Note, Paperclip, Play, Scales, StopCircle, UsersThree } from "@phosphor-icons/react";
 import { ArrowRight } from "@/app/_components/glyphs";
 import { PencilSimple, Prohibit, CheckCircle } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
@@ -13,9 +13,10 @@ import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { CandidateRow, ElectionDetail } from "./data";
 import type { ElectionResult } from "./actions";
-import { cancelElection, declareWinner, openVoting, resolveCommitteeWinners, reviewCandidate, setDeadline, transitionElection } from "./actions";
+import { cancelElection, declareWinner, openVoting, resolveDepartmentWinners, reviewCandidate, setDeadline, transitionElection } from "./actions";
 import { CANDIDATE_STATUS_META, STATUS_META } from "./vocab";
 import { Breadcrumb } from "../_shell/Breadcrumb";
+import { createClient } from "@/lib/supabase/client";
 import { fromClubInput, toClubInput } from "@/lib/dates";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) بدل منتقي وقتٍ خام — voting_end = الآن + المدّة
@@ -56,13 +57,29 @@ export function ElectionDetailView({ election, readOnly = false }: { election: E
     });
   };
 
+  // ملفُّ المرشّح يُفتَح برابطٍ موقَّعٍ مؤقّت كما يفتحه صاحبُه: المخزَّن في `file_url` مسارٌ في
+  // دلو election-files لا رابطًا، والمراجعُ يقرؤه بسياسة الأدمن على الدلو.
+  const openCandidateFile = async (path: string) => {
+    try {
+      const sb = createClient();
+      const { data, error } = await sb.storage.from("election-files").createSignedUrl(path, 60);
+      if (error || !data?.signedUrl) throw error ?? new Error("no url");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("تعذّر فتح الملفّ، أعِد المحاولة.");
+    }
+  };
+
   const s = election.status;
   const phase: "candidacy" | "voting" | "done" =
     s === "candidacy_open" || s === "candidacy_closed" ? "candidacy"
       : s === "voting_open" || s === "voting_closed" ? "voting"
         : "done";
   const reviewable = (c: CandidateRow) => phase === "candidacy" && (c.status === "pending" || c.status === "needs_edit");
-  const declarable = (c: CandidateRow) => s === "voting_closed" && c.status === "approved";
+  // الإعلانُ المنفرد لا يصحّ ما دام في القسم مقعدٌ يشارك هذا المقعد مرشّحًا: القاعدة ترفضه،
+  // والمخرجُ حسمُ مقاعد القسم معًا (فالمفضَّل لا يُعرف إلّا بها).
+  const jointOnly = election.jointPending > 0 || election.jointBlocking > 0;
+  const declarable = (c: CandidateRow) => s === "voting_closed" && c.status === "approved" && !jointOnly;
 
   const approvedCount = election.candidates.filter((c) => c.status === "approved").length;
   const statusMeta = STATUS_META[s];
@@ -170,11 +187,10 @@ export function ElectionDetailView({ election, readOnly = false }: { election: E
             <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق التصويت؟", text: "سيتوقّف استقبال الأصوات، ثمّ تُعلن الفائز من النتائج.", confirmLabel: "إغلاق التصويت", tone: "warning", run: () => transitionElection(election.id, "voting_closed") })} loading={acting === "close_v"} disabled={pending}><StopCircle size={18} />إغلاق التصويت</Button>
           ) : null}
           {s === "voting_closed" ? (
-            election.committeeId != null && election.siblingSeatReady ? (
-              <>
-                <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي اللجنة معًا؟", text: "يُحسَم مقعدا القيادة والنيابة معًا: إن فاز شخصٌ بهما أخذ مفضّله، وذهب الآخرُ للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي اللجنة", tone: "success", run: () => resolveCommitteeWinners(election.committeeId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي اللجنة معًا</Button>
-                <span className="txt" style={{ alignSelf: "center" }}>أو افتح مرشّحًا لإعلانه فائزًا لهذا المقعد وحده.</span>
-              </>
+            election.jointBlocking > 0 ? (
+              <span className="txt" style={{ alignSelf: "center" }}>في هذا القسم مقعدٌ آخر يخوضه أحدُ مرشّحيك ولم يُغلق تصويتُه؛ أغلِقه ثمّ تُحسَم مقاعد القسم معًا.</span>
+            ) : election.jointPending > 0 && election.departmentId != null ? (
+              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي القسم معًا؟", text: "تُحسَم مقاعد القسم الجاهزة معًا: من تصدّر أكثر من مقعد أخذ مفضَّله، وذهب الباقي للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي القسم", tone: "success", run: () => resolveDepartmentWinners(election.departmentId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي القسم معًا</Button>
             ) : (
               <span className="txt" style={{ alignSelf: "center" }}>افتح مرشّحًا معتمَدًا من الجدول لإعلانه فائزًا (القاعدة تفرض الأعلى وزنًا).</span>
             )
@@ -212,8 +228,18 @@ export function ElectionDetailView({ election, readOnly = false }: { election: E
               <p className="txt" style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{detail.statement}</p>
             </div>
             {detail.fileUrl ? (
-              <a href={detail.fileUrl} target="_blank" rel="noreferrer" className="abtn abtn-ghost abtn-sm"><FileArrowDown size={16} />{detail.fileName ?? "ملفّ الترشّح"}</a>
-            ) : null}
+              <FileButton
+                state="ready"
+                icon={<Paperclip />}
+                label={detail.fileName ?? "ملفّ الترشّح"}
+                hint="اضغط لفتح ملفّ المرشّح"
+                trailing={<FileArrowDown />}
+                onClick={() => openCandidateFile(detail.fileUrl!)}
+              />
+            ) : (
+              /* الفراغُ يُقال ولا يُسكت عنه: غيابُ الزرّ يُقرأ عطلًا، والخبرُ الساكن يُقرأ خبرًا */
+              <FileButton state="empty" icon={<FileDashed />} label="لا ملفَّ مرفوق" hint="اكتفى المرشّح ببيانه" />
+            )}
             {phase !== "candidacy" ? (
               <div className="txt">الوزن: <b className="num">{detail.weight}</b>، الأصوات: <b className="num">{detail.votes}</b></div>
             ) : null}

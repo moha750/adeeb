@@ -2,7 +2,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { ROLE_ORDER } from "@/lib/roleOrder";
-import { roleTitle } from "@/lib/positionLabel";
+import { seatName } from "@/lib/positionLabel";
 
 /** منصبٌ في المحورين: صفًّا (المُنفّذ) وعمودًا (المقعد المقصود). */
 export type AuthRole = { roleName: string; roleAr: string };
@@ -59,11 +59,11 @@ export async function getAuthority(): Promise<AuthorityData> {
   const roles: AuthRole[] = (rRes.data ?? [])
     .map((r) => ({
       roleName: r.role_name as string,
-      roleAr: roleTitle({
-        roleAr: (r.role_name_ar as string) ?? (r.role_name as string),
-        homeCommitteeId: r.home_committee_id as number | null,
-        homeName: r.home_committee_id != null ? home.get(r.home_committee_id as number) ?? null : null,
-      }),
+      // مقعدٌ لا شخص: يُسمّى بوحدته الملازمة (لا إسنادَ في لوحة السلطة يُقرأ منه)
+      roleAr: seatName(
+        (r.role_name_ar as string) ?? (r.role_name as string),
+        r.home_committee_id != null ? home.get(r.home_committee_id as number) ?? null : null,
+      ),
     }))
     .sort((a, b) => rank(a.roleName) - rank(b.roleName));
 

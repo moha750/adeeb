@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { positionLabel, positionLine } from "@/lib/positionLabel";
+import { positionLine } from "@/lib/positionLabel";
 import { getPublicProfile } from "./data";
 
 export const size = { width: 1200, height: 630 };
@@ -70,13 +70,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
   const name = me?.name ?? "نادي أديب";
   const p = me?.positions[0];
-  const label = p
-    ? positionLabel(
-        { roleAr: p.roleAr, homeCommitteeId: p.homeCommitteeId, homeName: p.homeName },
-        { committeeId: p.committeeId, unitName: p.unitName },
-      )
-    : null;
-  const line = (label ? positionLine(label.title, label.scope) : null) ?? "عضوٌ في نادي أديب";
+  const line = (p ? positionLine(p.roleAr, p.unitName) : null) ?? "عضوٌ في نادي أديب";
   const earned = (me?.badges ?? []).filter((b) => b.earnedAt).slice(0, 4);
 
   return new ImageResponse(

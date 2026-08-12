@@ -43,15 +43,29 @@ function client(): AwsClient | null {
 
 /* ══ مفاتيح الكائنات — تُشتقّ ولا تُكتب بأيدٍ متفرّقة ═════════════════ */
 
-export const showLogoKey = (showId: string, ext: string) => `shows/${showId}/logo.${ext}`;
+/**
+ * **الصورةُ الجديدة رابطٌ جديد.**
+ *
+ * كان المفتاحُ ثابتًا (`logo.webp`)، فاستبدالُ الشعار يكتب فوق الكائن نفسِه
+ * ويبقى المسارُ في القاعدة كما هو والرابطُ العامّ كما هو — فيقول النظام «رُفع
+ * الشعار» ويعرض المتصفّحُ نسختَه المخزَّنة، ولا يرى المستخدمُ شيئًا تغيّر
+ * (شكا منه المالك، ٢٠٢٦-٠٨-١٢).
+ *
+ * والعلاجُ ليس تعطيلَ التخزين المؤقّت بل **جعلَ الرابط صادقًا**: بصمةٌ في اسم
+ * الملفّ تتبدّل مع كلّ رفعة، فيتبدّل المسارُ في القاعدة ويتبدّل الرابط، ويُحذف
+ * القديمُ من تلقاء نفسه (‏`setShowLogo` يمسح ما اختلف مساره).
+ */
+const stamp = () => Date.now().toString(36);
+
+export const showLogoKey = (showId: string, ext: string) => `shows/${showId}/logo-${stamp()}.${ext}`;
+/** شعارُ المحطّة — واحدٌ للإذاعة كلِّها، فلا معرّفَ في مساره. */
+export const stationLogoKey = (ext: string) => `station/logo-${stamp()}.${ext}`;
 /**
  * للحلقة نسختان في المخزن، والنسخةُ جزءٌ من المفتاح لا لاحقةٌ تُلصق —
  * فلا يدهس رفعُ إحداهما أختَها، ويكشف المفتاحُ وحدَه ما يحمله.
  */
 export const episodeAudioKey = (showId: string, episodeId: string, variant: "music" | "plain", ext: string) =>
   `shows/${showId}/episodes/${episodeId}/audio-${variant}.${ext}`;
-export const episodeCoverKey = (showId: string, episodeId: string, ext: string) =>
-  `shows/${showId}/episodes/${episodeId}/cover.${ext}`;
 /** كلّ وسائط البرنامج تحت بادئةٍ واحدة — فحذفه يمسحها دفعةً. */
 export const showPrefix = (showId: string) => `shows/${showId}/`;
 export const episodePrefix = (showId: string, episodeId: string) =>
