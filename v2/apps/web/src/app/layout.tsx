@@ -7,6 +7,7 @@ import "./globals.css";
 import "@adeeb/design-system/components.css";
 import { BootSplash } from "./_components/BootSplash";
 import { IconDefaults } from "./_components/IconDefaults";
+import { VisitTracker } from "./_components/VisitTracker";
 import { SiteCursor } from "./_components/SiteCursor";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
@@ -52,6 +53,8 @@ export default function RootLayout({
         <IconDefaults>{children}</IconDefaults>
         {/* مؤشّرُ أديب — طبقةٌ واحدةٌ للموقع كلِّه، **بعد** المحتوى فتعلوه بلا `z-index`
             يُنازَع عليه. وهي `pointer-events: none` فلا تحجب نقرةً ولا تمنع تحديدًا. */}
+        {/* تتبّعُ الزيارات — بعد المحتوى، ولا يرسم شيئًا. يتخطّى غرفَ اللوحة والتطوير. */}
+        <VisitTracker />
         <SiteCursor />
       </body>
     </html>

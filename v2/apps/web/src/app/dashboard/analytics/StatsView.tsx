@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Badge, Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, HeatGrid, type BarItem } from "@adeeb/design-system";
+import { Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, HeatGrid, type BarItem } from "@adeeb/design-system";
 import { Users, Timer, Globe, Robot, DeviceMobile, MapPin, UserPlus, Clock, SignOut } from "@phosphor-icons/react";
 import { Eye } from "@/app/_components/glyphs";
 import { ArrowUUpLeft, ArrowBendUpLeft } from "@/app/_components/glyphs";
@@ -76,7 +76,10 @@ const routeIcon = (href: string) => {
   const I = ICONS[key];
   return <I />;
 };
+/** جذورُ الموقع: عنوانُها اسمُ النادي نفسُه، فتُسمّى بوظيفتها لا باسمه. */
+const HOME_PATHS = new Set(["/", "/index.html", "/index.htm"]);
 const pageTitle = (p: { label: string; title: string | null }) => {
+  if (HOME_PATHS.has(p.label)) return "الصفحة الرئيسية";
   const t = (p.title ?? "").trim();
   if (!t) return p.label;
   const short = t.replace(SITE_TAIL, "").trim();
@@ -102,9 +105,21 @@ const mergePages = (pages: { label: string; title: string | null; count: number 
 };
 
 // أعمدة جدول «أحدث الزوّار» — على DataTable الموحّد (لا قائمة .st-rv خاصّة).
+// آخرُ ظهورٍ جملةً تُقرأ: «٩ أغسطس الساعة 10:49 م» — بتوقيت الرياض كسائر أوقات الصفحة،
+// وبأرقامٍ لاتينيّة واسمِ شهرٍ عربيّ. و«ص/م» تُشتقّ من `dayPeriod` لا تُحسب باليد.
+const RIYADH_DT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "numeric", minute: "2-digit", hour12: true,
+});
+const fmtSeen = (iso: string) => {
+  const p = Object.fromEntries(RIYADH_DT.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
+  const period = (p.dayPeriod ?? "").toUpperCase().startsWith("A") ? "ص" : "م";
+  return `${Number(p.day)} ${MONTHS[Number(p.month) - 1]} الساعة ${p.hour}:${p.minute} ${period}`;
+};
+
 const recentCols: Column<RecentVisitor>[] = [
   { key: "country", header: "الدولة", width: "1fr", render: (v) => (v.country ? <span className="txt"><CountryFlag code={v.country} /> {countryName(v.country)}</span> : <span className="txt na">—</span>) },
-  { key: "member", header: "النوع", width: "1fr", render: (v) => (v.isMember ? <Badge tone="success" variant="soft">عضو</Badge> : <span className="txt na">زائر</span>) },
+  { key: "lastSeen", header: "آخر ظهور", width: "1.2fr", render: (v) => <span className="txt">{fmtSeen(v.lastSeen)}</span> },
   { key: "pageviews", header: "الزيارات", width: "0.8fr", align: "center", render: (v) => <span className="txt num">{nf(v.pageviews)}</span> },
   { key: "sessions", header: "الجلسات", width: "0.8fr", align: "center", render: (v) => <span className="txt num">{nf(v.sessions)}</span> },
 ];
