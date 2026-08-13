@@ -29,7 +29,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "البيانات",
-    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["charts/compare", "المخطّطات: الحالي مقابل المقترح"], ["structure", "شجرة الهيكلة"]],
+    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["structure", "شجرة الهيكلة"]],
   },
 ];
 
