@@ -142,12 +142,24 @@ export async function getBallot(userId: string, electionId: string): Promise<Bal
   const session = await createClient();
   const { data, error: e } = await session.rpc("get_anonymized_candidates", { p_election: electionId });
   if (e) return { ok: false, error: e.message, election, candidates: [], myVote: null };
+
+  /**
+   * **ورقتُك تُعرَف بمن تُعرض له لا بمن يحمل الجلسة**: القاعدةُ تحسب `is_self` من
+   * `auth.uid()`، وفي **المعاينة كعضو** (`getCurrentAdmin`) تبقى الجلسةُ للمعايِن فتقول
+   * القاعدةُ «ليست ورقتَك» بحقّ. فيُسأل عن صاحب الورقة بمفتاح الخدمة **في الخادم وحدَه**،
+   * ولا يعبر إلى المتصفّح إلّا `isSelf` نعمًا أو لا : التعميةُ باقيةٌ واسمٌ لا يُفشى.
+   * (ولا تُمرَّر هويّةٌ إلى دالّةٍ فتصدّقها : `auth.uid()` يبقى وحدَه حَكَمَ الفعل.)
+   */
+  const svc = service();
+  const mineRes = svc ? await svc.from("election_candidates").select("id").eq("election_id", electionId).eq("user_id", userId).eq("status", "approved").maybeSingle() : null;
+  const mineId = (mineRes?.data?.id as string | undefined) ?? null;
+
   type Row = { candidate_id: string; candidate_number: number; statement_ar: string; file_url: string | null; file_name: string | null; file_size_bytes: number | null; file_mime: string | null; is_self: boolean };
   const candidates: BallotCandidate[] = ((data ?? []) as Row[]).map((c) => ({
     id: c.candidate_id, number: c.candidate_number, statement: c.statement_ar,
     fileUrl: c.file_url ?? null, fileName: c.file_name ?? null,
     fileSize: c.file_size_bytes ?? null, fileMime: c.file_mime ?? null,
-    isSelf: !!c.is_self,
+    isSelf: !!c.is_self || c.candidate_id === mineId,
   }));
 
   // صوتُك المختوم يُقرأ بعميل الجلسة : السياسةُ تأذن لصاحبه وحدَه، فلا حاجةَ لمفتاح خدمةٍ
