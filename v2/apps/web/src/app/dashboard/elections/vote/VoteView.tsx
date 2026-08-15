@@ -2,7 +2,7 @@
 
 import { Alert, Button } from "@adeeb/design-system";
 import { Scales } from "@phosphor-icons/react";
-import { CheckCircle, Checks } from "@/app/_components/glyphs";
+import { CheckCircle, Checks, Eye } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { OpportunityCard } from "../_member/OpportunityCard";
 import { Countdown } from "../_member/Countdown";
@@ -14,6 +14,9 @@ import type { VoteItem } from "../member-data";
  * (`‎/vote/[electionId]`) لا نافذةً: البيانُ والملفُّ لا يُحشران في مودال.
  *
  * ومن صوّت يدخل مطّلِعًا لا مصوّتًا، فزرُّه يقول «صوّتت» ويبقى بابًا لا شاهدَ حالٍ معطَّلًا.
+ *
+ * **ومقعدُ ترشُّحك الوحيد يُعرَض ولا يُصوَّت فيه** (`viewOnly`): زرُّه يقول «اطّلع» فيَصدُق
+ * الوعدُ قبل الضغط، ولا يُوعَد بصندوقٍ لا يجده. والكرتُ يبقى بهيئة أخواته لا معطَّلًا رماديًّا.
  */
 export function VoteView({ items, error }: { items: VoteItem[]; error: string | null }) {
   const api = useElectionApi();
@@ -40,11 +43,13 @@ export function VoteView({ items, error }: { items: VoteItem[]; error: string | 
             ) : "التصويت مفتوح"}
             action={
               <Button
-                variant={e.hasVoted ? "success" : "primary"}
+                variant={e.viewOnly ? "neutral" : e.hasVoted ? "success" : "primary"}
                 size="sm"
                 onClick={() => api.nav(`/dashboard/elections/vote/${e.electionId}`)}
               >
-                {e.hasVoted ? <><CheckCircle size={16} />صوّتت</> : <><Checks size={16} />صوّت</>}
+                {e.viewOnly ? <><Eye size={16} />اطّلع</>
+                  : e.hasVoted ? <><CheckCircle size={16} />صوّتت</>
+                  : <><Checks size={16} />صوّت</>}
               </Button>
             }
           />

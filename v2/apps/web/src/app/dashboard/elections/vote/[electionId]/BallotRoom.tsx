@@ -20,6 +20,11 @@ import { Card, CardBody } from "@adeeb/design-system";
  *
  * **وصوتُه يبقى مرئيًّا له**: الورقةُ التي وقع عليها صوتُه تلبس خضرتَها وتُوسَم «صوتك»،
  * كما كانت لحظةَ الاختيار. والسرّيّةُ حجبُه عن غيره لا عنه.
+ *
+ * **ومرشّحُ المقعد الوحيد يدخلها ولا يفعل فيها** (`election.viewOnly`، قرار المالك
+ * ٢٠٢٦-٠٨-١٥): بابُه مفتوحٌ ليقرأ بيانَه وملفَّه وموعدَ الإغلاق، ولا يُعرَض عليه صندوقٌ
+ * لأنّ التزكيةَ رأيُ غيرِه فيه. وطريقُ العرض واحدٌ لمن صوّت ولمن لا فعلَ له : غرفةُ اطّلاعٍ
+ * يفترق تنبيهُها وحدَه.
  */
 export function BallotRoom({ election, candidates, myVote }: { election: VoteItem; candidates: BallotCandidate[]; myVote: MyVote | null }) {
   const toast = useToast();
@@ -43,14 +48,22 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
 
   return (
     <>
-      <div className="ash-phead"><div><Breadcrumb leaf={election.position} /><h1>صوّت الآن</h1></div></div>
+      {/* والعنوانُ لا يَعِد بما لا يقع: من لا صندوقَ له لا يُقال له «صوّت الآن» */}
+      <div className="ash-phead"><div><Breadcrumb leaf={election.position} /><h1>{election.viewOnly ? "بطاقةُ مقعدك" : "صوّت الآن"}</h1></div></div>
 
-      {election.hasVoted ? (
+      {election.hasVoted || election.viewOnly ? (
         <div className="blt">
           <BallotHead election={election} />
-          <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
-            صوتُك مسجَّلٌ ولا يُغيَّر. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
-          </Alert>
+          {election.viewOnly ? (
+            <Alert tone="info" title="أنت مرشّحُ هذا المنصب">
+              لا مرشّحَ سواك، ونظامُ الانتخابات لا يُجيز التصويتَ للنفس. فهذه بطاقتُك تطّلع عليها،
+              والقرارُ لأعضاء وحدتك.
+            </Alert>
+          ) : (
+            <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
+              صوتُك مسجَّلٌ ولا يُغيَّر. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
+            </Alert>
+          )}
           {candidates.map((c) => {
             /* **الوسمُ وحدَه يقول أين وقع صوتُك** (قرار المالك ٢٠٢٦-٠٨-١٥): جُرّبت خضرةُ
                الاختيار على الورقة بعد الختم فرُدّت. ونغمةُ السطح لغةُ **الاختيار الجاري**،

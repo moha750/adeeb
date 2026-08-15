@@ -31,12 +31,19 @@ const positionOf = (rank: string | undefined, roleName: string, committeeAr: str
   return positionLine(title, committeeAr ?? departmentAr) ?? title;
 };
 
-type ElectionRpcRow = { election_id: string; target_role_name: string; target_committee_id?: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidacy_end?: string | null; voting_end?: string | null; has_submission?: boolean; has_voted?: boolean };
+type ElectionRpcRow = { election_id: string; target_role_name: string; target_committee_id?: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidacy_end?: string | null; voting_end?: string | null; has_submission?: boolean; has_voted?: boolean; view_only?: boolean };
 type CandidacyRpcRow = { candidate_id: string; election_id: string; target_role_name: string; target_committee_id: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidate_number: number; candidate_status: CandidateStatus; election_status: ElectionStatus; election_archived_at: string | null; statement_ar: string; file_url: string | null; file_name: string | null; review_note_ar: string | null; submitted_at: string | null; candidacy_end: string | null; can_withdraw: boolean; can_edit: boolean };
 
 // الموعد مرّتين: نصًّا للعين (`…End`)، وخامًا للعدّاد الحيّ (`…EndRaw`).
 export type RunItem = { electionId: string; position: string; candidacyEnd: string; candidacyEndRaw: string | null; hasSubmission: boolean; committeeId: number | null; roleName: string };
-export type VoteItem = { electionId: string; position: string; votingEnd: string; votingEndRaw: string | null; hasVoted: boolean };
+export type VoteItem = {
+  electionId: string; position: string; votingEnd: string; votingEndRaw: string | null; hasVoted: boolean;
+  /**
+   * **مقعدٌ يُرى ولا يُفعَل فيه**: صاحبُه مرشّحُه الوحيد (`is_sole_candidate` في القاعدة).
+   * يبقى في بابه ليقرأ بيانَه وموعدَه، ويسقط عنه الصندوقُ وحدَه — لا يُسأل أحدٌ عن نفسه.
+   */
+  viewOnly: boolean;
+};
 export type RecordTone = LogTone;
 /** محطّةٌ في رحلة الترشّح — قد تحمل ملاحظةً في متنها. */
 export type JourneyStep = { kind: LogKind; label: string; date: string; note?: string };
@@ -111,6 +118,7 @@ export async function getVoteElections(userId: string): Promise<MemberFetch<Vote
   const items: VoteItem[] = ((data ?? []) as ElectionRpcRow[]).map((r) => ({
     electionId: r.election_id, position: positionOf(lbl(r.target_role_name), r.target_role_name, r.target_committee_ar, r.target_department_ar),
     votingEnd: fmtDateTime(r.voting_end ?? null), votingEndRaw: r.voting_end ?? null, hasVoted: !!r.has_voted,
+    viewOnly: !!r.view_only,
   }));
   return { items, error: null };
 }
