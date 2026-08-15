@@ -57,7 +57,7 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
           {election.viewOnly ? (
             <Alert tone="info" title="أنت مرشّحُ هذا المنصب">
               لا مرشّحَ سواك، ونظامُ الانتخابات لا يُجيز التصويتَ للنفس. فهذه بطاقتُك تطّلع عليها،
-              والقرارُ لأعضاء وحدتك.
+              والقرارُ للمصوّتين.
             </Alert>
           ) : (
             <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
