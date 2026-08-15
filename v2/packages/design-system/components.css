@@ -7602,6 +7602,10 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .blt-row { display: flex; align-items: center; gap: 12px; min-height: 44px; }
 .blt-rowtx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .blt-name { font-size: 15px; font-weight: 800; color: var(--card-tx, var(--color-primary)); }
+/* **ورقتُك تُسمّى في سطرها لا بشارةٍ على حافته** (قرار المالك): «المرشّح رقم ٤ (ترشّحك)»
+   خبرٌ واحدٌ يُقرأ جملةً، والشارةُ كانت تزاحم الاسمَ وتُقرأ حالةً مستقلّة. فيخفت اللاحقُ
+   عن متبوعه ليبقى الرقمُ هو الهويّة. */
+.blt-self { font-weight: 700; color: var(--color-text-muted); }
 .blt-hint { font-size: 12px; font-weight: 600; color: var(--color-text-muted); }
 
 /* **الكرتُ كلُّه رقعةُ الضغط لا سطرُ نصّه** (قرار المالك): زرٌّ ممدودٌ على سطح الكرت بحاشيته

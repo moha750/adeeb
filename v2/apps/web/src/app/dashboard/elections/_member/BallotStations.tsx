@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { Button, Card, CardBody } from "@adeeb/design-system";
 import { ArrowLeft, ArrowRight, Check, Eye } from "@/app/_components/glyphs";
-import { BallotHead, ConfidenceNote, CandidateFile, CandidateMark, CandidateModal, ConfirmVote, SelfCandidateNote, SelfTag, SoleChoice, Statement, type FileOpener } from "./ballotParts";
+import { BallotHead, ConfidenceNote, CandidateFile, CandidateMark, CandidateModal, CandidateName, ConfirmVote, SelfCandidateNote, SoleChoice, Statement, type FileOpener } from "./ballotParts";
 import type { BallotCandidate, VoteItem } from "../member-data";
 
 /**
@@ -93,7 +93,7 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
           <CardBody className="flex flex-col gap-3">
             <div className="blt-row">
               <CandidateMark number={sole.number} />
-              <span className="blt-name">المرشّح رقم {sole.number}</span>
+              <CandidateName number={sole.number} />
             </div>
             <Statement text={sole.statement} defaultOpen />
             <CandidateFile candidate={sole} opener={opener} onFail={onFileFail} />
@@ -124,8 +124,7 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
               <CardBody className="flex flex-col gap-3">
                 <div className="blt-row">
                   <CandidateMark number={c.number} />
-                  <span className="blt-name">المرشّح رقم {c.number}</span>
-                  {c.isSelf ? <SelfTag /> : null}
+                  <CandidateName number={c.number} self={c.isSelf} />
                 </div>
                 <Statement text={c.statement} />
                 <CandidateFile candidate={c} opener={opener} onFail={onFileFail} />
@@ -142,16 +141,15 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
         <>
           {candidates.map((c) => c.isSelf ? (
             /* **ورقتُك لا تُختار** : تبقى في موضعها من الترتيب بهيئة أخواتها، وتُنزع عنها
-               رقعةُ الضغط وعلامةُ الاختيار وحدَهما، ويحلّ الوسمُ محلَّ العلامة. */
+               رقعةُ الضغط وعلامةُ الاختيار وحدَهما، وتُسمّى في سطر اسمها. */
             <Card key={c.id}>
               <CardBody className="flex flex-col gap-2">
                 <div className="blt-row">
                   <CandidateMark number={c.number} />
                   <div className="blt-rowtx">
-                    <span className="blt-name">المرشّح رقم {c.number}</span>
+                    <CandidateName number={c.number} self />
                     <span className="ccard-stmt">{c.statement}</span>
                   </div>
-                  <SelfTag />
                 </div>
                 <Button variant="ghost" size="sm" className="self-start" onClick={() => setReview(c)}>
                   <Eye size={15} />راجع بيانك وملفَّك
@@ -173,7 +171,7 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
                 <div className="blt-row">
                   <CandidateMark number={c.number} />
                   <div className="blt-rowtx">
-                    <span className="blt-name">المرشّح رقم {c.number}</span>
+                    <CandidateName number={c.number} />
                     {/* مقتطَفُ البيان بمقتطَف كرت المرشّح المُقَرّ نفسِه (سطران) : هنا يُختار لا يُقرأ. */}
                     <span className="ccard-stmt">{c.statement}</span>
                   </div>

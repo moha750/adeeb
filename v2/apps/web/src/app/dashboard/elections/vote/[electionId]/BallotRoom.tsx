@@ -5,7 +5,7 @@ import { Alert, Button } from "@adeeb/design-system";
 import { CheckCircle } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../../_shell/Breadcrumb";
 import { useToast } from "../../../_components/ToastProvider";
-import { BallotHead, CandidateFile, CandidateMark, SelfTag, Statement, VoteTag } from "../../_member/ballotParts";
+import { BallotHead, CandidateFile, CandidateMark, CandidateName, Statement, VoteTag } from "../../_member/ballotParts";
 import { BallotStations } from "../../_member/BallotStations";
 import { useElectionApi } from "../../actions-context";
 import type { BallotCandidate, MyVote, VoteItem } from "../../member-data";
@@ -61,9 +61,10 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
                 <CardBody className="flex flex-col gap-3">
                   <div className="blt-row">
                     <CandidateMark number={c.number} />
-                    <span className="blt-name">المرشّح رقم {c.number}</span>
-                    {/* الوسمُ يبقى بعد الختم : من عاد يقرأ يعرف ورقتَه كما عرفها قبل صوته. */}
-                    {mine ? <VoteTag choice={rejected ? "reject" : "approve"} /> : c.isSelf ? <SelfTag /> : null}
+                    {/* ورقتُك تُسمّى في سطرها بعد الختم كما سُمّيت قبله، وشارةُ «صوتك» وحدَها
+                        تبقى على الحافّة : خبرُ الاختيار غيرُ خبرِ الهويّة. */}
+                    <CandidateName number={c.number} self={c.isSelf} />
+                    {mine ? <VoteTag choice={rejected ? "reject" : "approve"} /> : null}
                   </div>
                   <Statement text={c.statement} />
                   <CandidateFile candidate={c} onFail={() => toast.error("تعذّر فتح الملفّ، أعِد المحاولة.")} />
