@@ -15,3 +15,17 @@ export function unitWord(n: number, unit?: ChartUnit): string | null {
   const c = AR_PLURAL.select(n);
   return c === "two" ? unit.two : c === "few" || c === "zero" ? unit.few : unit.one;
 }
+
+/**
+ * الجملةُ كاملةً: عددٌ وكلمتُه — **إلّا في المثنّى فيسقط العدد.**
+ *
+ * «٢ استماعتان» حشوٌ: صيغةُ المثنّى تحمل العددَ في نفسها، فالعربيّةُ تقول
+ * «استماعتان» لا «٢ استماعتان». وما سواه يُكتب عددًا وكلمةً: «١ استماعة»
+ * و«١٢ استماعة» و«٣ استماعات».
+ *
+ * وهي هنا لا في كلّ مستدعٍ، فلا يتفرّق الجوابُ عن سؤالٍ واحد.
+ */
+export function countPhrase(n: number, unit: ChartUnit): string {
+  const word = unitWord(n, unit)!;
+  return word === unit.two ? word : `${n} ${word}`;
+}

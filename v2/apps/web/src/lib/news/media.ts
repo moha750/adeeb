@@ -10,6 +10,7 @@
  */
 import "server-only";
 import { NEWS_BUCKET } from "./bucket";
+import { UPLOAD_RULES, limitText } from "@/lib/upload";
 
 export { NEWS_BUCKET };
 
@@ -26,11 +27,11 @@ export const IMAGE_EXT: Record<string, string> = {
   "image/png": "png",
 };
 
-/** سقف الدلو نفسه ٥ م.ب — يُذكر هنا ليردّ الرفعة الخاطئة برسالةٍ مفهومة لا بخطأ خام. */
-export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+/** الحدُّ والجملُ من قانون المرفقات (`lib/upload`) — لا رقمَ ثانٍ ولا صياغةَ ثانية. */
+export const IMAGE_MAX_BYTES = UPLOAD_RULES.newsImage.maxBytes;
 
-export const BAD_MIME = "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG.";
-export const TOO_BIG = "الصورة أكبر من ٥ م.ب. اضغطها أو صدّرها WEBP.";
+export const BAD_MIME = `الصيغةُ غير مدعومة، المدعوم ${UPLOAD_RULES.newsImage.formats}`;
+export const TOO_BIG = `الحجمُ فوق الحدّ (${limitText(UPLOAD_RULES.newsImage)}) : اضغطها أو صدّرها WEBP`;
 
 /** مفتاحٌ فريد لكلّ رفعة: الاسم لا يُشتقّ من اسم الملفّ الأصليّ (قد يكون عربيًّا أو مكرّرًا). */
 export const coverKey = (newsId: string, ext: string) =>

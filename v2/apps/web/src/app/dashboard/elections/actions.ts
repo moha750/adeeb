@@ -4,7 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getElectionManager } from "@/lib/elections/authz";
 import { createClient } from "@/lib/supabase/server";
-import type { BallotCandidate } from "./member-data";
+import { getAppointableMembers, type AppointOption } from "./data";
 import { statementError } from "./vocab";
 
 export type ElectionResult = { ok: boolean; message: string; id?: string };
@@ -58,8 +58,8 @@ function mapCreateError(error: { code?: string; message?: string } | null): stri
  * والتداخل مسموح: مقعدُ القسم ومقاعدُ لجانه تُفتح معًا.
  *
  * وموعدُ إغلاق الترشّح يُكتب في `candidacy_end`، فتتولّاه كنّاسةُ القاعدة
- * (`sweep_election_deadlines` كلّ دقيقة): تُغلق الباب، أو تمدّه 24 ساعة مرّةً
- * واحدة إن قلّ المرشّحون عن اثنين، ثمّ تُلغي الانتخاب إن بقي الحال.
+ * (`sweep_election_deadlines` كلّ دقيقة): تُغلق الباب إن كان فيه مرشّحٌ واحدٌ فأكثر
+ * (والواحدُ يمضي تزكيةً)، وإن كان فارغًا أوقفت الانتخاب ينتظر قرار المشرف.
  */
 export async function createElection(input: CreateElectionInput): Promise<ElectionResult> {
   const mgr = await getElectionManager();
@@ -134,6 +134,24 @@ export async function reviewCandidate(
 }
 
 /**
+ * إرجاعُ مرشّحٍ سحب ترشّحه — يعود «قيد المراجعة» لا معتمَدًا (اختيار المالك ٢٠٢٦-٠٨-١٤):
+ * الرجعةُ تُعيده إلى الصفّ، والاعتمادُ قرارٌ يُتّخذ بعدها ويُوقَّع باسم صاحبه.
+ *
+ * وحارسُه في القاعدة لا هنا: قانونُ الانتقال (`enforce_candidate_status_transition`) يشترط
+ * مشرفًا وطورَ ترشّحٍ لكلّ رجعة، فلا يفتح هذا الفعلُ بابًا يُغلقه القانون.
+ */
+export async function restoreCandidacy(candidateId: string): Promise<ElectionResult> {
+  const sb = await userClient();
+  if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
+
+  const { error } = await sb.rpc("restore_candidacy", { p_candidate: candidateId });
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر إرجاع المرشّح.") };
+
+  revalidatePath("/dashboard/elections", "layout");
+  return { ok: true, message: "أُعيد المرشّح إلى المراجعة، وأُبلِغ بذلك." };
+}
+
+/**
  * انتقال حالةٍ صرف (إغلاق الترشّح · إعادة فتحه · إغلاق التصويت).
  * وإعادةُ الفتح ترفع موعدَ الإغلاق في القاعدة نفسها، وإلّا التقطته الكنّاسة بعد دقيقة فأغلقه ثانيةً.
  */
@@ -181,7 +199,12 @@ export async function setDeadline(electionId: string, iso: string | null): Promi
       : null;
   if (!column) return { ok: false, message: "لا موعدَ إلّا لبابٍ مفتوح (ترشّحًا أو تصويتًا)." };
 
-  const { error } = await sb.from("elections").update({ [column]: when }).eq("id", electionId);
+  // ضبطُ مهلةِ ترشّحٍ جديدة هو **بابُ التمديد** نفسُه لمقعدٍ تعثّر: يسقط وسمُ الانتظار
+  // فتعود الكنّاسة إلى عملها على الموعد الجديد (ولا تُبقيه واقفًا بلا حاجة).
+  const patch: Record<string, unknown> = { [column]: when };
+  if (column === "candidacy_end") patch.stalled_at = null;
+
+  const { error } = await sb.from("elections").update(patch).eq("id", electionId);
   if (error) return { ok: false, message: error.message };
 
   revalidatePath("/dashboard/elections", "layout");
@@ -198,10 +221,35 @@ export async function openVoting(electionId: string, votingEndIso: string): Prom
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
 
   const { error } = await sb.rpc("transition_election", { p_election: electionId, p_new_status: "voting_open", p_voting_end: votingEndIso });
-  if (error) return { ok: false, message: rpcMessage(error, "تعذّر فتح التصويت. تأكّد من اعتماد مرشّحَين على الأقلّ.") };
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر فتح التصويت. تأكّد من اعتماد مرشّحٍ واحدٍ على الأقلّ ومن مراجعة الباقين.") };
 
   revalidatePath("/dashboard/elections", "layout");
   return { ok: true, message: "فُتح باب التصويت." };
+}
+
+/** أعضاءُ نطاق المقعد — تُحمَّل عند فتح نافذة التكليف (الحارس قدراتيّ قبل القراءة). */
+export async function loadAppointOptions(electionId: string): Promise<{ members: AppointOption[]; error: string | null }> {
+  const mgr = await getElectionManager();
+  if (!mgr) return { members: [], error: "لا تملك صلاحية إدارة الانتخابات." };
+  return getAppointableMembers(electionId);
+}
+
+/**
+ * بابُ التكليف على مقعدٍ تعثّر انتخابُه — إسنادٌ عاديٌّ بلا مدّة عبر البوّابة المحروسة
+ * (`assign_position` داخل `appoint_to_seat`)، ثمّ يُوقَف الانتخاب بسببٍ مسجّل.
+ */
+export async function appointToSeat(electionId: string, userId: string, reason: string): Promise<ElectionResult> {
+  if (!userId) return { ok: false, message: "اختر العضو المكلَّف." };
+  if (!reason?.trim() || reason.trim().length < 10) return { ok: false, message: "اكتب سبب التكليف (١٠ أحرف على الأقلّ)." };
+  const sb = await userClient();
+  if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
+
+  const { error } = await sb.rpc("appoint_to_seat", { p_election: electionId, p_user: userId, p_reason: reason.trim() });
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر التكليف على هذا المقعد.") };
+
+  revalidatePath("/dashboard/elections", "layout");
+  revalidatePath("/dashboard/unit", "layout");
+  return { ok: true, message: "كُلّف العضو وأُسنِد المنصب، وأُوقف الانتخاب." };
 }
 
 /** إعلان الفائز — القاعدة تفرض أن يكون الأعلى وزنًا، وتُسنِد المنصب عبر assign_position. */
@@ -279,14 +327,24 @@ export async function resubmitCandidacy(candidateId: string, statement: string, 
   return { ok: true, message: "حُفظ تعديل ترشّحك، وهو الآن قيد المراجعة." };
 }
 
-/** تصويت العضو لمرشّحٍ مُعَمّى — سرّيّ ونهائيّ، صوتٌ واحد. */
-export async function castVote(electionId: string, candidateId: string): Promise<ElectionResult> {
+/**
+ * تصويت العضو لمرشّحٍ مُعَمّى — سرّيّ ونهائيّ، صوتٌ واحد.
+ * وحين يكون المرشّح وحيدًا يصير الصوتُ رأيًا فيه: تأييدٌ أو اعتراض (تزكية).
+ *
+ * **والامتناعُ بطاقةٌ تُختم بلا مرشّح** (`candidateId = null`): تُقرأ مشاركةً لا غيابًا، ولا
+ * تُحسب لأحد. وهي مخرجُ من منعته اللائحةُ أن يزكّي نفسَه ولم يرَ في الباقين مَن يزكّيه، فلا
+ * يُترك بين تزكيةِ خصمٍ وصمتٍ يُقرأ تخلّفًا.
+ */
+export async function castVote(electionId: string, candidateId: string | null, choice: "approve" | "reject" | "abstain" = "approve"): Promise<ElectionResult> {
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
-  const { error } = await sb.rpc("cast_vote", { p_election: electionId, p_candidate: candidateId });
+  const { error } = await sb.rpc("cast_vote", { p_election: electionId, p_candidate: candidateId, p_choice: choice });
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر تسجيل صوتك. تأكّد من أنّ التصويت مفتوحٌ ولم تصوّت بعد.") };
   revalidatePath("/dashboard/elections", "layout");
-  return { ok: true, message: "سُجِّل صوتك، شكرًا لمشاركتك." };
+  const done = choice === "abstain" ? "سُجِّل امتناعك، وخُتمت بطاقتك."
+    : choice === "reject" ? "سُجِّل اعتراضك، شكرًا لمشاركتك."
+    : "سُجِّل صوتك، شكرًا لمشاركتك.";
+  return { ok: true, message: done };
 }
 
 /** سحب الترشّح — نهائيّ في هذه الدورة. */
@@ -299,47 +357,7 @@ export async function withdrawCandidacy(candidateId: string): Promise<ElectionRe
   return { ok: true, message: "سُحب ترشّحك." };
 }
 
-/** تحميل بطاقة تصويتٍ مُعَمّاة (رقم + بيان بلا اسم) عند فتح النافذة. */
-export async function loadBallot(electionId: string): Promise<{ candidates: BallotCandidate[]; error: string | null }> {
-  const sb = await userClient();
-  if (!sb) return { candidates: [], error: "سجّل الدخول ثمّ أعِد المحاولة." };
-  const { data, error } = await sb.rpc("get_anonymized_candidates", { p_election: electionId });
-  if (error) return { candidates: [], error: rpcMessage(error, "تعذّر تحميل المرشّحين.") };
-  const candidates: BallotCandidate[] = ((data ?? []) as { candidate_id: string; candidate_number: number; statement_ar: string }[])
-    .map((c) => ({ id: c.candidate_id, number: c.candidate_number, statement: c.statement_ar }));
-  return { candidates, error: null };
-}
 
-/* ══ السجلّ الزمنيّ لترشّح العضو ═══════════════════════════════════════ */
-
-const MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-function fmtStamp(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getDate()} ${MONTHS_AR[d.getMonth()]} ${d.getFullYear()}، ${hh}:${mm}`;
-}
-
-export type TrailEvent = { type: string; date: string; actor: string | null; status: string | null; note: string | null };
-
-/** سجلّ أحداث ترشّحٍ (قُدّم · عُدّل · رُوجِع · سُحب…) — لصاحبه أو للمدير. */
-export async function loadCandidateTrail(candidateId: string): Promise<{ events: TrailEvent[]; error: string | null }> {
-  const sb = await userClient();
-  if (!sb) return { events: [], error: "سجّل الدخول ثمّ أعِد المحاولة." };
-  const { data, error } = await sb.rpc("get_candidate_audit_trail", { p_candidate: candidateId });
-  if (error) return { events: [], error: rpcMessage(error, "تعذّر تحميل السجلّ.") };
-  const rows = (data ?? []) as { event_type: string; payload: Record<string, unknown> | null; actor_name: string | null; created_at: string }[];
-  const events: TrailEvent[] = rows.map((e) => {
-    const p = e.payload ?? {};
-    return {
-      type: e.event_type,
-      date: fmtStamp(e.created_at),
-      actor: e.actor_name ?? null,
-      status: (p["new_status"] as string) ?? null,
-      note: ((p["note_ar"] ?? p["review_note_ar"] ?? p["note"]) as string) ?? null,
-    };
-  });
-  return { events, error: null };
-}
+/* ══ السجلّ ═══════════════════════════════════════════════════════════
+   لا فعلَ هنا للسجلّ: يُقرأ مع الصفحة نفسِها (`getElectionLog` في data.ts) لا بندائين،
+   وشاشةُ المرشّح تنخل منه أحداثَه — مصدرٌ واحد يُجلَب مرّة، وتذييلُه توقيعُ صاحبه. */

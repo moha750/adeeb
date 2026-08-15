@@ -1,0 +1,54 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Prohibit } from "@/app/_components/glyphs";
+import { ConfirmDialog } from "../../../_components/ConfirmDialog";
+import { useToast } from "../../../_components/ToastProvider";
+import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { CandidacyJourney } from "../../_member/CandidacyJourney";
+import { withdrawCandidacy } from "../../actions";
+import type { CandidacyJourney as CJ } from "../../member-data";
+
+/**
+ * صفحةُ ترشّحٍ واحد — يصلها العضو من كرتٍ في سجلّه، فتحمل السردَ الكامل الذي كان يُحشَر
+ * في الكشف: هيروُ الهوية، ورسالةُ الحال، والرحلةُ، والبيانُ والملفّ، والتعديلُ والسحب.
+ * والسحبُ يقع هنا لا في الكشف: الفعلُ الخطِر يُطلَب من صفحة صاحبِه بعد قراءته.
+ */
+export function CandidacyDetailView({ c }: { c: CJ }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [ask, setAsk] = useState(false);
+
+  const doWithdraw = () =>
+    start(async () => {
+      const r = await withdrawCandidacy(c.candidateId);
+      if (r.ok) { toast.success(r.message); setAsk(false); router.refresh(); } else toast.error(r.message);
+    });
+
+  return (
+    <>
+      <div className="ash-phead"><div><Breadcrumb leaf={c.position} /><h1>{c.position}</h1></div></div>
+
+      <CandidacyJourney
+        c={c}
+        cycle={c.cycle}
+        onEdit={() => router.push(`/dashboard/elections/my/${c.electionId}/edit`)}
+        onWithdraw={() => setAsk(true)}
+      />
+
+      <ConfirmDialog
+        open={ask}
+        onClose={() => setAsk(false)}
+        tone="danger"
+        icon={<Prohibit />}
+        title="سحب الترشّح؟"
+        text={`سيُسحب ترشّحك في «${c.position}» نهائيًّا في هذه الدورة.`}
+        confirmLabel="نعم، اسحب"
+        loading={pending}
+        onConfirm={doWithdraw}
+      />
+    </>
+  );
+}

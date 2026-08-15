@@ -2,15 +2,10 @@ import { Alert } from "@adeeb/design-system";
 import { getMembers } from "../data";
 import { CredentialsView, type CredMember } from "./CredentialsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>تغيير بيانات الدخول</h1>
-    </div>
-  </div>
+  <PageHeader title="تغيير بيانات الدخول" />
 );
 
 export default async function CredentialsPage() {

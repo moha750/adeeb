@@ -40,6 +40,29 @@ export default function LoadingGalleryPage() {
         </p>
 
         <Sec
+          title="شريطُ التقدّم"
+          note="غيرُ «يعمل الآن» في الزرّ (ق٧): تلك تقول «انتظر» وهذه تقول كم بقي. أوّلُ من احتاجها رفعُ حلقة الإذاعة: ملفٌّ بعشرات الميغابايت يمشي من جهاز المستخدم، وسطرٌ يقول «جارٍ» بلا رقم يترك صاحبَه لا يدري أوشك أم تعلّق."
+        >
+          <Frame>
+            <div className="flex w-full max-w-md flex-col gap-8">
+              {[0.18, 0.64, 1].map((v) => (
+                <div key={v} className="aprog">
+                  <div className="aprog-head">
+                    <span>النسخة بموسيقى</span>
+                    <span className="aprog-pct">{Math.round(v * 100)}٪</span>
+                  </div>
+                  <div className="aprog-track"><div className="aprog-fill" style={{ width: `${v * 100}%` }} /></div>
+                </div>
+              ))}
+              <div className="aprog is-indeterminate">
+                <div className="aprog-head"><span>مقدارٌ لا يُعرف</span></div>
+                <div className="aprog-track"><div className="aprog-fill" /></div>
+              </div>
+            </div>
+          </Frame>
+        </Sec>
+
+        <Sec
           title="الرأسيّ: شاشةُ بدء الموقع"
           note="يملأ شاشةً فارغة، ويُستعمل في شاشة البدء وفي حدّ التحميل للجذر."
         >

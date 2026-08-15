@@ -1,9 +1,8 @@
 "use client";
 
 import { Button, Container, FileButton, IconButton } from "@adeeb/design-system";
-import { ArrowClockwise, CheckCircle, CopySimple, FileArrowDown, FileDashed, Paperclip, PaperPlaneTilt, Warning } from "@phosphor-icons/react";
-import { ArrowDown } from "@/app/_components/glyphs";
-import { ArrowUp, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
+import { CopySimple, FileArrowDown, FileDashed, Paperclip, PaperPlaneTilt } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowDown, ArrowUp, CheckCircle, PencilSimple, Plus, Trash, Warning } from "@/app/_components/glyphs";
 
 const VARIANTS = ["primary", "ghost", "danger", "neutral", "inverse"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
@@ -200,7 +199,7 @@ export default function ButtonsPage() {
                 block
                 state="empty"
                 icon={<FileDashed />}
-                label="لا ملفَّ مرفوق"
+                label="لا ملف انتخابي مرفوق"
                 hint="empty : خبرٌ ساكنٌ لا يُضغط"
               />
             </div>

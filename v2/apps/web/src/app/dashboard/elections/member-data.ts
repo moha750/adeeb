@@ -6,7 +6,9 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { positionLine } from "@/lib/positionLabel";
 import { fmtDateTime } from "./data";
+import { fmtMonthYear } from "@/lib/dates";
 import { CANDIDATE_STATUS_META, type CandidateStatus, type ElectionStatus } from "./vocab";
+import { describeEvent, type LogKind, type LogTone } from "./log";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -30,24 +32,46 @@ const positionOf = (rank: string | undefined, roleName: string, committeeAr: str
 };
 
 type ElectionRpcRow = { election_id: string; target_role_name: string; target_committee_id?: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidacy_end?: string | null; voting_end?: string | null; has_submission?: boolean; has_voted?: boolean };
-type CandidacyRpcRow = { candidate_id: string; election_id: string; target_role_name: string; target_committee_id: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidate_number: number; candidate_status: CandidateStatus; election_status: ElectionStatus; statement_ar: string; file_url: string | null; file_name: string | null; review_note_ar: string | null; can_withdraw: boolean; can_edit: boolean };
+type CandidacyRpcRow = { candidate_id: string; election_id: string; target_role_name: string; target_committee_id: number | null; target_committee_ar: string | null; target_department_ar: string | null; candidate_number: number; candidate_status: CandidateStatus; election_status: ElectionStatus; election_archived_at: string | null; statement_ar: string; file_url: string | null; file_name: string | null; review_note_ar: string | null; submitted_at: string | null; candidacy_end: string | null; can_withdraw: boolean; can_edit: boolean };
 
 // الموعد مرّتين: نصًّا للعين (`…End`)، وخامًا للعدّاد الحيّ (`…EndRaw`).
 export type RunItem = { electionId: string; position: string; candidacyEnd: string; candidacyEndRaw: string | null; hasSubmission: boolean; committeeId: number | null; roleName: string };
 export type VoteItem = { electionId: string; position: string; votingEnd: string; votingEndRaw: string | null; hasVoted: boolean };
-export type RecordTone = "warning" | "info" | "success" | "danger" | "neutral";
-export type TrailKind = "submit" | "edit" | "approve" | "reject" | "withdraw" | "open" | "win" | "end";
+export type RecordTone = LogTone;
 /** محطّةٌ في رحلة الترشّح — قد تحمل ملاحظةً في متنها. */
-export type JourneyStep = { kind: TrailKind; label: string; date: string; note?: string };
+export type JourneyStep = { kind: LogKind; label: string; date: string; note?: string };
 /** ترشّحٌ واحدٌ رحلةً كاملة — يُبنى منه تبويب «سِجلّ ترشُّحي». */
 export type CandidacyJourney = {
   candidateId: string; electionId: string; position: string; number: number;
+  /** اسمُ الدورة («دورة أغسطس 2026») — مرساةُ الزمن، وبها يفترق ترشّحان لمنصبٍ واحد. */
+  cycle: string;
+  /** استقرّ مآلُه فلا ينتظر منك شيئًا: منسحبٌ أو مرفوضٌ أو انتهى انتخابُه. */
+  archived: boolean;
   status: CandidateStatus; statusLabel: string; statusTone: RecordTone;
   next: string; future: string | null;
   statement: string; fileUrl: string | null; fileName: string | null;
   trail: JourneyStep[]; canEdit: boolean; canWithdraw: boolean;
 };
-export type BallotCandidate = { id: string; number: number; statement: string };
+/**
+ * مرشّحٌ في بطاقة الاقتراع — **مُعمًّى لا منقوص**: يسقط اسمُه وصورتُه، ويبقى كلُّ ما يُحكَم به
+ * عليه. والملفُّ الانتخابيّ منه: القاعدةُ تُخرجه (`get_anonymized_candidates`) والدلو يأذن
+ * للناخب بقراءته (`can_voter_read_election_file`)، فحجبُه عن الناخب كان فقدًا في الواجهة.
+ *
+ * و**اسمُ الملفّ لا يُعرَض للناخب** (يُحمَل هنا لأنّ المراجع يراه): «سيرة محمّد.pdf» تكسر
+ * التعميةَ من حيث لا يُحتسب. المعروضُ نوعُه وحجمُه.
+ */
+export type BallotCandidate = {
+  id: string; number: number; statement: string;
+  /** مسارٌ في دلو `election-files` لا رابطًا — يُفتح برابطٍ موقَّعٍ مؤقّت (`candidateFile.ts`). */
+  fileUrl: string | null; fileName: string | null;
+  fileSize: number | null; fileMime: string | null;
+  /**
+   * **ورقتُك أنت**: القاعدةُ تحسبها من `auth.uid()` فلا يعرفها إلّا صاحبُها، ولا تُفشي اسمًا.
+   * وبها تُعلَّم ورقتُه في البطاقة وتُنزع عنها رقعةُ الاختيار، فتقول اللائحةُ كلمتَها قبل
+   * أن يمدّ يدَه، لا سطرًا أحمرَ بعد ضغطه.
+   */
+  isSelf: boolean;
+};
 
 /** حِملُ أيّ بابٍ من أبواب العضو: قائمتُه أو خطأُ جلبها. */
 export type MemberFetch<T> = { items: T[]; error: string | null };
@@ -91,33 +115,74 @@ export async function getVoteElections(userId: string): Promise<MemberFetch<Vote
   return { items, error: null };
 }
 
-type AuditRow = { event_type: string; payload: Record<string, unknown> | null; created_at: string };
+/**
+ * صوتُك أنت بعد ختمه — **يُرى لصاحبه وحدَه** (سياسة `votes_select_self`: `voter_id = auth.uid()`).
+ * السرّيّةُ حجبُ صوتك عن غيرك لا عنك، ومن ختم بطاقتَه له أن يطمئنّ بمَن أدلى.
+ * و`candidateId` فارغٌ في الامتناع.
+ */
+export type MyVote = { candidateId: string | null; choice: "approve" | "reject" | "abstain" };
 
-/** حدثُ السجلّ من القاعدة → محطّةُ رحلة (بأيقونتها ونصّها وملاحظتها). */
-function toStep(r: AuditRow): JourneyStep {
-  const p = r.payload ?? {};
-  const note = (p["note_ar"] ?? p["review_note_ar"] ?? p["note"]) as string | undefined;
-  const st = p["new_status"] as string | undefined;
-  const date = fmtDateTime(r.created_at);
-  switch (r.event_type) {
-    case "candidacy_submitted": return { kind: "submit", label: "قُدّم الترشّح", date };
-    case "candidate_updated": return { kind: "edit", label: "عُدّل الترشّح", date };
-    case "candidate_resubmitted": return { kind: "edit", label: "أُعيد بعد التعديل", date };
-    case "candidate_withdrawn": return { kind: "withdraw", label: "سُحب الترشّح", date };
-    case "candidate_reviewed":
-      if (st === "approved") return { kind: "approve", label: "اعتُمد الترشّح", date };
-      if (st === "rejected") return { kind: "reject", label: "رُفض الترشّح", date, note };
-      if (st === "needs_edit") return { kind: "edit", label: "طُلب تعديل", date, note };
-      return { kind: "edit", label: "رُوجِع الترشّح", date, note };
-    default: return { kind: "submit", label: r.event_type, date };
+/** حِملُ صفحة الاقتراع: المقعدُ ومرشّحوه وصوتُك إن ختمت، أو سببُ تعذّرها. */
+export type BallotContext = { ok: boolean; error: string | null; election: VoteItem | null; candidates: BallotCandidate[]; myVote: MyVote | null };
+
+/**
+ * بطاقةُ اقتراعٍ كاملةً لصفحتها — **الأهليّةُ تُقرأ من قائمة المفتوح له لا من ظنّ**: من ليس
+ * المقعدُ في قائمته لا يرى بطاقتَه، ومن صوّت يبقى في قائمته بعلامة `hasVoted` فيدخل مطّلِعًا
+ * لا مصوّتًا. والقاعدةُ تحرس ما وراء ذلك (`get_anonymized_candidates` ترفض غير المؤهَّل،
+ * و`cast_vote` ترفض الصوتَ الثاني)، فهذه الصفحةُ عرضٌ لا حارسٌ ثانٍ.
+ */
+export async function getBallot(userId: string, electionId: string): Promise<BallotContext> {
+  const { items, error } = await getVoteElections(userId);
+  if (error) return { ok: false, error, election: null, candidates: [], myVote: null };
+  const election = items.find((e) => e.electionId === electionId) ?? null;
+  if (!election) return { ok: false, error: "هذا الاقتراع غير مفتوحٍ لك الآن.", election: null, candidates: [], myVote: null };
+
+  const session = await createClient();
+  const { data, error: e } = await session.rpc("get_anonymized_candidates", { p_election: electionId });
+  if (e) return { ok: false, error: e.message, election, candidates: [], myVote: null };
+  type Row = { candidate_id: string; candidate_number: number; statement_ar: string; file_url: string | null; file_name: string | null; file_size_bytes: number | null; file_mime: string | null; is_self: boolean };
+  const candidates: BallotCandidate[] = ((data ?? []) as Row[]).map((c) => ({
+    id: c.candidate_id, number: c.candidate_number, statement: c.statement_ar,
+    fileUrl: c.file_url ?? null, fileName: c.file_name ?? null,
+    fileSize: c.file_size_bytes ?? null, fileMime: c.file_mime ?? null,
+    isSelf: !!c.is_self,
+  }));
+
+  // صوتُك المختوم يُقرأ بعميل الجلسة : السياسةُ تأذن لصاحبه وحدَه، فلا حاجةَ لمفتاح خدمةٍ
+  // ولا لنخلٍ في الواجهة. ولا يُطلَب إلّا لمن ختم، فلا نداءَ زائدٌ في كلّ فتحة.
+  let myVote: MyVote | null = null;
+  if (election.hasVoted) {
+    const { data: v } = await session
+      .from("election_votes")
+      .select("candidate_id, vote_choice")
+      .eq("election_id", electionId)
+      .eq("voter_id", userId)
+      .maybeSingle();
+    if (v) myVote = { candidateId: v.candidate_id ?? null, choice: (v.vote_choice ?? "approve") as MyVote["choice"] };
   }
+
+  return { ok: true, error: null, election, candidates, myVote };
 }
 
-/** الحالةُ المعروضة و«ما التالي» والمحطّة القادمة — تراعي حالة المرشّح وطور الانتخاب والفوز. */
-function statusView(status: CandidateStatus, election: ElectionStatus, isWinner: boolean, position: string): { label: string; tone: RecordTone; next: string; future: string | null } {
+type AuditRow = { event_type: string; payload: Record<string, unknown> | null; created_at: string };
+
+/**
+ * حدثُ السجلّ من القاعدة → محطّةُ رحلة. الجملةُ والرسمُ من المعجم الواحد (`log.ts`)، وهذا
+ * يضيف تاريخَها ولا يضيف فاعلَها: رحلةُ العضو تقول ما جرى لا مَن أجراه (قرار المالك).
+ */
+function toStep(r: AuditRow): JourneyStep {
+  const f = describeEvent(r, { audience: "member" });
+  return { kind: f.kind, label: f.label, date: fmtDateTime(r.created_at), note: f.note ?? undefined };
+}
+
+/**
+ * الحالةُ المعروضة و«ما التالي» والمحطّة القادمة — تراعي حالة المرشّح وطور الانتخاب والفوز.
+ * و`sole` يقول إنّه المرشّح المعتمَد الوحيد، فالتصويتُ عليه **تزكيةٌ** لا منافسة.
+ */
+function statusView(status: CandidateStatus, election: ElectionStatus, isWinner: boolean, position: string, sole: boolean): { label: string; tone: RecordTone; next: string; future: string | null } {
   if (election === "completed" && status === "approved") {
     return isWinner
-      ? { label: "فائز", tone: "success", next: `مُبارَك لك! فزتَ بالمنصب يا ${position}`, future: null }
+      ? { label: "فائز", tone: "success", next: sole ? `نلتَ ثقة الناخبين تزكيةً، مُبارَك لك يا ${position}` : `مُبارَك لك! فزتَ بالمنصب يا ${position}`, future: null }
       : { label: "لم يُوفَّق", tone: "info", next: "انتهى التصويت؛ لم يُوفَّق ترشّحك هذه المرّة، شكرًا لِمُشاركتك.", future: null };
   }
   const base = CANDIDATE_STATUS_META[status];
@@ -125,9 +190,12 @@ function statusView(status: CandidateStatus, election: ElectionStatus, isWinner:
     case "pending": return { label: base.label, tone: base.tone, next: "طلبك تحت مراجعة إدارة الموارد البشرية. يمكنك تعديل أو تطوير ترشّحك خلال مراجعة ترشيحك.", future: election === "candidacy_open" ? "تصويت" : null };
     case "needs_edit": return { label: base.label, tone: base.tone, next: "راجِع ملاحظة إدارة الموارد البشرية وعدّل بيانك أو ملفّك، ثمّ أعِد الإرسال.", future: election === "candidacy_open" ? "تصويت" : null };
     case "approved": {
-      const next = election === "voting_open" ? "التصويت جارٍ الآن على ترشّحك."
+      // ترشّحٌ وحيد: الناخبون يؤيّدون أو يعترضون. تُقال الحقيقةُ كما هي، لا يُهوَّل ولا يُخفى.
+      const next = election === "voting_open"
+        ? (sole ? "أنت المرشّح الوحيد، والتصويت جارٍ تزكيةً لك: يؤيّد الناخبون أو يعترضون." : "التصويت جارٍ الآن على ترشّحك.")
         : election === "voting_closed" ? "أُغلق التصويت، بانتظار إعلان النتيجة."
-          : "مُبارك لك! تم قبول ترشحك لخوض مرحلة التصويت.";
+          : sole ? "قُبل ترشّحك، وأنت المرشّح الوحيد: يُعرَض على الناخبين تزكيةً لا منافسة."
+            : "مُبارك لك! تم قبول ترشحك لخوض مرحلة التصويت.";
       const future = (election === "candidacy_open" || election === "candidacy_closed") ? "تصويت"
         : (election === "voting_open" || election === "voting_closed") ? "النتيجة" : null;
       return { label: base.label, tone: base.tone, next, future };
@@ -153,24 +221,40 @@ export async function getMyCandidacies(userId: string): Promise<MemberFetch<Cand
   if (!rows.length) return { items: [], error: null };
 
   const electionIds = [...new Set(rows.map((r) => r.election_id))];
-  const [elecRes, trailRes] = await Promise.all([
+  const [elecRes, approvedRes, trailRes] = await Promise.all([
     svc.from("elections").select("id, winner_candidate_id").in("id", electionIds),
+    // كم معتمَدًا في كلّ انتخاب — به يُعرَف أنّ الترشّح وحيدٌ فالتصويتُ عليه تزكية
+    svc.from("election_candidates").select("election_id").in("election_id", electionIds).eq("status", "approved"),
     Promise.all(rows.map((r) => session.rpc("get_candidate_audit_trail", { p_candidate: r.candidate_id }))),
   ]);
   const winnerOf = new Map(((elecRes.data ?? []) as { id: string; winner_candidate_id: string | null }[]).map((x) => [x.id, x.winner_candidate_id]));
+  const approvedCount = new Map<string, number>();
+  for (const a of (approvedRes.data ?? []) as { election_id: string }[]) {
+    approvedCount.set(a.election_id, (approvedCount.get(a.election_id) ?? 0) + 1);
+  }
 
   const items: CandidacyJourney[] = rows.map((r, i) => {
     const isWinner = winnerOf.get(r.election_id) === r.candidate_id;
     const position = positionOf(lbl(r.target_role_name), r.target_role_name, r.target_committee_ar, r.target_department_ar);
-    const view = statusView(r.candidate_status, r.election_status, isWinner, position);
+    const sole = r.candidate_status === "approved" && approvedCount.get(r.election_id) === 1;
+    const view = statusView(r.candidate_status, r.election_status, isWinner, position, sole);
     const audit = ((trailRes[i]?.data ?? []) as AuditRow[]).slice().sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
-    const trail: JourneyStep[] = audit.length ? audit.map(toStep) : [{ kind: "submit", label: "قُدّم الترشّح", date: "" }];
+    // ترشّحٌ بلا سجلٍّ (سبق نظامَ السجلّ): محطّةٌ واحدةٌ تُقال بلفظ المعجم نفسِه
+    const trail: JourneyStep[] = audit.length ? audit.map(toStep) : [{ kind: "submit", label: "تقدّمت للمنصب", date: "" }];
     // مآلُ التصويت محطّةٌ ختاميّة (ليست في سجلّ المرشّح): فوزٌ أو انتهاء
     if (r.election_status === "completed" && r.candidate_status === "approved") {
-      trail.push(isWinner ? { kind: "win", label: "فاز بالمنصب", date: "" } : { kind: "end", label: "لم يُوفَّق", date: "" });
+      // خطابُ الرحلة لصاحبها، فمآلُها يُقال له لا عنه (أمرُ المالك ٢٠٢٦-٠٨-١٤)
+      trail.push(isWinner ? { kind: "win", label: "فُزت بالمنصب", date: "" } : { kind: "end", label: "لم تُوفَّق للمنصب", date: "" });
     }
+    // الدورةُ من موعد الانتخاب نفسِه (لا من تقديمِ العضو) فيتّحد اسمُها لكلّ مرشّحيه
+    const cycle = fmtMonthYear(r.candidacy_end ?? r.submitted_at);
+    // الأرشفةُ باستقرار المآل لا بحال الانتخاب وحدَه: المنسحبُ لا ينتظر شيئًا ولو بقي البابُ مفتوحًا
+    const archived =
+      r.candidate_status === "withdrawn" || r.candidate_status === "rejected" ||
+      r.election_status === "completed" || r.election_status === "cancelled" || !!r.election_archived_at;
     return {
       candidateId: r.candidate_id, electionId: r.election_id, position,
+      cycle: cycle ? `دورة ${cycle}` : "", archived,
       number: r.candidate_number, status: r.candidate_status,
       statusLabel: view.label, statusTone: view.tone, next: view.next, future: view.future,
       statement: r.statement_ar, fileUrl: r.file_url ?? null, fileName: r.file_name ?? null,

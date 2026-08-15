@@ -1,8 +1,8 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "../_shell/guard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
 import { getMySettings } from "./data";
 import { SettingsView } from "./SettingsView";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * **الإعدادات** — حسابُك لا سجلُّك: بريدُ الدخول ومفتاحُه، والأجهزةُ التي تحمل جلساتك.
@@ -23,12 +23,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الإعدادات</h1>
-        </div>
-      </div>
+      <PageHeader title="الإعدادات" />
 
       {error ? <Alert tone="danger" title="تعذّر جلب إعداداتك">{error}</Alert> : null}
       {settings ? <SettingsView settings={settings} /> : null}

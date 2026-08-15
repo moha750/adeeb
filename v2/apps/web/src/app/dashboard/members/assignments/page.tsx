@@ -3,15 +3,10 @@ import { getOrgData } from "../structure/orgData";
 import { buildPositions, buildStructure } from "../structure/model";
 import { AssignmentsView } from "./AssignmentsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>تعيين المناصب</h1>
-    </div>
-  </div>
+  <PageHeader title="تعيين المناصب" />
 );
 
 export default async function AssignmentsPage() {

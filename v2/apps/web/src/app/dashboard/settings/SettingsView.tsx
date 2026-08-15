@@ -5,7 +5,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, Field, Modal } from "@adeeb/design-system";
-import { At, Desktop, Envelope, Key, Lock, ShieldCheck, SignOut } from "@phosphor-icons/react";
+import { At, Desktop, Envelope, Key, Lock, ShieldCheck } from "@phosphor-icons/react";
+import { SignOut } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { EmptyState } from "../_components/EmptyState";

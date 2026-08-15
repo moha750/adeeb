@@ -6,7 +6,7 @@ import { getMembers } from "../data";
 import { getOrgData } from "../structure/orgData";
 import { myCommittees } from "./model";
 import { SupervisedView } from "./SupervisedView";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 /**
  * «من أشرف عليهم» — غرفةُ من لا يملك سجلّ الأعضاء كلّه.
@@ -32,12 +32,7 @@ export default async function SupervisedMembersPage() {
   if (failed) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb />
-            <h1>من أشرف عليهم</h1>
-          </div>
-        </div>
+        <PageHeader title="من أشرف عليهم" />
         <Alert tone="warning" title="تعذّر جلب البيانات">{failed}</Alert>
       </>
     );

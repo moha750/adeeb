@@ -10,6 +10,10 @@ import { useToast } from "../../_components/ToastProvider";
 import type { SponsorEditData } from "./data";
 import { createSponsor, updateSponsor, uploadSponsorLogo, type SponsorInput } from "./actions";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
+
+// وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
+const IMAGE_RULE = UPLOAD_RULES.siteImage;
 
 export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
   const toast = useToast();
@@ -33,6 +37,9 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
     const file = e.target.files?.[0];
     e.target.value = ""; // كي يُقبَل اختيار الملفّ نفسه ثانيةً
     if (!file) return;
+    // بوّابةُ قانون المرفقات قبل الشبكة: لا يُرفع ما سيُردّ، ولا ينتظر صاحبُه ليُقال له
+    const why = checkFile(file, IMAGE_RULE);
+    if (why) { toast.error(why); return; }
     setUploading(true);
     try {
       const fd = new FormData();
@@ -94,7 +101,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt="شعار الراعي" className="max-h-32 rounded bg-white/60 object-contain p-2 ring-1 ring-navy-950/5" />
             ) : (
-              <div className="text-sm text-content-muted">لا شعار بعد. ارفع صورةً (JPG، PNG، WEBP، GIF، حتّى ٥ ميغابايت). يُفضّل شعارٌ بخلفيّة شفّافة.</div>
+              <div className="text-sm text-content-muted">{`لا شعار بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). يُفضّل شعارٌ بخلفيّة شفّافة.`}</div>
             )}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
@@ -106,7 +113,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
                 </Button>
               ) : null}
             </div>
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickFile} />
+            <input ref={fileRef} type="file" accept={IMAGE_RULE.accept} hidden onChange={onPickFile} />
           </div>
         </SectionCard>
       </div>

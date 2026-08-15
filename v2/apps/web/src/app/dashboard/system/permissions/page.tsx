@@ -4,15 +4,10 @@ import { getPermissionMatrix, getVacantPositions, getViewAsTargets } from "./dat
 import { PermissionsMatrix } from "./PermissionsMatrix";
 import { ViewAsPicker } from "./ViewAsPicker";
 import { VacantSeatPicker } from "./VacantSeatPicker";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>لوحة الصلاحيات</h1>
-    </div>
-  </div>
+  <PageHeader title="لوحة الصلاحيات" />
 );
 
 export default async function PermissionsPage() {

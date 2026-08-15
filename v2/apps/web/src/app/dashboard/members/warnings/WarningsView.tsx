@@ -21,7 +21,7 @@ import { waHref } from "@/lib/whatsapp";
 import { cancelWarning } from "./actions";
 import { IssueWarningModal } from "./IssueWarningModal";
 import type { WarningRow, WarningsData } from "./data";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 type Mode = "members" | "all";
 
@@ -234,13 +234,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الإنذارات</h1>
-        </div>
-        {mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye />}>اطّلاعٌ لا إصدار</Badge>}
-      </div>
+      <PageHeader title="الإنذارات" status={mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye />}>اطّلاعٌ لا إصدار</Badge>} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Warning />} value={stats.active} label="إنذارات سارية" tone={stats.active > 0 ? "warning" : "brand"} />

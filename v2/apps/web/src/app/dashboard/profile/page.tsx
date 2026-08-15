@@ -1,8 +1,8 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "../_shell/guard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
 import { getMyProfile } from "./data";
 import { ProfileView } from "./ProfileView";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * **الملفّ الشخصيّ** — بياناتُك أنت: تُعرَض كاملةً، ويُحرَّر منها ما هو منك.
@@ -24,12 +24,7 @@ export default async function MyProfilePage() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الملف الشخصي</h1>
-        </div>
-      </div>
+      <PageHeader title="الملف الشخصي" />
 
       {error ? <Alert tone="danger" title="تعذّر جلب ملفّك">{error}</Alert> : null}
       {profile ? <ProfileView profile={profile} /> : null}

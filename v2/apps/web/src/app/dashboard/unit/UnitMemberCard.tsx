@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card } from "@adeeb/design-system";
-import { SignOut } from "@phosphor-icons/react";
+import { SignOut } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
 import type { UnitMember } from "./model";
 

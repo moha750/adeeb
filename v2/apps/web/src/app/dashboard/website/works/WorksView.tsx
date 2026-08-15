@@ -17,7 +17,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { WorkRow } from "./data";
 import { WorkCard } from "./WorkCard";
 import { deleteWork, moveWork } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 /** يستخرج نطاق الرابط للعرض المختصر (بلا بروتوكول)، أو يعيد الرابط كما هو إن تعذّر. */
 function linkLabel(url: string): string {
@@ -103,13 +103,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>معرض الأعمال</h1>
-        </div>
-        {createBtn}
-      </div>
+      <PageHeader title="معرض الأعمال" primary={{ label: "عمل جديد", icon: <Plus size={18} />, href: "/dashboard/website/works/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ImagesSquare />} value={works.length} label="أعمال في المعرض" />

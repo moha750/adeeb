@@ -10,6 +10,7 @@ import { navFor, type NavItem } from "./nav";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
 import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe } from "./icons";
+import { DuotoneZone } from "@/app/_components/glyphs";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
@@ -100,6 +101,10 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
     <div className={cls}>
       <div className="ash-scrim" onClick={() => setMobOpen(false)} />
 
+      {/* **الشريطُ منطقةُ duotone** (قرار المالك ٢٠٢٦-٠٨-١٣): كلُّ أيقونةٍ فيه ترجع إلى وزن
+          الموقع ولو كان اسمُها في قائمة الاستثناء — الشيفرونُ وصندوقُ الاقتراع وبابُ الخروج
+          وزرُّ الطيّ سواءً. والإعلانُ على الحاوية مرّةً، لا خاصّةٌ في بندٍ ولا صنفٌ يُرصَّع. */}
+      <DuotoneZone>
       <aside className="ash-side">
         {/* طبقاتُ اللوح المذهّب — شبكةٌ فنقشٌ فحجاب، كلُّها خلف المحتوى وخارج شجرة القراءة.
             والشبكةُ صنفُ الهوية نفسُه (`.amb-mesh`) لا نسخةً منه — يتبدّل قناعُه وحده
@@ -125,10 +130,9 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
             والمعكوسُ مصنوعٌ لهذا («يُعكَس ما يختفي على الداكن»).
         <Button variant="inverse" className="ash-cta"><IconPlus /><span>إجراء سريع</span></Button> */}
 
-        {/* الوزن صفةُ **الموقع** لا صفةُ مكانٍ ولا أيقونةٍ على حدة: سياقُ الجذر
-            (`IconDefaults` في `app/layout.tsx`) يرسم أيقونات أديب كلَّها duotone، وما
-            يُستثنى منها مسمًّى في `_components/glyphs.tsx` (الشيفرونُ منه) — فلا سياقَ
-            محلّيّ هنا ولا `weight` مرصَّع في بندٍ. */}
+        {/* لا `weight` في بندٍ ولا سياقَ محلّيّ هنا: الوزنُ يأتي من الجذر (`IconDefaults`)
+            أو من قائمة الاستثناء (`_components/glyphs.tsx`)، و`DuotoneZone` أعلاه تردّ
+            المستثنى إلى duotone ما دام في الشريط. */}
         <nav className="ash-nav" ref={navRef}>
           {nav.map((g, gi) => (
             <div className="ash-group" key={g.head ?? gi}>
@@ -169,6 +173,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         {/* مركز المساعدة: طوقُ النجاة بندٌ في الشريط كسائر البنود. */}
         <HelpCenter />
       </aside>
+      </DuotoneZone>
 
       <div className="ash-main">
         <header className="ash-top">

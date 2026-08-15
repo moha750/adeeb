@@ -23,7 +23,7 @@ import {
   missingForPublish, type Category, type Workflow,
 } from "./vocab";
 import { createNews, deleteNews, setNewsStatus, toggleFeatured } from "./actions";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /** مراحل اللوحة — تبويبٌ لكلّ محطّة في الطريق، لا قائمةٌ واحدة يضيع فيها ما يحتاجك الآن. */
 const STAGES: { value: string; label: string; match: (n: NewsRow) => boolean }[] = [
@@ -270,13 +270,7 @@ export function NewsView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>غرفة تحرير أدِيب</h1>
-        </div>
-        {createBtn}
-      </div>
+      <PageHeader title="غرفة تحرير أدِيب" primary={isChief ? { label: "خبر جديد", icon: <Plus size={18} />, onClick: () => { setForm({ title: "", category: "coverage", committeeId: "" }); setFormErr(null); } } : undefined} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Newspaper />} value={rows.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />

@@ -5,7 +5,7 @@ import { ShowEditorView } from "./ShowEditorView";
 import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export default async function ShowEditorPage({ params }: { params: Promise<{ showId: string }> }) {
   const denied = await denyUnless("/dashboard/radio");
@@ -19,12 +19,7 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb leaf="البرنامج" />
-            <h1>البرنامج</h1>
-          </div>
-        </div>
+        <PageHeader title="البرنامج" />
         <Alert tone="warning" title="تعذّر جلب البرنامج">{error}</Alert>
       </>
     );
@@ -37,7 +32,7 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
       episodes={data.episodes}
       platforms={data.platforms}
       members={members}
-      stationTalkStart={data.stationTalkStart}
+      showTalkStart={data.showTalkStart}
     />
   );
 }

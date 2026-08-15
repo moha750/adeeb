@@ -16,10 +16,12 @@
 //     import { Plus, CaretDown } from "@/app/_components/glyphs";
 //
 // **لإعادة أيقونةٍ إلى duotone:** احذف سطرَها من هنا وأعد استيرادها من `@phosphor-icons/react`.
+import { createContext, useContext } from "react";
 import type { Icon, IconProps } from "@phosphor-icons/react";
 import {
   // ١ · رموزُ الفعل — طبقتُها الخافتة **مربّعٌ مستدير يملأ الإطار** لا شكلُ الرمز
-  Plus as PhPlus, X as PhX, Check as PhCheck, Minus as PhMinus, DotsSixVertical as PhDotsSixVertical,
+  Plus as PhPlus, X as PhX, Check as PhCheck, Checks as PhChecks, Minus as PhMinus,
+  DotsSixVertical as PhDotsSixVertical,
   // ٢ · الأسهم والشيفرونات — الطبقة **مثلّثٌ مصمتٌ** خلف السهم الخطّيّ (إشارةُ اتّجاهٍ لا أيقونةَ معنى)
   CaretDown as PhCaretDown, CaretUp as PhCaretUp, CaretLeft as PhCaretLeft, CaretRight as PhCaretRight,
   CaretUpDown as PhCaretUpDown, CaretDoubleRight as PhCaretDoubleRight,
@@ -32,25 +34,53 @@ import {
   // ٧ · أدواتُ الفعل — تسكن الأزرارَ وأشرطةَ الأدوات، فتتبع وزنَ الفعل لا وزنَ المعنى
   Trash as PhTrash, PencilSimple as PhPencilSimple, Eye as PhEye, EyeSlash as PhEyeSlash,
   MagnifyingGlass as PhMagnifyingGlass, DownloadSimple as PhDownloadSimple, UploadSimple as PhUploadSimple,
-  // ٤ · شعاراتُ المنصّات — شعارُ العلامة صورتُها المسجّلة، لا يُخترع له وجهٌ ثنائيّ
-  WhatsappLogo as PhWhatsappLogo, XLogo as PhXLogo, LinkedinLogo as PhLinkedinLogo,
-  InstagramLogo as PhInstagramLogo, TiktokLogo as PhTiktokLogo,
-  GoogleLogo as PhGoogleLogo, AppleLogo as PhAppleLogo,
+  // ومنها ما يجمع العلّتين: `FunnelSimple` طبقتُها الخافتة **مربّعٌ مستدير يملأ الإطار**
+  // (كصفّ ١) فتُقرأ بطاقةً بسطرين لا قُمعَ ترشيح؛ و`SignOut` طبقتُها **لوحُ الغرفة** الذي
+  // يُخرَج منه، لا السهمُ الخارج، فيثقُل نصفُ الأيقونة بما ليس معناها.
+  FunnelSimple as PhFunnelSimple, SignOut as PhSignOut,
+  // ٤ · شعاراتُ الدخول والتواصل — شعارُ العلامة صورتُها المسجّلة، لا يُخترع له وجهٌ ثنائيّ.
+  // **وشعاراتُ المنصّات الاجتماعيّة خرجت من هنا** بقرار المالك ٢٠٢٦-٠٨-١٣ (`XLogo`
+  // `InstagramLogo` `TiktokLogo` `LinkedinLogo`): رآها في `/ui/icons` فاختار لها duotone
+  // كسائر الموقع، ومعها `YoutubeLogo` التي لم تكن في القائمة أصلًا. وبقيت هذه الثلاثةُ
+  // ريثما يفصل فيها (زرّا الدخول بقوقل وأبل، وواتساب في التواصل).
+  WhatsappLogo as PhWhatsappLogo, GoogleLogo as PhGoogleLogo, AppleLogo as PhAppleLogo,
   // ٥ · نجمةُ «مميّز» — حالةُ تشغيلٍ لا معنى؛ ونصفُ الممتلئة تُقرأ «نصف مفعّلة»
   Star as PhStar,
   // ٦ · الحالاتُ الدائريّة — علامةُ حالةٍ تُقرأ لمحةً، فلا تُثقَل بطبقةٍ خافتة
   CheckCircle as PhCheckCircle, XCircle as PhXCircle, WarningCircle as PhWarningCircle,
   Warning as PhWarning, Prohibit as PhProhibit, Info as PhInfo, Question as PhQuestion,
 } from "@phosphor-icons/react";
-import { ICON_WEIGHT_EXCEPTION } from "@/lib/iconWeight";
+import { ICON_WEIGHT, ICON_WEIGHT_EXCEPTION } from "@/lib/iconWeight";
 
 /** التوقيعُ نفسُه بلا `weight` — الوزنُ قرارُ هذا الملفّ، والمترجمُ حارسُه. */
 type GlyphProps = Omit<IconProps, "weight">;
 
+/**
+ * **منطقةُ duotone — استثناءُ الاستثناء، بالمكان لا بالاسم** (قرار المالك ٢٠٢٦-٠٨-١٣).
+ *
+ * سطحٌ يُعلن نفسَه منطقةً فترجع كلُّ أيقونةٍ فيه إلى وزن الموقع، **ولو كان اسمُها في
+ * القائمة**. ولِمَ سياقٌ لا صنفُ CSS ولا خاصّةٌ تُمرَّر: الوزنُ رسمٌ في الـSVG لا نمطٌ
+ * يُورَّث، والسطحُ لا يعرف أيَّ أيقونةٍ تسكنه ولا كم عمقها — فيُعلَن مرّةً على الحاوية
+ * وتقرؤه كلُّ ذرّيّتها، بلا سطرٍ في بندٍ ولا استثناءٍ يُرصَّع في شاشة.
+ *
+ * وأوّلُ ساكنيها **الشريطُ الجانبيّ للوحة**: بنودُه معنًى لا أفعال، فيستوي فيه الشيفرونُ
+ * وصندوقُ الاقتراع وبابُ الخروج مع سائر الوجهات. والفرقُ محفوظ: القائمةُ المنسدلة في
+ * الترويسة خارج الشريط، فيبقى `SignOut` فيها على وزن الاستثناء.
+ */
+const DuotoneZoneCtx = createContext(false);
+
+export function DuotoneZone({ children }: { children: React.ReactNode }) {
+  return <DuotoneZoneCtx.Provider value>{children}</DuotoneZoneCtx.Provider>;
+}
+
 /** يربط أيقونةً بوزن الاستثناء ربطًا نهائيًّا: الخاصّةُ بعد النشر، فلا يُنقَض من الشاشة.
-    والوزنُ **واحدٌ للصفوف السبعة** — لا قسمة بين فعلٍ ومصمت. */
+    والوزنُ **واحدٌ للصفوف السبعة** — لا قسمة بين فعلٍ ومصمت. ولا ينقضه إلّا مكانٌ
+    أعلن نفسَه `DuotoneZone`، وهو إعلانٌ على السطح لا خاصّةٌ تكتبها الشاشة. */
 function bind(Icon: Icon, name: string) {
-  const Glyph = (props: GlyphProps) => <Icon {...props} weight={ICON_WEIGHT_EXCEPTION} />;
+  const Glyph = (props: GlyphProps) => {
+    const duotoneZone = useContext(DuotoneZoneCtx);
+    return <Icon {...props} weight={duotoneZone ? ICON_WEIGHT : ICON_WEIGHT_EXCEPTION} />;
+  };
   Glyph.displayName = name;
   return Glyph;
 }
@@ -59,6 +89,7 @@ function bind(Icon: Icon, name: string) {
 export const Plus = bind(PhPlus, "Plus");
 export const X = bind(PhX, "X");
 export const Check = bind(PhCheck, "Check");
+export const Checks = bind(PhChecks, "Checks");
 export const Minus = bind(PhMinus, "Minus");
 export const DotsSixVertical = bind(PhDotsSixVertical, "DotsSixVertical");
 
@@ -91,13 +122,11 @@ export const EyeSlash = bind(PhEyeSlash, "EyeSlash");
 export const MagnifyingGlass = bind(PhMagnifyingGlass, "MagnifyingGlass");
 export const DownloadSimple = bind(PhDownloadSimple, "DownloadSimple");
 export const UploadSimple = bind(PhUploadSimple, "UploadSimple");
+export const FunnelSimple = bind(PhFunnelSimple, "FunnelSimple");
+export const SignOut = bind(PhSignOut, "SignOut");
 
-// ٤ · شعاراتُ المنصّات
+// ٤ · شعاراتُ الدخول والتواصل
 export const WhatsappLogo = bind(PhWhatsappLogo, "WhatsappLogo");
-export const XLogo = bind(PhXLogo, "XLogo");
-export const LinkedinLogo = bind(PhLinkedinLogo, "LinkedinLogo");
-export const InstagramLogo = bind(PhInstagramLogo, "InstagramLogo");
-export const TiktokLogo = bind(PhTiktokLogo, "TiktokLogo");
 // وشعارا مزوّدَي الدخول — من العائلة نفسِها لا من أصولٍ ملوّنةٍ تُستورَد: لونُهما من الرموز
 // كسائر الأيقونات، فلا يدخل الموقعَ لونٌ خارج `tokens.css` ولو كان لونَ علامةٍ أخرى.
 export const GoogleLogo = bind(PhGoogleLogo, "GoogleLogo");

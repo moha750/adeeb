@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Alert, Card, CardBody, CardHeader, Container, Footer, LandingHeading } from "@adeeb/design-system";
 import { IdentificationBadge } from "@phosphor-icons/react/dist/ssr";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { getSessionAdmin } from "@/lib/auth";
 import { getMyAccount } from "./data";
@@ -52,7 +53,7 @@ export default async function MePage() {
                 <Card>
                   <CardHeader
                     variant="soft"
-                    icon={<IdentificationBadge aria-hidden />}
+                    icon={<IdentificationBadge weight={ICON_WEIGHT} aria-hidden />}
                     title="بياناتك"
                     subtitle="بها نحجز مقعدك ونتواصل معك"
                   />

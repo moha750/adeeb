@@ -6,15 +6,10 @@ import { getMembers } from "../members/data";
 import { getOrgData } from "../members/structure/orgData";
 import { committeeNodes } from "../members/structure/model";
 import { CommitteeView } from "./CommitteeView";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 const Head = ({ name }: { name?: string }) => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb leaf={name} />
-      <h1>{name ?? "لجنتي"}</h1>
-    </div>
-  </div>
+  <PageHeader title={name ?? "لجنتي"} crumbLeaf={name} />
 );
 
 /**

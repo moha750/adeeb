@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { XLogo } from "@/app/_components/glyphs";
-import { LinkedinLogo } from "@/app/_components/glyphs";
+import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
 import { positionLine } from "@/lib/positionLabel";

@@ -7,20 +7,24 @@
 // achievements.icon_class؛ المفتاح غير المعروف/الفارغ يقع على الافتراض (DEFAULT_STAT_ICON).
 //
 // للتوسّع: أضِف سطرًا في STAT_ICONS ثمّ ضع مفتاحه في الفئة المناسبة — يظهر في المنتقي والعرض تلقائيًّا.
-import type { Icon } from "@phosphor-icons/react";
+import type { ComponentType } from "react";
+import type { Icon, IconProps } from "@phosphor-icons/react";
 import {
   FilmSlate, ImageSquare, Camera, VideoCamera, MicrophoneStage, MusicNotes, PaintBrush, PenNib, Article, Quotes,
   BookOpen, Books, Lightbulb, GraduationCap, ChalkboardTeacher, PuzzlePiece,
   UsersThree, User, Student, HandsClapping, HandHeart, Handshake,
   CalendarBlank, CalendarCheck, Ticket, MapPin, Clock, Flag, Confetti,
-  Trophy, Medal, Star, Crown, Certificate, Target, ChartLineUp, Rocket, Sparkle, Fire, SealCheck, Lightning,
-  Megaphone, ShareNetwork, Globe, ChatCircle, Heart, ThumbsUp, Eye, Broadcast,
+  Trophy, Medal, Crown, Certificate, Target, ChartLineUp, Rocket, Sparkle, Fire, SealCheck, Lightning,
+  Megaphone, ShareNetwork, Globe, ChatCircle, Heart, ThumbsUp, Broadcast,
   Hash, Percent, Gift, Coins, Leaf, Buildings,
 } from "@phosphor-icons/react";
+import { Eye, Star } from "./glyphs";
 import { asIconKey, DEFAULT_STAT_ICON } from "./statIconKeys";
 export { asIconKey, DEFAULT_STAT_ICON };
 
-export type StatIconEntry = { label: string; Icon: Icon };
+// السجلّ يقبل الوجهين: مكوّنَ Phosphor كما هو (يقرأ وزنَ السياق)، ومستثنًى من `glyphs`
+// (وزنُه مربوطٌ فيه، فنوعُه بلا `weight`). فالمصدرُ واحدٌ والسجلُّ لا يكتب وزنًا.
+export type StatIconEntry = { label: string; Icon: Icon | ComponentType<Omit<IconProps, "weight">> };
 
 /** السجلّ — مصدر الحقيقة الوحيد لأيقونات الإحصاءات. المفتاح نصّ ثابت يُخزَّن في القاعدة. */
 export const STAT_ICONS: Record<string, StatIconEntry> = {

@@ -9,7 +9,7 @@ import { Committee } from "../members/structure/tree";
 import { MembersView } from "../members/MembersView";
 import type { MemberRow } from "../members/data";
 import type { CommitteeNode } from "../members/structure/model";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * «لجنتي» — شاشة **قائد اللجنة التنفيذيّة ونائبها**، وهي **عرضٌ محض** (20260801): لا ضمَّ ولا
@@ -43,12 +43,7 @@ export function CommitteeView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={c.name} />
-          <h1>{c.name}</h1>
-        </div>
-      </div>
+      <PageHeader title={c.name} crumbLeaf={c.name} />
 
       {/* عددٌ واحد يكفي: القيادةُ والإشرافُ يُرَيان بأعيان شاغليهم في الكرت أدناه، فرقمٌ
           يعيدهما زينةٌ لا خبر (وشغورُ المقعد يقوله الكرت صريحًا). */}

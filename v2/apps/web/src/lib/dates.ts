@@ -30,12 +30,38 @@ export const fmtDate = (iso: string | null): string => {
   return `${p.day} ${MONTHS[p.month - 1]} ${p.year}`;
 };
 
-/** موعدٌ بساعته — حيث الدقيقة تفرق (بابٌ يُغلق عندها). */
+/** يومٌ وشهرٌ بلا سنة — لخانةٍ ضيّقةٍ في كرت، والسنةُ معلومةٌ من سياقها فلا تُزاحم. */
+export const fmtDayMonth = (iso: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = parts(d);
+  return `${p.day} ${MONTHS[p.month - 1]}`;
+};
+
+/** شهرٌ وسنةٌ بلا يوم — اسمُ الدورة الانتخابيّة («أغسطس 2026»)، فاليومُ لا يميّز دورةً عن دورة. */
+export const fmtMonthYear = (iso: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = parts(d);
+  return `${MONTHS[p.month - 1]} ${p.year}`;
+};
+
+/**
+ * موعدٌ بساعته — حيث الدقيقة تفرق (بابٌ يُغلق عندها).
+ *
+ * والساعةُ **اثنتا عشرةَ بصباحٍ ومساء** (قرار المالك): «11:59 م» لا «23:59» — هكذا يقرأ
+ * الناسُ الوقتَ عندنا. والحسابُ هنا لا بـ`hour12` من `Intl`، إذ يُخرج «PM» أو «م» بحسب
+ * اللغة المطلوبة، والصيغةُ يجب أن تكون واحدةً لا تتبدّل بلغة التنسيق.
+ */
 export const fmtStamp = (iso: string | null): string => {
   const day = fmtDate(iso);
   if (!day) return "";
   const p = parts(new Date(iso as string));
-  return `${day} الساعة ${p.hour}:${p.minute}`;
+  const h24 = Number(p.hour);
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${day} الساعة ${h12}:${p.minute} ${h24 < 12 ? "ص" : "م"}`;
 };
 
 /* ══ حقلُ `datetime-local` : ما يكتبه المشرف ساعةُ النادي لا ساعةُ جهازه ═════════ */

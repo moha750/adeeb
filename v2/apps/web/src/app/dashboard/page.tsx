@@ -2,7 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "./_shell/guard";
 import { getMyMembership } from "./_membership/data";
 import { MembershipView } from "./_membership/MembershipView";
-import { Breadcrumb } from "./_shell/Breadcrumb";
+import { PageHeader } from "./_components/PageHeader";
 
 /**
  * **عضويتي** — صدر اللوحة وتبويبها الافتراضيّ: عضويّة صاحب الجلسة نفسه لا سجلّ غيره.
@@ -22,12 +22,7 @@ export default async function MyMembershipPage() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>عضويتي</h1>
-        </div>
-      </div>
+      <PageHeader title="عضويتي" />
 
       {error ? <Alert tone="danger" title="تعذّر جلب عضويّتك">{error}</Alert> : null}
       {membership ? <MembershipView membership={membership} /> : null}

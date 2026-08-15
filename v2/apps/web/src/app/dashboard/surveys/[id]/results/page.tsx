@@ -4,7 +4,7 @@ import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { getSurveyResponses } from "../../results-data";
 import { ResultsView } from "../../ResultsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 
 export default async function SurveyResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/surveys");
@@ -23,12 +23,7 @@ export default async function SurveyResultsPage({ params }: { params: Promise<{ 
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb leaf="النتائج" />
-            <h1>نتائج الاستبيان</h1>
-          </div>
-        </div>
+        <PageHeader title="نتائج الاستبيان" crumbLeaf="النتائج" />
         <Alert tone="warning" title="تعذّر جلب النتائج">{error}</Alert>
       </>
     );

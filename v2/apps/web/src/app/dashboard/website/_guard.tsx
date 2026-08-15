@@ -1,5 +1,5 @@
 import { Alert } from "@adeeb/design-system";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * تنبيه «لا صلاحية» لصفحات محتوى الموقع — يُعرض لمن لا يملك قدرة **هذا المجلّد وحده**
@@ -11,12 +11,7 @@ import { Breadcrumb } from "../_shell/Breadcrumb";
 export function WebsiteDenied({ section }: { section: string }) {
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>{section}</h1>
-        </div>
-      </div>
+      <PageHeader title={section} />
       <Alert tone="warning" title={`لا تملك صلاحية إدارة «${section}»`}>
         هذه الصفحة لمن مُنحت له قدرة إدارة «{section}» وحدها. إن رأيت أنّها ينبغي أن تكون لك، فراجع مسؤول الصلاحيات.
       </Alert>

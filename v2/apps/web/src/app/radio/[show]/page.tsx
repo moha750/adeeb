@@ -1,14 +1,29 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Footer } from "@adeeb/design-system";
-import { MicrophoneStage, Playlist, Play } from "@phosphor-icons/react/dist/ssr";
+import {
+  MicrophoneStage, Playlist, Play,
+  YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
+} from "@phosphor-icons/react/dist/ssr";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "../../_components/SiteHeader";
-import { getPublicShowPage } from "../data";
+import { PLATFORM_META } from "../../dashboard/radio/vocab";
+import { getPublicShowPage, isPlayable, toTrack } from "../data";
 import { EpisodeRow } from "../_player/EpisodeRow";
 import { FoldedText } from "../_player/FoldedText";
 import type { Track } from "../_player/PlayerProvider";
 
 export const revalidate = 60;
+
+/* glyph-weight: YoutubeLogo XLogo InstagramLogo TiktokLogo — تُرسَم عبر الخريطة أدناه،
+   والوزنُ يُمرَّر عند الرسم لا هنا. وصفُّها استوى على duotone بقرار المالك ٢٠٢٦-٠٨-١٣. */
+/** شعارُ كلّ منصّةٍ — الشكلُ يعرّفها فلا تحتاج كلمةً تحتها. */
+const PLATFORM_ICON = {
+  youtube: YoutubeLogo,
+  x: XLogo,
+  instagram: InstagramLogo,
+  tiktok: TiktokLogo,
+} as const;
 
 export async function generateMetadata({ params }: { params: Promise<{ show: string }> }) {
   const { show } = await params;
@@ -24,22 +39,10 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
   const { show: slug } = await params;
   const page = await getPublicShowPage(slug);
   if (!page) notFound();
-  const { show, episodes } = page;
+  const { show, episodes, platforms } = page;
 
-  const playable = episodes.filter((e) => e.musicUrl);
-  const tracks: Track[] = playable.map((e) => ({
-    id: e.id,
-    title: e.title,
-    showTitle: show.title,
-    showSlug: show.slug,
-    episodeSlug: e.slug,
-    musicUrl: e.musicUrl!,
-    plainUrl: e.plainUrl,
-    talkStartsAt: e.talkStartsAt,
-    coverUrl: show.logoUrl,
-    seconds: e.musicSeconds,
-    tone: show.tone,
-  }));
+  const playable = episodes.filter(isPlayable);
+  const tracks: Track[] = playable.map((e) => toTrack(e, show));
 
   return (
     <>
@@ -54,7 +57,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                 {show.logoUrl
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={show.logoUrl} alt="" />
-                  : <MicrophoneStage size={40} aria-hidden />}
+                  : <MicrophoneStage size={40} weight={ICON_WEIGHT} aria-hidden />}
               </div>
               <div className="rad-hero-txt">
                 <h1 className="rad-hero-name">{show.title}</h1>
@@ -62,12 +65,31 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                 <div className="rad-ep-sub" style={{ marginTop: 8 }}>
                   {show.hostName ? <span>تقديم {show.hostName}</span> : null}
                   <span className="inline-flex items-center gap-1.5">
-                    <Playlist aria-hidden /><span className="font-latin">{episodes.length}</span> حلقة
+                    <Playlist weight={ICON_WEIGHT} aria-hidden /><span className="font-latin">{episodes.length}</span> حلقة
                   </span>
                 </div>
+                {/**
+                  * منصّاتُ البرنامج **أيقوناتٌ في صدره** لا شاراتٌ نصّيّة:
+                  * الروابطُ هويّةُ البرنامج لا محتواه، فموضعُها حيث اسمُه وشعارُه.
+                  * والشارةُ النصّيّة تُقرأ وسمًا يصنّفه لا بابًا يُضغط.
+                  */}
+                {platforms.length ? (
+                  <div className="rad-links">
+                    {platforms.map((p) => {
+                      const Icon = PLATFORM_ICON[p.platform];
+                      return (
+                        <a key={p.platform} href={p.url} target="_blank" rel="noreferrer"
+                          className={`rad-link rad-link-${p.platform}`}
+                          aria-label={`${show.title} على ${PLATFORM_META[p.platform].label}`}>
+                          <Icon size={19} weight={ICON_WEIGHT} aria-hidden />
+                        </a>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <div className="rad-hero-cta">{tracks[0] ? (
                   <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="rad-cta">
-                    <Play size={18} weight="fill" aria-hidden />استمع لآخر حلقة
+                    <Play size={18} weight={ICON_WEIGHT} aria-hidden />استمع لآخر حلقة
                   </Link>
                 ) : null}</div>
               </div>
@@ -91,6 +113,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                     dateLabel={e.dateLabel}
                     summary={e.summary}
                     showName={null}
+                    plays={e.plays}
                   />
                 ))}
               </div>

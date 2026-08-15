@@ -8,6 +8,7 @@ import {
   FileDashed, FlagCheckered, Hourglass, Infinity as InfinityIcon, LockSimple, PauseCircle, Timer,
 } from "@phosphor-icons/react";
 import { Trash } from "@/app/_components/glyphs";
+import { arCountdown } from "@/lib/duration";
 import { fmtDateAndTime, fmtDayMonth } from "./format";
 import type { SurveyRow } from "./data";
 
@@ -22,24 +23,8 @@ function useClientNow(): number {
   return now;
 }
 
-// جمعٌ عربيّ للمعدود: [مفرد · مثنّى (بعد جرّ) · جمع ٣–١٠ · مفرد منصوب ١١+]
-const ar = (n: number, f: readonly [string, string, string, string]): string =>
-  n === 1 ? f[0] : n === 2 ? f[1] : n >= 3 && n <= 10 ? `${n} ${f[2]}` : `${n} ${f[3]}`;
-
-const DAY: readonly [string, string, string, string] = ["يوم", "يومين", "أيّام", "يومًا"];
-const HOUR: readonly [string, string, string, string] = ["ساعة", "ساعتين", "ساعات", "ساعة"];
-const MIN: readonly [string, string, string, string] = ["دقيقة", "دقيقتين", "دقائق", "دقيقة"];
-
-/** «بعد …» للمستقبل و«قبل …» للماضي (دارجة، باختيار المالك)، بأدقّ وحدة. */
-function countdown(target: number, now: number): string {
-  const diff = target - now;
-  const pre = diff >= 0 ? "بعد" : "قبل";
-  const a = Math.abs(diff);
-  if (a < 60_000) return "الآن";
-  if (a < 3_600_000) return `${pre} ${ar(Math.round(a / 60_000), MIN)}`;
-  if (a < 86_400_000) return `${pre} ${ar(Math.round(a / 3_600_000), HOUR)}`;
-  return `${pre} ${ar(Math.round(a / 86_400_000), DAY)}`;
-}
+// المدّةُ وجمعُها العربيّ رُفعا إلى `lib/duration` — يقاسمهما كرتُ الانتخاب، فلا نسختان.
+const countdown = arCountdown;
 
 // نغمةُ الأيقونة بالحال (دلاليّة): محذوفٌ أحمر · مفتوحٌ أخضر · موقوفٌ أصفر · مجدولٌ/مسودّة فولاذيّ · منتهٍ رماديّ.
 type Tone = "steel" | "success" | "warning" | "neutral" | "danger";

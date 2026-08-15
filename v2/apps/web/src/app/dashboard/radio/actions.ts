@@ -9,9 +9,10 @@ import {
   presignUpload, showLogoKey, showPrefix, stationLogoKey,
 } from "@/lib/radio/r2";
 import {
-  DURATION_TOLERANCE_SECONDS, PLATFORM_VALUES, TONE_VALUES, VARIANT_META, VARIANT_VALUES,
+  DURATION_TOLERANCE_SECONDS, PLATFORM_VALUES, TONE_VALUES, UPLOAD_VARIANTS, VARIANT_META,
   formatDuration, slugify, type AudioVariant, type Platform, type ShowTone,
 } from "./vocab";
+import { UPLOAD_RULES, limitText } from "@/lib/upload";
 
 /** `warning` نصٌّ يُقال بعد النجاح: العمل تمّ وفيه ما يستحقّ نظرةً. */
 export type Result = { ok: boolean; message: string; id?: string; warning?: string };
@@ -36,12 +37,14 @@ const isDup = (msg: string) => /duplicate key|unique/i.test(msg);
 /** حرّاس القاعدة تُترجَم لرسائل عربيّة — فلا يرى المستخدم اسم قيدٍ إنجليزيّ. */
 function guardMessage(msg: string): string | null {
   if (/radio_shows_publish_guard/.test(msg)) return "لا يُنشَر برنامجٌ بلا شعارٍ ووصف. أكمِلهما أوّلًا.";
-  if (/radio_episodes_publish_guard/.test(msg)) return "لا تُنشَر حلقةٌ بلا نسخةٍ بموسيقى. ارفعها أوّلًا.";
+  if (/radio_episodes_publish_guard/.test(msg)) return "لا تُنشَر حلقةٌ بلا صوتٍ يُسمَع. ارفع مسارَي الصوت والموسيقى أوّلًا.";
   if (/radio_episodes_schedule_guard/.test(msg)) return "الجدولة تحتاج تاريخًا.";
   if (/radio_episodes_show_id_number_key/.test(msg)) return "رقم الحلقة مستخدَمٌ في هذا البرنامج.";
-  if (/radio_episodes_plain_complete/.test(msg)) return "النسخة المجرّدة ناقصة. أعِد رفعها كاملةً.";
+  if (/radio_episodes_plain_complete/.test(msg)) return "مسار الصوت ناقص. أعِد رفعه كاملًا.";
+  if (/radio_episodes_stem_complete/.test(msg)) return "مسار الموسيقى ناقص. أعِد رفعه كاملًا.";
   if (/radio_episodes_youtube_url_check/.test(msg)) return "رابط يوتيوب غير صالح. يبدأ بـ https://youtube.com أو https://youtu.be.";
   if (/talk_start_check/.test(msg)) return "بداية الحديث ثوانٍ موجبةٌ أقلّ من عشر دقائق.";
+  if (/radio_episodes_stem_aligned/.test(msg)) return "المساران مختلفا المدّة. صدّرهما من التايم لاين نفسه بكتم المسار الآخر.";
   if (/radio_episodes_takes_aligned/.test(msg)) return "النسختان مختلفتا المدّة. صدّرهما من التايم لاين نفسه بكتم مسار الموسيقى.";
   if (/slug_format/.test(msg)) return "المعرّف بأحرفٍ لاتينيّة وأرقامٍ وشُرَط فقط.";
   return null;
@@ -63,6 +66,8 @@ export type ShowInput = {
   tone: ShowTone;
   hostId: string;
   committeeId?: number | null;
+  /** ثانيةُ بدء الحديث: طولُ المقدّمة الموسيقيّة في هذا البرنامج. إلزاميّ. */
+  talkStartsAt: number;
 };
 
 function validate(input: ShowInput): { error: string } | { slug: string } {
@@ -71,6 +76,10 @@ function validate(input: ShowInput): { error: string } | { slug: string } {
   if (!TONE_VALUES.includes(input.tone)) return { error: "نغمة غير معروفة." };
   const slug = slugify(input.slug ?? "");
   if (!slug) return { error: "المعرّف مطلوب: أحرف لاتينيّة وأرقام." };
+  const talk = input.talkStartsAt;
+  if (!(Number.isFinite(talk) && talk >= 0 && talk < 600)) {
+    return { error: "بداية الحديث مطلوبة: ثوانٍ أو توقيتُ المحرّر مثل 0:00:10:19." };
+  }
   return { slug };
 }
 
@@ -82,6 +91,7 @@ const showColumns = (input: ShowInput, slug: string) => ({
   tone: input.tone,
   host_member_id: input.hostId,
   producing_committee_id: input.committeeId ?? null,
+  talk_starts_at: input.talkStartsAt,
 });
 
 export async function createShow(input: ShowInput): Promise<Result> {
@@ -199,7 +209,7 @@ export async function createLogoUploadUrl(showId: string, mime: string, size: nu
 
   const ext = IMAGE_EXT[mime];
   if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
-  if (size > IMAGE_MAX_BYTES) return { ok: false, message: "الصورة أكبر من ٨ م.ب." };
+  if (size > IMAGE_MAX_BYTES) return { ok: false, message: `الحجمُ فوق الحدّ (${limitText(UPLOAD_RULES.radioLogo)})` };
 
   const path = showLogoKey(showId, ext);
   const url = await presignUpload(path);
@@ -213,11 +223,12 @@ export async function createAudioUploadUrl(
   const mgr = await getRadioManager();
   if (!mgr) return { ok: false, message: DENIED };
   if (!R2_READY) return { ok: false, message: R2_MISSING };
-  if (!VARIANT_VALUES.includes(variant)) return { ok: false, message: "نسخةٌ غير معروفة." };
+  // المكسُ لا يُرفَع بعدُ: بابُ الرفع مساران، والقديمُ يُقرأ ولا يُكتب.
+  if (!UPLOAD_VARIANTS.includes(variant)) return { ok: false, message: "مسارٌ غير معروف." };
 
   const ext = AUDIO_EXT[mime];
   if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم MP3 (أو M4A/AAC)." };
-  if (size > AUDIO_MAX_BYTES) return { ok: false, message: "الملفّ أكبر من ١٥٠ م.ب. تأكّد أنّه MP3 مضغوط لا WAV." };
+  if (size > AUDIO_MAX_BYTES) return { ok: false, message: `الحجمُ فوق الحدّ (${limitText(UPLOAD_RULES.radioAudio)}) : تأكّد أنّه MP3 مضغوط لا WAV` };
 
   const path = episodeAudioKey(showId, episodeId, variant, ext);
   const url = await presignUpload(path);
@@ -232,7 +243,7 @@ export async function createStationLogoUploadUrl(mime: string, size: number): Pr
 
   const ext = IMAGE_EXT[mime];
   if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
-  if (size > IMAGE_MAX_BYTES) return { ok: false, message: "الصورة أكبر من ٨ م.ب." };
+  if (size > IMAGE_MAX_BYTES) return { ok: false, message: `الحجمُ فوق الحدّ (${limitText(UPLOAD_RULES.radioLogo)})` };
 
   const path = stationLogoKey(ext);
   const url = await presignUpload(path);
@@ -276,85 +287,134 @@ export async function setShowLogo(showId: string, path: string): Promise<Result>
 }
 
 /**
- * يُثبت نسخةً صوتيّةً ومعها **المدّة والحجم مقروءتين من الملفّ نفسه** في المتصفّح —
+ * يُثبت مسارًا صوتيًّا ومعه **المدّة والحجم مقروءتين من الملفّ نفسه** في المتصفّح —
  * فلا يُدخلهما إنسانٌ بيده، وعليهما يقوم شريطُ المشغّل.
  *
- * وحين تجتمع النسختان يُفحص اتّساقُهما: **مدّتاهما تتساويان**، فهما تايم لاينٌ
- * واحدٌ صُدِّر مرّتين بكتم مسار الموسيقى في إحداهما. واختلافُهما علامةُ تصديرٍ
- * مقصوص أو ملفٍّ رُفع في غير موضعه، وكلاهما يجعل المبدّل يكذب.
+ * وحين يجتمع المساران يُفحص اتّساقُهما: **مدّتاهما تتساويان**، فهما تصديرتان من
+ * تايم لاينٍ واحد بكتم المسار الآخر. واختلافُهما علامةُ تصديرٍ مقصوص أو ملفٍّ
+ * رُفع في غير موضعه، ونتيجتُه موسيقى تسبق الكلامَ أو تتخلّف عنه.
  */
 export async function setEpisodeAudio(
   episodeId: string, variant: AudioVariant, path: string, bytes: number, durationSeconds: number, mime: string,
+  /** قممُ الموجة (٠ إلى ١٠٠) محسوبةً في المتصفّح. `null` فترتدّ الحلقةُ إلى الشريط الزمنيّ. */
+  peaks: number[] | null = null,
 ): Promise<Result> {
   const mgr = await getRadioManager();
   if (!mgr) return { ok: false, message: DENIED };
   const sb = service();
   if (!sb) return { ok: false, message: ENV_MISSING };
-  if (!VARIANT_VALUES.includes(variant)) return { ok: false, message: "نسخةٌ غير معروفة." };
+  if (!UPLOAD_VARIANTS.includes(variant)) return { ok: false, message: "مسارٌ غير معروف." };
   if (!(bytes > 0) || !(durationSeconds > 0)) return { ok: false, message: "تعذّرت قراءة مدّة الملفّ أو حجمه. أعِد الرفع." };
 
   const { data: cur } = await sb
     .from("radio_episodes")
-    .select("audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds")
+    .select("audio_plain_path, audio_plain_seconds, audio_stem_path, audio_stem_seconds")
     .eq("id", episodeId)
     .maybeSingle();
 
   const seconds = Math.round(durationSeconds);
-  const { error } = await sb
-    .from("radio_episodes")
-    .update({
-      [`audio_${variant}_path`]: path,
-      [`audio_${variant}_bytes`]: bytes,
-      [`audio_${variant}_seconds`]: seconds,
-      [`audio_${variant}_mime`]: mime,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", episodeId);
+  const patch: Record<string, unknown> = {
+    [`audio_${variant}_path`]: path,
+    [`audio_${variant}_bytes`]: bytes,
+    [`audio_${variant}_seconds`]: seconds,
+    [`audio_${variant}_mime`]: mime,
+    updated_at: new Date().toISOString(),
+  };
+  // ولمسارِ الموسيقى وحدَه لا عمودَ قمم: موجتُه لا تُعرَض قطّ، وإنّما تُعرض
+  // موجةُ الصوت وموجةُ المجموع. فلا يُخزَّن ما لا يُقرأ.
+  if (variant === "plain") patch.audio_plain_peaks = sanePeaks(peaks);
+
+  const { error } = await sb.from("radio_episodes").update(patch).eq("id", episodeId);
   if (error) return fail(error.message, "تعذّر حفظ الصوت");
 
-  // الملفّ القديم يُمسح بعد نجاح الكتابة لا قبلها، وإن اختلف امتدادُه وحده.
-  const prevPath = variant === "music" ? cur?.audio_music_path : cur?.audio_plain_path;
+  // الملفّ القديم يُمسح بعد نجاح الكتابة لا قبلها.
+  const prevPath = variant === "plain" ? cur?.audio_plain_path : cur?.audio_stem_path;
   if (prevPath && prevPath !== path) await deleteObject(prevPath);
 
-  const music = variant === "music" ? seconds : cur?.audio_music_seconds ?? null;
   const plain = variant === "plain" ? seconds : cur?.audio_plain_seconds ?? null;
+  const stem = variant === "stem" ? seconds : cur?.audio_stem_seconds ?? null;
 
   let warning: string | undefined;
-  if (music && plain && Math.abs(music - plain) > DURATION_TOLERANCE_SECONDS) {
+  if (plain && stem && Math.abs(plain - stem) > DURATION_TOLERANCE_SECONDS) {
     warning =
-      `النسختان مختلفتا المدّة (${formatDuration(music)} و${formatDuration(plain)}) وحقُّهما التساوي. ` +
-      "صدّرهما من التايم لاين نفسه بكتم مسار الموسيقى، وإلّا انحرف المبدّل عند المستمع.";
+      `المساران مختلفا المدّة (${formatDuration(plain)} و${formatDuration(stem)}) وحقُّهما التساوي. ` +
+      "صدّرهما من التايم لاين نفسه بكتم المسار الآخر، وإلّا انحرفت الموسيقى عن الكلام.";
   }
 
   touch();
   return {
     ok: true,
-    message: `رُفعت ${VARIANT_META[variant].verb} (${formatDuration(seconds)}).`,
+    message: `${VARIANT_META[variant].uploaded} (${formatDuration(seconds)}).`,
     warning,
   };
 }
 
-/** نزعُ نسخةٍ مرفوعة. المجرّدةُ وحدها تُنزَع: نزعُ الموسيقى يترك حلقةً منشورةً بلا صوت. */
+/**
+ * تنقيةُ القمم قبل الحفظ: أعدادٌ صحيحةٌ من ٠ إلى ١٠٠ وعددٌ معقول.
+ * والقاعدةُ تحرسها بقيدٍ كذلك، وهذا يترجم المنعَ رسالةً قبل أن يصرخ القيد.
+ */
+function sanePeaks(peaks: number[] | null): number[] | null {
+  if (!peaks?.length || peaks.length > 2000) return null;
+  const out = peaks.map((v) => Math.max(0, Math.min(100, Math.round(v))));
+  return out.some((v) => v > 0) ? out : null;
+}
+
+/**
+ * الموجتان المعروضتان: موجةُ الصوت وحدَه، وموجةُ ما يُسمَع بالموسيقى.
+ *
+ * والثانيةُ تسكن `audio_music_peaks`: كانت تأتي من ملفّ المكس، وصارت من مجموع
+ * المسارين. والمعنى واحدٌ لم يتغيّر (ما تسمعه الأذنُ والموسيقى عالية)، فبقي
+ * العمودُ واحدًا ولم يُشقّ له ثانٍ.
+ */
+export async function setEpisodePeaks(
+  episodeId: string, which: "plain" | "mixed", peaks: number[],
+): Promise<Result> {
+  const mgr = await getRadioManager();
+  if (!mgr) return { ok: false, message: DENIED };
+  const sb = service();
+  if (!sb) return { ok: false, message: ENV_MISSING };
+
+  const clean = sanePeaks(peaks);
+  if (!clean) return { ok: false, message: "تعذّر حساب الموجة من هذا الملفّ." };
+
+  const column = which === "plain" ? "audio_plain_peaks" : "audio_music_peaks";
+  const { error } = await sb
+    .from("radio_episodes")
+    .update({ [column]: clean, updated_at: new Date().toISOString() })
+    .eq("id", episodeId);
+  if (error) return fail(error.message, "تعذّر حفظ الموجة");
+
+  touch();
+  return { ok: true, message: which === "plain" ? "حُسبت موجة الصوت." : "حُسبت موجة الحلقة بموسيقاها." };
+}
+
+/**
+ * نزعُ مسارٍ مرفوع. المسارُ الواحد لا يُترَك وحدَه في حلقةٍ منشورة: حارسُ النشر
+ * في القاعدة يردّ ذلك، وترجمتُه في `guardMessage`.
+ */
 export async function clearEpisodeAudio(episodeId: string, variant: AudioVariant): Promise<Result> {
   const mgr = await getRadioManager();
   if (!mgr) return { ok: false, message: DENIED };
   const sb = service();
   if (!sb) return { ok: false, message: ENV_MISSING };
-  if (variant !== "plain") return { ok: false, message: "النسخة بموسيقى تُستبدَل ولا تُنزَع." };
+  if (!UPLOAD_VARIANTS.includes(variant)) return { ok: false, message: "المكس القديم يُستبدَل بالمسارين ولا يُنزَع." };
 
-  const { data: cur } = await sb.from("radio_episodes").select("audio_plain_path").eq("id", episodeId).maybeSingle();
-  const { error } = await sb
-    .from("radio_episodes")
-    .update({
-      audio_plain_path: null, audio_plain_bytes: null, audio_plain_seconds: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", episodeId);
-  if (error) return fail(error.message, "تعذّر نزع النسخة");
-  if (cur?.audio_plain_path) await deleteObject(cur.audio_plain_path);
+  const col = `audio_${variant}`;
+  const { data: cur } = await sb.from("radio_episodes").select(`${col}_path`).eq("id", episodeId).maybeSingle();
+  const patch: Record<string, unknown> = {
+    [`${col}_path`]: null, [`${col}_bytes`]: null, [`${col}_seconds`]: null, [`${col}_mime`]: null,
+    updated_at: new Date().toISOString(),
+  };
+  if (variant === "plain") patch.audio_plain_peaks = null;
+
+  const { error } = await sb.from("radio_episodes").update(patch).eq("id", episodeId);
+  if (error) return fail(error.message, "تعذّر نزع المسار");
+
+  const prev = (cur as Record<string, string | null> | null)?.[`${col}_path`];
+  if (prev) await deleteObject(prev);
 
   touch();
-  return { ok: true, message: "نُزعت النسخة المجرّدة، فيختفي المبدّل من الحلقة." };
+  return { ok: true, message: `نُزع ${VARIANT_META[variant].verb}.` };
 }
 
 /* ══ الحلقة ══════════════════════════════════════════════════════════ */
@@ -556,12 +616,12 @@ export type StationInput = {
   name: string;
   tagline?: string | null;
   description?: string | null;
-  talkStartsAt: number;
 };
 
 /**
- * إعدادات المحطّة، وفيها **ثانيةُ بدء الحديث**: رقمٌ واحد ترثه كلّ حلقة فلا يُكتب
- * مرّةً بعد مرّة. ولا يمسّ دقّةَ التبديل (الزمنُ مشترك)، بل موضعَ البدء في المجرّدة.
+ * إعدادات المحطّة: اسمُها وشعارُها وتعريفُها.
+ * **وبدايةُ الحديث غادرت إلى البرنامج** (٢٠٢٦-٠٨-١٣): رقمٌ واحدٌ للإذاعة كلِّها
+ * يكذب صامتًا عند أوّل برنامجٍ تختلف مقدّمتُه الموسيقيّة.
  */
 export async function saveStation(input: StationInput): Promise<Result> {
   const mgr = await getRadioManager();
@@ -570,10 +630,6 @@ export async function saveStation(input: StationInput): Promise<Result> {
   if (!sb) return { ok: false, message: ENV_MISSING };
 
   if (!clean(input.name)) return { ok: false, message: "اسم المحطّة مطلوب." };
-  const talk = input.talkStartsAt;
-  if (!(Number.isFinite(talk) && talk >= 0 && talk < 600)) {
-    return { ok: false, message: "بداية الحديث ثوانٍ موجبةٌ أقلّ من عشر دقائق." };
-  }
 
   const { error } = await sb
     .from("radio_station")
@@ -581,7 +637,6 @@ export async function saveStation(input: StationInput): Promise<Result> {
       name: clean(input.name),
       tagline: clean(input.tagline),
       description: clean(input.description),
-      talk_starts_at: talk,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

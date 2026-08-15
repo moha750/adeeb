@@ -4,7 +4,7 @@ import { LibraryView } from "./LibraryView";
 import { getLibraryManager } from "@/lib/library/authz";
 import { LibraryDenied } from "./_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 export default async function LibraryPage() {
   const denied = await denyUnless("/dashboard/library");
@@ -17,12 +17,7 @@ export default async function LibraryPage() {
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb />
-            <h1>مكتبة «إرثٌ يُروى»</h1>
-          </div>
-        </div>
+        <PageHeader title="مكتبة «إرثٌ يُروى»" />
         <Alert tone="warning" title="تعذّر جلب المنشورات">{error}</Alert>
       </>
     );

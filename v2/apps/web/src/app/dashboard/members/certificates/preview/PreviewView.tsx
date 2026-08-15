@@ -6,7 +6,7 @@ import { Certificate as CertIcon } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { downloadCertificate, renderCertificate } from "@/lib/certificates/letter";
 import type { Certificate } from "@/lib/certificates/text";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 
 /**
  * ثلاث عيّنات **متخيَّلة** (كعيّنات معرض المكوّنات) تكشف ما يختلف فعلًا:
@@ -84,13 +84,7 @@ export function PreviewView() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf="معاينة شهادة الخبرة" />
-          <h1>معاينة شهادة الخبرة</h1>
-        </div>
-        <Badge tone="info" variant="soft" icon={<CertIcon />}>عيّنةٌ لا سجلّ</Badge>
-      </div>
+      <PageHeader title="معاينة شهادة الخبرة" status={<Badge tone="info" variant="soft" icon={<CertIcon />}>عيّنةٌ لا سجلّ</Badge>} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ على قالبك بالرسّام الذي سيعمل عند الإصدار، والأسماء والأرقام

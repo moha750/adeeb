@@ -5,16 +5,11 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getOrgData } from "../members/structure/orgData";
 import { buildRoster, buildSeats, adminUnit } from "./model";
 import { UnitView } from "./UnitView";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 // العنوان اسمُ الإدارة نفسها — فيعرف القائد أيّها يدير بلا سطرٍ ثالثٍ يشرح.
 const Head = ({ unit }: { unit?: string }) => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb leaf={unit} />
-      <h1>{unit ?? "إدارتي"}</h1>
-    </div>
-  </div>
+  <PageHeader title={unit ?? "إدارتي"} crumbLeaf={unit} />
 );
 
 export default async function UnitPage() {

@@ -45,7 +45,7 @@ export const NAV: NavGroup[] = [
       // أبواب الانتخابات — كلٌّ فعلٌ للعضو، يظهر حين يصير متاحًا (لا بابَ بلا غرفة).
       { label: "الترشُّح", icon: "candidacy", href: "/dashboard/elections/run", election: "canRun" },
       { label: "سِجلّ ترشُّحي", icon: "myruns", href: "/dashboard/elections/my", election: "hasCandidacy" },
-      { label: "التصويت", icon: "ballot", href: "/dashboard/elections/vote", election: "canVote" },
+      { label: "صوّت الآن", icon: "ballot", href: "/dashboard/elections/vote", election: "canVote" },
     ],
   },
   {

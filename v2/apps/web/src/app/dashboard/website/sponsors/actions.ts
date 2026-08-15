@@ -3,6 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getWebsiteManager } from "@/lib/website/authz";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 export type SponsorResult = { ok: boolean; message: string; id?: string };
 
@@ -145,7 +146,7 @@ export type UploadResult = { ok: boolean; message?: string; url?: string };
 
 const BUCKET = "images";
 const PREFIX = "sponsors";
-const MAX_BYTES = 5 * 1024 * 1024; // حدّ الدلو نفسه
+const RULE = UPLOAD_RULES.siteImage; // حدّ الدلو نفسه
 const EXT_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
 };
@@ -158,9 +159,11 @@ export async function uploadSponsorLogo(formData: FormData): Promise<UploadResul
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم يُرفَق شعار." };
-  if (file.size > MAX_BYTES) return { ok: false, message: "حجم الشعار يتجاوز ٥ ميغابايت." };
+  // الحدُّ والجملةُ من قانون المرفقات (`lib/upload`) — ظهيرُ الخادم يقول ما قاله العميل
+  const why = checkFile(file, RULE);
+  if (why) return { ok: false, message: why };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم JPG أو PNG أو WEBP أو GIF." };
+  if (!ext) return { ok: false, message: `الصيغةُ غير مدعومة، المدعوم ${RULE.formats}` };
 
   const path = `${PREFIX}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
   const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });

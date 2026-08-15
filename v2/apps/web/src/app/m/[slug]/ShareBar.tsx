@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@adeeb/design-system";
-import { Check, LinkSimple, ShareNetwork } from "@phosphor-icons/react";
+import { LinkSimple, ShareNetwork } from "@phosphor-icons/react";
+import { Check } from "@/app/_components/glyphs";
 
 /**
  * الغايةُ أن يَنشرها صاحبُها، فالنشرُ زرٌّ لا تعليمات.
@@ -42,7 +43,7 @@ export function ShareBar({ name, slug }: { name: string; slug: string }) {
 
   return (
     <Button variant="ghost" size="sm" onClick={share}>
-      {copied ? <Check weight="bold" /> : canShare ? <ShareNetwork weight="fill" /> : <LinkSimple weight="bold" />}
+      {copied ? <Check /> : canShare ? <ShareNetwork weight="fill" /> : <LinkSimple weight="bold" />}
       <span>{copied ? "نُسخ الرابط" : "انشر صفحتك"}</span>
     </Button>
   );

@@ -5,15 +5,10 @@ import { PreviewView } from "./PreviewView";
 import { NO_YOU, type YouAre } from "../MapView";
 import { getCurrentAdmin } from "@/lib/auth";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb leaf="معاينة المقترح" />
-      <h1>هيكلة أديب</h1>
-    </div>
-  </div>
+  <PageHeader title="هيكلة أديب" crumbLeaf="معاينة المقترح" />
 );
 
 /**

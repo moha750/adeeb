@@ -28,6 +28,8 @@ export type ShowRow = {
   logoUrl: string | null;
   logoPath: string | null;
   tone: ShowTone;
+  /** ثانيةُ بدء الحديث في هذا البرنامج. ترثها حلقاتُه ما لم تُصرّح بغيرها. */
+  talkStartsAt: number;
   status: ShowStatus;
   isFeatured: boolean;
   order: number;
@@ -52,7 +54,7 @@ export async function getShows(): Promise<{ shows: ShowRow[]; error: string | nu
 
   const [sRes, eRes, cRes] = await Promise.all([
     sb.from("radio_shows")
-      .select("id, title, slug, tagline, description, logo_path, tone, status, is_featured, \"order\", host_member_id, producing_committee_id, created_at")
+      .select("id, title, slug, tagline, description, logo_path, tone, talk_starts_at, status, is_featured, \"order\", host_member_id, producing_committee_id, created_at")
       .order("is_featured", { ascending: false })
       .order("order", { ascending: true })
       .order("created_at", { ascending: false }),
@@ -88,6 +90,7 @@ export async function getShows(): Promise<{ shows: ShowRow[]; error: string | nu
       logoPath: s.logo_path ?? null,
       logoUrl: publicUrl(s.logo_path),
       tone: s.tone as ShowTone,
+      talkStartsAt: Number(s.talk_starts_at),
       status: s.status as ShowStatus,
       isFeatured: s.is_featured,
       order: s.order ?? 0,
@@ -108,7 +111,7 @@ export async function getShows(): Promise<{ shows: ShowRow[]; error: string | nu
 
 /* ══ محرّر البرنامج: رأسه وحلقاته ومنصّاته ═══════════════════════════ */
 
-/** نسخةٌ صوتيّةٌ مرفوعة. `null` يعني: لم تُرفع بعد. */
+/** ملفٌّ صوتيٌّ مرفوع. `null` يعني: لم يُرفع بعد. */
 export type AudioTake = { seconds: number; bytes: number };
 
 export type EpisodeRow = {
@@ -118,8 +121,19 @@ export type EpisodeRow = {
   slug: string;
   summary: string | null;
   status: EpisodeStatus;
+  /** المكسُ القديم — يُقرأ في الحلقات التي رُفعت قبل المسارين، ولا يُرفَع بعدُ. */
   music: AudioTake | null;
+  /** مسارُ الصوت. */
   plain: AudioTake | null;
+  /** مسارُ الموسيقى. مع الصوت تكتمل الحلقةُ ويظهر المقبض. */
+  stem: AudioTake | null;
+  /** أمحسوبتان الموجتان؟ موجةُ الصوت، وموجةُ ما يُسمَع بالموسيقى. */
+  hasVoiceWave: boolean;
+  hasMixedWave: boolean;
+  /** روابطُ البثّ — تلزم حسابَ الموجة لحلقةٍ رُفعت قبل الميزة. */
+  musicUrl: string | null;
+  plainUrl: string | null;
+  stemUrl: string | null;
   /** ثانيةُ بدء الحديث **بعد** حلّ الوراثة: تجاوزُ الحلقة إن وُجد، وإلّا رقمُ المحطّة. */
   talkStartsAt: number;
   /** أهي مكتوبةٌ في الحلقة نفسها؟ يميّز الموروثَ من المُعلَن في الواجهة. */
@@ -129,6 +143,11 @@ export type EpisodeRow = {
   publishAt: string | null;
   publishedAt: string | null;
   plays: number;
+  /** كم من تلك الاستماعات كان بالنسخة المجرّدة. */
+  playsPlain: number;
+  /** الأجهزةُ المختلفة التي سمعتها. الفرقُ عن `plays` يقول أيُعيدونها. */
+  listeners: number;
+  likes: number;
 };
 
 export type PlatformRow = { id: string; platform: Platform; url: string };
@@ -137,8 +156,8 @@ export type ShowEditor = {
   show: ShowRow;
   episodes: EpisodeRow[];
   platforms: PlatformRow[];
-  /** بدءُ الحديث الموروث من المحطّة — يُعرض في نموذج الحلقة نائبًا عن الفارغ. */
-  stationTalkStart: number;
+  /** بدءُ الحديث الموروث من البرنامج — يُعرض في نموذج الحلقة نائبًا عن الفارغ. */
+  showTalkStart: number;
 };
 
 export async function getShowEditor(id: string): Promise<{ data: ShowEditor | null; error: string | null }> {
@@ -150,17 +169,18 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
   const show = shows.find((s) => s.id === id);
   if (!show) return { data: null, error: null };
 
-  const [eRes, pRes, stRes] = await Promise.all([
+  const [eRes, pRes] = await Promise.all([
     sb.from("radio_episodes")
-      .select("id, number, title, slug, summary, status, audio_music_path, audio_music_bytes, audio_music_seconds, audio_plain_path, audio_plain_bytes, audio_plain_seconds, talk_starts_at, youtube_url, host_member_id, publish_at, published_at, plays")
+      .select("id, number, title, slug, summary, status, audio_music_path, audio_music_bytes, audio_music_seconds, audio_plain_path, audio_plain_bytes, audio_plain_seconds, audio_stem_path, audio_stem_bytes, audio_stem_seconds, audio_music_peaks, audio_plain_peaks, talk_starts_at, youtube_url, host_member_id, publish_at, published_at, plays, plays_plain, listeners, likes")
       .eq("show_id", id)
       .order("number", { ascending: false }),
     sb.from("radio_show_platforms").select("id, platform, url").eq("show_id", id).order("order", { ascending: true }),
-    sb.from("radio_station").select("talk_starts_at").eq("id", 1).maybeSingle(),
   ]);
   if (eRes.error) return { data: null, error: eRes.error.message };
 
-  const stationTalkStart = Number(stRes.data?.talk_starts_at ?? 0);
+  // المصدرُ الموروث صار **البرنامج** لا المحطّة: رقمٌ واحدٌ للإذاعة كلِّها
+  // يكذب صامتًا عند أوّل برنامجٍ تختلف مقدّمتُه.
+  const showTalkStart = show.talkStartsAt;
 
   const hostIds = [...new Set((eRes.data ?? []).map((e) => e.host_member_id).filter(Boolean))];
   const { data: hosts } = hostIds.length
@@ -179,20 +199,30 @@ export async function getShowEditor(id: string): Promise<{ data: ShowEditor | nu
       ? { seconds: e.audio_music_seconds, bytes: Number(e.audio_music_bytes) } : null,
     plain: e.audio_plain_path && e.audio_plain_seconds && e.audio_plain_bytes
       ? { seconds: e.audio_plain_seconds, bytes: Number(e.audio_plain_bytes) } : null,
-    talkStartsAt: e.talk_starts_at === null ? stationTalkStart : Number(e.talk_starts_at),
+    stem: e.audio_stem_path && e.audio_stem_seconds && e.audio_stem_bytes
+      ? { seconds: e.audio_stem_seconds, bytes: Number(e.audio_stem_bytes) } : null,
+    hasVoiceWave: Boolean(e.audio_plain_peaks?.length),
+    hasMixedWave: Boolean(e.audio_music_peaks?.length),
+    musicUrl: publicUrl(e.audio_music_path),
+    plainUrl: publicUrl(e.audio_plain_path),
+    stemUrl: publicUrl(e.audio_stem_path),
+    talkStartsAt: e.talk_starts_at === null ? showTalkStart : Number(e.talk_starts_at),
     talkStartOverridden: e.talk_starts_at !== null,
     youtubeUrl: e.youtube_url ?? null,
     hostName: nameById.get(e.host_member_id) ?? "—",
     publishAt: e.publish_at ?? null,
     publishedAt: e.published_at ?? null,
     plays: e.plays ?? 0,
+    playsPlain: e.plays_plain ?? 0,
+    listeners: e.listeners ?? 0,
+    likes: e.likes ?? 0,
   }));
 
   const platforms: PlatformRow[] = (pRes.data ?? []).map((p) => ({
     id: p.id, platform: p.platform as Platform, url: p.url,
   }));
 
-  return { data: { show, episodes, platforms, stationTalkStart }, error: null };
+  return { data: { show, episodes, platforms, showTalkStart }, error: null };
 }
 
 /* ══ خيارات النماذج ══════════════════════════════════════════════════ */
@@ -230,8 +260,6 @@ export type StationData = {
   description: string | null;
   logoPath: string | null;
   logoUrl: string | null;
-  /** ثانيةُ بدء الحديث. المصدرُ الواحد الذي ترثه كلّ حلقةٍ لا تُصرّح بغيره. */
-  talkStartsAt: number;
 };
 
 export async function getStation(): Promise<{ station: StationData | null; error: string | null }> {
@@ -239,7 +267,7 @@ export async function getStation(): Promise<{ station: StationData | null; error
   if (!sb) return { station: null, error: ENV_MISSING };
   const { data, error } = await sb
     .from("radio_station")
-    .select("name, tagline, description, logo_path, talk_starts_at")
+    .select("name, tagline, description, logo_path")
     .eq("id", 1)
     .maybeSingle();
   if (error) return { station: null, error: error.message };
@@ -251,7 +279,6 @@ export async function getStation(): Promise<{ station: StationData | null; error
       description: data.description ?? null,
       logoPath: data.logo_path ?? null,
       logoUrl: publicUrl(data.logo_path),
-      talkStartsAt: Number(data.talk_starts_at),
     },
     error: null,
   };

@@ -22,7 +22,11 @@ import {
   type QrSpec,
 } from "@/lib/qr";
 import { downloadBlob } from "@/lib/download";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+import { PageHeader } from "../../_components/PageHeader";
+
+// وصفةُ شعار الرمز من قانون المرفقات (`lib/upload`)
+const LOGO_RULE = UPLOAD_RULES.qrLogo;
 
 /* ── مفردات المحرّر ─────────────────────────────────────────────────────── */
 
@@ -55,7 +59,6 @@ const LOGO_SIZES = [
 const PREVIEW = 360;
 
 /** أقصى حجمٍ لملفّ الشعار — يُضمَّن في الرمز نفسه، فالكبيرُ يُثقل كلّ نسخةٍ منه. */
-const LOGO_MAX_BYTES = 512 * 1024;
 
 /** عتبتا التباين: دون الأولى تحذير، ودون الثانية إنذارٌ صريح (لا يُمسح غالبًا). */
 const CONTRAST_WARN = 4;
@@ -94,6 +97,7 @@ export function QrToolView() {
 
   // الشعار
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoOk, setLogoOk] = useState<string | null>(null);
   const [logoScale, setLogoScale] = useState("0.24");
   const [logoError, setLogoError] = useState<string | null>(null);
   const logoInput = useRef<HTMLInputElement>(null);
@@ -158,16 +162,18 @@ export function QrToolView() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > LOGO_MAX_BYTES) {
-      setLogoError("الملفّ أكبر من ٥١٢ كيلوبايت، الشعار يُضمَّن في كلّ نسخةٍ من الرمز، فاختر ملفًّا أخفّ.");
-      return;
-    }
+    // البوّابةُ من قانون المرفقات (`lib/upload`)، والسببُ يُعرض تنبيهًا لا توستًا: الشاشةُ مختبرٌ
+    // يبقى المستعملُ فيه طويلًا، فالرسالةُ تُقيم بجانب الحقل لا تمرّ.
+    const why = checkFile(file, LOGO_RULE);
+    if (why) { setLogoOk(null); setLogoError(`${why}. الشعارُ يُضمَّن في كلّ نسخةٍ من الرمز، فاختر ملفًّا أخفّ`); return; }
     const reader = new FileReader();
     reader.onload = () => {
       setLogo(typeof reader.result === "string" ? reader.result : null);
       setLogoError(null);
+      // خبرُ القبول يُقال كما يُقال خبرُ الرفض، وفي موضعه نفسِه
+      setLogoOk(`أُدرج «${file.name}» في قلب الرمز`);
     };
-    reader.onerror = () => setLogoError("تعذّرت قراءة الملفّ.");
+    reader.onerror = () => { setLogoOk(null); setLogoError("تعذّرت قراءة الملفّ."); };
     reader.readAsDataURL(file);
   };
 
@@ -193,12 +199,7 @@ export function QrToolView() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>مولّد الباركود</h1>
-        </div>
-      </div>
+      <PageHeader title="مولّد الباركود" />
 
       <Alert tone="info" title="الرمز آلةٌ تُقرأ قبل أن يكون شكلًا">
         اطبعه بضلعٍ لا يقلّ عن ٢ سم (٣ سم لِما يُمسح من بُعد)، واترك حوله الفراغَ المرسوم في
@@ -311,13 +312,14 @@ export function QrToolView() {
                   <Sparkle size={18} /> شعار أديب
                 </Button>
                 {logo ? (
-                  <Button variant="ghost-danger" size="md" onClick={() => setLogo(null)}>
+                  <Button variant="ghost-danger" size="md" onClick={() => { setLogo(null); setLogoOk(null); }}>
                     <Trash size={18} /> إزالة
                   </Button>
                 ) : null}
               </div>
-              <input ref={logoInput} type="file" accept="image/png,image/svg+xml,image/webp,image/jpeg" hidden onChange={onPickLogo} />
+              <input ref={logoInput} type="file" accept={LOGO_RULE.accept} hidden onChange={onPickLogo} />
               {logoError ? <Alert tone="danger" title="تعذّر استعمال الشعار">{logoError}</Alert> : null}
+              {logoOk && !logoError ? <Alert tone="success" title="أُدرج الشعار">{logoOk}</Alert> : null}
               {logo ? (
                 <div className="w-full">
                   <Select label="حجم الشعار" icon={<ImageSquare />} options={LOGO_SIZES} value={logoScale} onValueChange={setLogoScale} />

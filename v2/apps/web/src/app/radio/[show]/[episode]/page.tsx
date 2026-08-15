@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accordion, Container, Footer } from "@adeeb/design-system";
+import { Accordion, Container, Footer, countPhrase } from "@adeeb/design-system";
 import { MicrophoneStage, YoutubeLogo } from "@phosphor-icons/react/dist/ssr";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "../../../_components/SiteHeader";
 import { episodeLabel, formatDuration } from "../../../dashboard/radio/vocab";
 import { youtubeId } from "@/lib/radio/youtube";
-import { getPublicEpisode } from "../../data";
-import { EpisodeRow, PlayTrackButton } from "../../_player/EpisodeRow";
+import { getPublicEpisode, isPlayable, toTrack } from "../../data";
+import { EpisodeRow, PLAYS_UNIT } from "../../_player/EpisodeRow";
+import { InlinePlayer } from "../../_player/InlinePlayer";
+import { ShareEpisode } from "../../_player/ShareEpisode";
+import { LikeEpisode } from "../../_player/LikeEpisode";
 import { YoutubeThumb } from "../../_player/YoutubeThumb";
 import { FoldedText } from "../../_player/FoldedText";
-import type { Track } from "../../_player/PlayerProvider";
 
 export const revalidate = 60;
 
@@ -29,21 +32,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ show: 
   if (!found) notFound();
   const { show, episode, siblings } = found;
 
-  const toTrack = (e: typeof episode): Track => ({
-    id: e.id,
-    title: e.title,
-    showTitle: show.title,
-    showSlug: show.slug,
-    episodeSlug: e.slug,
-    musicUrl: e.musicUrl!,
-    plainUrl: e.plainUrl,
-    talkStartsAt: e.talkStartsAt,
-    coverUrl: show.logoUrl,
-    seconds: e.musicSeconds,
-    tone: show.tone,
-  });
-
-  const more = siblings.filter((e) => e.musicUrl).slice(0, 5);
+  const more = siblings.filter(isPlayable).slice(0, 5);
   const ytId = youtubeId(episode.youtubeUrl);
 
   return (
@@ -62,7 +51,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ show: 
                 {show.logoUrl
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={show.logoUrl} alt="" />
-                  : <MicrophoneStage size={40} aria-hidden />}
+                  : <MicrophoneStage size={40} weight={ICON_WEIGHT} aria-hidden />}
               </div>
               <div className="rad-hero-txt">
                 <h1 className="rad-hero-name">{episode.title}</h1>
@@ -73,22 +62,42 @@ export default async function EpisodePage({ params }: { params: Promise<{ show: 
                     <span className="font-latin"><bdi dir="ltr">{formatDuration(episode.musicSeconds)}</bdi></span>
                   ) : null}
                   {episode.hostName ? <span>تقديم {episode.hostName}</span> : null}
+                  {episode.plays > 0 ? (
+                    <span>{countPhrase(episode.plays, PLAYS_UNIT)}</span>
+                  ) : null}
                 </div>
-                <div className="rad-hero-cta"><PlayTrackButton track={toTrack(episode)} label="استمع" rest={more.map(toTrack)} /></div>
+                <div className="rad-hero-cta flex items-center gap-2">
+                  <LikeEpisode episodeId={episode.id} initial={episode.likes} />
+                  <ShareEpisode title={episode.title} showTitle={show.title} />
+                </div>
               </div>
             </div>
 
+            {/* المشغّلُ حيث يقع الفعل، لا في أسفل الشاشة بعيدًا عمّا ضُغط */}
+            <InlinePlayer track={toTrack(episode, show)} rest={more.map((e) => toTrack(e, show))} />
+
             {episode.summary ? (
-              <div className="max-w-2xl"><FoldedText text={episode.summary} /></div>
+              <div className="mt-6 max-w-2xl"><FoldedText text={episode.summary} /></div>
             ) : null}
 
+            {/**
+              * الصورةُ **بابٌ لا شاشة**: لا يُضمَّن مشغّلُ يوتيوب في الصفحة.
+              * فالقسمُ غرفةُ استماع، وشاشةٌ تعمل وسطها تكسب العينَ دائمًا فيتوقّف
+              * من كان يقرأ التفريغ. والفيديوُ المضمَّن يعرض عند انتهائه مقاطعَ
+              * **قنواتٍ أخرى** داخل صفحتنا. أمّا الخروجُ إلى يوتيوب فمشاهدةٌ
+              * تُحسَب للقناة، فهو ربحٌ لا خسارة. (قرار المالك ٢٠٢٦-٠٨-١٣.)
+              *
+              * والدعوةُ **سطرٌ تحت الصورة** لا شارةٌ عليها: الشارةُ تُقرأ وسمًا لا
+              * دعوة، وقد تختفي وراء ما هو مكتوبٌ في المصغّرة أصلًا.
+              */}
             {episode.youtubeUrl ? (
-              <div className="mt-6">
-                <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="rad-yt">
-                  {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
-                  <span className="rad-yt-tag"><YoutubeLogo size={16} weight="fill" aria-hidden />شاهِد على يوتيوب</span>
-                </a>
-              </div>
+              <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="rad-yt mt-6">
+                {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
+                <span className="rad-yt-cta">
+                  <YoutubeLogo size={18} weight={ICON_WEIGHT} aria-hidden />
+                  شاهِد الحلقة على يوتيوب
+                </span>
+              </a>
             ) : null}
 
             {episode.notes ? (
@@ -123,11 +132,12 @@ export default async function EpisodePage({ params }: { params: Promise<{ show: 
                   {more.map((e) => (
                     <EpisodeRow
                       key={e.id}
-                      track={toTrack(e)}
+                      track={toTrack(e, show)}
                       number={e.number}
                       dateLabel={e.dateLabel}
                       summary={e.summary}
                       showName={null}
+                      plays={e.plays}
                     />
                   ))}
                 </div>

@@ -93,7 +93,11 @@ export function Footer({
 
           <div className="sftr-bottom">
             <p className="sftr-copy">
-              جميع الحقوق محفوظة لنادي أَدِيب <span className="font-latin">{year}</span> ©
+              {/* السنةُ و© في خانةٍ واحدة: كلاهما لاتينيُّ الرسم فيلبسان `--font-latin`
+                  (كان © خارجها فيُرسَم بخطّ المتن، ورسمُه في الخطّين مختلف).
+                  **وبلا `dir`**: الترتيبُ المرئيّ يقرّره اتّجاهُ الفقرة، فتقع السنةُ
+                  بعد الاسم و© آخرًا كما أراد المالك — ووسمُ `ltr` يقلبهما. */}
+              جميع الحقوق محفوظة لنادي أَدِيب <span className="font-latin">{year} ©</span>
             </p>
             <button
               type="button"

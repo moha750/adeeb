@@ -10,6 +10,10 @@ import { Avatar } from "../_components/Avatar";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { useToast } from "../_components/ToastProvider";
 import { removeMyAvatar, uploadMyAvatar } from "./actions";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+
+// وصفةُ أصل الأفتار من قانون المرفقات (`lib/upload`)
+const SOURCE_RULE = UPLOAD_RULES.avatarSource;
 
 /** ضلع مربّع المعاينة (بكسل CSS) — والخارج عنه هو المقصوص. */
 const VIEW = 300;
@@ -18,9 +22,7 @@ const OUT = 512;
 /** أقصى تكبيرٍ فوق «ما يملأ المربّع» — أبعدُ منه يُحوّل الوجه إلى بكسلات. */
 const MAX_ZOOM = 5;
 /** ما يقبله المتصفّح رسمًا — و«ما يُحفظ» صيغةٌ واحدة (WEBP) مهما كان الأصل. */
-const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/bmp";
 /** حدُّ الأصل قبل القصّ — الناتج يخرج نحو ٦٠ ك.ب مهما كبر الوارد، فالحدّ للذاكرة لا للتخزين. */
-const MAX_SOURCE = 15 * 1024 * 1024;
 
 type Frame = { scale: number; x: number; y: number };
 
@@ -82,8 +84,9 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
   const onPick = (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("اختر ملفَّ صورة."); return; }
-    if (file.size > MAX_SOURCE) { toast.error("الصورة أكبر من ١٥ ميغابايت. اختر أصغر منها."); return; }
+    // بوّابةٌ واحدةٌ للموقع كلِّه (`lib/upload`) — لا جملةً خاصّةً بهذه الشاشة
+    const why = checkFile(file, SOURCE_RULE);
+    if (why) { toast.error(why); return; }
 
     const url = URL.createObjectURL(file);
     const el = new Image();
@@ -237,7 +240,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
       <input
         ref={pick}
         type="file"
-        accept={ACCEPT}
+        accept={SOURCE_RULE.accept}
         hidden
         onChange={(e) => { onPick(e.target.files); e.target.value = ""; }}
       />

@@ -2,7 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getMembers, type MemberStatus } from "./data";
 import { MembersView } from "./MembersView";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * شاشة الأعضاء الخادمية — تجلب البيانات وتمرّرها للعرض (اختياريًّا مثبّتة على حالة).
@@ -20,12 +20,7 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb leaf="الأعضاء" />
-            <h1>الأعضاء</h1>
-          </div>
-        </div>
+        <PageHeader title="الأعضاء" />
         <Alert tone="warning" title="تعذّر جلب الأعضاء">{error}</Alert>
       </>
     );

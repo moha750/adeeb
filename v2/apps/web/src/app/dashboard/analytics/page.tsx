@@ -2,17 +2,12 @@ import { Alert } from "@adeeb/design-system";
 import { getAnalytics } from "./data";
 import { StatsView } from "./StatsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 const RANGES = [7, 30, 90, 3650];
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>إحصائيّات الزوّار</h1>
-    </div>
-  </div>
+  <PageHeader title="إحصائيّات الزوّار" />
 );
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {

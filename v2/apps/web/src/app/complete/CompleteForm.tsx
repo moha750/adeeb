@@ -6,8 +6,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Field, Select, Card, CardBody, Alert } from "@adeeb/design-system";
 import {
-  User, Phone, Hash, Envelope, At, IdentificationCard, CalendarBlank, Certificate, GraduationCap, Buildings, BookOpen, Books, GenderIntersex, Palette } from "@phosphor-icons/react";
-import { PencilSimple, XLogo, InstagramLogo, TiktokLogo, LinkedinLogo } from "@/app/_components/glyphs";
+  User, Phone, Hash, Envelope, At, IdentificationCard, CalendarBlank, Certificate, GraduationCap, Buildings, BookOpen, Books, GenderIntersex, Palette,
+  XLogo, InstagramLogo, TiktokLogo, LinkedinLogo } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 import { DEGREES, hasAcademicFields, NATIONAL_ID_LEN, PHONE_LEN, RECORD_NO_MAX } from "@/lib/membershipFields";
 import { completeSchema, emptyComplete, type CompleteInput } from "./vocab";
 import { completeMyRecord } from "./actions";

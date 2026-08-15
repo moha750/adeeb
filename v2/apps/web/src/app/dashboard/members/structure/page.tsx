@@ -3,15 +3,10 @@ import { getOrgData } from "./orgData";
 import { buildStructure } from "./model";
 import { StructureView } from "./StructureView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>هيكلة أديب</h1>
-    </div>
-  </div>
+  <PageHeader title="هيكلة أديب" />
 );
 
 export default async function StructurePage() {

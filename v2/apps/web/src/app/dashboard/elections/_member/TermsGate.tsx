@@ -45,12 +45,11 @@ export function TermsGate({ target, onClose, onAgree }: {
         </>
       }
     >
-      <div style={{ display: "grid", gap: 14 }}>
-        <Alert tone="info" title="المنصب المتقدَّم له">{target?.position}</Alert>
-        <div>
-          <p className="txt" style={{ fontWeight: 700, marginBottom: 8 }}>الشروط والأحكام</p>
-          <ul className="ctrm">{TERMS.map((t, i) => <li key={i}>{t}</li>)}</ul>
-        </div>
+      {/* لا غلافَ يخترع فجوته : جسمُ النافذة يباعِد أبناءه بنفسه (ق١٣). */}
+      <Alert tone="info" title="المنصب المتقدَّم له">{target?.position}</Alert>
+      <div>
+        <p className="txt" style={{ fontWeight: 700, marginBottom: 8 }}>الشروط والأحكام</p>
+        <ul className="ctrm">{TERMS.map((t, i) => <li key={i}>{t}</li>)}</ul>
       </div>
     </Modal>
   );

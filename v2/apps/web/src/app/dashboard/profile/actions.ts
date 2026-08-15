@@ -4,6 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
 import { writeMemberData } from "@/lib/memberData";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 export type ProfileResult = { ok: boolean; message: string };
 
@@ -78,7 +79,7 @@ export type AvatarResult = { ok: boolean; message: string; url?: string };
 
 const BUCKET = "avatars";
 /** الوجه المقصوص يخرج WEBP ‎512×512‎ من المتصفّح — نحو ٦٠ ك.ب؛ والحدّ سعةٌ لِما قد يكبر. */
-const MAX_BYTES = 2 * 1024 * 1024;
+const RULE = UPLOAD_RULES.avatarStored;
 const EXT_BY_MIME: Record<string, string> = {
   "image/webp": "webp",
   "image/jpeg": "jpg",
@@ -111,9 +112,11 @@ export async function uploadMyAvatar(formData: FormData): Promise<AvatarResult> 
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم تُرفَق صورة." };
-  if (file.size > MAX_BYTES) return { ok: false, message: "حجم الصورة يتجاوز ٢ ميغابايت." };
+  // الحدُّ والجملةُ من قانون المرفقات (`lib/upload`) — ظهيرُ الخادم يقول ما قاله العميل
+  const why = checkFile(file, RULE);
+  if (why) return { ok: false, message: why };
   const ext = EXT_BY_MIME[file.type];
-  if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم WEBP أو JPG أو PNG." };
+  if (!ext) return { ok: false, message: `الصيغةُ غير مدعومة، المدعوم ${RULE.formats}` };
 
   // العضويّة المنتهية سجلٌّ مغلق لا يُحرَّر — الحكم نفسه الذي يحرس بقيّة الحقول (`lib/memberData`)
   const { data: target, error: tErr } = await sb.from("profiles").select("account_status, avatar_url").eq("id", me.id).maybeSingle();

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Field, Select, type SelectOption, Modal, Switch } from "@adeeb/design-system";
+import { Alert, Button, Field, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { Buildings, CalendarBlank, Clock, Scales, UsersThree } from "@phosphor-icons/react";
 import { useToast } from "../_components/ToastProvider";
 import { fromClubInput } from "@/lib/dates";
@@ -22,7 +22,6 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
   const [roleName, setRoleName] = useState("");
   const [scopeId, setScopeId] = useState("");
   const [candidacyEnd, setCandidacyEnd] = useState(""); // datetime-local محلّيّ، يُحوَّل ISO عند الإرسال
-  const [openBoth, setOpenBoth] = useState(false); // توأمة الفتح: يفتح المقعد الآخر للجنة نفسها معًا
 
   const role = options.roles.find((r) => r.roleName === roleName) ?? null;
   const scopeList = role
@@ -35,30 +34,17 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
   const scopeOptions: SelectOption[] = scopeList.map((s) => ({ value: String(s.id), label: s.label }));
   const noScope = role !== null && scopeOptions.length === 0;
 
-  const reset = () => { setRoleName(""); setScopeId(""); setCandidacyEnd(""); setOpenBoth(false); };
+  const reset = () => { setRoleName(""); setScopeId(""); setCandidacyEnd(""); };
   const close = () => { if (!pending) { reset(); onClose(); } };
 
   const submit = () => {
     if (!role || !scopeId) return;
     setPending(true);
-    const isComm = role.scope === "committee";
     const candidacyEndIso = fromClubInput(candidacyEnd);
-    const primary = isComm
+    const primary = role.scope === "committee"
       ? { roleName: role.roleName, committeeId: Number(scopeId), candidacyEndIso }
       : { roleName: role.roleName, departmentId: Number(scopeId), candidacyEndIso };
-    const pairRole = role.roleName === "committee_leader" ? "deputy_committee_leader"
-      : role.roleName === "deputy_committee_leader" ? "committee_leader" : null;
-    (async () => {
-      const r1 = await createElection(primary);
-      if (!r1.ok) return r1;
-      if (openBoth && isComm && pairRole) {
-        const r2 = await createElection({ roleName: pairRole, committeeId: Number(scopeId), candidacyEndIso });
-        return r2.ok
-          ? { ok: true as const, message: "فُتح مقعدا اللجنة معًا (قيادةً ونيابةً)." }
-          : { ok: true as const, message: `فُتح المقعد الأوّل، وتعذّر الآخر: ${r2.message}` };
-      }
-      return r1;
-    })().then((r) => {
+    createElection(primary).then((r) => {
       setPending(false);
       if (r.ok) { toast.success(r.message); reset(); onClose(); router.refresh(); }
       else toast.error(r.message);
@@ -85,7 +71,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
         icon={<Scales />}
         options={roleOptions}
         value={roleName}
-        onValueChange={(v) => { setRoleName(v); setScopeId(""); setOpenBoth(false); }}
+        onValueChange={(v) => { setRoleName(v); setScopeId(""); }}
         required
       />
       {role ? (
@@ -110,19 +96,11 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
               icon={<CalendarBlank />}
               innerIcon={<Clock />}
               placeholder="بلا موعد (يُغلق بيدك)"
-              helper="بتوقيت الرياض. عند الموعد يُغلق الباب تلقائيًّا، وإن قلّ المرشّحون عن اثنين مُدّ 24 ساعة مرّةً واحدة."
+              helper="عند الموعد يُغلق الباب تلقائيًّا، وإن قلّ المرشّحون عن اثنين مُدّ 24 ساعة مرّةً واحدة."
               value={candidacyEnd}
               onChange={(e) => setCandidacyEnd(e.target.value)}
               optional
             />
-            {role.scope === "committee" ? (
-              <Switch
-                label="افتح المقعد الآخر في اللجنة نفسها"
-                description={role.roleName === "committee_leader" ? "يُفتح انتخابُ النائب أيضًا (مقعدان مستقلّان بالتوقيت نفسه)." : "يُفتح انتخابُ القائد أيضًا (مقعدان مستقلّان بالتوقيت نفسه)."}
-                checked={openBoth}
-                onChange={(e) => setOpenBoth(e.target.checked)}
-              />
-            ) : null}
           </>
         )
       ) : null}

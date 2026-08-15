@@ -38,7 +38,7 @@ export { AreaChart, type AreaChartProps, type AreaSeries } from "./components/Ar
 export { ColumnBars, type ColumnBarsProps, type ColumnBar } from "./components/ColumnBars";
 export { HeatGrid, type HeatGridProps } from "./components/HeatGrid";
 // وحدةُ العدّ — مصدرٌ واحد لقائمة الأشرطة والحلقة.
-export { unitWord, type ChartUnit } from "./lib/units";
+export { unitWord, countPhrase, type ChartUnit } from "./lib/units";
 export { Checkbox, Radio, Switch } from "./components/Choice";
 export { Alert, type AlertProps } from "./components/Alert";
 export { SaveBar, type SaveBarProps } from "./components/SaveBar";

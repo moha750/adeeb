@@ -18,7 +18,7 @@ import { Toolbar, type ViewMode } from "../_components/Toolbar";
 import { useToast } from "../_components/ToastProvider";
 import { MemberCard } from "../members/MemberCard";
 import type { MemberRow } from "../members/data";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /* ── أيقونات صغيرة للعرض (Phosphor) ── */
 const Ic = {
@@ -108,12 +108,7 @@ export default function ComponentsGallery() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf="معرض المكوّنات" />
-          <h1>معرض المكوّنات</h1>
-        </div>
-      </div>
+      <PageHeader title="معرض المكوّنات" />
 
       <div className="gal">
         <nav className="gal-toc" aria-label="فهرس">

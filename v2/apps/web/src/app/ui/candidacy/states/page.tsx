@@ -5,14 +5,15 @@
 
 import { useState } from "react";
 import { Alert, Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
-import { Eye, EyeSlash, Scales } from "@phosphor-icons/react";
+import { Scales } from "@phosphor-icons/react";
+import { Eye, EyeSlash } from "@/app/_components/glyphs";
 import { ToastProvider, useToast } from "../../../dashboard/_components/ToastProvider";
 import { CandidacyJourney } from "../../../dashboard/elections/_member/CandidacyJourney";
 import type { CandidacyJourney as CJ } from "../../../dashboard/elections/member-data";
 
 const D = "2 أغسطس 2026 · 14:20";
 const BASE = {
-  candidateId: "a", electionId: "e1", position: "قائد لجنة الإعلام", number: 3, status: "pending" as const,
+  candidateId: "a", electionId: "e1", cycle: "دورة أغسطس 2026", archived: false, position: "قائد لجنة الإعلام", number: 3, status: "pending" as const,
   fileUrl: null as string | null, fileName: "خطة-الإعلام.pdf" as string | null,
   statement:
     "أسعى إلى بناء تغطيةٍ إعلاميّةٍ أسبوعيّةٍ منتظمة تُبرز أنشطة النادي وتصل إلى كلّ الأعضاء عبر قنواتٍ متجدّدة. لديّ خبرةُ عامين في إدارة المحتوى، وأخطّط لفريقٍ صغيرٍ يغطّي الفعاليّات ويُصدر نشرةً شهريّة.",
@@ -131,7 +132,7 @@ export default function CandidacyStatesLab() {
               </div>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <Scales size={18} style={{ color: "var(--steel-600)", flex: "none", marginTop: 2 }} />
-                <span className="txt">وأخواه بابان مستقلّان: <b>الترشُّح</b> يظهر بإشارة canRun (انتخابٌ مفتوحٌ لم تقدّم له)، و<b>التصويت</b> بإشارة canVote (تصويتٌ مفتوحٌ لم تُدلِ فيه).</span>
+                <span className="txt">وأخواه بابان مستقلّان: <b>الترشُّح</b> يظهر بإشارة canRun (انتخابٌ مفتوحٌ لم تقدّم له)، و<b>التصويت</b> بإشارة canVote (تصويتٌ مفتوحٌ في نطاقك، أدليتَ فيه أو لم تُدلِ).</span>
               </div>
             </div>
           </CardBody>

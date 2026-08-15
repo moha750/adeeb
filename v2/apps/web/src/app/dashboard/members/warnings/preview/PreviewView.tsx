@@ -7,7 +7,7 @@ import { Warning } from "@/app/_components/glyphs";
 import { WARNING_CATEGORIES, warningTitle } from "@/lib/warnings/vocab";
 import { renderWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage, type WarningLetter } from "@/lib/warnings/message";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 
 /**
  * عيّنةٌ ثابتة — **اسمٌ متخيَّل** لا عضوٌ حقيقيّ (كعيّنات معرض المكوّنات)، فالمعاينة تُقرأ
@@ -73,13 +73,7 @@ export function PreviewView() {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf="معاينة الخطاب" />
-          <h1>معاينة الخطاب</h1>
-        </div>
-        <Badge tone="info" variant="soft" icon={<ShieldWarning />}>عيّنةٌ لا سجلّ</Badge>
-      </div>
+      <PageHeader title="معاينة الخطاب" status={<Badge tone="info" variant="soft" icon={<ShieldWarning />}>عيّنةٌ لا سجلّ</Badge>} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ بالرسّام نفسه الذي يعمل عند الإصدار، على قالبك، والاسم والسبب عيّنةٌ متخيَّلة.

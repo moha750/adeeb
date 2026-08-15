@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Alert, Button } from "@adeeb/design-system";
-import { CheckCircle, PencilSimple, Scales } from "@phosphor-icons/react";
+import { Scales } from "@phosphor-icons/react";
+import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { TermsGate } from "../_member/TermsGate";
 import { OpportunityCard } from "../_member/OpportunityCard";

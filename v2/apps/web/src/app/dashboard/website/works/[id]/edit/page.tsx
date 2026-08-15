@@ -5,7 +5,7 @@ import { WorkForm } from "../../WorkForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../../_components/PageHeader";
 
 export default async function EditWorkPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/works");
@@ -19,12 +19,7 @@ export default async function EditWorkPage({ params }: { params: Promise<{ id: s
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb leaf="تحرير" />
-            <h1>تحرير العمل</h1>
-          </div>
-        </div>
+        <PageHeader title="تحرير العمل" crumbLeaf="تحرير" />
         <Alert tone="warning" title="تعذّر جلب العمل">{error}</Alert>
       </>
     );

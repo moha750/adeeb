@@ -10,6 +10,8 @@
  */
 import "server-only";
 import { AwsClient } from "aws4fetch";
+import { UPLOAD_RULES } from "@/lib/upload";
+import type { AudioVariant } from "@/app/dashboard/radio/vocab";
 
 const ACCOUNT = process.env.R2_ACCOUNT_ID?.trim();
 const ACCESS_KEY = process.env.R2_ACCESS_KEY_ID?.trim();
@@ -61,11 +63,16 @@ export const showLogoKey = (showId: string, ext: string) => `shows/${showId}/log
 /** شعارُ المحطّة — واحدٌ للإذاعة كلِّها، فلا معرّفَ في مساره. */
 export const stationLogoKey = (ext: string) => `station/logo-${stamp()}.${ext}`;
 /**
- * للحلقة نسختان في المخزن، والنسخةُ جزءٌ من المفتاح لا لاحقةٌ تُلصق —
- * فلا يدهس رفعُ إحداهما أختَها، ويكشف المفتاحُ وحدَه ما يحمله.
+ * للحلقة مساران في المخزن، والمسارُ جزءٌ من المفتاح لا لاحقةٌ تُلصق —
+ * فلا يدهس رفعُ أحدهما أخاه، ويكشف المفتاحُ وحدَه ما يحمله.
+ *
+ * **وفيه بصمةُ اللحظة كما في الشعار**: كان المفتاحُ ثابتًا، فاستبدالُ مسارٍ
+ * يكتب فوق الكائن نفسِه ويبقى الرابطُ كما هو، فيقول النظام «رُفع» ويبثّ
+ * المتصفّحُ (أو حافّةُ المخزن) القديمَ من مخزونه. وهو العيبُ نفسُه الذي شُخّص
+ * في الشعار أعلاه، وسببُه واحد.
  */
-export const episodeAudioKey = (showId: string, episodeId: string, variant: "music" | "plain", ext: string) =>
-  `shows/${showId}/episodes/${episodeId}/audio-${variant}.${ext}`;
+export const episodeAudioKey = (showId: string, episodeId: string, variant: AudioVariant, ext: string) =>
+  `shows/${showId}/episodes/${episodeId}/audio-${variant}-${stamp()}.${ext}`;
 /** كلّ وسائط البرنامج تحت بادئةٍ واحدة — فحذفه يمسحها دفعةً. */
 export const showPrefix = (showId: string) => `shows/${showId}/`;
 export const episodePrefix = (showId: string, episodeId: string) =>
@@ -88,8 +95,8 @@ export const IMAGE_EXT: Record<string, string> = {
 };
 
 /** سقفٌ تطبيقيّ يصدّ الرفعة الخاطئة (ملفّ WAV مثلًا) — لا يقيّد طول الحلقة. */
-export const AUDIO_MAX_BYTES = 150 * 1024 * 1024;
-export const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+export const AUDIO_MAX_BYTES = UPLOAD_RULES.radioAudio.maxBytes;
+export const IMAGE_MAX_BYTES = UPLOAD_RULES.radioLogo.maxBytes;
 
 /* ══ العمليّات ══════════════════════════════════════════════════════ */
 

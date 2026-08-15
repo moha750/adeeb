@@ -1,5 +1,5 @@
 import { Alert } from "@adeeb/design-system";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "./PageHeader";
 
 /**
  * حالة «التبويب تحت الصيانة» — تُعرَض **مكان** محتوى التبويب فتحجبه (لا شيء خلفها)، وبلا إغلاق.
@@ -11,12 +11,7 @@ import { Breadcrumb } from "../_shell/Breadcrumb";
 export function Maintenance({ title }: { title: string }) {
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>{title}</h1>
-        </div>
-      </div>
+      <PageHeader title={title} />
       <Alert tone="warning" title="التبويب تحت الصيانة">
         نعمل على تجهيز هذا التبويب، وسيعود قريبًا بإذن الله.
       </Alert>

@@ -8,9 +8,9 @@ import {
 } from "@phosphor-icons/react";
 import { CheckCircle } from "@/app/_components/glyphs";
 import {
-  Trash, Warning, PencilSimple, Star, XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, Prohibit,
-  WarningCircle,
+  Trash, Warning, PencilSimple, Star, Prohibit, WarningCircle,
 } from "@/app/_components/glyphs";
+import { XLogo, InstagramLogo, TiktokLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { ConfirmDialog } from "../../dashboard/_components/ConfirmDialog";
 import { Avatar } from "../../dashboard/_components/Avatar";
 

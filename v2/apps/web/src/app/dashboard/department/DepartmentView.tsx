@@ -10,7 +10,7 @@ import { Committee } from "../members/structure/tree";
 import { MembersView } from "../members/MembersView";
 import type { MemberRow } from "../members/data";
 import type { CommitteeNode } from "../members/structure/model";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * «قسمي» — شاشة **منسّق القسم**، وهي **عرضٌ محض** (20260801): لجانُ قسمه، وقيادةُ كلٍّ
@@ -56,12 +56,7 @@ export function DepartmentView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={name} />
-          <h1>{name}</h1>
-        </div>
-      </div>
+      <PageHeader title={name} crumbLeaf={name} />
 
       <div className="stat-grid">
         <Stat icon={<Buildings />} value={committees.length} label="لجنة في قسمك" tone="brand" />

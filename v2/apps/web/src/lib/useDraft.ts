@@ -43,6 +43,7 @@ export function useDraft(key: string | null, value: string | null, baseline = ""
 
   useEffect(() => {
     if (!key || value === null) return;
+    // لا يُخزَّن فارغٌ ولا نسخةٌ ممّا عند الخادم (`baseline`): المسوّدةُ ما زاد عن المحفوظ لا صداه
     timer.current = setTimeout(() => write(PREFIX + key, value.trim() && value !== baseline ? value : ""), HUSH);
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [key, value, baseline]);

@@ -3,6 +3,7 @@ import {
   CalendarCheck, Compass, Fire, GraduationCap, InstagramLogo, LinkedinLogo,
   Medal as MedalIcon, Megaphone, Repeat, Ticket, TiktokLogo, XLogo,
 } from "@phosphor-icons/react/dist/ssr";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { fmtDateOnly, fmtDate } from "@/lib/date";
 import { formatDegree, SOCIAL_KEYS, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
@@ -10,25 +11,28 @@ import { positionLine } from "@/lib/positionLabel";
 import { ShareBar } from "./ShareBar";
 import type { PublicProfile } from "./data";
 
+/* glyph-weight: XLogo InstagramLogo TiktokLogo LinkedinLogo Medal — **معلَّقٌ ينتظر كلمةَ المالك.**
+   هذه الشاشةُ تكتب `fill` بيدها لأسماءَ مستثناةٍ وزنُها `bold`، ولأوسمةٍ خارج القائمة أصلًا.
+   فإمّا ترجع إلى وزنها من المصدر، وإمّا يدخل قرارُ «الوسامُ مصمت» القانونَ نفسَه. */
 /**
  * أيقونةُ الوسام تأتي اسمًا من القاعدة، وتُحلّ ههنا في خريطةٍ صريحة.
  * ولا تُستدعى ديناميكيًّا: الاستدعاءُ الديناميكيّ يجرّ حزمةَ الأيقونات كلَّها إلى الصفحة.
  */
 const BADGE_ICONS: Record<string, React.ReactNode> = {
-  CalendarCheck: <CalendarCheck weight="fill" />,
-  Compass: <Compass weight="fill" />,
-  Megaphone: <Megaphone weight="fill" />,
-  Ticket: <Ticket weight="fill" />,
-  Repeat: <Repeat weight="bold" />,
-  Fire: <Fire weight="fill" />,
+  CalendarCheck: <CalendarCheck weight={ICON_WEIGHT} />,
+  Compass: <Compass weight={ICON_WEIGHT} />,
+  Megaphone: <Megaphone weight={ICON_WEIGHT} />,
+  Ticket: <Ticket weight={ICON_WEIGHT} />,
+  Repeat: <Repeat weight={ICON_WEIGHT} />,
+  Fire: <Fire weight={ICON_WEIGHT} />,
 };
 
 /** أيقونةُ كلّ منصّة. أمّا الرابطُ والتسميةُ فمن `membershipFields` مصدرًا واحدًا. */
 const SOCIAL_ICONS: Record<SocialKey, React.ReactNode> = {
-  twitter: <XLogo weight="fill" />,
-  instagram: <InstagramLogo weight="fill" />,
-  tiktok: <TiktokLogo weight="fill" />,
-  linkedin: <LinkedinLogo weight="fill" />,
+  twitter: <XLogo weight={ICON_WEIGHT} />,
+  instagram: <InstagramLogo weight={ICON_WEIGHT} />,
+  tiktok: <TiktokLogo weight={ICON_WEIGHT} />,
+  linkedin: <LinkedinLogo weight={ICON_WEIGHT} />,
 };
 
 /** «منذ ٩ أشهر» — مدّةُ الخدمة تُقال بالسنة والشهر لا بعدد الأيّام. */
@@ -90,7 +94,7 @@ export function ProfileView({ me }: { me: PublicProfile }) {
               {earned.map((b) => (
                 <Medal
                   key={b.key}
-                  icon={BADGE_ICONS[b.icon] ?? <MedalIcon weight="fill" />}
+                  icon={BADGE_ICONS[b.icon] ?? <MedalIcon weight={ICON_WEIGHT} />}
                   name={b.name}
                   note={b.evidence ?? b.how}
                   earnedOn={fmtDate(b.earnedAt)}
@@ -99,7 +103,7 @@ export function ProfileView({ me }: { me: PublicProfile }) {
               {locked.map((b) => (
                 <Medal
                   key={b.key}
-                  icon={BADGE_ICONS[b.icon] ?? <MedalIcon weight="fill" />}
+                  icon={BADGE_ICONS[b.icon] ?? <MedalIcon weight={ICON_WEIGHT} />}
                   name={b.name}
                   note={b.how}
                   progress={b.current != null && b.threshold != null ? { current: b.current, threshold: b.threshold } : null}
@@ -113,7 +117,7 @@ export function ProfileView({ me }: { me: PublicProfile }) {
       {/* الدراسةُ والوصل: يكتبهما صاحبُهما، فلا يظهر منهما إلّا ما كتب */}
       {study.length || links.length ? (
         <Card>
-          <CardHeader variant="soft" icon={<GraduationCap aria-hidden />} title="عنه" subtitle="ما اختار أن يُعرَف به" />
+          <CardHeader variant="soft" icon={<GraduationCap weight={ICON_WEIGHT} aria-hidden />} title="عنه" subtitle="ما اختار أن يُعرَف به" />
           <CardBody>
             <div className="flex flex-col gap-4">
               {study.length ? (

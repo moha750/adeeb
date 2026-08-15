@@ -18,7 +18,7 @@ import { certDate } from "@/lib/certificates/text";
 import { revokeCertificate } from "./actions";
 import { IssueCertificateModal } from "./IssueCertificateModal";
 import type { CertificateRow, CertificatesData } from "./data";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 /**
  * **شهادات الخبرة** — غرفةُ من يُصدرها: رئيس النادي · رئيس التنفيذيّ · قائد الموارد.
@@ -181,13 +181,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>شهادات الخبرة</h1>
-        </div>
-        <Badge tone="info" variant="soft" icon={<Certificate />}>{rows.length} شهادة</Badge>
-      </div>
+      <PageHeader title="شهادات الخبرة" status={<Badge tone="info" variant="soft" icon={<Certificate />}>{rows.length} شهادة</Badge>} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<SealCheck />} value={stats.valid} label="شهادات سارية" />

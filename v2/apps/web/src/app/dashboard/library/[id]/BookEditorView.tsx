@@ -26,6 +26,10 @@ import {
   createPageUploadUrl, addPage, renamePage, deletePage, setPageHard, setCoverPage, reorderPages, setBookStatus,
 } from "../actions";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+
+// وصفةُ صفحة الكتاب من قانون المرفقات (`lib/upload`)
+const PAGE_RULE = UPLOAD_RULES.libraryPage;
 
 const BUCKET = "library";
 
@@ -106,9 +110,16 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
   /** رفع دفعة صور مباشرةً إلى التخزين عبر Signed URL، بأرقام صفحات متتالية مُوزَّعة سلفًا. */
   const onFiles = async (list: FileList | null) => {
     if (!list || list.length === 0 || uploading > 0) return;
-    const files = Array.from(list).filter((f) => /^image\/(webp|jpe?g|png)$/.test(f.type));
-    if (files.length === 0) { toast.error("اختر صور صفحات (WEBP، JPG، PNG)."); return; }
+    // كلُّ صفحةٍ تمرّ على بوّابة قانون المرفقات (`lib/upload`)، والمرفوضةُ تُسمّى باسمها
+    const files: File[] = [];
+    for (const f of Array.from(list)) {
+      const why = checkFile(f, PAGE_RULE);
+      if (why) toast.error(`لم تُقبل «${f.name}» : ${why}`);
+      else files.push(f);
+    }
+    if (files.length === 0) return;
     const base = pages.reduce((m, p) => Math.max(m, p.pageNumber), 0);
+    let done = 0;
     setUploading(files.length);
 
     let i = 0;
@@ -128,6 +139,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
             const np = added.page;
             setPages((prev) => [...prev, { id: np.id, url: np.url, pageNumber: np.pageNumber, label: null, isHard: false, isCover: false }]
               .sort((a, b) => a.pageNumber - b.pageNumber));
+            done += 1;
           } else toast.error(added.message);
         } finally {
           setUploading((u) => u - 1);
@@ -135,6 +147,8 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
       }
     };
     await Promise.all(Array.from({ length: Math.min(3, files.length) }, worker));
+    // خبرُ النجاح يُقال ولو ظهرت الصفحاتُ في الشبكة: الرفعُ فعلٌ طويل، وخبرُه يُنهيه
+    if (done > 0) toast.success(done === 1 ? "أُضيفت صفحة." : `أُضيفت ${done} صفحة.`);
     router.refresh();
   };
 
@@ -234,7 +248,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
           <UploadSimple size={18} />اختر الصفحات
         </Button>
         {uploading > 0 ? <div className="text-content-muted text-sm">يُرفع <b className="num">{uploading}</b>…</div> : null}
-        <input ref={fileRef} type="file" accept="image/webp,image/jpeg,image/png" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
+        <input ref={fileRef} type="file" accept={PAGE_RULE.accept} multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
       </div>
 
       <div className="mt-4">

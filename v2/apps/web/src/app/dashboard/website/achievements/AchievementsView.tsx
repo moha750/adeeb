@@ -19,7 +19,7 @@ import { formatThousands as fmt } from "@/app/_components/format";
 import type { AchievementRow } from "./data";
 import { AchievementCard } from "./AchievementCard";
 import { deleteAchievement, moveAchievement } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export function AchievementsView({ items }: { items: AchievementRow[] }) {
   const toast = useToast();
@@ -84,13 +84,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>ملخص المسيرة</h1>
-        </div>
-        {createBtn}
-      </div>
+      <PageHeader title="ملخص المسيرة" primary={{ label: "إحصائيّة جديدة", icon: <Plus size={18} />, href: "/dashboard/website/achievements/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ChartBar />} value={items.length} label="إحصاءات في الملخّص" />

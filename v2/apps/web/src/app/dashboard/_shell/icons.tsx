@@ -2,16 +2,18 @@
 import {
   Buildings, IdentificationBadge, MicrophoneStage, Newspaper, UsersThree, ClipboardText, FileText,
   CalendarBlank, Globe, Gear, Bell, Lifebuoy, List, SidebarSimple, ChartLineUp, Scales, BookOpen,
-  SignOut, ImagesSquare, ChartBar, Handshake, Question, UserCheck, HourglassMedium, Prohibit, Cake,
+  ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Checks,
+  PenNib, ClockCounterClockwise,
 } from "@phosphor-icons/react";
-import { CaretDown, CaretRight, CaretDoubleRight, Plus } from "@/app/_components/glyphs";
+import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
 // بلا `weight`: الوزن من سياق الجذر (`IconDefaults`) أو من قائمة المستثنَين (`glyphs`) —
 // لا تكتبه شاشةٌ ولا بندُ خريطة. وأيقوناتُ الوجهات هنا **معنًى** فتبقى duotone، وشيفروناتُها
 // و«إجراء سريع» **إشاراتٌ وأفعال** فتُستورد من قائمة الاستثناء.
+// **والقائمةُ تغلب حتى على وجهة:** ما أفسده الوزنُ المزدوج يخرج منه أينما وقع — `IconBallot`
+// (`Checks`) و`IconLogout` (`SignOut`) طبقتُهما الخافتة **لوحٌ مصمتٌ يملأ الإطار** لا شكلُ الرمز.
 type P = { className?: string };
 
 // عضويتي — بطاقة الهويّة: عضويّة صاحب الجلسة نفسه (حلّت محلّ بيت «نظرة عامة»)

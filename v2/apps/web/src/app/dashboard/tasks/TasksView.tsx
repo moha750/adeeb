@@ -11,10 +11,10 @@ import { PencilSimple, Plus } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
-import { Breadcrumb } from "../_shell/Breadcrumb";
 import { MARKABLE, STATE_META, STATUS_META } from "./vocab";
 import type { ManagedTask, MyTaskRow, TaskState, TasksData } from "./data";
 import { assignTask, createTask, markTask, setTaskStatus, submitTask, unassignTask } from "./actions";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * غرفةُ المهامّ — **وجهان بقفلٍ واحد**: «ما كُلِّفتُ به» يراه كلُّ من له منصب، و«مهامّ لجنتي»
@@ -41,13 +41,7 @@ export function TasksView({ data }: { data: TasksData }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>مهامّي</h1>
-        </div>
-        {data.canManage ? null : <Badge tone="info" variant="soft">ما كُلِّفتَ به</Badge>}
-      </div>
+      <PageHeader title="مهامّي" status={data.canManage ? null : <Badge tone="info" variant="soft">ما كُلِّفتَ به</Badge>} />
 
       {data.error ? <Alert tone="warning" title="تعذّر جلب المهامّ">{data.error}</Alert> : null}
 

@@ -16,7 +16,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { FaqRow } from "./data";
 import { FaqCard } from "./FaqCard";
 import { deleteFaq, moveFaq } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export function FaqView({ faqs }: { faqs: FaqRow[] }) {
   const toast = useToast();
@@ -80,13 +80,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الأسئلة الشائعة</h1>
-        </div>
-        {createBtn}
-      </div>
+      <PageHeader title="الأسئلة الشائعة" primary={{ label: "سؤال جديد", icon: <Plus size={18} />, href: "/dashboard/website/faq/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Question />} value={faqs.length} label="أسئلة منشورة" />

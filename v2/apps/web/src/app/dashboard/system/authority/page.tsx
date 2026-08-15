@@ -2,15 +2,10 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getAuthority } from "./data";
 import { AuthorityBoard } from "./AuthorityBoard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>لوحة السلطة</h1>
-    </div>
-  </div>
+  <PageHeader title="لوحة السلطة" />
 );
 
 /**

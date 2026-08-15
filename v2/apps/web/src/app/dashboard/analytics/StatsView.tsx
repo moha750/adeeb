@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, HeatGrid, type BarItem } from "@adeeb/design-system";
-import { Users, Timer, Globe, Robot, DeviceMobile, MapPin, UserPlus, Clock, SignOut } from "@phosphor-icons/react";
-import { Eye } from "@/app/_components/glyphs";
+import { Users, Timer, Globe, Robot, DeviceMobile, MapPin, UserPlus, Clock } from "@phosphor-icons/react";
+import { Eye, SignOut } from "@/app/_components/glyphs";
 import { ArrowUUpLeft, ArrowBendUpLeft } from "@/app/_components/glyphs";
 import { deviceName } from "@/lib/devices";
 import { CountryFlag, cityName, cityOf, countryName } from "@/lib/geo";

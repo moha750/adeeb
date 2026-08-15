@@ -4,7 +4,7 @@ import { WorksView } from "./WorksView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export default async function WorksPage() {
   const denied = await denyUnless("/dashboard/website/works");
@@ -17,12 +17,7 @@ export default async function WorksPage() {
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb />
-            <h1>معرض الأعمال</h1>
-          </div>
-        </div>
+        <PageHeader title="معرض الأعمال" />
         <Alert tone="warning" title="تعذّر جلب الأعمال">{error}</Alert>
       </>
     );

@@ -1,15 +1,10 @@
 import { Alert } from "@adeeb/design-system";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 // المسار من الخريطة لا من وسيط: الرأسُ يُعرَض على `/news` وعلى `/news/[id]` معًا، والورقةُ
 // المسمّاة تكرّر «الأخبار» مرّتين في الثاني — فتُترَك، فيقف البندُ نفسُه ورقةً.
 export const NewsHead = () => (
-  <div className="ash-phead">
-    <div>
-      <Breadcrumb />
-      <h1>غرفة تحرير أدِيب</h1>
-    </div>
-  </div>
+  <PageHeader title="غرفة تحرير أدِيب" />
 );
 
 /**

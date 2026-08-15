@@ -32,6 +32,10 @@ import {
   setCover, setNewsStatus, submitForReview, toggleFeatured,
 } from "../actions";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+
+// وصفةُ صور الأخبار من قانون المرفقات (`lib/upload`)
+const IMAGE_RULE = UPLOAD_RULES.newsImage;
 
 const dt = (s: string | null) =>
   s ? new Intl.DateTimeFormat("ar-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(new Date(s)) : "—";
@@ -125,6 +129,9 @@ export function NewsEditorView({
   const onCover = async (list: FileList | null) => {
     const file = list?.[0];
     if (!file) return;
+    // بوّابةُ قانون المرفقات قبل الشبكة (`lib/upload`)
+    const why = checkFile(file, IMAGE_RULE);
+    if (why) { toast.error(why); return; }
     setUploading((u) => u + 1);
     const ok = await upload(file, "cover");
     setUploading((u) => u - 1);
@@ -133,8 +140,14 @@ export function NewsEditorView({
 
   const onGallery = async (list: FileList | null) => {
     if (!list?.length) return;
-    const files = Array.from(list).filter((x) => /^image\/(webp|jpe?g|png)$/.test(x.type));
-    if (!files.length) { toast.error("اختر صورًا (WEBP، JPG، PNG)."); return; }
+    // كلُّ صورةٍ تمرّ على البوّابة نفسِها، والمرفوضةُ تُسمّى باسمها لا تُبتلَع صامتة
+    const files: File[] = [];
+    for (const x of Array.from(list)) {
+      const why = checkFile(x, IMAGE_RULE);
+      if (why) toast.error(`لم تُقبل «${x.name}» : ${why}`);
+      else files.push(x);
+    }
+    if (!files.length) return;
     setUploading((u) => u + files.length);
     let done = 0;
     // تسلسلًا لا توازيًا: المصفوفتان (صورٌ ومصوّرون) تُقرآن وتُكتبان معًا، والتوازي يفقد صفًّا.
@@ -350,7 +363,7 @@ export function NewsEditorView({
                   <UploadSimple size={18} />رفع الغلاف
                 </Button>} />
             ) : <p className="text-content-muted">لا غلاف، ولم تُكلَّف برفعه.</p>}
-            <input ref={coverInput} type="file" accept="image/webp,image/jpeg,image/png" hidden
+            <input ref={coverInput} type="file" accept={IMAGE_RULE.accept} hidden
               onChange={(e) => { onCover(e.target.files); e.target.value = ""; }} />
           </section>
 
@@ -380,7 +393,7 @@ export function NewsEditorView({
                 <Images size={18} />إضافة صور
               </Button>
             ) : null}
-            <input ref={galleryInput} type="file" accept="image/webp,image/jpeg,image/png" multiple hidden
+            <input ref={galleryInput} type="file" accept={IMAGE_RULE.accept} multiple hidden
               onChange={(e) => { onGallery(e.target.files); e.target.value = ""; }} />
           </section>
         </div>

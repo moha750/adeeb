@@ -1,30 +1,55 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
-import { Prohibit } from "@phosphor-icons/react";
-import { ConfirmDialog } from "../../_components/ConfirmDialog";
-import { useToast } from "../../_components/ToastProvider";
+import { Alert, Badge, Button, ModalSectionHeading } from "@adeeb/design-system";
+import { Archive, Clock, FlagCheckered, Scales, Trophy } from "@phosphor-icons/react";
+import { PencilSimple, Prohibit, XCircle } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
-import { CandidacyJourney } from "../_member/CandidacyJourney";
-import { withdrawCandidacy } from "../actions";
-import type { CandidacyJourney as CJ } from "../member-data";
+import { OpportunityCard } from "../_member/OpportunityCard";
+import type { CandidacyJourney as CJ, RecordTone } from "../member-data";
 
-/** باب «سِجلّ ترشُّحي» — كلُّ ترشّحٍ رحلةً كاملة، والتعديلُ/السحبُ في محطّته الحاليّة (بحسب ما يُتاح). */
+/**
+ * باب «سِجلّ ترشُّحي» — **كشفٌ ثمّ صفحة**: كلُّ ترشّحٍ كرتٌ بلغة بابَي «الترشُّح» و«التصويت»
+ * نفسِها (`OpportunityCard`)، والدخولُ إلى صفحته `‎/my/[electionId]` حيث الرحلةُ والبيانُ
+ * والتحكّم. وقسمان لا واحد: **القائم الآن** (ينتظر منك أو ينتظر نتيجتَه) و**المؤرشف**
+ * (استقرّ مآلُه) — فلا يزاحم المنقضي ما يطلب فعلَك.
+ *
+ * والكرتُ يقول حالَه ثلاثًا: نغمةُ سطحِه، وشارتُه، وأيقونةُ مآله — فيُعرَف قبل أن يُقرأ.
+ * وسبَبُ هجرِ السرد الكامل في الكشف أنّ سبعةَ ترشّحاتٍ كانت سبعةَ أقسامٍ متساويةِ الوزن
+ * في تمريرٍ طويل، لا مدخلَ لها ولا مرساةَ زمن.
+ */
+
+const iconOf = (c: CJ) =>
+  c.statusLabel === "فائز" ? <Trophy /> :
+  c.statusLabel === "مرفوض" ? <XCircle /> :
+  c.statusLabel === "منسحب" ? <Prohibit /> :
+  c.statusLabel === "لم يُوفَّق" ? <FlagCheckered /> :
+  c.statusLabel === "يحتاج تعديلًا" ? <PencilSimple /> :
+  c.statusLabel === "معتمَد" ? <Scales /> : <Clock />;
+
+/** نغمةُ الكرت من نغمة الحال — و«info» تصير `brand` (الكروت بلا نغمةٍ بهذا الاسم). */
+const cardTone = (t: RecordTone) => (t === "info" ? "brand" : t);
+
 export function MyCandidaciesView({ items, error }: { items: CJ[]; error: string | null }) {
-  const toast = useToast();
   const router = useRouter();
-  const [pending, start] = useTransition();
-  const [withdraw, setWithdraw] = useState<CJ | null>(null);
+  const live = items.filter((c) => !c.archived);
+  const past = items.filter((c) => c.archived);
 
-  const doWithdraw = () => {
-    if (!withdraw) return;
-    start(async () => {
-      const r = await withdrawCandidacy(withdraw.candidateId);
-      if (r.ok) { toast.success(r.message); setWithdraw(null); router.refresh(); } else toast.error(r.message);
-    });
-  };
+  const card = (c: CJ) => (
+    <OpportunityCard
+      key={c.candidateId}
+      tone={cardTone(c.statusTone)}
+      icon={iconOf(c)}
+      badge={<Badge tone={c.statusTone} dot>{c.statusLabel}</Badge>}
+      title={c.position}
+      subtitle={c.cycle}
+      action={
+        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/elections/my/${c.electionId}`)}>
+          عرض الترشّح
+        </Button>
+      }
+    />
+  );
 
   return (
     <>
@@ -32,31 +57,24 @@ export function MyCandidaciesView({ items, error }: { items: CJ[]; error: string
 
       {error ? <Alert tone="warning" title="تعذّر جلب ترشّحاتك">{error}</Alert> : null}
       {!error && items.length === 0 ? (
-        <Alert tone="info" title="لا ترشّحات بعد">حين تترشّح لانتخابٍ، تظهر هنا رحلتُه: حالتُه وبيانُه وخطُّ أحداثه.</Alert>
+        <Alert tone="info" title="لا ترشّحات بعد">حين تترشّح لانتخابٍ، يظهر هنا كرتُه: حالُه، وبابُه إلى رحلته وبيانك.</Alert>
       ) : null}
 
       <div className="mpage">
-        {items.map((c) => (
-          <CandidacyJourney
-            key={c.candidateId}
-            c={c}
-            onEdit={() => router.push(`/dashboard/elections/my/${c.electionId}`)}
-            onWithdraw={() => setWithdraw(c)}
-          />
-        ))}
-      </div>
+        {live.length > 0 ? (
+          <>
+            <ModalSectionHeading icon={<Scales />} title="القائم الآن" />
+            <div className="opp-grid">{live.map(card)}</div>
+          </>
+        ) : null}
 
-      <ConfirmDialog
-        open={withdraw !== null}
-        onClose={() => setWithdraw(null)}
-        tone="danger"
-        icon={<Prohibit weight="bold" />}
-        title="سحب الترشّح؟"
-        text={withdraw ? `سيُسحب ترشّحك في «${withdraw.position}» نهائيًّا في هذه الدورة.` : undefined}
-        confirmLabel="نعم، اسحب"
-        loading={pending}
-        onConfirm={doWithdraw}
-      />
+        {past.length > 0 ? (
+          <>
+            <ModalSectionHeading icon={<Archive />} title="المؤرشف" />
+            <div className="opp-grid">{past.map(card)}</div>
+          </>
+        ) : null}
+      </div>
     </>
   );
 }

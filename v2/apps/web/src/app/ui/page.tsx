@@ -4,7 +4,7 @@ import { Container } from "@adeeb/design-system";
 const GROUPS: { title: string; pages: [string, string][] }[] = [
   {
     title: "الأسس",
-    pages: [["tokens", "الرموز والألوان"], ["ambient", "خلفيّة الشفق"]],
+    pages: [["tokens", "الرموز والألوان"], ["ambient", "خلفيّة الشفق"], ["icons", "أوزان الأيقونات"]],
   },
   {
     title: "هيكل الصفحة",

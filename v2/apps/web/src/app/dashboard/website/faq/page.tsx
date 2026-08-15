@@ -4,7 +4,7 @@ import { FaqView } from "./FaqView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export default async function FaqPage() {
   const denied = await denyUnless("/dashboard/website/faq");
@@ -17,12 +17,7 @@ export default async function FaqPage() {
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb />
-            <h1>الأسئلة الشائعة</h1>
-          </div>
-        </div>
+        <PageHeader title="الأسئلة الشائعة" />
         <Alert tone="warning" title="تعذّر جلب الأسئلة">{error}</Alert>
       </>
     );

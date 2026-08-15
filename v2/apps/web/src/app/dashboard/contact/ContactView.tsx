@@ -11,11 +11,11 @@ import { Pagination } from "../_components/Pagination";
 import { Avatar } from "../_components/Avatar";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
-import { Breadcrumb } from "../_shell/Breadcrumb";
 import { fmtDate } from "@/lib/date";
 import { CONTACT_STATUSES, statusLabel, statusTone } from "@/lib/contact/vocab";
 import { saveContactNotes, sendContactReply, setContactStatus } from "./actions";
 import type { ContactRow } from "./data";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * **رسائل التواصل** — ما يكتبه الزائر في «تواصل معنا» بالصفحة الرئيسيّة، يصل هنا.
@@ -182,12 +182,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>رسائل التواصل</h1>
-        </div>
-      </div>
+      <PageHeader title="رسائل التواصل" />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Envelope />} value={stats.unread} label="رسائل جديدة" tone={stats.unread > 0 ? "warning" : "brand"} />

@@ -17,7 +17,7 @@ import type { MenuGroup } from "../../_components/DropdownMenu";
 import type { SponsorRow } from "./data";
 import { SponsorCard } from "./SponsorCard";
 import { deleteSponsor, moveSponsor } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 function linkLabel(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
@@ -98,13 +98,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الرعاة والشركاء</h1>
-        </div>
-        {createBtn}
-      </div>
+      <PageHeader title="الرعاة والشركاء" primary={{ label: "راعٍ جديد", icon: <Plus size={18} />, href: "/dashboard/website/sponsors/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Handshake />} value={sponsors.length} label="رعاة وشركاء" />

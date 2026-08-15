@@ -3,19 +3,20 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, FileButton, Radio, Textarea } from "@adeeb/design-system";
-import { CheckCircle, Note, Paperclip, PencilSimple, Warning } from "@phosphor-icons/react";
+import { Note, Paperclip } from "@phosphor-icons/react";
+import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
-import { formatBytesAr } from "@/lib/bytes";
+import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
 import { useDraft } from "@/lib/useDraft";
 import { resubmitCandidacy, submitCandidacy, type CandidacyFile } from "../actions";
 import { STATEMENT_MAX, STATEMENT_MIN, statementError } from "../vocab";
 import type { ApplyContext } from "../member-data";
 
-const MAX_FILE = 5 * 1024 * 1024; // ٥ ميغابايت (حدّ دلو election-files)
-const ALLOWED_MIME = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "image/png", "image/jpeg"];
+// وصفةُ المرفَق من قانون المرفقات — الحدُّ والصيغُ وجملُ الرفض هناك لا هنا (`lib/upload`)
+const FILE_RULE = UPLOAD_RULES.candidacyFile;
 
 /**
  * صفحةُ إكمال الترشّح — بيانُ الترشّح وملفُّه (والأفضليّةُ عند مقعدٍ شقيق) بمساحةٍ مريحة، بدل النافذة.
@@ -32,7 +33,8 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
   const [pending, start] = useTransition();
   const isEdit = ctx.existing !== null;
   const readOnly = isEdit && !ctx.existing!.canEdit;
-  const backHref = isEdit ? "/dashboard/elections/my" : "/dashboard/elections/run";
+  // التعديلُ جاء من صفحة الترشّح فيعود إليها، والترشّحُ الجديد من باب الترشُّح
+  const backHref = isEdit ? `/dashboard/elections/my/${ctx.electionId}` : "/dashboard/elections/run";
 
   const serverStatement = ctx.existing?.statement ?? "";
   // `null` = لم يمسّ العضو الحقلَ بعد، فالمعروضُ يُشتقّ: مسوّدتُه إن وُجدت، وإلّا ما عند الخادم
@@ -41,8 +43,6 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
   // المفضَّل مقعدٌ بعينه لا «هذا أو ذاك»: القسم قد يحمل ثلاثة مقاعد (تنسيقًا وقيادةً ونيابة).
   const [pref, setPref] = useState<string>(ctx.preferredElectionId);
   const [formErr, setFormErr] = useState<string | null>(null);
-  // عطبُ الملفّ يسكن زرَّه لا تنبيهَ النموذج: الرسالةُ عند مصدرها أقربُ لعين القارئ
-  const [fileErr, setFileErr] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -71,30 +71,25 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
   const existingFile = ctx.existing?.fileName ?? null;
   const unchanged = isEdit && file === null && statement.trim() === serverStatement.trim();
 
-  // حالُ زرّ المرفق تُشتقّ ولا تُخزَّن: رفعٌ جارٍ ← عطبٌ ← ملفٌّ حاضر ← دعوةٌ للإرفاق
-  const fileState = pending && file ? "uploading" : fileErr ? "error" : file || existingFile ? "ready" : "attach";
-  // إفراغُ الحقل مع الحالة: بلا تصفيرِ قيمته لا يُطلق `change` لو أعاد اختيار الملفّ نفسِه
-  const clearFile = () => { setFile(null); setFileErr(null); if (fileRef.current) fileRef.current.value = ""; };
+  // حالُ زرّ المرفق تُشتقّ ولا تُخزَّن: رفعٌ جارٍ ← ملفٌّ حاضر ← دعوةٌ للإرفاق
+  const fileState = pending && file ? "uploading" : file || existingFile ? "ready" : "attach";
+  // إفراغُ الحقل: بلا تصفيرِ قيمته لا يُطلق `change` لو أعاد اختيار الملفّ نفسِه
+  const clearFile = () => { setFile(null); if (fileRef.current) fileRef.current.value = ""; };
 
   /**
    * بوّابةٌ واحدةٌ للملفّ أيًّا جاء (نافذةُ الاختيار أو الإفلات) — والفحصُ هنا لا عند الإرسال
    * وحده، فالعضو يعرف عطبَ ملفّه ساعةَ اختاره لا بعد أن كتب بيانَه كلَّه.
    *
-   * **والمرفوضُ لا يهدم ما قبله**: من كان معه مرفَقٌ صالح فمحاولةٌ فاشلةٌ لا تسلبه إيّاه.
-   * ومن هنا يفترق موضعُ الرسالة: **الزرُّ يصف المرفَق، والتوستُ يصف المحاولة**. فإن لم يكن
-   * ثمّة مرفَقٌ أصلًا فالزرُّ هو صاحبُ الخبر (يحمرّ ويقول السبب)، وإن كان فالزرُّ يبقى على
-   * حقيقته ويُقال الرفضُ توستًا باسم الملفّ المرفوض — وإلّا كذبت الحمرةُ على ملفٍّ سليم.
+   * **والرفضُ إشعارٌ لا حالةٌ في الزرّ** (القاعدة ١٤): الزرُّ يبقى واصفًا لِما هو مرفَقٌ فعلًا،
+   * فلا يحمرّ على ملفٍّ سليمٍ ولا يُسلَب صاحبُه مرفَقَه لأجل محاولةٍ فاشلة. والإشعارُ يسمّي
+   * المرفوضَ باسمه كي يعرف أيَّ ملفٍّ يعني.
    */
   const acceptFile = (f: File) => {
-    const reject = (why: string) => {
-      if (file || existingFile) toast.error(`لم يُقبل «${f.name}» : ${why}`);
-      else setFileErr(why);
-    };
-    // الحجمُ يُقال بعددِه لا بحدِّه وحده: «كم زاد» هو ما يقرّر أيضغطه أم يستبدله
-    if (f.size > MAX_FILE) return reject(`حجمُه ${formatBytesAr(f.size)} والحدُّ ٥`);
-    if (f.type && !ALLOWED_MIME.includes(f.type)) return reject("نوعُه غير مسموح (PDF أو Word أو نصّ أو صورة)");
-    setFileErr(null);
+    const why = checkFile(f, FILE_RULE);
+    if (why) { toast.error(`لم يُقبل «${f.name}» : ${why}`); return; }
     setFile(f);
+    // القبولُ يُقال كما يُقال الرفض — ويُقال بصدقٍ: الملفُّ أُرفق الآن ويُرفع مع الإرسال
+    toast.success(`أُرفق «${f.name}»، ويُرفع مع إرسال ترشُّحك`);
   };
 
   // ملفٌّ يُسحَب لا نصٌّ ولا رابط — وإلّا اشتعل الزرّ لكلّ تحديدِ كلمةٍ يمرّ فوقه
@@ -148,11 +143,10 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
     if (badStatement) return setFormErr(badStatement);
     // ظهيرٌ لا بابٌ أوّل: البوّابةُ `acceptFile` لا تدع معطوبًا يصل هنا، وهذا يمسك ما شذّ
     if (file) {
-      if (file.size > MAX_FILE) return setFileErr(`حجمُه ${formatBytesAr(file.size)} والحدُّ ٥`);
-      if (file.type && !ALLOWED_MIME.includes(file.type)) return setFileErr("نوعُه غير مسموح (PDF أو Word أو نصّ أو صورة)");
+      const why = checkFile(file, FILE_RULE);
+      if (why) { toast.error(why); return; }
     }
     setFormErr(null);
-    setFileErr(null);
     if (preview) {
       toast.success("محاكاة: أُرسل البيان (لا يُحفظ فعليًّا).");
       if (!isEdit) setSent(true);
@@ -164,7 +158,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
         const sb = createClient();
         const path = `${userId}/${ctx.electionId}/${Date.now()}_${file.name.replace(/[^\w.\-]+/g, "_")}`;
         const up = await sb.storage.from("election-files").upload(path, file, { upsert: true, contentType: file.type || undefined });
-        if (up.error) { setFileErr("تعذّر رفع الملفّ، أعِد المحاولة"); return; }
+        if (up.error) { toast.error("تعذّر رفع الملفّ، أعِد المحاولة"); return; }
         meta = { url: path, name: file.name, size: file.size, mime: file.type || null };
       } else if (isEdit && ctx.existing?.fileUrl) {
         meta = { url: ctx.existing.fileUrl, name: ctx.existing.fileName ?? "ملفّ الترشّح", size: null, mime: null };
@@ -231,16 +225,15 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
                 block
                 state={fileState}
                 dragging={dragging}
-                icon={fileErr ? <Warning /> : <Paperclip />}
+                icon={<Paperclip />}
                 label={dragging ? "أفلِت الملفَّ هنا" : file ? file.name : existingFile ?? "إرفاق ملفٍّ (اختياريّ)"}
                 hint={
                   /* الحدُّ يُقال قبل الاختيار لا بعد الفشل: من عرفه سلفًا لم يُصدَم به */
-                  dragging ? "PDF أو Word أو نصّ أو صورة، حتّى ٥ ميغابايت"
+                  dragging ? attachHint(FILE_RULE)
                     : fileState === "uploading" ? "يُرفع ملفُّك الآن"
-                    : fileErr ? fileErr
                     : file ? "ملفٌّ جديد، اضغط لتغييره"
                     : existingFile ? "الملفّ الحاليّ، اضغط لتغييره"
-                    : "اضغط أو اسحب ملفَّك إلى هنا : PDF أو Word أو نصّ أو صورة، حتّى ٥ ميغابايت"
+                    : `اضغط أو اسحب ملفَّك إلى هنا : ${attachHint(FILE_RULE)}`
                 }
                 onClick={() => fileRef.current?.click()}
                 /* الإزالةُ تُعرَض لِما اختاره الآن وحده — أمّا الملفّ المحفوظ فحذفُه فعلٌ في الخادم */
@@ -250,12 +243,10 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
               <input
                 ref={fileRef}
                 type="file"
-                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                accept={FILE_RULE.accept}
                 style={{ display: "none" }}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) acceptFile(f); e.target.value = ""; }}
               />
-              {/* رسالةُ الزرّ تتبدّل صامتةً للقارئ الآليّ، فتُعلَن هنا (والتوستُ يُعلن نفسَه) */}
-              <p className="sr-only" role="status" aria-live="polite">{fileErr ?? ""}</p>
             </div>
 
             {ctx.siblings.length ? (
@@ -287,7 +278,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
         open={sent}
         onClose={() => go("/dashboard/elections/my", "سِجلّ ترشُّحي")}
         tone="success"
-        icon={<CheckCircle weight="bold" />}
+        icon={<CheckCircle />}
         title="أُرسل ترشُّحك"
         text={`بيانُك في «${ctx.position}» صار عند إدارة الموارد البشرية للمراجعة، وتتابع حالته في سِجلّ ترشُّحك.`}
         confirmLabel="سِجلّ ترشُّحي"

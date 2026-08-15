@@ -9,6 +9,8 @@ import {
 import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass, UploadSimple } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
+import { usePersistentView } from "../_components/usePersistentView";
+import { ShowCard } from "./ShowCard";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
@@ -22,16 +24,20 @@ import {
   createStationLogoUploadUrl, setStationLogo,
 } from "./actions";
 import { Breadcrumb } from "../_shell/Breadcrumb";
+import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+
+// وصفةُ شعار الإذاعة من قانون المرفقات (`lib/upload`)
+const LOGO_RULE = UPLOAD_RULES.radioLogo;
 
 type FormState = {
   title: string; slug: string; tagline: string; description: string;
-  tone: ShowTone; hostId: string; committeeId: string;
+  tone: ShowTone; hostId: string; committeeId: string; talkStart: string;
 };
 const EMPTY_FORM: FormState = {
-  title: "", slug: "", tagline: "", description: "", tone: "brand", hostId: "", committeeId: "",
+  title: "", slug: "", tagline: "", description: "", tone: "brand", hostId: "", committeeId: "", talkStart: "",
 };
 
-type StationForm = { name: string; tagline: string; description: string; talkStart: string };
+type StationForm = { name: string; tagline: string; description: string };
 
 export function RadioView({
   shows, members, committees, station,
@@ -43,6 +49,7 @@ export function RadioView({
   const [fv, setFv] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  const [view, changeView] = usePersistentView("radio-view");
 
   // نافذة البيانات: null مغلقة، كائن مفتوحة (edit=null للإنشاء)
   const [form, setForm] = useState<{ edit: ShowRow | null; state: FormState; slugTouched: boolean } | null>(null);
@@ -61,6 +68,9 @@ export function RadioView({
    */
   const onStationLogo = async (file: File | undefined) => {
     if (!file) return;
+    // بوّابةُ قانون المرفقات قبل تذكرة الرفع (`lib/upload`)
+    const why = checkFile(file, LOGO_RULE);
+    if (why) { toast.error(why); return; }
     setUploadingLogo(true);
     try {
       const ticket = await createStationLogoUploadUrl(file.type, file.size);
@@ -87,7 +97,6 @@ export function RadioView({
       name: station.name,
       tagline: station.tagline ?? "",
       description: station.description ?? "",
-      talkStart: formatTalkStart(station.talkStartsAt),
     });
     setStErr({});
   };
@@ -95,17 +104,14 @@ export function RadioView({
     if (!stForm) return;
     const errs: Partial<Record<keyof StationForm, string>> = {};
     if (!stForm.name.trim()) errs.name = "اسم المحطّة مطلوب.";
-    const talkStart = parseTalkStart(stForm.talkStart);
-    if (talkStart === null || Number.isNaN(talkStart)) errs.talkStart = "ثوانٍ ورقمٌ عشريٌّ اختياريّ، مثل 10.633.";
     setStErr(errs);
-    if (Object.keys(errs).length || talkStart === null || Number.isNaN(talkStart)) return;
+    if (Object.keys(errs).length) return;
 
     startPending(async () => {
       const r = await saveStation({
         name: stForm.name,
         tagline: stForm.tagline || null,
         description: stForm.description || null,
-        talkStartsAt: talkStart,
       });
       if (r.ok) { toast.success(r.message); setStForm(null); router.refresh(); } else toast.error(r.message);
     });
@@ -153,6 +159,7 @@ export function RadioView({
       state: {
         title: s.title, slug: s.slug, tagline: s.tagline ?? "", description: s.description ?? "",
         tone: s.tone, hostId: s.hostId, committeeId: s.committeeId ? String(s.committeeId) : "",
+        talkStart: formatTalkStart(s.talkStartsAt),
       },
     });
     setFormErr({});
@@ -174,12 +181,17 @@ export function RadioView({
     if (!s.title.trim()) errs.title = "اسم البرنامج مطلوب.";
     if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب: أحرف لاتينيّة وأرقام.";
     if (!s.hostId) errs.hostId = "اختر مقدّم البرنامج.";
+    const talkStart = parseTalkStart(s.talkStart);
+    if (talkStart === null || Number.isNaN(talkStart)) {
+      errs.talkStart = "مطلوبة: ثوانٍ مثل 10.633 أو توقيتُ المحرّر مثل 0:00:10:19.";
+    }
     setFormErr(errs);
-    if (Object.keys(errs).length) return;
+    if (Object.keys(errs).length || talkStart === null || Number.isNaN(talkStart)) return;
 
     const input = {
       title: s.title, slug: s.slug, tagline: s.tagline || null, description: s.description || null,
       tone: s.tone, hostId: s.hostId, committeeId: s.committeeId ? Number(s.committeeId) : null,
+      talkStartsAt: talkStart,
     };
     startPending(async () => {
       const r = form.edit ? await updateShow(form.edit.id, input) : await createShow(input);
@@ -297,19 +309,33 @@ export function RadioView({
         search={search} onSearch={setSearch}
         filters={filters} filterValues={fv}
         onFilter={(k, v) => setFv((p) => ({ ...p, [k]: v }))} onReset={() => setFv({})}
+        view={view} onViewChange={changeView}
       />
 
-      <DataTable
-        columns={columns}
-        rows={pageRows}
-        getRowId={(s) => s.id}
-        sort={sort}
-        onToggleSort={toggleSort}
-        emptyState={emptyState}
-        footer={pager ?? undefined}
-        rowActions={actionsFor}
-        onRowClick={openEditor}
-      />
+      {view === "table" ? (
+        <DataTable
+          columns={columns}
+          rows={pageRows}
+          getRowId={(s) => s.id}
+          sort={sort}
+          onToggleSort={toggleSort}
+          emptyState={emptyState}
+          footer={pager ?? undefined}
+          rowActions={actionsFor}
+          onRowClick={openEditor}
+        />
+      ) : rows.length === 0 ? (
+        <div className="card-empty">{emptyState}</div>
+      ) : (
+        <>
+          <div className="card-grid">
+            {pageRows.map((s) => (
+              <ShowCard key={s.id} show={s} actions={actionsFor(s)} onOpen={() => openEditor(s)} />
+            ))}
+          </div>
+          <div className="card-pager">{pager}</div>
+        </>
+      )}
 
       <Modal
         open={form !== null}
@@ -339,6 +365,21 @@ export function RadioView({
               onValueChange={(v) => patchForm({ tone: v as ShowTone })} required />
             <Select label="اللجنة المنتجة" icon={<UsersThree />} options={committeeOptions} value={form.state.committeeId}
               onValueChange={(v) => patchForm({ committeeId: v })} optional />
+            {/**
+              * بدايةُ الحديث: **إلزاميّةٌ عند إنشاء البرنامج** لا موروثةٌ من المحطّة.
+              * ويقبل الحقلُ توقيتَ المحرّر كما يُقرأ منه، فلا يُطالَب صاحبُه بحسابٍ ذهنيّ.
+              */}
+            <Field className="form-full" label="بداية الحديث" icon={<Waveform />} innerIcon={<Hash />}
+              placeholder="10:19" charset="latin"
+              value={form.state.talkStart} onChange={(e) => patchForm({ talkStart: e.target.value })}
+              error={formErr.talkStart}
+              helper={(() => {
+                const v = parseTalkStart(form.state.talkStart);
+                const read = v !== null && !Number.isNaN(v) ? ` تُقرأ ${formatTalkStart(v)}ث.` : "";
+                return `نهايةُ المقدّمة الموسيقيّة. اكتبها ثانيةً:إطارًا كما تقرؤها من المحرّر (10:19)، أو توقيتًا كاملًا (0:00:10:19)، أو ثوانيَ (10.633).${read}`;
+              })()}
+              required />
+
             <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
               placeholder="حوارٌ أسبوعيّ عن الكتابة وأهلها"
               value={form.state.tagline} onChange={(e) => patchForm({ tagline: e.target.value })} optional />
@@ -354,7 +395,7 @@ export function RadioView({
         open={stForm !== null}
         onClose={() => setStForm(null)}
         title="إعدادات المحطّة"
-        description="تعمّ الإذاعة كلَّها: اسمُها وتعريفُها، وثانيةُ بدء الحديث التي ترثها الحلقات."
+        description="تعمّ الإذاعة كلَّها: اسمُها وشعارُها وتعريفُها."
         busy={pending}
         size="md"
         footer={
@@ -384,7 +425,7 @@ export function RadioView({
                 <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
                   <UploadSimple size={18} />{station?.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
                 </Button>
-                <input ref={stLogoRef} type="file" accept="image/webp,image/jpeg,image/png" hidden
+                <input ref={stLogoRef} type="file" accept={LOGO_RULE.accept} hidden
                   onChange={(ev) => { void onStationLogo(ev.target.files?.[0]); ev.target.value = ""; }} />
               </div>
             </div>
@@ -392,12 +433,6 @@ export function RadioView({
               placeholder="إذاعة أدِيب" value={stForm.name}
               onChange={(e) => setStForm((f) => (f ? { ...f, name: e.target.value } : f))}
               error={stErr.name} required />
-            <Field className="form-full" label="بداية الحديث (ثانية)" icon={<Waveform />} innerIcon={<Hash />}
-              placeholder="10.633" charset="latin" value={stForm.talkStart}
-              onChange={(e) => setStForm((f) => (f ? { ...f, talkStart: e.target.value } : f))}
-              error={stErr.talkStart}
-              helper="نهايةُ المقدّمة الموسيقيّة. لا تمسّ دقّةَ التبديل (النسختان تايم لاينٌ واحد)، بل تمنع المستمعَ أن يجلس في صمتٍ إن بدأ بالنسخة المجرّدة."
-              required />
             <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
               placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}
               onChange={(e) => setStForm((f) => (f ? { ...f, tagline: e.target.value } : f))} optional />

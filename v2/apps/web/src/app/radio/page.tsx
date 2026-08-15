@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Container, Footer } from "@adeeb/design-system";
 import { MicrophoneStage, Play } from "@phosphor-icons/react/dist/ssr";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "../_components/SiteHeader";
-import { getLatestEpisodes, getPublicShows, getPublicStation } from "./data";
+import { getLatestEpisodes, getPublicShows, getPublicStation, isPlayable, toTrack } from "./data";
 import { EpisodeRow } from "./_player/EpisodeRow";
 import type { Track } from "./_player/PlayerProvider";
 
@@ -21,19 +22,9 @@ export default async function RadioPage() {
   ]);
 
   const tracks: Track[] = latest
-    .filter((l) => l.episode.musicUrl)
-    .map((l) => ({
-      id: l.episode.id,
-      title: l.episode.title,
-      showTitle: l.showTitle,
-      showSlug: l.showSlug,
-      episodeSlug: l.episode.slug,
-      musicUrl: l.episode.musicUrl!,
-      plainUrl: l.episode.plainUrl,
-      talkStartsAt: l.episode.talkStartsAt,
-      coverUrl: l.showLogoUrl,
-      seconds: l.episode.musicSeconds,
-      tone: l.showTone,
+    .filter((l) => isPlayable(l.episode))
+    .map((l) => toTrack(l.episode, {
+      title: l.showTitle, slug: l.showSlug, logoUrl: l.showLogoUrl, tone: l.showTone,
     }));
 
   return (
@@ -48,14 +39,14 @@ export default async function RadioPage() {
                 {station.logoUrl
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={station.logoUrl} alt="" />
-                  : <MicrophoneStage size={40} aria-hidden />}
+                  : <MicrophoneStage size={40} weight={ICON_WEIGHT} aria-hidden />}
               </div>
               <div className="rad-hero-txt">
                 <h1 className="rad-hero-name">{station.name}</h1>
                 <p className="rad-hero-deck">{station.tagline ?? "برامجُ أدِيب مسموعةً، بموسيقى أو بدونها."}</p>
                 <div className="rad-hero-cta">{tracks[0] ? (
                   <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="rad-cta">
-                    <Play size={18} weight="fill" aria-hidden />استمع لآخر حلقة
+                    <Play size={18} weight={ICON_WEIGHT} aria-hidden />استمع لآخر حلقة
                   </Link>
                 ) : null}</div>
               </div>
@@ -76,7 +67,7 @@ export default async function RadioPage() {
                         {s.logoUrl
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={s.logoUrl} alt="" />
-                          : <MicrophoneStage size={34} aria-hidden />}
+                          : <MicrophoneStage size={34} weight={ICON_WEIGHT} aria-hidden />}
                       </div>
                       <div className="rad-prog-name">{s.title}</div>
                       {s.tagline ? <div className="rad-prog-sub">{s.tagline}</div> : null}
@@ -94,7 +85,7 @@ export default async function RadioPage() {
               <>
                 <h2 className="mb-3 mt-10 font-display text-lg font-black">أحدث الحلقات</h2>
                 <div className="rad-eps">
-                  {latest.filter((l) => l.episode.musicUrl).map((l, i) => (
+                  {latest.filter((l) => isPlayable(l.episode)).map((l, i) => (
                     <EpisodeRow
                       key={l.episode.id}
                       track={tracks[i]}
@@ -102,6 +93,7 @@ export default async function RadioPage() {
                       dateLabel={l.episode.dateLabel}
                       summary={l.episode.summary}
                       showName={l.showTitle}
+                      plays={l.episode.plays}
                     />
                   ))}
                 </div>

@@ -17,13 +17,18 @@ export function formatBytes(bytes: number | null | undefined): string {
   return `${mbRounded(bytes)} م.ب`;
 }
 
+const toArabicDigits = (s: string): string =>
+  s.replace(/[0-9.]/g, (c) => (c === "." ? "٫" : "٠١٢٣٤٥٦٧٨٩"[Number(c)]));
+
 /**
  * جملةٌ منثورةٌ يقرؤها العضو — «٧٫٤ ميغابايت»: أرقامٌ عربيّة كي لا يختلط الرقمان في سطرٍ
  * واحد، والاسمُ كاملًا لا مختصرًا، وبلا صفرٍ زائدٍ بعد الفاصلة (٦ لا ٦٫٠).
+ *
+ * وما دون الميغابايت يُقال كيلوبايت: «٠٫٥ ميغابايت» رقمٌ لا يتصوّره أحد، و«٥١٢ كيلوبايت»
+ * يتصوّره كلُّ أحد (حدُّ شعار رمز QR).
  */
 export function formatBytesAr(bytes: number | null | undefined): string {
   if (!bytes || bytes <= 0) return "";
-  const n = mbRounded(bytes).replace(/\.0$/, "");
-  const arabic = n.replace(/[0-9.]/g, (c) => (c === "." ? "٫" : "٠١٢٣٤٥٦٧٨٩"[Number(c)]));
-  return `${arabic} ميغابايت`;
+  if (bytes < 1024 * 1024) return `${toArabicDigits(String(Math.round(bytes / 1024)))} كيلوبايت`;
+  return `${toArabicDigits(mbRounded(bytes).replace(/\.0$/, ""))} ميغابايت`;
 }

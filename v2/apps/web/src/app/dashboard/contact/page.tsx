@@ -1,8 +1,8 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
 import { getContactMessages } from "./data";
 import { ContactView } from "./ContactView";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * **رسائل التواصل** — الطرفُ الآخر من قسم «تواصل معنا» في الصفحة الرئيسيّة.
@@ -20,12 +20,7 @@ export default async function ContactPage() {
   if (error) {
     return (
       <>
-        <div className="ash-phead">
-          <div>
-            <Breadcrumb />
-            <h1>رسائل التواصل</h1>
-          </div>
-        </div>
+        <PageHeader title="رسائل التواصل" />
         <Alert tone="warning" title="تعذّر جلب الرسائل">{error}</Alert>
       </>
     );
