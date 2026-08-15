@@ -24,7 +24,13 @@ export type FileOpener = (path: string) => Promise<boolean>;
 
 /* ══ رأسُ الاقتراع ═══════════════════════════════════════════════════ */
 
-/** المنصبُ ومتى يُغلق البابُ ومَن يرى صوتَك : ثلاثةُ أسئلةٍ تسبق كلَّ قراءة. */
+/**
+ * المنصبُ ومتى يُغلق البابُ ومَن يرى صوتَك : ثلاثةُ أسئلةٍ تسبق كلَّ قراءة.
+ *
+ * **وشارةُ السرّيّة لمن له صوت** (قرار المالك ٢٠٢٦-٠٨-١٥): مرشّحُ المقعد الوحيد يطّلع ولا
+ * يُدلي، فوعدُ «صوتك سرّيّ» عنده كلامٌ في شيءٍ لا وجودَ له. والرأسُ يعرف حالَ المقعد من
+ * `election` نفسِه، فلا يُترَك لكلّ داعٍ أن يتذكّر إخفاءها.
+ */
 export function BallotHead({ election, extra }: { election: VoteItem; extra?: ReactNode }) {
   return (
     <div className="blt-head">
@@ -32,7 +38,7 @@ export function BallotHead({ election, extra }: { election: VoteItem; extra?: Re
           رتبةٍ واحدة، فيقعان في سطرٍ واحدٍ طرفاه، ولا يعلو أحدُهما الآخر. */}
       <div className="blt-head-row blt-head-top">
         <h2 className="blt-pos">{election.position}</h2>
-        <Badge tone="neutral" variant="soft"><LockKey size={13} />صوتك سرّيّ</Badge>
+        {election.viewOnly ? null : <Badge tone="neutral" variant="soft"><LockKey size={13} />صوتك سرّيّ</Badge>}
         {extra}
       </div>
       <div className="blt-head-row">
