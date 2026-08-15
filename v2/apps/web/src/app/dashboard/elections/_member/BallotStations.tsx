@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { Button, Card, CardBody } from "@adeeb/design-system";
 import { ArrowLeft, ArrowRight, Check, Eye } from "@/app/_components/glyphs";
-import { AbstainOption, BallotHead, ConfidenceNote, CandidateFile, CandidateMark, CandidateModal, ConfirmVote, SelfCandidateNote, SelfTag, SoleChoice, SoleSelfNote, Statement, type FileOpener } from "./ballotParts";
+import { BallotHead, ConfidenceNote, CandidateFile, CandidateMark, CandidateModal, ConfirmVote, SelfCandidateNote, SelfTag, SoleChoice, Statement, type FileOpener } from "./ballotParts";
 import type { BallotCandidate, VoteItem } from "../member-data";
 
 /**
@@ -47,7 +47,7 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
   election: VoteItem;
   candidates: BallotCandidate[];
   pending?: boolean;
-  onCast: (candidateId: string | null, choice?: "approve" | "reject" | "abstain") => void;
+  onCast: (candidateId: string, choice?: "approve" | "reject") => void;
   opener?: FileOpener;
   onFileFail?: () => void;
 }) {
@@ -58,17 +58,14 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
 
   // تزكية: مرشّحٌ وحيدٌ معتمَد، فالرأيُ فيه لا اختيارٌ بينه وبين غيره.
   const sole = candidates.length === 1 ? candidates[0] : null;
-  /** ورقةُ الناخب نفسِه إن كان مرشّحًا ههنا : تُعلَّم ولا تُختار، وبها يُعرَض عليه الامتناع. */
+  /** ورقةُ الناخب نفسِه إن كان مرشّحًا ههنا : تُعلَّم ولا تُختار (والوحيدُ لا يصل إلى بطاقته أصلًا). */
   const mine = candidates.find((c) => c.isSelf) ?? null;
-  /** الامتناعُ خيارٌ بين الخيارات، فيسكن `pick` نفسَه ولا يخترع حالةً ثانيةً تُنسى. */
-  const abstaining = pick === "abstain";
-  const chosen = sole || abstaining ? null : candidates.find((c) => c.id === pick) ?? null;
-  const ready = abstaining || (sole ? pick === "approve" || pick === "reject" : !!chosen);
+  const chosen = sole ? null : candidates.find((c) => c.id === pick) ?? null;
+  const ready = sole ? pick === "approve" || pick === "reject" : !!chosen;
 
   const seal = () => {
     setSealing(false);
-    if (abstaining) onCast(null, "abstain");
-    else if (sole) onCast(sole.id, pick as "approve" | "reject");
+    if (sole) onCast(sole.id, pick as "approve" | "reject");
     else if (chosen) onCast(chosen.id);
   };
 
@@ -79,35 +76,33 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
       onConfirm={seal}
       pending={pending}
       number={chosen ? chosen.number : null}
-      choice={abstaining ? "abstain" : sole ? (pick as "approve" | "reject") : null}
+      choice={sole ? (pick as "approve" | "reject") : null}
     />
   );
 
   /* ── التزكية: شاشةٌ واحدةٌ ثمّ ختم ───────────────────────────────── */
   if (sole) {
-    // ومرشّحُ التزكية قد يكون الناخبَ نفسَه : لا سؤالَ يُوجَّه إليه، وله بابُ الامتناع وحدَه.
-    const soleIsSelf = sole.isSelf;
+    /* **ولا يبلغها مرشّحُها**: المرشّحُ الوحيد ليس ناخبًا في مقعده (قرار المالك ٢٠٢٦-٠٨-١٥)،
+       والقاعدةُ تُسقطه من أهليّة الصوت فلا يصل هذا الفرعُ إليه أصلًا. فلا شاشةَ ثانيةً تُبنى
+       له ههنا، ولا سؤالَ يُوجَّه إلى أحدٍ عن نفسه. */
     return (
       <div className="blt">
         <BallotHead election={election} />
-        {soleIsSelf ? <SoleSelfNote /> : <ConfidenceNote />}
+        <ConfidenceNote />
         <Card>
           <CardBody className="flex flex-col gap-3">
             <div className="blt-row">
               <CandidateMark number={sole.number} />
               <span className="blt-name">المرشّح رقم {sole.number}</span>
-              {soleIsSelf ? <SelfTag /> : null}
             </div>
             <Statement text={sole.statement} defaultOpen />
             <CandidateFile candidate={sole} opener={opener} onFail={onFileFail} />
           </CardBody>
         </Card>
-        {soleIsSelf
-          ? <AbstainOption on={abstaining} onPick={() => setPick("abstain")} hint="يُسجَّل أنّك شاركت، ولا تُعَدّ غائبًا عن مقعدك" />
-          : <SoleChoice value={pick} onChange={setPick} />}
+        <SoleChoice value={pick} onChange={setPick} />
         <div className="blt-bar">
           <Button variant="primary" size="md" disabled={!ready} onClick={() => setSealing(true)}>
-            {soleIsSelf ? "أكّد امتناعي" : "أكّد صوتي"}
+            أكّد صوتي
           </Button>
         </div>
         {confirm}
@@ -190,8 +185,6 @@ export function BallotStations({ election, candidates, pending, onCast, opener, 
               </CardBody>
             </Card>
           ))}
-          {/* بابُ المرشّح الذي لا يرى في الباقين مَن يزكّيه : خيارٌ في الصندوق لا خروجٌ منه. */}
-          {mine ? <AbstainOption on={abstaining} onPick={() => setPick("abstain")} /> : null}
           <div className="blt-bar">
             <Button variant="ghost" size="md" onClick={() => setAt(0)}><ArrowRight size={16} />عودةٌ للقراءة</Button>
             <Button variant="primary" size="md" disabled={!ready} onClick={() => setSealing(true)}>أكّد صوتي</Button>

@@ -118,9 +118,11 @@ export async function getVoteElections(userId: string): Promise<MemberFetch<Vote
 /**
  * صوتُك أنت بعد ختمه — **يُرى لصاحبه وحدَه** (سياسة `votes_select_self`: `voter_id = auth.uid()`).
  * السرّيّةُ حجبُ صوتك عن غيرك لا عنك، ومن ختم بطاقتَه له أن يطمئنّ بمَن أدلى.
- * و`candidateId` فارغٌ في الامتناع.
+ *
+ * ورأيان لا ثالثَ لهما بعد نزع الامتناع (٢٠٢٦-٠٨-١٥)، وكلُّ ورقةٍ تقع على مرشّح
+ * (`candidate_id NOT NULL` في القاعدة).
  */
-export type MyVote = { candidateId: string | null; choice: "approve" | "reject" | "abstain" };
+export type MyVote = { candidateId: string; choice: "approve" | "reject" };
 
 /** حِملُ صفحة الاقتراع: المقعدُ ومرشّحوه وصوتُك إن ختمت، أو سببُ تعذّرها. */
 export type BallotContext = { ok: boolean; error: string | null; election: VoteItem | null; candidates: BallotCandidate[]; myVote: MyVote | null };
@@ -158,7 +160,7 @@ export async function getBallot(userId: string, electionId: string): Promise<Bal
       .eq("election_id", electionId)
       .eq("voter_id", userId)
       .maybeSingle();
-    if (v) myVote = { candidateId: v.candidate_id ?? null, choice: (v.vote_choice ?? "approve") as MyVote["choice"] };
+    if (v?.candidate_id) myVote = { candidateId: v.candidate_id, choice: (v.vote_choice ?? "approve") as MyVote["choice"] };
   }
 
   return { ok: true, error: null, election, candidates, myVote };

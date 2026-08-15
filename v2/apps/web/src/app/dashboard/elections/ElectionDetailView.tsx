@@ -154,12 +154,12 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     { key: "role", header: "رتبتُه حينها", width: "1.2fr", render: (v) => <span className="txt">{v.voterRole ?? "—"}</span> },
     {
       key: "candidate", header: "صوّت لـ", width: "minmax(150px, 1.6fr)",
-      // الرأيُ أوّلًا ثمّ الاسم: الامتناعُ والاعتراضُ لا مرشّحَ لهما فيُقالان بذاتهما، ويبقى
-      // «مرشّحٌ محذوف» احتياطيًّا لحالته الحقّة وحدَها (صوتٌ لمرشّحٍ مُحي ملفُّه).
+      // الاعتراضُ رأيٌ في التزكية لا صوتٌ لأحد، فيُقال بذاته. و«مرشّحٌ محذوف» لحالته الحقّة
+      // وحدَها: صوتٌ قائمٌ لمرشّحٍ مُحي ملفُّه (والورقةُ الفارغة لم تعد ممكنة).
       render: (v) => (
         <span className="txt">
-          {v.choice === "reject" ? <Badge tone="danger" variant="soft" dot>اعتراض على التزكية</Badge>
-            : v.choice === "abstain" ? <Badge tone="warning" variant="soft" dot>امتناع</Badge>
+          {v.choice === "reject"
+            ? <Badge tone="danger" variant="soft" dot>اعتراض على التزكية</Badge>
             : <><b>{v.candidate ?? "مرشّحٌ محذوف"}</b>{v.candidateNumber != null ? <span className="num"> #{v.candidateNumber}</span> : null}</>}
         </span>
       ),

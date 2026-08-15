@@ -7629,8 +7629,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    يقول ضدَّ ما يفعله الناخب. فالعلامةُ تقول «هذا اختيارُك» ولونُها من الاختيار نفسِه. */
 .blt-on .blt-check { background: var(--blt-mark, var(--grad-success)); border-color: transparent; color: var(--color-on-primary); }
 .blt-mark-danger { --blt-mark: var(--grad-danger); }
-/* الامتناعُ نغمتُه إنذاريّة : قرارٌ يُحترم ولا يُهنَّأ عليه بالأخضر، ولا يُرمى بحمرة الاعتراض */
-.blt-mark-warning { --blt-mark: var(--grad-warning); }
 
 /* **وسطحُ المختار نغمةُ الهويّة لا صبغةٌ تُخترع له** (قرار المالك ٢٠٢٦-٠٨-١٥): جُرّب مزيجٌ
    خاصٌّ بالكرت المختار فرُدّ. النغمةُ يحملها `tone` على `Card` فيقرأ `--aurora-*` عند 62%

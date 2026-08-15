@@ -331,20 +331,16 @@ export async function resubmitCandidacy(candidateId: string, statement: string, 
  * تصويت العضو لمرشّحٍ مُعَمّى — سرّيّ ونهائيّ، صوتٌ واحد.
  * وحين يكون المرشّح وحيدًا يصير الصوتُ رأيًا فيه: تأييدٌ أو اعتراض (تزكية).
  *
- * **والامتناعُ بطاقةٌ تُختم بلا مرشّح** (`candidateId = null`): تُقرأ مشاركةً لا غيابًا، ولا
- * تُحسب لأحد. وهي مخرجُ من منعته اللائحةُ أن يزكّي نفسَه ولم يرَ في الباقين مَن يزكّيه، فلا
- * يُترك بين تزكيةِ خصمٍ وصمتٍ يُقرأ تخلّفًا.
+ * **وكلُّ بطاقةٍ تقع على مرشّح** (قرار المالك ٢٠٢٦-٠٨-١٥): نُزع الامتناعُ فلم تبقَ ورقةٌ
+ * تُختم فارغةً، ومن ترشّح وحدَه لا يُسأل عن نفسه فأُسقطت أهليّتُه للصوت في مقعده.
  */
-export async function castVote(electionId: string, candidateId: string | null, choice: "approve" | "reject" | "abstain" = "approve"): Promise<ElectionResult> {
+export async function castVote(electionId: string, candidateId: string, choice: "approve" | "reject" = "approve"): Promise<ElectionResult> {
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
   const { error } = await sb.rpc("cast_vote", { p_election: electionId, p_candidate: candidateId, p_choice: choice });
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر تسجيل صوتك. تأكّد من أنّ التصويت مفتوحٌ ولم تصوّت بعد.") };
   revalidatePath("/dashboard/elections", "layout");
-  const done = choice === "abstain" ? "سُجِّل امتناعك، وخُتمت بطاقتك."
-    : choice === "reject" ? "سُجِّل اعتراضك، شكرًا لمشاركتك."
-    : "سُجِّل صوتك، شكرًا لمشاركتك.";
-  return { ok: true, message: done };
+  return { ok: true, message: choice === "reject" ? "سُجِّل اعتراضك، شكرًا لمشاركتك." : "سُجِّل صوتك، شكرًا لمشاركتك." };
 }
 
 /** سحب الترشّح — نهائيّ في هذه الدورة. */

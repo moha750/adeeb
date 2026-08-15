@@ -563,11 +563,10 @@ export type VoteDetailRow = {
   candidate: string | null;
   weight: number;
   /**
-   * ثلاثةٌ كما في القاعدة: تأييدٌ لمرشّح، واعتراضٌ على التزكية، و**امتناعٌ** بلا مرشّح
-   * (يحرسه قيد `election_votes_abstain_has_no_candidate`). ولا تُطوى الثالثة في الأولى،
-   * وإلّا ظهر الممتنعُ مؤيّدًا لمرشّحٍ فارغ — أي «مرشّحٌ محذوف» كذبًا.
+   * رأيان لا ثالثَ لهما: تأييدٌ لمرشّح، واعتراضٌ على تزكية. والامتناعُ نُزع بقرار المالك
+   * (٢٠٢٦-٠٨-١٥)، ومُحيت ورقتُه اليتيمة، فضاق قيدُ القاعدة على الاثنين.
    */
-  choice: "approve" | "reject" | "abstain";
+  choice: "approve" | "reject";
   at: string;
 };
 
@@ -596,7 +595,7 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
     candidateNumber: r.candidate_number ?? null,
     candidate: r.candidate_name ? firstAndLastOf(r.candidate_name) : null,
     weight: Number(r.vote_weight ?? 0),
-    choice: r.vote_choice === "reject" ? "reject" : r.vote_choice === "abstain" ? "abstain" : "approve",
+    choice: r.vote_choice === "reject" ? "reject" : "approve",
     at: fmtDateTime(r.voted_at),
   }));
   return { rows, error: null };

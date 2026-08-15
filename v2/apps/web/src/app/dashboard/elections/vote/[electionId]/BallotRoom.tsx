@@ -25,15 +25,13 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
   const toast = useToast();
   const api = useElectionApi();
   const [pending, start] = useTransition();
-  const abstained = myVote?.choice === "abstain";
   const rejected = myVote?.choice === "reject";
   /* **العنوانُ يسمّي مَن أدليتَ له** (قرار المالك ٢٠٢٦-٠٨-١٥): «صوّتّ في هذا المقعد» تقول
      الواقعةَ وتُخفي محلَّها، والمقعدُ مكتوبٌ في الرأس فوقها. فيُقال الرقمُ في العنوان نفسِه،
-     ويسقط إلى الجملة العامّة إن لم يكن للصوت مرشّحٌ في القائمة (اعتراضٌ أو امتناع). */
+     ويسقط إلى الجملة العامّة إن لم يكن للصوت مرشّحٌ في القائمة (الاعتراضُ على التزكية). */
   const votedNumber = myVote?.candidateId ? candidates.find((c) => c.id === myVote.candidateId)?.number ?? null : null;
 
-  // والمرشّحُ `null` في الامتناع : بطاقةٌ تُختم بلا مرشّح.
-  const cast = (candidateId: string | null, choice?: "approve" | "reject" | "abstain") => {
+  const cast = (candidateId: string, choice?: "approve" | "reject") => {
     start(async () => {
       const r = await api.castVote(election.electionId, candidateId, choice);
       if (!r.ok) { toast.error(r.message); return; }
@@ -50,15 +48,9 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
       {election.hasVoted ? (
         <div className="blt">
           <BallotHead election={election} />
-          {abstained ? (
-            <Alert tone="warning" title="امتنعت في هذا المقعد">
-              لم يذهب صوتُك لأحد، ويُسجَّل أنّك شاركت. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
-            </Alert>
-          ) : (
-            <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
-              صوتُك مسجَّلٌ ولا يُغيَّر. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
-            </Alert>
-          )}
+          <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
+            صوتُك مسجَّلٌ ولا يُغيَّر. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
+          </Alert>
           {candidates.map((c) => {
             /* **الوسمُ وحدَه يقول أين وقع صوتُك** (قرار المالك ٢٠٢٦-٠٨-١٥): جُرّبت خضرةُ
                الاختيار على الورقة بعد الختم فرُدّت. ونغمةُ السطح لغةُ **الاختيار الجاري**،

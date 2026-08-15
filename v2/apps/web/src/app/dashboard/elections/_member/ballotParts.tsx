@@ -256,52 +256,8 @@ export function SelfCandidateNote() {
   return (
     <Alert tone="info" title="أنت مرشّحٌ في هذا المقعد">
       ورقتُك موسومةٌ بين الورقات ولا تُختار : اللائحةُ لا تُجيز التصويتَ للنفس. فاختر مرشّحًا
-      آخر، أو امتنع : لا يذهب صوتُك لأحد، ويُسجَّل أنّك شاركت.
+      آخر، أو دَعِ البطاقةَ ولا تختم.
     </Alert>
-  );
-}
-
-/**
- * التزكيةُ ومرشّحُها الوحيد هو الناخبُ نفسُه : بابٌ كان يُردّ في وجهه مرّتين (تأييدًا واعتراضًا)
- * ثمّ يُقرأ غائبًا. فالسؤالُ يسقط عنه ويبقى له أن يُغلق بطاقتَه بامتناعه.
- */
-export function SoleSelfNote() {
-  return (
-    <Alert tone="warning" title="أنت مرشّحُ هذا المقعد">
-      التزكيةُ رأيُ سِواك فيك، فلا تأييدَ منك ولا اعتراض. ولك أن تمتنع، فيُسجَّل أنّك شاركت
-      ولا تُعَدّ غائبًا عن مقعدٍ أنت صاحبُه.
-    </Alert>
-  );
-}
-
-/* ══ الامتناع ═══════════════════════════════════════════════════════ */
-
-/**
- * الامتناعُ **خيارٌ في الصندوق لا زرٌّ على حافته** : يُعرَض كرتًا بين ما يُختار، فيُختار
- * كما تُختار الورقة ويُختم بالزرّ نفسِه. ولو كان زرًّا ثالثًا في شريط الفعل لزاحم «أكّد صوتي»
- * على شاشة جوّالٍ وقُرئ خروجًا لا قرارًا.
- *
- * ونغمتُه إنذاريّةٌ لا خضراء : قرارٌ يُحترم، وليس رضًا يُهنَّأ عليه.
- */
-export function AbstainOption({ on, onPick, hint = "لا يذهب صوتك لأحد، ويُسجَّل أنّك شاركت" }: {
-  on: boolean;
-  onPick: () => void;
-  hint?: string;
-}) {
-  return (
-    <button type="button" className="blt-pick" onClick={onPick} aria-pressed={on}>
-      <Card tone={on ? "warning" : undefined} className={on ? "blt-on blt-mark-warning" : undefined}>
-        <CardBody>
-          <div className="blt-row">
-            <div className="blt-rowtx">
-              <span className="blt-name">أمتنع عن التصويت</span>
-              <span className="blt-hint">{hint}</span>
-            </div>
-            <span className="blt-check"><Check size={15} /></span>
-          </div>
-        </CardBody>
-      </Card>
-    </button>
   );
 }
 
@@ -310,27 +266,24 @@ export function AbstainOption({ on, onPick, hint = "لا يذهب صوتك لأ�
 /**
  * محطّةُ الختم — الصوتُ لا رجعةَ فيه، فيُستعاد ما اختاره الناخبُ قبل إمضائه. والزرُّ يقول
  * «أختم» لا «أرسل» : الإرسالُ فعلٌ يُعاد، والختمُ يقع مرّةً.
- *
- * وللامتناع نغمتُه وكلمتُه : لا يُختم بأخضرَ كأنّه تزكية، ولا بأحمرَ كأنّه اعتراض.
  */
 export function ConfirmVote({ open, onClose, onConfirm, pending, number, choice }: {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   pending?: boolean;
-  /** رقمُ المرشّح المختار، أو `null` في التزكية والامتناع. */
+  /** رقمُ المرشّح المختار، أو `null` في التزكية (رأيٌ في واحدٍ لا اختيارٌ بين اثنين). */
   number: number | null;
-  /** رأيُ التزكية حين لا مرشّحَ يُختار، أو الامتناعُ في أيّ بطاقة. */
-  choice?: "approve" | "reject" | "abstain" | null;
+  /** رأيُ التزكية حين لا مرشّحَ يُختار. */
+  choice?: "approve" | "reject" | null;
 }) {
   const reject = choice === "reject";
-  const abstain = choice === "abstain";
-  const tone = abstain ? "warning" : reject ? "danger" : "success";
+  const tone = reject ? "danger" : "success";
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={abstain ? "اختم امتناعك" : number !== null ? "اختم صوتك" : "اختم رأيك"}
+      title={number !== null ? "اختم صوتك" : "اختم رأيك"}
       description="لا يمكن تغييره بعد ختمه"
       size="sm"
       busy={pending}
@@ -339,27 +292,22 @@ export function ConfirmVote({ open, onClose, onConfirm, pending, number, choice 
         <>
           <Button variant="ghost" size="md" onClick={onClose} disabled={pending}>رجوع</Button>
           <Button variant={tone} size="md" loading={pending} onClick={onConfirm}>
-            <Check size={16} />{abstain ? "أختم امتناعي" : number !== null ? "أختم صوتي" : "أختم رأيي"}
+            <Check size={16} />{number !== null ? "أختم صوتي" : "أختم رأيي"}
           </Button>
         </>
       }
     >
-      {/* الامتناعُ لا يُستعاد في سطر : ليس فيه مرشّحٌ يُراجَع، والعنوانُ قاله. */}
-      {abstain ? null : (
-        <div className="blt-row">
-          {number !== null ? <CandidateMark number={number} lg /> : null}
-          <span className="blt-name">
-            {number !== null ? `صوتك للمرشّح رقم ${number}` : reject ? "اعتراضك على التزكية" : "تأييدك للمرشّح"}
-          </span>
-        </div>
-      )}
-      <Alert tone={tone} title={abstain ? "امتناعك نهائيّ ولا يُعدَّل" : "صوتٌ واحدٌ لا يُعاد"}>
-        {abstain
-          ? "لا يذهب صوتُك لأيّ مرشّح، ويُسجَّل أنّك شاركت في التصويت."
-          /* **الوعدُ بقدر ما يقع** (٢٠٢٦-٠٨-١٥): صار لإدارة الانتخابات أن تقرأ الأصوات بأسماء
-             أصحابها بقرار المالك، فلا يصحّ أن تقول الشاشةُ «لا أحد يطلع عليه». تُقال الحقيقةُ
-             للناخب قبل أن يختم، لا يعلمها من غيرنا بعد. */
-          : "يُحفظ صوتُك سرًّا عن الأعضاء، ولا يطّلع عليه إلّا إدارةُ الانتخابات. ولا يمكن تغييرُه ولا سحبُه بعد ختمه."}
+      <div className="blt-row">
+        {number !== null ? <CandidateMark number={number} lg /> : null}
+        <span className="blt-name">
+          {number !== null ? `صوتك للمرشّح رقم ${number}` : reject ? "اعتراضك على التزكية" : "تأييدك للمرشّح"}
+        </span>
+      </div>
+      {/* **الوعدُ بقدر ما يقع** (٢٠٢٦-٠٨-١٥): صار لإدارة الانتخابات أن تقرأ الأصوات بأسماء
+          أصحابها بقرار المالك، فلا يصحّ أن تقول الشاشةُ «لا أحد يطلع عليه». تُقال الحقيقةُ
+          للناخب قبل أن يختم، لا يعلمها من غيرنا بعد. */}
+      <Alert tone={tone} title="صوتٌ واحدٌ لا يُعاد">
+        يُحفظ صوتُك سرًّا عن الأعضاء، ولا يطّلع عليه إلّا إدارةُ الانتخابات. ولا يمكن تغييرُه ولا سحبُه بعد ختمه.
       </Alert>
     </Modal>
   );
