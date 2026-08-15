@@ -9,7 +9,7 @@ import { Alert, Badge, Button, Card, CardBody, CardFooter, CardHeader, FileButto
 import { FileArrowDown, FileDashed, Note, Paperclip, Path } from "@phosphor-icons/react";
 import { PencilSimple, Prohibit } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
-import { createClient } from "@/lib/supabase/client";
+import { useElectionApi } from "../actions-context";
 import { JourneyBody } from "./JourneyBody";
 import { toneVars } from "../journeyTone";
 import type { CandidacyJourney as CJ } from "../member-data";
@@ -17,19 +17,13 @@ import type { CandidacyJourney as CJ } from "../member-data";
 /** `cycle` اسمُ الدورة — مرساةُ الزمن، وبها يفترق ترشّحان لمنصبٍ واحدٍ في دورتين. */
 export function CandidacyJourney({ c, cycle, onEdit, onWithdraw }: { c: CJ; cycle?: string; onEdit: () => void; onWithdraw: () => void }) {
   const toast = useToast();
+  const api = useElectionApi();
   const showControls = c.canEdit || c.canWithdraw;
 
-  // فتحُ الملفّ المرفق برابطٍ موقَّعٍ مؤقّت (الملفّ ملكُ صاحبه في دلو election-files)
+  // الملفُّ ملكُ صاحبه في دلو election-files، ويُفتح بمنفذ `openFile` الواحد (تبويبٌ في اللمسة ثمّ توقيع)
   const openFile = async () => {
     if (!c.fileUrl) return;
-    try {
-      const sb = createClient();
-      const { data, error } = await sb.storage.from("election-files").createSignedUrl(c.fileUrl, 60);
-      if (error || !data?.signedUrl) throw error ?? new Error("no url");
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("تعذّر فتح الملفّ، أعِد المحاولة.");
-    }
+    if (!(await api.openFile(c.fileUrl))) toast.error("تعذّر فتح الملفّ، أعِد المحاولة.");
   };
 
   return (

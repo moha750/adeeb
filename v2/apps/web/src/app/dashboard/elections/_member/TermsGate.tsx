@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Alert, Button, Modal } from "@adeeb/design-system";
+import { useElectionApi } from "../actions-context";
 
 // شروطُ الترشّح — بوّابةٌ قبل صفحة إكمال البيان (يوافق ثمّ يُكمل). نصٌّ معتمَدٌ بكلمة المالك، مسنودٌ إلى لائحة الانتخابات.
 const TERMS = [
@@ -23,11 +23,11 @@ export function TermsGate({ target, onClose, onAgree }: {
   onClose: () => void;
   onAgree?: (electionId: string) => void;
 }) {
-  const router = useRouter();
+  const api = useElectionApi();
   const agree = () => {
     if (!target) return;
     if (onAgree) onAgree(target.electionId);
-    else router.push(`/dashboard/elections/run/${target.electionId}`);
+    else api.nav(`/dashboard/elections/run/${target.electionId}`);
     onClose();
   };
 

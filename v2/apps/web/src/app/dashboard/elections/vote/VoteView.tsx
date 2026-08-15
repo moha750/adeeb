@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Alert, Button } from "@adeeb/design-system";
 import { Scales } from "@phosphor-icons/react";
 import { CheckCircle, Checks } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { OpportunityCard } from "../_member/OpportunityCard";
 import { Countdown } from "../_member/Countdown";
+import { useElectionApi } from "../actions-context";
 import type { VoteItem } from "../member-data";
 
 /**
@@ -16,7 +16,7 @@ import type { VoteItem } from "../member-data";
  * ومن صوّت يدخل مطّلِعًا لا مصوّتًا، فزرُّه يقول «صوّتت» ويبقى بابًا لا شاهدَ حالٍ معطَّلًا.
  */
 export function VoteView({ items, error }: { items: VoteItem[]; error: string | null }) {
-  const router = useRouter();
+  const api = useElectionApi();
   return (
     <>
       <div className="ash-phead">
@@ -42,7 +42,7 @@ export function VoteView({ items, error }: { items: VoteItem[]; error: string | 
               <Button
                 variant={e.hasVoted ? "success" : "primary"}
                 size="sm"
-                onClick={() => router.push(`/dashboard/elections/vote/${e.electionId}`)}
+                onClick={() => api.nav(`/dashboard/elections/vote/${e.electionId}`)}
               >
                 {e.hasVoted ? <><CheckCircle size={16} />صوّتت</> : <><Checks size={16} />صوّت</>}
               </Button>

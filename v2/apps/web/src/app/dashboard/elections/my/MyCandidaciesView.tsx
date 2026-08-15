@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, ModalSectionHeading } from "@adeeb/design-system";
 import { Archive, Clock, FlagCheckered, Scales, Trophy } from "@phosphor-icons/react";
 import { PencilSimple, Prohibit, XCircle } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { OpportunityCard } from "../_member/OpportunityCard";
+import { useElectionApi } from "../actions-context";
 import type { CandidacyJourney as CJ, RecordTone } from "../member-data";
 
 /**
@@ -31,7 +31,7 @@ const iconOf = (c: CJ) =>
 const cardTone = (t: RecordTone) => (t === "info" ? "brand" : t);
 
 export function MyCandidaciesView({ items, error }: { items: CJ[]; error: string | null }) {
-  const router = useRouter();
+  const api = useElectionApi();
   const live = items.filter((c) => !c.archived);
   const past = items.filter((c) => c.archived);
 
@@ -44,7 +44,7 @@ export function MyCandidaciesView({ items, error }: { items: CJ[]; error: string
       title={c.position}
       subtitle={c.cycle}
       action={
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/elections/my/${c.electionId}`)}>
+        <Button variant="ghost" size="sm" onClick={() => api.nav(`/dashboard/elections/my/${c.electionId}`)}>
           عرض الترشّح
         </Button>
       }

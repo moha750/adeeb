@@ -38,21 +38,22 @@ export function BallotLinkShare({ electionId, position, votingEnd }: {
     ? `فُتح التصويت على مقعد ${position}. أدلِ بصوتك قبل ${votingEnd}.`
     : `فُتح التصويت على مقعد ${position}. أدلِ بصوتك.`;
 
-  const share = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `تصويت ${position}`, text: message, url });
-        return;
-      } catch {
-        // أُغلقت ورقةُ المشاركة أو منعها المتصفّح — يُكمَل إلى النسخ
-      }
-    }
+  /** النسخُ فعلٌ قائمٌ بنفسه (طلب المالك): لا يُبلَغ إليه بعد إغلاق ورقة المشاركة. */
+  const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch {
       // حافظةٌ ممنوعة (سياقٌ غير آمن) — الرابطُ معروضٌ في الحقل يُنسَخ باليد
+    }
+  };
+
+  const share = async () => {
+    try {
+      await navigator.share({ title: `تصويت ${position}`, text: message, url });
+    } catch {
+      // أُغلقت ورقةُ المشاركة أو منعها المتصفّح — ولا يُنسَخ خلسةً، فللنسخ زرُّه
     }
   };
 
@@ -70,10 +71,17 @@ export function BallotLinkShare({ electionId, position, votingEnd }: {
           onFocus={(e) => e.currentTarget.select()}
           helper="شاركه مع ناخبي هذا المقعد. من كان في نطاقه فتح بطاقتَه، ومن سواه رُدّ."
         />
+        {/* فعلان لا فعلٌ يتحوّل : المشاركةُ تسوق الرسالةَ إلى قناةٍ يختارها، والنسخُ يضع
+            الرابطَ في يده ليصنع به ما شاء. وحيث لا ورقةَ مشاركة يبقى النسخُ وحدَه صدرًا. */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          <Button variant="primary" size="md" onClick={share}>
-            {copied ? <Check size={18} /> : canShare ? <ShareNetwork size={18} weight="fill" /> : <LinkSimple size={18} weight="bold" />}
-            {copied ? "نُسخ الرابط" : canShare ? "شارك الرابط" : "انسخ الرابط"}
+          {canShare ? (
+            <Button variant="primary" size="md" onClick={share}>
+              <ShareNetwork size={18} weight="fill" />شارك الرابط
+            </Button>
+          ) : null}
+          <Button variant={canShare ? "ghost" : "primary"} size="md" onClick={copy}>
+            {copied ? <Check size={18} /> : <LinkSimple size={18} weight="bold" />}
+            {copied ? "نُسخ الرابط" : "انسخ الرابط"}
           </Button>
         </div>
       </CardBody>

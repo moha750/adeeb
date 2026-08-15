@@ -1,14 +1,13 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Alert, Button } from "@adeeb/design-system";
 import { CheckCircle } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../../_shell/Breadcrumb";
 import { useToast } from "../../../_components/ToastProvider";
 import { BallotHead, CandidateFile, CandidateMark, SelfTag, Statement, VoteTag } from "../../_member/ballotParts";
 import { BallotStations } from "../../_member/BallotStations";
-import { castVote } from "../../actions";
+import { useElectionApi } from "../../actions-context";
 import type { BallotCandidate, MyVote, VoteItem } from "../../member-data";
 import { Card, CardBody } from "@adeeb/design-system";
 
@@ -24,7 +23,7 @@ import { Card, CardBody } from "@adeeb/design-system";
  */
 export function BallotRoom({ election, candidates, myVote }: { election: VoteItem; candidates: BallotCandidate[]; myVote: MyVote | null }) {
   const toast = useToast();
-  const router = useRouter();
+  const api = useElectionApi();
   const [pending, start] = useTransition();
   const abstained = myVote?.choice === "abstain";
   const rejected = myVote?.choice === "reject";
@@ -36,11 +35,11 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
   // والمرشّحُ `null` في الامتناع : بطاقةٌ تُختم بلا مرشّح.
   const cast = (candidateId: string | null, choice?: "approve" | "reject" | "abstain") => {
     start(async () => {
-      const r = await castVote(election.electionId, candidateId, choice);
+      const r = await api.castVote(election.electionId, candidateId, choice);
       if (!r.ok) { toast.error(r.message); return; }
       toast.success(r.message);
-      router.push("/dashboard/elections/vote");
-      router.refresh();
+      api.nav("/dashboard/elections/vote");
+      api.refresh();
     });
   };
 
@@ -81,7 +80,7 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
             );
           })}
           <div className="blt-bar">
-            <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/elections/vote")}>
+            <Button variant="ghost" size="md" onClick={() => api.nav("/dashboard/elections/vote")}>
               <CheckCircle size={16} />عودةٌ إلى التصويت
             </Button>
           </div>

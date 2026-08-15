@@ -2,7 +2,6 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Field, FileButton, ModalSectionHeading, Radio, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
 import { CalendarBlank, ClockCounterClockwise, Clock, FileArrowDown, FileDashed, HandTap, Megaphone, Note, Paperclip, Play, Quotes, Scales, StopCircle, UserPlus, UsersThree } from "@phosphor-icons/react";
 import { ArrowUUpLeft } from "@/app/_components/glyphs";
@@ -19,11 +18,10 @@ import { CandidateCard } from "./CandidateCard";
 import { ElectionLog } from "./ElectionLog";
 import type { AppointOption, CandidateRow, ElectionDetail, ElectionLogEvent, VoteDetailRow } from "./data";
 import type { ElectionResult } from "./actions";
-import { appointToSeat, cancelElection, declareWinner, loadAppointOptions, openVoting, resolveDepartmentWinners, restoreCandidacy, reviewCandidate, setDeadline, transitionElection } from "./actions";
+import { useElectionApi } from "./actions-context";
 import { byGender, CANDIDATE_CARD_TONE, CANDIDATE_STATUS_META, decisionLine } from "./vocab";
 import { StatusBadge } from "./StatusBadge";
 import { Breadcrumb } from "../_shell/Breadcrumb";
-import { openCandidateFile } from "./candidateFile";
 import { fromClubInput, toClubInput } from "@/lib/dates";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) للحالة الغالبة — voting_end = الآن + المدّة.
@@ -56,7 +54,7 @@ type Confirm = { title: string; text: string; confirmLabel: string; tone: "warni
  */
 export function ElectionDetailView({ election, log, logError = null, votes = [], votesError = null, readOnly = false }: { election: ElectionDetail; log: ElectionLogEvent[]; logError?: string | null; votes?: VoteDetailRow[]; votesError?: string | null; readOnly?: boolean }) {
   const toast = useToast();
-  const router = useRouter();
+  const api = useElectionApi();
   const [pending, startPending] = useTransition();
   const [acting, setActing] = useState<string | null>(null);
 
@@ -83,14 +81,14 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     startPending(async () => {
       const r = await fn();
       setActing(null);
-      if (r.ok) { toast.success(r.message); onOk?.(); router.refresh(); }
+      if (r.ok) { toast.success(r.message); onOk?.(); api.refresh(); }
       else toast.error(r.message);
     });
   };
 
-  // ملفُّ المرشّح يُفتَح برابطٍ موقَّعٍ مؤقّت (`candidateFile.ts` — مصدرٌ واحدٌ يقاسمه الناخب).
+  // ملفُّ المرشّح يُفتَح برابطٍ موقَّعٍ مؤقّت (منفذُ `openFile` — مصدرٌ واحدٌ يقاسمه الناخب).
   const showCandidateFile = async (path: string) => {
-    if (!(await openCandidateFile(path))) toast.error("تعذّر فتح الملفّ، أعِد المحاولة.");
+    if (!(await api.openFile(path))) toast.error("تعذّر فتح الملفّ، أعِد المحاولة.");
   };
 
   const s = election.status;
@@ -129,7 +127,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   const stalled = election.stalled && s === "candidacy_open";
   const openAppoint = () => {
     setAppointee(""); setAppointReason(""); setAppointees(null); setAppointOpen(true);
-    loadAppointOptions(election.id).then((r) => setAppointees(r.members));
+    api.loadAppointOptions(election.id).then((r) => setAppointees(r.members));
   };
 
   // جنسُ الفائز من صفّه في المرشّحين (هو أحدُهم)، فلا يُطلَب من القاعدة مرّةً ثانية
@@ -156,10 +154,12 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     { key: "role", header: "رتبتُه حينها", width: "1.2fr", render: (v) => <span className="txt">{v.voterRole ?? "—"}</span> },
     {
       key: "candidate", header: "صوّت لـ", width: "minmax(150px, 1.6fr)",
+      // الرأيُ أوّلًا ثمّ الاسم: الامتناعُ والاعتراضُ لا مرشّحَ لهما فيُقالان بذاتهما، ويبقى
+      // «مرشّحٌ محذوف» احتياطيًّا لحالته الحقّة وحدَها (صوتٌ لمرشّحٍ مُحي ملفُّه).
       render: (v) => (
         <span className="txt">
-          {v.choice === "reject"
-            ? <Badge tone="danger" variant="soft" dot>اعتراض على التزكية</Badge>
+          {v.choice === "reject" ? <Badge tone="danger" variant="soft" dot>اعتراض على التزكية</Badge>
+            : v.choice === "abstain" ? <Badge tone="warning" variant="soft" dot>امتناع</Badge>
             : <><b>{v.candidate ?? "مرشّحٌ محذوف"}</b>{v.candidateNumber != null ? <span className="num"> #{v.candidateNumber}</span> : null}</>}
         </span>
       ),
@@ -227,7 +227,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
           <Button
             variant="primary"
             size="md"
-            onClick={() => { if (verdict) run("save", () => reviewCandidate(c.id, verdict, note), closeDetail); }}
+            onClick={() => { if (verdict) run("save", () => api.reviewCandidate(c.id, verdict, note), closeDetail); }}
             loading={acting === "save"}
             disabled={pending || !verdict || noteMissing}
           >
@@ -240,7 +240,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
       return (
         <>
           {close}
-          <Button variant="primary" size="md" onClick={() => run("win", () => declareWinner(election.id, c.id), closeDetail)} loading={acting === "win"} disabled={pending}>{byGender(c.gender, "إعلانه فائزًا", "إعلانها فائزةً")}</Button>
+          <Button variant="primary" size="md" onClick={() => run("win", () => api.declareWinner(election.id, c.id), closeDetail)} loading={acting === "win"} disabled={pending}>{byGender(c.gender, "إعلانه فائزًا", "إعلانها فائزةً")}</Button>
         </>
       );
     }
@@ -253,7 +253,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
           <Button
             variant="primary"
             size="md"
-            onClick={() => run("restore", () => restoreCandidacy(c.id), closeDetail)}
+            onClick={() => run("restore", () => api.restoreCandidacy(c.id), closeDetail)}
             loading={acting === "restore"}
             disabled={pending}
           >
@@ -340,23 +340,23 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
                 <Button variant="ghost" size="md" onClick={openAppoint} disabled={pending}><UserPlus size={18} />تكليف شاغل</Button>
               </>
             ) : (
-              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق باب الترشّح؟", text: "لن يُقبل مرشّحون جدد. ويكفي مرشّحٌ واحدٌ معتمَد: يُعرَض على الناخبين تزكيةً يؤيّدونها أو يعترضون عليها.", confirmLabel: "إغلاق الترشّح", tone: "warning", run: () => transitionElection(election.id, "candidacy_closed") })} loading={acting === "close_c"} disabled={pending}><StopCircle size={18} />إغلاق الترشّح</Button>
+              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق باب الترشّح؟", text: "لن يُقبل مرشّحون جدد. ويكفي مرشّحٌ واحدٌ معتمَد: يُعرَض على الناخبين تزكيةً يؤيّدونها أو يعترضون عليها.", confirmLabel: "إغلاق الترشّح", tone: "warning", run: () => api.transitionElection(election.id, "candidacy_closed") })} loading={acting === "close_c"} disabled={pending}><StopCircle size={18} />إغلاق الترشّح</Button>
             )
           ) : null}
           {s === "candidacy_closed" ? (
             <>
               <Button variant="primary" size="md" onClick={openVote} disabled={pending}><Play size={18} />فتح التصويت</Button>
-              <Button variant="ghost" size="md" onClick={() => run("reopen", () => transitionElection(election.id, "candidacy_open"))} loading={acting === "reopen"} disabled={pending}>إعادة فتح الترشّح</Button>
+              <Button variant="ghost" size="md" onClick={() => run("reopen", () => api.transitionElection(election.id, "candidacy_open"))} loading={acting === "reopen"} disabled={pending}>إعادة فتح الترشّح</Button>
             </>
           ) : null}
           {s === "voting_open" ? (
-            <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق التصويت؟", text: "سيتوقّف استقبال الأصوات، ثمّ تُعلن الفائز من النتائج.", confirmLabel: "إغلاق التصويت", tone: "warning", run: () => transitionElection(election.id, "voting_closed") })} loading={acting === "close_v"} disabled={pending}><StopCircle size={18} />إغلاق التصويت</Button>
+            <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق التصويت؟", text: "سيتوقّف استقبال الأصوات، ثمّ تُعلن الفائز من النتائج.", confirmLabel: "إغلاق التصويت", tone: "warning", run: () => api.transitionElection(election.id, "voting_closed") })} loading={acting === "close_v"} disabled={pending}><StopCircle size={18} />إغلاق التصويت</Button>
           ) : null}
           {s === "voting_closed" ? (
             election.jointBlocking > 0 ? (
               <span className="txt" style={{ alignSelf: "center" }}>في هذا القسم مقعدٌ آخر يخوضه أحدُ مرشّحيك ولم يُغلق تصويتُه؛ أغلِقه ثمّ تُحسَم مقاعد القسم معًا.</span>
             ) : election.jointPending > 0 && election.departmentId != null ? (
-              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي القسم معًا؟", text: "تُحسَم مقاعد القسم الجاهزة معًا: من تصدّر أكثر من مقعد أخذ مفضَّله، وذهب الباقي للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي القسم", tone: "success", run: () => resolveDepartmentWinners(election.departmentId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي القسم معًا</Button>
+              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي القسم معًا؟", text: "تُحسَم مقاعد القسم الجاهزة معًا: من تصدّر أكثر من مقعد أخذ مفضَّله، وذهب الباقي للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي القسم", tone: "success", run: () => api.resolveDepartmentWinners(election.departmentId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي القسم معًا</Button>
             ) : (
               <span className="txt" style={{ alignSelf: "center" }}>
                 {election.confidence
@@ -548,7 +548,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         footer={
           <>
             <Button variant="ghost" size="md" onClick={() => setVoteOpen(false)} disabled={pending}>إلغاء</Button>
-            <Button variant="primary" size="md" loading={acting === "open_v"} disabled={pending || (custom && !voteEnd)} onClick={() => run("open_v", () => openVoting(election.id, votingEndIso()), () => setVoteOpen(false))}>فتح التصويت</Button>
+            <Button variant="primary" size="md" loading={acting === "open_v"} disabled={pending || (custom && !voteEnd)} onClick={() => run("open_v", () => api.openVoting(election.id, votingEndIso()), () => setVoteOpen(false))}>فتح التصويت</Button>
           </>
         }
       >
@@ -578,10 +578,10 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         footer={
           <>
             {deadlineRaw ? (
-              <Button variant="danger" size="md" onClick={() => run("dl_clear", () => setDeadline(election.id, null), () => setDeadlineOpen(false))} loading={acting === "dl_clear"} disabled={pending}>إزالة الموعد</Button>
+              <Button variant="danger" size="md" onClick={() => run("dl_clear", () => api.setDeadline(election.id, null), () => setDeadlineOpen(false))} loading={acting === "dl_clear"} disabled={pending}>إزالة الموعد</Button>
             ) : null}
             <Button variant="ghost" size="md" onClick={() => setDeadlineOpen(false)} disabled={pending}>إلغاء</Button>
-            <Button variant="primary" size="md" onClick={() => run("dl_save", () => setDeadline(election.id, fromClubInput(deadline)), () => setDeadlineOpen(false))} loading={acting === "dl_save"} disabled={pending || !deadline}>حفظ</Button>
+            <Button variant="primary" size="md" onClick={() => run("dl_save", () => api.setDeadline(election.id, fromClubInput(deadline)), () => setDeadlineOpen(false))} loading={acting === "dl_save"} disabled={pending || !deadline}>حفظ</Button>
           </>
         }
       >
@@ -614,7 +614,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
           <>
             <Button variant="ghost" size="md" onClick={() => setAppointOpen(false)} disabled={pending}>تراجع</Button>
             <Button variant="primary" size="md" loading={acting === "appoint"} disabled={pending || !appointee || appointReason.trim().length < 10}
-              onClick={() => run("appoint", () => appointToSeat(election.id, appointee, appointReason), () => setAppointOpen(false))}>
+              onClick={() => run("appoint", () => api.appointToSeat(election.id, appointee, appointReason), () => setAppointOpen(false))}>
               تكليف وإسناد المنصب
             </Button>
           </>
@@ -658,7 +658,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         footer={
           <>
             <Button variant="ghost" size="md" onClick={() => setCancelOpen(false)} disabled={pending}>تراجع</Button>
-            <Button variant="danger" size="md" loading={acting === "cancel"} onClick={() => run("cancel", () => cancelElection(election.id, reason), () => { setCancelOpen(false); setReason(""); })}>تأكيد الإلغاء</Button>
+            <Button variant="danger" size="md" loading={acting === "cancel"} onClick={() => run("cancel", () => api.cancelElection(election.id, reason), () => { setCancelOpen(false); setReason(""); })}>تأكيد الإلغاء</Button>
           </>
         }
       >

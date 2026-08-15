@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Alert, Button, FileButton, Radio, Textarea } from "@adeeb/design-system";
 import { Note, Paperclip } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { Breadcrumb } from "../../_shell/Breadcrumb";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
-import { createClient } from "@/lib/supabase/client";
 import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
 import { useDraft } from "@/lib/useDraft";
-import { resubmitCandidacy, submitCandidacy, type CandidacyFile } from "../actions";
+import type { CandidacyFile } from "../actions";
+import { useElectionApi } from "../actions-context";
 import { STATEMENT_MAX, STATEMENT_MIN, statementError } from "../vocab";
 import type { ApplyContext } from "../member-data";
 
@@ -29,7 +28,7 @@ const FILE_RULE = UPLOAD_RULES.candidacyFile;
  */
 export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext; userId: string; preview?: boolean }) {
   const toast = useToast();
-  const router = useRouter();
+  const api = useElectionApi();
   const [pending, start] = useTransition();
   const isEdit = ctx.existing !== null;
   const readOnly = isEdit && !ctx.existing!.canEdit;
@@ -134,8 +133,8 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
     return () => { window.removeEventListener("dragover", swallow); window.removeEventListener("drop", swallow); };
   }, []);
 
-  const back = () => { if (preview) { toast.success("محاكاة: رجوع"); return; } router.push(backHref); };
-  const go = (href: string, what: string) => { if (preview) { toast.success(`محاكاة: ${what}`); setSent(false); return; } router.push(href); };
+  const back = () => { if (preview) { toast.success("محاكاة: رجوع"); return; } api.nav(backHref); };
+  const go = (href: string, what: string) => { if (preview) { toast.success(`محاكاة: ${what}`); setSent(false); return; } api.nav(href); };
 
   const submit = () => {
     const s = statement.trim();
@@ -155,27 +154,24 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
     start(async () => {
       let meta: CandidacyFile = null;
       if (file) {
-        const sb = createClient();
-        const path = `${userId}/${ctx.electionId}/${Date.now()}_${file.name.replace(/[^\w.\-]+/g, "_")}`;
-        const up = await sb.storage.from("election-files").upload(path, file, { upsert: true, contentType: file.type || undefined });
-        if (up.error) { toast.error("تعذّر رفع الملفّ، أعِد المحاولة"); return; }
-        meta = { url: path, name: file.name, size: file.size, mime: file.type || null };
+        meta = await api.uploadCandidacyFile(userId, ctx.electionId, file);
+        if (!meta) { toast.error("تعذّر رفع الملفّ، أعِد المحاولة"); return; }
       } else if (isEdit && ctx.existing?.fileUrl) {
         meta = { url: ctx.existing.fileUrl, name: ctx.existing.fileName ?? "ملفّ الترشّح", size: null, mime: null };
       }
       const r = isEdit
-        ? await resubmitCandidacy(ctx.existing!.candidateId, s, meta)
-        : await submitCandidacy(ctx.electionId, s, meta);
+        ? await api.resubmitCandidacy(ctx.existing!.candidateId, s, meta)
+        : await api.submitCandidacy(ctx.electionId, s, meta);
       if (r.ok) {
         if (ctx.siblings.length && ctx.departmentId != null) {
-          await createClient().rpc("set_seat_preference", { p_department: ctx.departmentId, p_preferred_election: pref });
+          await api.setSeatPreference(ctx.departmentId, pref);
         }
         // بلغ البيانُ القاعدةَ فانتهت حاجةُ المسوّدة: تُمحى هنا وحدَها لا عند كلّ خروج
         draft.clear();
         setDismissed(true);
         toast.success(r.message);
         // الجديدُ يُخيَّر بنافذة النجاح، والتعديلُ يعود من حيث جاء (السجلّ)
-        if (isEdit) router.push(backHref); else setSent(true);
+        if (isEdit) api.nav(backHref); else setSent(true);
       } else toast.error(r.message);
     });
   };

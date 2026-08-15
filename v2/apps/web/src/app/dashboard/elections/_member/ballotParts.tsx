@@ -6,7 +6,7 @@ import { CaretDown, CaretUp, Check } from "@/app/_components/glyphs";
 import { Clock, FileArrowDown, FileDashed, LockKey, Megaphone, Paperclip, Quotes } from "@phosphor-icons/react";
 import { fileMeta } from "@/lib/upload";
 import type { BallotCandidate, VoteItem } from "../member-data";
-import { openCandidateFile } from "../candidateFile";
+import { useElectionApi } from "../actions-context";
 import { Countdown } from "./Countdown";
 
 /**
@@ -92,11 +92,14 @@ export function Statement({ text, defaultOpen, open, onToggle }: {
  * ملفُّ المرشّح : **يُوصَف ولا يُسمّى**. اسمُ الملفّ قد يحمل اسمَ صاحبه («سيرة محمّد.pdf»)
  * فيكسر تعميةَ الاقتراع، فالمعروضُ نوعُه وحجمُه. والغيابُ يُقال ولا يُسكت عنه.
  */
-export function CandidateFile({ candidate, opener = openCandidateFile, onFail }: {
+export function CandidateFile({ candidate, opener, onFail }: {
   candidate: BallotCandidate;
   opener?: FileOpener;
   onFail?: () => void;
 }) {
+  // الفاتحُ من منفذ الانتخابات (الحقيقيُّ في الإنتاج، والمُنافَذ في المحاكي)، و`opener` يغلبه صراحةً
+  const api = useElectionApi();
+  const open = opener ?? api.openFile;
   if (!candidate.fileUrl) {
     return <FileButton state="empty" icon={<FileDashed />} label="لا ملف انتخابي مرفَق" hint="اكتفى المرشّح ببيانه" />;
   }
@@ -107,7 +110,7 @@ export function CandidateFile({ candidate, opener = openCandidateFile, onFail }:
       label="الملف الانتخابي"
       hint={fileMeta(candidate.fileMime, candidate.fileSize)}
       trailing={<FileArrowDown />}
-      onClick={async () => { if (!(await opener(candidate.fileUrl!))) onFail?.(); }}
+      onClick={async () => { if (!(await open(candidate.fileUrl!))) onFail?.(); }}
     />
   );
 }

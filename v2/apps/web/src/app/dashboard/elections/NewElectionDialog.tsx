@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Alert, Button, Field, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { Buildings, CalendarBlank, Clock, Scales, UsersThree } from "@phosphor-icons/react";
 import { useToast } from "../_components/ToastProvider";
 import { fromClubInput } from "@/lib/dates";
-import { createElection } from "./actions";
+import { useElectionApi } from "./actions-context";
 import type { ElectionCreateOptions } from "./data";
 
 /**
@@ -17,7 +16,7 @@ import type { ElectionCreateOptions } from "./data";
  */
 export function NewElectionDialog({ open, onClose, options }: { open: boolean; onClose: () => void; options: ElectionCreateOptions }) {
   const toast = useToast();
-  const router = useRouter();
+  const api = useElectionApi();
   const [pending, setPending] = useState(false);
   const [roleName, setRoleName] = useState("");
   const [scopeId, setScopeId] = useState("");
@@ -44,9 +43,9 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
     const primary = role.scope === "committee"
       ? { roleName: role.roleName, committeeId: Number(scopeId), candidacyEndIso }
       : { roleName: role.roleName, departmentId: Number(scopeId), candidacyEndIso };
-    createElection(primary).then((r) => {
+    api.createElection(primary).then((r) => {
       setPending(false);
-      if (r.ok) { toast.success(r.message); reset(); onClose(); router.refresh(); }
+      if (r.ok) { toast.success(r.message); reset(); onClose(); api.refresh(); }
       else toast.error(r.message);
     });
   };

@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { Button, ModalSectionHeading, Stat, matchesSearch } from "@adeeb/design-system";
 import { Scales, Megaphone, Trophy, Hourglass, Timer } from "@phosphor-icons/react";
 import { MagnifyingGlass } from "@/app/_components/glyphs";
@@ -13,6 +12,7 @@ import { Tabs } from "../_components/Tabs";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
+import { useElectionApi } from "./actions-context";
 import type { ElectionRow, ElectionCreateOptions } from "./data";
 import { NewElectionDialog } from "./NewElectionDialog";
 import { ElectionCard } from "./ElectionCard";
@@ -49,7 +49,7 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
   createOptions: ElectionCreateOptions | null;
   readOnly?: boolean;
 }) {
-  const router = useRouter();
+  const api = useElectionApi();
   const [search, setSearch] = useState("");
   const [fv, setFv] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
@@ -212,7 +212,7 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
     onToggleSort: toggleSort,
     emptyState,
     footer: pager ?? undefined,
-    onRowClick: (e: ElectionRow) => router.push(`/dashboard/elections/${e.id}`),
+    onRowClick: (e: ElectionRow) => api.nav(`/dashboard/elections/${e.id}`),
     rowTone: (e: ElectionRow) => toneOf(e),
   };
 
@@ -262,7 +262,7 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
                     election={e}
                     tone={toneOf(e)}
                     live={tab === "live"}
-                    onOpen={() => router.push(`/dashboard/elections/${e.id}`)}
+                    onOpen={() => api.nav(`/dashboard/elections/${e.id}`)}
                   />
                 ))}
               </div>

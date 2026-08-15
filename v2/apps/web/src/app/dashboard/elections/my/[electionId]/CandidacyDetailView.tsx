@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Prohibit } from "@/app/_components/glyphs";
 import { ConfirmDialog } from "../../../_components/ConfirmDialog";
 import { useToast } from "../../../_components/ToastProvider";
 import { Breadcrumb } from "../../../_shell/Breadcrumb";
 import { CandidacyJourney } from "../../_member/CandidacyJourney";
-import { withdrawCandidacy } from "../../actions";
+import { useElectionApi } from "../../actions-context";
 import type { CandidacyJourney as CJ } from "../../member-data";
 
 /**
@@ -17,14 +16,14 @@ import type { CandidacyJourney as CJ } from "../../member-data";
  */
 export function CandidacyDetailView({ c }: { c: CJ }) {
   const toast = useToast();
-  const router = useRouter();
+  const api = useElectionApi();
   const [pending, start] = useTransition();
   const [ask, setAsk] = useState(false);
 
   const doWithdraw = () =>
     start(async () => {
-      const r = await withdrawCandidacy(c.candidateId);
-      if (r.ok) { toast.success(r.message); setAsk(false); router.refresh(); } else toast.error(r.message);
+      const r = await api.withdrawCandidacy(c.candidateId);
+      if (r.ok) { toast.success(r.message); setAsk(false); api.refresh(); } else toast.error(r.message);
     });
 
   return (
@@ -34,7 +33,7 @@ export function CandidacyDetailView({ c }: { c: CJ }) {
       <CandidacyJourney
         c={c}
         cycle={c.cycle}
-        onEdit={() => router.push(`/dashboard/elections/my/${c.electionId}/edit`)}
+        onEdit={() => api.nav(`/dashboard/elections/my/${c.electionId}/edit`)}
         onWithdraw={() => setAsk(true)}
       />
 
