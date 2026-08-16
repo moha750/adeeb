@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Field, FileButton, ModalSectionHeading, Radio, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
-import { CalendarBlank, ClockCounterClockwise, Clock, FileArrowDown, FileDashed, HandTap, Megaphone, Note, Paperclip, Play, Quotes, Scales, StopCircle, UserPlus, UsersThree } from "@phosphor-icons/react";
+import { CalendarBlank, ClockCounterClockwise, Clock, FileArrowDown, FileDashed, HandTap, ImageSquare, Megaphone, Note, Paperclip, Play, Quotes, Scales, StopCircle, UserPlus, UsersThree } from "@phosphor-icons/react";
 import { ArrowUUpLeft } from "@/app/_components/glyphs";
 import { ArrowRight } from "@/app/_components/glyphs";
 import { PencilSimple, Prohibit, CheckCircle } from "@/app/_components/glyphs";
@@ -23,6 +23,9 @@ import { byGender, CANDIDATE_CARD_TONE, CANDIDATE_STATUS_META, decisionLine } fr
 import { StatusBadge } from "./StatusBadge";
 import { Breadcrumb } from "../_shell/Breadcrumb";
 import { fromClubInput, toClubInput } from "@/lib/dates";
+import { firstAndLastOf } from "@/lib/personName";
+import { tallyLine, type ResultCard } from "@/lib/elections/resultCard";
+import { ShareResultModal } from "./ShareResultModal";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) للحالة الغالبة — voting_end = الآن + المدّة.
 // و«موعد مخصّص» يكشف حقلَ تاريخٍ وساعةٍ بساعة النادي، فتبقى الدقّة متاحةً من أوّل خطوة.
@@ -44,7 +47,9 @@ const VERDICTS: { value: "approved" | "needs_edit" | "rejected"; label: string; 
   { value: "rejected", label: "رفض", description: "لا يدخل الصندوق، ويُبلَّغ بالسبب.", icon: <Prohibit />, needsNote: true },
 ];
 
-type Confirm = { title: string; text: string; confirmLabel: string; tone: "warning" | "danger" | "success"; run: () => Promise<ElectionResult> };
+// أيقونةُ التأكيد تتبع الفعل لا النافذة: الإغلاقُ وقفٌ (`StopCircle`) والإعلانُ نداء
+// (`Megaphone`) — فلا يُختَم خبرٌ سارٌّ بعلامة وقوف. وفراغُها يعود إلى الوقف افتراضًا.
+type Confirm = { title: string; text: string; confirmLabel: string; tone: "warning" | "danger" | "success"; icon?: ReactNode; run: () => Promise<ElectionResult>; then?: () => void };
 
 // الحقلُ يقرأ ويكتب بساعة النادي (الرياض) لا بساعة جهاز المشرف — المصدر `lib/dates`.
 
@@ -66,6 +71,8 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   const [days, setDays] = useState("3");
   const [voteEnd, setVoteEnd] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [tieOpen, setTieOpen] = useState(false);
+  const [tiePick, setTiePick] = useState("");
   const [reason, setReason] = useState("");
   const [deadlineOpen, setDeadlineOpen] = useState(false);
   const [deadline, setDeadlineValue] = useState("");
@@ -107,7 +114,58 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   const jointOnly = election.jointPending > 0 || election.jointBlocking > 0;
   const declarable = (c: CandidateRow) => s === "voting_closed" && c.status === "approved" && !jointOnly;
 
-  const approvedCount = election.candidates.filter((c) => c.status === "approved").length;
+  const approved = election.candidates.filter((c) => c.status === "approved");
+  const approvedCount = approved.length;
+
+  /**
+   * **مَن يُعلَن؟** القاعدةُ تعرفه سلفًا: `declare_winner` ترفض من ليس صاحبَ أعلى وزن. فلا
+   * يُطلَب من المشرف أن يفتّش عن جوابٍ بأيدينا: يُحسَب المتصدّرُ هنا بالقاعدة نفسِها ويُسمّى
+   * في الزرّ. والتساوي وحدَه يُعيد إليه الاختيار (القاعدة تقبل أيًّا من المتساوين، فالقرارُ
+   * قرارُه لا قرارُ الترتيب)، وصندوقٌ لم يصوّت فيه أحدٌ متساوٍ على الصفر فيدخل هذا البابَ نفسَه.
+   */
+  const topWeight = approved.reduce((m, c) => Math.max(m, c.weight), 0);
+  const leaders = approved.filter((c) => c.weight === topWeight);
+
+  /** ما تحمله بطاقةُ النتيجة عن مرشّح — لغةٌ واحدة يقرؤها التأكيدُ قبل الإعلان والصورةُ بعده. */
+  const resultOf = (c: CandidateRow): ResultCard => ({
+    position: election.positionLabel,
+    roleName: election.targetRoleName,
+    winner: c.name,
+    gender: c.gender === "male" || c.gender === "female" ? c.gender : null,
+    votes: c.votes,
+    turnout: election.votes,
+    confidence: election.confidence,
+    opposeVotes: election.opposeVotes,
+    declaredAt: election.winnerDeclaredAtRaw,
+  });
+
+  /** لفظُ الفعل يتبع صاحبَه: «إعلان الفائزة نورة» لا «الفائز نورة». والمجهولُ يُذكَّر (`byGender`). */
+  const declareLabel = (c: CandidateRow) =>
+    election.confidence ? "إعلان التزكية" : `إعلان ${byGender(c.gender, "الفائز", "الفائزة")}`;
+
+  /** تأكيدُ الإعلان: الحصيلةُ تُقرأ قبل الضغط، وأثرُ الفعل مكتوبٌ (إسنادٌ وقفلُ دورة). */
+  const confirmDeclare = (c: CandidateRow) => setConfirm({
+    title: `${declareLabel(c)}؟`,
+    text: `${c.name}: ${tallyLine(resultOf(c))}. بالإعلان يُسنَد المنصب تلقائيًّا ويُقفَل الانتخاب، ثمّ تستخرج بطاقة النتيجة لتوزّعها.`,
+    confirmLabel: declareLabel(c),
+    tone: "success",
+    icon: <Megaphone />,
+    run: () => api.declareWinner(election.id, c.id),
+    // لحظةُ الإعلان هي هذه اللحظة، فتُختَم بها البطاقةُ بلا انتظار وصول الصفّ من الخادم
+    then: () => openShare({ ...resultOf(c), declaredAt: new Date().toISOString() }),
+  });
+
+  /**
+   * بابُ المشاركة: البطاقةُ والتهنئةُ في نافذةٍ واحدة (`ShareResultModal`).
+   *
+   * **ويُفتَح من نفسه بعد الإعلان** (طلبُ المالك ٢٠٢٦-٠٨-١٦): الإعلانُ والتوزيعُ فعلٌ واحدٌ في
+   * ذهن المشرف. ولا يُفتَح على فراغٍ ينتظر عودةَ الخادم: **النافذةُ تحمل لقطتَها** (`shareCard`)
+   * مبنيّةً من الصفّ الذي أُعلن، وتاريخُها هذه اللحظةُ نفسُها (وهي لحظةُ الإعلان حقًّا).
+   *
+   * ومن أغلقه سهوًا لم يفته شيء: زرُّ «شارك النتيجة» باقٍ في تنبيه «اكتمل الانتخاب».
+   */
+  const [shareCard, setShareCard] = useState<ResultCard | null>(null);
+  const openShare = (card: ResultCard) => setShareCard(card);
 
   // الطور الموقوت — بابٌ مفتوح وحده يقبل موعدًا، وهو الذي يقول أيّ عمودٍ يُضبط
   const timedPhase: "candidacy" | "voting" | null =
@@ -130,8 +188,9 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     api.loadAppointOptions(election.id).then((r) => setAppointees(r.members));
   };
 
-  // جنسُ الفائز من صفّه في المرشّحين (هو أحدُهم)، فلا يُطلَب من القاعدة مرّةً ثانية
-  const winnerGender = election.candidates.find((c) => c.id === election.winnerCandidateId)?.gender ?? null;
+  // صفُّ الفائز في المرشّحين (هو أحدُهم) — منه جنسُه وحصيلتُه، فلا يُطلَب من القاعدة مرّةً ثانية
+  const winnerRow = election.candidates.find((c) => c.id === election.winnerCandidateId) ?? null;
+  const winnerGender = winnerRow?.gender ?? null;
 
   // وزنُ التأييد في التزكية = وزنُ المرشّح الوحيد المعتمَد (الاعتراضُ محسوبٌ للانتخاب نفسه)
   const soleApproved = election.confidence ? election.candidates.find((c) => c.status === "approved") ?? null : null;
@@ -283,6 +342,16 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
           {election.confidence
             ? <>{byGender(winnerGender, "نال", "نالت")} <b>{election.winnerName}</b> ثقة الناخبين تزكيةً، وأُسنِد المنصب تلقائيًّا.</>
             : <>{byGender(winnerGender, "الفائز", "الفائزة")}: <b>{election.winnerName}</b>، أُسنِد المنصب تلقائيًّا.</>}
+          {/* البطاقةُ تُستخرَج متى شاء لا في لحظة الإعلان وحدَها — فمن أغلق الصفحة لم يفته شيء.
+              وتُعرَض للمطّلِع أيضًا: صورةُ نتيجةٍ مُعلَنة نشرٌ لا تصريف. */}
+          {/* بابٌ واحدٌ لا زرّان: الصورةُ تُرى والتهنئةُ تُقرأ قبل أن تُرسَلا (`ShareResultModal`) */}
+          {winnerRow ? (
+            <div style={{ marginTop: 10 }}>
+              <Button variant="ghost" size="sm" onClick={() => openShare(resultOf(winnerRow))}>
+                <ImageSquare size={18} />شارك النتيجة
+              </Button>
+            </div>
+          ) : null}
         </Alert>
       ) : null}
       {s === "cancelled" ? (
@@ -356,13 +425,24 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
             election.jointBlocking > 0 ? (
               <span className="txt" style={{ alignSelf: "center" }}>في هذا القسم مقعدٌ آخر يخوضه أحدُ مرشّحيك ولم يُغلق تصويتُه؛ أغلِقه ثمّ تُحسَم مقاعد القسم معًا.</span>
             ) : election.jointPending > 0 && election.departmentId != null ? (
-              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي القسم معًا؟", text: "تُحسَم مقاعد القسم الجاهزة معًا: من تصدّر أكثر من مقعد أخذ مفضَّله، وذهب الباقي للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي القسم", tone: "success", run: () => api.resolveDepartmentWinners(election.departmentId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي القسم معًا</Button>
-            ) : (
-              <span className="txt" style={{ alignSelf: "center" }}>
+              <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إعلان فائزي القسم معًا؟", text: "تُحسَم مقاعد القسم الجاهزة معًا: من تصدّر أكثر من مقعد أخذ مفضَّله، وذهب الباقي للتالي في الأصوات. تُسنَد المناصب تلقائيًّا.", confirmLabel: "إعلان فائزي القسم", tone: "success", icon: <Megaphone />, run: () => api.resolveDepartmentWinners(election.departmentId!) })} loading={acting === "confirm"} disabled={pending}><CheckCircle size={18} />إعلان فائزي القسم معًا</Button>
+            ) : election.confidence && (soleApproved?.weight ?? 0) <= election.opposeWeight ? (
+              /* التزكيةُ تسقط بالقاعدة نفسِها، فلا يُعرَض زرٌّ يُردّ حتمًا: يُقال الحالُ ويُترَك المخرج */
+              <span className="txt" style={{ alignSelf: "center" }}>سقطت التزكية: لم يغلب التأييدُ الاعتراض، والمخرجُ إلغاءُ هذا الانتخاب.</span>
+            ) : leaders.length === 1 ? (
+              /* المتصدّرُ واحدٌ ⇒ فعلٌ واحدٌ باسمه: لا تفتيشَ في القائمة عن جوابٍ تعرفه القاعدة */
+              <Button variant="primary" size="md" onClick={() => confirmDeclare(leaders[0])} loading={acting === "confirm"} disabled={pending}>
+                <Megaphone size={18} />
                 {election.confidence
-                  ? "غلب التأييدُ الاعتراضَ فقامت التزكية: افتح المرشّح من القائمة لإعلانه فائزًا."
-                  : "افتح مرشّحًا معتمَدًا من القائمة لإعلانه فائزًا (القاعدة تفرض الأعلى وزنًا)."}
-              </span>
+                  ? `إعلان تزكية ${firstAndLastOf(leaders[0].name)}`
+                  : `${declareLabel(leaders[0])} ${firstAndLastOf(leaders[0].name)}`}
+              </Button>
+            ) : leaders.length > 1 ? (
+              <Button variant="primary" size="md" onClick={() => setTieOpen(true)} disabled={pending}>
+                <Scales size={18} />تساوى المتصدّرون، اختر
+              </Button>
+            ) : (
+              <span className="txt" style={{ alignSelf: "center" }}>لا مرشّح معتمَد في هذا الصندوق، فلا فائزَ يُعلَن.</span>
             )
           ) : null}
           {timedPhase && !stalled ? (
@@ -665,16 +745,64 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         <Textarea label="سبب الإلغاء" icon={<Prohibit />} innerIcon={<Note />} placeholder="لماذا يُلغى هذا الانتخاب؟…" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} required />
       </Modal>
 
+      <ShareResultModal card={shareCard} open={shareCard !== null} onClose={() => setShareCard(null)} />
+
+      {/* التساوي — البابُ الوحيد الذي يبقى فيه الاختيارُ للمشرف: القاعدة تقبل أيًّا من
+          المتصدّرين المتساوين، فلا ترجّح الشاشةُ أحدَهم بترتيبٍ لا معنى له. والحصيلةُ مكتوبةٌ
+          تحت كلّ اسم فيقع الاختيارُ على علم، ولا تأكيدَ فوقه (نافذةٌ فوق نافذةٍ تكرارٌ لا حماية). */}
+      <Modal
+        open={tieOpen}
+        onClose={() => { if (!pending) { setTieOpen(false); setTiePick(""); } }}
+        title="تساوى المتصدّرون"
+        description="اختر مَن يُعلَن فائزًا، ويُسنَد المنصب تلقائيًّا."
+        size="sm"
+        busy={pending}
+        footer={
+          <>
+            <Button variant="ghost" size="md" onClick={() => { setTieOpen(false); setTiePick(""); }} disabled={pending}>إغلاق</Button>
+            <Button
+              variant="primary"
+              size="md"
+              loading={acting === "win_tie"}
+              disabled={pending || !tiePick}
+              onClick={() => run("win_tie", () => api.declareWinner(election.id, tiePick), () => {
+                setTieOpen(false);
+                setTiePick("");
+                const won = leaders.find((c) => c.id === tiePick);
+                if (won) openShare({ ...resultOf(won), declaredAt: new Date().toISOString() });
+              })}
+            >
+              {/* اللفظُ يتبع مَن اخترتَ لا الزرَّ: قبل الاختيار يُذكَّر (لا صاحبَ له بعد) */}
+              <Megaphone size={18} />{declareLabel(leaders.find((c) => c.id === tiePick) ?? leaders[0])}
+            </Button>
+          </>
+        }
+      >
+        {leaders.map((c) => (
+          <Radio
+            key={c.id}
+            card
+            name="tie"
+            icon={<UsersThree />}
+            checked={tiePick === c.id}
+            onChange={() => setTiePick(c.id)}
+            label={c.name}
+            description={tallyLine(resultOf(c))}
+            disabled={pending}
+          />
+        ))}
+      </Modal>
+
       <ConfirmDialog
         open={confirm !== null}
         onClose={() => setConfirm(null)}
         tone={confirm?.tone ?? "warning"}
-        icon={<StopCircle />}
+        icon={confirm?.icon ?? <StopCircle />}
         title={confirm?.title ?? ""}
         text={confirm?.text}
         confirmLabel={confirm?.confirmLabel ?? "تأكيد"}
         loading={pending}
-        onConfirm={() => { if (confirm) run("confirm", confirm.run, () => setConfirm(null)); }}
+        onConfirm={() => { if (confirm) { const c = confirm; run("confirm", c.run, () => { setConfirm(null); c.then?.(); }); } }}
       />
     </>
   );

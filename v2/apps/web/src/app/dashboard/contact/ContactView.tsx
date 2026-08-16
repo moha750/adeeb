@@ -16,6 +16,7 @@ import { CONTACT_STATUSES, statusLabel, statusTone } from "@/lib/contact/vocab";
 import { saveContactNotes, sendContactReply, setContactStatus } from "./actions";
 import type { ContactRow } from "./data";
 import { PageHeader } from "../_components/PageHeader";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * **رسائل التواصل** — ما يكتبه الزائر في «تواصل معنا» بالصفحة الرئيسيّة، يصل هنا.
@@ -97,7 +98,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
 
   const copyEmail = async (r: ContactRow) => {
     try {
-      await navigator.clipboard.writeText(r.email);
+      await copyText(r.email);
       toast.success("نُسخ البريد.");
     } catch {
       toast.error("تعذّر نسخ البريد.");

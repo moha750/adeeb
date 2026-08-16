@@ -23,6 +23,7 @@ import {
 import { StatusBadge } from "./StatusBadge";
 import { TypeBadge } from "./TypeBadge";
 import { Breadcrumb } from "../_shell/Breadcrumb";
+import { copyText } from "@/lib/clipboard";
 
 type Phase = "draft" | "cancelled" | "upcoming" | "today" | "ended";
 type TabKey = "whatsapp" | "attendance" | "certificates" | "completed" | "dropped" | "all";
@@ -125,7 +126,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
     });
   };
   const copy = async (text: string, label: string) => {
-    try { await navigator.clipboard.writeText(text); toast.success(`نُسخ ${label}.`); } catch { toast.error("تعذّر النسخ."); }
+    try { await copyText(text); toast.success(`نُسخ ${label}.`); } catch { toast.error("تعذّر النسخ."); }
   };
   const openWa = (r: ReservationRow) => { if (r.phone) window.open(waHref(r.phone, buildWaMessage(r, detail)), "_blank", "noopener"); };
 

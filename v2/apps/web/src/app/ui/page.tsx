@@ -20,7 +20,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
       ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["loading", "شاشة التحميل"], ["empty", "الحالة الفارغة"],
       ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["medal", "الوسام"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
-      ["membership", "بطاقة العضويّة"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"],
+      ["membership", "بطاقة العضويّة"], ["result-card", "بطاقة نتيجة الانتخاب"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"],
     ],
   },
   {

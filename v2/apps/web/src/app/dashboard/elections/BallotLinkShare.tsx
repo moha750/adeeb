@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Button, Card, CardBody, Field } from "@adeeb/design-system";
 import { LinkSimple, PaperPlaneTilt, ShareNetwork } from "@phosphor-icons/react";
 import { Check } from "@/app/_components/glyphs";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * **رابطُ بطاقة الاقتراع يُنشَر ولا يُملى** (طلب المالك ٢٠٢٦-٠٨-١٥): حين يُفتح التصويت
@@ -41,7 +42,7 @@ export function BallotLinkShare({ electionId, position, votingEnd }: {
   /** النسخُ فعلٌ قائمٌ بنفسه (طلب المالك): لا يُبلَغ إليه بعد إغلاق ورقة المشاركة. */
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch {

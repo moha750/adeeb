@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@adeeb/design-system";
 import { LinkSimple, ShareNetwork } from "@phosphor-icons/react";
 import { Check } from "@/app/_components/glyphs";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * الغايةُ أن يَنشرها صاحبُها، فالنشرُ زرٌّ لا تعليمات.
@@ -33,7 +34,7 @@ export function ShareBar({ name, slug }: { name: string; slug: string }) {
     }
 
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch {

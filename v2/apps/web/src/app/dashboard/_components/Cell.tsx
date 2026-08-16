@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy } from "@phosphor-icons/react";
 import { ArrowSquareOut } from "@/app/_components/glyphs";
 import { useToast } from "./ToastProvider";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * خليّة العرض (القاعدة ٨) — تسميةٌ بأيقونتها ثمّ القيمة، والرُّكن يُعلن طبيعتها:
@@ -28,7 +29,7 @@ export function Cell({ label, value, icon, lat, full, href, noCopy, action }: {
   const copy = async () => {
     if (empty || !value) return;
     try {
-      await navigator.clipboard.writeText(value);
+      await copyText(value);
       setDone(true);
       window.setTimeout(() => setDone(false), 1400);
       toast.success(`نُسِخ: ${label}`);

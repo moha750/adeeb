@@ -54,13 +54,15 @@ function canShareFile(file: File): boolean {
  * يعرض الملفّ في ورقة مشاركة النظام (فيُحفظ في الاستوديو أو يُرسَل)، وإلّا ينزّله.
  * ينبغي أن يُنادى من نقرةِ مستخدمٍ مباشرة — وكلّما طال التوليد قبله ضَعُف إذن اللمسة.
  */
-export async function shareOrDownloadBlob(blob: Blob, filename: string, fallback = "ملف"): Promise<SaveResult> {
+export async function shareOrDownloadBlob(blob: Blob, filename: string, fallback = "ملف", text?: string): Promise<SaveResult> {
   const name = safeName(filename, fallback);
   const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
 
   if (canShareFile(file)) {
     try {
-      await navigator.share({ files: [file] });
+      // النصُّ المرافق **رجاءٌ لا ضمان**: بعض التطبيقات (واتساب منها) تُسقطه حين تستقبل صورة.
+      // فمن أراد يقينًا نسخَ النصّ فله زرُّ نسخٍ في شاشته، وهذا لا يضرّ إن سقط.
+      await navigator.share({ files: [file], ...(text ? { text } : {}) });
       return "shared";
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return "cancelled";

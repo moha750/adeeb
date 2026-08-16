@@ -307,6 +307,8 @@ export type ElectionDetail = {
   opposeVotes: number;
   winnerCandidateId: string | null;
   winnerName: string | null;
+  /** لحظةُ الإعلان خامًا (ISO) — تقرؤها بطاقةُ النتيجة، فالورقةُ تؤرَّخ بيوم الإعلان لا بيوم استخراجها. */
+  winnerDeclaredAtRaw: string | null;
   committeeId: number | null;
   /** قسمُ المقعد — وحدةُ الحسم (`resolve_department_election_winners`). */
   departmentId: number | null;
@@ -328,7 +330,7 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
   const sb = service();
   if (!sb) return { election: null, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
-  const eRes = await sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at, stalled_at, candidacy_end, voting_end, winner_candidate_id").eq("id", id).maybeSingle();
+  const eRes = await sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at, stalled_at, candidacy_end, voting_end, winner_candidate_id, winner_declared_at").eq("id", id).maybeSingle();
   if (eRes.error) return { election: null, error: eRes.error.message };
   if (!eRes.data) return { election: null, error: null };
   const e = eRes.data;
@@ -433,6 +435,7 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
       opposeVotes,
       winnerCandidateId: e.winner_candidate_id ?? null,
       winnerName,
+      winnerDeclaredAtRaw: e.winner_declared_at ?? null,
       committeeId: e.target_committee_id ?? null,
       departmentId,
       jointPending,

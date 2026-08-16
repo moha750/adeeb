@@ -30,6 +30,7 @@ import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
 import { SurveyCard } from "./SurveyCard";
 import { Breadcrumb } from "../_shell/Breadcrumb";
+import { copyText } from "@/lib/clipboard";
 
 // نغمة سطح الصفّ من الحالة المخزّنة — المتوقّف أصفر. النشط لا يُدرَج هنا لأنّ خضرته مشروطة
 // بكونه حيًّا الآن (لا مجدولًا ولا منتهيًا) لا بحالته المخزّنة وحدها — تُحسب في isLiveActive.
@@ -108,7 +109,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
 
   const copyLink = async (s: SurveyRow) => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/surveys/${s.id}`);
+      await copyText(`${window.location.origin}/surveys/${s.id}`);
       toast.success("نُسخ رابط الاستبيان.");
     } catch { toast.error("تعذّر النسخ."); }
   };

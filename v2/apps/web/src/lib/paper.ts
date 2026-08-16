@@ -372,16 +372,28 @@ async function drawWithElongation(
 }
 
 /**
- * سياقُ رسمٍ جاهز: قالبٌ مرسومٌ في canvas بمقاسه، وسياقٌ يُقاس به قبل بناء القطع.
- * (القياس يسبق التخطيط: عرضُ السطر يُعرف قبل أن يُعرف موضعُه.)
+ * سياقُ رسمٍ **بلا قالب**: لوحٌ فارغٌ بمقاس الورقة وخطوطُها محمّلة.
+ *
+ * ولمن هو؟ لورقةٍ لا صورةَ لها يُرسَم عليها، بل تُرسَم خلفيّتُها من رموز الهوية (بطاقةُ نتيجة
+ * الانتخاب). فالقالبُ صورةٌ في الخلفيّة لا شرطٌ في الرسّام، ومَن جاء بقالبٍ فوقَه استعمل
+ * `openPaper` أدناه — وهي هذه نفسُها ثمّ رسمُ الصورة، لا رسّامٌ ثانٍ.
  */
-export async function openPaper(template: string, page: PageSize): Promise<CanvasRenderingContext2D> {
+export async function openBlank(page: PageSize): Promise<CanvasRenderingContext2D> {
   await ensureFonts();
   const canvas = document.createElement("canvas");
   canvas.width = page.w;
   canvas.height = page.h;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("تعذّر تجهيز الورقة (canvas).");
+  return ctx;
+}
+
+/**
+ * سياقُ رسمٍ جاهز: قالبٌ مرسومٌ في canvas بمقاسه، وسياقٌ يُقاس به قبل بناء القطع.
+ * (القياس يسبق التخطيط: عرضُ السطر يُعرف قبل أن يُعرف موضعُه.)
+ */
+export async function openPaper(template: string, page: PageSize): Promise<CanvasRenderingContext2D> {
+  const ctx = await openBlank(page);
 
   const img = await loadTemplate(template);
   if (!img) throw new Error(`قالب الورقة غير موجود (public${template}).`);
