@@ -2975,6 +2975,11 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    القضيبَ الغائرَ والرقاقةَ الفعّالة، وينفرد وحده بمقاس عنصره وشارته (في قسم التبويبات أدناه). */
 .seg, .tabs-segmented { display: inline-flex; gap: 2px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius); }
 .seg { width: max-content; padding: 3px; }
+/* ممتدّ — يملأ صفّه وتتقاسمه عناصرُه بالسويّة. لخيارٍ **هو نفسُه الشاشة** (أيُّ إدارةٍ تُدار)
+   لا خيارٍ يُزيَّن به ركن: القضيبُ حينئذٍ يقود العين لا يقف على حافّتها، والهدفُ يتّسع
+   للإبهام على 375px. و`flex-basis: 0` كي يستوي العنصران وإن تفاوتت كلماتُهما. */
+.seg.seg-wide { width: 100%; }
+.seg.seg-wide > .seg-item { flex: 1 1 0; min-width: 0; text-align: center; }
 .tabs-segmented { padding: 4px; }
 .seg-item { font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-muted); background: 0; border: 0; border-radius: var(--radius-nested); padding: 7px 15px; cursor: pointer; text-decoration: none; transition: color var(--dur-fast); }
 .seg-item:hover, .tabs-segmented .tab:hover { color: var(--color-primary); }

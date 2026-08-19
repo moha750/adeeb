@@ -111,7 +111,14 @@ export const NAV: NavGroup[] = [
  * كتابة المسار في شريط العنوان.
  */
 export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
-  const has = (it: NavItem) => (!it.seat || scope[it.seat] !== null) && (!it.election || scope.elections[it.election]);
+  // مقعدُ «الإدارة» وحدَه يُسأل عن **المدى** لا عن المقعد (20260819): الرئيسان لا يقودان
+  // إدارةً وتعيينُهما يبلغ الإدارتين، فلو سُئل عن مقعدٍ لسقط البندُ عنهما وهما أهلُه.
+  const seated = (it: NavItem) =>
+    !it.seat || (it.seat === "unit" ? scope.units.length > 0 : scope[it.seat] !== null);
+  const has = (it: NavItem) => seated(it) && (!it.election || scope.elections[it.election]);
+  // والاسمُ يتبع الحقيقة: «إدارتي» لمن له فيها مقعد، و«الإدارات» لمن يبلغها ولا يجلس فيها.
+  const named = (it: NavItem): NavItem =>
+    it.seat === "unit" && !scope.unit ? { ...it, label: "الإدارات" } : it;
   return NAV.map((g) => ({
     ...g,
     items: g.items.flatMap((it) => {
@@ -119,7 +126,7 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
         const children = it.children.filter((c) => canOpen(caps, c.href));
         return children.length ? [{ ...it, children }] : [];
       }
-      return it.href && canOpen(caps, it.href) && has(it) ? [it] : [];
+      return it.href && canOpen(caps, it.href) && has(it) ? [named(it)] : [];
     }),
   })).filter((g) => g.items.length > 0);
 }

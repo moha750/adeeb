@@ -17,6 +17,7 @@ const RANGES = [
 export default function SegmentedPage() {
   const [status, setStatus] = useState("active");
   const [tab, setTab] = useState("info");
+  const [unit, setUnit] = useState("hr");
 
   return (
     <main className="py-16">
@@ -40,6 +41,16 @@ export default function SegmentedPage() {
             <Lab>تبويبان</Lab>
             <Segmented aria-label="أقسام الملفّ" value={tab} onValueChange={setTab}
               items={[{ value: "info", label: "المعلومات" }, { value: "activity", label: "النشاط" }]} />
+          </section>
+
+          <section>
+            <Lab>ممتدّ: wide — يملأ صفّه وتتقاسمه عناصرُه بالسويّة</Lab>
+            <Segmented aria-label="الإدارة المعروضة" wide value={unit} onValueChange={setUnit}
+              items={[{ value: "hr", label: "إدارة الموارد البشرية" }, { value: "qa", label: "إدارة الضمان والجودة" }]} />
+            <p className="mt-3 text-content-muted">
+              لخيارٍ <b>هو نفسُه الشاشة</b> لا خيارٍ يُزيَّن به ركن: القضيبُ يقود العين، والهدفُ يتّسع للإبهام
+              على 375px. وتفاوتُ الكلمات لا يُفاوت بين العنصرين.
+            </p>
           </section>
 
           <section>

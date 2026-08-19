@@ -24,6 +24,8 @@ export interface SegmentedProps {
   linkAs?: LinkLike;
   /** تسمية المجموعة لقارئ الشاشة. */
   "aria-label"?: string;
+  /** ممتدٌّ على عرض صفّه، تتقاسمه عناصرُه بالسويّة — لخيارٍ هو نفسُه الشاشة لا زينةُ ركن. */
+  wide?: boolean;
   className?: string;
 }
 
@@ -34,10 +36,10 @@ export interface SegmentedProps {
  * وضعان: **أزرار** (حالة عبر `onValueChange`) أو **روابط** (تنقّل عبر `href`
  * على كلّ عنصر). في وضع الروابط مرّر `linkAs={Link}` لتنقّلٍ عميليّ.
  */
-export function Segmented({ items, value, onValueChange, linkAs, className, ...aria }: SegmentedProps) {
+export function Segmented({ items, value, onValueChange, linkAs, wide, className, ...aria }: SegmentedProps) {
   const Link = linkAs;
   return (
-    <div className={cn("seg", className)} role="group" aria-label={aria["aria-label"]}>
+    <div className={cn("seg", wide && "seg-wide", className)} role="group" aria-label={aria["aria-label"]}>
       {items.map((it) => {
         const on = it.value === value;
         if (it.href != null) {
