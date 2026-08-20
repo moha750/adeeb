@@ -23,6 +23,8 @@ export type DeeboConversation = {
   lastAt: string;
   /** بصمةٌ تدور يوميًّا: تكفي للتمييز داخل اليوم ولا تصل زيارتَي يومين بشخصٍ واحد. */
   visitorHash: string;
+  /** اسمُ صاحبها إن كان له حساب — `null` للزائر المجهول (وله بصمتُه وحدَها). */
+  ownerName: string | null;
   entryPath: string | null;
   model: string;
   messageCount: number;
@@ -45,6 +47,10 @@ const KEY_HINT = "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local 
  *
  * والقراءةُ بمفتاح الخدمة كسائر غرف اللوحة: **التفويض عند الباب** (`manage_deebo` في
  * `denyUnless`) لا في الاستعلام. وسياستا RLS في القاعدة تحرسان من ينادي القاعدةَ مباشرةً.
+ *
+ * **وما حذفه صاحبُه لا يُقرأ ههنا** (كلمةُ المالك ٢٠٢٦-٠٨-٢٠: «حذفك للمحادثة يعني حذفها
+ * من كلّ مكان»): الصفُّ يذهب من القاعدة فلا يبقى ما يُعرَض. وحدُّ الحفظ باقٍ على حاله:
+ * سنةٌ ثمّ تذهب المملوكةُ كلُّها بمهمّة `deebo_purge_owned`.
  */
 export async function getDeeboLog(): Promise<DeeboLogData> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -55,7 +61,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
   const { data: convs, error } = await sb
     .from("deebo_conversations")
     .select(
-      "id, started_at, last_at, visitor_hash, entry_path, model, message_count, total_input_tokens, total_output_tokens, total_cached_tokens",
+      "id, started_at, last_at, visitor_hash, user_id, entry_path, model, message_count, total_input_tokens, total_output_tokens, total_cached_tokens",
     )
     .order("started_at", { ascending: false })
     .limit(200);
@@ -63,11 +69,24 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
 
   type RawConv = {
     id: string; started_at: string; last_at: string; visitor_hash: string;
+    user_id: string | null;
     entry_path: string | null; model: string; message_count: number;
     total_input_tokens: number; total_output_tokens: number; total_cached_tokens: number;
   };
   const raw = (convs ?? []) as RawConv[];
   if (!raw.length) return { rows: [], error: null };
+
+  /* أسماءُ أصحاب المحادثات — نداءٌ واحدٌ لهم جميعًا لا نداءٌ لكلّ صفّ.
+     **والاسمُ يُقرأ من `profiles` لا يُخزَّن في المحادثة**: من غيّر اسمَه غيّره في سجلّه
+     معه، ومن خرج من أديب صار `user_id` فيها `null` (م١) فعادت مجهولةً بلا أثرٍ لاسمه. */
+  const ownerIds = [...new Set(raw.map((c) => c.user_id).filter((v): v is string => !!v))];
+  const names = new Map<string, string>();
+  if (ownerIds.length) {
+    const { data: people } = await sb.from("profiles").select("id, full_name").in("id", ownerIds);
+    for (const p of (people ?? []) as Array<{ id: string; full_name: string | null }>) {
+      if (p.full_name) names.set(p.id, p.full_name);
+    }
+  }
 
   // رسائلُ المحادثات كلِّها في نداءٍ واحد — لا محادثةٌ تجرّ نداءَها (سابقةُ أسماء الرادّين
   // في رسائل التواصل). والترتيبُ بالوقت صاعدًا فتُقرأ كما جرت.
@@ -107,6 +126,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
       startedAt: c.started_at,
       lastAt: c.last_at,
       visitorHash: c.visitor_hash,
+      ownerName: c.user_id ? names.get(c.user_id) ?? "صاحبُ حسابٍ لا اسمَ له" : null,
       entryPath: c.entry_path,
       model: c.model,
       messageCount: c.message_count,

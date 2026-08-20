@@ -109,7 +109,7 @@ export default function DeeboBubblePage() {
           </Sec>
           <Sec
             title="الوجوه وحالاتها"
-            note="خمسةٌ من تسعةٍ وثلاثين تفاعلًا: الوجهُ واقعةٌ تُقرأ لا زينةٌ تدور، فلا يتبدّل إلّا لسبب. ومَن يقرّر أيَّ وجهٍ في أيّ حال هو lib/deebo/mood وحدَه."
+            note="خمسةُ وجوهٍ للجواب: الوجهُ واقعةٌ تُقرأ لا زينةٌ تدور، فلا يتبدّل إلّا لسبب. ووجوهُ التحيّة ثمانيةٌ أخرى تحملها صدورُها، جردُها في ui/deebo-greeting. والكتالوجُ كلُّه lib/deebo/mood وحدَه."
           >
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-5">
               {MOODS.map(([mood, when]) => (

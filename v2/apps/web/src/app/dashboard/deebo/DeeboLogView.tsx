@@ -25,9 +25,10 @@ import type { DeeboConversation, DeeboMessage } from "./data";
  * «ما نصُّ كلّ رسالة» — فالأشرطةُ هي الجواب، والتفصيلُ يُطلَب بنقرة. وتُفتح كلُّها متى قام
  * بحثٌ أو مرشِّح، وإلّا رأى الباحثُ شريطًا فيه عدٌّ ولا نتيجةَ تحته.
  *
- * **ولا هويّةَ لزائرٍ تُعرَض ولا يمكن أن تُعرَض**: البصمةُ تدور كلّ يوم بأمر الترحيل، فما
- * في الصفّ يقول «سؤالٌ واحدٌ من متصفّحٍ واحدٍ في يومٍ واحد» ولا يقول من صاحبُه. وعرضُها هنا
- * ليفرّق القارئُ بين محادثتين في اليوم نفسه، لا ليتعقّب أحدًا.
+ * **والمجهولُ يبقى مجهولًا، ومن دخل بحسابه يُسمّى**: بصمةُ الزائر تدور كلّ يوم بأمر
+ * الترحيل، فما في صفّه يقول «سؤالٌ واحدٌ من متصفّحٍ واحدٍ في يومٍ واحد» ولا يقول من صاحبُه
+ * (وعرضُها ليفرّق القارئُ بين محادثتين في اليوم نفسه، لا ليتعقّب أحدًا). وأمّا من سأل
+ * بحسابه فقد اختار أن يُعرَف، فاسمُه في الشريط.
  */
 export function DeeboLogView({ rows }: { rows: DeeboConversation[] }) {
   const [search, setSearch] = useState("");
@@ -36,9 +37,13 @@ export function DeeboLogView({ rows }: { rows: DeeboConversation[] }) {
   const filtered = useMemo(
     () =>
       rows.filter((c) => {
-        // البحثُ في نصّ المحادثة كلِّها لا في شريطها: ما يُبحَث عنه كلمةٌ قيلت في سؤالٍ أو جواب.
-        if (!matchesSearch(search, `${c.model} ${c.messages.map((m) => m.content).join(" ")}`)) return false;
+        // البحثُ في نصّ المحادثة كلِّها لا في شريطها: ما يُبحَث عنه كلمةٌ قيلت في سؤالٍ أو
+        // جواب، أو **اسمُ من سألها** (فالسؤال «ما الذي سأل عنه فلان» يُطرَح ههنا).
+        if (!matchesSearch(search, `${c.model} ${c.ownerName ?? ""} ${c.messages.map((m) => m.content).join(" ")}`))
+          return false;
         if (filters.blocked === "yes" && !c.messages.some((m) => m.guardBlocked)) return false;
+        if (filters.who === "member" && !c.ownerName) return false;
+        if (filters.who === "guest" && c.ownerName) return false;
         if (filters.model && c.model !== filters.model) return false;
         return true;
       }),
@@ -56,6 +61,15 @@ export function DeeboLogView({ rows }: { rows: DeeboConversation[] }) {
   const models = useMemo(() => [...new Set(rows.map((c) => c.model))], [rows]);
 
   const filterDefs: FilterDef[] = [
+    {
+      key: "who",
+      label: "السائل",
+      options: [
+        { value: "", label: "الكلّ" },
+        { value: "member", label: "أصحاب الحسابات" },
+        { value: "guest", label: "زوّارٌ مجهولون" },
+      ],
+    },
     {
       key: "blocked",
       label: "حارس الأرقام",
@@ -114,10 +128,15 @@ export function DeeboLogView({ rows }: { rows: DeeboConversation[] }) {
        لا خبرَ فيه لمن يقرأ «بمَ سُئل النادي». والعمودُ يبقى في القاعدة كما هو (وعلّتُه
        مكتوبةٌ في ترحيله: كي لا يُقارَن جوابُ نموذجٍ بجواب آخر ظُلمًا يوم يُبدَّل المزوّد)،
        ويبقى مقروءًا بالبحث وبمرشِّح النموذج متى صار في السجلّ أكثرُ من واحد. */
+    /* ومن له حسابٌ يُنادى باسمه، ومن لا حسابَ له ببصمته: خبرٌ واحدٌ في موضعٍ واحد،
+       فلا يُعرَض للمعروف بصمةٌ لا تزيده تعريفًا. */
     hint: (
       <span>
-        {c.messages.length} رسالة، بصمة{" "}
-        <span className="font-latin" dir="ltr">{c.visitorHash.slice(0, 8)}</span>
+        {c.messages.length} رسالة، {c.ownerName ? c.ownerName : (
+          <>
+            بصمة <span className="font-latin" dir="ltr">{c.visitorHash.slice(0, 8)}</span>
+          </>
+        )}
       </span>
     ),
     rows: c.messages,
@@ -151,7 +170,7 @@ export function DeeboLogView({ rows }: { rows: DeeboConversation[] }) {
           title={rows.length === 0 ? "لم يسأل أحدٌ ديبو بعد" : "لا محادثةَ تطابق بحثك"}
           description={
             rows.length === 0
-              ? "أوّلُ محادثةٍ تُكتب هنا من نفسها متى فتح زائرٌ صفحةَ ديبو وسأل. ولا يُسجَّل اسمٌ ولا بريدٌ ولا عنوان: بصمةٌ تدور كلّ يوم وحدها."
+              ? "أوّلُ محادثةٍ تُكتب هنا من نفسها متى فتح أحدٌ صفحةَ ديبو وسأل. ومن سأل بحسابه كُتب اسمُه، ومن سأل زائرًا فبصمةٌ تدور كلّ يوم لا اسمَ فيها ولا بريدَ ولا عنوان."
               : "جرّب كلمةً أخرى أو ارفع المرشِّح."
           }
         />

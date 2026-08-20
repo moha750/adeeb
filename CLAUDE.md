@@ -335,9 +335,19 @@ Supabase Storage buckets in use: `images` (news), `library`, `election-files`, `
   `knowledge.ts` reading the live `faq` table; `limits.ts`, `persona.ts`, `questions.ts`,
   `useDeebo.ts`), the public `/deebo` page, `/ui/deebo-compare` (provider lab), and
   `/dashboard/deebo` (conversation log, capability `manage_deebo`).
-  Live provider: DeepSeek (`DEEPSEEK_API_KEY`). **Persona is still a draft** —
-  `v2/المتطلبات/ديبو-الهويّة.md` has 16 unanswered owner decisions, and `persona.ts` is replaced
-  verbatim with his words once he fills it. Do not invent a personality there.
+  Live provider: DeepSeek (`DEEPSEEK_API_KEY`). Since 2026-08-20 the page is a full-height
+  **chat room** (`.dchs-*`, one shape; the other two were executed), and signed-in visitors get
+  a stored conversation history (`deebo_conversations.user_id`/`title`, own-row RLS, monthly
+  `deebo_purge_owned(365)`) plus an identity briefing in the prompt (`lib/deebo/viewer.ts`:
+  first name + standing + position, nothing else). A session skips Turnstile; anonymous
+  visitors keep their talk in `localStorage` only. **The persona is the owner's words, filled
+  2026-08-20** — `v2/المتطلبات/ديبو-الهويّة.md` is its only human entry point, and `persona.ts`
+  carries his decisions verbatim (emoji now allowed and moderate after being banned outright;
+  the name story in his dialect; poems/songs now written, tied to Adeeb, after being refused;
+  sixteen prohibitions). Never write a personality trait there that the sheet does not carry.
+  Six items are still pending in the sheet's باب ز (the joining answer after registration was
+  killed, missing static facts, 4-vs-7 suggested questions, conversation logging, the third-party
+  disclosure line, the leadership one-liners) — leave them empty rather than inventing.
 - Edge functions in `supabase/functions/` may drift from what is actually deployed. Inspect the
   deployed version (and its `verify_jwt`) before redeploying anything.
 - V1 (`adeeb/`) is gitignored and retired. Read it only to understand the domain or migrate data.

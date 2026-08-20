@@ -7,7 +7,7 @@
  *
  * ## ترتيبُ الحرّاس، وهو مقصود
  *   ١) شكلُ الطلب      ← رخيص، يردّ العابث قبل أن يكلّفنا شيئًا
- *   ٢) Turnstile       ← نداءُ شبكةٍ لكلاودفلير، وأوّلَ رسالةٍ فقط
+ *   ٢) Turnstile       ← نداءُ شبكةٍ لكلاودفلير، وأوّلَ رسالةٍ فقط (ومحادثةٌ تُستأنَف تُصدَّق قبله)
  *   ٣) حدُّ الزائر والسقفُ اليوميّ ← استعلاما قاعدة
  *   ٤) المزوّد          ← وهو وحده ما يكلّف مالًا
  * فكلُّ حارسٍ أرخصُ ممّا بعده. ومن سقط في الأوّل لم يبلغ الرابع.
@@ -17,11 +17,13 @@
  */
 
 import { after } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { buildSystemPrompt } from "@/lib/deebo/persona";
 import { createSentenceGuard, allowedNumbers } from "@/lib/deebo/guard";
 import { liveProvider, readableError, type ChatMessage } from "@/lib/deebo/providers";
 import { checkGate, clientIp, deeboService, visitorHash } from "@/lib/deebo/limits";
+import { loadDeeboViewer, viewerBriefing } from "@/lib/deebo/viewer";
 import type { FaqRow } from "@/lib/deebo/knowledge";
 
 /** أطولُ سؤالٍ يُقبل. ما زاد إفراطٌ أو عبث، وكلاهما يُكلّف رموزًا بلا فائدة. */
@@ -43,6 +45,18 @@ type Body = {
 };
 
 const line = (o: unknown) => new TextEncoder().encode(`${JSON.stringify(o)}\n`);
+
+/**
+ * عنوانُ المحادثة من أوّل سؤال — **قصٌّ عند كلمةٍ لا عند حرف**: «كيف أنضمّ إل…» تُقرأ عطبًا.
+ * ولا يُستدعى النموذجُ لتسميتها: أوّلُ سؤالٍ هو موضوعُها في العادة، وثمنُ التسمية رحلةٌ ثانية.
+ */
+function conversationTitle(question: string): string {
+  const flat = question.replace(/\s+/g, " ").trim();
+  if (flat.length <= 48) return flat;
+  const cut = flat.slice(0, 48);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 24 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
 
 function fail(status: number, message: string) {
   return new Response(JSON.stringify({ type: "error", message }), {
@@ -81,19 +95,53 @@ export async function POST(req: Request) {
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : null;
   const entryPath = typeof body.path === "string" ? body.path.slice(0, 200) : null;
 
+  /* ── ١٫٥) مَن يسأل؟ ───────────────────────────────────────────────────────
+     صاحبُ الجلسة يُعرَف من كوكيز الطلب لا من حقلٍ في المتن: معرّفٌ يرسله المتصفّح
+     يعني أنّ كلَّ زائرٍ يستطيع أن يكتب محادثةً باسم غيره (درسُ `p_actor` المسدود). */
+  let userId: string | null = null;
+  try {
+    const sb = await createClient();
+    const { data } = await sb.auth.getUser();
+    userId = data.user?.id ?? null;
+  } catch {
+    userId = null; // تعثُّرُ قراءةِ الجلسة يجعله زائرًا، ولا يُسقط سؤاله
+  }
+
+  /* ── ١٫٦) أهذه المحادثةُ محادثتُك؟ ────────────────────────────────────────
+     معرّفُ المحادثة يأتي من المتصفّح، وحتّى اليوم كان يُصدَّق كما جاء: فمن حمل معرّفَ
+     محادثةِ غيره كتب فيها. فالمعرّفُ يُصدَّق بشرطين لا ثالثَ لهما:
+       · صاحبُ الجلسة يُكمل ما هو **له**.
+       · والمجهولُ يُكمل ما لا صاحبَ له وحدَه، فلا يُلحِق كلامَه بسجلّ عضو.
+     وما لم يجتَزْ يُهمَل بلا خطأ: تُفتح له محادثةٌ جديدة، ويعود الدرعُ شرطًا كما لو
+     لم يرسل معرّفًا أصلًا (وإلّا كان المعرّفُ المخترَعُ بابًا يتخطّى Turnstile). */
+  const supabase = deeboService();
+  if (!supabase) return fail(503, "ديبو غير مهيّأ الآن.");
+
+  let resumeId: string | null = null;
+  if (conversationId) {
+    const { data: own } = await supabase
+      .from("deebo_conversations")
+      .select("id, user_id")
+      .eq("id", conversationId)
+      .maybeSingle();
+    const row = own as { id: string; user_id: string | null } | null;
+    if (row && (row.user_id ?? null) === userId) resumeId = row.id;
+  }
+
   /* ── ٢) الدرع، وأوّلَ رسالةٍ فقط ────────────────────────────────────────── */
   // رمزُ Turnstile يُستهلك مرّةً، ومطالبةُ الزائر بحلّ اللغز عند كلّ سؤالٍ تقتل
   // المحادثة. فالأوّلُ يُدرَع، وما بعده يحرسه ربطُ المحادثة بالبصمة + حدُّ الساعة.
-  if (!conversationId) {
+  //
+  // **ومن دخل بحسابه لا يُدرَع أصلًا**: الدرعُ يسأل «أإنسانٌ أنت؟»، وحسابٌ قائمٌ في
+  // أديب جوابٌ أوثق من لغزٍ يُحلّ. وحدُّ الساعة والسقفُ اليوميّ يبقيان عليه كما هما،
+  // فالبابُ الذي يحرس الرصيد لم يُفتح. (والصفحةُ لا ترسم الودجةَ له من أصلها.)
+  if (!resumeId && !userId) {
     const token = typeof body.turnstileToken === "string" ? body.turnstileToken : undefined;
     const shieldError = await verifyTurnstile(token);
     if (shieldError) return fail(403, shieldError);
   }
 
   /* ── ٣) البصمةُ والحدود ────────────────────────────────────────────────── */
-  const supabase = deeboService();
-  if (!supabase) return fail(503, "ديبو غير مهيّأ الآن.");
-
   let hash: string;
   try {
     hash = visitorHash(clientIp(req.headers));
@@ -113,7 +161,9 @@ export async function POST(req: Request) {
   if (faqErr) return fail(503, "تعذّر قراءة معرفة ديبو الآن.");
 
   const rows = (faq ?? []) as FaqRow[];
-  const system = buildSystemPrompt(rows);
+  // صفةُ صاحب الجلسة (إن كان له حساب) — بإذن المالك ٢٠٢٦-٠٨-٢٠: الاسمُ الأوّل والصفة لا أكثر.
+  const viewer = userId ? await loadDeeboViewer(userId) : null;
+  const system = buildSystemPrompt(rows, viewer ? viewerBriefing(viewer) : null);
 
   // ما يُسمح لديبو أن يذكره من أعداد: ما في معرفته، وما كتبه الزائر بنفسه.
   const guard = createSentenceGuard(allowedNumbers(system, question));
@@ -122,7 +172,7 @@ export async function POST(req: Request) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let answer = "";
-      let convId = conversationId;
+      let convId = resumeId;
 
       try {
         // المحادثةُ تُفتح قبل البثّ كي يعود معرّفُها للعميل في أوّل سطر،
@@ -130,7 +180,14 @@ export async function POST(req: Request) {
         if (!convId) {
           const { data } = await supabase
             .from("deebo_conversations")
-            .insert({ visitor_hash: hash, entry_path: entryPath, model: provider.model })
+            .insert({
+              visitor_hash: hash,
+              entry_path: entryPath,
+              model: provider.model,
+              // الصاحبُ من الجلسة، والعنوانُ من أوّل سؤالٍ له (لا رحلةَ ثانيةً إلى المزوّد لتسميةٍ).
+              user_id: userId,
+              title: conversationTitle(question),
+            })
             .select("id")
             .single();
           convId = (data?.id as string | undefined) ?? null;
