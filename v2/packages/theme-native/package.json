@@ -1,0 +1,14 @@
+{
+  "name": "@adeeb/theme-native",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ثيم React Native مولَّد من tokens.css — المصدر يبقى ورقة الرموز وحدها",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "node ../../scripts/theme-native.mjs"
+  },
+  "peerDependencies": {
+    "react-native": "*"
+  }
+}
