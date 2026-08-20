@@ -2,8 +2,15 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 
 export type Cat = { label: string; count: number };
+/** بابُ الزيارة كما تعرفه القاعدة (عمود `source`): الموقعُ أو التطبيق. */
+export type Source = "web" | "app";
+
 export type Analytics = {
   days: number;
+  /** البابُ المختار، و`null` = البابان معًا. */
+  source: Source | null;
+  /** توزيعُ البابين في المدّة نفسِها **غيرَ منخول**، فيُرى ما وراء البابِ الآخر وأنت داخل أحدهما. */
+  sources: Partial<Record<Source, number>>;
   kpis: { pageviews: number; visitors: number; sessions: number; avg_seconds: number; bounce_rate: number; members: number; countries: number };
   bots: number;
   daily: { date: string; pageviews: number; visitors: number }[];
@@ -29,7 +36,7 @@ export type RecentVisitor = { id: string; lastSeen: string; pageviews: number; s
 type RawRecent = { id: string; last_seen: string; pageviews: number; sessions: number; country: string | null };
 
 /** إحصائيّات الزوّار من القاعدة الحيّة (خادميّ، عبر مفتاح الخدمة). */
-export async function getAnalytics(days: number): Promise<{ data: Analytics | null; recent: RecentVisitor[]; error: string | null }> {
+export async function getAnalytics(days: number, source: Source | null = null): Promise<{ data: Analytics | null; recent: RecentVisitor[]; error: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
   if (!url || !key) return { data: null, recent: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
@@ -37,7 +44,8 @@ export async function getAnalytics(days: number): Promise<{ data: Analytics | nu
 
   // نداءٌ واحد: «أحدث الزوّار» صار داخل الدالّة نفسها ليرث شرطَها ومدّتَها (كان جدولًا منفصلًا
   // يُقرأ خامًا، فيُدخل الروبوتات ويتجاهل المدّة ويعرض عمرَ الزائر كلَّه).
-  const a = await sb.rpc("get_visitor_analytics", { p_days: days });
+  // `p_source = null` يعني البابين معًا، وهو سلوكُ الدالّة قبل أن تعرف الأبواب أصلًا.
+  const a = await sb.rpc("get_visitor_analytics", { p_days: days, p_source: source });
   if (a.error) return { data: null, recent: [], error: a.error.message };
 
   const payload = a.data as Analytics & { recent?: RawRecent[] };

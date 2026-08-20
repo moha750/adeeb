@@ -12,7 +12,7 @@ import { ICONS } from "../_shell/icons";
 import { iconKeyForHref } from "../_shell/nav";
 import { DataTable, type Column } from "../_components/DataTable";
 import { EmptyState } from "../_components/EmptyState";
-import type { Analytics, Cat, RecentVisitor } from "./data";
+import type { Analytics, Cat, RecentVisitor, Source } from "./data";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 // نغمةُ قوائم الأشرطة **واحدةٌ** (الافتراضيّة `--chart-1`) — أُزيلت النغمات الأربع ٢٠٢٦-٠٨-٠٩:
@@ -21,6 +21,10 @@ const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "ماي�
 // (خيارٌ سابقٌ بـchart-6 في الاستبيانات · «أخرى» رماديّة في الحلقة).
 
 const nf = (n: number) => n.toLocaleString("en-US");
+/** عنوانُ الشاشة يحمل الاختيارين معًا: تبديلُ المدّة لا يعيدك إلى البابين، والعكس. */
+const href = (days: number, source: Source | null) =>
+  `/dashboard/analytics?days=${days}${source ? `&src=${source}` : ""}`;
+const total = (s: Analytics["sources"]) => Object.values(s).reduce((a, b) => a + b, 0);
 const fmtDate = (s: string) => { const [y, m, d] = s.split("-").map(Number); return `${d} ${MONTHS[(m || 1) - 1]}`; };
 const fmtDur = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
 
@@ -31,6 +35,10 @@ const U_VISITOR = { one: "زائر", two: "زائران", few: "زوّار" };
 const U_SESSION = { one: "جلسة", two: "جلستان", few: "جلسات" };
 
 const RANGES: Array<[number, string]> = [[7, "٧ أيّام"], [30, "٣٠ يومًا"], [90, "٩٠ يومًا"], [3650, "الكلّ"]];
+
+// بابُ الزيارة (عمود `source`، ٢٠٢٦-٠٨-٢٠): صار للنادي مدخلان، فرقمٌ يجمعهما لا يصف أحدَهما.
+// و«البابان» أوّلًا لأنّه ما كانت عليه الشاشةُ قبل اليوم، فلا يتبدّل ما يراه القادمُ بلا اختيار.
+const DOORS: Array<[Source | null, string]> = [[null, "البابان"], ["web", "الموقع"], ["app", "التطبيق"]];
 
 // محوّلٌ لفئات القاعدة {label, count} إلى سلسلة {label, value} — يخدم BarList والحلقة معًا.
 const toSeries = (cats: Cat[]): BarItem[] => cats.map((c) => ({ label: c.label, value: c.count }));
@@ -133,7 +141,7 @@ const heatMatrix = (heat: Analytics["hourly_heat"]) => {
   return m;
 };
 
-export function StatsView({ data, recent, days }: { data: Analytics; recent: RecentVisitor[]; days: number }) {
+export function StatsView({ data, recent, days, source }: { data: Analytics; recent: RecentVisitor[]; days: number; source: Source | null }) {
   const k = data.kpis;
   const kpis = useMemo(() => [
     { icon: <Eye />, n: nf(k.pageviews), l: "زيارة (صفحة)" },
@@ -149,7 +157,18 @@ export function StatsView({ data, recent, days }: { data: Analytics; recent: Rec
     <div className="st">
       <div className="st-tools">
         <Segmented aria-label="مدى المدّة" linkAs={Link} value={String(days)}
-          items={RANGES.map(([d, lbl]) => ({ value: String(d), href: `/dashboard/analytics?days=${d}`, label: lbl }))} />
+          items={RANGES.map(([d, lbl]) => ({ value: String(d), href: href(d, source), label: lbl }))} />
+        <Segmented aria-label="باب الزيارة" linkAs={Link} value={source ?? "all"}
+          items={DOORS.map(([door, lbl]) => ({
+            value: door ?? "all",
+            href: href(days, door),
+            // العددُ في التسمية عمدًا: يقول لك إن كان وراء البابِ الآخر أحدٌ قبل أن تفتحه
+            label: (
+              <>
+                {lbl} <span className="font-latin">{nf(door ? data.sources[door] ?? 0 : total(data.sources))}</span>
+              </>
+            ),
+          }))} />
         <span className="st-note">لا يشمل الصفحات الإداريّة ولا الروبوتات</span>
       </div>
 
