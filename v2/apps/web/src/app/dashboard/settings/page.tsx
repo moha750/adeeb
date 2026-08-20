@@ -42,6 +42,7 @@ export default async function SettingsPage() {
         <SettingsView
           settings={settings}
           exit={exit}
+          fullName={me?.fullName ?? ""}
           deletion={{
             pending: me?.deletionRequestedAt != null,
             dueLabel: deletionDueLabel(me?.deletionRequestedAt ?? null),

@@ -98,6 +98,7 @@ export default async function MePage() {
                     <AccountExit
                       door={exit.door}
                       deciders={exit.deciders}
+                      fullName={me.fullName ?? account.fullName}
                       pending={exit.pending}
                       lastAnswer={exit.lastAnswer}
                       deletion={{

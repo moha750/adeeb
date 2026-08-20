@@ -85,7 +85,7 @@ type DeletionState = {
   dueLabel: string | null;
 };
 
-export function SettingsView({ settings, deletion, exit }: { settings: MySettings; deletion: DeletionState; exit: MyExit }) {
+export function SettingsView({ settings, deletion, exit, fullName }: { settings: MySettings; deletion: DeletionState; exit: MyExit; fullName: string }) {
   const toast = useToast();
   const router = useRouter();
   const [busy, startAction] = useTransition();
@@ -422,6 +422,7 @@ export function SettingsView({ settings, deletion, exit }: { settings: MySetting
           <AccountExit
             door={exit.door}
             deciders={exit.deciders}
+            fullName={fullName}
             pending={exit.pending}
             lastAnswer={exit.lastAnswer}
             deletion={{
