@@ -1,6 +1,6 @@
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { AppleLogoIcon, CalendarCheckIcon, CaretLeftIcon, IdentificationCardIcon, SignOutIcon, UserIcon, UserMinusIcon } from "phosphor-react-native";
+import { AppleLogoIcon, CalendarCheckIcon, CaretLeftIcon, ClipboardTextIcon, IdentificationCardIcon, SignOutIcon, UserIcon, UserMinusIcon } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 
@@ -103,6 +103,21 @@ export default function MeScreen() {
             </T>
             <T size="xs" color={color.textMuted}>
               منصبُك ومسيرتُك وإنذاراتُك وشهاداتُك
+            </T>
+          </View>
+          <CaretLeftIcon size={18} color={color.textMuted} />
+        </Pressable>
+      ) : null}
+
+      {profile?.isMember ? (
+        <Pressable style={styles.room} onPress={() => router.push("/tasks")}>
+          <ClipboardTextIcon size={22} color={color.primary} />
+          <View style={{ flex: 1 }}>
+            <T size="base" weight="medium">
+              مهامّي
+            </T>
+            <T size="xs" color={color.textMuted}>
+              ما أُسنِد إليك، وتسليمُه من هنا
             </T>
           </View>
           <CaretLeftIcon size={18} color={color.textMuted} />

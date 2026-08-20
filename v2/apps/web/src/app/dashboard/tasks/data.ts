@@ -13,8 +13,10 @@ import { fmtDateOnly } from "@/lib/dates";
  * ويتبع **الهويّةَ المعروضة** لا صاحبَ الجلسة (`getCurrentAdmin`): من عاين قائدًا رأى غرفتَه.
  */
 
-export type TaskState = "pending" | "delivered" | "missed" | "excused";
-export type TaskStatus = "open" | "closed" | "cancelled";
+// الحالتان تُعرَّفان في النواة مع مفرداتهما (`@adeeb/core/tasks`) — وتُستورَدان هنا
+// وتُصدَّران كما كانتا، فلا يتغيّر مسارُ استيرادٍ في غرفة المهامّ.
+import type { TaskState, TaskStatus } from "@adeeb/core/tasks";
+export type { TaskState, TaskStatus };
 
 export type TaskPerson = {
   id: string;

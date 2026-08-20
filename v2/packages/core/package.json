@@ -19,6 +19,7 @@
     "./position-label": "./src/positionLabel.ts",
     "./role-order": "./src/roleOrder.ts",
     "./member-status": "./src/memberStatus.ts",
-    "./membership": "./src/membership.ts"
+    "./membership": "./src/membership.ts",
+    "./tasks": "./src/tasks.ts"
   }
 }

@@ -80,6 +80,7 @@ export default function RootLayout() {
                 <Stack.Screen name="activity/[id]" options={{ animation: "slide_from_bottom" }} />
                 <Stack.Screen name="news/[id]" options={{ animation: "slide_from_bottom" }} />
                 <Stack.Screen name="membership" options={{ animation: "slide_from_bottom" }} />
+                <Stack.Screen name="tasks" options={{ animation: "slide_from_bottom" }} />
               </Stack>
               {ready ? <MiniPlayer /> : null}
             </RadioPlayerProvider>
