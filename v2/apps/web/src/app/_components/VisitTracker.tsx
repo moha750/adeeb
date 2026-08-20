@@ -103,6 +103,7 @@ export function VisitTracker() {
             screen_height: window.screen?.height ?? null,
             language: (navigator.language || "").slice(0, 20) || null,
             user_id: userId,
+            source: "web",
           }),
         });
         if (!res.ok || view.stopped) return;

@@ -81,7 +81,7 @@ function isBot(ua: string): boolean {
 
 async function hashIp(ip: string): Promise<Uint8Array | null> {
   if (!ip) return null;
-  const salt = Deno.env.get('VISIT_IP_SALT') ?? '';
+  const salt = Deno.env.get('VISIT_IP_SALT') ?? 'adeeb-default-salt-please-rotate';
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest('SHA-256', enc.encode(salt + ip));
   return new Uint8Array(buf);
@@ -161,6 +161,8 @@ interface StartBody {
   screen_height?: number;
   language?: string | null;
   user_id?: string | null;
+  /** بابُ الزيارة: 'web' أو 'app'. ما سواهما يُشتقّ من مخطَّط العنوان. */
+  source?: string | null;
 }
 
 interface HeartbeatBody {
@@ -197,12 +199,6 @@ Deno.serve(async (req: Request) => {
 
       if (!id || !UUID_REGEX.test(id)) return json({ error: 'invalid_pageview_id' }, 400);
 
-      // GREATEST لمنع القفز للخلف، last_heartbeat_at = now()
-      const { error } = await supabase.rpc('exec_heartbeat_update' as never, {} as never).then(
-        () => ({ error: null }),
-        () => ({ error: 'fallback' })
-      );
-      // الاعتماد على update مباشر (لا توجد RPC مخصصة):
       const { error: updErr } = await supabase
         .from('site_pageviews')
         .update({
@@ -215,7 +211,6 @@ Deno.serve(async (req: Request) => {
         console.error('[track-pageview/heartbeat] update error:', updErr);
         return json({ error: 'update_failed' }, 500);
       }
-      void error; // تجاهل
       return ok();
     }
 
@@ -300,6 +295,13 @@ Deno.serve(async (req: Request) => {
       ip_hash:      ipHash ? `\\x${Array.from(ipHash).map(b => b.toString(16).padStart(2, '0')).join('')}` : null,
       country_code: country,
       city:         cap(city, 200),
+
+      // بابُ الزيارة: يقوله العميلُ صراحةً، ولا يُصدَّق على علّاته.
+      // وإن سكت أو قال ما لا نعرف، اشتُقّ من مخطَّط العنوان: `adeeb://` تطبيقٌ وما سواه موقع.
+      // (عمودُ `source` نزل في ترحيل 2026-08-20، وافتراضُه `web`.)
+      source: body.source === 'app' || body.source === 'web'
+        ? body.source
+        : (typeof body.page_url === 'string' && body.page_url.startsWith('adeeb://') ? 'app' : 'web'),
 
       is_bot: bot,
       total_seconds: 0,

@@ -5,6 +5,7 @@ import {
   TRACK_FN,
   TRACK_MAX_SECONDS,
   VISITOR_KEY,
+  type TrackSource,
 } from "@adeeb/core/tracking";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
@@ -139,6 +140,7 @@ export function startView(path: string, title: string | null, userId: string | n
       screen_height: size.height,
       language: (getLocales()[0]?.languageTag ?? "").slice(0, 20) || null,
       user_id: userId,
+      source: "app" satisfies TrackSource,
     });
     if (!res?.ok || view.stopped) return;
 
