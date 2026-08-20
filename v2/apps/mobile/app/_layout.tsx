@@ -9,7 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider } from "@/auth/AuthProvider";
 import { loadPrefs } from "@/lib/prefs";
-import { useTrackScreens } from "@/lib/useTrackScreens";
+import { ScreenTracker } from "@/lib/ScreenTracker";
 import { getStation } from "@/lib/radio";
 import { MiniPlayer } from "@/player/MiniPlayer";
 import { RadioPlayerProvider } from "@/player/PlayerProvider";
@@ -28,9 +28,6 @@ import { IconDefaults } from "@/ui/icons";
 export default function RootLayout() {
   const [stationName, setStationName] = useState("إذاعة أديب");
   const [ready, setReady] = useState(false);
-
-  // زياراتُ الشاشات تُسجَّل في جدول الموقع نفسِه، موسومةً بمخطَّط التطبيق (`lib/track`)
-  useTrackScreens();
 
   useEffect(() => {
     if (!I18nManager.isRTL && __DEV__) {
@@ -67,6 +64,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <IconDefaults>
           <AuthProvider>
+            {/* زياراتُ الشاشات تُسجَّل في جدول الموقع نفسِه، موسومةً بمخطَّط التطبيق (`lib/track`).
+                وهو ابنُ المزوّد لا أخوه: الهويّةُ تُقرأ من الجلسة القائمة لا من سؤالٍ للخادم. */}
+            <ScreenTracker />
             <RadioPlayerProvider stationName={stationName}>
               <StatusBar style="dark" />
               <Stack

@@ -15,6 +15,12 @@ export const TRACK_FN = "/functions/v1/track-pageview";
 export const VISITOR_KEY = "adeeb_visitor_id";
 export const SESSION_KEY = "adeeb_session_id";
 
+/**
+ * بابُ الاختبار المقصود: التطويرُ لا يُسجَّل في إحصاء الموقع الحيّ إلّا بهذا المفتاح.
+ * والاسمُ واحدٌ في الموضعين: `sessionStorage` في المتصفّح، وقرصُ التفضيلات في التطبيق.
+ */
+export const TRACK_DEV_KEY = "adeeb_track_dev";
+
 /** نبضةٌ كلّ خمس عشرة ثانية: فإن ضاعت الخاتمةُ لم تكن المدّةُ صفرًا. */
 export const HEARTBEAT_MS = 15_000;
 

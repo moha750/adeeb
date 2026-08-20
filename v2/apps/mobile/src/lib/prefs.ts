@@ -1,4 +1,5 @@
 import { DEVICE_KEY, LIKED_KEY, MUSIC_LEVEL_KEY } from "@adeeb/core";
+import { TRACK_DEV_KEY } from "@adeeb/core/tracking";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
@@ -12,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * والمفاتيحُ نفسُها التي يستعملها الويب، فما تعلّمه المستمعُ هناك يعرفه هنا لو وُحّدا يومًا.
  */
 
-const KEYS = [MUSIC_LEVEL_KEY, DEVICE_KEY, LIKED_KEY] as const;
+const KEYS = [MUSIC_LEVEL_KEY, DEVICE_KEY, LIKED_KEY, TRACK_DEV_KEY] as const;
 export type PrefKey = (typeof KEYS)[number];
 
 const cache = new Map<PrefKey, string | null>();

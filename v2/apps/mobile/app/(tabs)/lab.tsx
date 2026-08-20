@@ -1,3 +1,4 @@
+import { TRACK_DEV_KEY } from "@adeeb/core/tracking";
 import { color, radius, shadow, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
 import { PauseIcon, PlayIcon } from "phosphor-react-native";
@@ -5,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { readPref, writePref } from "@/lib/prefs";
 import { getEpisodes, type Episode } from "@/lib/radio";
 import { clock, toneColor } from "@/player/tones";
 import { MINI_H, TOUCH } from "@/ui/layout";
@@ -58,6 +60,8 @@ export default function DesignLab() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
+        <TrackSwitch />
+
         {!episode ? <Note>جارٍ التحميل</Note> : null}
 
         {episode ? (
@@ -79,6 +83,42 @@ export default function DesignLab() {
         ) : null}
       </ScrollView>
     </View>
+  );
+}
+
+/**
+ * بابُ الاختبار المقصود: يفتح تسجيلَ الزيارات وأنت على جهاز التطوير.
+ *
+ * وهو مغلقٌ افتراضًا لأنّ إحصاءَ الموقع سجلُّ جمهورٍ لا سجلُّ عمل: كلُّ إعادةِ تحميلٍ
+ * أثناء البناء زيارةٌ كاذبةٌ تُفسد المتوسّطات. والويبُ يفتحه بمفتاحٍ في `sessionStorage`،
+ * وههنا بإصبعك. (هذا التبويبُ لا يظهر في نسخة الإنتاج أصلًا.)
+ */
+function TrackSwitch() {
+  const [on, setOn] = useState(() => readPref(TRACK_DEV_KEY) === "1");
+
+  return (
+    <Pressable
+      style={styles.track}
+      onPress={() => {
+        const next = !on;
+        setOn(next);
+        writePref(TRACK_DEV_KEY, next ? "1" : "0");
+      }}
+    >
+      <View style={{ flex: 1, gap: space[1] }}>
+        <T size="base" weight="medium">
+          سجّل زياراتي في الإحصاء الحيّ
+        </T>
+        <T size="xs" color={color.textMuted}>
+          {on ? "مفتوح: ما تفتحه الآن يُكتب في إحصاء الموقع" : "مغلق: التطويرُ لا يُحسب زيارة"}
+        </T>
+      </View>
+      <View style={[styles.pill, on && styles.pillOn]}>
+        <T size="xs" weight="medium" color={on ? color.onPrimary : color.textMuted}>
+          {on ? "مفتوح" : "مغلق"}
+        </T>
+      </View>
+    </Pressable>
   );
 }
 
@@ -280,6 +320,25 @@ const styles = StyleSheet.create({
   section: { marginTop: space[6], gap: space[1] },
   slot: { gap: space[2] },
   slotHead: { flexDirection: "row", alignItems: "center", gap: space[2] },
+  track: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space[3],
+    minHeight: TOUCH,
+    backgroundColor: color.surface,
+    borderRadius: radius.base,
+    borderWidth: stroke.w,
+    borderColor: color.cardStroke,
+    padding: space[4],
+  },
+  pill: {
+    borderRadius: radius.full,
+    borderWidth: stroke.w,
+    borderColor: color.cardStroke,
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+  },
+  pillOn: { backgroundColor: color.primary, borderColor: color.primary },
   num: {
     width: 20,
     height: 20,

@@ -1,6 +1,7 @@
 import {
   HEARTBEAT_MS,
   randomUuid,
+  TRACK_DEV_KEY,
   TRACK_FN,
   TRACK_MAX_SECONDS,
   VISITOR_KEY,
@@ -11,7 +12,7 @@ import { getLocales } from "expo-localization";
 import { AppState, Dimensions, Platform } from "react-native";
 
 import { env } from "./env";
-import { supabase } from "./supabase";
+import { readPref } from "./prefs";
 
 /**
  * تتبّعُ الشاشات في التطبيق.
@@ -29,11 +30,13 @@ import { supabase } from "./supabase";
  * الزيارةُ **حاسوبًا مكتبيًّا**. فتُصاغ على صورةٍ يقرؤها: `iPhone OS 26_3` بالشرطة
  * السفليّة كما تكتبها سفاري، و`Android …; Mobile` كما يكتبها كروم.
  *
- * **٣. لا يُتبَّع التطوير**: العملُ على جهاز المطوِّر لا يُكتب في إحصاءات الموقع الحيّ،
- * وهو قيدُ الويب نفسُه.
+ * **٣. لا يُتبَّع التطوير** إلّا بإذنٍ صريح: العملُ على جهاز المطوِّر لا يُكتب في إحصاءات
+ * الموقع الحيّ، وهو قيدُ الويب نفسُه. وبابُه الخلفيُّ مفتاحُ `TRACK_DEV_KEY` نفسُه الذي
+ * يفتحه الويبُ في `sessionStorage`، ويقلبه هنا مبدّلٌ في تبويب «المعرض» (تطويرٌ وحدَه).
  */
 
-const TRACK_IN_DEV = false;
+/** أيُسجَّل ما يقع على جهاز المطوِّر؟ في الإنتاج السؤالُ لا يُطرَح أصلًا. */
+const tracking = () => !__DEV__ || readPref(TRACK_DEV_KEY) === "1";
 
 const url = () => env.supabaseUrl.replace(/\/+$/, "") + TRACK_FN;
 
@@ -108,13 +111,20 @@ async function post(path: string, body: unknown): Promise<Response | null> {
   }
 }
 
-/** تبدأ زيارةُ شاشة. الرجوعُ مرجعٌ يُغلَق بـ`endView`. */
-export function startView(path: string, title: string | null): View {
+/**
+ * تبدأ زيارةُ شاشة. الرجوعُ مرجعٌ يُغلَق بـ`endView`.
+ *
+ * **والهويّةُ تُمرَّر ولا تُسأل.** جُرّب السؤالُ على الجهاز مرّتين فكذب مرّتين: `getUser`
+ * تسأل الشبكةَ فتردّ «لا أحد» قبل أن تُقرأ الجلسة، و`getSession` تسأل المخزنَ فتردّ مثلها
+ * في الفجوة نفسِها (٢٠٢٦-٠٨-٢٠). والتطبيقُ يملك الجلسةَ أصلًا في `AuthProvider`، فمنه
+ * تؤخذ: لا سؤالَ في لحظةٍ خطأ، ولا مصدرَ ثانٍ للهويّة.
+ */
+export function startView(path: string, title: string | null, userId: string | null): View {
   const view: View = { id: null, started: Date.now(), stopped: false };
-  if (__DEV__ && !TRACK_IN_DEV) return view;
+  if (!tracking()) return view;
 
   void (async () => {
-    const [visitorValue, { data }] = await Promise.all([visitor(), supabase.auth.getUser()]);
+    const visitorValue = await visitor();
     if (view.stopped) return;
 
     const size = screen();
@@ -128,7 +138,7 @@ export function startView(path: string, title: string | null): View {
       screen_width: size.width,
       screen_height: size.height,
       language: (getLocales()[0]?.languageTag ?? "").slice(0, 20) || null,
-      user_id: data.user?.id ?? null,
+      user_id: userId,
     });
     if (!res?.ok || view.stopped) return;
 
