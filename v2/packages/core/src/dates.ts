@@ -143,6 +143,31 @@ const UNITS: [seconds: number, one: string, two: string, few: string, many: stri
   [86400, "يوم", "يومين", "أيّام", "يومًا"],
 ];
 
+/**
+ * مفتاحُ اليوم بتوقيت النادي (`YYYY-MM-DD`) — للتجميع لا للعرض.
+ *
+ * ولا يُشتقّ من `getDate()` ولا من `toISOString()`: الأوّل يقرأ ساعةَ الجهاز، والثاني يقرأ
+ * غرينتش — فمحادثةٌ جرت الحاديةَ عشرة ليلًا بالرياض تُحسَب «أمس» على خادمٍ يعمل بـUTC.
+ */
+export const clubDayKey = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = parts(d);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+};
+
+/**
+ * كم يومًا بين مفتاحَي يومٍ (بتوقيت النادي). يُحسَب بالظهيرة لا بمنتصف الليل، فلا يُزحزحه
+ * تبديلُ التوقيت الصيفيّ في مناطقَ أخرى إن قُرئ مفتاحٌ قادمٌ منها.
+ */
+export const daysBetweenKeys = (a: string, b: string): number => {
+  const at = Date.parse(`${a}T12:00:00Z`);
+  const bt = Date.parse(`${b}T12:00:00Z`);
+  if (Number.isNaN(at) || Number.isNaN(bt)) return 0;
+  return Math.round((bt - at) / 86400000);
+};
+
 export const fmtSince = (iso: string | null | undefined): string => {
   if (!iso) return "";
   const then = new Date(iso);
@@ -163,4 +188,21 @@ export const fmtSince = (iso: string | null | undefined): string => {
     return n <= 10 ? `منذ ${n} ${few}` : `منذ ${n} ${many}`;
   }
   return "الآن";
+};
+
+/**
+ * ساعةُ النادي الآن (٠..٢٣) بتوقيت الرياض : **للاختيار لا للعرض**.
+ *
+ * وُضعت ٢٠٢٦-٠٨-٢٠ لتحيّة ديبو (صباحٌ أم مساء)، وهي من هذا الملفّ لا من `getHours()`
+ * للسبب نفسِه الذي أعدم `lib/date.ts`: خادمُ النشر يعمل بغرينتش، فتحيّةُ العاشرة مساءً
+ * بالرياض تُقال «صباح الخير» لأنّ الساعةَ هناك السابعة.
+ *
+ * **وكونُها من مصدرٍ واحدٍ يجعلها آمنةً عند الترطيب**: الخادمُ والمتصفّح يقرآن المنطقةَ
+ * نفسَها، فلا يختلف رسمُهما.
+ */
+export const clubHour = (iso?: string | null): number => {
+  const d = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(d.getTime())) return 12;
+  // «٢٤» تخرج من بعض إصدارات ICU عند منتصف الليل (hourCycle h24)، فتُردّ إلى صفرها.
+  return Number(parts(d).hour) % 24;
 };

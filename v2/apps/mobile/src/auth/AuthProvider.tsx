@@ -62,17 +62,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       return;
     }
+    /**
+     * **الصفُّ المضمَّن كائنٌ لا مصفوفة.** على `member_details.user_id` قيدُ تفرُّد، فيعدّ
+     * PostgREST العلاقةَ واحدًا إلى واحدٍ ويردّ كائنًا أو `null`. وكان الشرطُ هنا
+     * `Array.isArray(...)` فكان يسقط لكلّ عضوٍ لا لبعضهم، فيُقال لرئيس النادي نفسِه
+     * «حسابُ زائر» (قِيس على الجهاز ٢٠٢٦-٠٨-٢٠). ويُقبَل الشكلان معًا كي لا يعود العطلُ
+     * لو زال القيدُ يومًا فصارت العلاقةُ واحدًا إلى كثير.
+     */
     const row = data as {
       id: string;
       full_name: string | null;
       gender: "male" | "female" | null;
-      member_details: unknown[] | null;
+      member_details: unknown[] | Record<string, unknown> | null;
     };
+    const md = row.member_details;
     setProfile({
       id: row.id,
       fullName: row.full_name,
       gender: row.gender,
-      isMember: Array.isArray(row.member_details) && row.member_details.length > 0,
+      isMember: Array.isArray(md) ? md.length > 0 : md != null,
     });
   };
 

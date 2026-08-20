@@ -1,6 +1,6 @@
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { AppleLogoIcon, CalendarCheckIcon, SignOutIcon, UserIcon, UserMinusIcon } from "phosphor-react-native";
+import { AppleLogoIcon, CalendarCheckIcon, CaretLeftIcon, IdentificationCardIcon, SignOutIcon, UserIcon, UserMinusIcon } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 
@@ -20,6 +20,7 @@ import { T } from "@/ui/T";
  * لنظام iOS يُنشَأ في لوحة قوقل.
  */
 export default function MeScreen() {
+  const router = useRouter();
   const { session, user, profile, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
   const [canApple, setCanApple] = useState(false);
@@ -91,6 +92,22 @@ export default function MeScreen() {
           </T>
         )}
       </View>
+
+      {/* بابُ العضويّة لا يُفتح لزائر: لا سجلَّ وراءه فيرى غرفةً فارغةً تُوهمه بنقص */}
+      {profile?.isMember ? (
+        <Pressable style={styles.room} onPress={() => router.push("/membership")}>
+          <IdentificationCardIcon size={22} color={color.primary} />
+          <View style={{ flex: 1 }}>
+            <T size="base" weight="medium">
+              عضويّتي
+            </T>
+            <T size="xs" color={color.textMuted}>
+              منصبُك ومسيرتُك وإنذاراتُك وشهاداتُك
+            </T>
+          </View>
+          <CaretLeftIcon size={18} color={color.textMuted} />
+        </Pressable>
+      ) : null}
 
       <MyBookings />
 
@@ -247,6 +264,17 @@ const styles = StyleSheet.create({
     borderWidth: stroke.w,
     borderColor: color.cardStroke,
     padding: space[3],
+  },
+  room: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space[3],
+    minHeight: TOUCH,
+    backgroundColor: color.surface,
+    borderRadius: radius.base,
+    borderWidth: stroke.w,
+    borderColor: color.cardStroke,
+    padding: space[4],
   },
   signOut: {
     flexDirection: "row",

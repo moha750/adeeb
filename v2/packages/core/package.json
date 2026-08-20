@@ -15,6 +15,10 @@
     "./auth-errors": "./src/authErrors.ts",
     "./dates": "./src/dates.ts",
     "./news": "./src/news.ts",
-    "./tracking": "./src/tracking.ts"
+    "./tracking": "./src/tracking.ts",
+    "./position-label": "./src/positionLabel.ts",
+    "./role-order": "./src/roleOrder.ts",
+    "./member-status": "./src/memberStatus.ts",
+    "./membership": "./src/membership.ts"
   }
 }
