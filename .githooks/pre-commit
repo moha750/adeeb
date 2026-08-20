@@ -1,25 +1,46 @@
 #!/bin/sh
-# خطّاف ما قبل الإيداع — حارس المصدر الواحد لأوراق V2.
+# خطّاف ما قبل الإيداع — حرّاسُ V2 الأربعة.
 #
-# لا يعمل إلا إذا كانت إحدى الورقتين ضمن الإيداع، فلا يُثقل إيداعات V1.
-# ويفحص **المُدرَج في الفهرس** (git show :path) لا ما في القرص: ما تُودعه هو
-# ما يُحكَم عليه، ولو كان في محرّرك تعديلٌ لم تُدرِجه.
+# كان يُجري حارسًا واحدًا (المصدرَ الواحد للأوراق) وحين تُدرَج إحدى الورقتين فقط،
+# فمرّت مخالفاتُ الفواصل وأوزانِ الأيقونات إلى الإيداع بلا صوت. صار يُجري الأربعةَ
+# جميعًا، وكلٌّ يُجرى ويُطبَع مهما سقط سابقُه: لا `&&` يقطع الطابور، والخروجُ غيرُ
+# صفريٍّ إن سقط واحدٌ منها.
+#
+# ولا يعمل إن خلا الإيداعُ من `v2/`: حرّاسُ V2 لا شأنَ لهم بترحيلات القاعدة ولا
+# بالوثائق، فلا يُثقلانها. والأربعةُ مجتمعةً دون ثانيتين.
+#
+# حارسُ الأوراق وحده يفحص **المُدرَج في الفهرس** (git show :path) لا ما في القرص:
+# ما تُودعه هو ما يُحكَم عليه، ولو كان في محرّرك تعديلٌ لم تُدرِجه. والثلاثةُ الباقون
+# يمشون شجرةَ المصدر كلَّها فيقرؤون القرص — وذاك تقريبٌ مقصود: نسخُ الفهرس كلِّه
+# إلى مجلّدٍ مؤقّتٍ عند كلّ إيداعٍ أبطأُ من فائدته. وأمّا الحكمُ القاطع فبوّابةُ
+# التكامل المستمرّ (.github/workflows/ci.yml) تُجريه على ما وصل فعلًا.
 #
 # التفعيل مرّةً واحدة على كلّ جهاز:  git config core.hooksPath .githooks
 # التخطّي عند الضرورة:               git commit --no-verify
 
+if [ -z "$(git diff --cached --name-only --diff-filter=ACM -- v2)" ]; then
+  exit 0
+fi
+
+rc=0
+
+# ١) المصدرُ الواحد للأوراق — على نسخةٍ من الفهرس
 G='v2/apps/web/src/app/globals.css'
 C='v2/packages/design-system/components.css'
-
-staged=$(git diff --cached --name-only --diff-filter=ACM)
-case "$staged" in
-  *"$G"*|*"$C"*) ;;
-  *) exit 0 ;;
-esac
-
 tmp=$(mktemp -d) || exit 1
-git show ":$G" > "$tmp/globals.css" && git show ":$C" > "$tmp/components.css"
-node v2/scripts/css-single-source.mjs "$tmp/globals.css" "$tmp/components.css"
-rc=$?
+if git show ":$G" > "$tmp/globals.css" 2>/dev/null &&
+   git show ":$C" > "$tmp/components.css" 2>/dev/null; then
+  node v2/scripts/css-single-source.mjs "$tmp/globals.css" "$tmp/components.css" || rc=1
+fi
 rm -rf "$tmp"
+
+# ٢-٤) الباقون — على شجرة العمل
+for guard in modal-spacing no-separators glyph-weights; do
+  node "v2/scripts/$guard.mjs" || rc=1
+done
+
+if [ $rc -ne 0 ]; then
+  printf '\n  الإيداعُ موقوف. أصلِح ما فوق، أو تخطَّ الحرّاسَ بـ  git commit --no-verify\n\n'
+fi
+
 exit $rc

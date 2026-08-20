@@ -1,0 +1,80 @@
+# تكامُلٌ مستمرّ — بوّابةُ `main` وكلِّ طلبِ دمج.
+#
+# تنصب الاعتماديّات مرّةً واحدة ثمّ تُجري أربعَ بوّاباتٍ كلٌّ في خطوةٍ باسمها
+# (حرّاس · لِنت · أنواع · اختبارات)، فالساقطُ يقول اسمَه في قائمة الخطوات بلا أن
+# يُقرأ سجلٌّ طويل.
+#
+# وما لا تفعله عمدًا: **لا `next build`**. فرسيل يبنيه من `main` أصلًا، والبناءُ
+# هنا يطلب أسرارَ سوبابيس وتيرنستايل. ولا سرَّ في هذه الورقة البتّة ولا خطوةَ نشر:
+# تُجرى كما هي على أيّ نسخةٍ مشتقّة (fork) بلا إعدادٍ ولا مفتاح.
+#
+# والمنتَجُ كلُّه في `v2/`، وجذرُ المستودع بلا package.json — فكلُّ أمرٍ يُجرى هناك
+# عبر `defaults.run.working-directory` أدناه، وما يُمرَّر إلى الأفعال (uses) يبقى
+# منسوبًا إلى الجذر لأنّ الإزاحةَ لا تطالها.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# دفعتان متتاليتان على الفرع نفسه: تُلغى الجولةُ السابقة ولا تُزاحم التاليةَ على المُشغِّلات.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# قراءةٌ فقط — لا شيءَ هنا يكتب في المستودع.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: v2
+
+jobs:
+  verify:
+    name: حرّاسٌ ولِنتٌ وأنواع
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: جلبُ المستودع
+        uses: actions/checkout@v4
+
+      - name: تنصيبُ pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # لا رقمَ مكتوبًا هنا: النسخةُ تُقرأ من `packageManager` في v2/package.json
+          # (pnpm@9.15.9 اليوم)، فمصدرُها واحدٌ وترقيتُها لا تُنسى في ورقتين.
+          # وتسميةُ الملفّ لازمة: جذرُ المستودع لا package.json فيه.
+          package_json_file: v2/package.json
+
+      - name: تنصيبُ Node وخزنُ مخزن pnpm
+        # يجب أن تلي تنصيبَ pnpm: خزنُ `cache: pnpm` يسأل pnpm عن مسار مخزنه.
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: v2/pnpm-lock.yaml
+
+      - name: تنصيبُ الاعتماديّات
+        run: pnpm install --frozen-lockfile
+
+      - name: الحرّاسُ الأربعة (pnpm check)
+        run: pnpm check
+
+      - name: لِنت (pnpm lint)
+        run: pnpm lint
+
+      - name: فحصُ الأنواع (tsc --noEmit)
+        run: pnpm --filter web exec tsc --noEmit -p tsconfig.srconly.json
+
+      - name: الاختبارات (إن وُجد سكربتُها)
+        # سكربتُ `test` يُبنى الآن في مسارٍ موازٍ؛ فتُخطّى الخطوةُ بلا سقوطٍ حتى ينزل،
+        # ثمّ تعمل من تلقائها يومَ يظهر في v2/package.json بلا لمسِ هذه الورقة.
+        run: |
+          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            pnpm test
+          else
+            echo "لا سكربتَ test في v2/package.json بعدُ — تُخطّى هذه الخطوة."
+          fi

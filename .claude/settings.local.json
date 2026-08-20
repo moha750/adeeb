@@ -252,7 +252,8 @@
       "Bash(git -c core.quotepath=false -c core.precomposeunicode=false ls-files greetings/Eid/templates/)",
       "Bash(ls ~/.claude/projects/*/memory/ 2>/dev/null | head -20; echo \"---\"; find / -name \"reference_nextdev_jest_worker_dynamic_routes.md\" -not -path \"*/node_modules/*\" 2>/dev/null | head -3)",
       "Read(//Users/m7_almattar/.claude/projects/**)",
-      "Bash(bash /private/tmp/claude-501/-Users-m7-almattar-adeeb/d6eccddb-fbd2-450a-88a8-30497ed6bdc7/scratchpad/export-registration.sh)"
+      "Bash(bash /private/tmp/claude-501/-Users-m7-almattar-adeeb/d6eccddb-fbd2-450a-88a8-30497ed6bdc7/scratchpad/export-registration.sh)",
+      "Bash(python3 /Users/m7_almattar/adeeb/supabase/tools/sql.py:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
