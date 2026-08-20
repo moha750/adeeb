@@ -164,8 +164,12 @@ export function RadioPlayerProvider({ children, stationName }: { children: React
      * صوتُ المذيع سنجابًا عند ١٫٥×.
      */
     lead.setPlaybackRate(rate, "high");
+    // مقياسُ الصوت في `expo-audio` حقلٌ يُسنَد إليه، لا دالّةً تُنادى: إسنادُه هو واجهتُها
+    // الوحيدة، فقاعدةُ «لا يُعدَّل ما ترجعه خطّافة» لا حيلةَ لها ههنا.
+    // eslint-disable-next-line react-hooks/immutability
     lead.volume = 1;
     stem.setPlaybackRate(rate, "high");
+    // eslint-disable-next-line react-hooks/immutability
     stem.volume = hasDial ? musicLevel : 0;
   }, [lead, stem, rate, musicLevel, hasDial, current]);
 
@@ -317,6 +321,9 @@ export function RadioPlayerProvider({ children, stationName }: { children: React
     if (!current) return;
     void lead.seekTo(0, 0, 0);
     lead.play();
+    // الحالةُ ترجمةُ فعلٍ أصيلٍ وقع للتوّ لا سببٌ لرسمةٍ جديدة: المشغّلُ يعمل الآن،
+    // فوسمُه بغير ذلك يجعل الزرَّ يكذب على صاحبه.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPlaying(true);
 
     claimLockScreen();

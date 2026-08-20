@@ -1,9 +1,9 @@
 import { color, type } from "@adeeb/theme-native";
 import { Tabs } from "expo-router";
-import { CalendarDotsIcon, PaletteIcon, RadioIcon, UserIcon } from "phosphor-react-native";
+import { CalendarDotsIcon, NewspaperIcon, PaletteIcon, RadioIcon, UserIcon } from "phosphor-react-native";
 
 /**
- * أبوابُ التطبيق الثلاثة: الإذاعة · الأنشطة · حسابي.
+ * أبوابُ الزائر الثلاثة: الإذاعة · الأنشطة · الأخبار. ورابعُها «حسابي» وهو بابُ صاحبِه لا بابُ زائر.
  * ورابعٌ («المعرض») لا يظهر إلّا في التطوير — فيه بدائلُ التصميم تُعرَض جنبًا إلى جنب.
  *
  * الشريطُ سفليٌّ لأنّ الإبهامَ يبلغه، والقياسُ 375px لا الشاشةُ العريضة:
@@ -38,6 +38,13 @@ export default function TabsLayout() {
         options={{
           title: "الأنشطة",
           tabBarIcon: ({ color: c, size }) => <CalendarDotsIcon color={c as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="news"
+        options={{
+          title: "الأخبار",
+          tabBarIcon: ({ color: c, size }) => <NewspaperIcon color={c as string} size={size} />,
         }}
       />
       <Tabs.Screen

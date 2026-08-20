@@ -1,3 +1,5 @@
+import { fmtDate } from "@adeeb/core/dates";
+
 import { supabase } from "./supabase";
 
 /**
@@ -14,16 +16,12 @@ export type DeletionState = { requestedAt: string | null; dueAt: string | null }
 
 export type DeletionResult = { ok: boolean; message: string };
 
-/** «١٨ سبتمبر ٢٠٢٦» بتوقيت الرياض — لا بساعة الجهاز، فقد يكون صاحبُه مسافرًا. */
-export function dueLabel(iso: string | null): string | null {
-  if (!iso) return null;
-  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
-    timeZone: "Asia/Riyadh",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(iso));
-}
+/**
+ * «١٨ سبتمبر ٢٠٢٦» بتوقيت الرياض لا بساعة الجهاز، فقد يكون صاحبُه مسافرًا.
+ * والرسّامُ واحدٌ للويب والتطبيق (`@adeeb/core/dates`) منذ ٢٠٢٦-٠٨-٢٠: شهرٌ واحدٌ
+ * بحروفٍ واحدةٍ في الشاشتين.
+ */
+export const dueLabel = (iso: string | null): string | null => (iso ? fmtDate(iso) || null : null);
 
 export async function getMyDeletion(): Promise<DeletionState> {
   const { data, error } = await supabase.rpc("my_account_deletion");

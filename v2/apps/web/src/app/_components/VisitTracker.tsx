@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { HEARTBEAT_MS, SESSION_KEY, TRACK_FN, TRACK_MAX_SECONDS, VISITOR_KEY, randomUuid } from "@adeeb/core/tracking";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -25,33 +26,18 @@ import { createClient } from "@/lib/supabase/client";
  * كان صفرًا دائمًا لأنّ أحدًا لم يرسله.
  */
 
-const FN = "/functions/v1/track-pageview";
-const VISITOR_KEY = "adeeb_visitor_id";
-const SESSION_KEY = "adeeb_session_id";
-const HEARTBEAT_MS = 15_000;
-const MAX_SECONDS = 14_400; // أربع ساعات — سقفُ الدالّة نفسه
-
-const uuid = () => {
-  try {
-    return crypto.randomUUID();
-  } catch {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-    });
-  }
-};
+// الوجهةُ والمفاتيحُ والنبضةُ في `@adeeb/core/tracking` — يقرؤها الويبُ والتطبيقُ معًا.
 
 const stored = (store: Storage | undefined, key: string) => {
   try {
-    if (!store) return uuid();
+    if (!store) return randomUuid();
     const v = store.getItem(key);
     if (v) return v;
-    const fresh = uuid();
+    const fresh = randomUuid();
     store.setItem(key, fresh);
     return fresh;
   } catch {
-    return uuid(); // متصفّحٌ يمنع التخزين: نعدّه زائرًا جديدًا ولا نتعطّل
+    return randomUuid(); // متصفّحٌ يمنع التخزين: نعدّه زائرًا جديدًا ولا نتعطّل
   }
 };
 
@@ -81,12 +67,12 @@ export function VisitTracker() {
 
     const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!base) return;
-    const url = base.replace(/\/+$/, "") + FN;
+    const url = base.replace(/\/+$/, "") + TRACK_FN;
 
     const view = { id: null as string | null, started: Date.now(), stopped: false };
     live.current = view;
 
-    const seconds = () => Math.min(MAX_SECONDS, Math.floor((Date.now() - view.started) / 1000));
+    const seconds = () => Math.min(TRACK_MAX_SECONDS, Math.floor((Date.now() - view.started) / 1000));
     let timer: ReturnType<typeof setInterval> | undefined;
 
     const begin = async () => {

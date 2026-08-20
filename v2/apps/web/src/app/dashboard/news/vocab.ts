@@ -37,18 +37,10 @@ export const IN_FLIGHT: readonly Workflow[] = ["assigned", "in_progress", "ready
 
 /* ══ القسم ═══════════════════════════════════════════════════════════ */
 
-export type Category = "coverage" | "partnership" | "achievement" | "announcement" | "feature";
-
-export const CATEGORY_META: Record<Category, { label: string; hint: string }> = {
-  coverage:     { label: "تغطية",  hint: "فعاليّةٌ أقامها أدِيب أو شارك فيها" },
-  partnership:  { label: "شراكة",  hint: "اتفاقيّة أو مذكّرة تفاهم" },
-  achievement:  { label: "إنجاز",  hint: "تكريمٌ أو جائزة" },
-  announcement: { label: "إعلان",  hint: "بيانٌ من النادي" },
-  feature:      { label: "تحقيق",  hint: "مادّة تحريريّة موسّعة" },
-};
-
-export const CATEGORY_VALUES = Object.keys(CATEGORY_META) as Category[];
-export const CATEGORY_OPTIONS = CATEGORY_VALUES.map((v) => ({ value: v, label: CATEGORY_META[v].label }));
+// القسمُ ودقائقُ القراءة **في النواة** (`@adeeb/core/news`) منذ ٢٠٢٦-٠٨-٢٠: يقرأهما الزائرُ
+// في الويب والتطبيقُ في الجوّال، وما دون ذلك في هذا الملفّ تحريريٌّ لا يعرفه إلّا المحرّر.
+export { CATEGORY_META, CATEGORY_OPTIONS, CATEGORY_VALUES, readingMinutes, wordCount } from "@adeeb/core/news";
+export type { Category } from "@adeeb/core/news";
 
 /* ══ حقول التكليف ════════════════════════════════════════════════════ */
 
@@ -113,13 +105,3 @@ export function missingForPublish(n: Publishable): string[] {
   return gaps;
 }
 
-/* ══ عرض ═════════════════════════════════════════════════════════════ */
-
-/** زمن القراءة بالدقائق — تقديرٌ عربيّ معقول (نحو ٢٠٠ كلمة في الدقيقة). */
-export function readingMinutes(content: string | null | undefined): number {
-  const words = (content ?? "").trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
-}
-
-export const wordCount = (content: string | null | undefined): number =>
-  (content ?? "").trim().split(/\s+/).filter(Boolean).length;

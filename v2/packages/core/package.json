@@ -12,6 +12,9 @@
     ".": "./src/index.ts",
     "./activities": "./src/activities.ts",
     "./radio": "./src/radio.ts",
-    "./auth-errors": "./src/authErrors.ts"
+    "./auth-errors": "./src/authErrors.ts",
+    "./dates": "./src/dates.ts",
+    "./news": "./src/news.ts",
+    "./tracking": "./src/tracking.ts"
   }
 }

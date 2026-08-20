@@ -38,18 +38,38 @@ export default function ActivityScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const reload = useCallback(async () => {
-    if (!id) return;
+  /**
+   * القراءةُ تُفصَل عن الإسناد: تُجلَب البياناتُ ثمّ تُسنَد، ومعها رايةُ حياة.
+   * فمن فتح فعاليّةً ثمّ رجع قبل أن تصل الشبكةُ لا تُسنَد حالةٌ إلى شاشةٍ غادرها.
+   */
+  const fetchAll = useCallback(async () => {
+    if (!id) return null;
     const [{ data, error }, s] = await Promise.all([getActivity(id), getSeats(id)]);
-    setActivity(data);
-    setError(error);
-    setSeats(s);
-    setMine(session ? await getMyBooking(id) : null);
+    return { data, error, seats: s, mine: session ? await getMyBooking(id) : null };
   }, [id, session]);
 
+  const reload = useCallback(async () => {
+    const res = await fetchAll();
+    if (!res) return;
+    setActivity(res.data);
+    setError(res.error);
+    setSeats(res.seats);
+    setMine(res.mine);
+  }, [fetchAll]);
+
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    let alive = true;
+    void fetchAll().then((res) => {
+      if (!alive || !res) return;
+      setActivity(res.data);
+      setError(res.error);
+      setSeats(res.seats);
+      setMine(res.mine);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [fetchAll]);
 
   if (error) return <Wrap top={insets.top} onClose={() => router.back()}><Note tone="danger">{`تعذّرت القراءة: ${error}`}</Note></Wrap>;
   if (!activity) return <Wrap top={insets.top} onClose={() => router.back()}><Note>جارٍ التحميل</Note></Wrap>;
