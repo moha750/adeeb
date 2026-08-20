@@ -1,0 +1,1514 @@
+[
+ {
+  "schemaname": "cron",
+  "tablename": "job",
+  "policyname": "cron_job_policy",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(username = CURRENT_USER)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "cron",
+  "tablename": "job_run_details",
+  "policyname": "cron_job_run_details_policy",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(username = CURRENT_USER)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "achievements",
+  "policyname": "achievements_select_public",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "achievements",
+  "policyname": "achievements_write_website",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_achievements'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_achievements'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activities",
+  "policyname": "activities_admin_delete",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_activities'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activities",
+  "policyname": "activities_admin_insert",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_activities'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activities",
+  "policyname": "activities_admin_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_activities'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activities",
+  "policyname": "activities_select_published",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "((is_published = true) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_activities'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activity_log",
+  "policyname": "activity_log_insert_system",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(user_id IS NULL)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activity_log",
+  "policyname": "activity_log_select_admin_policy",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'view_watchtower'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activity_log",
+  "policyname": "activity_log_select_own_policy",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "activity_reservations",
+  "policyname": "reservations_select_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_activities'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "badges",
+  "policyname": "badges_read",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "is_active",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "comment_likes",
+  "policyname": "الجميع يمكنهم قراءة إعجابات التعل",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "comment_likes",
+  "policyname": "المستخدمون يمكنهم إضافة إعجاب للت",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "((( SELECT auth.uid() AS uid) = user_id) OR (guest_identifier IS NOT NULL))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "comment_likes",
+  "policyname": "المستخدمون يمكنهم حذف إعجاباتهم ل",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "committee_supervision",
+  "policyname": "committee_supervision_modify",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "committee_supervision",
+  "policyname": "committee_supervision_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(( SELECT auth.role() AS role) = 'authenticated'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "committees",
+  "policyname": "committees_modify",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_committees'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "committees",
+  "policyname": "committees_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((is_active = true) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_committees'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "contact_messages",
+  "policyname": "contact_messages_insert_public",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "((name IS NOT NULL) AND (email IS NOT NULL) AND (message IS NOT NULL) AND (length(name) >= 2) AND (length(message) >= 10))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "contact_messages",
+  "policyname": "contact_messages_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_contact'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "contact_messages",
+  "policyname": "contact_messages_update_admin",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_contact'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_contact'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "councils",
+  "policyname": "councils_admin_write",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "councils",
+  "policyname": "councils_public_read",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "departments",
+  "policyname": "departments_modify_president",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.is_active = true) AND (ur.role_name = 'club_president'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "departments",
+  "policyname": "departments_select_all",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_audit_log",
+  "policyname": "audit_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_audit_log",
+  "policyname": "audit_select_viewer",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((election_id IS NOT NULL) AND has_election_view_permission(( SELECT auth.uid() AS uid), election_id))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_delete_admin",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_insert_self",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_select_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_select_viewer",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "has_election_view_permission(( SELECT auth.uid() AS uid), election_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_update_admin",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": "has_election_admin_permission(( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_candidates",
+  "policyname": "candidates_update_self",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_votes",
+  "policyname": "votes_insert_self",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "(voter_id = ( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_votes",
+  "policyname": "votes_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "election_votes",
+  "policyname": "votes_select_self",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(voter_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "elections",
+  "policyname": "elections_delete_admin",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "elections",
+  "policyname": "elections_insert_admin",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "has_election_admin_permission(( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "elections",
+  "policyname": "elections_select_all",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "is_adeeb_member(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "elections",
+  "policyname": "elections_update_admin",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "has_election_admin_permission(( SELECT auth.uid() AS uid))",
+  "with_check": "has_election_admin_permission(( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "experience_certificates",
+  "policyname": "experience_certificates_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "can_view_certificate_of(( SELECT auth.uid() AS uid), user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "faq",
+  "policyname": "faq_select_public",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "faq",
+  "policyname": "faq_write_website",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_faq'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_faq'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "file_downloads",
+  "policyname": "file_downloads_insert_anon",
+  "cmd": "INSERT",
+  "roles": "{anon,authenticated}",
+  "qual": "",
+  "with_check": "true"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "file_downloads",
+  "policyname": "file_downloads_select_auth",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "current_user_is_admin()",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "guess_word_answers",
+  "policyname": "gw_answers_select",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text) OR (EXISTS ( SELECT 1\n   FROM (guess_word_words w\n     JOIN guess_word_sessions s ON ((s.id = w.session_id)))\n  WHERE ((w.id = guess_word_answers.word_id) AND (s.status = 'finished'::text)))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "guess_word_players",
+  "policyname": "gw_players_select",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "((is_kicked = false) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "guess_word_sessions",
+  "policyname": "gw_sessions_select",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "guess_word_words",
+  "policyname": "gw_words_select",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text) OR (EXISTS ( SELECT 1\n   FROM guess_word_sessions s\n  WHERE ((s.id = guess_word_words.session_id) AND (s.current_word_id = guess_word_words.id)))) OR (EXISTS ( SELECT 1\n   FROM guess_word_sessions s\n  WHERE ((s.id = guess_word_words.session_id) AND (s.status = 'finished'::text)))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "iso_countries",
+  "policyname": "iso_countries_select_all",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "library_books",
+  "policyname": "library_books_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(status = 'published'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "library_pages",
+  "policyname": "library_pages_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM library_books b\n  WHERE ((b.id = library_pages.book_id) AND (b.status = 'published'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_badges",
+  "policyname": "member_badges_read",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "committee_leaders_can_read_members_details",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM (user_roles leader_ur\n     JOIN user_roles member_ur ON ((member_ur.committee_id = leader_ur.committee_id)))\n  WHERE ((leader_ur.user_id = ( SELECT auth.uid() AS uid)) AND (leader_ur.is_active = true) AND (leader_ur.role_name = ANY (ARRAY['committee_leader'::text, 'deputy_committee_leader'::text])) AND (member_ur.user_id = member_details.user_id) AND (member_ur.is_active = true) AND (leader_ur.committee_id IS NOT NULL))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المسؤولون يمكنهم إدراج بيانات الأ",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_member_data'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المسؤولون يمكنهم تحديث بيانات الأ",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "can_edit_member_data(( SELECT auth.uid() AS uid), user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المسؤولون يمكنهم قراءة جميع البيا",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'view_members'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المستخدمون يمكنهم إنشاء بياناتهم ",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(( SELECT auth.uid() AS uid) = user_id)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المستخدمون يمكنهم تحديث بياناتهم ",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_details",
+  "policyname": "المستخدمون يمكنهم قراءة بياناتهم ",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_evaluations",
+  "policyname": "member_evaluations_insert_policy",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_member_data'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_evaluations",
+  "policyname": "member_evaluations_select_admin_policy",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'view_department_reports'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_evaluations",
+  "policyname": "member_evaluations_select_own_policy",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_evaluations",
+  "policyname": "member_evaluations_update_policy",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(evaluator_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "member_warnings",
+  "policyname": "member_warnings_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "can_view_warnings_of(( SELECT auth.uid() AS uid), user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "membership_applications",
+  "policyname": "membership_applications_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_membership_applications'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "membership_authority",
+  "policyname": "mta_read",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news",
+  "policyname": "news_delete",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "(news_role(( SELECT auth.uid() AS uid), id) = 'chief'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news",
+  "policyname": "news_insert",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(can_open_newsroom(( SELECT auth.uid() AS uid)) AND (created_by = ( SELECT auth.uid() AS uid)))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news",
+  "policyname": "news_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((workflow_status = 'published'::text) OR (news_role(( SELECT auth.uid() AS uid), id) <> 'none'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news",
+  "policyname": "news_update",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(news_role(( SELECT auth.uid() AS uid), id) = ANY (ARRAY['chief'::text, 'writer'::text]))",
+  "with_check": "(news_role(( SELECT auth.uid() AS uid), id) = ANY (ARRAY['chief'::text, 'writer'::text]))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_activity_log",
+  "policyname": "news_activity_log_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(news_role(( SELECT auth.uid() AS uid), news_id) <> 'none'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_collaboration_comments",
+  "policyname": "news_collaboration_comments_insert",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (news_role(( SELECT auth.uid() AS uid), news_id) <> 'none'::text))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_collaboration_comments",
+  "policyname": "news_collaboration_comments_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((deleted_at IS NULL) AND (news_role(( SELECT auth.uid() AS uid), news_id) <> 'none'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_collaboration_comments",
+  "policyname": "news_collaboration_comments_update",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))",
+  "with_check": "((user_id = ( SELECT auth.uid() AS uid)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_likes",
+  "policyname": "news_likes_delete",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "((( SELECT auth.uid() AS uid) IS NOT NULL) AND (user_id = ( SELECT auth.uid() AS uid)))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_likes",
+  "policyname": "news_likes_insert",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "((EXISTS ( SELECT 1\n   FROM news n\n  WHERE ((n.id = news_likes.news_id) AND (n.workflow_status = 'published'::text)))) AND (((( SELECT auth.uid() AS uid) IS NOT NULL) AND (user_id = ( SELECT auth.uid() AS uid))) OR ((( SELECT auth.uid() AS uid) IS NULL) AND (user_id IS NULL) AND (guest_identifier IS NOT NULL))))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_likes",
+  "policyname": "news_likes_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_public_comments",
+  "policyname": "news_public_comments_delete",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_public_comments",
+  "policyname": "news_public_comments_insert",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "((is_approved = false) AND (EXISTS ( SELECT 1\n   FROM news n\n  WHERE ((n.id = news_public_comments.news_id) AND (n.workflow_status = 'published'::text)))) AND (((( SELECT auth.uid() AS uid) IS NOT NULL) AND (user_id = ( SELECT auth.uid() AS uid)) AND (guest_name IS NULL)) OR ((( SELECT auth.uid() AS uid) IS NULL) AND (user_id IS NULL) AND (guest_name IS NOT NULL))))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_public_comments",
+  "policyname": "news_public_comments_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(is_approved OR (user_id = ( SELECT auth.uid() AS uid)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_public_comments",
+  "policyname": "news_public_comments_update",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(((user_id = ( SELECT auth.uid() AS uid)) AND (NOT is_approved)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))",
+  "with_check": "(((user_id = ( SELECT auth.uid() AS uid)) AND (NOT is_approved)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_writer_assignments",
+  "policyname": "news_writer_assignments_respond",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(writer_id = ( SELECT auth.uid() AS uid))",
+  "with_check": "(writer_id = ( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_writer_assignments",
+  "policyname": "news_writer_assignments_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((writer_id = ( SELECT auth.uid() AS uid)) OR (news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "news_writer_assignments",
+  "policyname": "news_writer_assignments_write",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text)",
+  "with_check": "(news_role(( SELECT auth.uid() AS uid), news_id) = 'chief'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "newsletter_subscribers",
+  "policyname": "newsletter_subscribers_delete_admin",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_newsletter'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "newsletter_subscribers",
+  "policyname": "newsletter_subscribers_insert_public",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(email IS NOT NULL)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "newsletter_subscribers",
+  "policyname": "newsletter_subscribers_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_newsletter'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "newsletter_subscribers",
+  "policyname": "newsletter_subscribers_update_admin",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_newsletter'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_newsletter'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notification_reads",
+  "policyname": "Users can mark notifications as read",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notification_reads",
+  "policyname": "Users can view their own reads",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notifications",
+  "policyname": "Club president can create notifications",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_notifications'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notifications",
+  "policyname": "Club president can delete notifications",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_notifications'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notifications",
+  "policyname": "Club president can update notifications",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_notifications'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "notifications",
+  "policyname": "Users can view their notifications",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((target_audience = 'all'::text) OR ((target_audience = 'specific_users'::text) AND (( SELECT auth.uid() AS uid) = ANY (target_user_ids))) OR ((target_audience = 'members'::text) AND (EXISTS ( SELECT 1\n   FROM member_details\n  WHERE (member_details.user_id = ( SELECT auth.uid() AS uid))))) OR ((target_audience = 'committee_leaders'::text) AND check_user_permission(( SELECT auth.uid() AS uid), 'view_pending_members'::text)) OR ((target_audience = 'admins'::text) AND (EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND ur.is_active AND (ur.role_name = ANY (ARRAY['club_president'::text, 'president_advisor'::text])))))) OR ((target_audience = 'election_admins'::text) AND has_election_admin_permission(( SELECT auth.uid() AS uid))) OR ((target_audience = 'specific_committee'::text) AND (EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = ( SELECT auth.uid() AS uid)) AND (user_roles.committee_id = notifications.target_committee_id))))) OR ((target_audience = 'election_voters'::text) AND (target_election_id IS NOT NULL) AND (is_top_admin_role(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1\n   FROM elections e\n  WHERE ((e.id = notifications.target_election_id) AND (((e.target_committee_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM user_roles ur\n          WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.committee_id = e.target_committee_id) AND ur.is_active)))) OR ((e.target_department_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM (user_roles ur\n             JOIN committees c2 ON ((c2.id = ur.committee_id)))\n          WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (c2.department_id = e.target_department_id) AND ur.is_active)))))))))) OR ((target_audience = 'election_candidates'::text) AND (target_election_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM election_candidates ec\n  WHERE ((ec.election_id = notifications.target_election_id) AND (ec.user_id = ( SELECT auth.uid() AS uid)) AND (ec.status = ANY (ARRAY['pending'::text, 'approved'::text, 'needs_edit'::text])))))) OR ((target_audience = 'election_participants'::text) AND (target_election_id IS NOT NULL) AND (is_top_admin_role(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1\n   FROM election_candidates ec\n  WHERE ((ec.election_id = notifications.target_election_id) AND (ec.user_id = ( SELECT auth.uid() AS uid)) AND (ec.status = ANY (ARRAY['pending'::text, 'approved'::text, 'needs_edit'::text, 'withdrawn'::text, 'rejected'::text]))))) OR (EXISTS ( SELECT 1\n   FROM elections e\n  WHERE ((e.id = notifications.target_election_id) AND (((e.target_committee_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM user_roles ur\n          WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.committee_id = e.target_committee_id) AND ur.is_active)))) OR ((e.target_department_id IS NOT NULL) AND (EXISTS ( SELECT 1\n           FROM (user_roles ur\n             JOIN committees c2 ON ((c2.id = ur.committee_id)))\n          WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (c2.department_id = e.target_department_id) AND ur.is_active)))))))))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "participation_certificates",
+  "policyname": "participation_certificates_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_volunteering'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "permissions",
+  "policyname": "permissions_admin_all",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.is_active = true) AND (ur.role_name = 'club_president'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "permissions",
+  "policyname": "permissions_select_all",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "position_authority",
+  "policyname": "position_authority_read",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profile_name_changes",
+  "policyname": "Users can insert their own name changes",
+  "cmd": "INSERT",
+  "roles": "{public}",
+  "qual": "",
+  "with_check": "(( SELECT auth.uid() AS uid) = user_id)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profile_name_changes",
+  "policyname": "Users can view their own name changes",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profiles",
+  "policyname": "profiles_delete",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_member_data'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profiles",
+  "policyname": "profiles_insert_policy",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_member_data'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profiles",
+  "policyname": "profiles_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((id = ( SELECT auth.uid() AS uid)) OR is_adeeb_member(( SELECT auth.uid() AS uid)))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profiles",
+  "policyname": "profiles_update_admin",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "can_edit_member_data(( SELECT auth.uid() AS uid), id)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "profiles",
+  "policyname": "profiles_update_own",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "(id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_episodes",
+  "policyname": "radio_episodes_admin_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_episodes",
+  "policyname": "radio_episodes_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "((status = 'published'::text) AND ((publish_at IS NULL) OR (publish_at <= now())) AND (EXISTS ( SELECT 1\n   FROM radio_shows s\n  WHERE ((s.id = radio_episodes.show_id) AND (s.status = 'published'::text)))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_show_platforms",
+  "policyname": "radio_platforms_admin_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_show_platforms",
+  "policyname": "radio_platforms_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM radio_shows s\n  WHERE ((s.id = radio_show_platforms.show_id) AND (s.status = 'published'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_shows",
+  "policyname": "radio_shows_admin_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_shows",
+  "policyname": "radio_shows_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(status = 'published'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_station",
+  "policyname": "radio_station_admin_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_radio'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "radio_station",
+  "policyname": "radio_station_public_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "role_permissions",
+  "policyname": "role_permissions_admin_all",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.is_active = true) AND (ur.role_name = 'club_president'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "role_permissions",
+  "policyname": "role_permissions_select_all",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "roles",
+  "policyname": "roles_modify",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "roles",
+  "policyname": "roles_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "site_pageviews",
+  "policyname": "pv_admin_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "current_user_is_admin()",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "site_settings",
+  "policyname": "Allow admins to manage settings",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_website'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_website'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "site_settings",
+  "policyname": "Allow authenticated users to read active settings",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(is_active = true)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "site_visitors",
+  "policyname": "visitors_admin_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "current_user_is_admin()",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "site_visits_daily_summary",
+  "policyname": "summary_admin_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "current_user_is_admin()",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "sponsors",
+  "policyname": "sponsors_select_public",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "sponsors",
+  "policyname": "sponsors_write_website",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_sponsors'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_sponsors'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "stats",
+  "policyname": "Allow public increment",
+  "cmd": "UPDATE",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "stats",
+  "policyname": "Allow public read access",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "survey_answers",
+  "policyname": "survey_answers_read_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM survey_responses r\n  WHERE ((r.id = survey_answers.response_id) AND (r.user_id = ( SELECT auth.uid() AS uid)))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "survey_questions",
+  "policyname": "survey_questions_read",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM surveys s\n  WHERE ((s.id = survey_questions.survey_id) AND (s.status = 'active'::text) AND (s.archived_at IS NULL) AND (s.deleted_at IS NULL) AND ((s.access_type = 'public'::text) OR ((s.access_type = 'members_only'::text) AND survey_is_active_member(( SELECT auth.uid() AS uid)))))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "survey_responses",
+  "policyname": "survey_responses_read_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "surveys",
+  "policyname": "surveys_read_members",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((status = 'active'::text) AND (access_type = 'members_only'::text) AND (archived_at IS NULL) AND (deleted_at IS NULL) AND survey_is_active_member(( SELECT auth.uid() AS uid)))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "surveys",
+  "policyname": "surveys_read_public",
+  "cmd": "SELECT",
+  "roles": "{anon,authenticated}",
+  "qual": "((status = 'active'::text) AND (access_type = 'public'::text) AND (archived_at IS NULL) AND (deleted_at IS NULL))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "task_assignments",
+  "policyname": "task_assignments_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'view_members'::text) OR can_manage_tasks_of(( SELECT auth.uid() AS uid), task_committee(task_id)))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "tasks",
+  "policyname": "tasks_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(can_manage_tasks_of(( SELECT auth.uid() AS uid), committee_id) OR check_user_permission(( SELECT auth.uid() AS uid), 'view_members'::text) OR is_my_task(id) OR may_see_open_call(id))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "testimonials",
+  "policyname": "testimonials_admin_all",
+  "cmd": "ALL",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_website'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "testimonials",
+  "policyname": "testimonials_select_visible",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(visible = true)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_roles",
+  "policyname": "user_roles_delete",
+  "cmd": "DELETE",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_roles",
+  "policyname": "user_roles_insert",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_roles",
+  "policyname": "user_roles_select_all",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "is_adeeb_member(( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_roles",
+  "policyname": "user_roles_select_own",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_roles",
+  "policyname": "user_roles_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_positions'::text)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_specific_permissions",
+  "policyname": "usp_manage_president",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.is_active = true) AND (ur.role_name = 'club_president'::text))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "user_specific_permissions",
+  "policyname": "usp_select_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "visitors",
+  "policyname": "visitors_insert_self",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "(( SELECT auth.uid() AS uid) = id)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "visitors",
+  "policyname": "visitors_select_self",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((( SELECT auth.uid() AS uid) = id) OR check_user_permission(( SELECT auth.uid() AS uid), 'view_site_stats'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "visitors",
+  "policyname": "visitors_update_self",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "(( SELECT auth.uid() AS uid) = id)",
+  "with_check": "(( SELECT auth.uid() AS uid) = id)"
+ },
+ {
+  "schemaname": "public",
+  "tablename": "volunteer_applications",
+  "policyname": "volunteer_applications_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_volunteering'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "volunteer_opportunities",
+  "policyname": "volunteer_opportunities_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(check_user_permission(( SELECT auth.uid() AS uid), 'manage_volunteering'::text) OR ((status <> 'draft'::text) AND is_active_volunteer(( SELECT auth.uid() AS uid))))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "volunteer_preferences",
+  "policyname": "volunteer_preferences_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_volunteering'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "volunteers",
+  "policyname": "volunteers_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "((user_id = ( SELECT auth.uid() AS uid)) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_volunteering'::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "works",
+  "policyname": "works_select_public",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": ""
+ },
+ {
+  "schemaname": "public",
+  "tablename": "works",
+  "policyname": "works_write_website",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_works'::text)",
+  "with_check": "check_user_permission(( SELECT auth.uid() AS uid), 'manage_works'::text)"
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Anyone can view images",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(bucket_id = 'images'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Authenticated users can delete images",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "(bucket_id = 'images'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Authenticated users can update images",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "(bucket_id = 'images'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Authenticated users can upload images",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "(bucket_id = 'images'::text)"
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Avatars are publicly accessible",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(bucket_id = 'avatars'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Users can update their own avatar",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "(bucket_id = 'avatars'::text)",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "Users can upload their own avatar",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "(bucket_id = 'avatars'::text)"
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_delete_admin",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "((bucket_id = 'election-files'::text) AND has_election_admin_permission(auth.uid()))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_delete_own",
+  "cmd": "DELETE",
+  "roles": "{authenticated}",
+  "qual": "((bucket_id = 'election-files'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_insert_self",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": "",
+  "with_check": "((bucket_id = 'election-files'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))"
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_select_admin",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((bucket_id = 'election-files'::text) AND has_election_admin_permission(auth.uid()))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_select_own",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((bucket_id = 'election-files'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
+  "with_check": ""
+ },
+ {
+  "schemaname": "storage",
+  "tablename": "objects",
+  "policyname": "election_files_select_voter",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((bucket_id = 'election-files'::text) AND can_voter_read_election_file(auth.uid(), name))",
+  "with_check": ""
+ }
+]

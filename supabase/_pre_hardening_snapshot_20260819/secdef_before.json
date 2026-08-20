@@ -1,0 +1,1217 @@
+[
+ {
+  "fn": "_apply_termination(uuid,uuid,text,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_cancel_election_apply(uuid,text,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_choice_weight(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_count_active_candidates(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_count_approved_candidates(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_finalize_confidence(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "_send_election_notification(uuid,text,text,text,text,text,uuid[],jsonb)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "accept_aspirant(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "admin_cancel_reservation(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "admin_force_close_candidacy(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "aggregate_yesterday_into_summary()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "apply_for_membership()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "apply_for_opportunity(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "apply_for_volunteering(integer[])",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "appoint_to_seat(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "archive_election(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "assign_position(uuid,uuid,text,integer,integer,boolean,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "assign_supervision(uuid,uuid,integer,integer,boolean,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "assign_task(uuid,uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "assignable_members(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "auto_grant_winner_role()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "badge_awards()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "book_activity_seat(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "bump_episode_like(uuid,boolean)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "bump_episode_play(uuid,boolean,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "calculate_average_rating(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "calculate_nps_score(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_assign_role(uuid,text,integer)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_change_name(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_edit_member_data(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_end_membership(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_issue_certificate(uuid,uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_issue_warning(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_manage_site_visits(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_manage_tasks_of(uuid,integer)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_open_newsroom(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_take_position_from(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_view_certificate_of(uuid,uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_view_site_visits(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_view_warnings_of(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "can_voter_read_election_file(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cancel_activity_reservation(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cancel_election(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cancel_warning(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "capture_visit_ip()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cascade_membership_loss_to_candidacy()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cascade_membership_loss_to_supervision()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cast_vote(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "certificate_targets(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "certificates_for_reader(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "check_any_permission(uuid,text[],text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "check_permission(uuid,text,text,jsonb)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "check_user_permission(uuid,text,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "check_user_permission(uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "cleanup_pageviews_older_than(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "clear_stall_on_candidacy()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "confirm_user_email(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "confirm_whatsapp(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "count_user_election_tabs(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "create_my_account_profile(text,text,text,text,boolean)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "create_open_call(text,text,integer,date,integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "create_task(text,text,integer,date)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "current_user_is_admin()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "decide_volunteer_application(uuid,boolean,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "declare_winner_apply(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "declare_winner(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "department_resolution_state(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "election_department(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "end_volunteering(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_candidacy_eligibility()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_candidate_status_transition()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_committee_council_matches_department()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_committee_role_names()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_department_council_change()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_election_status_transition()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_home_unit_match()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_position_uniqueness()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_seat_belongs_to_unit()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_supervision_shape()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_vacant_target()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_vote_eligibility()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "enforce_winner_declaration()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "evaluate_volunteer(uuid,boolean,text,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "export_visits_for_admin(timestamp with time zone,timestamp with time zone)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_active_attendance_windows()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_activity_attendance_list(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_activity_full_details(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_activity_seat_status(uuid)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_anonymized_candidates(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_board_members()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_browser_stats(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_candidate_audit_trail(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_candidates_with_identity(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_certificate_data(text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_cities_stats(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_countries_stats(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_device_stats(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_download_stats(text)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_election_audit_log(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_election_results(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_election_vote_detail(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_election_voters_participation(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_eligible_elections_for_user(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_ended_activities_with_seats(integer)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_exit_pages(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_member_election_signals(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_month_visits_stats()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_new_vs_returning(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_occupied_positions()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_option_distribution(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_public_profile(text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_published_activities_with_seats()",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_today_visits_stats()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_top_pages(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_top_referrers(integer,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_unread_notifications_count(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_all_permissions(uuid)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_candidacies(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_notifications(uuid,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_permissions_by_module(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_permissions(uuid)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_user_primary_role(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_visit_stats(timestamp with time zone,timestamp with time zone)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_visits_by_day(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_visits_heatmap(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_votable_elections_for_user(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_vote_weight(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "get_week_visits_stats()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "grant_membership_to_volunteer(uuid,integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "grant_user_specific_permission(uuid,text,text,boolean,timestamp with time zone,uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "guard_terminated_membership_details()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_close_session(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_create_session(text,text[],integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_delete_session(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_end_current_round(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_generate_session_code()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_get_admin_session_data(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_get_leaderboard(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_get_player_state(text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_is_admin(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_join_session(text,text,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_kick_player(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_list_admin_sessions()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_pick_winner(uuid,uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_start_next_round(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "gw_submit_answer(text,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "has_election_admin_permission(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "has_election_view_permission(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "increment_survey_views(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_active_volunteer(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_adeeb_member(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_committee_member(integer)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_confidence_election(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_my_task(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_sole_candidate(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_target_position_vacant(text,integer,integer)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_top_admin_role(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_user_eligible_to_run(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "is_user_eligible_to_vote(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "issue_certificate(uuid,uuid,text,text)",
+  "cfg": "search_path=public, extensions, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "issue_participation_certificate(uuid)",
+  "cfg": "search_path=public, extensions, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "issue_warning(uuid,uuid,text,text,integer,date)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "library_increment_views(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "library_reorder_pages(uuid,uuid[])",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "list_certificates_for_send()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "log_activity(uuid,text,text,text,jsonb,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "log_activity(uuid,text,text,text,jsonb)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "log_file_download(text,text,text,text)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "log_news_activity(uuid,text,jsonb)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "lookup_auth_user_by_email(text)",
+  "cfg": "search_path=public, auth",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "mark_attendance(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "mark_certificate_sent(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "mark_task(uuid,text,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "mark_volunteer_attendance(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "may_see_open_call(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "member_within_reach(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "members_i_may_certify(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "members_i_may_warn(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "members_in_my_reach(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "my_public_slug()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "my_sessions()",
+  "cfg": "search_path=auth, public",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_assign_writers(uuid,uuid,uuid[],jsonb,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_bump_views(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_comment(uuid,uuid,text,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_create(uuid,text,integer,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_log(uuid,uuid,text,jsonb)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_return_for_edits(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_role(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_set_status(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_submit_for_review(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "news_writer_touch(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "notify_candidate_status_change()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "notify_candidate_submitted()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "position_title_of(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "prevent_delete_declared_role()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "promote_to_voting_check()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "recommend_aspirant(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "resolve_department_election_winners(integer)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "restore_candidacy(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "restore_membership(uuid,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "resubmit_candidacy(uuid,text,text,text,integer,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "review_candidate(uuid,text,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "revoke_certificate(uuid,uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "revoke_my_session(uuid)",
+  "cfg": "search_path=auth, public",
+  "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "revoke_participation_certificate(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "revoke_position(uuid,uuid,text,integer)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "revoke_supervision(uuid,uuid,integer,integer)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "seat_declared_by_unit(text,integer)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "select_volunteer(uuid,boolean)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "set_my_volunteer_preferences(integer[])",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "set_seat_preference(integer,uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "set_task_status(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "submit_candidacy(uuid,text,text,text,integer,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "submit_survey_response(integer,uuid,jsonb,integer,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "submit_task(uuid,text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "survey_is_active_member(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sweep_election_deadlines()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sweep_radio_schedule()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sweep_survey_deadlines()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sync_assign_positions_key()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sync_badges()",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sync_full_name_from_member_details()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sync_full_name_from_profiles()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "sync_profile_email_from_auth()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "task_committee(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "task_committees_of(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "terminate_membership(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "toggle_news_like(uuid,uuid,text)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "transition_election(uuid,text,timestamp with time zone)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "trg_pv_compute_bounce()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "trg_pv_set_entry()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "trg_pv_upsert_visitor()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{postgres=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "unassign_task(uuid,uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "update_member_email(uuid,text)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "update_member_password(uuid,text)",
+  "cfg": "",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "update_task(uuid,text,text,date)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "verify_certificate(text)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "volunteer_committee_options()",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "volunteer_for_call(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "warnings_for_reader(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "withdraw_application()",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "withdraw_candidacy(uuid)",
+  "cfg": "search_path=public",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ },
+ {
+  "fn": "withdraw_my_application(uuid)",
+  "cfg": "search_path=public, pg_temp",
+  "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+ }
+]
