@@ -10,7 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 import { GENDER_OPTIONS } from "@/lib/activities";
 import { PHONE_HINT, PHONE_LEN, PHONE_PREFIX, isPhone, phoneError } from "@/lib/fieldFormats";
 import { arabicNameError } from "@/lib/personName";
-import { saveMyData, type MyDataInput } from "./actions";
+import { saveMyData } from "./actions";
+import type { MyDataInput } from "./schema";
 import type { MyAccount } from "./data";
 
 const RPC_ERRORS: Record<string, string> = {

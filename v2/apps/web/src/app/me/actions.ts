@@ -1,23 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionAdmin } from "@/lib/auth";
-import { PHONE_RE, PHONE_HINT } from "@/lib/membershipFields";
-import { ARABIC_NAME_HINT, arabicNameError, normalizeName } from "@/lib/personName";
+import { normalizeName } from "@/lib/personName";
+import { myDataSchema, type MyDataInput, type SaveResult } from "./schema";
 import { EXIT_REASON_MIN } from "./vocab";
 
-export const myDataSchema = z.object({
-  // بالعربيّة وحدها، ومطبَّعًا: ما يُحفظ هو ما يُطبع في ورقةٍ ويُنادى به في كشف.
-  fullName: z.string().trim().min(1, "الاسم مطلوب").refine((v) => !arabicNameError(v), ARABIC_NAME_HINT),
-  phone: z.string().trim().regex(PHONE_RE, PHONE_HINT),
-  city: z.string().trim().max(60, "المدينة أطول من اللازم").optional().or(z.literal("")),
-});
-export type MyDataInput = z.infer<typeof myDataSchema>;
 
-export type SaveResult = { ok: boolean; message: string; fieldErrors?: Partial<Record<keyof MyDataInput, string>> };
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
