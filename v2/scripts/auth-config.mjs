@@ -190,7 +190,11 @@ if (appleSecret) {
 
   Object.assign(desired, {
     external_apple_enabled: true,
-    external_apple_client_id: "club.adeeb.signin", // Services ID — معرّفٌ لا سرّ
+    // معرّفان لا واحد، والفاصلةُ لغةُ GoTrue: الأوّل Services ID للويب، والثاني ـ Bundle ID
+    // للتطبيق الأصيل (أبل تُصدِر الرمزَ باسم الحزمة لا باسم الخدمة). وحذفُ أحدِهما يقتل
+    // بابَه وحده؛ وقد كان هذا السطرُ يحمل الأوّلَ وحده بينما الحيُّ يحملهما — لغمٌ
+    // ينفجر أوّلَ رفعةٍ بسرّ أبل (صُحّح 2026-08-20). معرّفاتٌ لا أسرار.
+    external_apple_client_id: "club.adeeb.signin,club.adeeb.app",
     external_apple_secret: appleSecret,
   });
 }
