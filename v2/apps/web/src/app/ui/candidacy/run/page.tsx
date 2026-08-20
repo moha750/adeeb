@@ -12,6 +12,14 @@ import { TermsGate } from "../../../dashboard/elections/_member/TermsGate";
 import { OpportunityCard } from "../../../dashboard/elections/_member/OpportunityCard";
 import { Countdown } from "../../../dashboard/elections/_member/Countdown";
 import type { RunItem } from "../../../dashboard/elections/member-data";
+import { PageHeader } from "@/app/dashboard/_components/PageHeader";
+import type { CrumbStep } from "@/app/dashboard/_shell/crumb";
+
+/** فتاتٌ مرسومٌ لأنّ صفحةَ المعرض ليست في خريطة اللوحة (خاصّيّةُ `crumb` للمعارض وحدها) */
+const CRUMB: CrumbStep[] = [
+  { kind: "link", label: "الانتخابات", href: "#" },
+  { kind: "leaf", label: "الترشُّح" },
+];
 
 // موعدٌ معروضٌ وخامُه معًا (كما يأتيان من `member-data`)، ومستقبليٌّ كي يتحرّك العدّاد في المختبر
 const END = "5 سبتمبر 2026";
@@ -38,7 +46,7 @@ function RunPreview({ items }: { items: RunItem[] }) {
   return (
     <>
       <div className="rounded border border-line p-4 md:p-7" style={{ background: "var(--color-bg)" }}>
-        <div className="ash-phead"><div><h1>الترشُّح</h1></div></div>
+        <PageHeader crumb={CRUMB} title="الترشُّح" />
         {items.length === 0 ? (
           <Alert tone="info" title="لا ترشّح مفتوح الآن">حين يُفتح بابُ ترشّحٍ لمنصبٍ في نطاقك، يظهر هنا لتقدّم بيانك.</Alert>
         ) : (
@@ -70,7 +78,7 @@ export default function RunLab() {
   return (
     <main className="py-16">
       <Container className="max-w-3xl">
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Run Door · Lab</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Run Door, Lab</p>
         <h1 className="mt-1 font-display text-4xl font-black text-content">محاكي باب «الترشُّح»</h1>
         <p className="mt-2 max-w-xl text-content-muted">
           قائمةُ الانتخابات المفتوحة لترشُّحك بحالاتها. زرّ «ترشّح» يفتح بوّابةَ الشروط، والموافقةُ تنقل لصفحة إكمال البيان (<b className="text-content">هنا محاكاة</b>). بدّل الحالة.

@@ -46,6 +46,8 @@ export const SECTION_CAP = {
   // سجلّ الإنذارات: بابُه `view_warnings` — يحمله قائد الموارد وعضوها **والرئيسان** (اطّلاعًا).
   // والإصدارُ والإلغاء قدرةٌ ثانية (`manage_warnings`) تُسأل داخل الغرفة وفي القاعدة، لا هنا.
   "/dashboard/members/warnings": "view_warnings",
+  // طلباتُ الخروج: القفلُ للغرفة، والقاضون فيها ثلاثةٌ تسمّيهم القاعدة (can_decide_membership_exit)
+  "/dashboard/members/exits": "view_members",
   // شهادات الخبرة: قدرةٌ **واحدة** لا بابٌ وفعل — الرائي هنا هو المُصدِر نفسه (رئيس النادي ·
   // رئيس التنفيذيّ · قائد الموارد)، فلا فرقَ يُصنَع بلا أثر. ومدى الإصدار يقوله
   // `membership_authority` في القاعدة لا هذا القفل.
@@ -68,6 +70,12 @@ export const SECTION_CAP = {
   "/dashboard/committee": "manage_committee_members",
   "/dashboard/members/credentials": "manage_member_data",
   "/dashboard/events": "manage_activities",
+  // **التطوّع** — غرفتان بقفلٍ واحد `manage_volunteering`: الفرصُ وسجلُّ المتطوّعين. وهما
+  // موضوعٌ واحد (من يتطوّع، وفيمَ تطوّع) لا غرفتان مختلفتان، فمفتاحٌ واحدٌ لهما.
+  // وأمّا **إهداءُ العضويّة** فقدرةٌ ثانية (`manage_membership_applications`) تُسأل في القاعدة
+  // عند الفعل لا عند الباب: من دخل السجلَّ بلا سلطةِ منحٍ رأى المسيرةَ ولم يُهدِ.
+  "/dashboard/volunteering": "manage_volunteering",
+  "/dashboard/volunteering/volunteers": "manage_volunteering",
   // رسائل التواصل — صندوقُ ما يكتبه الزائر في «تواصل معنا». قدرةٌ **واحدة** لا بابٌ وفعل:
   // من يرى بريد الزائر يردّ عليه، فلا معنى لقارئٍ لا يُجيب في غرفةٍ كلُّ عملها الجواب.
   "/dashboard/contact": "manage_contact",
@@ -89,6 +97,10 @@ export const SECTION_CAP = {
   // باب غرفة التحرير: `write_news`. ورئيس التحرير (`manage_news`) يملكها معه —
   // فالمفتاح واحدٌ للباب، والفارق بين رئيسٍ وكاتب داخل الغرفة لا عندها.
   "/dashboard/news": "write_news",
+  // **ديبو** — سجلُّ محادثاته. قدرةٌ مستقلّةٌ `manage_deebo` لا `manage_faq`: الغرفةُ ستكبر
+  // (قراءةُ السجلّ اليوم، ورعايةُ المعرفة والشخصيّة غدًا)، وعُرفُ اللوحة قدرةٌ لكلّ غرفة.
+  // نزلت القدرةُ إلى الإنتاج ٢٠٢٦-٠٨-١٩ لرئيس النادي وحدَه، وتوسيعُها من غرفة الصلاحيّات.
+  "/dashboard/deebo": "manage_deebo",
   "/dashboard/system/permissions": "manage_permissions",
   // لوحة السلطة — حدودُ المناصب (من يُسنِد مَن، ومن لا تطوله يدُه، ومدى سلطة العضويّة).
   // قفلُها قفلُ الصلاحيات: من يوزّع القدرات يرسم الحدود.

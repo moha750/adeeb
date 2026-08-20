@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { computePeaks, downsample } from "@/lib/radio/peaks";
+import { computePeaks } from "@/lib/radio/peaks";
+import { useWaveBars } from "@/lib/radio/useWaveBars";
 import { Badge, Button, Container } from "@adeeb/design-system";
 import {
   MicrophoneStage, SpeakerSimpleNone, MusicNotes, Play, Pause, SpeakerHigh,
 } from "@phosphor-icons/react";
-import { ArrowCounterClockwise, ArrowClockwise, UploadSimple } from "@/app/_components/glyphs";
+import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
 
 /**
  * معرضُ قسم الإذاعة (`.rad-*`) — التخطيطُ المُقَرّ ببياناتٍ ساكنة.
@@ -203,6 +204,7 @@ const PLAYED = 0.42;
 function Waveform() {
   const [peaks, setPeaks] = useState<number[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const { ref, bars } = useWaveBars(peaks ?? []);
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -221,10 +223,9 @@ function Waveform() {
     );
   }
 
-  const bars = downsample(peaks);
   const cut = Math.round(bars.length * PLAYED);
   return (
-    <div className="radw" role="presentation">
+    <div className="radw" ref={ref} role="presentation">
       {bars.map((v, i) => (
         <span key={i} className={"radw-bar" + (i < cut ? " is-played" : "")}
           style={{ height: `${v}%` }} />
@@ -332,6 +333,41 @@ export default function RadioLabPage() {
           <p className="mt-6 max-w-3xl text-sm text-content-muted">
             عُرض معه مقترحُ <strong>حبّةٍ عائمة</strong> في الرُّكن، فاختار المالك النحيل: يُرى دائمًا ويُقرأ
             عنوانُه كاملًا، وثمنُه سطرٌ من أسفل الشاشة. وأُعدمت الحبّةُ من المكتبة فلا يبقى ما لا يُستعمَل.
+          </p>
+        </section>
+
+        {/* ── محاورُ الحلقة ─────────────────────────────────────────── */}
+        <section className="mt-20">
+          <h2 className="mb-2 font-display text-2xl font-black text-content">محاور الحلقة</h2>
+          <p className="mb-6 max-w-3xl text-content-muted">
+            قائمةُ المحاور كانت تُقرأ ولا تُفعَل: يقرأ الزائرُ عنوانَ محورٍ فلا يجد إليه سبيلًا إلّا أن
+            يسحب الموجةَ يخمّن. فصار السطرُ <strong>بابًا</strong>. والوقتُ يُشتقّ من نصّ «محاور الحلقة»
+            نفسِه ولا عمودَ له في القاعدة: المحرّرُ يكتب القائمةَ موقّتةً كما يكتبها لوصف يوتيوب على كلّ
+            حال، فينالها الموقعُ بلا حقلٍ جديد ولا ترحيل. ويُقرأ الوقتُ في أوّل السطر وفي آخره معًا،
+            فيوتيوب يقبل الوجهين والكاتبُ العربيّ يؤخّره عادةً.
+          </p>
+          <div className="max-w-xl">
+            <ol className="rad-chaps">
+              {[
+                { at: "0:00", t: "البداية" },
+                { at: "2:08", t: "الحلم وحده لا يكفي" },
+                { at: "7:18", t: "صراع الاستمراريّة" },
+                { at: "14:02", t: "ماذا لو تغيّر الطريق؟" },
+              ].map((c, i) => (
+                <li key={c.at}>
+                  <button type="button" className={"rad-chap" + (i === 2 ? " is-playing" : "")}
+                    aria-current={i === 2 ? "true" : undefined}>
+                    <span className="rad-chap-at font-latin"><bdi dir="ltr">{c.at}</bdi></span>
+                    <span className="rad-chap-t">{c.t}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <p className="mt-6 max-w-3xl text-sm text-content-muted">
+            والعاملُ منها يُعلَّم كما تُعلَّم شارةُ «يُذاع الآن» في الصفوف، فيعرف القارئُ أين هو ممّا
+            يسمع. <strong>وإن خلا سطرٌ واحدٌ من وقت فلا محاور</strong> ويُعرَض النصُّ كما كُتب: قائمةٌ
+            نصفُها أزرارٌ ونصفُها سطورٌ ميّتة تُقرأ عطلًا لا تصميمًا.
           </p>
         </section>
       </Container>

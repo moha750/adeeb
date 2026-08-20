@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useRef, useState, type CSSProperties, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../lib/cn";
 import { useCharsetGuard, type FieldCharset } from "../lib/charset";
 import { CharsetWhisper, KeyboardGlyph } from "./CharsetWhisper";
@@ -29,6 +29,11 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   helper?: string;
   /** وسم «اختياري» هادئ في آخر صفّ التسمية (رماديّ خافت). يُلغي وسم الإلزام. */
   optional?: boolean;
+  /**
+   * لصيقة ثابتة قبل القيمة (`+966` نموذجًا) — **نصٌّ يُقرأ لا يُحرَّر**: لا يدخل القيمة ولا يُرسَل،
+   * وإنّما يقول للكاتب أين يقف رقمه وبأيّ بلدٍ يُقرأ. ومكانُها محجوزٌ بعرضها فلا تركبها القيمة.
+   */
+  prefix?: string;
 }
 
 /* عين الكشف — بخطّ أيقونات النظام نفسه (stroke 1.7، لا تعبئة) */
@@ -53,7 +58,7 @@ const EyeOff = () => (
  * المكوّن عميليّ (`use client`) لأنّ حارس `charset` يعترض الإدخال — وكلّ مستهلكيه عميليّون أصلًا.
  */
 export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
-  { label, icon, innerIcon, placeholder, charset, error, success, helper, optional, required, className, dir, type, onBeforeInput, onChange, ...props },
+  { label, icon, innerIcon, placeholder, charset, error, success, helper, optional, prefix, required, className, dir, type, onBeforeInput, onChange, ...props },
   ref,
 ) {
   const msg = error ?? helper;
@@ -71,9 +76,16 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         {label}
         <FieldMark optional={optional} required={required} />
       </span>
-      <div ref={wrapRef} className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}>
+      <div
+        ref={wrapRef}
+        className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}
+        /* مكانُ اللصيقة يُحجَز بعرضها لا برقمٍ يُخمَّن: `ch` عرضُ الصفر في خطّ الحقل نفسه، فيتّسع المحجوز بها. */
+        style={prefix ? ({ "--fld-pre-w": `${prefix.length}ch` } as CSSProperties) : undefined}
+      >
         {/* أثناء الهمسة تُبدَّل الأيقونة الداخليّة بلوحة مفاتيح: الرسم يقول ما تقوله الهمسة، فيُفهم بلا قراءة */}
         <span className="fld-iic" aria-hidden="true">{whisper ? <KeyboardGlyph /> : innerIcon}</span>
+        {/* بلا `aria-hidden`: الغلاف `<label>` فيلتحق نصُّها باسم الحقل المنطوق — وهو المراد (ق٣: «رقم الجوّال +966») */}
+        {prefix ? <span className="fld-pre">{prefix}</span> : null}
         <input
           ref={ref}
           className="fld-in"

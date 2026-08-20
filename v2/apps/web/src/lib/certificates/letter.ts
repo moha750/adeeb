@@ -18,7 +18,7 @@
  */
 import { downloadBlob } from "@/lib/download";
 import { imagePdf, A4_LANDSCAPE } from "@/lib/pdf";
-import { openPaper, sealPaper, fitSize, WEIGHTS, type PageSize, type Piece } from "@/lib/paper";
+import { openPaper, sealPaper, fitSize, elongationRatio, WEIGHTS, type PageSize, type Piece } from "@/lib/paper";
 import { stampQr } from "@/lib/qr";
 import { period, testimony, verifyLine, verifyUrl, QR_CAPTION, type Certificate } from "./text";
 
@@ -93,8 +93,20 @@ export async function renderCertificate(
       text,
       x: CENTER,
       y: l.y,
-      // القياس بـcanvas أضيقُ من المرسوم (لا مدّ فيه)، فنضيّق الحدَّ احتياطًا لا نوسّعه
-      size: fitSize(ctx, text, MAXW * 0.86, l.size, l.weight, l.min),
+      /**
+       * canvas يقيس الحرف **غير ممدود** والورقةُ تُرسَم ممدودة، فالحدُّ يُضيَّق. وكان المعامل
+       * ٠٫٨٦ تخمينًا (يكافئ نسبةَ مدٍّ ١٫١٦)، وقياسُ السطور الحقيقيّة (٢٠٢٦-٠٨-١٦) أخرج
+       * ١٫٠٠–١٫١٨: فالتخمينُ يضيق على سطرٍ ويتّسع على آخر — وهو الذي طفح في بطاقة الانتخاب.
+       *
+       * **والأضيقُ منهما هو المأخوذ** عمدًا: القياسُ يحمي السطرَ الذي جاوز التخمين، ولا
+       * يُكبّر سطرًا صحّ اليومَ بمقاسه. فالشهادةُ وثيقةٌ صادرةٌ بيد الناس، وتكبيرُ حرفها
+       * قرارُ تصميمٍ يُعرَض ويُقَرّ، لا أثرٌ جانبيٌّ لإصلاح عطل.
+       */
+      size: fitSize(
+        ctx, text,
+        Math.min(MAXW * 0.86, MAXW / elongationRatio(ctx, text, l.size, l.weight)),
+        l.size, l.weight, l.min,
+      ),
       weight: l.weight,
       color: INK,
       anchor: "middle",

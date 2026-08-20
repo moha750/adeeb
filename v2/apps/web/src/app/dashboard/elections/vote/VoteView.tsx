@@ -3,7 +3,7 @@
 import { Alert, Button } from "@adeeb/design-system";
 import { Scales } from "@phosphor-icons/react";
 import { CheckCircle, Checks, Eye } from "@/app/_components/glyphs";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { OpportunityCard } from "../_member/OpportunityCard";
 import { Countdown } from "../_member/Countdown";
 import { useElectionApi } from "../actions-context";
@@ -22,9 +22,7 @@ export function VoteView({ items, error }: { items: VoteItem[]; error: string | 
   const api = useElectionApi();
   return (
     <>
-      <div className="ash-phead">
-        <div><Breadcrumb /><h1>صوّت الآن</h1></div>
-      </div>
+      <PageHeader title="صوّت الآن" />
 
       {error ? <Alert tone="warning" title="تعذّر جلب الانتخابات">{error}</Alert> : null}
       {!error && items.length === 0 ? (

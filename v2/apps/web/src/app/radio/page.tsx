@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Container, Footer } from "@adeeb/design-system";
+import { Alert, Container, Footer } from "@adeeb/design-system";
 import { MicrophoneStage, Play } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "../_components/SiteHeader";
@@ -9,17 +9,36 @@ import type { Track } from "./_player/PlayerProvider";
 
 export const revalidate = 60;
 
-export const metadata = {
-  title: "إذاعة أدِيب",
-  description: "برامجُ نادي أدِيب مسموعةً: حوارٌ وقراءةٌ وكلمة، بموسيقى أو بدونها.",
-};
+const DECK = "برامجُ نادي أدِيب مسموعةً: حوارٌ وقراءةٌ وكلمة، بموسيقى أو بدونها.";
+
+/**
+ * الوسمُ يُبنى ولا يُكتَب ثابتًا: صورةُ البطاقة شعارُ المحطّة، وهو في القاعدة.
+ * والقراءةُ مغلَّفةٌ بـ`cache` فلا تصير استعلامًا ثانيًا مع قراءة الصفحة نفسِها.
+ */
+export async function generateMetadata() {
+  const station = await getPublicStation();
+  const description = station.tagline ?? DECK;
+  return {
+    title: station.name,
+    description,
+    alternates: { canonical: "/radio" },
+    openGraph: {
+      title: station.name,
+      description,
+      images: station.logoUrl ? [station.logoUrl] : undefined,
+      type: "website",
+      siteName: "إذاعة أدِيب",
+    },
+  };
+}
 
 export default async function RadioPage() {
-  const [station, shows, latest] = await Promise.all([
+  const [station, showsRes, latest] = await Promise.all([
     getPublicStation(),
     getPublicShows(),
     getLatestEpisodes(6),
   ]);
+  const { shows, error: showsError } = showsRes;
 
   const tracks: Track[] = latest
     .filter((l) => isPlayable(l.episode))
@@ -59,7 +78,7 @@ export default async function RadioPage() {
             {/* رفُّ البرامج */}
             {shows.length ? (
               <>
-                <h2 className="mb-3 mt-10 font-display text-lg font-black">البرامج</h2>
+                <h2 className="mb-3 mt-10 font-display text-lg font-black">البودكاست</h2>
                 <div className="rad-shelf">
                   {shows.map((s) => (
                     <Link key={s.id} href={`/radio/${s.slug}`} className={`rad-prog rad-tone-${s.tone}`}>
@@ -76,6 +95,11 @@ export default async function RadioPage() {
                   ))}
                 </div>
               </>
+            ) : showsError ? (
+              /* تعذّرت القراءة، فلا يُقال «لا برامج»: تلك جملةٌ عن المحتوى وهذه عن العطل. */
+              <div className="mt-10 max-w-2xl">
+                <Alert tone="warning">تعذّر تحميلُ البرامج الآن. أعِد تحديثَ الصفحة بعد قليل.</Alert>
+              </div>
             ) : (
               <p className="mt-10 text-content-muted">لا برامج منشورة بعد. تابعنا لتصلك الأولى.</p>
             )}

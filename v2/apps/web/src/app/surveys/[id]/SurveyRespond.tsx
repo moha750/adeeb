@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { Alert, Button, Card, CardBody, Checkbox, Field, FieldMark, Radio, Select, Textarea } from "@adeeb/design-system";
 import {
@@ -9,6 +9,7 @@ import { PencilSimple, Question, Star } from "@/app/_components/glyphs";
 import type { QuestionType } from "@/app/dashboard/surveys/vocab";
 import { submitSurveyResponse } from "./actions";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
+import { EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, EMAIL_RE, PHONE_RE } from "@/lib/fieldFormats";
 
 // مفتاح Turnstile العامّ — يُدمَج وقت البناء (NEXT_PUBLIC). غيابه (تجربةٌ محليّة بلا إعداد) يُسقط الدرع بلا كسر.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -52,6 +53,21 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; inner: React.ReactNode
 const DRAFT_TTL = 7 * 24 * 60 * 60 * 1000;
 const draftKey = (id: number) => `svy-draft-${id}`;
 
+/** خامُ المسوّدة كما هو في المخزن — نصٌّ ثابتٌ يصلح لقطةً لـ`useSyncExternalStore`. */
+const readRawDraft = (id: number): string | null => {
+  try { return localStorage.getItem(draftKey(id)); } catch { return null; }
+};
+
+/** إجاباتُها إن كانت حيّةً، و`null` إن غابت أو شاخت (أسبوع) أو عطبت. */
+function draftAnswers(raw: string | null): Record<number, AnswerValue> | null {
+  if (!raw) return null;
+  try {
+    const d = JSON.parse(raw) as { answers?: Record<number, AnswerValue>; savedAt?: number };
+    if (d.savedAt && Date.now() - d.savedAt < DRAFT_TTL && d.answers) return d.answers;
+  } catch { /* مسوّدة معطوبة — تُتجاهل */ }
+  return null;
+}
+
 const deviceType = (): string => {
   const ua = navigator.userAgent;
   if (/iPad|Tablet/i.test(ua)) return "tablet";
@@ -65,23 +81,37 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, startSubmit] = useTransition();
-  const startedAt = useRef(Date.now());
+  // ساعةُ البدء تُضبَط بعد التركيب لا في الرسم: قراءةُ الساعة أثناء الرسم غيرُ نقيّة
+  // (رسمةٌ ثانيةٌ تعطي رقمًا آخر)، وأوّلُ لحظةٍ يراها المجيب هي لحظةُ التركيب لا غير.
+  const startedAt = useRef(0);
+  useEffect(() => { startedAt.current = Date.now(); }, []);
   // درع Turnstile — الرمز الحيّ وإشارة إعادة الضبط (الرمز يُستهلك مرّة، فيُجدَّد بعد فشل)
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
   const shieldOn = !preview && !!TURNSTILE_SITE_KEY;
 
-  // مسوّدة المتصفّح — تعود لصاحبها إن غادر وعاد خلال أسبوع، وتُمحى عند الإرسال
+  // مسوّدة المتصفّح — تعود لصاحبها إن غادر وعاد خلال أسبوع، وتُمحى عند الإرسال.
+  // **المخزنُ يُقرأ بـ`useSyncExternalStore` لا يُنسَخ في أثر** (سابقةُ `lib/useDraft`):
+  // الخادمُ لا مخزنَ له فلقطتُه `null` (فلا يختلف المرسَلُ عن المرسوم)، ثمّ تُبذَر إجاباتُها
+  // في الحالة **مرّةً واحدةً** بعد الترطيب. والبذرُ في الرسم لا في أثر: الأثرُ كان يرسم
+  // النموذجَ فارغًا رسمةً كاملةً ثمّ يملؤه، فيرى صاحبُ المسوّدة نموذجَه خاليًا لحظةً.
+  // (والمعاينة لا تقرأ مسوّدةً ولا تكتبها — لا id حقيقيّ لها.)
+  const rawDraft = useSyncExternalStore(
+    () => () => {},
+    () => (preview ? null : readRawDraft(survey.id)),
+    () => null,
+  );
+  const [seeded, setSeeded] = useState(false);
+  if (!seeded && rawDraft) {
+    setSeeded(true);
+    const restored = draftAnswers(rawDraft);
+    if (restored) setAnswers(restored);
+  }
+  // كنسُ الشائخة والمعطوبة — **كتابةٌ** في مخزنٍ خارجيّ، فمكانُها أثرٌ لا رسم
   useEffect(() => {
-    if (preview) return; // المعاينة لا تقرأ مسوّدةً ولا تكتبها — لا id حقيقيّ لها
-    try {
-      const raw = localStorage.getItem(draftKey(survey.id));
-      if (!raw) return;
-      const draft = JSON.parse(raw) as { answers?: Record<number, AnswerValue>; savedAt?: number };
-      if (draft.savedAt && Date.now() - draft.savedAt < DRAFT_TTL && draft.answers) setAnswers(draft.answers);
-      else localStorage.removeItem(draftKey(survey.id));
-    } catch { /* مسوّدة معطوبة — تُتجاهل */ }
-  }, [survey.id, preview]);
+    if (preview || !rawDraft || draftAnswers(rawDraft)) return;
+    try { localStorage.removeItem(draftKey(survey.id)); } catch { /* لا شيء */ }
+  }, [rawDraft, preview, survey.id]);
   useEffect(() => {
     if (preview || done || !Object.keys(answers).length) return;
     const t = window.setTimeout(() => {
@@ -112,12 +142,21 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
 
   const submit = () => {
     const missing: Record<number, string> = {};
+    let blank = 0;
     for (const q of questions) {
-      if (q.required && answers[q.id] === undefined) missing[q.id] = "هذا السؤال إلزاميّ.";
+      if (q.required && answers[q.id] === undefined) { missing[q.id] = "هذا السؤال إلزاميّ."; blank++; continue; }
+      // صيغةُ البريد والجوّال تُفحص كما تُفحص في بقيّة أبواب الموقع — والمصدر واحد.
+      // (الطقم يمنع المحرف لا الصيغة، وقاعدةُ البيانات تخزّن الثلاثة نصًّا واحدًا بلا تمييز.)
+      const v = answers[q.id];
+      if (typeof v !== "string" || !v.trim()) continue;
+      if (q.type === "email" && !EMAIL_RE.test(v.trim())) missing[q.id] = EMAIL_HINT;
+      if (q.type === "phone" && !PHONE_RE.test(v.trim())) missing[q.id] = PHONE_HINT;
     }
     setErrors(missing);
     if (Object.keys(missing).length) {
-      setFormError(`بقي ${Object.keys(missing).length} سؤال إلزاميّ بلا إجابة.`);
+      setFormError(blank
+        ? `بقي ${blank} سؤال إلزاميّ بلا إجابة.`
+        : "راجع الأسئلة المميّزة بالأحمر.");
       return;
     }
     setFormError(null);
@@ -342,6 +381,7 @@ function QuestionField({
       placeholder={t.placeholder}
       type={inputType}
       charset={charset}
+      {...(q.type === "phone" ? { maxLength: PHONE_LEN, prefix: PHONE_PREFIX } : {})}
       value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
       onChange={(e) => {
         const raw = e.target.value;

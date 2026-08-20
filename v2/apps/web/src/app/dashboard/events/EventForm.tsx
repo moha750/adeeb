@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SectionCard, Field, Select, Textarea } from "@adeeb/design-system";
+import { Button, SaveBar, SectionCard, Field, Select, Textarea } from "@adeeb/design-system";
 import {
   Armchair, CalendarBlank, CalendarDots, ChatText, Clock, Flag, GenderFemale, GenderMale, Hash, HourglassMedium, Image as ImageIcon, LinkSimple, MapPin, MapPinLine, Sparkle, TextT, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
@@ -10,7 +10,7 @@ import { useToast } from "../_components/ToastProvider";
 import type { EventEditData, OrganizerOption } from "./data";
 import { AUDIENCE_OPTIONS, TYPE_OPTIONS, type ActivityType } from "./vocab";
 import { createEvent, updateEvent, uploadEventCover, type EventInput } from "./actions";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
 
 // وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
@@ -39,7 +39,6 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
   const [cover, setCover] = useState<string | null>(event?.coverImageUrl ?? null);
 
   const editing = event != null;
-  const crumbLeaf = editing ? "تحرير" : "فعاليّة جديدة";
 
   // حالة المقاعد للتلميح: مخزون مشترك (الجنسان فارغان) · تقسيم (كلاهما وسطُهما = الإجمالي) · ناقص
   const totalN = Number(totalSeats) || 0;
@@ -113,6 +112,16 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
     coverImageUrl: cover,
   });
 
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
+   * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
+   * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
+
   const save = () => {
     startSave(async () => {
       const input = toInput();
@@ -127,16 +136,9 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? `تحرير: ${event.name}` : "فعاليّة جديدة"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/events")} disabled={saving}>إلغاء</Button>
-          <Button variant="primary" size="md" loading={saving} onClick={save}>{editing ? "حفظ التغييرات" : "إنشاء الفعاليّة"}</Button>
-        </div>
-      </div>
+      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
+          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
+      <PageHeader title={editing ? `تحرير: ${event.name}` : "فعاليّة جديدة"} />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل الفعاليّة">
@@ -188,6 +190,12 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
           </div>
         </SectionCard>
       </div>
+
+      <SaveBar open={dirty} message={editing ? undefined : "فعاليّةٌ لم تُنشَأ بعد"}>
+        <Button variant="primary" size="md" loading={saving} onClick={save}>
+          {editing ? "حفظ التغييرات" : "إنشاء الفعاليّة"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

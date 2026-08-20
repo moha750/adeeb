@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Textarea, Segmented, Modal } from "@adeeb/design-system";
 import {
   Megaphone, Playlist, MicrophoneStage, Hash, LinkSimple, TextAlignLeft, CalendarBlank, Clock,
   Archive, MusicNotes, User, FileText, YoutubeLogo, Waveform, SpeakerSimpleNone,
 } from "@phosphor-icons/react";
-import { ArrowRight } from "@/app/_components/glyphs";
 import { EyeSlash, UploadSimple, Trash, PencilSimple, Plus } from "@/app/_components/glyphs";
 import { putWithProgress } from "@/lib/radio/upload";
 import { computeMixedPeaks, computePeaks } from "@/lib/radio/peaks";
@@ -31,7 +29,7 @@ import {
   loadEpisode, saveShowPlatforms, setEpisodeAudio, setEpisodePeaks, setEpisodeStatus, setShowLogo,
   setShowStatus, updateEpisode,
 } from "../actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 // وصفتا الشعار والصوت من قانون المرفقات (`lib/upload`)
@@ -176,6 +174,10 @@ export function ShowEditorView({
     for (const [i, [variant, file]] of jobs.entries()) {
       setUploading({
         label: VARIANT_META[variant].verb, step: i + 1, steps: jobs.length + 1,
+        // ساعةُ بدء هذه الرفعة. و`runUpload` **يدُ زرٍّ لا رسمة**: لا تُنادى إلّا من
+        // `onClick`، فقراءةُ الساعة فيها لا تقع في رسمٍ ولا تتبدّل بإعادته. والقاعدة
+        // لا تُميّز يدَ الحدث من الرسم في دوالّ المكوّن، فتُستثنى هنا وحدها.
+        // eslint-disable-next-line react-hooks/purity
         pct: 0, loaded: 0, total: file.size, startedAt: Date.now(),
       });
       const duration = await durationOf(file);
@@ -196,6 +198,8 @@ export function ShowEditorView({
     // الموجتان: المرفوعُ الآن من الملفّ الذي بين يدينا، وما لم يُرفَع من المخزن.
     setUploading({
       label: "حساب الموجة", step: jobs.length + 1, steps: jobs.length + 1,
+      // ساعةُ محطّة الموجة — يدُ الزرّ نفسُها، والعلّةُ أعلاه
+      // eslint-disable-next-line react-hooks/purity
       pct: 0, loaded: 0, total: 0, startedAt: Date.now(),
     });
     await saveWaves(ep, audioModal.plain, audioModal.stem);
@@ -428,23 +432,21 @@ export function ShowEditorView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={show.title} />
-          <h1>{show.title}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Badge tone={SHOW_STATUS_META[show.status].tone} dot>{SHOW_STATUS_META[show.status].label}</Badge>
-          <Link href="/dashboard/radio" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>
-          {show.status === "published" ? (
-            <Button variant="ghost" size="md" loading={pending} onClick={() => runShowStatus("unpublish")}><EyeSlash size={18} />إلغاء النشر</Button>
-          ) : (
-            <Button variant="primary" size="md" loading={pending} onClick={() => runShowStatus("publish")}><Megaphone size={18} />نشر البرنامج</Button>
-          )}
-        </div>
-      </div>
+      {/* «رجوع» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«إلغاء النشر» ليست غايةَ الشاشة
+          فنزلت إلى `⋯`، والنشرُ وحده يبقى فعلًا أساسيًّا (حكمُ `/ui/page-header`). */}
+      <PageHeader
+        title={show.title}
+        status={<Badge tone={SHOW_STATUS_META[show.status].tone} dot>{SHOW_STATUS_META[show.status].label}</Badge>}
+        primary={show.status === "published" ? undefined : {
+          label: "نشر البرنامج", icon: <Megaphone size={18} />, loading: pending,
+          onClick: () => runShowStatus("publish"),
+        }}
+        menu={show.status === "published"
+          ? [{ items: [{ label: "إلغاء النشر", icon: <EyeSlash size={18} />, onSelect: () => runShowStatus("unpublish") }] }]
+          : undefined}
+      />
 
-      <Segmented items={tabs} value={tab} onValueChange={(v) => setTab(v as typeof tab)} aria-label="أقسام البرنامج" className="mb-4" />
+      <Segmented items={tabs} value={tab} onValueChange={(v) => setTab(v as typeof tab)} aria-label="أقسام البرنامج" className="seg-block mb-4" />
 
       {tab === "episodes" ? (
         <>

@@ -9,7 +9,7 @@
  * والنداء **من لقطة الإنذار** لا من حاله اليوم: منصبُه يومَ صدوره (`role_at_issue`) — فالخطاب
  * يبقى صادقًا ولو انتقل صاحبه بعده. **واللجنة لا تُذكر في النصّ** (قرار المالك): تبقى في السجلّ.
  */
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { positionLine } from "@/lib/positionLabel";
 import { CHARTER, countWord, observationSentence, ordinalWord } from "./vocab";
 

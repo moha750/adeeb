@@ -1717,16 +1717,22 @@
   padding: 14px;
   background: radial-gradient(1200px 440px at 100% -10%,
     color-mix(in oklab, var(--steel-500) 15%, var(--color-bg)), var(--color-bg));
+}
 
-  /* ═══ سلّمُ حبر اللوح المذهّب — أربعةُ رموزٍ تُعلَن مرّةً وتقرؤها الأبناء ═══
-     السلّمُ رُفع درجةً كاملة (٢٠٢٦-٠٨-٠٣) بعد **قياسٍ** لا انطباع: أرضُ اللوح
-     مذهّبةٌ متوسّطةُ النغمة لا كحليّةٌ داكنة، فالأحبارُ المضبوطةُ للكحليّ ترسب عليها —
-     كانت `steel-200` عند **3.48** و`steel-300` عند **2.32** والعتبة 4.5. والعلاجُ في
-     الحبر لا في الحجاب: رفعُ الحجاب يُعتِم لوحًا أفتحَه المالكُ عمدًا.
+/* ═══ سلّمُ حبر اللوح المذهّب — أربعةُ رموزٍ تُعلَن مرّةً وتقرؤها الأبناء ═══
+   السلّمُ رُفع درجةً كاملة (٢٠٢٦-٠٨-٠٣) بعد **قياسٍ** لا انطباع: أرضُ اللوح
+   مذهّبةٌ متوسّطةُ النغمة لا كحليّةٌ داكنة، فالأحبارُ المضبوطةُ للكحليّ ترسب عليها —
+   كانت `steel-200` عند **3.48** و`steel-300` عند **2.32** والعتبة 4.5. والعلاجُ في
+   الحبر لا في الحجاب: رفعُ الحجاب يُعتِم لوحًا أفتحَه المالكُ عمدًا.
 
-     **ومكانُه الهيكلُ لا اللوح** (٢٠٢٦-٠٨-٠٣): كان يُعلَن على `.ash-side`، فمن وقف
-     **فوق** اللوح وهو خارجَه لم يجد حبرَه — وبرغرُ الجوّال يفعل ذلك بالضبط. والسلّمُ
-     سلّمُ الهيكل أصلًا لا سلّمَ الشريط، فأُعلن حيث يراه الطرفان. */
+   **ومكانُه الهيكلُ لا اللوح** (٢٠٢٦-٠٨-٠٣): كان يُعلَن على `.ash-side`، فمن وقف
+   **فوق** اللوح وهو خارجَه لم يجد حبرَه — وبرغرُ الجوّال يفعل ذلك بالضبط. والسلّمُ
+   سلّمُ الهيكل أصلًا لا سلّمَ الشريط، فأُعلن حيث يراه الطرفان.
+
+   **وخرج من `.ash` إلى قاعدةٍ بمُضيفين** (٢٠٢٦-٠٨-١٩): الورقةُ الصاعدة (`.mnsh`)
+   لوحٌ مذهّبٌ آخر، وقد تُرسَم في بوّابةٍ خارج شجرة `.ash` — فلا ترث حبرَه. والسلّمُ
+   يبقى **إعلانًا واحدًا** يقرؤه المضيفان، لا نسخةً ثانيةً تفترق عند أوّل تعديل. */
+.ash, .mnsh, .nvlab-frame {
   --ash-ink: var(--steel-50);    /* الأسطع: العنوان · البند النشط */
   --ash-ink-2: var(--steel-100); /* المتن: بنودُ التنقّل · رؤوسُ المجموعات (11px) */
   --ash-ink-3: var(--steel-200); /* الثانويّ: رؤوسُ المجموعات · الأبناء */
@@ -2169,43 +2175,6 @@
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
-/* مُطلِقُ الدُرج — **أيقونةُ الرأس نفسُها لا شبيهتُها**: `.bic` بدائيّةُ المكتبة
-   (ثلاثةُ خطوطٍ متفاوتةٍ تنطبق فتصير ×)، وحالتُها من `aria-expanded` على هذا الزرّ.
-   والمقاسُ 40×40 هدفَ لمسٍ كزرّ الرأس — لا حجمَ الأيقونة (20px) الذي يُخطأ باللمس. */
-.ash-ham {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 40px; height: 40px; flex: none;
-  border: 0;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  padding: 0;
-  /* **يعلو الدُرجَ فيُرى ×** (‏١٣٠١ = طبقةُ النافذة + 1): الدُرجُ ينزلق من اليمين
-     فوق الشريط العلويّ فيبتلع الزرَّ، والحجابُ فوقه — فتجري الحركةُ في الخفاء
-     ويصير الزرُّ يعلن `aria-expanded="true"` ولا يُنقَر. ورفعُه يجعل الأمرَ واحدًا:
-     زرٌّ واحد يفتح ويغلق، وأيقونتُه هي إشارةُ الحالة نفسُها.
-     ولا شيءَ يقصّه: `.ash-main` يقصّ فيضَه لكنّ الزرَّ داخل حدوده، وسلسلةُ آبائه
-     (`.ash` · `.ash-main` · `.ash-top`) بلا سياقِ تكديسٍ يحبس رقمَه. */
-  position: relative;
-  z-index: calc(var(--z-modal) + 1);
-  transition: color var(--dur-fast);
-}
-/* **ويلبس حبرَ اللوح حين يعلوه**: مفتوحًا يقف فوق أرضٍ مذهّبةٍ لا فوق سطحٍ فاتح،
-   فحبرُ العلامة (‏#274060) يرسب عليها. `--ash-ink` من `.ash` (ق: سلّمُ الحبر). */
-.ash-ham[aria-expanded="true"] { color: var(--ash-ink); }
-/* **واتّجاهُه معكوسٌ عن برغر الرأس** (قرار المالك ٢٠٢٦-٠٨-٠٣): الحركةُ واحدةٌ من
-   المصدر نفسِه، والمرآةُ وحدها تنقلب — تفاوتُ الأطوال يستند إلى **مبتدأ** السطر لا
-   منتهاه (‏`inset-inline: 0 auto`)، والأوسطُ يغادر إلى الجهة التي يستند إليها كي
-   يبقى خروجُه من الطرف المرصوص لا من الطرف المتفاوت. */
-.ash-ham .bic span { inset-inline: 0 auto; }
-.ash-ham[aria-expanded="true"] .bic span:nth-child(2) { translate: 22px 0; }
-.ash-ham:active { transform: scale(.96); }
-.ash-ham:focus-visible { outline: none; box-shadow: var(--ring); }
-@media (prefers-reduced-motion: reduce) {
-  .ash-ham:active { transform: none; }
-}
 /* الشريط الجانبيّ ثابت على سطح المكتب (بلا طيّ) — طابع SaaS احترافيّ نظيف.
    الهوية في العلويّ (منطقة لا تنطوي أبدًا) تحقيقًا لقاعدة: الهوية لا تختفي مهما كان. */
 /* الهويّة **مُطلِقُ قائمة الحساب** لا نصًّا ساكنًا: فتُعامَل معاملة الزرّ — سطحٌ يستجيب للمرور،
@@ -2311,64 +2280,25 @@
 .ash.rail .ash-cta span { display: none; }
 .ash.rail .ash-ftx { display: none; }
 
-/* ---- الجوّال: دُرج منزلق ---- */
-.ash-scrim { display: none; }
+/* ---- الجوّال: لا دُرجَ ولا شريطَ جانبيّ ----
+   كان الشريطُ ينزلق دُرجًا من البرغر، فذهبا معًا (٢٠٢٦-٠٨-٢٠): البرغرُ لبعده عن
+   الإبهام، والدُرجُ لأنّ **الورقةَ الصاعدة هي هو** — `.mnsh` يحمل `ash-side` نفسَه
+   فيرفع اللوحَ من القاع بمادّته وبنوده. فلا نسخةَ ثانية ولا حالةَ `mob-open`. */
 @media (max-width: 860px) {
   .ash { padding: 0; gap: 0; }
-  .ash-main { height: 100vh; border-radius: 0; border: 0; box-shadow: none; }
-  .ash-ham { display: inline-flex; }
-  /* الشريط يصير دُرجًا منزلقًا (الطيّ على الجوّال فقط) */
-  .ash-side {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: auto;
-    height: 100vh;
-    width: 264px;
-    border-radius: 0;
-    z-index: var(--z-modal);
-    /* موجب X = خارج الشاشة يمينًا (لا يتأثّر بالاتجاه) */
-    transform: translateX(100%);
-    transition: transform var(--dur) var(--ease-standard);
-  }
-  .ash.mob-open .ash-side { transform: translateX(0); }
-  /* **موضعُ البرغر محجوزٌ في ترويسة الدُرج**: الزرُّ يعلو اللوحَ مفتوحًا (لا يُقصّ ولا
-     يُبتلَع) فيقع على الرمز — 20px حشوُ الشريط العلويّ + 40px عرضُه + 6px متنفَّسًا،
-     فيُقرأ الصفُّ ترويسةً واحدة: زرٌّ فرمزٌ فاسم، وإن كان الزرُّ من طبقةٍ أخرى.
-     ورأسا الصفّين متحاذيان بحكم الحساب لا بالضبط: مركزُ الزرّ 33 (‏66÷2) ومركزُ
-     الرمز 35 (‏14 حشوَ اللوح + 2 + 19). */
-  .ash-brand { padding-inline-start: 66px; }
-  .ash.mob-open .ash-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: calc(var(--z-modal) - 1);
-    background: color-mix(in oklab, var(--navy-950) 55%, transparent);
-    backdrop-filter: blur(1px);
-  }
+  /* **`dvh` لا `vh`**: سفاري الجوّال يحسب `100vh` بشريط عنوانه **مطويًّا** دائمًا، فآخرُ
+     ‏~70px من الصفحة تقع تحته وتُزاحَم الجزيرةُ الثابتة. والوحدةُ الديناميّة تتبع
+     المساحةَ المرئيّة فعلًا. */
+  .ash-main { height: 100dvh; border-radius: 0; border: 0; box-shadow: none; }
+  /* الترويسةُ تخفّ بعد ذهاب البرغر: صفٌّ يحمل هويّةً وجرسًا لا يلزمه 66 */
+  .ash-top { height: 58px; padding-inline: 16px; }
+  /* اللوحُ يبقى في الشجرة (ورقتُه تقرأ أصنافَه) ولا يُرسَم عمودًا في شاشةٍ لا تسعه */
+  .ash-side:not(.mnsh) { display: none; }
   /* ⛔ قاعدة مقدّسة: الاسم + الترحيب + الصورة تبقى ظاهرة دائمًا — لا نُخفي الهوية أبدًا. */
   .ash-greet { flex: 1; min-width: 0; }
-  /* على الجوّال الطيّ يكون بإغلاق الدُرج لا بالريّل — نُلغي أثر الريّل ونُخفي المقبض */
-  .ash-handle { display: none; }
-  .ash.rail .ash-side { width: 264px; }
-  .ash.rail .ash-i .lbl,
-  .ash.rail .ash-b,
-  .ash.rail .ash-caret { display: revert; }
-  .ash.rail .ash-cta { width: auto; height: auto; padding: 10px; margin-inline: 14px; gap: 8px; }
-  .ash.rail .ash-i { width: calc(100% - 24px); height: auto; padding: 10px 14px; margin-inline: 12px; justify-content: flex-start; gap: 12px; }
-  .ash.rail .ash-foot { width: auto; height: auto; padding: 10px 12px; margin-inline: 14px; justify-content: flex-start; gap: 10px; }
-  .ash.rail .ash-rule { width: auto; margin-inline: 18px; }
-  .ash.rail .ash-nav-head { width: auto; }
-  .ash.rail .ash-name { display: block; }
-  /* والحجزُ نفسُه في المطويّ — الريّل مُحيَّدٌ على الجوّال، فترويسته ترويسةُ الدُرج */
-  .ash.rail .ash-brand { justify-content: flex-start; padding-inline: 66px 18px; }
-  .ash.rail .ash-rule { margin-inline: 18px; }
-  .ash.rail .ash-nav-head { height: auto; padding: 14px 20px 6px; margin: 0; font-size: var(--ash-head-size); gap: 9px; }
-  .ash.rail .ash-cta { gap: 8px; }
-  .ash.rail .ash-cta span,
-  .ash.rail .ash-ftx { display: revert; }
-  .ash.rail .ash-foot { gap: 10px; }
+  /* **والمحتوى يحجز مكانَ الجزيرة**: طبقةٌ ثابتةٌ تحجب آخرَ ما في الصفحة إن لم يُحجَز
+     لها — 58 صفًّا + 3.5 حدًّا + 12 عومًا + متنفَّسًا، ومعها شريطُ الجهاز. */
+  .ash-content { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
 }
 /* في الشاشات الضيّقة جدًّا: الهوية كلّها تبقى (اسمٌ وترحيبٌ وصورة) — الاسم وحده يصغر قياسه */
 @media (max-width: 460px) {
@@ -2555,7 +2485,7 @@
 .dt-head + .dt-group { border-top: 0; }
 /* المرورُ طبقةٌ تذوب لا تدرّجٌ يُبدَّل: التدرّجاتُ لا تُستوفى بين حالتين، فيقفز اللون.
    والشدّةُ من لغة صفّ الجدول نفسِها (rgba(--dt-accent)) فيتّسقان. */
-.dt-group::after {
+:is(.dt-group, .dcard-band)::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2565,7 +2495,7 @@
   transition: opacity var(--dur) var(--ease-standard);
 }
 button.dt-group { cursor: pointer; }
-button.dt-group:hover::after { opacity: .07; }
+button:is(.dt-group, .dcard-band):hover::after { opacity: .07; }
 /* المحتوى يلتصق بصدر الحاوية فيبقى مقروءًا مهما امتدّ الجدولُ أفقيًّا (سابقة `.mtx-group span`) */
 .dt-gr-in { position: sticky; inset-inline-start: 14px; display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* الدوّارة: صدى `.aacc-ic` بمقاس الشريط (22px ← ق٢: صغيرٌ جدًّا فزاويتُه --radius-xs) */
@@ -2578,18 +2508,18 @@ button.dt-group:hover::after { opacity: .07; }
   transition: transform 0.25s var(--ease-standard), background 0.2s ease;
 }
 .dt-gr-ic svg { width: 14px; height: 14px; }
-.dt-group[aria-expanded="true"] .dt-gr-ic { transform: rotate(180deg); background: color-mix(in oklab, rgb(var(--dt-accent)) 20%, transparent); }
+:is(.dt-group, .dcard-band)[aria-expanded="true"] .dt-gr-ic { transform: rotate(180deg); background: color-mix(in oklab, rgb(var(--dt-accent)) 20%, transparent); }
 .dt-gr-lb { font-size: 13px; font-weight: 800; color: var(--dt-gr-ink, var(--color-primary)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* التلميحُ يتبع النغمة ويبقى **دون** العنوان فلا ينافسه — مزيجُ 55% نفسُه من ق٨ */
 .dt-gr-hint { font-size: 12px; font-weight: 600; color: color-mix(in oklab, rgb(var(--dt-accent)) 55%, var(--color-text-muted)); white-space: nowrap; }
 /* نغمةُ الشريط تُعلَن مرّةً (لكنةً وحبرًا) وتقرؤها أجزاؤه — لا لونَ يُكرَّر في كلّ جزء (ق٤).
    والأصفرُ حبرُه من 800 لا 700 لسببٍ وصوليّ، كما في سائر النظام. */
-.dt-group.dt-tone-success { --dt-accent: 26, 132, 82;  --dt-gr-aurora: var(--aurora-success); --dt-gr-ink: var(--success-700); }
-.dt-group.dt-tone-warning { --dt-accent: 184, 122, 12; --dt-gr-aurora: var(--aurora-warning); --dt-gr-ink: var(--warning-800); }
-.dt-group.dt-tone-danger  { --dt-accent: 181, 47, 34;  --dt-gr-aurora: var(--aurora-danger);  --dt-gr-ink: var(--danger-700); }
-.dt-group.dt-tone-neutral { --dt-accent: 84, 92, 109;  --dt-gr-aurora: var(--aurora-neutral); --dt-gr-ink: var(--neutral-700); }
+:is(.dt-group, .dcard-band).dt-tone-success { --dt-accent: 26, 132, 82;  --dt-gr-aurora: var(--aurora-success); --dt-gr-ink: var(--success-700); }
+:is(.dt-group, .dcard-band).dt-tone-warning { --dt-accent: 184, 122, 12; --dt-gr-aurora: var(--aurora-warning); --dt-gr-ink: var(--warning-800); }
+:is(.dt-group, .dcard-band).dt-tone-danger  { --dt-accent: 181, 47, 34;  --dt-gr-aurora: var(--aurora-danger);  --dt-gr-ink: var(--danger-700); }
+:is(.dt-group, .dcard-band).dt-tone-neutral { --dt-accent: 84, 92, 109;  --dt-gr-aurora: var(--aurora-neutral); --dt-gr-ink: var(--neutral-700); }
 @media (prefers-reduced-motion: reduce) {
-  .dt-gr-ic, .dt-group::after { transition: none; }
+  .dt-gr-ic, .dt-group::after, .dcard-band::after { transition: none; }
 }
 /* أفتار الجدول يتبنّى نغمة الطاولة (كاملةً) أو الصفّ (مفردًا): تعبئة بتدرّج النغمة وظلّ بلونها — كأفتار كرت العضو المنغَّم */
 .dt.dt-tone-success .av, .dt-body .dt-row.dt-tone-success .av { background: var(--grad-success); --shadow-tone: var(--shadow-tone-success); }
@@ -2989,6 +2919,13 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .seg-lbl { display: inline-flex; align-items: center; gap: 6px; }
 .seg-lbl svg { width: 15px; height: 15px; }
 .viewbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* قائمةُ صفوفٍ لكلٍّ فعلُه — متنُ كرتٍ محتواه إعداداتٌ متجاورة (بريدٌ · كلمةُ مرور · طريقُ دخول).
+   والفصلُ **خطٌّ واحدٌ بين صفَّين** لا إطارٌ حول كلِّ صفّ: الكرتُ سطحٌ مؤطَّرٌ أصلًا، والسطحُ
+   المؤطَّر لا يحمل أسطحًا مؤطَّرة. ولا تعرف هذه القائمةُ شكلَ صفوفها: كلُّ صفٍّ `.viewbar`
+   كما هو، فالبدائيّةُ واحدةٌ لا تُعاد، وهذه تصفُّها وتفصلها لا غير. */
+.setl { display: flex; flex-direction: column; }
+.setl > * + * { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--card-stroke); }
 
 /* ============================================================
    الترقيم (Pagination) — تذييل الجدول · بادئة .pag
@@ -3673,6 +3610,70 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* تذييل الترقيم في عرض الكروت (منفصل) + الحالة الفارغة */
 .card-pager { margin-top: 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); box-shadow: var(--shadow-md); }
 .card-empty { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); }
+
+/* ============================================================
+   كرتُ الصفّ (.dcard) — **وجهُ الجدول الكرتيُّ مرسومًا من أعمدته نفسِها** (مكوّنه `DataCards`).
+   ثلاثُ هيئاتٍ تتقاسم رأسًا واحدًا: حقائقُ في شريط، وصفوفٌ مسطورة، ومضغوطٌ لقائمةٍ طويلة.
+   ومعرضُها `/ui/cards-view`. تبني على `.acard` (السطح والحدّ والظلّ والزاوية والنغمة) فلا تحفر
+   وصفةً ثانية، وتقرأ رموزَ النغمة (--card-t/--card-tx) كسائر الكروت (ق٤).
+   ============================================================ */
+.dcard { display: flex; flex-direction: column; }
+.dcard-head { display: flex; align-items: center; gap: 11px; padding: 15px 16px; min-width: 0; }
+.dcard-lead { flex: 0 0 auto; display: inline-flex; }
+.dcard-id { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* سطران ثمّ القصّ: عنوانُ الصفّ خبرُه، وقصُّه من أوّل كلمةٍ يُذهب معناه (كان سطرًا واحدًا فصار
+   «طلب انضم…»). وسطرانِ سقفٌ لا اثنان دائمًا، فلا يتفاوت ارتفاعُ الرؤوس في الصفّ الواحد. */
+.dcard-title { font-size: 15.5px; font-weight: 800; line-height: 1.35; color: var(--card-tx, var(--color-primary)); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.dcard-sub { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dcard-end { margin-inline-start: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+/* النصُّ الحرّ يُقصّ بعد ثلاثة أسطر: الكرتُ لمحةٌ تُقرأ في مسحةِ عين، وتمامُ النصّ في صفحته.
+   ولولا القصُّ لصار كرتُ رسالةٍ طويلةٍ أطولَ من الشاشة، ولانكسر تراصُّ الشبكة (ق٦). */
+/* والفسحةُ السفلى **هامشٌ لا حشو**: مع القصّ (`-webkit-line-clamp`) يسيل السطرُ الزائد في
+   منطقة الحشو فيُرى شبحًا مقطوعًا تحت السطر الثالث. والهامشُ خارج الصندوق فلا يسيل فيه شيء. */
+.dcard-body { margin: 0 0 14px; padding: 0 16px; font-size: 13.5px; line-height: 1.7; color: var(--color-text); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+
+/* (١) هيئةُ الحقائق — شريطٌ في قاع الكرت، **والفجوةُ هي الفاصل** (حيلةُ `.mcard-facts` عينُها:
+   السطحُ يلبس لون الحدّ والخلايا تلبس لون الكرت، فما بينها يُرى شعرةً رأسيّةً بين المتجاورَين
+   وأفقيّةً بين المتراكبَين بلا شرطٍ ولا استعلامِ وسائط). والدفعُ إلى القاع (`margin-top:auto`)
+   يجعل أشرطةَ الكروت في الصفّ الواحد تتراصّ رغم تفاوت عناوينها. */
+.dcard-facts { margin: auto 0 0; display: flex; flex-wrap: wrap; gap: var(--card-stroke-w); background: var(--card-stroke); border-top: var(--card-stroke-w) solid var(--card-stroke); }
+/* بذرةُ الخليّة 150 لا أقلّ: البريدُ أطولُ قيمةٍ في اللوحة ولا موضعَ كسرٍ فيه، فبذرةٌ أضيق
+   تُجلس حقيقتين في صفٍّ فينكسر البريد بحرفه («‎majed@exam / ple.com»). وعندها تنزل الحقيقةُ
+   صفًّا وحدها متى ضاق الكرت، وتعود جارتَها متى اتّسع (ق٦: الفردُ يمتدّ فلا فراغَ في الصفّ). */
+.dcard-fact { flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 11px 14px; background: var(--color-surface); }
+.dcard-fact dt { font-size: 11.5px; font-weight: 600; color: var(--color-text-muted); }
+/* القيمةُ أكبرُ من تسميتها بمقدارٍ يُرى — فارقٌ يقول أيُّهما الخبر (نظيرُ `.mcard-fact dd`) */
+/* القيمةُ **تنكسر ولا تُقصّ**: خليّةُ الحقيقة ضيّقة، والبريدُ سلسلةٌ بلا فراغٍ فكان يخرج
+   «‎…example.com» بلا صاحب. والكسرُ بالحرف (`anywhere`) لأنّ اللاتينيّ الطويل لا موضعَ كسرٍ فيه. */
+.dcard-fact dd { margin: 0; font-size: 14px; font-weight: 800; line-height: 1.3; color: var(--card-tx, var(--color-primary)); overflow-wrap: anywhere; }
+
+/* (٢) هيئةُ الصفوف — تسميةٌ في الصدر وقيمةٌ في الطرف، بشعرةٍ بينها تتبع نغمةَ الكرت.
+   تصلح لصفٍّ حقائقُه كثيرةٌ لا تُصفّ عرضًا (شهادةٌ لها سلسلةٌ ومدّةٌ ومُصدِرٌ وحال). */
+.dcard-rows { margin: auto 0 0; padding: 2px 16px 14px; display: flex; flex-direction: column; }
+.dcard-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--card-t, var(--steel-500)) 12%, transparent); }
+.dcard-row dt { flex: 0 0 auto; font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
+.dcard-row dd { margin: 0; margin-inline: auto 0; min-width: 0; text-align: end; font-size: 13.5px; font-weight: 700; color: var(--card-tx, var(--color-primary)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* (٣) الهيئةُ المضغوطة — الحقائقُ سطرٌ تحت العنوان لا شبكةَ خلايا. للقوائم التي تُمسَح مسحًا
+   (المكتبة، الزوّار، الأخبار): كرتٌ أقصرُ يعني صفوفًا أكثرَ في الشاشة الواحدة.
+   ولا فاصلَ محفورًا بين الحقائق: **الفجوةُ تفصل**، فلا نقطةَ ولا شريط. */
+/* اسمُ الهيئة منسوبٌ (`dcard-v-`) لا مجرَّدًا: `dcard-compact` كان يصطدم بأسماء الأجزاء
+   (`.dcard-facts` شريطُ الحقائق)، فورث الكرتُ `margin-top:auto` من جزئه فتساوت قيعانُ الكروت
+   واختلفت رؤوسُها في الصفّ الواحد. المساحةُ الواحدة تُقسَم: جزءٌ باسمه، وهيئةٌ ببادئتها. */
+.dcard-v-compact .dcard-head { padding: 12px 14px; }
+.dcard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 12px; margin-top: 2px; }
+.dcard-mi { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.dcard-mk { font-size: 11.5px; font-weight: 600; color: var(--color-text-muted); }
+.dcard-mv { font-size: 12.5px; font-weight: 700; color: var(--card-tx, var(--color-primary)); }
+
+/* شريطُ المجموعة في عرض الكروت — شريطُ الجدول نفسُه (لكنةً وحبرًا ودوّارةً)، إلّا أنّه هنا
+   **سطحٌ قائمٌ بذاته**: الجدولُ يحويه إطارُه فيسقط عنه الإطار (ق١٢)، والكروتُ لا إطارَ فوقها
+   فيلبس حدَّه وزاويتَه. ونغمتُه ودوّارتُه في قواعد `.dt-group` نفسِها لا في نسخةٍ ثانية. */
+.dcard-band { --dt-accent: 69, 113, 154; position: relative; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 12px; padding: 9px 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); overflow: hidden; background: linear-gradient(to left, var(--dt-gr-aurora, var(--aurora-brand)), color-mix(in oklab, var(--dt-gr-aurora, var(--aurora-brand)) 40%, var(--color-surface))); font: inherit; text-align: start; cursor: pointer; }
+.dcard-band:first-child { margin-top: 0; }
+/* عمودُ المعاينة في المعرض وحده (`/ui/cards-view`) — عرضُ جوّالٍ حقيقيّ يُحكَم عليه، فاللوحةُ
+   منتَجُ جوّال. صنفٌ معرضيٌّ كنظرائه (`.phdlab-col`) لا يُستعمل في شاشةٍ حيّة. */
+.cvlab { width: 390px; max-width: 100%; }
 
 /* ── كرت الشخص منغَّمًا بحالته الدلاليّة ─────────────────────────────────────────
    نظام النغمة موحَّد: `.acard-tone-*` (أعلى الملفّ) يُعلن رموزه (--card-t/--card-tx/--card-grad)
@@ -5410,7 +5411,7 @@ html:not(.js) .ldr-boot { display: none; }
 .dm-trigger, .mdl-x, .pag-arr, .pag-num, .acard-dots,
 .acard-ic, .ash-fic, .dt-dots, .ash-mark, .gal-num,
 .ash.rail .ash-cta, .ash.rail .ash-i, .ash.rail .ash-foot,
-.shdr-link, .shdr-burger, .ash-ham {
+.shdr-link, .shdr-burger {
   border-radius: var(--radius-sm);
 }
 /* والأفتار الصغيران منها، إلّا أنّهما يُغيّران **الرمز** لا الخاصّيّة: زاويةُ الأفتار
@@ -7661,3 +7662,394 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    سطحُ الصفحة بلا تدرّجٍ يفصله (لم يعد شيءٌ يمرّ تحته). */
 .blt-bar { display: flex; gap: 10px; padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
 .blt-bar .abtn { flex: 1 1 auto; }
+
+
+
+/* ════════════════════════════════════════════════════════════════════
+   محادثةُ ديبو (`.dch-*`) — **الفقاعتان**: أقرّها المالك ٢٠٢٦-٠٨-١٩ بعد معاينةٍ عرضت
+   ثلاثةَ اتّجاهاتٍ جنبًا إلى جنب (التفريغ · الفقاعتان · السكّة)، **فأُعدم أخواها** ولم يبقَ
+   منهما سطر (سابقةُ كرت المرشّح وبطاقة الاقتراع: لا اتّجاهَ ميّتٌ يبقى يشوّش من يقرأ بعدنا).
+
+   وحجّةُ المالك في اختيارها: «أريده وكأنه AI chat» — أي أن يلبس ديبو اللغةَ التي يعرفها
+   كلُّ زائرٍ من محادثات المساعدين، لا لغةً أدبيّةً يتعلّمها عندنا وحدنا.
+
+   **وهي مشتقّةٌ لا مخترعة:** سطحُ الجواب سطحُ الشفق نفسُه بحدّ ق٤ وظلٍّ من سلّم ق٥، وسؤالُ
+   الزائر كبسولةٌ فولاذيّةٌ بالرموز نفسِها. والجديدُ حكمان اثنان:
+
+   • **الجهةُ تقول القائل** — سؤالُك ينزوي في **منتهى** السطر (يسارَ العربيّة) وجوابُ ديبو في
+     مبدئه. وهي `align-items` منطقيّةٌ لا محاذاةٌ فيزيائيّة، فتنقلب مع الاتّجاه بلا سطرٍ ثانٍ.
+   • **ذيلٌ بلا رسم ذيل** — الركنُ الأقربُ إلى قائله يصغر إلى `--radius-xs`، فيميل الشكلُ نحوه
+     ميلًا يُحسّ ولا يُرى. ولا مثلّثَ يُقصّ ولا `border-radius` بقيمةٍ صريحة (ق٢).
+
+   **والعرضُ مقيسٌ بالمحرف لا بالنسبة**: `ch` تتبع مقاسَ الخطّ فيبقى السطرُ في حدّ القراءة
+   المريح على الجوّال والحاسوب معًا، ونسبةُ `%` كانت تُمطّط السطرَ على الشاشة العريضة.
+   ════════════════════════════════════════════════════════════════════ */
+.dch { display: flex; flex-direction: column; gap: 14px; list-style: none; margin: 0; padding: 0; }
+/* **الفقاعةُ تلبس مقاسَ كلامها** — `flex-start` لا `stretch` الافتراضيّة: بلا هذا يتمدّد
+   السطرُ الواحد إلى آخر `max-width` فتصير فقاعةُ «نعم» بعرض فقاعةِ الفقرة، ويضيع الخبرُ
+   الذي تقوله الفقاعةُ أصلًا (قِصَرُ الجواب من طوله). والحدُّ الأعلى يبقى سقفًا لا مقاسًا.
+   وهي منطقيّةٌ فتنقلب مع الاتّجاه: مبدأُ السطر يمينَ العربيّة. */
+.dch-turn { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+
+/* نغمةُ الدور تُعلَن مرّةً ثمّ تقرؤها الأنماط (سابقةُ ق٤): ديبو براند، والزائر فولاذيٌّ محايد. */
+.dch-turn[data-who="assistant"] { --dch-line: var(--card-stroke-brand); --dch-face: var(--surface-aurora); }
+.dch-turn[data-who="user"]      { --dch-line: var(--card-stroke);       --dch-face: var(--color-surface); }
+
+/* اسمُ المتكلّم: حاشيةٌ فوق فقاعته تتبعها جهةً، لا ترويسةٌ تتصدّر السطر. */
+.dch-who { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.dch-who > b { font-size: var(--text-xs); font-weight: var(--fw-bold); color: var(--color-text-muted); }
+
+/* المتنُ: أسطرُ المتكلّم تُحفظ كما وردت، والكلمةُ الطويلة تُكسَر فلا تمدّ الفقاعة. */
+.dch-say {
+  margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
+  padding: 11px 14px; line-height: 1.9; max-width: 46ch;
+  color: var(--color-text);
+  border: var(--card-stroke-w) solid var(--dch-line);
+  border-radius: var(--radius); background: var(--dch-face);
+  box-shadow: var(--shadow-sm);
+}
+
+.dch-turn[data-who="user"] { align-items: flex-end; }
+.dch-turn[data-who="user"] .dch-say { border-start-end-radius: var(--radius-xs); }
+/* وجوابُ ديبو أوسعُ سطرًا: هو المتنُ الذي يُقرأ، والسؤالُ سطرٌ يُمرّ عليه. */
+.dch-turn[data-who="assistant"] .dch-say { border-start-start-radius: var(--radius-xs); max-width: 58ch; }
+
+/* ── نبضةُ الانتظار: ثلاثُ نقاطٍ تتنفّس قبل أن يصل أوّلُ حرف ──────────────────
+   وهي **ليست هيكلَ تحميل** (`skeleton`) لأنّها لا تحاكي شكلَ ما سيأتي: الجوابُ قد يكون
+   سطرًا أو فقرة، فقضيبٌ بمقاسٍ مزعومٍ يكذب. والنقطةُ تقول «يكتب» ولا تعد بطول. */
+.dch-wait { display: inline-flex; align-items: center; gap: 5px; padding-block: 4px; }
+.dch-wait > i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  animation: dch-breathe 1.25s ease-in-out infinite;
+}
+.dch-wait > i:nth-child(2) { animation-delay: .18s; }
+.dch-wait > i:nth-child(3) { animation-delay: .36s; }
+@keyframes dch-breathe {
+  0%, 60%, 100% { opacity: .32; transform: translateY(0); }
+  30%           { opacity: 1;   transform: translateY(-3px); }
+}
+/* من طلب تقليلَ الحركة رأى النقاطَ ساكنةً بشدّةٍ واحدة — الخبرُ باقٍ والحركةُ ذاهبة. */
+@media (prefers-reduced-motion: reduce) {
+  .dch-wait > i { animation: none; opacity: .55; }
+}
+
+/* ── وجهُ ديبو بجوار جوابه (`.dch-av`) ─────────────────────────────────────────
+   سلّم المالك ٣٩ تفاعلًا مرسومًا للشخصيّة (٢٠٢٦-٠٨-٢٠)، وحجّتُه في اختيار الفقاعتين
+   أصلًا أنّها تلبس لغةَ محادثات المساعدين — والأفتارُ من تلك اللغة. **وأيُّ وجهٍ في أيّ
+   حال يقوله `lib/deebo/mood.ts` وحدَه**، فلا يختار وجهًا مَن يرسم فقاعة.
+
+   وثلاثةُ أحكامٍ في هيئته:
+   • **شبكةٌ لا صفٌّ مرن**: الوجهُ عمودٌ والوسمُ والفقاعةُ عمودٌ يعلوه أحدهما الآخر، فيبقى
+     الوجهُ محاذيًا **لرأس** الفقاعة مهما طالت — ولو كان صفًّا لتوسّط فقرةً من خمسة أسطر.
+   • **مربّعٌ متراكزٌ لا دائرة** (ق٢): الدوائرُ عندنا وظيفيّةٌ (نقطةٌ · مقبض)، والأفتارُ
+     الصغيرةُ على `--radius-sm`. وهو عُرفُ `.av` في اللوحة، فلا لغتان لأفتارٍ واحد.
+   • **بلا حدٍّ ولا سطح**: الرسمُ نفسُه صدرٌ مقصوصٌ بحوافَّ ناعمة، فإطارٌ حوله يقصّ رأسَه
+     ويكذب بأنّه صورةُ ملفٍّ شخصيّ. يقع على سطح الصفحة كما يقع الملصق.
+
+   والأفتارُ **زينةٌ لا خبر**: الوسمُ يقول «ديبو» نصًّا، فلو غاب الرسمُ لم يضع شيء. */
+.dch-turn[data-who="assistant"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto);
+  grid-template-areas: "av who" "av say";
+  column-gap: 10px; row-gap: 5px;
+  /* والفقاعةُ تبقى تلبس مقاسَ كلامها: العمودُ الثاني `auto` والشبكةُ تنكمش إلى مبدأ السطر. */
+  justify-content: start; align-items: start;
+}
+.dch-turn[data-who="assistant"] .dch-who { grid-area: who; }
+.dch-turn[data-who="assistant"] .dch-say { grid-area: say; }
+/* الشخصيّةُ كبيرةً في شاشة الترحيب: تُرى مرّةً بحجمها ثمّ تصغر أفتارًا بجوار كلّ جواب.
+   ومحاذاتُها **مبدأُ السطر** لا الوسط: هي أوّلُ ما يقع عليه البصر في صفحةٍ عربيّةٍ فارغة. */
+.dch-hero { display: block; width: 160px; height: 160px; object-fit: contain; }
+/* مقاسٌ ثانٍ للمعرض: الوجوهُ الخمسةُ صفًّا تُقارَن، فلا تحتاج حجمَ الترحيب. */
+.dch-hero-sm { width: 96px; height: 96px; }
+
+.dch-av {
+  grid-area: av;
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  /* الرسمُ يملأ مربّعَه من المِعمل (مرساةٌ سفليّة)، فلا يُقصّ هنا ولا يُمطّ. */
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   تنقّلُ الجوّال — شريطُ الوجهات وورقتُه (اعتُمد ٢٠٢٦-٠٨-٢٠ · `/ui/nav-mobile`)
+   ════════════════════════════════════════════════════════════════════
+   العلّةُ مقيسةٌ لا مذوقة: ٢٣٠ عضوًا من ٢٩١ لم يفتحوا اللوحةَ من حاسوبٍ قطّ، وبابُ
+   التنقّل عندهم **زاويةٌ عليا** — أبعدُ ما عن الإبهام في يدٍ تمسك جهازًا بطول 6.5".
+   والبرغرُ فوق ذلك عُرفٌ مكتبيّ: ثلاثةُ خطوطٍ لا تقول ما خلفها، فيُفتَح ليُرى ما فيه.
+
+   **فالمنهجيّة المعتمَدة**: أربعُ وجهاتٍ تقف في منطقة الإبهام تُنقر بلا فتح، وخامسٌ
+   («الكلّ») يرفع **الشريطَ الجانبيَّ نفسَه** من قاع الشاشة بالخريطة كاملة. وأُعدم
+   معها اتّجاهُ «قرص القائمة» فلم يبقَ منه سطر (سابقةُ بطاقة الاقتراع).
+
+   ⚠️ المقاسُ نسبيٌّ (`max-height: %`) لا `vh`: كتلةُ احتواء الثابت هي النافذةُ في
+   الإنتاج وإطارُ المعاينة في المعرض (‏`contain: paint`) — فيصحّ في الموضعين بلا رقمين. */
+
+/* طبقةُ الجوّال في اللوحة تُوقَد بعرض الجهاز لا بعرض المكوّن: غلافٌ `display: contents`
+   فالأبناءُ يبقون في تموضعهم الثابت كأنّه غير موجود، ولا يُلمَس `display` كلِّ ابنٍ
+   على حدة (‏`.mnav` شبكةٌ وقد يصير مرنًا بهيئته، فتوحيدُه في الغلاف أسلم). */
+.ash-mob { display: none; }
+@media (max-width: 860px) { .ash-mob { display: contents; } }
+
+/* ── جزيرةُ الوجهات ────────────────────────────────────────────────────────
+   **الهيئةُ المعتمَدة (المالك ٢٠٢٦-٠٨-٢٠): الجزيرة** — وأُعدمت الهيئاتُ الأربعُ التي
+   عُرِضت معها (الشفقُ الملتصق · اللوحُ المذهّب · الكبسولةُ العائمة · الوجهةُ تصعد ·
+   الخيطُ المتنقّل) فلم يبقَ منها سطر، سابقةَ الرأس والتذييل يوم اعتُمدت جزيرتاهما.
+
+   وهي **الجهازُ المقرَّر مرّتين** لا شكلٌ يُخترع: كرتٌ عائمٌ بزاوية الأساس (ق٢) وحدِّ
+   الأسطح (ق٤) وظلٍّ من السلّم (ق٥) وزجاجٍ يمرّ من تحته ما تحته — كرأس الموقع
+   (٢٠٢٦-٠٨-٠١) وتذييله (٢٠٢٦-٠٨-١٢). فيُفتَح الموقعُ بجزيرةٍ ويُختَم بجزيرة وتُقاد
+   اللوحةُ بثالثة.
+
+   ومكسبُها العمليّ أنّ **الزجاج يقول إنّ تحته بقيّة**: الشريطُ المصمت يُقرأ أرضًا
+   فيُظنّ الجدولُ منتهيًا عندها، والجزيرةُ يمرّ تحتها الصفُّ فيُرى ناقصًا فيُمرَّر.
+
+   ⚠️ وسطحُها **أكثفُ من سطح الرأس** (‏75٪ لا 30٪): الرأسُ يعوم فوق شفقٍ معروف، وهذه
+   تعوم فوق جدولٍ ونصٍّ عشوائيّ — والعلّةُ مكتوبةٌ في كتلة `.shdr` نفسِها («لوحُ الجوّال
+   يلزمه سطحٌ ممتلئ»). وإن ثقُل الرسمُ على جهازٍ متوسّط فالعلاجُ سطرٌ واحد: يشتدّ
+   السطحُ ويسقط الزجاج. */
+.mnav {
+  --mnav-pad: 6px;
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  /* **لا فجوةَ بين الخانات**: الحبّةُ المنزلقة تُحسَب خانةً متساويةً من عرض الجزيرة،
+     وفجوةٌ بينها تجعل الحسابَ يكذب عند الطرف. والفصلُ يقع بحشو البند لا بفجوة. */
+  gap: 0;
+  padding: var(--mnav-pad);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--color-surface) 75%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-md);
+}
+/* هدفُ اللمس ٤٤ حكمًا لا تقديرًا (قانون اللمس) — و46 هنا فيصير صفُّ الجزيرة 58.
+   والزاويةُ **متراكزةٌ** (ق٢): زاويةُ الأمّ ناقصَ الفراغ بينهما، لا رقمٌ يُختار. */
+.mnav-i {
+  position: relative;
+  z-index: 1;            /* فوق الحبّة المنزلقة */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  /* **متنفَّسٌ فوق الرسم**: الخيطُ يركب رأسَ الحبّة، وحشوٌ متساوٍ يجعله يلامس الرسمَ
+     ملامسةً تُقرأ احتكاكًا. فالحشوُ العلويُّ ضِعفُ السفليّ (قرار المالك ٢٠٢٦-٠٨-٢٠):
+     يفصل الخيطَ عن الرسم ولا يزحزح التسميةَ عن قاع الحبّة. */
+  min-height: 44px;
+  padding: 10px 2px 5px;
+  border: 0;
+  background: transparent;
+  border-radius: calc(var(--radius) - var(--mnav-pad));
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur-fast), background var(--dur-fast);
+}
+/* الرسمُ يكبر قليلًا ويرتفع حين تصل الحبّةُ تحته — **حركةٌ لا وزنٌ يتبدّل**: وزنُ
+   الأيقونات قانونٌ واحدٌ للموقع (duotone بسياق الجذر)، فما يتحوّل هو **أرضُها وحبرُها
+   ومقاسُها** لا رسمُها. */
+.mnav-i svg {
+  width: 21px; height: 21px; flex: 0 0 auto;
+  transition: scale var(--dur) var(--ease-standard), translate var(--dur) var(--ease-standard);
+}
+.mnav-i.on svg { scale: 1.08; translate: 0 -1px; }
+.mnav-i:active { transform: scale(.94); }
+.mnav-lbl { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mnav-i:focus-visible { outline: none; box-shadow: var(--ring); }
+/* **«الكلّ» أداةٌ لا وجهة**، فحالتاه غيرُ حالة الوجهة: يلبس **التحديدَ** حين تكون في
+   صفحةٍ خارج الأربع (فالحبّةُ لا تبقى بلا بيت ولا تكذب بتحديد صفحةٍ لست فيها)، ويُعلن
+   **فتحَه** بحبر العلامة ما دامت الورقةُ مرفوعة. */
+.mnav-i[aria-expanded="true"] { color: var(--color-primary); }
+/* **والنشطُ لا يُقال باللون وحده** (ق١٠): حبّةٌ تحته، وخيطٌ على رأسها، وحبرُ العلامة
+   ووزنُه ومقاسُ رسمه — خمسُ إشاراتٍ يكفي منها اثنتان لمن لا يفرّق الألوان. */
+.mnav-i.on { color: var(--color-primary); font-weight: 800; }
+
+/* ── الحبّةُ المنزلقة: **عنصرٌ واحدٌ ينتقل** لا سطحٌ يومض في مكانٍ ويُطفأ في آخر ──
+   وهي ما يجعل الشريطَ متحرّكًا: الوجهةُ الجديدة لا تُضاء فجأةً، بل تأتيها الحبّةُ من
+   الوجهة السابقة فتُقرأ **العلاقةُ بين الموضعين** لا وميضان منفصلان.
+   وتصحيحُ ظنٍّ سابق: هيكلُ اللوحة **لا يُعاد بناؤه** عند التنقّل بين صفحاتها (تنقّلٌ
+   عميليٌّ في App Router)، فالحبّةُ باقيةٌ في الشجرة والانزلاقُ يقع فعلًا.
+
+   وموضعُها من **رقم الخانة وعددها** (رمزان يضبطهما المكوّن)، ووجهتُها من اتّجاه الصفحة
+   (`--mn-dir`) لا من افتراض أنّ الأولى يمينًا. */
+.mnav-ind {
+  position: absolute;
+  z-index: 0;
+  top: var(--mnav-pad);
+  bottom: var(--mnav-pad);
+  inset-inline-start: var(--mnav-pad);
+  width: calc((100% - var(--mnav-pad) * 2) / var(--mnav-n, 5));
+  border-radius: calc(var(--radius) - var(--mnav-pad));
+  background: linear-gradient(160deg, var(--aurora-brand), transparent 72%);
+  pointer-events: none;
+  --mn-dir: 1;
+  translate: calc(var(--mnav-i, 0) * var(--mn-dir) * 100%) 0;
+  transition: translate var(--dur) var(--ease-standard), background var(--dur) var(--ease-standard);
+}
+.mnav-ind:dir(rtl) { --mn-dir: -1; }
+/* الخيطُ يركب الحبّةَ فينتقل معها — إشارةُ الموضع الثانية بلا عنصرٍ ثالثٍ يُتابَع.
+
+   **ويُرسَم من منتصفه إلى طرفيه معًا** (قرار المالك ٢٠٢٦-٠٨-٢٠): يبدأ نقطةً في الوسط
+   ويمتدّ يمنةً ويسرةً في آنٍ واحد — فالوجهةُ الجديدة لا تُوسَم بخطٍّ يظهر جاهزًا، بل
+   **يُخَطّ عليها**. والحركةُ `scaleX` من مركزه (‏`transform-origin` وسطٌ افتراضًا)،
+   فالتوازي حكمُ المحور لا رقمان يُضبطان.
+
+   وهو **عنصرٌ لا `::after`**: الحبّةُ تبقى في الشجرة لتنزلق، والخيطُ يُستأنَف بمفتاحٍ
+   يتبدّل مع الوجهة فيُعاد بناؤه — فتقع الحركتان معًا: الحبّةُ تسير والخيطُ يُخَطّ.
+   (والأنيميشنُ لا يُعاد على عنصرٍ باقٍ إلّا بحيلة، فالمفتاحُ أصرحُ منها.)
+
+   وسبقتها محاولتان أُعدمتا فلم يبقَ منهما سطر: تحريكُ موضع التدرّج (لم يُرَ حركةً)،
+   ولمعةٌ تمرّ (رُئيت ورُدّت). */
+.mnav-thr {
+  position: absolute;
+  top: 0;
+  /* **طولُه ربعُ الخانة** (‏26٪ من كلّ طرف) — جُرّب مدُّه إلى 12٪ فرُدّ بكلمة المالك،
+     فعُولجت قراءةُ الحركة **بالمدّة** لا بالطول. */
+  inset-inline: 26%;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--grad-primary);
+  /* **مدّةٌ ومنحنًى ضُبطا بالعين ثلاث مرّات** (٢٠٢٦-٠٨-٢٠):
+     `--ease-standard` وحدَه اندفع في أوّله (بلغ نصفَ الطول في خُمس المدّة) فبدا كأنّه
+     لا يبدأ من الصفر؛ ثمّ `linear` بدأ من الصفر لكنّه **آليٌّ لا سَلِس** وبطيءٌ في
+     ‏400ms. فاستقرّ على `ease-in-out` في `--dur`: يخرج من السكون ويعود إليه (فهو سَلِس)
+     ويبقى في أوّله صغيرًا (فهو يبدأ من الصفر) ويتمّ في ربع ثانية (فهو خفيف).
+     و`will-change` يعزله في طبقةٍ خاصّة فلا يُعاد رسمُ الجزيرةِ الزجاجيّة معه. */
+  animation: mnav-draw 350ms ease-in-out both;
+  will-change: transform;
+}
+@keyframes mnav-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnav-ind, .mnav-i svg { transition: none; }
+  .mnav-thr { animation: none; }
+  .mnav-i:active { transform: none; }
+}
+
+/* **والحبّةُ فاتحةٌ بتينت الهوية** (اختيار المالك ٢٠٢٦-٠٨-٢٠): عُرِضت معها حبّةٌ
+   مذهّبةٌ ينقلب عليها الرسمُ والاسمُ إلى حبرٍ فاتح، فأُعدمت ولم يبقَ منها سطر. والعلّةُ
+   أنّ الكرومَ يحسن به أن ينسحب: الجزيرةُ تُرافق كلَّ شاشة، والذهبُ يبقى حدثًا يرتفع
+   مع الورقة. */
+/* نقطةُ «خلف الكلّ جديد»: بابٌ موقوتٌ فُتح (ترشُّحٌ أو تصويت) أو بندٌ يحمل عددًا.
+   والعددُ لا يُقرأ في 10.5px، فالنقطةُ تقول ما يقوله العدد. */
+.mnav-dot {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 18%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+/* ── الورقةُ الصاعدة: **الشريطُ الجانبيُّ نفسُه** جاء من جهة الإبهام ──────────
+   لا سطحٌ يُخترع لها: الوسمُ يحمل `ash-side` فتأتيها المادّةُ والطبقاتُ والحشوُ
+   والترويسةُ والبنودُ والتذييلُ من مصدرها، ولا يبقى هنا إلّا **الموضعُ والمقاس**:
+   تلتصق بالقاع، وزاويتاها العلويّتان وحدهما، وسقفُها 82٪ فيبقى تحت الإبهام طرفٌ
+   من الشاشة يُغلق بلمسه. (قرار المالك ٢٠٢٦-٠٨-٢٠: «أريد تصميم mnsh مثل الشريط».) */
+.mn-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) - 1);
+  background: color-mix(in oklab, var(--navy-950) 55%, transparent);
+  backdrop-filter: blur(1px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur) var(--ease-standard), visibility var(--dur);
+}
+.mn-scrim[data-open="true"] { opacity: 1; visibility: visible; }
+.mnsh {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  top: auto;
+  z-index: var(--z-modal);
+  width: auto;
+  height: auto;
+  max-height: 82%;
+  padding-block: 0 env(safe-area-inset-bottom);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow-lg);
+  /* ‏101٪ لا 100٪: كسرُ البكسل يترك خيطًا مذهّبًا على حافّة الشاشة عند الإغلاق */
+  transform: translateY(101%);
+  visibility: hidden;
+  transition: transform var(--dur) var(--ease-standard), visibility var(--dur);
+}
+.mnsh[data-open="true"] { transform: none; visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .mnsh, .mn-scrim { transition: none; }
+}
+/* المقبضُ يقول «تُسحَب» ويصير هو حشوَ الرأس: الشريطُ يحشو 14px فوق ترويسته،
+   والورقةُ تستبدله بالمقبض فلا تُحشى مرّتين. */
+/* منطقةُ القبض أوسعُ من رسم المقبض: الرسمُ 42×4 لا يُمسَك بإبهام، فالمنطقةُ حوله
+   ‏22px ارتفاعًا. و`touch-action: none` تمنع المتصفّحَ من قراءة السحب تمريرًا. */
+.mnsh-grab {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 9px 0 7px;
+  touch-action: none;
+  cursor: grab;
+}
+.mnsh-grab:active { cursor: grabbing; }
+.mnsh-grip {
+  width: 42px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--ash-veil-2);
+}
+/* أثناء السحب: الورقةُ تتبع الإصبعَ بلا انتقالٍ يلاحقه (وإلّا تأخّرت عن اليد) */
+.mnsh.is-drag { transition: none; }
+/* زرُّ الإغلاق يقف في ترويسة اللوح آخرَ الصفّ — بمقاس اللمس لا بمقاس الرسم */
+.mnsh-x {
+  margin-inline-start: auto;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ash-ink-2);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.mnsh-x:hover { background: var(--ash-veil); color: var(--ash-ink); }
+.mnsh-x svg { width: 18px; height: 18px; }
+/* التمريرُ يُحبَس في الورقة فلا تنجرّ الصفحةُ تحتها (والقائمةُ `.ash-nav` بأثرها) */
+.mnsh .ash-nav { overscroll-behavior: contain; }
+
+/* ── إطارُ المعاينة في المعرض وحده · .nvlab ────────────────────────────────
+   `contain: paint` يجعل الإطارَ **كتلةَ احتواءٍ للثابت** (سابقةُ `.shdr-demo`) —
+   فالشريطُ والورقةُ والحجاب تقف داخله لا في زوايا الشاشة، ويُحكَم عليها بعرض جهازٍ
+   حقيقيٍّ على شاشة حاسوب. صنفٌ معرضيٌّ لا يُستعمل في شاشةٍ حيّة. */
+.nvlab { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.nvlab-col { flex: 0 0 auto; width: 390px; max-width: 100%; }
+.nvlab-frame {
+  position: relative;
+  contain: paint;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 620px;
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+.nvlab-body { flex: 1 1 auto; overflow: hidden; padding: 16px; }
+.nvlab-note { margin-top: 10px; font-size: 12.5px; line-height: 1.7; color: var(--color-text-muted); }

@@ -141,12 +141,12 @@ function HeadPair({ title }: { title: string }) {
         <div className="phdlab-tag bad"><span className="dot" aria-hidden />الآن<span className="h">{hOld ? hOld + "px" : ""}</span></div>
         <div className="phdlab-frame" style={{ paddingBottom: 14 }}>
           <div ref={refOld}>
-            <div className="ash-phead">
+            <div className="phdlab-was">
               <div>
                 <CrumbTrail steps={CRUMB} />
                 <h1>{title}</h1>
               </div>
-              <div className="form-head-actions">
+              <div className="phdlab-was-acts">
                 <Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>
                 <Button variant="ghost" size="md"><Eye size={18} />معاينة</Button>
                 <Button variant="primary" size="md"><DownloadSimple size={18} />تصدير</Button>
@@ -199,12 +199,12 @@ export default function ScreenPreviewLab() {
         <div className="mt-12" style={{ ["--phdlab-w" as string]: w + "px" }}>
           <div className="phdlab">
             <Frame tag="الآن" tone="bad">
-              <div className="ash-phead">
+              <div className="phdlab-was">
                 <div>
                   <CrumbTrail steps={CRUMB} />
                   <h1>سجلّ الأعضاء</h1>
                 </div>
-                <div className="form-head-actions">
+                <div className="phdlab-was-acts">
                   <Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>
                   <Button variant="ghost" size="md"><Eye size={18} />معاينة</Button>
                   <Link href="#" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>

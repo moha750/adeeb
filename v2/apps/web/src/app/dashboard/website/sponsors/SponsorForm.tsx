@@ -2,14 +2,14 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SectionCard, Field, Textarea } from "@adeeb/design-system";
+import { Button, SaveBar, SectionCard, Field, Textarea } from "@adeeb/design-system";
 import {
   Buildings, ChatText, Image as ImageIcon, LinkSimple, SealCheck, Sparkle, TextT } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { SponsorEditData } from "./data";
 import { createSponsor, updateSponsor, uploadSponsorLogo, type SponsorInput } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
 
 // وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
@@ -29,7 +29,6 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
   const [logo, setLogo] = useState<string | null>(sponsor?.logoUrl ?? null);
 
   const editing = sponsor != null;
-  const crumbLeaf = editing ? "تحرير" : "راعٍ جديد";
 
   const pickFile = () => fileRef.current?.click();
 
@@ -60,6 +59,16 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
     description: description || null,
   });
 
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
+   * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
+   * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
+
   const save = () => {
     startSave(async () => {
       const input = toInput();
@@ -74,16 +83,9 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? `تحرير: ${sponsor.name}` : "راعٍ جديد"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/website/sponsors")} disabled={saving}>إلغاء</Button>
-          <Button variant="primary" size="md" loading={saving} onClick={save}>{editing ? "حفظ التغييرات" : "إضافة الراعي"}</Button>
-        </div>
-      </div>
+      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
+          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
+      <PageHeader title={editing ? `تحرير: ${sponsor.name}` : "راعٍ جديد"} />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل الراعي">
@@ -117,6 +119,12 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
           </div>
         </SectionCard>
       </div>
+
+      <SaveBar open={dirty} message={editing ? undefined : "راعٍ لم يُضَف بعد"}>
+        <Button variant="primary" size="md" loading={saving} onClick={save}>
+          {editing ? "حفظ التغييرات" : "إضافة الراعي"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

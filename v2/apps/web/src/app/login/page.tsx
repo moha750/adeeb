@@ -39,6 +39,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <LoginForm />
         </Suspense>
 
+        {/* بابُ من لا حساب له — فُتح مع طريق العضويّة (١٥ أغسطس ٢٠٢٦) */}
+        <p className="text-content-muted text-center text-sm">
+          ليس لك حساب؟{" "}
+          <Link className="font-bold underline" href="/signup">أنشئ حسابًا</Link>
+        </p>
+
         {/* المخرج: عودةٌ إلى الموقع لمن حطّ هنا بلا حساب — نمطُ زرّ‑الرابط المتّبع في اللوحة */}
         <Link href="/" className="abtn abtn-ghost abtn-md aauth-back">
           <ArrowRight size={18} weight={ICON_WEIGHT_EXCEPTION} />

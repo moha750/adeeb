@@ -36,6 +36,47 @@ export function createAdeebServiceClient(url: string, serviceKey: string): Supab
   });
 }
 
+/**
+ * مخزَنُ الجلسة كما يطلبه Supabase. يُمرَّر من الخارج عمدًا:
+ * هذه الحزمةُ يقرأها الويبُ والخادمُ والجوّال، فلا يجوز أن تعتمد على `expo-secure-store`.
+ */
+export type AdeebSessionStore = {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+};
+
+/**
+ * عميل الجوّال (React Native).
+ *
+ * يفترق عن عميل المتصفّح في ثلاثة، وكلُّها مقصودة:
+ *   - **المخزَن يُحقَن** (`expo-secure-store` في التطبيق): لا `localStorage` ولا كعكات.
+ *     وجلسةُ التطبيق منفصلةٌ عن جلسة الموقع، فالدخولُ في أحدهما لا يُدخِل الآخر.
+ *   - `detectSessionInUrl: false`: لا شريطَ عنوانٍ في التطبيق. تركُها `true` يجعل GoTrue
+ *     يفتّش عن رمزٍ في رابطٍ لا وجودَ له. والعودةُ من قوقل/أبل تُعالَج يدويًّا بالرابط العميق.
+ *   - `lock`: الرمزُ يُجدَّد من شاشتين معًا أحيانًا (خلفيّة + مقدّمة)، فيُقفل التجديدُ
+ *     على نفسه كي لا يُبطل أحدُهما رمزَ الآخر.
+ *
+ * ⚠️ التجديدُ التلقائيّ لا يعمل وحدَه في الجوّال: يجب ربطُه بـ`AppState` في التطبيق
+ * (`startAutoRefresh` عند العودة للمقدّمة و`stopAutoRefresh` عند الخلفيّة)، وإلّا استمرّ
+ * المؤقّتُ يعمل والتطبيقُ نائمٌ فيستيقظ برمزٍ منتهٍ.
+ */
+export function createAdeebMobileClient(
+  url: string,
+  anonKey: string,
+  storage: AdeebSessionStore
+): SupabaseClient {
+  return createClient(url, anonKey, {
+    auth: {
+      storage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      storageKey: 'adeeb_auth',
+    },
+  });
+}
+
 /** يحوّل الأرقام العربية-الهندية (٠-٩) والفارسية إلى لاتينية (0-9) لتُعرض بخط Eras. */
 export function toLatinDigits(input: string | null | undefined): string {
   if (!input) return '';
@@ -46,5 +87,7 @@ export function toLatinDigits(input: string | null | undefined): string {
 
 export type { User, Session, SupabaseClient } from '@supabase/supabase-js';
 
-// ملاحظة: أنواع قاعدة البيانات (Database) ستُولَّد لاحقًا من Supabase الحيّة
-// عبر `supabase gen types typescript` وتوضع هنا لتأمين الأنواع طرفًا لطرف.
+// أنواعُ قاعدةِ البيانات مولَّدةٌ من السكيمة الحيّة في `database.types.ts`.
+// تُصدَّر من هنا وحدها كي يبقى للمشروع مصدرٌ واحدٌ لنوع القاعدة.
+export type { Database, Json, Tables, TablesInsert, TablesUpdate, Enums } from './database.types';
+export * from './radio';

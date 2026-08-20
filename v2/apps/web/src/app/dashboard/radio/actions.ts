@@ -267,7 +267,7 @@ export async function setStationLogo(path: string): Promise<Result> {
   if (cur?.logo_path && cur.logo_path !== path) await deleteObject(cur.logo_path);
 
   touch();
-  return { ok: true, message: "رُفع شعار المحطّة." };
+  return { ok: true, message: "رُفع شعار الإذاعة." };
 }
 
 /** يُثبت الشعار بعد نجاح الرفع (والقديم يُمسح إن اختلف امتداده). */
@@ -629,7 +629,7 @@ export async function saveStation(input: StationInput): Promise<Result> {
   const sb = service();
   if (!sb) return { ok: false, message: ENV_MISSING };
 
-  if (!clean(input.name)) return { ok: false, message: "اسم المحطّة مطلوب." };
+  if (!clean(input.name)) return { ok: false, message: "اسم الإذاعة مطلوب." };
 
   const { error } = await sb
     .from("radio_station")
@@ -640,10 +640,10 @@ export async function saveStation(input: StationInput): Promise<Result> {
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);
-  if (error) return fail(error.message, "تعذّر حفظ إعدادات المحطّة");
+  if (error) return fail(error.message, "تعذّر حفظ إعدادات الإذاعة");
 
   touch();
-  return { ok: true, message: "حُفظت إعدادات المحطّة." };
+  return { ok: true, message: "حُفظت إعدادات الإذاعة." };
 }
 
 /* ══ منصّات البرنامج ═════════════════════════════════════════════════ */

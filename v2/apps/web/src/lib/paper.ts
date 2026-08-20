@@ -289,13 +289,20 @@ async function drawLayer(
   pieces: Piece[],
   page: PageSize,
   font: FontPack[number],
+  weight: number,
 ): Promise<HTMLCanvasElement | null> {
   // عائلتان في SVG كما في الموقع: «ER» للاتينيّ والأرقام، و«LA» للعربيّة — والترتيب يفرزهما.
   // و`font-display:block` عمدًا: ما لم يصل خطُّه **لا يُرسَم** بخطٍّ آخر — بياضٌ يُكشَف بالعدّ
   // أهونُ من حرفٍ يخرج بخطّ المتصفّح فيمرّ كأنّه صحيح.
+  //
+  // **و`font-weight` واجبٌ في التعريف لا زينة**: الوصفُ إن غاب فالوجهُ عند المتصفّح وزنُه ٤٠٠،
+  // فإذا طلب النصُّ ٧٠٠ لم يجد وجهًا عريضًا فـ**زوّره**: يرسم الحرف مرّتين بإزاحةٍ يسيرة (سفاري
+  // صريحًا، وكروم تغليظًا بالحدّ). وهو الذي رآه المالك (٢٠٢٦-٠٨-١٦): اسمُ الفائز كأنّه مطبوعٌ
+  // مرّتين. والتزويرُ يوسّع الحرفَ أيضًا فيطفح السطرُ عمّا قِيس له. فيُعلَن هنا **وزنُ الطبقة**
+  // نفسُه (لا وزنُ الملفّ): مطابقةٌ تامّة ⇒ لا تزوير.
   const faces =
-    `@font-face{font-family:"LA";src:url(data:font/woff2;base64,${font.ar}) format("woff2");font-display:block;}`
-    + `@font-face{font-family:"ER";src:url(data:font/ttf;base64,${font.lat}) format("truetype");font-display:block;}`;
+    `@font-face{font-family:"LA";src:url(data:font/woff2;base64,${font.ar}) format("woff2");font-weight:${weight};font-display:block;}`
+    + `@font-face{font-family:"ER";src:url(data:font/ttf;base64,${font.lat}) format("truetype");font-weight:${weight};font-display:block;}`;
   const body = pieces
     .map((p) =>
       `<text x="${p.x}" y="${p.y}" font-size="${p.size}" font-weight="${p.weight}" fill="${p.color}"`
@@ -363,7 +370,7 @@ async function drawWithElongation(
   for (const w of weights) {
     const font = pack.find((f) => f.weight === w) ?? pack[0];
     if (!font) return false;
-    const layer = await drawLayer(pieces.filter((p) => p.weight === w), page, font);
+    const layer = await drawLayer(pieces.filter((p) => p.weight === w), page, font, w);
     if (!layer) return false;
     layers.push(layer);
   }

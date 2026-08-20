@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Stat, Modal } from "@adeeb/design-system";
 import {
@@ -77,7 +77,11 @@ export function NewsView({
     });
   }, [staged, search, fv]);
 
-  useEffect(() => { setPage(1); }, [search, fv, pageSize, stage]);
+  // تبدّلُ البحث أو المرشّح أو المرحلة يعيد إلى الصفحة الأولى — **في الرسم لا في أثر**:
+  // الأثرُ يرسم صفحةً رقمُها من قائمةٍ سابقة ثمّ يصحّحها، فتومض نتائجُ ليست المطلوبة.
+  const sift = JSON.stringify([stage, search, pageSize, fv]);
+  const [lastSift, setLastSift] = useState(sift);
+  if (lastSift !== sift) { setLastSift(sift); setPage(1); }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);

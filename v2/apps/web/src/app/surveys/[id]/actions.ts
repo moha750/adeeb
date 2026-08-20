@@ -1,37 +1,11 @@
 "use server";
 
-import { headers } from "next/headers";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { submitErrorMessage } from "@/app/dashboard/surveys/vocab";
 
 export type SubmitResult = { ok: boolean; message: string };
-
-/**
- * درع Turnstile — يتحقّق من رمز العميل لدى Cloudflare قبل قبول الإرسال.
- * غياب المفتاح السرّيّ (تجربةٌ محليّة بلا إعداد) يُسقط الدرع؛ وجودُه (الإنتاج) يفرضه.
- * يعيد رسالة خطأٍ عربيّة عند الفشل، أو null عند المرور.
- */
-async function verifyTurnstile(token: string | undefined): Promise<string | null> {
-  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
-  if (!secret) return null; // الدرع غير مُفعَّل هنا
-  if (!token) return "تعذّر التحقّق من أنّك لست روبوتًا. حدّث الصفحة وأعد المحاولة.";
-
-  const form = new URLSearchParams({ secret, response: token });
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
-  if (ip) form.append("remoteip", ip);
-
-  try {
-    const resp = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: form,
-    });
-    const data = (await resp.json()) as { success?: boolean };
-    if (data.success === true) return null;
-  } catch { /* تعذّر الوصول لـCloudflare — نرفض بأمان */ }
-  return "فشل التحقّق من أنّك لست روبوتًا. حدّث الصفحة وأعد المحاولة.";
-}
 
 /**
  * إرسال مشاركة — الطريق الوحيد للكتابة: لا سياسة RLS تسمح بإدراجٍ من المتصفّح،

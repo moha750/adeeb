@@ -10,6 +10,7 @@ import {
   DEGREE_VALUES, hasAcademicFields, PHONE_RE, PHONE_HINT, socialHandle, SOCIAL_KEYS,
   NATIONAL_ID_RE, NATIONAL_ID_HINT, RECORD_NO_RE, RECORD_NO_HINT,
 } from "@/lib/membershipFields";
+import { ARABIC_NAME_HINT, arabicNameError } from "@/lib/personName";
 
 const GENDER_VALUES = ["male", "female"];
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -22,7 +23,8 @@ export const completeSchema = z
   .object({
     gender: z.string().refine((v) => GENDER_VALUES.includes(v), "اختر الجنس"),
     phone: z.string().trim().regex(PHONE_RE, PHONE_HINT),
-    full_name_triple: z.string().trim().min(5, "اكتب اسمك الثلاثيّ كاملًا"),
+    full_name_triple: z.string().trim().min(5, "اكتب اسمك الثلاثيّ كاملًا")
+      .refine((v) => !arabicNameError(v), ARABIC_NAME_HINT),
     national_id: z.string().trim().regex(NATIONAL_ID_RE, NATIONAL_ID_HINT),
     birth_date: z.string().min(1, "تاريخ الميلاد مطلوب"),
     academic_degree: z.string().refine((v) => DEGREE_VALUES.includes(v), "اختر الدرجة العلميّة"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@adeeb/design-system";
 import { LinkSimple, ShareNetwork } from "@phosphor-icons/react";
 import { Check } from "@/app/_components/glyphs";
@@ -15,10 +15,10 @@ import { copyText } from "@/lib/clipboard";
  */
 export function ShareBar({ name, slug }: { name: string; slug: string }) {
   const [copied, setCopied] = useState(false);
-  // يُقرأ بعد الرَّكْب لا أثناء الرسم: الخادمُ لا يعرف `navigator`، ولو قرأناه في الرسم
-  // لاختلفت أيقونةُ الخادم عن أيقونة المتصفّح فصاح الترطيب.
-  const [canShare, setCanShare] = useState(false);
-  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
+  // **`useSyncExternalStore` لا حالةٌ في أثر** (سابقةُ `BallotLinkShare`): الخادمُ لا يعرف
+  // `navigator`، فقراءتُه في الرسم تكسر الترطيب، وضبطُ حالةٍ في أثرٍ يرسم مرّتين ويردّه الحارس.
+  // ولقطةُ الخادم `false`: زرُّ النسخ صادقٌ في كلّ مكان.
+  const canShare = useSyncExternalStore(() => () => {}, () => typeof navigator.share === "function", () => false);
 
   const share = async () => {
     const url = `${window.location.origin}/m/${encodeURIComponent(slug)}`;

@@ -6,6 +6,7 @@ import { Alert, Button, Field } from "@adeeb/design-system";
 import { At, Envelope } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { toArabicAuthError, waitSeconds } from "@/lib/authErrors";
+import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 import { markResetSent } from "@/lib/resetWindow";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
 
@@ -32,6 +33,8 @@ export function ForgotForm() {
   // درعُ الباب — الرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسالٍ نجح أو ردّ
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
+  /** رايةُ الصيغة تُرفع عند مغادرة الحقل أو عند الإرسال — لا وهو يكتب أوّلَ محرف. */
+  const [emailTouched, setEmailTouched] = useState(false);
 
   /** العدّاد يمنع الطلبَ قبل أوانه بدل أن يُرسله فيُردّ بخطأ حدّ الوتيرة. */
   useEffect(() => {
@@ -42,6 +45,9 @@ export function ForgotForm() {
 
   const send = () => {
     setErr(null);
+    // ردُّ هذه الشاشة محايدٌ عمدًا («أُرسل الرابط إن كان البريد مسجّلًا»)، فلو مرّ المكسور
+    // لَجلس صاحبُه ينتظر رابطًا لا يجيء ولا شيء يقول له لِمَ. والصيغةُ ليست إفشاءً لحساب.
+    if (!isEmail(email)) { setEmailTouched(true); setErr(`${EMAIL_HINT}.`); return; }
     start(async () => {
       const supabase = createClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -136,6 +142,8 @@ export function ForgotForm() {
         autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        onBlur={() => setEmailTouched(true)}
+        error={emailError(email, emailTouched)}
         required
       />
 

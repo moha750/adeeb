@@ -1,7 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 import { getMyCandidacies } from "../../member-data";
 import { CandidacyDetailView } from "./CandidacyDetailView";
 
@@ -24,7 +24,7 @@ export default async function CandidacyPage({ params }: { params: Promise<{ elec
   if (!c) {
     return (
       <>
-        <div className="ash-phead"><div><Breadcrumb leaf="ترشّح" /><h1>الترشّح</h1></div></div>
+        <PageHeader title="الترشّح" />
         <Alert tone="warning" title="تعذّر فتح الترشّح">{error ?? "لا ترشّحَ لك في هذا الانتخاب."}</Alert>
       </>
     );

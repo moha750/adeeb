@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog } from "@adeeb/design-system";
-import { useId, useRef } from "react";
+import { useId, useState } from "react";
 import { toLatinDigits } from "@adeeb/core";
 import { X } from "@/app/_components/glyphs";
 
@@ -19,10 +19,13 @@ export type Work = {
  * يُغلق بالخلفية أو Esc. (Dialog يعيش في dashboard/_components ريثما يُرقّى إلى نظام التصميم.)
  */
 export function WorkLightbox({ work, onClose }: { work: Work | null; onClose: () => void }) {
-  // نُبقي آخر عمل معروض كي تُكمل حركة الإغلاق صورتها بعد أن يصير work=null
-  const shown = useRef<Work | null>(work);
-  if (work) shown.current = work;
-  const w = shown.current;
+  // نُبقي آخر عمل معروض كي تُكمل حركة الإغلاق صورتها بعد أن يصير work=null.
+  // **حالةٌ تُضبَط في الرسم لا مرجعٌ يُكتَب فيه**: المرجعُ لا يُوقظ الرسم، فما يُكتَب فيه
+  // أثناءه لا يُضمَن ظهوره (وقاعدةُ المصرّف `refs` تردّه). وضبطُ الحالة عند تبدّل الخاصّة
+  // يقع قبل أن يُرسَم شيء، فلا رسمةَ ضائعة ولا وميض.
+  const [shown, setShown] = useState<Work | null>(work);
+  if (work && work !== shown) setShown(work);
+  const w = work ?? shown;
   const titleId = useId();
 
   return (

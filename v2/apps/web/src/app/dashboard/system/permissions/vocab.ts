@@ -17,4 +17,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   elections: "الانتخابات",
   website: "الموقع",
   radio: "الإذاعة",
+  // الفئةُ غيرُ المسمّاة هنا تُعرَض بمفتاحها الإنجليزيّ (`CATEGORY_LABEL[key] ?? key`)،
+  // فتظهر «deebo» في شاشةٍ عربيّة. أُضيفت يومَ نزلت قدرةُ `manage_deebo` (2026-08-19).
+  deebo: "ديبو",
 };

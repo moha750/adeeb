@@ -10,8 +10,16 @@ import { Eye, EyeSlash } from "@/app/_components/glyphs";
 import { ToastProvider, useToast } from "../../../dashboard/_components/ToastProvider";
 import { CandidacyJourney } from "../../../dashboard/elections/_member/CandidacyJourney";
 import type { CandidacyJourney as CJ } from "../../../dashboard/elections/member-data";
+import { PageHeader } from "@/app/dashboard/_components/PageHeader";
+import type { CrumbStep } from "@/app/dashboard/_shell/crumb";
 
-const D = "2 أغسطس 2026 · 14:20";
+/** فتاتٌ مرسومٌ لأنّ صفحةَ المعرض ليست في خريطة اللوحة (خاصّيّةُ `crumb` للمعارض وحدها) */
+const CRUMB: CrumbStep[] = [
+  { kind: "link", label: "الانتخابات", href: "#" },
+  { kind: "leaf", label: "سِجلّ ترشُّحي" },
+];
+
+const D = "2 أغسطس 2026،14:20";
 const BASE = {
   candidateId: "a", electionId: "e1", cycle: "دورة أغسطس 2026", archived: false, position: "قائد لجنة الإعلام", number: 3, status: "pending" as const,
   fileUrl: null as string | null, fileName: "خطة-الإعلام.pdf" as string | null,
@@ -22,7 +30,7 @@ const S = (o: Omit<CJ, keyof typeof BASE> & Partial<CJ>): CJ => ({ ...BASE, ...o
 
 const T = {
   submit: { kind: "submit" as const, label: "قُدّم الترشّح", date: D },
-  approve: { kind: "approve" as const, label: "اعتُمد الترشّح", date: "3 أغسطس 2026 · 16:45" },
+  approve: { kind: "approve" as const, label: "اعتُمد الترشّح", date: "3 أغسطس 2026،16:45" },
   open: { kind: "open" as const, label: "فُتح التصويت", date: "5 أغسطس 2026" },
 };
 
@@ -34,7 +42,7 @@ const STATES: { key: string; label: string; cjs: CJ[] | null }[] = [
   { key: "needs_edit", label: "يحتاج تعديلًا", cjs: [S({
     statusLabel: "يحتاج تعديلًا", statusTone: "info", future: "تصويت",
     next: "راجِع ملاحظة إدارة الموارد البشرية وعدّل بيانك أو ملفّك، ثمّ أعِد الإرسال.",
-    trail: [T.submit, { kind: "edit", label: "طُلب تعديل", date: "3 أغسطس 2026 · 09:10", note: "وضّح خطّتك للتغطية الأسبوعيّة، وأضِف جدولًا زمنيًّا." }],
+    trail: [T.submit, { kind: "edit", label: "طُلب تعديل", date: "3 أغسطس 2026،09:10", note: "وضّح خطّتك للتغطية الأسبوعيّة، وأضِف جدولًا زمنيًّا." }],
     canEdit: true, canWithdraw: true })] },
   { key: "approved_c", label: "معتمَد (الترشّح مفتوح)", cjs: [S({
     statusLabel: "معتمَد", statusTone: "success", future: "تصويت",
@@ -47,12 +55,12 @@ const STATES: { key: string; label: string; cjs: CJ[] | null }[] = [
   { key: "rejected", label: "مرفوض", cjs: [S({
     statusLabel: "مرفوض", statusTone: "danger", future: null,
     next: "تعتذر إدارة الموارد البشرية عن قبول ترشّحك في هذا الانتخاب، يُمكنك رؤية سبب الرفض.",
-    trail: [T.submit, { kind: "reject", label: "رُفض الترشّح", date: "3 أغسطس 2026 · 16:45", note: "شكرًا لتقدّمك؛ رأت الإدارة ترشّحًا أنسبَ للنطاق." }],
+    trail: [T.submit, { kind: "reject", label: "رُفض الترشّح", date: "3 أغسطس 2026،16:45", note: "شكرًا لتقدّمك؛ رأت الإدارة ترشّحًا أنسبَ للنطاق." }],
     canEdit: false, canWithdraw: false })] },
   { key: "withdrawn", label: "منسحب", cjs: [S({
     statusLabel: "منسحب", statusTone: "neutral", future: null,
     next: "سحبتَ ترشّحك من هذا الانتخاب.",
-    trail: [T.submit, { kind: "withdraw", label: "سُحب الترشّح", date: "3 أغسطس 2026 · 18:00" }],
+    trail: [T.submit, { kind: "withdraw", label: "سُحب الترشّح", date: "3 أغسطس 2026،18:00" }],
     canEdit: false, canWithdraw: false })] },
   { key: "won", label: "فائز", cjs: [S({
     statusLabel: "فائز", statusTone: "success", future: null,
@@ -66,7 +74,7 @@ const STATES: { key: string; label: string; cjs: CJ[] | null }[] = [
     canEdit: false, canWithdraw: false })] },
   { key: "multiple", label: "ترشّحان (متعدّد)", cjs: [
     S({ statusLabel: "معتمَد", statusTone: "success", future: "تصويت", next: "مُبارك لك! تم قبول ترشحك لخوض مرحلة التصويت.", trail: [T.submit, T.approve], canEdit: false, canWithdraw: true }),
-    S({ candidateId: "b", position: "نائب لجنة البرمجة", number: 2, statusLabel: "قيد المراجعة", statusTone: "warning", future: "تصويت", next: "طلبك تحت مراجعة إدارة الموارد البشرية. يمكنك تعديل أو تطوير ترشّحك خلال مراجعة ترشيحك.", trail: [{ kind: "submit", label: "قُدّم الترشّح", date: "4 أغسطس 2026 · 10:00" }], canEdit: true, canWithdraw: true }),
+    S({ candidateId: "b", position: "نائب لجنة البرمجة", number: 2, statusLabel: "قيد المراجعة", statusTone: "warning", future: "تصويت", next: "طلبك تحت مراجعة إدارة الموارد البشرية. يمكنك تعديل أو تطوير ترشّحك خلال مراجعة ترشيحك.", trail: [{ kind: "submit", label: "قُدّم الترشّح", date: "4 أغسطس 2026،10:00" }], canEdit: true, canWithdraw: true }),
   ] },
   { key: "empty", label: "لا ترشّحات (الباب مخفيّ)", cjs: null },
 ];
@@ -98,7 +106,7 @@ function Preview({ cjs }: { cjs: CJ[] | null }) {
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded border border-line p-4 md:p-7" style={{ background: "var(--color-bg)" }}>
-      <div className="ash-phead"><div><h1>سِجلّ ترشُّحي</h1></div></div>
+      <PageHeader crumb={CRUMB} title="سِجلّ ترشُّحي" />
       {children}
     </div>
   );
@@ -111,7 +119,7 @@ export default function CandidacyStatesLab() {
   return (
     <main className="py-16">
       <Container className="max-w-4xl">
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Candidacy Tab · States</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Candidacy Tab, States</p>
         <h1 className="mt-1 font-display text-4xl font-black text-content">سِجلّ ترشُّحي: كلّ الحالات</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           هذا هو التبويب <b className="text-content">الحقيقيّ</b> (مكوّن CandidacyJourney نفسه) بكلّ حالاته. بدّل الحالة لترى كيف يتبدّل الهيرو و«ما التالي» والأزرار والرحلة، بلا قبولٍ أو رفضٍ فعليّ.

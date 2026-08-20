@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Alert, Button, Field, Select, type SelectOption, Modal } from "@adeeb/design-system";
 import { Certificate, FilePdf, IdentificationCard, NotePencil, SealCheck, UserCircle } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
@@ -8,6 +8,7 @@ import { Avatar } from "../../_components/Avatar";
 import { useToast } from "../../_components/ToastProvider";
 import { downloadCertificate, downloadCertificatePdf } from "@/lib/certificates/letter";
 import { certDate } from "@/lib/certificates/text";
+import { arabicNameError } from "@/lib/personName";
 import { issueCertificate } from "./actions";
 import type { CertificateTarget } from "./data";
 
@@ -57,13 +58,18 @@ export function IssueCertificateModal({
   const target = targets.find((t) => t.id === userId) ?? null;
   const today = todayInRiyadh();
 
-  // تبديلُ العضو يجلب اقتراحَه: اسمُه المقترَح ومسمّاه كما تقولهما القاعدة
-  useEffect(() => {
+  // تبديلُ العضو يجلب اقتراحَه: اسمُه المقترَح ومسمّاه كما تقولهما القاعدة.
+  // **يُضبَط في الرسم لا في أثر**: الأثرُ كان يرسم النافذةَ رسمةً باسم العضو السابق ثمّ
+  // يستبدله في رسمةٍ ثانية، وهذه ورقةٌ تُراجَع بالعين فلا يليق بها وميضُ اسمٍ ليس صاحبَها.
+  const [lastId, setLastId] = useState(userId);
+  if (lastId !== userId) {
+    setLastId(userId);
     setName(target?.suggestedName ?? "");
     setPosition(target?.positionTitle ?? "");
-  }, [target]);
+  }
 
-  const ready = !!target && !!target.joinedDate && name.trim().length >= 3 && position.trim().length >= 2;
+  const nameError = arabicNameError(name);
+  const ready = !!target && !!target.joinedDate && name.trim().length >= 3 && !nameError && position.trim().length >= 2;
 
   const close = () => {
     setUserId(preselect ?? "");
@@ -200,6 +206,7 @@ export function IssueCertificateModal({
         placeholder="الاسم الثلاثيّ"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        error={nameError ?? undefined}
         required
         helper="الثلاثيّ إن وُجد، وهو ما يُطبع في الورقة ويُحفظ في السجلّ."
       />

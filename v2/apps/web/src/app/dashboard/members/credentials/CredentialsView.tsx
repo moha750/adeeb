@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Alert, Button, Field, Select } from "@adeeb/design-system";
 import { At, Envelope, Key, Lock, User } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
+import { EMAIL_HINT, isEmail } from "@/lib/fieldFormats";
 import { updateCredentials, type CredResult } from "./actions";
 
 // بلا حالة: الشاشة لا تُطعَم إلّا الساري (`page.tsx`)، وشارةٌ تقول «نشط» في كلّ مرّة خبرٌ لا يُخبر.
 export type CredMember = { id: string; name: string; email: string; avatar: string | null; gender: "male" | "female" | null };
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function CredentialsView({ members }: { members: CredMember[] }) {
   const [uid, setUid] = useState("");
@@ -22,11 +21,17 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
   const selected = useMemo(() => members.find((m) => m.id === uid) ?? null, [members, uid]);
   const options = useMemo(() => members.map((m) => ({ value: m.id, label: `${m.name}، ${m.email}` })), [members]);
 
-  // إعادة ضبط الحقول والنتيجة عند تبديل العضو
-  useEffect(() => { setEmail(""); setPw(""); setPw2(""); setRes(null); }, [uid]);
+  // إعادة ضبط الحقول والنتيجة عند تبديل العضو — **في الرسم لا في أثر**: الأثرُ يرسم الشاشةَ
+  // مرّةً بحقول العضو السابق ثمّ يمحوها في رسمةٍ ثانية (وميضٌ يراه المستخدم)، وضبطُها عند
+  // تبدّل المفتاح يقع قبل أن يظهر شيء. (سابقةُ React: «ضبطُ الحالة حين تتبدّل الخاصّة».)
+  const [lastUid, setLastUid] = useState(uid);
+  if (lastUid !== uid) {
+    setLastUid(uid);
+    setEmail(""); setPw(""); setPw2(""); setRes(null);
+  }
 
   const emailTrim = email.trim();
-  const emailErr = emailTrim && !EMAIL_RE.test(emailTrim) ? "بريد إلكترونيّ غير صالح" : undefined;
+  const emailErr = emailTrim && !isEmail(emailTrim) ? EMAIL_HINT : undefined;
   const emailSame =
     emailTrim && selected && emailTrim.toLowerCase() === selected.email.toLowerCase()
       ? "هذا هو البريد الحاليّ للعضو"

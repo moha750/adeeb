@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
@@ -41,6 +41,22 @@ function socialUrl(v: string | null, kind: "tw" | "in"): string | null {
   return kind === "tw" ? `https://x.com/${h}` : `https://www.linkedin.com/in/${h}`;
 }
 
+/* ══ ما يقوله المتصفّح عن نفسه: يُقرأ بـ`useSyncExternalStore` لا بحالةٍ في أثر ══
+   عرضُ النافذة وتفضيلُ تقليل الحركة مصدران خارجيّان لا يعرفهما الخادم. وكانا يُنسَخان
+   في حالتين داخل أثرٍ بعد التركيب، فتُرسَم البطاقاتُ بعرضٍ مفترَضٍ ثمّ يُعاد رسمُها بالعرض
+   الحقيقيّ (قفزةُ مقاسٍ تُرى على الجوّال). ولقطةُ الخادم هنا افتراضٌ صريحٌ لا كذب: عرضٌ
+   عريضٌ وحركةٌ مسموحة، وهما ما عليه أكثرُ الزوّار. */
+const REDUCE_MOTION = "(prefers-reduced-motion: reduce)";
+const subscribeMotion = (cb: () => void) => {
+  const mq = window.matchMedia(REDUCE_MOTION);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+};
+const subscribeWidth = (cb: () => void) => {
+  window.addEventListener("resize", cb);
+  return () => window.removeEventListener("resize", cb);
+};
+
 // محور الشريط. `translateX` لا يعرف `dir`: الموجب يمينٌ مهما كانت لغة الصفحة.
 // والصفحة عربيّة (`dir="rtl"`)، فالتالي إلى اليسار والسابق إلى اليمين — أي سالب.
 // موضعٌ واحد يحكم الاتّجاه كلّه: التموضع هنا، والسحب في onMove.
@@ -66,8 +82,8 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   const [hover, setHover] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [motion, setMotion] = useState(true);
-  const [vw, setVw] = useState(1200);
+  const motion = useSyncExternalStore(subscribeMotion, () => !window.matchMedia(REDUCE_MOTION).matches, () => true);
+  const vw = useSyncExternalStore(subscribeWidth, () => window.innerWidth, () => 1200);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -85,18 +101,19 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   const stageH = Math.round((CARD * 4) / 3 + 22);
   const monoSize = Math.round(CARD * 0.36);
 
-  const spRef = useRef(SPACING); spRef.current = SPACING;
-  const nRef = useRef(n); nRef.current = n;
-  const visRef = useRef(VISIBLE); visRef.current = VISIBLE;
-  const curRef = useRef(current); curRef.current = current;
-
+  // مرايا لمستمعي المؤشّر: هم مربوطون مرّةً واحدةً عند التركيب، فلا يرون قيمَ الرسمة
+  // الجارية إلّا من هنا. **وتُحدَّث بعد الرسم لا فيه**: الكتابةُ في مرجعٍ أثناء الرسم
+  // تكسر نقاءه (قاعدةُ المصرّف `refs`)، وما بعد التثبيت يسبق أوّلَ لمسةٍ دائمًا.
+  const spRef = useRef(SPACING);
+  const nRef = useRef(n);
+  const visRef = useRef(VISIBLE);
+  const curRef = useRef(current);
   useEffect(() => {
-    setMotion(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    const onResize = () => setVw(window.innerWidth);
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    spRef.current = SPACING;
+    nRef.current = n;
+    visRef.current = VISIBLE;
+    curRef.current = current;
+  });
 
   // الدوران لا يبدأ قبل أن يصل الزائرُ إلى القسم: كان يمشي منذ تحميل الصفحة فيجد
   // الزائرُ بطاقةً في وسط الدورة لا أوّلَ المجلس. وعودةُ القسم تُعيد المؤقّت من أوّله،
@@ -163,7 +180,6 @@ export function BoardCarousel({ members }: { members: Member[] }) {
       window.removeEventListener("pointerup", onUp);
       if (resumeT.current) clearTimeout(resumeT.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onDown = (e: React.PointerEvent) => {

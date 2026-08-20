@@ -79,12 +79,12 @@ const BOOK_BODY = "اسحب صور الصفحات هنا، أو اخترها م�
 
 function BookNow() {
   return (
-    <div className="ash-phead">
+    <div className="phdlab-was">
       <div>
         <CrumbTrail steps={BOOK_CRUMB} />
         <h1>{BOOK_TITLE}</h1>
       </div>
-      <div className="form-head-actions">
+      <div className="phdlab-was-acts">
         <Badge tone="warning" dot>مسودّة</Badge>
         <Button variant="ghost" size="md"><Eye size={18} />معاينة</Button>
         <Link href="#" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>
@@ -127,12 +127,12 @@ const SURVEY_TITLE = "تحرير: استبيان رضا الأعضاء عن ال
 
 function SurveyNow() {
   return (
-    <div className="ash-phead">
+    <div className="phdlab-was">
       <div>
         <CrumbTrail steps={SURVEY_CRUMB} />
         <h1>{SURVEY_TITLE}</h1>
       </div>
-      <div className="form-head-actions">
+      <div className="phdlab-was-acts">
         <Button variant="ghost" size="md"><Eye size={18} /> معاينة</Button>
         <Button variant="ghost" size="md">إلغاء</Button>
         <Button variant="neutral" size="md">حفظ كمسودّة</Button>
@@ -178,7 +178,7 @@ const NEWS_TITLE = "أديب يفتتح موسمَه الثقافيّ";
 function NewsNow() {
   return (
     <>
-      <div className="ash-phead">
+      <div className="phdlab-was">
         <div>
           <CrumbTrail steps={NEWS_CRUMB} />
           <h1 style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Alert, Card, CardBody, CardHeader, Container, Footer, LandingHeading } from "@adeeb/design-system";
-import { IdentificationBadge } from "@phosphor-icons/react/dist/ssr";
+import { IdentificationBadge, UserMinus } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { getSessionAdmin } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { deletionDueLabel } from "@/lib/accountDeletion";
+import { AccountExit } from "@/app/_components/AccountExit";
+import { getMyExit } from "@/lib/membershipExit";
 import { getMyAccount } from "./data";
+import { getMyVolunteering } from "./volunteering";
 import { MyBookings } from "./MyBookings";
 import { MyData } from "./MyData";
+import { MyVolunteering } from "./MyVolunteering";
 
 export const metadata: Metadata = { title: "حسابك، نادي أديب" };
 export const dynamic = "force-dynamic";
@@ -27,7 +32,15 @@ export default async function MePage() {
   const me = await getSessionAdmin();
   if (!me) redirect("/login?next=/me");
 
-  const account = await getMyAccount(me.id);
+  const [account, volunteering] = await Promise.all([getMyAccount(me.id), getMyVolunteering(me.id)]);
+
+  // بابُ الحذف يسأل سؤالين: أطلبَه صاحبُه من قبل؟ وهل له كلمةُ مرورٍ تُثبِته؟ والهويّاتُ تُقرأ
+  // من الجلسة نفسِها (`getUser().identities`) لا بنداءٍ إداريّ — كما في تبويب الإعدادات سواءً.
+  const pendingDeletion = me.deletionRequestedAt != null;
+  const { data: { user: sessionUser } } = await (await createClient()).auth.getUser();
+  const hasPassword = (sessionUser?.identities ?? []).some((i) => i.provider === "email");
+  // البابُ يتبدّل بالمقعد (٢٠٢٦-٠٨-٢٠): العضويّةُ تُنهى قبل الحساب لا معه.
+  const exit = await getMyExit();
 
   return (
     <>
@@ -48,6 +61,10 @@ export default async function MePage() {
               </div>
             ) : (
               <div className="flex flex-col gap-8" style={{ marginTop: 32 }}>
+                {/* التطوّعُ أوّلًا لمن ليس عضوًا: هو طريقُه إلى العضويّة، والحجوزاتُ دونه شأنًا.
+                    والعضوُ لا يُعرَض عليه (طريقُه انتهى، وبيتُ عضويّته اللوحة). */}
+                {!account.isMember && volunteering ? <MyVolunteering data={volunteering} /> : null}
+
                 <MyBookings upcoming={account.upcoming} past={account.past} />
 
                 <Card>
@@ -62,13 +79,35 @@ export default async function MePage() {
                   </CardBody>
                 </Card>
 
-                {/* الحذفُ مراسلةً لا زرًّا (قرار المالك ٢٠٢٦-٠٨-٠٥): حجوزاتُك سجلُّ حضورٍ للنادي
-                    وبعضُها شهاداتٌ صدرت، فحذفُها قرارٌ يُنظَر فيه لا نقرةٌ تُمحى بها. */}
-                <p className="text-content-muted text-sm text-center">
-                  أردتَ حذف حسابك؟{" "}
-                  <Link className="font-bold underline" href="/#contact">راسلنا</Link>
-                  {" "}ونتولّى ذلك.
-                </p>
+                {/* **بابٌ لا مراسلة** (قرار المالك ٢٠٢٦-٠٨-١٩، ينسخ قرارَ ٥ أغسطس): كانت
+                    الحجّةُ أنّ الحجوزات سجلُّ حضورٍ للنادي فلا تُمحى بنقرة — وهي حجّةٌ صحيحةٌ
+                    نالت جوابَها في التصميم لا في إغلاق الباب: السجلُّ يبقى كاملًا والحسابُ
+                    وحدَه يذهب. وشرحُه في `v2/ACCOUNT-DELETION.md`. */}
+                <Card>
+                  <CardHeader
+                    variant="soft"
+                    icon={<UserMinus weight={ICON_WEIGHT} aria-hidden />}
+                    title={exit.door === "delete" ? "حذف الحساب" : "الخروج من أديب"}
+                    subtitle={
+                      exit.door === "delete"
+                        ? "بابُك إلى الخروج، ومهلتُه ثلاثون يومًا"
+                        : "عضويّتُك أوّلًا، ثمّ حسابُك إن شئت"
+                    }
+                  />
+                  <CardBody>
+                    <AccountExit
+                      door={exit.door}
+                      deciders={exit.deciders}
+                      pending={exit.pending}
+                      lastAnswer={exit.lastAnswer}
+                      deletion={{
+                        pending: pendingDeletion,
+                        dueLabel: deletionDueLabel(me.deletionRequestedAt),
+                        hasPassword,
+                      }}
+                    />
+                  </CardBody>
+                </Card>
               </div>
             )}
           </Container>

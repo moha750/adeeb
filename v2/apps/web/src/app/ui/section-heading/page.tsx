@@ -3,6 +3,7 @@
 import { Container, Field, ModalSectionHeading } from "@adeeb/design-system";
 import { AddressBook, Books, ShareNetwork, Envelope, At, Phone, Hash } from "@phosphor-icons/react";
 import { Prohibit } from "@/app/_components/glyphs";
+import { PHONE_LEN, PHONE_PREFIX } from "@/lib/fieldFormats";
 
 function Lab({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{children}</p>;
@@ -46,7 +47,7 @@ export default function SectionHeadingPage() {
               <div className="form-grid">
                 <ModalSectionHeading icon={<AddressBook />} title="بيانات التواصل" />
                 <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" />
-                <Field label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" />
+                <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" />
                 <ModalSectionHeading icon={<Books />} title="البيانات الأكاديميّة" />
                 <Field className="form-full" label="الكلّية" icon={<Books />} innerIcon={<At />} placeholder="مثال: كلّية الآداب" />
               </div>

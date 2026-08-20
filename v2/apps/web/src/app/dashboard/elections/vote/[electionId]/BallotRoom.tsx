@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Alert, Button } from "@adeeb/design-system";
 import { CheckCircle } from "@/app/_components/glyphs";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 import { useToast } from "../../../_components/ToastProvider";
 import { BallotHead, CandidateFile, CandidateMark, CandidateName, Statement, VoteTag } from "../../_member/ballotParts";
 import { BallotStations } from "../../_member/BallotStations";
@@ -49,7 +49,7 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
   return (
     <>
       {/* والعنوانُ لا يَعِد بما لا يقع: من لا صندوقَ له لا يُقال له «صوّت الآن» */}
-      <div className="ash-phead"><div><Breadcrumb leaf={election.position} /><h1>{election.viewOnly ? "بطاقةُ مقعدك" : "صوّت الآن"}</h1></div></div>
+      <PageHeader title={election.viewOnly ? "بطاقةُ مقعدك" : "صوّت الآن"} crumbLeaf={election.position} />
 
       {election.hasVoted || election.viewOnly ? (
         <div className="blt">

@@ -11,7 +11,7 @@ import { Pagination } from "../_components/Pagination";
 import { Avatar } from "../_components/Avatar";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { CONTACT_STATUSES, statusLabel, statusTone } from "@/lib/contact/vocab";
 import { saveContactNotes, sendContactReply, setContactStatus } from "./actions";
 import type { ContactRow } from "./data";

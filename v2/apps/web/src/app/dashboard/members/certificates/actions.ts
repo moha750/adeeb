@@ -3,6 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
+import { arabicNameError, normalizeName } from "@/lib/personName";
 
 export type CertificateResult = {
   ok: boolean;
@@ -41,10 +42,15 @@ export async function issueCertificate(input: {
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
+  // الاسمُ المصحَّح يُطبع في ورقةٍ ويُحفظ لقطةً في السجلّ، فيلزمه ما يلزم كلَّ اسم: العربيّةُ وحدها.
+  const name = normalizeName(input.name ?? "") || null;
+  const nameError = arabicNameError(name);
+  if (nameError) return { ok: false, message: `${nameError}.` };
+
   const { data, error } = await sb.rpc("issue_certificate", {
     p_actor: admin.id,
     p_user: input.userId,
-    p_name: input.name?.trim() || null,
+    p_name: name,
     p_position: input.position?.trim() || null,
   });
   if (error) return { ok: false, message: `تعذّر إصدار الشهادة: ${error.message}` };

@@ -3,7 +3,7 @@
 import { Alert, Badge, Button, ModalSectionHeading } from "@adeeb/design-system";
 import { Archive, Clock, FlagCheckered, Scales, Trophy } from "@phosphor-icons/react";
 import { PencilSimple, Prohibit, XCircle } from "@/app/_components/glyphs";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { OpportunityCard } from "../_member/OpportunityCard";
 import { useElectionApi } from "../actions-context";
 import type { CandidacyJourney as CJ, RecordTone } from "../member-data";
@@ -53,7 +53,7 @@ export function MyCandidaciesView({ items, error }: { items: CJ[]; error: string
 
   return (
     <>
-      <div className="ash-phead"><div><Breadcrumb /><h1>سِجلّ ترشُّحي</h1></div></div>
+      <PageHeader title="سِجلّ ترشُّحي" />
 
       {error ? <Alert tone="warning" title="تعذّر جلب ترشّحاتك">{error}</Alert> : null}
       {!error && items.length === 0 ? (

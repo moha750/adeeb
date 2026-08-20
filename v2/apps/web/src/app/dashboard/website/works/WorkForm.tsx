@@ -2,14 +2,14 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SectionCard, Field } from "@adeeb/design-system";
+import { Button, SaveBar, SectionCard, Field } from "@adeeb/design-system";
 import {
   Image as ImageIcon, LinkSimple, Sparkle, Tag, TextT } from "@phosphor-icons/react";
 import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { WorkEditData } from "./data";
 import { createWork, updateWork, uploadWorkImage, type WorkInput } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
 
 // وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
@@ -28,7 +28,6 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
   const [image, setImage] = useState<string | null>(work?.imageUrl ?? null);
 
   const editing = work != null;
-  const crumbLeaf = editing ? "تحرير" : "عمل جديد";
 
   const pickFile = () => fileRef.current?.click();
 
@@ -58,6 +57,16 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
     linkUrl: linkUrl || null,
   });
 
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
+   * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
+   * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
+
   const save = () => {
     startSave(async () => {
       const input = toInput();
@@ -72,16 +81,9 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? `تحرير: ${work.title}` : "عمل جديد"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/website/works")} disabled={saving}>إلغاء</Button>
-          <Button variant="primary" size="md" loading={saving} onClick={save}>{editing ? "حفظ التغييرات" : "إضافة العمل"}</Button>
-        </div>
-      </div>
+      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
+          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
+      <PageHeader title={editing ? `تحرير: ${work.title}` : "عمل جديد"} />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل العمل">
@@ -114,6 +116,12 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
           </div>
         </SectionCard>
       </div>
+
+      <SaveBar open={dirty} message={editing ? undefined : "عملٌ لم يُضَف بعد"}>
+        <Button variant="primary" size="md" loading={saving} onClick={save}>
+          {editing ? "حفظ التغييرات" : "إضافة العمل"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

@@ -6,8 +6,9 @@
  * فالصوتُ يُبَثّ من العنوان العامّ للدلو مباشرةً.
  */
 import "server-only";
+import { cache } from "react";
 import { createAdeebServerClient } from "@adeeb/core";
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { publicUrl } from "@/lib/radio/r2";
 import type { Platform, ShowTone } from "../dashboard/radio/vocab";
 import type { Track } from "./_player/PlayerProvider";
@@ -24,7 +25,11 @@ export type PublicStation = {
   logoUrl: string | null;
 };
 
-export async function getPublicStation(): Promise<PublicStation> {
+/**
+ * المحطّة — مغلَّفةٌ بـ`cache`: تخطيطُ القسم يقرؤها لأجل جلسة الوسائط، وصفحتاه
+ * تقرآنها لأجل الصدر. وبلا التغليف يصير استعلامان لطلبٍ واحد.
+ */
+export const getPublicStation = cache(async function getPublicStation(): Promise<PublicStation> {
   const { data } = await anon()
     .from("radio_station")
     .select("name, tagline, description, logo_path")
@@ -36,7 +41,7 @@ export async function getPublicStation(): Promise<PublicStation> {
     description: data?.description ?? null,
     logoUrl: publicUrl(data?.logo_path),
   };
-}
+});
 
 /* ══ البرامج ═════════════════════════════════════════════════════════ */
 
@@ -70,7 +75,18 @@ async function hostNames(ids: string[]): Promise<Map<string, string>> {
   return new Map((data ?? []).map((p) => [p.id, p.full_name as string]));
 }
 
-export async function getPublicShows(): Promise<PublicShow[]> {
+/**
+ * البرامجُ المنشورة، **ومعها خبرُ الفشل إن وقع**.
+ *
+ * كان الخطأُ يُبتلَع وتُردّ قائمةٌ فارغة، فتقول الصفحةُ للزائر «لا برامج منشورة
+ * بعد. تابعنا لتصلك الأولى» — وهي **كذبةٌ مطمئنّة**: القاعدةُ متعثّرةٌ والبرامجُ
+ * قائمة. والفرقُ بين «لا شيء هنا» و«لم نستطع القراءة» فرقٌ في المعنى لا في
+ * الشكل، فمن قرأ الأولى لا يعود.
+ *
+ * وهو نمطُ المستودع في سائر الغرف (`{ data, error }` ثمّ `Alert tone="warning"`)،
+ * وكان غائبًا عن الإذاعة كلِّها.
+ */
+export async function getPublicShows(): Promise<{ shows: PublicShow[]; error: boolean }> {
   const sb = anon();
   const [{ data, error }, { data: eps }] = await Promise.all([
     sb.from("radio_shows").select(SHOW_COLS)
@@ -79,13 +95,13 @@ export async function getPublicShows(): Promise<PublicShow[]> {
       .returns<ShowRaw[]>(),
     sb.from("radio_episodes").select("show_id"),
   ]);
-  if (error || !data) return [];
+  if (error || !data) return { shows: [], error: true };
 
   const counts = new Map<string, number>();
   for (const e of eps ?? []) counts.set(e.show_id, (counts.get(e.show_id) ?? 0) + 1);
   const names = await hostNames(data.map((s) => s.host_member_id));
 
-  return data.map((s) => ({
+  const shows = data.map((s) => ({
     id: s.id,
     slug: s.slug,
     title: s.title,
@@ -98,6 +114,7 @@ export async function getPublicShows(): Promise<PublicShow[]> {
     isFeatured: s.is_featured,
     episodeCount: counts.get(s.id) ?? 0,
   }));
+  return { shows, error: false };
 }
 
 /* ══ الحلقات ═════════════════════════════════════════════════════════ */
@@ -187,11 +204,12 @@ export async function getPublicShowPage(slug: string): Promise<{
   const { data: raw } = await sb.from("radio_shows").select(SHOW_COLS).eq("slug", slug).maybeSingle<ShowRaw>();
   if (!raw) return null;
 
-  const [{ data: eps }, { data: plats }, station, names] = await Promise.all([
+  // ولا تُقرأ المحطّةُ هنا: كانت تُجلَب ولا تُستعمَل، فهي استعلامٌ صامتٌ في كلّ
+  // فتحةِ برنامج. (أمسكه المصرِّف يوم وُصل المشغّلُ بجلسة الوسائط، ٢٠٢٦-٠٨-١٨.)
+  const [{ data: eps }, { data: plats }, names] = await Promise.all([
     sb.from("radio_episodes").select(EP_COLS).eq("show_id", raw.id)
       .order("number", { ascending: false }).returns<EpRaw[]>(),
     sb.from("radio_show_platforms").select("platform, url").eq("show_id", raw.id).order("order", { ascending: true }),
-    getPublicStation(),
     hostNames([raw.host_member_id]),
   ]);
 
@@ -292,4 +310,34 @@ export async function getLatestEpisodes(limit = 6): Promise<
       showTone: show.tone as ShowTone,
     }];
   });
+}
+
+/**
+ * مدخلاتُ خريطة الموقع — **أعمدةٌ نحيلةٌ عمدًا**، لا `EP_COLS`.
+ *
+ * الخريطةُ لا تحتاج تفريغًا ولا موجةً ولا روابطَ صوت، فجلبُها لأجلها يحمّل
+ * الطلبَ عشراتِ الكيلوبايتات بلا مقابل. وسائرُ القراءات تجلب العريضَ لأنّها
+ * ترسم صفحةً، وهذه لا ترسم شيئًا.
+ *
+ * وRLS هو الحارس كسائر قراءات هذا الملفّ: لا يخرج منها إلّا منشورٌ حلّ موعدُه.
+ */
+export async function getRadioSitemapEntries(): Promise<{
+  shows: { slug: string }[];
+  episodes: { showSlug: string; slug: string; publishedAt: string | null }[];
+}> {
+  const sb = anon();
+  const [{ data: shows }, { data: eps }] = await Promise.all([
+    sb.from("radio_shows").select("id, slug"),
+    sb.from("radio_episodes").select("slug, show_id, published_at"),
+  ]);
+  const slugOf = new Map((shows ?? []).map((s) => [s.id as string, s.slug as string]));
+  return {
+    shows: (shows ?? []).map((s) => ({ slug: s.slug as string })),
+    episodes: (eps ?? []).flatMap((e) => {
+      const showSlug = slugOf.get(e.show_id as string);
+      return showSlug
+        ? [{ showSlug, slug: e.slug as string, publishedAt: (e.published_at as string | null) ?? null }]
+        : [];
+    }),
+  };
 }

@@ -2,6 +2,10 @@
 // (اللوحة وصفحة الاستجابة العامّة). كلّ قيمة هنا يحرسها قيدٌ مقابل في القاعدة:
 // surveys_status_check · surveys_access_type_check · survey_questions_question_type_check.
 // لا تُضِف قيمة قبل توسيع القيد بترحيل مقابل.
+//
+// ونصُّ خطأِ البريد والجوّال يُستورَد من `lib/fieldFormats` ولا يُكتب ههنا: جملةٌ واحدةٌ في
+// أبواب الموقع كلِّها، ولا يُبدَّل لفظُها في موضعٍ ويُنسى في آخر.
+import { EMAIL_HINT, PHONE_HINT } from "@/lib/fieldFormats";
 
 /* ══ الحالة ══════════════════════════════════════════════════════════ */
 
@@ -119,6 +123,9 @@ export const SUBMIT_ERRORS: Record<string, string> = {
   foreign_question: "تعذّر التحقّق من الإجابات. حدّث الصفحة وأعد المحاولة.",
   required_missing: "سؤال إلزاميّ بلا إجابة.",
   bad_answer: "إجابة غير صالحة لأحد الأسئلة.",
+  // صيغتان تُحرسان في القاعدة كما تُحرسان في الشاشة — واللفظ من `lib/fieldFormats` نفسه
+  bad_email: `${EMAIL_HINT} في أحد الأسئلة`,
+  bad_phone: `${PHONE_HINT} في أحد الأسئلة`,
   empty_response: "لا إجابات لإرسالها.",
   unknown_type: "نوع سؤال غير مدعوم.",
 };

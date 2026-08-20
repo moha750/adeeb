@@ -11,6 +11,7 @@ import { PLATFORM_META } from "../../dashboard/radio/vocab";
 import { getPublicShowPage, isPlayable, toTrack } from "../data";
 import { EpisodeRow } from "../_player/EpisodeRow";
 import { FoldedText } from "../_player/FoldedText";
+import { breadcrumbLd, ldScript, podcastSeriesLd } from "@/lib/radio/jsonld";
 import type { Track } from "../_player/PlayerProvider";
 
 export const revalidate = 60;
@@ -29,9 +30,18 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
   const { show } = await params;
   const page = await getPublicShowPage(show);
   if (!page) return { title: "إذاعة أدِيب" };
+  const description = page.show.tagline ?? page.show.description ?? undefined;
   return {
     title: `${page.show.title}، إذاعة أدِيب`,
-    description: page.show.tagline ?? page.show.description ?? undefined,
+    description,
+    alternates: { canonical: `/radio/${show}` },
+    openGraph: {
+      title: page.show.title,
+      description,
+      images: page.show.logoUrl ? [page.show.logoUrl] : undefined,
+      type: "website",
+      siteName: "إذاعة أدِيب",
+    },
   };
 }
 
@@ -46,6 +56,13 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldScript(podcastSeriesLd(show))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldScript(
+        breadcrumbLd([
+          { name: "الإذاعة", path: "/radio" },
+          { name: show.title, path: `/radio/${show.slug}` },
+        ]),
+      )} />
       <SiteHeader activeHref="/radio" />
       <main>
         <section className={`rad rad-tone-${show.tone} py-10 md:py-14`}>

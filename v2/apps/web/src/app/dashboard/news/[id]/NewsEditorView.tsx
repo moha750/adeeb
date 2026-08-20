@@ -2,13 +2,12 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Checkbox, Field, Select, Textarea, Modal } from "@adeeb/design-system";
+import { Alert, Badge, Button, Checkbox, Field, SaveBar, Select, Textarea, Modal } from "@adeeb/design-system";
 import {
   Newspaper, TextAlignLeft, Tag, UsersThree, ClipboardText, Image as ImageIcon, Images,
   PaperPlaneTilt, Megaphone, Archive, ChatCircleDots, ClockCounterClockwise, Camera, Users,
   FloppyDisk, LinkSimple, Hash,
 } from "@phosphor-icons/react";
-import { ArrowRight } from "@/app/_components/glyphs";
 import {
   PencilSimple, UploadSimple, Trash, EyeSlash, ArrowUUpLeft, Star, CheckCircle, XCircle,
   WarningCircle,
@@ -31,7 +30,7 @@ import {
   moderatePublicComment, removeCover, removeGalleryImage, returnForEdits, saveNews,
   setCover, setNewsStatus, submitForReview, toggleFeatured,
 } from "../actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 // وصفةُ صور الأخبار من قانون المرفقات (`lib/upload`)
@@ -190,26 +189,18 @@ export function NewsEditorView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={row.title} />
-          <h1 style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {row.title}
+      {/* عنقودان صارا لا شيء (حكمُ `/ui/page-header`): «رجوع» يكرّر الفتاتَ فسقط، و«حفظ»
+          فعلُ التزامٍ لا فعلُ رأسٍ فنزل إلى الشريط اللاصق أسفلَه — ولا يظهر حتى يوجد ما
+          يُحفَظ. والشارةُ والنجمةُ حالان، فموضعُهما سطرُ الفتات لا عنقودُ الأزرار. */}
+      <PageHeader
+        title={row.title}
+        status={
+          <>
             <Badge tone={meta.tone} dot>{meta.label}</Badge>
             {row.isFeatured ? <Star size={18} className="text-warning" aria-label="مميّز" /> : null}
-          </h1>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/news")}>
-            <ArrowRight size={18} />رجوع
-          </Button>
-          {mayAny ? (
-            <Button variant={dirty ? "primary" : "ghost"} size="md" onClick={save} loading={pending} disabled={!dirty}>
-              <FloppyDisk size={18} />حفظ
-            </Button>
-          ) : null}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* شريط الحالة — ما المطلوب منك الآن، لا ما حدث سابقًا */}
       {row.rejectionReason && row.workflow === "in_progress" ? (
@@ -643,6 +634,15 @@ export function NewsEditorView({
           if (r.ok) { toast.success(r.message); setKillImage(null); router.refresh(); } else toast.error(r.message);
         })}
       />
+
+      {/* حفظةُ المحرّر — تلاحق الكاتبَ أينما مرّر في شاشةٍ طويلة، ووجودُها نفسُه هو التنبيه */}
+      {mayAny ? (
+        <SaveBar open={dirty}>
+          <Button variant="primary" size="md" onClick={save} loading={pending}>
+            <FloppyDisk size={18} />حفظ
+          </Button>
+        </SaveBar>
+      ) : null}
     </>
   );
 }

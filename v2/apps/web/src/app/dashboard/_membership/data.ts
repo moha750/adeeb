@@ -5,7 +5,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
-import { fmtDateOnly, fmtDate } from "@/lib/date";
+import { fmtDateOnly, fmtDate } from "@/lib/dates";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
 import { positionLine, positionParts } from "@/lib/positionLabel";

@@ -8,6 +8,10 @@ import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
+import {
+  EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, emailError, isEmail, isPhone, phoneError,
+} from "@/lib/fieldFormats";
+import { arabicNameError } from "@/lib/personName";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -32,7 +36,8 @@ const BOOK_ERRORS: Record<string, string> = {
   NOT_OWNER: "هذا الحجز ليس لك.",
   // أخطاء `create_my_account_profile` — بابُ الزائر إلى صفّه
   NAME_REQUIRED: "الاسم مطلوب.",
-  PHONE_INVALID: "رقم الجوّال غير صحيح. أدخله هكذا: 05xxxxxxxx.",
+  NAME_NOT_ARABIC: "اكتب الاسم بالحروف العربيّة وحدها.",
+  PHONE_INVALID: `${PHONE_HINT}.`,
   PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا. أعِد تحميل الصفحة.",
 };
 const bookError = (raw: string | null | undefined): string => {
@@ -66,6 +71,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   // بلا حارس. والرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسال.
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
+  /** رايتا الصيغة تُرفعان عند مغادرة الحقل أو عند الإرسال — لا والزائر يكتب أوّلَ محرف. */
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
 
   // النمط المشترك: أيّ جنسٍ متاحٌ ما دام في الإجمالي متّسع؛ المقسّم: لكلّ جنسٍ سقفُه
   const genderAvailable = (g: "male" | "female") => {
@@ -123,6 +132,8 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const sendOtp = async () => {
     setErr(null);
     if (!email.trim()) { setErr("أدخل بريدك الإلكترونيّ."); return; }
+    // بريدٌ مكسورُ الصيغة يُرسَل إلى العدم: الرمزُ يذهب ولا يصل، فينتظره الزائرُ ولا يجيء
+    if (!isEmail(email)) { setEmailTouched(true); setErr(`${EMAIL_HINT}.`); return; }
     setBusy(true);
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim(),
@@ -159,7 +170,10 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const submitProfile = async () => {
     setErr(null);
     if (!name.trim()) { setErr("الاسم مطلوب."); return; }
+    const nameErr = arabicNameError(name);
+    if (nameErr) { setNameTouched(true); setErr(`${nameErr}.`); return; }
     if (!phone.trim()) { setErr("رقم الجوّال مطلوب."); return; }
+    if (!isPhone(phone)) { setPhoneTouched(true); setErr(`${PHONE_HINT}.`); return; }
     if (!gender) { setErr("اختر فئتك."); return; }
     setBusy(true);
     const { data: { user } } = await sb.auth.getUser();
@@ -237,7 +251,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
       {step === "email" ? (
         <>
           <p className="text-sm text-content-muted">أدخل بريدك ليصلك رمز تأكيد، بلا كلمة مرور.</p>
-          <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} error={emailError(email, emailTouched)} required />
           {TURNSTILE_SITE_KEY ? (
             <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
           ) : null}
@@ -262,9 +276,9 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
       {step === "profile" ? (
         <>
           <p className="text-sm text-content-muted">أكمِل بياناتك مرّةً واحدة لإتمام الحجز.</p>
-          <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Field label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-          <Select label="الفئة" icon={<UsersThree />} options={genderOptions} value={gender} onValueChange={(v) => setGender(v as "male" | "female")} required />
+          <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setNameTouched(true)} error={nameTouched ? arabicNameError(name) ?? undefined : undefined} required />
+          <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhoneTouched(true)} error={phoneError(phone, phoneTouched)} required />
+          <Select label="الجنس" icon={<UsersThree />} options={genderOptions} value={gender} onValueChange={(v) => setGender(v as "male" | "female")} required />
           <Field label="المدينة" icon={<MapPin />} innerIcon={<IdentificationBadge />} placeholder="مدينتك" value={city} onChange={(e) => setCity(e.target.value)} optional />
           <Button variant="primary" size="md" loading={busy} onClick={submitProfile}>تأكيد الحجز</Button>
         </>

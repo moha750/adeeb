@@ -5,7 +5,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
-import { fmtDateOnly, fmtDate } from "@/lib/date";
+import { fmtDateOnly, fmtDate } from "@/lib/dates";
 import { formatDegree, SOCIAL_KEYS, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
 import { positionLine } from "@/lib/positionLabel";
 import { ShareBar } from "./ShareBar";

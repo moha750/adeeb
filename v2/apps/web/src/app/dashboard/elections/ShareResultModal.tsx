@@ -11,8 +11,8 @@
 
 import { useEffect, useState } from "react";
 import { Button, Modal, Textarea } from "@adeeb/design-system";
-import { ArrowUUpLeft } from "@/app/_components/glyphs";
-import { Copy, DownloadSimple, Megaphone, Note } from "@phosphor-icons/react";
+import { ArrowUUpLeft, DownloadSimple } from "@/app/_components/glyphs";
+import { Copy, Megaphone, Note } from "@phosphor-icons/react";
 import { copyText } from "@/lib/clipboard";
 import { renderResultCard, resultMessage, saveResultCard, type ResultCard } from "@/lib/elections/resultCard";
 import { useToast } from "../_components/ToastProvider";

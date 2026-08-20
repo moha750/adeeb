@@ -63,10 +63,19 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
   const toast = useToast();
   const router = useRouter();
   const pick = useRef<HTMLInputElement>(null);
-  // مرجعٌ **دالّيّ** لا `useRef`: النافذة تُركّب محتواها بعد دورةٍ من فتحها (`mounted` في `Dialog`
-  // يُضبط داخل تأثير)، فتأثيرُ الرسم المعلّق على الصورة وحدها كان يجري على مرجعٍ فارغ ثمّ لا يعود —
-  // فيبقى المربّع بلا رسم حتى أوّل سحبة. وجعلُ الكانفس حالةً يجعل تركيبَه نفسَه تبعيّةً تُشعِل الرسم.
-  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+  // مرجعٌ **دالّيّ** لا `useRef` وحدَه: النافذة تُركّب محتواها بعد دورةٍ من فتحها (`mounted` في
+  // `Dialog` يُضبط داخل تأثير)، فتأثيرُ الرسم المعلّق على الصورة وحدها كان يجري على مرجعٍ فارغ
+  // ثمّ لا يعود — فيبقى المربّع بلا رسم حتى أوّل سحبة. فتركيبُ الكانفس نفسُه تبعيّةٌ تُشعل الرسم.
+  //
+  // **واللوحُ في مرجعٍ والخبرُ في حالة**، لا اللوحُ نفسُه في حالة: مقاسُ الكانفس يُكتَب فيه
+  // كتابةً (`canvas.width`)، والكتابةُ في قيمةٍ خرجت من `useState` تكسر قاعدةَ الجمود
+  // (`immutability`) — فالحالةُ تُبدَّل بالضابط لا تُعدَّل. فالحالةُ هنا **علمُ حضورٍ** لا أكثر.
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
+  const attachCanvas = useCallback((el: HTMLCanvasElement | null) => {
+    canvasRef.current = el;
+    setCanvasReady(el !== null);
+  }, []);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [frame, setFrame] = useState<Frame>({ scale: 1, x: 0, y: 0 });
   const [saving, startSave] = useTransition();
@@ -117,6 +126,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
 
   // المعاينة — تُعاد بكلّ سحبةٍ وتكبير، بدقّة الشاشة لا بدقّة CSS (فلا تخرج مشوّشة على الشاشات الحادّة)
   useEffect(() => {
+    const canvas = canvasRef.current;
     if (!canvas || !img) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     canvas.width = VIEW * dpr;
@@ -125,7 +135,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     paint(ctx, img, frame, VIEW);
-  }, [canvas, img, frame, paint]);
+  }, [canvasReady, img, frame, paint]);
 
   /** التكبير حول **وسط المربّع** لا حول ركنه — فيبقى ما تنظر إليه في مكانه. */
   const zoomBy = useCallback((k: number) => {
@@ -145,6 +155,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
   // عجلة الفأرة تكبّر ولا تُمرّر الصفحة — ولذلك تُربَط يدويًّا بـ`passive: false`
   // (React تربط `onWheel` سلبيًّا، فـ`preventDefault` فيها لا يعمل ويُنذر في الطرفيّة).
   useEffect(() => {
+    const canvas = canvasRef.current;
     if (!canvas || !img) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -152,7 +163,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
-  }, [canvas, img, zoomBy]);
+  }, [canvasReady, img, zoomBy]);
 
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -262,7 +273,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
         }
       >
         <canvas
-          ref={setCanvas}
+          ref={attachCanvas}
           className="touch-none cursor-move"
           style={{ width: VIEW, height: VIEW, maxWidth: "100%" }}
           onPointerDown={onDown}

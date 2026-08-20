@@ -1,7 +1,7 @@
 // يُستورَد من مكوّنات خادميّة وحدها — المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
-import { fmtDateOnly } from "@/lib/date";
+import { fmtDateOnly } from "@/lib/dates";
 
 /**
  * قارئُ غرفة المهامّ — **وجهان بقفلٍ واحد**: ما كُلِّفتَ به، وما تُكلّف به لجنتُك.

@@ -32,11 +32,11 @@ export const hasAcademicFields = (degree: string | null | undefined): boolean =>
   !!degree && ACADEMIC_DEGREES.has(degree);
 
 /**
- * صيغة الجوّال السعوديّ — مصدر واحد للطبقات الثلاث: مخطّط النموذج · الفعل الخادميّ · قيد القاعدة
- * (profiles_phone_check و member_details_phone_check). غيّرها هنا ⇐ عدّل القيد بترحيل مقابل.
+ * صيغة الجوّال — **انتقلت إلى `lib/fieldFormats`** وتُعاد من هنا فلا يُكسَر مستورد:
+ * الجوّال يُكتب في أبوابٍ لا علاقة لها بالعضويّة (التسجيل · حجز فعاليّة · إجابة استبيان)،
+ * فلا يليق أن يكون مصدرُه ملفَّ «حقول العضويّة».
  */
-export const PHONE_RE = /^05[0-9]{8}$/;
-export const PHONE_HINT = "رقم جوّال غير صالح. الصيغة: 05xxxxxxxx";
+export { PHONE_RE, PHONE_HINT, PHONE_PREFIX } from "./fieldFormats";
 
 /* ══ أطوال الحقول الرقميّة ═══════════════════════════════════════════════════════
  * الرقمُ الأقصى لكلّ حقلٍ رقميّ — **مصدرٌ واحد يخدم طبقتين**: `maxLength` على المُدخَل
@@ -45,7 +45,7 @@ export const PHONE_HINT = "رقم جوّال غير صالح. الصيغة: 05xx
  *
  * وبلا الحدّ على المُدخَل كان الحقلُ يقبل عشرين رقمًا صامتًا ثمّ يردّها عند الحفظ —
  * والحارسُ الذي يمنع بعد الفعل أسوأ من الذي يمنع قبله. */
-export const PHONE_LEN = 10;
+export { PHONE_LEN } from "./fieldFormats";
 export const NATIONAL_ID_LEN = 10;
 /** الرقم الأكاديميّ يتفاوت بين الجامعات — فحدُّه مدًى لا رقمٌ واحد. */
 export const RECORD_NO_MIN = 6;

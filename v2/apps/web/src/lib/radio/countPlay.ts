@@ -8,8 +8,8 @@
 
 import { createAdeebClient } from "@adeeb/core";
 
-/** نصفُ دقيقةِ سماعٍ: مقدّمةُ البرنامج عشرُ ثوانٍ، فمن بلغها سمع كلامًا لا افتتاحيّة. */
-export const PLAY_THRESHOLD_SECONDS = 30;
+/** عتبةُ الاحتساب — من `@adeeb/core`، يقرؤها الويبُ والجوّالُ سواء. */
+export { PLAY_THRESHOLD_SECONDS } from "@adeeb/core";
 
 /**
  * علامةُ الجهاز — تُولَّد مرّةً وتبقى في متصفّح الزائر.

@@ -3,7 +3,7 @@ import { getElections, getElectionCreateOptions } from "./data";
 import { ElectionsView } from "./ElectionsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /**
  * غرفة الانتخابات — للإدارة والاطّلاع (قفلها `view_election_candidates`).
@@ -25,7 +25,7 @@ export default async function ElectionsPage() {
   if (error) {
     return (
       <>
-        <div className="ash-phead"><div><Breadcrumb /><h1>الانتخابات</h1></div></div>
+        <PageHeader title="الانتخابات" />
         <Alert tone="warning" title="تعذّر جلب الانتخابات">{error}</Alert>
       </>
     );

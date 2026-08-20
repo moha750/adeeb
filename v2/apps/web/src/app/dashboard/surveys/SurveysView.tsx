@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button, Stat, matchesSearch } from "@adeeb/design-system";
 import {
   Archive, ChartBar, ChatCenteredDots, ClipboardText, LinkSimple, PauseCircle, Play, StopCircle } from "@phosphor-icons/react";
@@ -29,7 +28,7 @@ import { ScheduleLine } from "./ScheduleLine";
 import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
 import { SurveyCard } from "./SurveyCard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 import { copyText } from "@/lib/clipboard";
 
 // نغمة سطح الصفّ من الحالة المخزّنة — المتوقّف أصفر. النشط لا يُدرَج هنا لأنّ خضرته مشروطة
@@ -363,13 +362,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الاستبيانات</h1>
-        </div>
-        <Link href="/dashboard/surveys/new" className="abtn abtn-primary abtn-md"><Plus size={18} />استبيان جديد</Link>
-      </div>
+      <PageHeader title="الاستبيانات" primary={{ label: "استبيان جديد", icon: <Plus size={18} />, href: "/dashboard/surveys/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ClipboardText />} value={kept.length} label="إجمالي الاستبيانات" />

@@ -1,24 +1,26 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { createAdeebClient } from "@adeeb/core";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Field, Textarea, Card, CardBody } from "@adeeb/design-system";
 import { At, ChatText, Envelope, TextT, User } from "@phosphor-icons/react";
 import { PencilSimple } from "@/app/_components/glyphs";
+import { TurnstileWidget } from "@/app/_components/Turnstile";
+import { sendContactMessage } from "@/app/_components/contact-actions";
+import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
-export function ContactForm() {
-  const sb = useMemo(
-    () =>
-      createAdeebClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
+// مفتاح Turnstile العامّ — يُدمَج وقت البناء (NEXT_PUBLIC). غيابه (تجربةٌ محليّة بلا إعداد) يُسقط الدرع بلا كسر.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
+export function ContactForm() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  // درع Turnstile — الرمز الحيّ وإشارة إعادة الضبط (الرمز يُستهلك مرّة، فيُجدَّد بعد فشل)
+  const [tsToken, setTsToken] = useState<string | null>(null);
+  const [tsReset, setTsReset] = useState(0);
+  const shieldOn = !!TURNSTILE_SITE_KEY;
+  /** رايةُ الصيغة تُرفع عند مغادرة الحقل أو عند الإرسال — لا وهو يكتب أوّلَ محرف. */
+  const [emailTouched, setEmailTouched] = useState(false);
   const [state, setState] = useState<FormState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -33,26 +35,40 @@ export function ContactForm() {
       setState("error");
       return;
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-      setErrorMsg("يرجى إدخال بريد إلكتروني صحيح.");
+    if (!isEmail(form.email)) {
+      setEmailTouched(true);
+      setErrorMsg(`${EMAIL_HINT}.`);
+      setState("error");
+      return;
+    }
+    // درع Turnstile: لا نُرسل بلا رمزٍ صالح (غالبًا يجهز خفيةً في ثوانٍ)
+    if (shieldOn && !tsToken) {
+      setErrorMsg("جارٍ التأكّد أنّك لست روبوتًا، انتظر لحظةً ثمّ أعد الإرسال.");
       setState("error");
       return;
     }
     setState("submitting");
     setErrorMsg("");
-    const { error } = await sb.from("contact_messages").insert({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      subject: form.subject.trim() || null,
-      message: form.message.trim(),
+    // لا إدراجَ من المتصفّح: الفعلُ الخادميّ يتحقّق من الرمز ثمّ يكتب (contact-actions.ts)
+    const r = await sendContactMessage({
+      name: form.name,
+      email: form.email,
+      subject: form.subject,
+      message: form.message,
+      turnstileToken: tsToken ?? undefined,
     });
-    if (error) {
-      setErrorMsg("تعذّر إرسال الرسالة، حاول لاحقًا.");
+    if (!r.ok) {
+      setErrorMsg(r.message);
       setState("error");
+      // الرمزُ استُهلك في المحاولة الفاشلة، فيُجدَّد قبل الثانية
+      setTsToken(null);
+      setTsReset((n) => n + 1);
       return;
     }
     setState("success");
     setForm({ name: "", email: "", subject: "", message: "" });
+    setTsToken(null);
+    setTsReset((n) => n + 1);
   }
 
   if (state === "success") {
@@ -91,11 +107,16 @@ export function ContactForm() {
               charset="latin"
               value={form.email}
               onChange={set("email")}
+              onBlur={() => setEmailTouched(true)}
+              error={emailError(form.email, emailTouched)}
               required
             />
           </div>
           <Field label="الموضوع" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" value={form.subject} onChange={set("subject")} optional />
           <Textarea label="الرسالة" icon={<ChatText />} innerIcon={<PencilSimple />} placeholder="اكتب هنا…" rows={5} value={form.message} onChange={set("message")} required />
+          {shieldOn ? (
+            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY!} onToken={setTsToken} resetSignal={tsReset} />
+          ) : null}
           {state === "error" && <p className="text-sm font-bold text-danger">{errorMsg}</p>}
           <Button type="submit" size="lg" loading={state === "submitting"}>
             إرسال الرسالة

@@ -27,6 +27,7 @@ import { Skeleton } from "../_components/Skeleton";
 import { useToast } from "../_components/ToastProvider";
 import { Cell } from "../_components/Cell";
 import { positionLine } from "@/lib/positionLabel";
+import { ARABIC_NAME_HINT, arabicNameError } from "@/lib/personName";
 import { Section } from "../_components/Section";
 import { SOCIAL_ICON } from "../_components/socialIcons";
 import { MEMBER_STATUS } from "@/lib/memberStatus";
@@ -36,12 +37,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus, MoveTarget } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
+import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { endMembership, restoreMembership, updateMember } from "./actions";
 // النقل إسنادٌ لا فعلٌ ثانٍ: البابُ نفسه الذي يفتحه تبويب التعيينات (`assign_position`)، وهي
 // تُخلي الموضع القديم وتكتب الجديد في معاملةٍ واحدة. فلا فعلَ خادميّ ثالثٌ يفترق عنهما يومًا.
 import { assignPosition } from "./structure/actions";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 // الحقول الثلاثة التي تلزم صاحب الدرجة الجامعيّة وحده — ويُمنع منها صاحب «ثانوية عامة» و«موظف».
 const ACADEMIC_REQUIRED = [
@@ -53,7 +54,8 @@ const ACADEMIC_REQUIRED = [
 // مخطّط التحقّق من نموذج العضو (Zod) — مصدر واحد للقواعد ولنوع النموذج.
 // النطاق مقصود: القسم والدور يملكهما `assignments/`، والبريد يملكه `credentials/` (هويّة مصادقة) — فلا يُحرَّران هنا.
 const memberSchema = z.object({
-  name: z.string().trim().min(2, "الاسم مطلوب (حرفان على الأقلّ)"),
+  name: z.string().trim().min(2, "الاسم مطلوب (حرفان على الأقلّ)")
+    .refine((v) => !arabicNameError(v), ARABIC_NAME_HINT),
   // **إجباريّ** (قرار المالك ٢٠٢٦-٠٨-٠٤): يُلزَم على بابَي الالتحاق، فلا يُفرَّغ بعدهما — لا من
   // صاحبه في «الملف الشخصي» ولا من المدير هنا. والصيغة تفرضها القاعدة بقيد مقابل (`profiles_phone_check`).
   phone: z.string().trim().min(1, "رقم الجوّال مطلوب").regex(PHONE_RE, PHONE_HINT),
@@ -536,14 +538,9 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   return (
     <>
       {headless ? null : (
-        <div className="ash-phead">
-          <div>
-            {/* الأقسام الثلاثة **أخواتٌ** لا أبناءَ لـ«أعضاء أديب» — بندُ كلٍّ في الخريطة قائمٌ بنفسه.
-                وعنوانُ الورقة من `section` نفسه الذي يقوله العنوان، فلا يفترقان. */}
-            <Breadcrumb leaf={section.title} />
-            <h1>{section.title}</h1>
-          </div>
-        </div>
+        // الأقسام الثلاثة **أخواتٌ** لا أبناءَ لـ«أعضاء أديب»: بندُ كلٍّ في الخريطة قائمٌ
+        // بنفسه، فورقةُ الفتات تُشتقّ منه ولا تُمرَّر — والعنوانُ تحتها يقولها.
+        <PageHeader title={section.title} />
       )}
 
       {lockedStatus === "active" ? (
@@ -673,7 +670,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
 
             <ModalSectionHeading icon={<AddressBook />} title="بيانات التواصل" />
             {/* البريد هويّة مصادقة لا بيان تواصل: يُغيَّر من «بيانات الدخول» حيث يُزامَن مع auth.users — كتابته هنا وحده تفكّ المزامنة */}
-            <Field className="form-full" label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
+            <Field className="form-full" label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={editForm.formState.errors.phone?.message} required {...editForm.register("phone")} />
             <Field className="form-full" label="البريد الإلكترونيّ" type="email" charset="latin" disabled readOnly value={member?.email ?? ""} icon={<Envelope />} innerIcon={<At />} placeholder="you@adeeb.club" helper="يُغيَّر من «بيانات الدخول»." />
 
             {member && member.degreeRaw == null ? (

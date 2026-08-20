@@ -12,7 +12,7 @@ import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
-import { fmtDate, fmtDateOnly } from "@/lib/date";
+import { fmtDate, fmtDateOnly } from "@/lib/dates";
 import { positionLine } from "@/lib/positionLabel";
 import { WARNING_CATEGORIES, categoryLabel, dots, remainingText, toneOf, warningTitle } from "@/lib/warnings/vocab";
 import { downloadWarningLetter } from "@/lib/warnings/letter";

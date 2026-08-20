@@ -1,7 +1,7 @@
 // يُستورَد فقط من مكوّنات خادميّة (page.tsx). المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { fmtDate } from "./format";
+import { fmtDate } from "@/lib/dates";
 import type { AccessType, Choice, QuestionOptions, QuestionType, SurveyStatus } from "./vocab";
 
 /** تاريخ عربيّ مختصر من ISO — الاسم القديم محفوظٌ لمستهلكيه، والتنفيذ من مصدر التنسيق الواحد (`./format`). */

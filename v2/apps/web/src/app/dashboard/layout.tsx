@@ -26,6 +26,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (session && !(await isAdeebMember(session.id))) redirect("/me");
   if (session && !(await hasMemberRecord(session.id))) redirect("/complete");
 
+  // **ومن طلب أن يذهب لا يُترَك يعمل** (٢٠٢٦-٠٨-١٩): الحسابُ في مهلته مجمَّدٌ لا مقفَل —
+  // فيُساق إلى `/me` حيث خبرُ الطلب وبابُ العدول، لا إلى غرفِ العمل. وشرطُه صاحبُ الجلسة
+  // لا الهويّةَ المُعارة: من عاين طالبًا للحذف لم يُحبَس بطلبه.
+  if (session?.deletionRequestedAt) redirect("/me");
+
   // شريط المعاينة — يسبق حتّى بابَ الردّ: لو عاينتَ عضوًا لا لوحةَ له، رأيتَ ردَّه **ومعه مخرجُك**.
   const bar = admin.viewAs ? <ViewAsBar targetName={admin.fullName} realName={admin.viewAs.realName} /> : null;
   if (!admin.isAdmin) return <>{bar}<AccessDenied name={admin.fullName} /></>;

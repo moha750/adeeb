@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BurgerIcon } from "@adeeb/design-system";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { navFor, type NavItem } from "./nav";
@@ -14,9 +13,36 @@ import { DuotoneZone } from "@/app/_components/glyphs";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
+import { MobileSheet, MobileTabs } from "./MobileNav";
 
 // المستخدم الحاليّ — يُمرَّر من تخطيط اللوحة الخادميّ (getCurrentAdmin)
 export type ShellUser = { fullName: string | null; avatar: string | null; gender: "male" | "female" | null };
+
+/* ── طيُّ الشريط: مخزنٌ خارجيٌّ يُقرأ ويُكتَب، لا نسخةٌ منه في حالة ──
+   والنسخةُ في الذاكرة فوقه لأنّ متصفّحًا يمنع التخزين لا ينبغي أن يُبطل الزرّ. */
+const RAIL_KEY = "ash-rail";
+const railListeners = new Set<() => void>();
+let railCache: boolean | null = null;
+
+const railSnapshot = (): boolean =>
+  (railCache ??= (() => {
+    try { return localStorage.getItem(RAIL_KEY) === "1"; } catch { return false; }
+  })());
+const subscribeRail = (cb: () => void) => {
+  railListeners.add(cb);
+  return () => { railListeners.delete(cb); };
+};
+const writeRail = (on: boolean) => {
+  railCache = on;
+  try { localStorage.setItem(RAIL_KEY, on ? "1" : "0"); } catch { /* مُنع التخزين */ }
+  railListeners.forEach((cb) => cb());
+};
+
+/** ترحيبُ الساعة — صباحًا من الرابعة إلى الظهر، وما سواه مساء. */
+function greetNow(): string {
+  const h = new Date().getHours();
+  return h >= 4 && h < 12 ? "صباحُ الخير" : "مساءُ الخير";
+}
 
 function isActive(pathname: string, href?: string) {
   if (!href) return false;
@@ -41,12 +67,13 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
       router.replace("/login");
       router.refresh();
     });
-  const [mobOpen, setMobOpen] = useState(false);
-  // طيّ الشريط إلى ريّل (سطح المكتب) — يُحفظ بين الجلسات
-  const [rail, setRail] = useState(false);
-  useEffect(() => { setRail(localStorage.getItem("ash-rail") === "1"); }, []);
-  const toggleRail = () =>
-    setRail((v) => { const n = !v; localStorage.setItem("ash-rail", n ? "1" : "0"); return n; });
+  // ورقةُ الجوّال الصاعدة — خلَفُ الدُرج الجانبيّ (اعتُمدت المنهجيّة ٢٠٢٦-٠٨-٢٠)
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // طيّ الشريط إلى ريّل (سطح المكتب) — يُحفظ بين الجلسات. **والمخزنُ هو المصدر**
+  // يُقرأ بـ`useSyncExternalStore` لا يُنسَخ في حالةٍ داخل أثر (سابقةُ `lib/useDraft`):
+  // النسخُ كان يرسم اللوحةَ مبسوطةً ثمّ يطويها بعد الترطيب، فيُرى الشريطُ يقفز.
+  const rail = useSyncExternalStore(subscribeRail, railSnapshot, () => false);
+  const toggleRail = () => writeRail(!rail);
 
   // المجموعات المفتوحة — تُفتح تلقائيًا المجموعة الحاوية للمسار النشط
   const initialOpen = useMemo(() => {
@@ -64,15 +91,14 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
       return n;
     });
 
-  // ترحيب حسب الوقت (على العميل لتفادي عدم تطابق الترطيب)
-  const [greet, setGreet] = useState<string | null>(null);
-  useEffect(() => {
-    const d = new Date();
-    setGreet(d.getHours() >= 4 && d.getHours() < 12 ? "صباحُ الخير" : "مساءُ الخير");
-  }, []);
+  // ترحيب حسب الوقت — ساعةُ الجهاز مصدرٌ خارجيّ: لقطةُ الخادم `null` (لا ترحيب) ولقطةُ
+  // المتصفّح ساعتُه، فلا يختلف المرسَلُ عن المرسوم ولا تُنسَخ الساعةُ في حالةٍ داخل أثر.
+  const greet = useSyncExternalStore(() => () => {}, greetNow, () => null);
 
-  // إغلاق الدُرج عند تغيّر المسار
-  useEffect(() => { setMobOpen(false); }, [pathname]);
+  // إغلاق الدُرج عند تغيّر المسار — **في الرسم لا في أثر**: الأثرُ يرسم الصفحةَ الجديدة
+  // والدُرجُ مفتوحٌ عليها رسمةً كاملة ثمّ يُغلقه، فيُرى الدرجُ يومض على الصفحة الجديدة.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) { setLastPath(pathname); setSheetOpen(false); }
 
   // تلاشي طرفَي التنقّل — بديلُ شريط التمرير المخفيّ (الوصفُ في `.ash-nav` بالمكتبة).
   // باتّجاهٍ: يتلاشى الطرفُ الذي **خلفه مزيد** وحده، فلا يبهت رأسُ القائمة بلا سبب.
@@ -95,12 +121,10 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
     return () => { el.removeEventListener("scroll", sync); ro.disconnect(); };
   }, [nav, rail]);
 
-  const cls = ["ash", rail && "rail", mobOpen && "mob-open"].filter(Boolean).join(" ");
+  const cls = ["ash", rail && "rail"].filter(Boolean).join(" ");
 
   return (
     <div className={cls}>
-      <div className="ash-scrim" onClick={() => setMobOpen(false)} />
-
       {/* **الشريطُ منطقةُ duotone** (قرار المالك ٢٠٢٦-٠٨-١٣): كلُّ أيقونةٍ فيه ترجع إلى وزن
           الموقع ولو كان اسمُها في قائمة الاستثناء — الشيفرونُ وصندوقُ الاقتراع وبابُ الخروج
           وزرُّ الطيّ سواءً. والإعلانُ على الحاوية مرّةً، لا خاصّةٌ في بندٍ ولا صنفٌ يُرصَّع. */}
@@ -177,19 +201,8 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
 
       <div className="ash-main">
         <header className="ash-top">
-          {/* البرغر **يقول حالتَه ولا يفتح فقط**: `aria-expanded` هو ما تقرأه أيقونةُ
-              المكتبة (`BurgerIcon`) فتنطبق خطوطُها وتستدير × كبرغر رأس الموقع — حركةٌ
-              واحدةٌ من مصدرٍ واحد. ولذلك صار **مبدّلًا** لا مُطلِقًا: زرٌّ يعلن أنّه
-              مفتوح ثمّ لا يُغلِق تناقضٌ في الوصف قبل أن يكون نقصًا في السلوك. */}
-          <button
-            type="button"
-            className="ash-ham"
-            aria-expanded={mobOpen}
-            aria-label={mobOpen ? "إغلاق القائمة" : "فتح القائمة"}
-            onClick={() => setMobOpen((v) => !v)}
-          >
-            <BurgerIcon />
-          </button>
+          {/* **لا برغرَ هنا** (٢٠٢٦-٠٨-٢٠): كان في أبعد زاويةٍ عن الإبهام، وثلاثةُ خطوطٍ
+              لا تقول ما خلفها. وخلَفُه شريطُ الوجهات في القاع وورقتُه — أسفلَ هذا الملفّ. */}
           {/* الهويّة هي المُطلِق: تنقر «من أنت» فتجد «ما تفعله بحسابك». والشيفرون هو ما يحوّلها من
               صورةٍ إلى أداة — بدونه لا شيء في الشريط يقول إنّ هنا قائمةً تُفتح.
               السلوك كلّه (أسهم · ESC · نقر‑خارج · إرجاع التركيز · ARIA) من `DropdownMenu`. */}
@@ -219,6 +232,15 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         {/* الخريطة المرشَّحة تُحسب هنا مرّةً، وتقرؤها فتاتُ المسار في كلّ صفحة — لا ترشيحَ ثانٍ
             ولا قدراتٌ تُمرَّر عبر عشرات الشاشات */}
         <main className="ash-content"><NavProvider value={nav}>{children}</NavProvider></main>
+      </div>
+
+      {/* ── طبقةُ الجوّال: شريطُ الوجهات وورقتُه ──
+          غلافٌ `display: contents` يُطفَأ فوق 860px (`.ash-mob` بالمكتبة)، فلا يُرسَم
+          على سطح المكتب شيءٌ ولا يُقاس بعرض مكوّنٍ عرضَ نافذة. والشريطُ الجانبيُّ نفسُه
+          هو ما ترفعه الورقة، فلا خريطةَ ثانيةٌ تُصان. */}
+      <div className="ash-mob">
+        <MobileTabs nav={nav} pathname={pathname} sheetOpen={sheetOpen} onOpenAll={() => setSheetOpen(true)} />
+        <MobileSheet nav={nav} pathname={pathname} open={sheetOpen} onClose={() => setSheetOpen(false)} />
       </div>
     </div>
   );

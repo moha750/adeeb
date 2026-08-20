@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdeebServerClient } from "@adeeb/core";
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { readingMinutes, type Category } from "../dashboard/news/vocab";
 
 // عميل قراءة عامّ (مفتاح anon) — يحترم RLS: الزائر لا يرى إلّا المنشور.

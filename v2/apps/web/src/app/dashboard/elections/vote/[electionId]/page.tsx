@@ -1,7 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 import { getBallot } from "../../member-data";
 import { BallotRoom } from "./BallotRoom";
 
@@ -23,7 +23,7 @@ export default async function BallotPage({ params }: { params: Promise<{ electio
   if (!ballot.ok || !ballot.election) {
     return (
       <>
-        <div className="ash-phead"><div><Breadcrumb leaf="بطاقة الاقتراع" /><h1>صوّت الآن</h1></div></div>
+        <PageHeader title="صوّت الآن" crumbLeaf="بطاقة الاقتراع" />
         <Alert tone="warning" title="تعذّر فتح بطاقة الاقتراع">{ballot.error ?? "هذا الاقتراع غير مفتوحٍ لك الآن."}</Alert>
       </>
     );

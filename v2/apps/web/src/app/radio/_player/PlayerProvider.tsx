@@ -1,9 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { PLAY_THRESHOLD_SECONDS, reportPlay } from "@/lib/radio/countPlay";
-import { DEFAULT_MUSIC_LEVEL, MUSIC_LEVEL_KEY } from "../../dashboard/radio/vocab";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { DRIFT_TOLERANCE, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES } from "@adeeb/core";
+import { reportPlay } from "@/lib/radio/countPlay";
+import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
+import { DEFAULT_MUSIC_LEVEL, MUSIC_LEVEL_KEY, SKIP_SECONDS } from "../../dashboard/radio/vocab";
 import { PlayerControls } from "./PlayerControls";
+import { useMediaSession } from "./useMediaSession";
 
 /**
  * مشغّلُ المحطّة — **عنصرا الصوت يعيشان في تخطيط القسم لا في صفحته.**
@@ -63,23 +66,24 @@ export const INLINE_PLAYER = true;
 type Variant = "music" | "plain";
 type Mode = "stems" | "legacy";
 
-/**
- * ما نتسامح به من انزياحٍ بين المسارين قبل أن يُعاد ضبطُ الموسيقى.
- *
- * رُبعُ ثانيةٍ سخيّ عمدًا: السريرُ الموسيقيُّ لا يُوقَّع على كلمات، فانزياحُه
- * دون ذلك لا يُسمَع أصلًا. والضبطُ قفزةٌ صغيرة، فكلّما ندر كان أنظفَ للأذن.
- */
-const DRIFT_TOLERANCE = 0.25;
+
 
 type Api = {
   current: Track | null;
   playing: boolean;
+  /** أتعثّر تحميلُ المسار القائد؟ يقرؤه السطحُ فيقول ذلك بدل أن يصمت. */
+  failed: boolean;
   /**
    * يبدأ حلقةً، أو يقلب التشغيل إن كانت هي العاملة.
    * و`rest` ما يليها في القائمة التي ضُغطت منها — فتنتهي الحلقةُ فتليها أختُها
    * بلا نقرة، وهذا ما يجعل القسمَ محطّةً تُذاع لا صفحةً تُفتح.
+   *
+   * و`at` **منفذُ البدء من موضع**، ومصدرٌ واحدٌ لثلاثة أبواب: محورٌ يُنقَر،
+   * ورابطٌ فيه `?t=`، وتكملةُ ما سُمع. ولولا توحيدُها لاحتاج كلٌّ منها أن يبدأ
+   * ثمّ يثب بعد التحميل، وذاك يُسمِع أوّلَ الحلقة قبل أن يقفز.
+   * و`undefined` تعني «من حيث يقول المخزن»، والصفرُ يعني «من أوّلها» صراحةً.
    */
-  play: (t: Track, rest?: Track[]) => void;
+  play: (t: Track, rest?: Track[], at?: number) => void;
   isCurrent: (id: string) => boolean;
 
   /* ── زمامُ المشغّل: يقرؤه كلُّ سطحٍ يعرض الأدوات ── */
@@ -106,12 +110,51 @@ type Api = {
   setInlineVisible: (v: boolean) => void;
 };
 
+/**
+ * ══ مقبضُ الموسيقى: مخزنٌ خارجيٌّ يُقرأ، لا نسخةٌ منه في حالة ═══════════
+ *
+ * كان يُنسَخ من `localStorage` إلى حالةٍ داخل أثرٍ بعد التركيب، فيُرسَم المشغّلُ
+ * مرّةً بالمقدار الافتراضيّ ثمّ يُعاد رسمُه بمقدار صاحبه (رسمتان، وقفزةُ مقبضٍ
+ * تُرى). وهو ما تردّه قاعدةُ المصرّف `set-state-in-effect`. فصار المخزنُ هو
+ * المصدرَ يُقرأ بـ`useSyncExternalStore` (سابقةُ `lib/useDraft`).
+ *
+ * **والغيابُ يُفحَص قبل التحويل**: `getItem` يردّ `null` لمن لم يضبط شيئًا،
+ * و`Number(null)` صفرٌ صحيحٌ مقبولٌ في المدى — فكان كلُّ زائرٍ جديدٍ يسمع الحلقةَ
+ * بلا موسيقى ولا يدري لماذا. رُصد في المعاينة، ٢٠٢٦-٠٨-١٤.
+ *
+ * **ونسخةٌ في الذاكرة فوق المخزن**: متصفّحٌ يمنع التخزين (تصفّحٌ خاصّ) يجعل
+ * الكتابةَ ترمي، فلولا هذه النسخةُ لعاد المقبضُ إلى مكانه كلّما حُرّك.
+ */
+const levelListeners = new Set<() => void>();
+let levelCache: number | null = null;
+
+const readStoredLevel = (): number => {
+  try {
+    const raw = localStorage.getItem(MUSIC_LEVEL_KEY);
+    if (raw === null) return DEFAULT_MUSIC_LEVEL;
+    const saved = Number(raw);
+    return Number.isFinite(saved) && saved >= 0 && saved <= 1 ? saved : DEFAULT_MUSIC_LEVEL;
+  } catch { return DEFAULT_MUSIC_LEVEL; /* متصفّحٌ يمنع التخزين: يبقى الافتراضيّ */ }
+};
+
+/** لقطةٌ ثابتةٌ بين الكتابتين — قراءةُ المخزن في كلّ رسمةٍ لا داعيَ لها. */
+const levelSnapshot = (): number => (levelCache ??= readStoredLevel());
+const subscribeLevel = (cb: () => void) => {
+  levelListeners.add(cb);
+  return () => { levelListeners.delete(cb); };
+};
+const writeLevel = (level: number) => {
+  levelCache = level;
+  try { localStorage.setItem(MUSIC_LEVEL_KEY, String(level)); } catch { /* مُنع التخزين */ }
+  levelListeners.forEach((cb) => cb());
+};
+
 const Ctx = createContext<Api | null>(null);
 
 /** يقرؤه كلُّ زرِّ تشغيلٍ في القسم. خارج القسم لا مشغّل، فيردّ حالةً خاملة. */
 export function useRadioPlayer(): Api {
   return useContext(Ctx) ?? {
-    current: null, playing: false, play: () => {}, isCurrent: () => false,
+    current: null, playing: false, failed: false, play: () => {}, isCurrent: () => false,
     variant: "music", time: 0, duration: 0, rate: 1, volume: 1, muted: false,
     musicLevel: DEFAULT_MUSIC_LEVEL,
     toggle: () => {}, seek: () => {}, skip: () => {}, cycleRate: () => {},
@@ -120,7 +163,16 @@ export function useRadioPlayer(): Api {
   };
 }
 
-export function RadioPlayerProvider({ children }: { children: React.ReactNode }) {
+export function RadioPlayerProvider({
+  children,
+  stationName,
+  stationLogoUrl,
+}: {
+  children: React.ReactNode;
+  /** اسمُ المحطّة وشعارُها: لا يُرسَمان هنا، بل يُمليان على النظام في شاشة القفل. */
+  stationName: string;
+  stationLogoUrl: string | null;
+}) {
   /**
    * عنصران لا أربعة، ودورُهما يتبدّل بالباب:
    *   بالمسارين: `a` مسارُ الصوت و`b` مسارُ الموسيقى، ويعملان معًا.
@@ -137,9 +189,20 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
   const [rate, setRate] = useState(1);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
-  const [musicLevel, setMusicLevelState] = useState(DEFAULT_MUSIC_LEVEL);
+  // المقبضُ من المخزن لا من حالةٍ تنسخه — والخادمُ لا مخزنَ له فلقطتُه الافتراضيّ
+  const musicLevel = useSyncExternalStore(subscribeLevel, levelSnapshot, () => DEFAULT_MUSIC_LEVEL);
   const [queue, setQueue] = useState<Track[]>([]);
   const [inlineVisible, setInlineVisible] = useState(false);
+  /**
+   * **تعثّرٌ يُقال.** كان عطلُ الصوت صامتًا تمامًا: لا مستمعَ لحدث `error`، وكلُّ
+   * نداءِ `play()` ينتهي بـ`catch` يطفئ العَلَم ولا يقول شيئًا. فلو ردّ المخزنُ
+   * ‏404 (مفتاحٌ استُبدل ولم يُحدَّث صفُّه) أو ‏403، ومض الزرُّ ولم يقع شيءٌ أبدًا،
+   * ولا رسالةَ ولا إعادةَ محاولة — والزائرُ يحكم أنّ الموقع معطوب.
+   *
+   * ويخصّ **المسارَ القائد وحدَه**: تعثّرُ الموسيقى ليس عطلًا (تغيب لحظةً وتعود
+   * في موضعها، وهو قرارٌ قائم)، فإعلانُه يقول عطلًا حيث يُسمَع الحديثُ سليمًا.
+   */
+  const [failed, setFailed] = useState(false);
 
   const mode: Mode = current?.plainUrl && current?.stemUrl ? "stems" : "legacy";
   const srcA = mode === "stems" ? current?.plainUrl : current?.musicUrl;
@@ -157,22 +220,6 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
   const stemEl = useCallback(() => (mode === "stems" ? bRef.current : null), [mode]);
 
   /**
-   * المقبضُ يُحفَظ في المتصفّح: من فضّل موسيقى أخفت لا يعيد ضبطَها كلَّ حلقة.
-   *
-   * **والغيابُ يُفحَص قبل التحويل**: `getItem` يردّ `null` لمن لم يضبط شيئًا،
-   * و`Number(null)` صفرٌ صحيحٌ مقبولٌ في المدى — فكان كلُّ زائرٍ جديدٍ يسمع
-   * الحلقةَ بلا موسيقى ولا يدري لماذا. رُصد في المعاينة، ٢٠٢٦-٠٨-١٤.
-   */
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(MUSIC_LEVEL_KEY);
-      if (raw === null) return;
-      const saved = Number(raw);
-      if (Number.isFinite(saved) && saved >= 0 && saved <= 1) setMusicLevelState(saved);
-    } catch { /* متصفّحٌ يمنع التخزين: يبقى الافتراضيّ */ }
-  }, []);
-
-  /**
    * عدّادُ الاستماع — يُقاس **سماعًا حقيقيًّا لا زمنًا يمرّ**.
    *
    * فلا يُحسَب الوقتُ بالساعة (فمن ترك الصفحة مفتوحةً وهي متوقّفةٌ لم يسمع
@@ -188,6 +235,8 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
   const reported = useRef(false);
   const lastAt = useRef(0);
   const seeking = useRef(false);
+  /** آخرُ موضعٍ كُتب في المخزن، فلا يُكتَب مع كلّ حدث. */
+  const savedAt = useRef(0);
 
   /**
    * المقاديرُ تُضبَط على العنصرين معًا لا على العامل وحده، وإلّا رجع المستمعُ
@@ -206,6 +255,32 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
     if (a) a.volume = volume;
     if (b) b.volume = mode === "stems" ? volume * musicLevel : volume;
   }, [rate, volume, muted, musicLevel, mode, current]);
+
+  /**
+   * **الانتقالُ إلى التالية — مصدرٌ واحدٌ لبابين.**
+   *
+   * تُنادى حين تنتهي الحلقةُ وحدَها، وحين يُضغَط زرُّ «التالية» في شاشة القفل.
+   * وكانت خطواتُها مكتوبةً في `onEnded` وحدَه، فلو نُسخت للزرّ لافترقتا يومًا
+   * (عدّادُ الاستماع خاصّةً: نسيانُ تسليحه يجعل الحلقةَ الثانيةَ تُحسَب بما سُمع
+   * من الأولى).
+   *
+   * وتردّ: أوُجد تالٍ أم انتهى الطابور.
+   */
+  const advance = useCallback((): boolean => {
+    const [next, ...rest] = queue;
+    aRef.current?.pause();
+    bRef.current?.pause();
+    // استماعةٌ انتهت، فما بعدها بدايةٌ جديدة تُحتسَب وحدَها.
+    heard.current = 0; reported.current = false; lastAt.current = 0; savedAt.current = 0;
+    setFailed(false);
+    if (!next) return false;
+    setCurrent(next);
+    setQueue(rest);
+    setLegacyVariant("music");
+    setTime(0);
+    setDuration(next.seconds ?? 0);
+    return true;
+  }, [queue]);
 
   /** الصمتُ لا يُبدأ فيه: من أطفأ الموسيقى والمقدّمةُ لم تنتهِ يُنقَل إلى الكلام. */
   const landing = useCallback(
@@ -244,22 +319,35 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
         s.currentTime = t;
       }
 
+      /* تكملةُ ما سمعت: الموضعُ يُحفَظ كلَّ خمس ثوانٍ لا كلَّ حدث. و`timeupdate`
+         يقع نحوَ أربع مرّاتٍ في الثانية، فالكتابةُ عنده آلافُ نداءاتِ تخزينٍ في
+         حلقةٍ واحدة. وخمسٌ أقصى ما يخسره من أُغلق جهازُه فجأة. */
+      if (current && Math.abs(t - savedAt.current) >= 5) {
+        savedAt.current = t;
+        saveProgress(current.id, t, a.duration || current.seconds || 0);
+      }
+
       setTime(t);
     };
     const onMeta = () => { if (Number.isFinite(a.duration)) setDuration(a.duration); };
     const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    const onEnded = () => {
-      stemEl()?.pause();
-      // انتهت استماعةٌ، فما بعدها بدايةٌ جديدة تُحتسَب وحدَها.
-      heard.current = 0; reported.current = false; lastAt.current = 0;
-      const [next, ...rest] = queue;
-      if (next) { setCurrent(next); setQueue(rest); setLegacyVariant("music"); setTime(0); setDuration(next.seconds ?? 0); return; }
+    // الوقوفُ يحفظ فورًا: هو أشهرُ ما يسبق إغلاقَ التبويب، فلا يُنتظَر به الخمس.
+    const onPause = () => {
       setPlaying(false);
-      setTime(0);
+      if (current) saveProgress(current.id, a.currentTime, a.duration || current.seconds || 0);
+    };
+    // حلقةٌ سُمعت إلى آخرها تبدأ من أوّلها إن عاد إليها، فيُمسَح موضعُها.
+    const onEnded = () => {
+      if (current) clearProgress(current.id);
+      if (!advance()) { setPlaying(false); setTime(0); }
     };
     const onSeeking = () => { seeking.current = true; };
     const onSeeked = () => { lastAt.current = a.currentTime; seeking.current = false; };
+    // العطلُ يُعلَن، والنجاحُ يمحوه: من عادت إليه الشبكةُ لا يبقى أمامه إنذارٌ كاذب.
+    const onError = () => { setFailed(true); setPlaying(false); };
+    const onPlaying = () => setFailed(false);
+    a.addEventListener("error", onError);
+    a.addEventListener("playing", onPlaying);
     a.addEventListener("seeking", onSeeking);
     a.addEventListener("seeked", onSeeked);
     a.addEventListener("timeupdate", onTime);
@@ -269,6 +357,8 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
     a.addEventListener("ended", onEnded);
     onMeta();
     return () => {
+      a.removeEventListener("error", onError);
+      a.removeEventListener("playing", onPlaying);
       a.removeEventListener("seeking", onSeeking);
       a.removeEventListener("seeked", onSeeked);
       a.removeEventListener("timeupdate", onTime);
@@ -277,7 +367,7 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
       a.removeEventListener("pause", onPause);
       a.removeEventListener("ended", onEnded);
     };
-  }, [leadEl, stemEl, variant, current, queue]);
+  }, [leadEl, stemEl, variant, current, advance]);
 
   /**
    * مصالحةُ مسار الموسيقى بالحال — مكانٌ واحدٌ يقرّر أيعمل أم يقف، فلا تتفرّق
@@ -303,24 +393,36 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
     } else if (!b.paused) b.pause();
   }, [playing, musicLevel, mode, current]);
 
-  const play = useCallback((t: Track, rest: Track[] = []) => {
-    // الحلقةُ نفسُها: الزرُّ يقلب التشغيل ولا يعيد من أوّلها.
+  /** الموضعُ الذي تبدأ عنده الحلقةُ القادمة. يُملأ قبل `setCurrent` ويُقرأ بعد التركيب. */
+  const startAt = useRef(0);
+
+  const play = useCallback((t: Track, rest: Track[] = [], at?: number) => {
+    // الحلقةُ نفسُها: إن طُلب موضعٌ وثبت إليه، وإلّا فالزرُّ يقلب التشغيل ولا يعيد من أوّلها.
     if (current?.id === t.id) {
       const a = leadEl();
       if (!a) return;
+      if (at !== undefined) {
+        a.currentTime = at;
+        stemEl() && (stemEl()!.currentTime = at);
+        setTime(at);
+      }
       if (a.paused) void a.play().catch(() => setPlaying(false));
-      else { a.pause(); stemEl()?.pause(); }
+      else if (at === undefined) { a.pause(); stemEl()?.pause(); }
       return;
     }
     aRef.current?.pause();
     bRef.current?.pause();
+    // موضعُ البدء: ما طُلب صراحةً، وإلّا ما حفظه المخزنُ إن استحقّ الاستئناف.
+    const from = at ?? resumeAt(t.id, t.seconds ?? 0);
+    startAt.current = from;
     setCurrent(t);
     setQueue(rest);
     setLegacyVariant("music");
-    setTime(0);
+    setTime(from);
     setDuration(t.seconds ?? 0);
-    // استماعةٌ جديدة تبدأ، فيُسلَّح العدّادُ من جديد.
-    heard.current = 0; reported.current = false; lastAt.current = 0;
+    // استماعةٌ جديدة تبدأ، فيُسلَّح العدّادُ من جديد ويسقط إنذارُ ما قبلها.
+    heard.current = 0; reported.current = false; lastAt.current = from; savedAt.current = from;
+    setFailed(false);
   }, [current, leadEl, stemEl]);
 
   // حلقةٌ جديدة: تُحمَّل ثمّ تبدأ. والتشغيلُ هنا نتيجةُ نقرةِ المستخدم فلا يمنعه المتصفّح.
@@ -328,7 +430,7 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
     if (!current) return;
     const a = aRef.current;
     if (!a) return;
-    a.currentTime = 0;
+    a.currentTime = startAt.current;
     void a.play().catch(() => setPlaying(false));
   }, [current]);
 
@@ -360,8 +462,8 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
    */
   const setMusicLevel = useCallback((v: number) => {
     const level = Math.max(0, Math.min(1, v));
-    setMusicLevelState(level);
-    try { localStorage.setItem(MUSIC_LEVEL_KEY, String(level)); } catch { /* مُنع التخزين */ }
+    // المخزنُ هو المصدر: يُكتَب ثمّ يُنادى قارئوه (فيُعاد الرسمُ بمقدارٍ واحدٍ لا بنسختين)
+    writeLevel(level);
 
     if (level === 0 && mode === "stems") {
       const a = aRef.current;
@@ -405,20 +507,94 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
     setTime(t);
   };
 
-  /** خمسَ عشرةَ ثانية: أكثرُ ما يُحتاج في الحديث المسموع، تكرارُ جملةٍ فاتت أو تخطّي استطراد. */
   const skip = (by: number) => {
     const a = leadEl();
     if (!a) return;
     seek(Math.min(Math.max(a.currentTime + by, 0), duration || a.currentTime));
   };
 
-  /** دورةُ السرعة. الحلقةُ حديثٌ لا موسيقى، فتُسمَع مسرَّعةً بلا أن تفقد معناها. */
-  const RATES = [1, 1.25, 1.5, 2];
-  const cycleRate = () => setRate((r) => RATES[(RATES.indexOf(r) + 1) % RATES.length] ?? 1);
+  const cycleRate = () =>
+    setRate((r) => PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(r as (typeof PLAYBACK_RATES)[number]) + 1) % PLAYBACK_RATES.length] ?? 1);
+
+  /**
+   * **اختصاراتُ لوحة المفاتيح** — لا يملكها سبوتيفاي ولا أبل في الوِب، ويملكها
+   * Pocket Casts فيُعدّ بها مشغّلًا لا مشغّلَ صفحة. وثمنُها مستمعٌ واحد.
+   *
+   * ══ والسهمان مقلوبان عمدًا ══
+   * الزمنُ عندنا يمتلئ **من اليمين** (قرارُ المالك ٢٠٢٦-٠٨-١٨)، فالتقدّمُ يسارًا.
+   * وهو ما يفعله المتصفّحُ نفسُه في `input[type=range]` داخل سياقٍ من اليمين إلى
+   * اليسار: السهمُ الأيسرُ يزيد. فلو جعلنا الأيمنَ تقدّمًا لاختلف الاختصارُ عن
+   * الأداة التي يقف عليها التركيزُ في الصفحة نفسِها.
+   * و`J`/`L` لمن جاء من يوتيوب: حرفان لا اتّجاهَ فيهما فلا يلتبسان.
+   *
+   * ══ ولا تُخطَف مفاتيحُ أحد ══
+   * تُتجاهَل إن كان التركيزُ في حقلٍ أو نصٍّ يُحرَّر، أو مع مُبدِّلٍ مضغوط
+   * (‏`⌘`/`Ctrl`/`Alt`)، أو على عنصرٍ يعمل بالمسافة أصلًا (زرٌّ أو رابط) — وإلّا
+   * صارت المسافةُ تشغّل الحلقةَ بدل أن تضغط الزرَّ الذي تحت إصبعك. ولا تعمل إلّا
+   * وفي المشغّل حلقةٌ فعلًا، فلا يُسرَق مفتاحُ صفحةٍ لم يبدأ فيها صوت.
+   */
+  useEffect(() => {
+    if (!current) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (el?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // زرٌّ أو رابطٌ تحت التركيز: المسافةُ والإدخالُ ملكُه لا ملكُنا.
+      if ((tag === "BUTTON" || tag === "A" || tag === "SUMMARY") && (e.key === " " || e.key === "Enter")) return;
+
+      switch (e.key) {
+        case " ":
+        case "k":
+        case "K":
+          e.preventDefault();
+          toggle();
+          return;
+        case "ArrowLeft":
+        case "l":
+        case "L":
+          e.preventDefault();
+          skip(SKIP_SECONDS);
+          return;
+        case "ArrowRight":
+        case "j":
+        case "J":
+          e.preventDefault();
+          skip(-SKIP_SECONDS);
+          return;
+        case "m":
+        case "M":
+          e.preventDefault();
+          setMuted((v) => !v);
+          return;
+        default:
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, mode, legacyVariant, duration, variant]);
+
+  /**
+   * **ما يقوله الجهازُ عن الحلقة** — شاشةُ القفل ومركزُ التحكّم وأزرارُ
+   * السمّاعة. طبقةٌ فوق الزمام لا فرعٌ منه: تقرأ الحالَ وتنادي الأفعالَ نفسَها
+   * التي تناديها الأزرارُ في الصفحة، فلا يفترق ما في جيبك عمّا في يدك.
+   */
+  useMediaSession({
+    current, playing, time, rate,
+    // زرُّ «التالية» يظهر حين يكون في الطابور تاليةٌ فعلًا، ويغيب فتعود مكانَه
+    // أزرارُ القفز — فلا زرَّ ميّتٌ في شاشة القفل.
+    hasNext: queue.length > 0,
+    // المدّةُ من العنصر إن قرأها، وإلّا فالمحفوظةُ مع الحلقة — فالشريطُ في شاشة
+    // القفل يقول زمنَه الصحيح من أوّل ثانيةٍ لا بعد أن يجهز الملفّ.
+    duration: duration || current?.seconds || 0,
+    stationName, stationLogoUrl,
+    reins: { toggle, seek, skip, next: advance },
+  });
 
   const api = useMemo<Api>(
     () => ({
-      current, playing, play, isCurrent: (id: string) => current?.id === id,
+      current, playing, failed, play, isCurrent: (id: string) => current?.id === id,
       variant, time, duration, rate, volume, muted,
       musicLevel,
       toggle, seek, skip, cycleRate, setVolume, setMuted, setMusicLevel,
@@ -426,7 +602,7 @@ export function RadioPlayerProvider({ children }: { children: React.ReactNode })
       setInlineVisible,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current, playing, play, variant, time, duration, rate, volume, muted, musicLevel, mode],
+    [current, playing, failed, play, variant, time, duration, rate, volume, muted, musicLevel, mode],
   );
 
   return (

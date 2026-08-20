@@ -22,7 +22,11 @@ type Service = ReturnType<typeof createAdeebServiceClient>;
  * يبقى في الهيكلة يقول إنّ فلانًا كان هنا. (يبقى الملفّ والحساب المحظور للمرّة القادمة.)
  */
 export const PREVIEW_EMAIL = "preview@adeeb.local";
-export const PREVIEW_NAME = "شاغل مؤقّت (معاينة)";
+/**
+ * واسمُها بحروفٍ عربيّةٍ محضة بلا قوسٍ ولا رمز: عمودُ الاسم صار مقيَّدًا بالعربيّة
+ * (`profiles_full_name_arabic_check`)، والدُّميةُ تسكن العمودَ نفسَه فتخضع لحكمه.
+ */
+export const PREVIEW_NAME = "شاغل مؤقّت للمعاينة";
 /**
  * رقمٌ محجوز للدُّمية — لا لأنّ لها هاتفًا، بل لأنّ `profiles.phone` صار `NOT NULL`
  * (٢٠٢٦-٠٨-٠٤): الجوّال إجباريّ في القاعدة نفسها لا في التطبيق وحده. وفُضّل رقمٌ اصطلاحيّ
@@ -104,7 +108,7 @@ export async function seatPreview(
 ): Promise<string | null> {
   await vacatePreviewSeats(sb, userId);
   // اسم الدُّمية يحمل منصبها — فيقول شريطُ المعاينة «بأيّ منصبٍ تنظر» بلا استعلامٍ إضافيّ
-  await sb.from("profiles").update({ full_name: `${PREVIEW_NAME}، ${seat.roleAr}` }).eq("id", userId);
+  await sb.from("profiles").update({ full_name: `${PREVIEW_NAME} ${seat.roleAr}` }).eq("id", userId);
   // `role_id` لا يُكتب: تريغر `sync_role_key` يشتقّه من الاسم — والعمود مصيره الحذف (البند ١).
   const { error } = await sb.from("user_roles").insert({
     user_id: userId,

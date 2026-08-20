@@ -11,7 +11,7 @@
  * الخطاب وشهادةُ الخبرة (الخطّ المضمَّن ومِزات المدّ والقياس واللفّ والتنزيل). فهذا الملفّ
  * **تخطيطٌ لا رسّام ولا كاتب**.
  */
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { downloadBlob } from "@/lib/download";
 import {
   elongationRatio, fitSize, openPaper, sealPaper, wrap, FONT, WEIGHTS,

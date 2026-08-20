@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Field, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Alert, Badge, Button, Field, Segmented, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette,
-  Archive, Broadcast, Waveform, SlidersHorizontal } from "@phosphor-icons/react";
+  Archive, Broadcast, Waveform } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass, UploadSimple } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
@@ -23,7 +23,7 @@ import {
   createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow, saveStation,
   createStationLogoUploadUrl, setStationLogo,
 } from "./actions";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 // وصفةُ شعار الإذاعة من قانون المرفقات (`lib/upload`)
@@ -56,8 +56,24 @@ export function RadioView({
   const [formErr, setFormErr] = useState<Partial<Record<keyof FormState, string>>>({});
   const [confirmKill, setConfirmKill] = useState<ShowRow | null>(null);
 
-  // إعدادات المحطّة، وفيها ثانيةُ بدء الحديث التي ترثها كلّ حلقةٍ لم تُصرّح بغيرها.
-  const [stForm, setStForm] = useState<StationForm | null>(null);
+  /**
+   * **تبويبا الغرفة** (٢٠٢٦-٠٨-١٨): «البرامج» و«هويّة المحطّة».
+   *
+   * وسببُهما تناظرٌ كان مكسورًا: صفحةُ البرنامج تعرض حلقاتِه في تبويبٍ وهويّتَه في
+   * تبويبٍ بجواره، وصفحةُ المحطّة كانت تعرض برامجَها جسدًا وتدفن هويّتَها في `⋯`.
+   * فمستويان متناظران يُقرآن اليوم بقاعدةٍ واحدة، والمدفونُ صار مرئيًّا بلا بندٍ
+   * جديدٍ في الشريط الجانبيّ. (عُرضت الاحتمالاتُ الثلاثة في `/ui/radio-structure`
+   * فاختار المالكُ هذا.)
+   */
+  const [tab, setTab] = useState<"shows" | "station">("shows");
+
+  // نسخةُ المحطّة التي تُحرَّر في تبويبها. تبدأ بما جاء من القاعدة لا فارغةً: التبويبُ
+  // سطحٌ قائمٌ لا نافذةٌ تُفتح، فلا لحظةَ «فتحٍ» تملؤه.
+  const [stForm, setStForm] = useState<StationForm>({
+    name: station?.name ?? "",
+    tagline: station?.tagline ?? "",
+    description: station?.description ?? "",
+  });
   const [stErr, setStErr] = useState<Partial<Record<keyof StationForm, string>>>({});
   const stLogoRef = useRef<HTMLInputElement>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -91,19 +107,9 @@ export function RadioView({
     }
   };
 
-  const openStation = () => {
-    if (!station) { toast.error("تعذّر جلب إعدادات المحطّة."); return; }
-    setStForm({
-      name: station.name,
-      tagline: station.tagline ?? "",
-      description: station.description ?? "",
-    });
-    setStErr({});
-  };
   const submitStation = () => {
-    if (!stForm) return;
     const errs: Partial<Record<keyof StationForm, string>> = {};
-    if (!stForm.name.trim()) errs.name = "اسم المحطّة مطلوب.";
+    if (!stForm.name.trim()) errs.name = "اسم الإذاعة مطلوب.";
     setStErr(errs);
     if (Object.keys(errs).length) return;
 
@@ -113,7 +119,7 @@ export function RadioView({
         tagline: stForm.tagline || null,
         description: stForm.description || null,
       });
-      if (r.ok) { toast.success(r.message); setStForm(null); router.refresh(); } else toast.error(r.message);
+      if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
     });
   };
 
@@ -287,54 +293,110 @@ export function RadioView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>إذاعة أدِيب</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={openStation}><SlidersHorizontal size={18} />إعدادات المحطّة</Button>
-          <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />برنامج جديد</Button>
-        </div>
-      </div>
-
-      <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<MicrophoneStage />} value={shows.length} label="إجمالي البرامج" />
-        <Stat icon={<Broadcast />} value={published} label="برامج منشورة" tone="success" />
-        <Stat icon={<Playlist />} value={episodes} label="إجمالي الحلقات" />
-      </div>
-
-      <Toolbar
-        searchPlaceholder="ابحث باسم البرنامج أو معرّفه أو مقدّمه…"
-        search={search} onSearch={setSearch}
-        filters={filters} filterValues={fv}
-        onFilter={(k, v) => setFv((p) => ({ ...p, [k]: v }))} onReset={() => setFv({})}
-        view={view} onViewChange={changeView}
+      <PageHeader
+        title="إذاعة أدِيب"
+        // «برنامج جديد» غايةُ تبويب البرامج وحدَه؛ وحفظُ المحطّة فعلُ تبويبها لا فعلُ الرأس.
+        primary={tab === "shows" ? { label: "برنامج جديد", icon: <Plus size={18} />, onClick: openCreate } : undefined}
       />
 
-      {view === "table" ? (
-        <DataTable
-          columns={columns}
-          rows={pageRows}
-          getRowId={(s) => s.id}
-          sort={sort}
-          onToggleSort={toggleSort}
-          emptyState={emptyState}
-          footer={pager ?? undefined}
-          rowActions={actionsFor}
-          onRowClick={openEditor}
-        />
-      ) : rows.length === 0 ? (
-        <div className="card-empty">{emptyState}</div>
-      ) : (
+      <Segmented
+        items={[
+          { value: "shows", label: `البرامج (${shows.length})` },
+          { value: "station", label: "هويّة الإذاعة" },
+        ]}
+        value={tab}
+        onValueChange={(v) => setTab(v as typeof tab)}
+        aria-label="أقسام الإذاعة"
+        className="seg-block mb-4"
+      />
+
+      {tab === "shows" ? (
         <>
-          <div className="card-grid">
-            {pageRows.map((s) => (
-              <ShowCard key={s.id} show={s} actions={actionsFor(s)} onOpen={() => openEditor(s)} />
-            ))}
-          </div>
-          <div className="card-pager">{pager}</div>
+        <div className="stat-grid" style={{ marginBottom: 18 }}>
+          <Stat icon={<MicrophoneStage />} value={shows.length} label="إجمالي البرامج" />
+          <Stat icon={<Broadcast />} value={published} label="برامج منشورة" tone="success" />
+          <Stat icon={<Playlist />} value={episodes} label="إجمالي الحلقات" />
+        </div>
+
+        <Toolbar
+          searchPlaceholder="ابحث باسم البرنامج أو معرّفه أو مقدّمه…"
+          search={search} onSearch={setSearch}
+          filters={filters} filterValues={fv}
+          onFilter={(k, v) => setFv((p) => ({ ...p, [k]: v }))} onReset={() => setFv({})}
+          view={view} onViewChange={changeView}
+        />
+
+        {view === "table" ? (
+          <DataTable
+            columns={columns}
+            rows={pageRows}
+            getRowId={(s) => s.id}
+            sort={sort}
+            onToggleSort={toggleSort}
+            emptyState={emptyState}
+            footer={pager ?? undefined}
+            rowActions={actionsFor}
+            onRowClick={openEditor}
+          />
+        ) : rows.length === 0 ? (
+          <div className="card-empty">{emptyState}</div>
+        ) : (
+          <>
+            <div className="card-grid">
+              {pageRows.map((s) => (
+                <ShowCard key={s.id} show={s} actions={actionsFor(s)} onOpen={() => openEditor(s)} />
+              ))}
+            </div>
+            <div className="card-pager">{pager}</div>
+          </>
+        )}
         </>
+      ) : !station ? (
+        <Alert tone="warning" title="تعذّر جلب إعدادات الإذاعة">
+          أعِد تحميل الصفحة، فإن بقيت فالمفتاحُ الخادميّ ناقصٌ في البيئة.
+        </Alert>
+      ) : (
+        <div className="form-grid">
+          {/* شعار الإذاعة — نفسُ صندوق شعار البرنامج في تبويب هويّته، فالسطحان يُقرآن بقاعدةٍ واحدة. */}
+          <div className="form-full">
+            <div
+              onDragOver={(ev) => ev.preventDefault()}
+              onDrop={(ev) => { ev.preventDefault(); void onStationLogo(ev.dataTransfer.files?.[0]); }}
+              className="rounded border-2 border-dashed border-line bg-surface-2 p-8 flex flex-col items-center gap-3 text-center"
+            >
+              {station.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={station.logoUrl} alt="شعار الإذاعة" className="h-28 w-28 rounded object-cover" />
+              ) : (
+                <UploadSimple size={30} className="text-content-muted" />
+              )}
+              <div className="text-content-muted text-sm">
+                شعار الإذاعة: مربّعٌ لا يقلّ عن ١٤٠٠×١٤٠٠. اسحبه هنا أو اختره من جهازك.
+              </div>
+              <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
+                <UploadSimple size={18} />{station.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
+              </Button>
+              <input ref={stLogoRef} type="file" accept={LOGO_RULE.accept} hidden
+                onChange={(ev) => { void onStationLogo(ev.target.files?.[0]); ev.target.value = ""; }} />
+            </div>
+          </div>
+
+          <Field className="form-full" label="اسم الإذاعة" icon={<Broadcast />} innerIcon={<PencilSimple />}
+            placeholder="إذاعة أدِيب" value={stForm.name}
+            onChange={(e) => setStForm((f) => ({ ...f, name: e.target.value }))}
+            error={stErr.name} required />
+          <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
+            placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}
+            onChange={(e) => setStForm((f) => ({ ...f, tagline: e.target.value }))} optional />
+          <Textarea className="form-full" label="الوصف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
+            placeholder="وصفٌ يظهر في صدر صفحة الإذاعة…" rows={3} value={stForm.description}
+            onChange={(e) => setStForm((f) => ({ ...f, description: e.target.value }))} optional />
+
+          {/* الحفظُ زرٌّ في ذيل النموذج كنظيره في «الهويّة والمنصّات» بصفحة البرنامج. */}
+          <div className="form-full">
+            <Button variant="primary" size="md" onClick={submitStation} loading={pending}>حفظ بيانات الإذاعة</Button>
+          </div>
+        </div>
       )}
 
       <Modal
@@ -387,58 +449,6 @@ export function RadioView({
               placeholder="وصفٌ يظهر في صفحة البرنامج…" rows={3}
               value={form.state.description} onChange={(e) => patchForm({ description: e.target.value })}
               helper="مطلوبٌ قبل النشر: لا تُنشَر صفحةُ برنامجٍ بلا وصف." optional />
-          </div>
-        ) : null}
-      </Modal>
-
-      <Modal
-        open={stForm !== null}
-        onClose={() => setStForm(null)}
-        title="إعدادات المحطّة"
-        description="تعمّ الإذاعة كلَّها: اسمُها وشعارُها وتعريفُها."
-        busy={pending}
-        size="md"
-        footer={
-          <>
-            <Button variant="ghost" size="md" onClick={() => setStForm(null)} disabled={pending}>إلغاء</Button>
-            <Button variant="primary" size="md" onClick={submitStation} loading={pending}>حفظ</Button>
-          </>
-        }
-      >
-        {stForm ? (
-          <div className="form-grid">
-            <div className="form-full">
-              <div
-                onDragOver={(ev) => ev.preventDefault()}
-                onDrop={(ev) => { ev.preventDefault(); void onStationLogo(ev.dataTransfer.files?.[0]); }}
-                className="rounded border-2 border-dashed border-line bg-surface-2 p-6 flex flex-col items-center gap-3 text-center"
-              >
-                {station?.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={station.logoUrl} alt="شعار الإذاعة" className="h-24 w-24 rounded object-cover" />
-                ) : (
-                  <UploadSimple size={28} className="text-content-muted" />
-                )}
-                <div className="text-content-muted text-sm">
-                  شعار الإذاعة: مربّع ١٤٠٠×١٤٠٠. يظهر في صدر صفحة الإذاعة.
-                </div>
-                <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
-                  <UploadSimple size={18} />{station?.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
-                </Button>
-                <input ref={stLogoRef} type="file" accept={LOGO_RULE.accept} hidden
-                  onChange={(ev) => { void onStationLogo(ev.target.files?.[0]); ev.target.value = ""; }} />
-              </div>
-            </div>
-            <Field className="form-full" label="اسم المحطّة" icon={<Broadcast />} innerIcon={<PencilSimple />}
-              placeholder="إذاعة أدِيب" value={stForm.name}
-              onChange={(e) => setStForm((f) => (f ? { ...f, name: e.target.value } : f))}
-              error={stErr.name} required />
-            <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-              placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}
-              onChange={(e) => setStForm((f) => (f ? { ...f, tagline: e.target.value } : f))} optional />
-            <Textarea className="form-full" label="الوصف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-              placeholder="وصفٌ يظهر في صدر صفحة الإذاعة…" rows={3} value={stForm.description}
-              onChange={(e) => setStForm((f) => (f ? { ...f, description: e.target.value } : f))} optional />
           </div>
         ) : null}
       </Modal>

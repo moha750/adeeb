@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert, Button, FileButton, Radio, Textarea } from "@adeeb/design-system";
 import { Note, Paperclip } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
@@ -178,7 +178,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
 
   return (
     <>
-      <div className="ash-phead"><div><Breadcrumb leaf={isEdit ? "تعديل الترشّح" : "بيان الترشّح"} /><h1>{isEdit ? "تعديل ترشُّحك" : "بيانُ ترشُّحك"}</h1></div></div>
+      <PageHeader title={isEdit ? "تعديل ترشُّحك" : "بيانُ ترشُّحك"} />
 
       <div style={{ display: "grid", gap: 14, maxWidth: 720 }}>
         <Alert tone="info" title="المنصب المتقدَّم له">{ctx.position}</Alert>

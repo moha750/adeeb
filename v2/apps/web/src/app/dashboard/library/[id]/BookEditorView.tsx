@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Modal } from "@adeeb/design-system";
 import { Megaphone, Books, BookmarkSimple } from "@phosphor-icons/react";
 import { UploadSimple } from "@/app/_components/glyphs";
-import { DotsSixVertical, Star, Trash, PencilSimple, EyeSlash, ArrowRight, Eye } from "@/app/_components/glyphs";
+import { DotsSixVertical, Star, Trash, PencilSimple, EyeSlash, Eye } from "@/app/_components/glyphs";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";
@@ -25,7 +24,7 @@ import type { BookHeader, PageEditRow } from "../data";
 import {
   createPageUploadUrl, addPage, renamePage, deletePage, setPageHard, setCoverPage, reorderPages, setBookStatus,
 } from "../actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
 
 // وصفةُ صفحة الكتاب من قانون المرفقات (`lib/upload`)
@@ -220,22 +219,19 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={book.title} />
-          <h1>{book.title}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Badge tone={STATUS_META[status].tone} dot>{STATUS_META[status].label}</Badge>
-          <Button variant="ghost" size="md" onClick={() => setShowPreview(true)} disabled={pages.length === 0}><Eye size={18} />معاينة</Button>
-          <Link href="/dashboard/library" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>
-          {status === "draft" ? (
-            <Button variant="primary" size="md" loading={pending} onClick={() => runStatus("publish")}><Megaphone size={18} />نشر</Button>
-          ) : (
-            <Button variant="ghost" size="md" loading={pending} onClick={() => runStatus("unpublish")}><EyeSlash size={18} />إلغاء النشر</Button>
-          )}
-        </div>
-      </div>
+      {/* حكمُ `/ui/page-header`: يبقى «نشر» وحده فعلًا أساسيًّا، و«إلغاء النشر» إلى `⋯`،
+          و«رجوع» يُحذف لأنّه يكرّر الفتاتَ الذي فوقه بسطر. أمّا «معاينة» فخرجت من الرأس
+          كلِّه إلى أسفل الصفحات — انظر أدناه. */}
+      <PageHeader
+        title={book.title}
+        status={<Badge tone={STATUS_META[status].tone} dot>{STATUS_META[status].label}</Badge>}
+        primary={status === "draft"
+          ? { label: "نشر", icon: <Megaphone size={18} />, loading: pending, onClick: () => runStatus("publish") }
+          : undefined}
+        menu={status === "draft"
+          ? undefined
+          : [{ items: [{ label: "إلغاء النشر", icon: <EyeSlash size={18} />, onSelect: () => runStatus("unpublish") }] }]}
+      />
 
       <div
         onDragOver={(e) => e.preventDefault()}
@@ -264,6 +260,17 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
           </DndContext>
         )}
       </div>
+
+      {/* **«معاينة» فعلٌ على المحتوى لا على الصفحة** — فموضعُها عند ما تُعاينه، لا في رأسٍ
+          فوقه بشاشة (قرار المالك ٢٠٢٦-٠٨-١٦). ولا تُعرَض معطّلةً: بلا ما يُعاين لا وجودَ
+          لها أصلًا (ق٧: الزرُّ لا يَعِد بما لا يملك). */}
+      {pages.length > 0 ? (
+        <div className="mt-4 flex justify-center">
+          <Button variant="ghost" size="md" onClick={() => setShowPreview(true)}>
+            <Eye size={18} />معاينة المنشور
+          </Button>
+        </div>
+      ) : null}
 
       <Modal
         open={rename !== null}

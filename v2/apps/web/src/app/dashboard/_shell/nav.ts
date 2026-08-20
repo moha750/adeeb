@@ -42,10 +42,21 @@ export const NAV: NavGroup[] = [
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
-      // أبواب الانتخابات — كلٌّ فعلٌ للعضو، يظهر حين يصير متاحًا (لا بابَ بلا غرفة).
+    ],
+  },
+  {
+    // **الانتخابات** رأسٌ قائمٌ بنفسه: أبوابُها كانت مبعثرةً — فعلُ العضو في صدر «أنت»
+    // والغرفةُ في «التفاعل» — فجُمعت ههنا في موضعٍ واحد. وموضعُه فوق «العضوية» لأنّ
+    // «صوّت الآن» بابٌ موقوت: يُفتح أيّامًا ثمّ يُغلَق، فلا يُدفَن في ذيل القائمة.
+    // وترتيبُه ترتيبُ الفعل: تترشّح، فيصير لك سجلّ، ثمّ تصوّت، والغرفةُ آخرًا لأهلها.
+    head: "الانتخابات",
+    items: [
+      // أبواب العضو الثلاثة — كلٌّ فعلٌ له، يظهر حين يصير متاحًا (لا بابَ بلا غرفة).
       { label: "الترشُّح", icon: "candidacy", href: "/dashboard/elections/run", election: "canRun" },
       { label: "سِجلّ ترشُّحي", icon: "myruns", href: "/dashboard/elections/my", election: "hasCandidacy" },
       { label: "صوّت الآن", icon: "ballot", href: "/dashboard/elections/vote", election: "canVote" },
+      // غرفةُ الإدارة والاطّلاع — قفلُها `view_election_candidates`، ويتفرّع داخلها المديرُ عن المطّلِع.
+      { label: "إدارة الانتخابات", icon: "vote", href: "/dashboard/elections" },
     ],
   },
   {
@@ -56,6 +67,7 @@ export const NAV: NavGroup[] = [
       { label: "أعضاء سابقون", icon: "suspended", href: "/dashboard/members/suspended" },
       { label: "من أشرف عليهم", icon: "supervise", href: "/dashboard/members/supervised" },
       { label: "الإنذارات", icon: "warn", href: "/dashboard/members/warnings" },
+      { label: "طلبات الخروج", icon: "suspended", href: "/dashboard/members/exits" },
       { label: "شهادات الخبرة", icon: "certificate", href: "/dashboard/members/certificates" },
       { label: "أعياد الميلاد", icon: "cake", href: "/dashboard/members/birthdays" },
       { label: "هيكلة أديب", icon: "tree", href: "/dashboard/members/structure" },
@@ -64,14 +76,27 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    // **متطوّعو أدِيب** رأسٌ قائمٌ بنفسه لا بندان في «التفاعل»: التطوّعُ محطّةٌ في طريق العضويّة
+    // لا فعّاليّةٌ تُقام للناس — ومن ههنا تُهدى العضويّةُ نفسُها. وموضعُه تحت «العضوية» مباشرةً
+    // لأنّه رافدُها: هؤلاء من يصيرون أعضاءً غدًا.
+    head: "متطوّعو أدِيب",
+    items: [
+      { label: "الفرص التطوّعيّة", icon: "handshake", href: "/dashboard/volunteering" },
+      { label: "سجلّ المتطوّعين", icon: "supervise", href: "/dashboard/volunteering/volunteers" },
+    ],
+  },
+  {
     head: "التفاعل",
     items: [
       { label: "الفعاليّات", icon: "cal", href: "/dashboard/events" },
       { label: "الاستبيانات", icon: "clip", href: "/dashboard/surveys" },
-      { label: "الانتخابات", icon: "vote", href: "/dashboard/elections" },
       // رسائل التواصل — تفاعلٌ **وارد**: هذه أخواتُها تدعو الناسَ إلى النادي، وهي تحمل
       // ما يقوله الناسُ للنادي. فمكانُها هنا لا في «المحتوى» (نشرٌ) ولا في «النظام» (إدارة).
       { label: "رسائل التواصل", icon: "inbox", href: "/dashboard/contact" },
+      // «ديبو» جارُ «رسائل التواصل» للعلّة نفسِها: كلاهما يحمل ما يقوله الناسُ للنادي.
+      // والفارقُ أنّ الرسالةَ تُكتب لتُقرأ، والسؤالَ يُلقى على آلةٍ فيُقرأ عندنا **لنعرف
+      // بمَ يُسأل النادي حقًّا** وأين تكذب معرفتُه. غرفةُ اطّلاعٍ لا فعلَ فيها بعد.
+      { label: "ديبو", icon: "deebo", href: "/dashboard/deebo" },
     ],
   },
   {
@@ -84,7 +109,8 @@ export const NAV: NavGroup[] = [
       { label: "الأسئلة الشائعة", icon: "faq", href: "/dashboard/website/faq" },
       { label: "الأخبار", icon: "news", href: "/dashboard/news" },
       { label: "المكتبة", icon: "book", href: "/dashboard/library" },
-      { label: "الإذاعة", icon: "mic", href: "/dashboard/radio" },
+      // «إذاعة أدِيب» باسمها كاملًا بأمر المالك (٢٠٢٦-٠٨-١٨) — كما يقول عنوانُ غرفتها.
+      { label: "إذاعة أدِيب", icon: "mic", href: "/dashboard/radio" },
     ],
   },
   {

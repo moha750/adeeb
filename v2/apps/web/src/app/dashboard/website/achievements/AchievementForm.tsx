@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SectionCard, Field, Switch, matchesSearch } from "@adeeb/design-system";
+import { Button, SaveBar, SectionCard, Field, Switch, matchesSearch } from "@adeeb/design-system";
 import { Hash, Shapes, Sparkle, TextT } from "@phosphor-icons/react";
 import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
@@ -10,7 +10,7 @@ import { STAT_ICONS, STAT_ICON_CATEGORIES, DEFAULT_STAT_ICON, asIconKey, StatIco
 import { formatThousands as fmt } from "@/app/_components/format";
 import type { AchievementEditData } from "./data";
 import { createAchievement, updateAchievement, type AchievementInput } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export function AchievementForm({ item }: { item?: AchievementEditData | null }) {
   const toast = useToast();
@@ -25,7 +25,6 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
   const [iconQuery, setIconQuery] = useState("");
 
   const editing = item != null;
-  const crumbLeaf = editing ? "تحرير" : "إحصائيّة جديدة";
   const countN = Number(count);
   const preview = count !== "" && Number.isInteger(countN) && countN >= 0 ? `${fmt(countN)}${plus ? "+" : ""}` : null;
 
@@ -41,6 +40,16 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
 
   const toInput = (): AchievementInput => ({ label, count: Number(count) || 0, plus, icon });
 
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
+   * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
+   * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
+
   const save = () => {
     startSave(async () => {
       const input = toInput();
@@ -55,16 +64,9 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? `تحرير: ${item.label}` : "إحصائيّة جديدة"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/website/achievements")} disabled={saving}>إلغاء</Button>
-          <Button variant="primary" size="md" loading={saving} onClick={save}>{editing ? "حفظ التغييرات" : "إضافة الإحصائيّة"}</Button>
-        </div>
-      </div>
+      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
+          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
+      <PageHeader title={editing ? `تحرير: ${item.label}` : "إحصائيّة جديدة"} />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Sparkle />} title="الإحصائيّة">
@@ -119,6 +121,12 @@ export function AchievementForm({ item }: { item?: AchievementEditData | null })
           </div>
         </SectionCard>
       </div>
+
+      <SaveBar open={dirty} message={editing ? undefined : "إحصائيّةٌ لم تُضَف بعد"}>
+        <Button variant="primary" size="md" loading={saving} onClick={save}>
+          {editing ? "حفظ التغييرات" : "إضافة الإحصائيّة"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

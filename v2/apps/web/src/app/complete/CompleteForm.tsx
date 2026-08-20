@@ -9,7 +9,7 @@ import {
   User, Phone, Hash, Envelope, At, IdentificationCard, CalendarBlank, Certificate, GraduationCap, Buildings, BookOpen, Books, GenderIntersex, Palette,
   XLogo, InstagramLogo, TiktokLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { PencilSimple } from "@/app/_components/glyphs";
-import { DEGREES, hasAcademicFields, NATIONAL_ID_LEN, PHONE_LEN, RECORD_NO_MAX } from "@/lib/membershipFields";
+import { DEGREES, hasAcademicFields, NATIONAL_ID_LEN, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX } from "@/lib/membershipFields";
 import { completeSchema, emptyComplete, type CompleteInput } from "./vocab";
 import { completeMyRecord } from "./actions";
 
@@ -82,7 +82,7 @@ export function CompleteForm({ prefill }: { prefill: Prefill }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2" label="الاسم الثلاثيّ" icon={<User />} innerIcon={<PencilSimple />} placeholder="الاسم الأوّل واسم الأب واسم العائلة" error={errors.full_name_triple?.message} {...register("full_name_triple")} required />
               <Field label="رقم الهويّة" charset="digits" maxLength={NATIONAL_ID_LEN} icon={<IdentificationCard />} innerIcon={<Hash />} placeholder="١٠ أرقام" error={errors.national_id?.message} {...register("national_id")} required />
-              <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={errors.phone?.message} {...register("phone")} required />
+              <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" error={errors.phone?.message} {...register("phone")} required />
               <Field label="تاريخ الميلاد" type="date" icon={<CalendarBlank />} innerIcon={<CalendarBlank />} placeholder="سنة/شهر/يوم" error={errors.birth_date?.message} {...register("birth_date")} required />
               <Controller
                 name="gender"

@@ -1,5 +1,5 @@
 import { createAdeebServerClient, toLatinDigits } from "@adeeb/core";
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { newsHref } from "@/lib/news/link";
 import { NewsShowcase, type NewsCard } from "./NewsShowcase";
 

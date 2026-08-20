@@ -17,7 +17,7 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, t
 import type { BookRow } from "./data";
 import { KIND_META, KIND_OPTIONS, STATUS_META, slugify, type BookKind } from "./vocab";
 import { createBook, updateBook, setBookStatus, toggleBookFeatured, deleteBook } from "./actions";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 type FormState = { title: string; slug: string; kind: BookKind; summary: string; yearHijri: string; yearGregorian: string };
 const EMPTY_FORM: FormState = { title: "", slug: "", kind: "annual_report", summary: "", yearHijri: "", yearGregorian: "" };
@@ -188,13 +188,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>مكتبة «إرثٌ يُروى»</h1>
-        </div>
-        <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />منشور جديد</Button>
-      </div>
+      <PageHeader title="مكتبة «إرثٌ يُروى»" primary={{ label: "منشور جديد", icon: <Plus size={18} />, onClick: openCreate }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Books />} value={books.length} label="إجمالي المنشورات" />

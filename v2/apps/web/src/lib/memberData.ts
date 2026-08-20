@@ -17,6 +17,7 @@ import {
   socialHandle,
   socialLabelOf,
 } from "./membershipFields";
+import { arabicNameError, normalizeName } from "./personName";
 
 /** حقول العضو القابلة للكتابة. الغائب لا يُمَسّ — فمن لا يملك تحرير الاسم لا يمرّره أصلًا. */
 export type MemberFields = {
@@ -79,9 +80,14 @@ export async function writeMemberData(
   }
 
   // ── التحقّق ──────────────────────────────────────────────────────────────
+  // الاسمُ يُطبَّع قبل وزنه وحفظه: تُنزع الزينةُ والمسافاتُ المتوالية، فما يُخزَّن هو ما يُقاس.
   const wantsName = fields.name !== undefined;
-  const name = clean(fields.name);
+  const name = normalizeName(fields.name ?? "") || null;
   if (wantsName && (!name || name.length < 2)) return { ok: false, message: "الاسم مطلوب (حرفان على الأقلّ)." };
+  // **بالعربيّة وحدها** — والحكم هنا لا في النموذجين: هذا مَعبرُ كلّ تحرير، فيُردّ اللاتينيّ
+  // والرقمُ ولو نُودي الإجراءُ مباشرةً. ووراءه قيدُ `profiles_full_name_arabic_check`.
+  const nameError = wantsName ? arabicNameError(name) : null;
+  if (nameError) return { ok: false, message: `${nameError}.` };
 
   const degree = clean(fields.degree);
   if (degree && !DEGREE_VALUES.includes(degree)) return { ok: false, message: "درجة علمية غير معروفة." };

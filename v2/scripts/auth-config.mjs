@@ -97,6 +97,15 @@ const desired = {
   // عهد القفل — أُبقي لأنّ تغييرَه ههنا وهناك معًا شرطٌ لا يُؤمَن نسيانُه.)
   hook_before_user_created_enabled: true,
   hook_before_user_created_uri: "pg-functions://postgres/public/hook_block_oauth_signup",
+
+  // **الربطُ اليدويّ** — إذنُ `linkIdentity`/`unlinkIdentity`، ونظيرُه في الكود قسمُ «طرق
+  // الدخول» في `dashboard/settings`. وبدونه يردّ GoTrue «Manual linking is disabled» على
+  // كلّ ضغطةِ ربطٍ أو فكّ، فيبدو القسمُ معطوبًا وهو سليم.
+  //
+  // ولا يفتح بابًا جديدًا للدخول: الربطُ **يقع من جلسةٍ حيّة** لصاحب الحساب نفسِه، فهو
+  // يضمّ هويّةً إلى حسابٍ قائمٍ لا يُنشئ حسابًا — وخطّافُ ما‑قبل‑الإنشاء أعلاه على حاله.
+  // وحارسُ «آخرِ طريق» في `settings/actions.ts` يمنع أن يفكّ العضوُ ما يحبس به نفسَه.
+  security_manual_linking_enabled: true,
 };
 
 /**

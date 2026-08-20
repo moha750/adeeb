@@ -8,6 +8,8 @@ import { At, Envelope, Hash, IdentificationBadge, MapPin, Phone, User, UsersThre
 import { PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { GENDER_OPTIONS } from "@/lib/activities";
+import { PHONE_HINT, PHONE_LEN, PHONE_PREFIX, isPhone, phoneError } from "@/lib/fieldFormats";
+import { arabicNameError } from "@/lib/personName";
 import { saveMyData, type MyDataInput } from "./actions";
 import type { MyAccount } from "./data";
 
@@ -15,8 +17,9 @@ const RPC_ERRORS: Record<string, string> = {
   NOT_AUTHENTICATED: "انتهت جلستك. سجّل دخولك من جديد.",
   PROFILE_EXISTS: "بياناتك محفوظةٌ سلفًا. أعِد تحميل الصفحة.",
   NAME_REQUIRED: "الاسم مطلوب.",
-  GENDER_REQUIRED: "اختر فئتك.",
-  PHONE_INVALID: "رقم الجوّال غير صحيح. أدخله هكذا: 05xxxxxxxx.",
+  NAME_NOT_ARABIC: "اكتب الاسم بالحروف العربيّة وحدها.",
+  GENDER_REQUIRED: "حدّد جنسك.",
+  PHONE_INVALID: `${PHONE_HINT}.`,
 };
 const rpcError = (raw: string | null | undefined): string => {
   const code = Object.keys(RPC_ERRORS).find((c) => (raw ?? "").includes(c));
@@ -48,6 +51,10 @@ export function MyData({ me }: { me: MyAccount }) {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof MyDataInput, string>>>({});
+  /** رايةُ الجوّال تُرفع عند مغادرة الحقل أو عند الإرسال — لا وهو يكتب رقمه أوّلَ محرف. */
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  /** ورايةُ الاسم مثلُها: العربيّةُ شرطٌ يُقال عند المغادرة لا عند أوّل محرفٍ يُكتب. */
+  const [nameTouched, setNameTouched] = useState(false);
 
   /* ── عضوٌ: عرضٌ وإحالة ── */
   if (me.isMember) {
@@ -59,7 +66,7 @@ export function MyData({ me }: { me: MyAccount }) {
         <div className="flex flex-col gap-3">
           <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={me.fullName} disabled readOnly />
           <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={me.email} disabled readOnly />
-          <Field label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={me.phone} disabled readOnly />
+          <Field label="رقم الجوّال" type="tel" charset="digits" prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={me.phone} disabled readOnly />
         </div>
       </div>
     );
@@ -69,8 +76,11 @@ export function MyData({ me }: { me: MyAccount }) {
   const create = async () => {
     setErr(null); setOk(null);
     if (!fullName.trim()) { setErr("الاسم مطلوب."); return; }
+    const nameErr = arabicNameError(fullName);
+    if (nameErr) { setNameTouched(true); setErr(`${nameErr}.`); return; }
     if (!phone.trim()) { setErr("رقم الجوّال مطلوب."); return; }
-    if (!gender) { setErr("اختر فئتك."); return; }
+    if (!isPhone(phone)) { setPhoneTouched(true); setErr(`${PHONE_HINT}.`); return; }
+    if (!gender) { setErr("حدّد جنسك."); return; }
     setBusy(true);
     const { error } = await sb.rpc("create_my_account_profile", {
       p_full_name: fullName.trim(),
@@ -88,6 +98,9 @@ export function MyData({ me }: { me: MyAccount }) {
   /* ── صاحبُ حساب: تحريرٌ بفعلٍ خادميّ ── */
   const save = () => {
     setErr(null); setOk(null); setFieldErrors({});
+    const nameErr = arabicNameError(fullName);
+    if (nameErr) { setNameTouched(true); setErr(`${nameErr}.`); return; }
+    if (!isPhone(phone)) { setPhoneTouched(true); setErr(`${PHONE_HINT}.`); return; }
     start(async () => {
       const res = await saveMyData({ fullName, phone, city });
       if (!res.ok) {
@@ -112,7 +125,8 @@ export function MyData({ me }: { me: MyAccount }) {
 
       <Field
         label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ"
-        value={fullName} onChange={(e) => setFullName(e.target.value)} error={fieldErrors.fullName} required
+        value={fullName} onChange={(e) => setFullName(e.target.value)} onBlur={() => setNameTouched(true)}
+        error={fieldErrors.fullName ?? (nameTouched ? arabicNameError(fullName) ?? undefined : undefined)} required
       />
       <Field
         label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />}
@@ -120,12 +134,14 @@ export function MyData({ me }: { me: MyAccount }) {
         helper="بريدُك هو مفتاحُ دخولك، لا يُبدَّل من هنا."
       />
       <Field
-        label="رقم الجوّال" type="tel" charset="digits" icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx"
-        value={phone} onChange={(e) => setPhone(e.target.value)} error={fieldErrors.phone} required
+        label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX}
+        icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx"
+        value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhoneTouched(true)}
+        error={fieldErrors.phone ?? phoneError(phone, phoneTouched)} required
       />
       {!me.hasProfile ? (
         <Select
-          label="الفئة" icon={<UsersThree />} options={GENDER_OPTIONS} value={gender}
+          label="الجنس" icon={<UsersThree />} options={GENDER_OPTIONS} value={gender}
           onValueChange={(v) => setGender(v as "male" | "female")} required
         />
       ) : null}

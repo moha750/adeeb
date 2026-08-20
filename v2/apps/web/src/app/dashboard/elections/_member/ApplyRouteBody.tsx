@@ -1,6 +1,6 @@
 import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { getApplyContext } from "../member-data";
 import { ApplyForm } from "./ApplyForm";
 
@@ -17,7 +17,7 @@ export async function ApplyRouteBody({ electionId }: { electionId: string }) {
   if (!ctx.ok) {
     return (
       <>
-        <div className="ash-phead"><div><Breadcrumb leaf="بيان الترشّح" /><h1>بيانُ ترشُّحك</h1></div></div>
+        <PageHeader title="بيانُ ترشُّحك" />
         <Alert tone="warning" title="تعذّر فتح صفحة الترشّح">{ctx.error ?? "هذا الانتخاب غير متاحٍ للترشّح الآن."}</Alert>
       </>
     );

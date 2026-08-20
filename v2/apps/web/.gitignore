@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ما عدا النسخة النموذجيّة: أسماءٌ وشروحٌ بلا قيمة، وهي التي تُخبر القادمَ بما يلزمه
+!.env.example
 
 # vercel
 .vercel

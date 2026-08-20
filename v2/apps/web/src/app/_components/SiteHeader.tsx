@@ -1,21 +1,15 @@
-"use client";
-
-import { useState } from "react";
 import { Header } from "@adeeb/design-system";
-import { RegistrationClosedModal } from "./RegistrationClosed";
 
 /**
- * رأسُ الموقع كما يلبسه أدِيب — `Header` المكتبة وقد صار فعلُه الأوّل يفتح نافذةً لا ينقل.
+ * رأسُ الموقع كما يلبسه أدِيب — `Header` المكتبة وقد صار فعلُه الأوّل بابًا يُقصد.
  *
- * ولمَ لفافةٌ ولم يُمرَّر الفعلُ في كلّ صفحة؟ لأنّ ما يفعله زرُّ «انضمّ إلينا» قرارٌ واحدٌ للموقع
- * كلِّه — فلو مُرِّر في عشر صفحاتٍ لَتخلّفت واحدةٌ يومَ يُفتح البابُ ثانيةً. وههنا يُبدَّل مرّةً.
+ * ولمَ لفافةٌ ولم تُمرَّر الوِجهةُ في كلّ صفحة؟ لأنّ ما يفعله زرُّ «انضمّ إلينا» قرارٌ واحدٌ
+ * للموقع كلِّه — فلو مُرِّر في عشر صفحاتٍ لَتخلّفت واحدةٌ يومَ يتبدّل. وههنا يُبدَّل مرّةً.
+ *
+ * وكان يفتح نافذة «التسجيل مغلق» منذ نُحر نظامُ التسجيل، فصار يقصد `/join` بقرار المجلس
+ * (١٥ أغسطس ٢٠٢٦): بابُ العضويّة عاد، ومحطّتُه الأولى التطوّع. و`/join` وحدَها تعرف صاحبَها
+ * فتسوق كلًّا إلى منزلته، فيبقى الرأسُ ساكنًا لا يسأل عن جلسة.
  */
 export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "ctaHref" | "onCta">) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Header {...props} onCta={() => setOpen(true)} />
-      <RegistrationClosedModal open={open} onClose={() => setOpen(false)} />
-    </>
-  );
+  return <Header {...props} ctaHref="/join" />;
 }

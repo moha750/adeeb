@@ -230,11 +230,20 @@ export function DataTable<T>({ columns, rows, groups, getRowId, selectable, sele
                   {c.render ? c.render(row, offsets[bi] + i) : <span className="txt">{String((row as Record<string, unknown>)[c.key] ?? "")}</span>}
                 </div>
               ))}
-              {rowActions && (
-                <div className="dt-c dt-check" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu groups={rowActions(row)} triggerClassName="dt-dots" tone={dmTone} />
-                </div>
-              )}
+              {rowActions && (() => {
+                /* صفٌّ لا فعلَ له تبقى خانتُه **خاليةً لا معطَّلة**: الخانةُ تبقى ليستقيم عمودُ
+                   الشبكة، ويسقط المِقبض. وزرٌّ يفتح قائمةً فارغة ضجيجٌ لا خدمة — وهي القاعدةُ
+                   نفسُها التي يقوم عليها `noCopy` في `Cell`. (جلستُك الحاليّة أوّلُ من يستفيد:
+                   إنهاؤها خروجٌ، وله بابُه في رأس اللوحة.) */
+                const acts = rowActions(row);
+                return (
+                  <div className="dt-c dt-check" onClick={(e) => e.stopPropagation()}>
+                    {acts.some((g) => g.items.length > 0)
+                      ? <DropdownMenu groups={acts} triggerClassName="dt-dots" tone={dmTone} />
+                      : null}
+                  </div>
+                );
+              })()}
             </div>
           );
         })}

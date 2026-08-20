@@ -241,9 +241,6 @@
    الدخول وشاشة «لا صلاحية» معًا. أُزيلت الأصناف التسعة `.auth-*` الشاردة معها،
    وفيها شعارٌ مزيّف (حرف «أ» في مربّع) و`#fff` صريحٌ وسطحٌ يعيد كتابة `Card`.) */
 
-/* (تبويب تعيين المناصب: صار مكوّنات هوية — كرت المنصب `.pcard-*` ونافذة الإسناد + جذر `.asg`،
-   كلّها في المكتبة. أُزيلت الخلايا الشاردة `.asg-pos`/`.asg-holder` مع الجدول القديم.) */
-
 /* ============================================================
    إحصائيّات الزوّار — تخطيط الشاشة فقط (.st-*)
    كلّ الرسوم والعدّادات صارت مكوّنات هوية في المكتبة (Segmented · SectionCard · BarList ·
@@ -272,7 +269,6 @@
    تنبيه: لا نجمة تتبعها شرطة مائلة داخل تعليق — تُغلقه باكرًا.
    ============================================================ */
 /* تخطيط النماذج المشترك (بنّاء الاستبيانات · نموذج الفعاليّة) — مصدرٌ واحد لا يُنسَخ لكلّ نموذج. */
-.form-head-actions { display: flex; align-items: center; gap: 10px; }
 .form-build { display: flex; flex-direction: column; gap: 16px; }
 /* أقسام النموذج لوحاتُ SectionCard — جسمها (‎.acard-body‎) يُكدّس محتواه رأسيًّا بفجوة موحّدة. */
 .form-build .acard-body { display: flex; flex-direction: column; gap: 14px; }
@@ -290,7 +286,8 @@
 .svy-choice { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; width: 100%; }
 .svy-choice .aibtn { margin-bottom: 9px; }
 .svy-q-foot { display: flex; justify-content: flex-start; }
-.svy-add { display: flex; justify-content: center; }
+/* صفُّ ذيل الأسئلة: «إضافة سؤال» و«معاينة» — زرّان فيلزمه فجوة (ولا يلتفّ فيلتصقان) */
+.svy-add { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
 /* نتائج الاستبيان */
 .svy-r-list { display: flex; flex-direction: column; gap: 16px; }

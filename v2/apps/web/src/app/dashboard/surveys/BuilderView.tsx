@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, SectionCard, Field, IconButton, Select, Switch, Textarea } from "@adeeb/design-system";
+import { Alert, Button, SaveBar, SectionCard, Field, IconButton, Select, Switch, Textarea } from "@adeeb/design-system";
 import {
   CalendarBlank, ChatCircleText, ChatText, CheckSquare, ClipboardText, Clock, CopySimple, Gear,
   HandWaving, Hash, LockSimple, Sparkle, TextT,
@@ -20,7 +20,7 @@ import {
 import { createSurvey, updateSurvey, type QuestionInput, type SurveyInput } from "./actions";
 import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /** سؤال قيد التحرير — مفتاح React ثابت مستقلّ عن id القاعدة (الجديد بلا id بعد). */
 type QuestionDraft = {
@@ -104,7 +104,6 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
   const [confirmRemove, setConfirmRemove] = useState<QuestionDraft | null>(null);
 
   const editing = survey != null;
-  const crumbLeaf = editing ? "تحرير" : "استبيان جديد";
   // النشر المباشر يتطلّب سؤالًا واحدًا بنصّ (حارس النشر نفسه) — وإلّا فزرّ «نشر» معطّل بتلميح، لا يَعِد بما لا يملك
   const canPublish = questions.some((q) => q.text.trim().length > 0);
   const [showPreview, setShowPreview] = useState(false);
@@ -188,6 +187,17 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
     })),
   });
 
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد، فيلزمه جوابٌ صادق. والمقارنةُ
+   * بلَقطةِ `toInput()` نفسِها التي تُرسَل: فما لا يُرسَل لا يُعدّ تغييرًا (ترتيبُ الأسئلة
+   * ونصوصُها تُرسَل، ومفاتيحُ React المؤقّتة لا). والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً
+   * ولا تُحدَّث: الشاشةُ تُغادَر بعد الحفظ. **ولا `useRef`** — قراءةُ `ref.current` أثناء
+   * الرسم يردّها `react-hooks/refs` خطأً.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
+
   const save = (publish: boolean) => {
     setPendingAction(publish ? "publish" : "draft");
     startSave(async () => {
@@ -208,24 +218,20 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? `تحرير: ${survey.title}` : "استبيان جديد"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => setShowPreview(true)} disabled={!canPublish} title={canPublish ? undefined : "أضِف سؤالًا لتعاين"}><Eye size={18} /> معاينة</Button>
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/surveys")} disabled={saving}>إلغاء</Button>
-          {editing ? (
-            <Button variant="primary" size="md" loading={saving} onClick={() => save(false)}>حفظ التغييرات</Button>
-          ) : (
-            <>
-              <Button variant="neutral" size="md" loading={saving && pendingAction === "draft"} disabled={saving && pendingAction === "publish"} onClick={() => save(false)}>حفظ كمسودّة</Button>
-              <Button variant="primary" size="md" loading={saving && pendingAction === "publish"} disabled={!canPublish || (saving && pendingAction === "draft")} title={canPublish ? undefined : "أضِف سؤالًا واحدًا على الأقلّ لتنشر"} onClick={() => save(true)}>نشر</Button>
-            </>
-          )}
-        </div>
-      </div>
+      {/* أثقلُ الرؤوس كان: أربعةُ أزرارٍ نصّيّةٍ متقاربةِ الوزن لا يُعرف أيُّها المقصود.
+          فحكمَ `/ui/page-header`: يبقى «نشر» وحدَه فعلًا أساسيًّا، و«إلغاء» يسقط (يكرّر
+          الفتات)، و«حفظُ» المسودّة ينزل إلى الشريط اللاصق، و«معاينة» تخرج من الرأس
+          كلِّه إلى ذيل الأسئلة — انظر أدناه.
+          والشاشةُ المحرِّرة لا فعلَ رأسٍ لها أصلًا: كلُّ ما فيها التزامٌ. */}
+      <PageHeader
+        title={editing ? `تحرير: ${survey.title}` : "استبيان جديد"}
+        primary={editing ? undefined : {
+          label: "نشر",
+          loading: saving && pendingAction === "publish",
+          disabled: !canPublish || (saving && pendingAction === "draft"),
+          onClick: () => save(true),
+        }}
+      />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Gear />} title="إعدادات الاستبيان">
@@ -329,10 +335,18 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
             ))}
           </div>
 
+          {/* **«معاينة» فعلٌ على المحتوى لا على الصفحة** — فموضعُها عند ما تُعاينه، لا في رأسٍ
+              فوقه بشاشة (قرار المالك ٢٠٢٦-٠٨-١٦). ولا تُعرَض معطّلةً: بلا ما يُعاين لا وجودَ
+              لها أصلًا (ق٧: الزرُّ لا يَعِد بما لا يملك). */}
           <div className="svy-add">
             <Button variant="ghost" size="md" onClick={() => setQuestions((qs) => [...qs, blankQuestion()])}>
               <Plus size={18} />إضافة سؤال
             </Button>
+            {canPublish ? (
+              <Button variant="ghost" size="md" onClick={() => setShowPreview(true)}>
+                <Eye size={18} />معاينة الاستبيان
+              </Button>
+            ) : null}
           </div>
         </SectionCard>
       </div>
@@ -354,6 +368,20 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
       {showPreview ? (
         <SurveyPreview survey={previewSurvey} questions={previewQuestions} onClose={() => setShowPreview(false)} />
       ) : null}
+
+      {/* الشريطُ اللاصق يحمل فعلَ الالتزام: «حفظ التغييرات» في التحرير، و«حفظ كمسودّة»
+          في الجديد (وأخوه «نشر» في الرأس، فهو غايةُ الشاشة لا التزامُها). */}
+      <SaveBar open={dirty} message={editing ? undefined : "استبيانٌ لم يُحفَظ بعد"}>
+        <Button
+          variant={editing ? "primary" : "neutral"}
+          size="md"
+          loading={saving && pendingAction === "draft"}
+          disabled={saving && pendingAction === "publish"}
+          onClick={() => save(false)}
+        >
+          {editing ? "حفظ التغييرات" : "حفظ كمسودّة"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

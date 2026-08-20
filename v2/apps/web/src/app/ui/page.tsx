@@ -8,7 +8,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "هيكل الصفحة",
-    pages: [["header", "رأس الموقع"], ["footer", "تذييل الموقع"]],
+    pages: [["header", "رأس الموقع"], ["footer", "تذييل الموقع"], ["nav-mobile", "تنقّل اللوحة على الجوّال"]],
   },
   {
     title: "الإدخال",
@@ -20,16 +20,16 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
       ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["loading", "شاشة التحميل"], ["empty", "الحالة الفارغة"],
       ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["medal", "الوسام"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
-      ["membership", "بطاقة العضويّة"], ["result-card", "بطاقة نتيجة الانتخاب"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"],
+      ["membership", "بطاقة العضويّة"], ["result-card", "بطاقة نتيجة الانتخاب"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"], ["account-deletion", "الخروج من أديب لكلّ دور"],
     ],
   },
   {
     title: "التفاعل والتنبيه",
-    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["cursor", "مؤشّر الفأرة"]],
+    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["cursor", "مؤشّر الفأرة"], ["deebo-bubble", "فقاعة محادثة ديبو"]],
   },
   {
     title: "البيانات",
-    pages: [["table", "جدول البيانات"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["structure", "شجرة الهيكلة"]],
+    pages: [["table", "جدول البيانات"], ["cards-view", "عرض الكروت للجداول"], ["matrix", "المصفوفة والقائمة"], ["toolbar", "شريط الأدوات"], ["pagination", "الترقيم"], ["charts", "المخطّطات"], ["structure", "شجرة الهيكلة"]],
   },
 ];
 

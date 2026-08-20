@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Heart } from "@phosphor-icons/react";
 import { createAdeebClient } from "@adeeb/core";
 
@@ -23,12 +23,19 @@ function likedSet(): Set<string> {
 
 export function LikeEpisode({ episodeId, initial }: { episodeId: string; initial: number }) {
   const [count, setCount] = useState(initial);
-  const [liked, setLiked] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // تُقرأ بعد التركيب لا في أوّله: `localStorage` لا وجودَ له على الخادم،
-  // ولو قرأناها في الرندر لاختلف ما يُرسَل عمّا يُرسَم فتصرخ الترطيب.
-  useEffect(() => { setLiked(likedSet().has(episodeId)); }, [episodeId]);
+  // المخزنُ يُقرأ بـ`useSyncExternalStore` لا بحالةٍ في أثر (سابقةُ `lib/useDraft`):
+  // `localStorage` لا وجودَ له على الخادم، فلقطتُه هناك «لم يُعجَب»؛ ولو قرأناه في الرسم
+  // لاختلف ما يُرسَل عمّا يُرسَم فتصرخ الترطيب، ولو نُسخ في أثرٍ لرُسم القلبُ فارغًا ثمّ امتلأ.
+  const stored = useSyncExternalStore(
+    () => () => {},
+    () => likedSet().has(episodeId),
+    () => false,
+  );
+  // ما ضغطه الزائرُ الآن يسبق المخزن: الواجهةُ لا تنتظر الشبكة، و`null` تعني «لا ضغطةَ بعدُ»
+  const [pressed, setPressed] = useState<boolean | null>(null);
+  const liked = pressed ?? stored;
 
   const toggle = async () => {
     if (busy) return;
@@ -36,7 +43,7 @@ export function LikeEpisode({ episodeId, initial }: { episodeId: string; initial
     const up = !liked;
 
     // الواجهةُ تسبق الشبكة فلا ينتظر الضاغطُ، وتُردّ إن فشل النداء.
-    setLiked(up);
+    setPressed(up);
     setCount((c) => Math.max(0, c + (up ? 1 : -1)));
 
     try {
@@ -52,7 +59,8 @@ export function LikeEpisode({ episodeId, initial }: { episodeId: string; initial
       if (up) set.add(episodeId); else set.delete(episodeId);
       localStorage.setItem(KEY, JSON.stringify([...set]));
     } catch {
-      setLiked(!up);
+      // ردٌّ إلى ما في المخزن: لم يُكتَب شيءٌ فيه، فالحقيقةُ عنده لا عندنا
+      setPressed(null);
       setCount((c) => Math.max(0, c + (up ? -1 : 1)));
     } finally {
       setBusy(false);

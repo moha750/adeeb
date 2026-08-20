@@ -3,6 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getSessionAdmin } from "@/lib/auth";
 import { hasAcademicFields, socialHandle, SOCIAL_KEYS } from "@/lib/membershipFields";
+import { normalizeName } from "@/lib/personName";
 import { completeSchema, type CompleteInput } from "./vocab";
 
 export type CompleteResult = { ok: boolean; message: string; fieldErrors?: Partial<Record<keyof CompleteInput, string>> };
@@ -58,7 +59,7 @@ export async function completeMyRecord(raw: CompleteInput): Promise<CompleteResu
   const { error: mdError } = await sb.from("member_details").upsert(
     {
       user_id: me.id,
-      full_name_triple: v.full_name_triple,
+      full_name_triple: normalizeName(v.full_name_triple),
       national_id: v.national_id,
       birth_date: v.birth_date,
       academic_degree: v.academic_degree,

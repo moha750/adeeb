@@ -79,6 +79,9 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
   if (!survey) notFound();
 
   const { data: { user } } = await session.auth.getUser();
+  // مكوّنٌ **خادميّ** غيرُ متزامن: يجري مرّةً لكلّ طلبٍ ولا يُعاد رسمُه، فلا معنى لقاعدة
+  // نقاء الرسم هنا (لا خطّافات ولا حالة). والساعةُ لازمةٌ لنافذة الاستبيان الزمنيّة.
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const closedMsg = survey.closed_message ?? null;
 

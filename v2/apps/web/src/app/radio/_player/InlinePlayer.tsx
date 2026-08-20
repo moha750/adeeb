@@ -14,7 +14,7 @@ import { INLINE_PLAYER, useRadioPlayer, type Track } from "./PlayerProvider";
  * ويعود إن غاب (تمريرٌ إلى التفريغ أو مغادرةُ الصفحة). فالشريطُ خلَفٌ لا أصل:
  * لا يظهر إلّا حين يغيب أصلُه فعلًا، ولا يزاحم الصفحةَ إلّا حين يلزم.
  */
-export function InlinePlayer({ track, rest = [] }: { track: Track; rest?: Track[] }) {
+export function InlinePlayer({ track, rest = [], startAt = 0 }: { track: Track; rest?: Track[]; startAt?: number }) {
   const { setInlineVisible } = useRadioPlayer();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -36,7 +36,7 @@ export function InlinePlayer({ track, rest = [] }: { track: Track; rest?: Track[
 
   return (
     <div ref={ref} className="radp">
-      <PlayerControls compact={false} track={track} rest={rest} />
+      <PlayerControls compact={false} track={track} rest={rest} startAt={startAt} />
     </div>
   );
 }

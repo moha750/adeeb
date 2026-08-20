@@ -5,7 +5,7 @@
 // يتفاوت ارتفاع الكروت/الصفوف. مصدرٌ واحد يخدم ذيلَ الكرت وعمودَ التوقيت في الجدول.
 import { useEffect, useState } from "react";
 import { CalendarBlank } from "@phosphor-icons/react";
-import { fmtDayMonth as shortDate, fmtDateAndTime as fullDate } from "./format";
+import { fmtDayMonth as shortDate, fmtDateAndTime as fullDate } from "@/lib/dates";
 import type { SurveyRow } from "./data";
 
 // أرقامٌ لاتينيّة (كبقيّة تواريخ اللوحة)، والصياغة العربيّة تضبط المثنّى/الجمع تلقائيًّا

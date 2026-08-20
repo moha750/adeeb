@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SectionCard, Field, Textarea } from "@adeeb/design-system";
+import { Button, SaveBar, SectionCard, Field, Textarea } from "@adeeb/design-system";
 import { ChatText, TextT } from "@phosphor-icons/react";
 import { PencilSimple, Question } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { FaqEditData } from "./data";
 import { createFaq, updateFaq, type FaqInput } from "./actions";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
   const toast = useToast();
@@ -19,9 +19,18 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
   const [answer, setAnswer] = useState(faq?.answer ?? "");
 
   const editing = faq != null;
-  const crumbLeaf = editing ? "تحرير" : "سؤال جديد";
 
   const toInput = (): FaqInput => ({ question, answer });
+
+  /**
+   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
+   * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
+   * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
+   */
+  const snapshot = JSON.stringify(toInput());
+  const [origin] = useState(snapshot);
+  const dirty = snapshot !== origin;
 
   const save = () => {
     startSave(async () => {
@@ -37,16 +46,9 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={crumbLeaf} />
-          <h1>{editing ? "تحرير السؤال" : "سؤال جديد"}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Button variant="ghost" size="md" onClick={() => router.push("/dashboard/website/faq")} disabled={saving}>إلغاء</Button>
-          <Button variant="primary" size="md" loading={saving} onClick={save}>{editing ? "حفظ التغييرات" : "إضافة السؤال"}</Button>
-        </div>
-      </div>
+      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
+          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
+      <PageHeader title={editing ? "تحرير السؤال" : "سؤال جديد"} />
 
       <div className="form-build">
         <SectionCard headerVariant="chip" icon={<Question />} title="السؤال والإجابة">
@@ -56,6 +58,12 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
           </div>
         </SectionCard>
       </div>
+
+      <SaveBar open={dirty} message={editing ? undefined : "سؤالٌ لم يُضَف بعد"}>
+        <Button variant="primary" size="md" loading={saving} onClick={save}>
+          {editing ? "حفظ التغييرات" : "إضافة السؤال"}
+        </Button>
+      </SaveBar>
     </>
   );
 }

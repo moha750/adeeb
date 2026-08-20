@@ -88,7 +88,6 @@ export function VisitTracker() {
 
     const seconds = () => Math.min(MAX_SECONDS, Math.floor((Date.now() - view.started) / 1000));
     let timer: ReturnType<typeof setInterval> | undefined;
-    let starter: ReturnType<typeof setTimeout> | undefined;
 
     const begin = async () => {
       let userId: string | null = null;
@@ -144,7 +143,7 @@ export function VisitTracker() {
     // **تأخيرٌ قصيرٌ قبل التسجيل**: في تنقّل العميل يتغيّر المسارُ قبل أن يضع Next عنوانَ الصفحة،
     // فتُسجَّل الزيارةُ بعنوان الصفحة السابقة (رأيتُها في الاختبار). ويُلغي هذا التأخيرُ أيضًا
     // تسجيلَ صفحةٍ عبَرها الزائرُ في أقلّ من جزءٍ من الثانية.
-    starter = setTimeout(() => { void begin(); }, 400);
+    const starter = setTimeout(() => { void begin(); }, 400);
 
     /**
      * الخاتمة — تُرسَل **منارةً** (`sendBeacon`): هي الوسيلةُ المصمَّمة للنجاة من هدم الصفحة، وتصلح
@@ -196,7 +195,7 @@ export function VisitTracker() {
     return () => {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", endOnUnload);
-      if (starter) clearTimeout(starter);
+      clearTimeout(starter);
       if (timer) clearInterval(timer);
       end(); // التنقّل داخل الموقع خاتمةٌ كإغلاق التبويب
     };

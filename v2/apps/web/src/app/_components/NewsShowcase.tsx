@@ -30,8 +30,11 @@ const Meta = ({ n }: { n: NewsCard }) => (
 export function NewsShowcase({ items }: { items: NewsCard[] }) {
   const n = items.length;
   const [cur, setCur] = useState(0);
+  // مرآةُ الخبر الحاضر لمؤقّت التبديل: هو مربوطٌ مرّةً عند التركيب فلا يرى الحالةَ الجارية.
+  // **وتُحدَّث بعد الرسم لا فيه**: الكتابةُ في مرجعٍ أثناء الرسم تكسر نقاءه (قاعدةُ `refs`)،
+  // وما بعد التثبيت يسبق أوّلَ دقّةٍ للمؤقّت (خمسُ ثوانٍ) وأوّلَ نقرةٍ دائمًا.
   const curRef = useRef(0);
-  curRef.current = cur;
+  useEffect(() => { curRef.current = cur; });
 
   const l0 = useRef<HTMLDivElement>(null);
   const l1 = useRef<HTMLDivElement>(null);

@@ -3,10 +3,9 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
+import { EMAIL_HINT, isEmail } from "@/lib/fieldFormats";
 
 export type CredResult = { ok: boolean; message: string };
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * تغيير بريد و/أو كلمة مرور عضو — خادميّ حصرًا عبر مفتاح الخدمة (Auth Admin API).
@@ -39,7 +38,7 @@ export async function updateCredentials(input: {
 
   if (!userId) return { ok: false, message: "لم يُحدَّد العضو." };
   if (!email && !password) return { ok: false, message: "أدخِل بريدًا جديدًا أو كلمة مرور جديدة." };
-  if (email && !EMAIL_RE.test(email)) return { ok: false, message: "البريد الإلكترونيّ غير صالح." };
+  if (email && !isEmail(email)) return { ok: false, message: `${EMAIL_HINT}.` };
   if (password && password.length < 8) return { ok: false, message: "كلمة المرور يجب ألّا تقلّ عن ٨ محارف." };
 
   const sb = createAdeebServiceClient(url, key);

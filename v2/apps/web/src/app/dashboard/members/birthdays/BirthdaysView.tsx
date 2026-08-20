@@ -12,7 +12,7 @@ import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
 import type { BirthdayRow } from "./data";
 import { prewarmBirthdayCard, saveBirthdayCard } from "./card";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
@@ -201,16 +201,11 @@ export function BirthdaysView({
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>أعياد الميلاد</h1>
-        </div>
-        {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا */}
-        {scope === "supervised" && (
-          <Badge tone="info" variant="soft" icon={<UsersFour />}>مواليد من تشرف عليهم</Badge>
-        )}
-      </div>
+      {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا. وموضعُه سطرُ الفتات: حالٌ لا فعل. */}
+      <PageHeader
+        title="أعياد الميلاد"
+        status={scope === "supervised" ? <Badge tone="info" variant="soft" icon={<UsersFour />}>مواليد من تشرف عليهم</Badge> : undefined}
+      />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Cake />} value={stats.todayCount} label="ميلاد اليوم" tone={stats.todayCount > 0 ? "success" : "brand"} />

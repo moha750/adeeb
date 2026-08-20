@@ -8,7 +8,6 @@ import { LatestNews } from "./_components/LatestNews";
 import { FaqSection } from "./_components/FaqSection";
 import { ContactForm } from "./_components/ContactForm";
 import { SiteHeader } from "./_components/SiteHeader";
-import { JoinCta } from "./_components/RegistrationClosed";
 
 // يُعاد توليد الصفحة كل 60 ثانية بأحدث البيانات من Supabase (ISR)
 export const revalidate = 60;
@@ -112,7 +111,8 @@ export default function Home() {
                 انضمّ إلى نادٍ يحتفي بالكلمة ويصنع المبدعين.
               </p>
               <div className="mt-6 flex justify-center">
-                <JoinCta className="abtn abtn-inverse abtn-lg">سجّل عضويتك</JoinCta>
+                {/* بابُ العضويّة الواحد `/join` — يعرف صاحبَه فيسوقه إلى منزلته */}
+                <Link href="/join" className="abtn abtn-inverse abtn-lg">سجّل عضويتك</Link>
               </div>
             </Reveal>
           </Container>

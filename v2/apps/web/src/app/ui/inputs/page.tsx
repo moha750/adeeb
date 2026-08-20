@@ -7,6 +7,7 @@ import {
   PaintBucket, Phone, User,
 } from "@phosphor-icons/react";
 import { MagnifyingGlass, PencilSimple, Prohibit } from "@/app/_components/glyphs";
+import { PHONE_HINT, PHONE_LEN, PHONE_PREFIX } from "@/lib/fieldFormats";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -69,6 +70,16 @@ export default function InputsPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="كلمة المرور" type="password" dir="ltr" icon={<Lock />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-2026" autoComplete="new-password" required helper="اضغط العين لعرضها ثمّ لإغلاقها." />
               <Field label="تأكيد كلمة المرور" type="password" dir="ltr" icon={<LockKey />} innerIcon={<Key />} placeholder="••••••••" defaultValue="adeeb-202" autoComplete="new-password" required error="الكلمتان غير متطابقتين." />
+            </div>
+          </section>
+
+          <section>
+            <Label>لصيقة ثابتة (prefix): تُقرأ ولا تُحرَّر، ولا تدخل القيمة</Label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" required helper="المحفوظ عشرةُ أرقامٍ تبدأ بـ05؛ واللصيقة تقول البلد وحدها." />
+              <Field label="رقم الجوّال (ممتلئ)" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" defaultValue="0512345678" />
+              <Field label="رقم الجوّال (خطأ)" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" defaultValue="05123" error={PHONE_HINT} />
+              <Field label="رقم الجوّال (معطّل)" type="tel" charset="digits" prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" defaultValue="0512345678" disabled readOnly />
             </div>
           </section>
 

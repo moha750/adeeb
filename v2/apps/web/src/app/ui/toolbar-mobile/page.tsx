@@ -67,10 +67,6 @@ function Frame({ tag, tone, children }: { tag: string; tone: "bad" | "good"; chi
 export default function ToolbarMobileLab() {
   const [w, setW] = useState("390");
 
-  const [s1, setS1] = useState("");
-  const [f1, setF1] = useState<Record<string, string>>({ dept: "media" });
-  const [v1, setV1] = useState<ViewMode>("table");
-
   const [s2, setS2] = useState("");
   const [f2, setF2] = useState<Record<string, string>>({ dept: "media" });
   const [v2, setV2] = useState<ViewMode>("table");

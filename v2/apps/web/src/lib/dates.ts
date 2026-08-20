@@ -22,7 +22,7 @@ function parts(d: Date): { day: number; month: number; year: number; hour: strin
 }
 
 /** تاريخٌ بلا ساعة — للوقائع الماضية (قُدّم · اعتُمد · أُنشئ). */
-export const fmtDate = (iso: string | null): string => {
+export const fmtDate = (iso: string | null | undefined): string => {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -30,13 +30,36 @@ export const fmtDate = (iso: string | null): string => {
   return `${p.day} ${MONTHS[p.month - 1]} ${p.year}`;
 };
 
+/**
+ * «١٦ يناير ٢٠٢٦» من عمود **`date`** (بلا وقت) — ولا يمرّ بـ`Date` عمدًا:
+ * `new Date("2026-01-16")` يُفسَّر منتصفَ ليلٍ **بتوقيت غرينتش**، ثمّ تُقرأ أجزاؤه بمنطقةٍ
+ * أخرى فينقص التاريخ يومًا. والشطرُ النصّيّ يُنجيه من ذلك: يومٌ بلا وقتٍ لا منطقةَ له أصلًا.
+ * (نُقل من `lib/date.ts` يوم أُعدم في ٢٠٢٦-٠٨-١٦، وهو الوحيد فيه الذي كان سليمًا.)
+ */
+export const fmtDateOnly = (iso: string | null | undefined): string => {
+  const [y, m, d] = (iso ?? "").split("-").map(Number);
+  return y && m && d ? `${d} ${MONTHS[m - 1]} ${y}` : "";
+};
+
 /** يومٌ وشهرٌ بلا سنة — لخانةٍ ضيّقةٍ في كرت، والسنةُ معلومةٌ من سياقها فلا تُزاحم. */
-export const fmtDayMonth = (iso: string | null): string => {
+export const fmtDayMonth = (iso: string | null | undefined): string => {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const p = parts(d);
   return `${p.day} ${MONTHS[p.month - 1]}`;
+};
+
+/**
+ * «١٥ أغسطس ٢٠٢٦، ١٤:٣٠» — حين تلزم الساعةُ بأربعٍ وعشرين (تلميحاتُ مواعيد الاستبيانات).
+ * وهي غيرُ `fmtStamp` عمدًا: تلك اثنتا عشرةَ بصباحٍ ومساءٍ لعرضِ العضو، وهذه لسطرٍ إداريٍّ مضغوط.
+ * (نُقلت من `lib/date.ts` في ٢٠٢٦-٠٨-١٦ وكانت تقرأ **ساعة الجهاز** فتكذب على الخادم.)
+ */
+export const fmtDateAndTime = (iso: string | null | undefined): string => {
+  const day = fmtDate(iso);
+  if (!day) return "";
+  const p = parts(new Date(iso as string));
+  return `${day}، ${p.hour}:${p.minute}`;
 };
 
 /** شهرٌ وسنةٌ بلا يوم — اسمُ الدورة الانتخابيّة («أغسطس 2026»)، فاليومُ لا يميّز دورةً عن دورة. */
@@ -101,4 +124,43 @@ export const fromClubInput = (local: string): string | null => {
   const second = offsetMs(new Date(ts));
   if (second !== first) ts = guess - second;
   return new Date(ts).toISOString();
+};
+
+/* ══ «منذ متى» : زمنٌ نسبيٌّ لقارئٍ يريد الفارق لا التاريخ ══════════════════════ */
+
+/**
+ * «الآن» · «منذ ٤ دقائق» · «منذ ساعتين» · «منذ ٣ أيّام» — ثمّ يستسلم للتاريخ الكامل بعد أسبوع.
+ *
+ * **ويُحسَب على الخادم مرّةً ويُمرَّر نصًّا** (كسائر ما في `data.ts`): لو حُسب في المتصفّح
+ * لاختلف عمّا رسمه الخادمُ لحظةَ الترطيب، والفرقُ ثانيةٌ واحدةٌ تكفي ليصير «الآن» «منذ دقيقة».
+ * فهو صادقٌ عند الرسم، ويشيخ إلى أن تُحدَّث الصفحة — وذلك مقبولٌ في سطرٍ يقول «آخر نشاط».
+ *
+ * والصيغةُ عربيّةٌ بمثنّاها وجمعِ قلّتها: «دقيقتان» لا «٢ دقائق»، و«٣ أيّام» لا «٣ يوم».
+ */
+const UNITS: [seconds: number, one: string, two: string, few: string, many: string][] = [
+  [60, "دقيقة", "دقيقتين", "دقائق", "دقيقة"],
+  [3600, "ساعة", "ساعتين", "ساعات", "ساعة"],
+  [86400, "يوم", "يومين", "أيّام", "يومًا"],
+];
+
+export const fmtSince = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+
+  const secs = Math.floor((Date.now() - then.getTime()) / 1000);
+  if (secs < 0 || secs < 60) return "الآن";
+  // ما جاوز الأسبوعَ لا يُقاس بالأيّام: «منذ ٤١ يومًا» أثقلُ على القارئ من «١٦ يناير ٢٠٢٦»
+  if (secs >= 604800) return fmtDate(iso);
+
+  // أكبرُ وحدةٍ تُعطي عددًا ≥ ١ — تُقرأ من الأعلى فتقع على «يوم» قبل «ساعة» قبل «دقيقة»
+  for (let i = UNITS.length - 1; i >= 0; i--) {
+    const [size, one, two, few, many] = UNITS[i];
+    const n = Math.floor(secs / size);
+    if (n < 1) continue;
+    if (n === 1) return `منذ ${one}`;
+    if (n === 2) return `منذ ${two}`;
+    return n <= 10 ? `منذ ${n} ${few}` : `منذ ${n} ${many}`;
+  }
+  return "الآن";
 };

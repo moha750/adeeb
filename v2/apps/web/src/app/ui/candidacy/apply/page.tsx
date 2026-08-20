@@ -26,7 +26,7 @@ export default function ApplyLab() {
   return (
     <main className="py-16">
       <Container className="max-w-3xl">
-        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Apply Page · Lab</p>
+        <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Apply Page, Lab</p>
         <h1 className="mt-1 font-display text-4xl font-black text-content">معاينة صفحة إكمال الترشّح</h1>
         <p className="mt-2 max-w-xl text-content-muted">
           الصفحةُ التي يصلها العضو بعد بوّابة الشروط (جديد) أو من «سِجلّ ترشُّحي» (تعديل). الإرسالُ والرجوع <b className="text-content">محاكاة</b>، وإرسالُ الجديد يفتح <b className="text-content">نافذة النجاح</b> بوجهتيها. بدّل الحالة.

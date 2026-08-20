@@ -19,8 +19,8 @@ import { useToast } from "../_components/ToastProvider";
 import { useUnsavedGuard } from "../_components/useUnsavedGuard";
 import { color } from "@adeeb/design-system/tokens";
 import {
-  DEGREES, DEGREE_VALUES, PHONE_HINT, PHONE_RE, SOCIAL_KEYS, hasAcademicFields, socialHandle, socialLabelOf,
-  RECORD_NO_MAX,
+  DEGREES, DEGREE_VALUES, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, PHONE_RE, SOCIAL_KEYS, hasAcademicFields, socialHandle,
+  socialLabelOf, RECORD_NO_MAX,
 } from "@/lib/membershipFields";
 import { AvatarEditor } from "./AvatarEditor";
 import { updateMyProfile } from "./actions";
@@ -201,6 +201,8 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                   label="رقم الجوّال"
                   type="tel"
                   charset="digits"
+                  maxLength={PHONE_LEN}
+                  prefix={PHONE_PREFIX}
                   icon={<Phone />}
                   innerIcon={<Hash />}
                   placeholder="05xxxxxxxx"

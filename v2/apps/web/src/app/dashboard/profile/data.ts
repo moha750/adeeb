@@ -5,7 +5,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
-import { fmtDateOnly } from "@/lib/date";
+import { fmtDateOnly } from "@/lib/dates";
 import type { SocialKey } from "@/lib/membershipFields";
 
 export type MyProfile = {

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Prohibit } from "@/app/_components/glyphs";
 import { ConfirmDialog } from "../../../_components/ConfirmDialog";
 import { useToast } from "../../../_components/ToastProvider";
-import { Breadcrumb } from "../../../_shell/Breadcrumb";
+import { PageHeader } from "../../../_components/PageHeader";
 import { CandidacyJourney } from "../../_member/CandidacyJourney";
 import { useElectionApi } from "../../actions-context";
 import type { CandidacyJourney as CJ } from "../../member-data";
@@ -28,7 +28,7 @@ export function CandidacyDetailView({ c }: { c: CJ }) {
 
   return (
     <>
-      <div className="ash-phead"><div><Breadcrumb leaf={c.position} /><h1>{c.position}</h1></div></div>
+      <PageHeader title={c.position} />
 
       <CandidacyJourney
         c={c}

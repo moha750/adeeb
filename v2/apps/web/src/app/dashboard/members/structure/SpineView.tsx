@@ -12,6 +12,18 @@ const Caret = ({ on }: { on: boolean }) => (
   <svg className={"spn-caret" + (on ? " on" : "")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 4l-5 4 5 4" /></svg>
 );
 
+// رأسُ المجموعة يُعرَّف **خارج** الشاشة: مكوّنٌ يُخلَق في كلّ رسمةٍ نوعٌ جديد في عين React،
+// فتُهدَم شجرتُه وتُبنى من جديد (يضيع التركيز والصورة تُعاد جلبًا) — وهو ما تصيح به قاعدةُ
+// المصرِّف `static-components`. ولا يحتاج من الشاشة شيئًا: كلُّ ما يعرضه في خواصّه.
+const Head = ({ c, tail }: { c: CouncilBody; tail: string }) => (
+  <div className="spn-head">
+    <Avatar name={c.head?.name} gender={c.head?.gender} size="sm" />
+    <span className="spn-title">{c.name}</span>
+    <span className="spn-sub">، {c.head ? c.head.name : "الرئاسة شاغرة"}</span>
+    <span className="spn-cnt">{tail}</span>
+  </div>
+);
+
 export function SpineView({ model }: { model: StructureModel }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggle = (id: string) => setCollapsed((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -41,15 +53,6 @@ export function SpineView({ model }: { model: StructureModel }) {
       </div>
     );
   };
-
-  const Head = ({ c, tail }: { c: CouncilBody; tail: string }) => (
-    <div className="spn-head">
-      <Avatar name={c.head?.name} gender={c.head?.gender} size="sm" />
-      <span className="spn-title">{c.name}</span>
-      <span className="spn-sub">، {c.head ? c.head.name : "الرئاسة شاغرة"}</span>
-      <span className="spn-cnt">{tail}</span>
-    </div>
-  );
 
   return (
     <div className="spn">

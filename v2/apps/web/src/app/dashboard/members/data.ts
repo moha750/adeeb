@@ -4,7 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { formatDegree } from "./vocab";
 import { roleRank } from "@/lib/roleOrder";
-import { fmtDateOnly } from "@/lib/date";
+import { fmtDateOnly } from "@/lib/dates";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 
 import { getCurrentAdmin } from "@/lib/auth";

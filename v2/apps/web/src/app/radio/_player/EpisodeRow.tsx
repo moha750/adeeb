@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Badge, countPhrase } from "@adeeb/design-system";
-import { episodeLabel, formatDuration } from "../../dashboard/radio/vocab";
+import { episodeLabel, formatDuration, PLAYS_UNIT } from "../../dashboard/radio/vocab";
 import { useRadioPlayer, type Track } from "./PlayerProvider";
 
 /**
@@ -14,8 +14,6 @@ import { useRadioPlayer, type Track } from "./PlayerProvider";
  * ويبقى فيه أثرُ المشغّل شاهدًا لا زمامًا: شارةُ «يُذاع الآن» على الحلقة
  * العاملة، فيعرف القارئُ أين هو ممّا يسمع.
  */
-/** تصريفُ «استماعة» عربيًّا من مصدر المكتبة، فلا يُخترع تصريفٌ ثانٍ. */
-export const PLAYS_UNIT = { one: "استماعة", two: "استماعتان", few: "استماعات" };
 
 export function EpisodeRow({
   track, number, dateLabel, summary, showName, plays = 0,

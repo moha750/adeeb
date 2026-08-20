@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert, Button } from "@adeeb/design-system";
 import { Scales } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 import { TermsGate } from "../_member/TermsGate";
 import { OpportunityCard } from "../_member/OpportunityCard";
 import { Countdown } from "../_member/Countdown";
@@ -16,9 +16,7 @@ export function RunView({ items, error }: { items: RunItem[]; error: string | nu
 
   return (
     <>
-      <div className="ash-phead">
-        <div><Breadcrumb /><h1>الترشُّح</h1></div>
-      </div>
+      <PageHeader title="الترشُّح" />
 
       {error ? <Alert tone="warning" title="تعذّر جلب الانتخابات">{error}</Alert> : null}
       {!error && items.length === 0 ? (

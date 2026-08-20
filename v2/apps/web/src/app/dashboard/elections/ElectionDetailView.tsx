@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useTransition, type ReactNode } from "react";
-import Link from "next/link";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Field, FileButton, ModalSectionHeading, Radio, Select, Stat, Textarea, Modal } from "@adeeb/design-system";
 import { CalendarBlank, ClockCounterClockwise, Clock, FileArrowDown, FileDashed, HandTap, ImageSquare, Megaphone, Note, Paperclip, Play, Quotes, Scales, StopCircle, UserPlus, UsersThree } from "@phosphor-icons/react";
 import { ArrowUUpLeft } from "@/app/_components/glyphs";
-import { ArrowRight } from "@/app/_components/glyphs";
 import { PencilSimple, Prohibit, CheckCircle } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";
@@ -21,7 +19,7 @@ import type { ElectionResult } from "./actions";
 import { useElectionApi } from "./actions-context";
 import { byGender, CANDIDATE_CARD_TONE, CANDIDATE_STATUS_META, decisionLine } from "./vocab";
 import { StatusBadge } from "./StatusBadge";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 import { fromClubInput, toClubInput } from "@/lib/dates";
 import { firstAndLastOf } from "@/lib/personName";
 import { tallyLine, type ResultCard } from "@/lib/elections/resultCard";
@@ -326,16 +324,8 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={election.roleLabel} />
-          <h1>{election.positionLabel}</h1>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <StatusBadge status={s} stalled={stalled} />
-          <Link href="/dashboard/elections" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>
-        </div>
-      </div>
+      {/* و«رجوع» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر (حكمُ `/ui/page-header`) */}
+      <PageHeader title={election.positionLabel} status={<StatusBadge status={s} stalled={stalled} />} />
 
       {s === "completed" && election.winnerName ? (
         <Alert tone="success" title="اكتمل الانتخاب">

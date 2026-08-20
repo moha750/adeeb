@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { Trash } from "@/app/_components/glyphs";
 import { arCountdown } from "@/lib/duration";
-import { fmtDateAndTime, fmtDayMonth } from "./format";
+import { fmtDateAndTime, fmtDayMonth } from "@/lib/dates";
 import type { SurveyRow } from "./data";
 
 /** ساعةٌ عميليّة تبدأ بعد التركيب (0 على الخادم/أوّل رندر فلا عدّاد حتى يتّسق التمييه)، ثمّ تنبض كلّ دقيقة. */

@@ -13,9 +13,15 @@
  * ما يُفحص: `apps/web/src` و`packages/design-system/src` (كلّ .ts/.tsx)، وكلُّ ورقة CSS
  * في الموقع والمكتبة (`content:` وحدها — النقطةُ فيها تُرسَم على الشاشة).
  * وما لا يُفحص: **التعليقات** — توثيقٌ لا يراه أحد، وفيه تُقرأ النقطةُ فاصلًا مريحًا.
+ * ولا **ملفّاتُ الاختبار** (`*.test.ts` و`__tests__/`): اسمُ الاختبار وصفٌ للمطوّر لا نصٌّ
+ * يقع عليه بصرُ عضو، والقاعدةُ إنّما تحرس ما يراه المستخدم (٢٠٢٦-٠٨-١٦).
  *
  * أداةُ الفحص تفهم القوالب `` `…${كود}…` `` فلا تخلط `||` البرمجيّ بالشريط المرئيّ،
  * ولا تعدّ نوعًا مثل `"a" | "b"` مخالفة: الشريطُ لا يُدان إلّا وجارُه حرفٌ عربيّ.
+ *
+ * وتفهم كذلك **التعبير النمطيّ** `/…/` فلا يُدان بدلُه: في ٢٠٢٦-٠٨-١٦ أوقف الحارسُ البناءَ
+ * كلَّه بسبب `(أد[ِي]?يب|Adeeb)` في `StatsView` — شريطٌ جارُه حرفٌ عربيّ، لكنّه بدلٌ في تعبيرٍ
+ * نمطيّ لا يُرسَم على شاشةٍ قطّ. والتعبيرُ كودٌ كالتعليق، فيُتخطّى مثلَه.
  *
  * التشغيل: `pnpm check` (أو `node scripts/no-separators.mjs`)، ويخرج بـ1 عند أيّ مخالفة.
  */
@@ -28,10 +34,12 @@ const CODE = ["apps/web/src", "packages/design-system/src"];
 const SHEETS = ["apps/web/src", "packages/design-system"];
 const AR = /[؀-ۿݐ-ݿ]/;
 
+const IS_TEST = /(^|[\\/])__tests__[\\/]|\.test\.tsx?$|\.spec\.tsx?$/;
+
 function walk(dir, ext) {
   const out = [];
   for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === ".next") continue;
+    if (name === "node_modules" || name === ".next" || name === "__tests__") continue;
     const p = join(dir, name);
     if (statSync(p).isDirectory()) out.push(...walk(p, ext));
     else if (ext.test(p)) out.push(p);
@@ -43,19 +51,58 @@ function walk(dir, ext) {
  * يعلّم كلّ حرفٍ في الملفّ: `c` تعليق · `s` نصٌّ حرفيّ · `n` كودٌ أو نصُّ JSX.
  * يفتح `${` داخل القالب على حالة الكود ويغلقها بقوسها، فلا يُعَدّ ما فيه نصًّا.
  */
+const RE_BEFORE = new Set(["", "=", "(", ",", "[", "{", ";", ":", "!", "&", "|", "?", "+", "-", "*", "%", "~", "^", "}", ">", "\n"]);
+const RE_WORDS = new Set(["return", "typeof", "case", "in", "of", "do", "else", "yield", "await", "delete", "void", "instanceof", "new"]);
+
+/** أهذا `/` فاتحةُ تعبيرٍ نمطيّ أم قسمة؟ يُحسم بما قبله: بعد قيمةٍ قسمةٌ، وبعد مُعامِلٍ تعبير. */
+function opensRegex(src, i, prevSig, prevWord) {
+  if (RE_BEFORE.has(prevSig)) return true;
+  return RE_WORDS.has(prevWord);
+}
+
+/** يقرأ التعبيرَ النمطيَّ من فاتحته إلى خاتمته براياته، ويردّ موضعَ ما بعده (أو ‎-1 إن لم يُغلَق). */
+function readRegex(src, i) {
+  let j = i + 1, inClass = false;
+  while (j < src.length) {
+    const e = src[j];
+    if (e === "\\") { j += 2; continue; }
+    if (e === "\n") return -1;
+    if (e === "[") inClass = true;
+    else if (e === "]") inClass = false;
+    else if (e === "/" && !inClass) {
+      j++;
+      while (j < src.length && /[a-z]/i.test(src[j])) j++;
+      return j;
+    }
+    j++;
+  }
+  return -1;
+}
+
 function classify(src) {
   const st = new Array(src.length).fill("n");
   const stack = [];
   let mode = "n", i = 0, depth = 0;
+  let prevSig = "", prevWord = "";
   while (i < src.length) {
     const c = src[i], d = src[i + 1];
     if (mode === "n") {
       if (c === "/" && d === "/") { st[i] = st[i + 1] = "c"; i += 2; mode = "line"; continue; }
       if (c === "/" && d === "*") { st[i] = st[i + 1] = "c"; i += 2; mode = "block"; continue; }
+      if (c === "/" && opensRegex(src, i, prevSig, prevWord)) {
+        const end = readRegex(src, i);
+        // التعبيرُ النمطيُّ كودٌ لا يُرسَم، فيُعلَّم تعليقًا ويُتخطّى بدلُه `|` وحرفُه `·`
+        if (end > 0) { for (let k = i; k < end; k++) st[k] = "c"; prevSig = "/"; prevWord = ""; i = end; continue; }
+      }
       if (c === "'" || c === '"' || c === "`") { st[i] = "s"; mode = c === "`" ? "tpl" : c === "'" ? "sq" : "dq"; i++; continue; }
       if (c === "}" && stack.length && depth === 0) { st[i] = "s"; mode = stack.pop(); i++; continue; }
       if (stack.length) { if (c === "{") depth++; else if (c === "}") depth--; }
-      st[i] = "n"; i++; continue;
+      st[i] = "n";
+      if (!/\s/.test(c)) {
+        prevSig = c;
+        prevWord = /[A-Za-z_$]/.test(c) ? prevWord + c : "";
+      } else if (c === "\n") prevWord = "";
+      i++; continue;
     }
     if (mode === "line") { st[i] = "c"; if (c === "\n") mode = "n"; i++; continue; }
     if (mode === "block") { st[i] = "c"; if (c === "*" && d === "/") { st[i + 1] = "c"; i += 2; mode = "n"; } else i++; continue; }
@@ -72,6 +119,7 @@ const problems = [];
 
 for (const d of CODE) {
   for (const file of walk(join(ROOT, d), /\.tsx?$/)) {
+    if (IS_TEST.test(file)) continue;
     const src = readFileSync(file, "utf8");
     if (!src.includes("·") && !src.includes("|")) continue;
     const st = classify(src);

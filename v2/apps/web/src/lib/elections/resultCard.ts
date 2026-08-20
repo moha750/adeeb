@@ -14,7 +14,7 @@
  */
 import { shareOrDownloadBlob, type SaveResult } from "@/lib/download";
 import { fmtDate } from "@/lib/dates";
-import { openBlank, sealPaper, fitSize, loadTemplate, svgToDataUrl, WEIGHTS, type PageSize, type Piece } from "@/lib/paper";
+import { openBlank, sealPaper, fitSize, elongationRatio, loadTemplate, svgToDataUrl, WEIGHTS, type PageSize, type Piece } from "@/lib/paper";
 
 export type ResultCard = {
   /** المقعد كاملًا: «قائد لجنة الإعلام». */
@@ -56,11 +56,11 @@ const MAXW = 860;
  * وهذا صاحبُه» — فلا يُفصَل طرفاها بخلاءٍ يجعلهما خبرين.
  */
 const LINES = {
-  eyebrow: { y: 372, size: 34, weight: WEIGHTS.body, color: INK.faint, min: 34 },
-  position: { y: 496, size: 58, weight: WEIGHTS.bold, color: INK.soft, min: 38 },
-  winner: { y: 614, size: 104, weight: WEIGHTS.bold, color: INK.strong, min: 56 },
-  tally: { y: 772, size: 44, weight: WEIGHTS.body, color: INK.soft, min: 30 },
-  date: { y: 940, size: 30, weight: WEIGHTS.body, color: INK.faint, min: 30 },
+  eyebrow: { y: 372, size: 34, weight: WEIGHTS.body, color: INK.faint, min: 26 },
+  position: { y: 496, size: 58, weight: WEIGHTS.bold, color: INK.soft, min: 30 },
+  winner: { y: 614, size: 104, weight: WEIGHTS.bold, color: INK.strong, min: 42 },
+  tally: { y: 772, size: 44, weight: WEIGHTS.body, color: INK.soft, min: 24 },
+  date: { y: 940, size: 30, weight: WEIGHTS.body, color: INK.faint, min: 24 },
 } as const;
 
 const LOGO = { w: 300, y: 92 } as const;
@@ -354,11 +354,18 @@ export async function renderResultCard(c: ResultCard, confetti: ConfettiStyle = 
     .filter(([text]) => text.length > 0)
     .map(([text, key]) => {
       const l = LINES[key];
+      /**
+       * **حدُّ القياس مضيَّقٌ بنسبة المدّ** (كخطاب الإنذار سواء): canvas يقيس الحرفَ غيرَ ممدود،
+       * والبطاقةُ تُرسَم ممدودةً (`ss06`/`ss07`) — فما قِيس ٨٦٠ يُرسَم ١١٢٠ فيخرج طرفا الاسم عن
+       * البطاقة. وهو الذي رآه المالك (٢٠٢٦-٠٨-١٦): اسمٌ مقصوصٌ من جانبيه. والنسبةُ تُقاس **لكلّ
+       * سطرٍ بنصّه** لا مرّةً للبطاقة: مدُّ «الشمري» ليس مدَّ «نال ٤ أصوات».
+       */
+      const limit = MAXW / elongationRatio(ctx, text, l.size, l.weight);
       return {
         text,
         x: CENTER,
         y: l.y,
-        size: fitSize(ctx, text, MAXW, l.size, l.weight, l.min),
+        size: fitSize(ctx, text, limit, l.size, l.weight, l.min),
         weight: l.weight,
         color: l.color,
         anchor: "middle" as const,

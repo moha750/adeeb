@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button, Stat, matchesSearch } from "@adeeb/design-system";
 import { CalendarBlank, CalendarCheck, Megaphone, UsersThree } from "@phosphor-icons/react";
 import { ArrowCounterClockwise } from "@/app/_components/glyphs";
@@ -22,7 +21,7 @@ import { STATUS_OPS, TYPE_OPTIONS, type EventStatus, type StatusOp } from "./voc
 import { deleteEvent, setEventStatus } from "./actions";
 import { TypeBadge } from "./TypeBadge";
 import { EventCard } from "./EventCard";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 /** أيقونات إجراءات دورة الحياة — بمفاتيح STATUS_OPS نفسها (المصدر الواحد للانتقالات). */
 const OP_ICON: Record<StatusOp, React.ReactNode> = {
@@ -222,13 +221,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb />
-          <h1>الفعاليّات</h1>
-        </div>
-        <Link href="/dashboard/events/new" className="abtn abtn-primary abtn-md"><Plus size={18} />فعاليّة جديدة</Link>
-      </div>
+      <PageHeader title="الفعاليّات" primary={{ label: "فعاليّة جديدة", icon: <Plus size={18} />, href: "/dashboard/events/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<CalendarBlank />} value={events.length} label="إجمالي الفعاليّات" />

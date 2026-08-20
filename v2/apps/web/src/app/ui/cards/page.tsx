@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardMedia, CardBody, CardHeader, CardFooter, Badge, Button, Container, } from "@adeeb/design-system";
+import { Card, CardMedia, CardBody, CardHeader, CardFooter, Badge, Container, } from "@adeeb/design-system";
 import { GraduationCap } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
 import { MemberCard } from "../../dashboard/members/MemberCard";

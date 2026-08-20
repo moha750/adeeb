@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AreaChart, Badge, BarList, Button, SectionCard, ColumnBars, Donut, Stat, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   CalendarBlank, ChartBar, ChatCenteredDots, ClockCountdown, DeviceMobile, Percent, User } from "@phosphor-icons/react";
@@ -16,7 +16,7 @@ import { downloadBlob } from "@/lib/download";
 import type { SurveyAggregates, QuestionAgg } from "@/lib/surveys/aggregate";
 import type { ResponseRow } from "./results-data";
 import { QUESTION_TYPE_LABEL, STATUS_META, type SurveyStatus } from "./vocab";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 
 const fmtDur = (s: number | null): string => (s == null ? "—" : s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
 
@@ -173,6 +173,7 @@ function exportCsv(agg: SurveyAggregates, responses: ResponseRow[]) {
 
 export function ResultsView({ agg, responses }: { agg: SurveyAggregates; responses: ResponseRow[] }) {
   const toast = useToast();
+  const router = useRouter();
   const [tab, setTab] = useState<"summary" | "analytics" | "responses">("summary");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -228,27 +229,27 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf="النتائج" />
-          <h1>{agg.title}</h1>
-        </div>
-        <div className="form-head-actions">
-          <Badge tone={statusMeta.tone} variant="soft" dot live={agg.status === "active"}>{statusMeta.label}</Badge>
-          <Link href={`/dashboard/surveys/${agg.id}/edit`} className="abtn abtn-ghost abtn-md"><PencilSimple size={18} />تحرير</Link>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => {
-              if (!responses.length) { toast.info("لا مشاركات لتصديرها."); return; }
-              exportCsv(agg, responses);
-              toast.success("جُهّز ملفّ CSV.");
-            }}
-          >
-            <DownloadSimple size={18} />تصدير CSV
-          </Button>
-        </div>
-      </div>
+      {/* غايةُ شاشة النتائج تصديرُها، و«تحرير» بابُ شاشةٍ أخرى — فنزل إلى `⋯`.
+          و«النتائج» ورقةٌ لا يقولها العنوان (وهو اسمُ الاستبيان)، فتُمرَّر. */}
+      <PageHeader
+        title={agg.title}
+        crumbLeaf="النتائج"
+        status={<Badge tone={statusMeta.tone} variant="soft" dot live={agg.status === "active"}>{statusMeta.label}</Badge>}
+        primary={{
+          label: "تصدير CSV",
+          icon: <DownloadSimple size={18} />,
+          onClick: () => {
+            if (!responses.length) { toast.info("لا مشاركات لتصديرها."); return; }
+            exportCsv(agg, responses);
+            toast.success("جُهّز ملفّ CSV.");
+          },
+        }}
+        menu={[{ items: [{
+          label: "تحرير",
+          icon: <PencilSimple size={18} />,
+          onSelect: () => router.push(`/dashboard/surveys/${agg.id}/edit`),
+        }] }]}
+      />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ChatCenteredDots />} value={agg.totals.responses} label="مشاركة مكتملة" />

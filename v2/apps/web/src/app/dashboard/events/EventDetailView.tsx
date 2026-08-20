@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, BarList, Button, SectionCard, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import { CalendarBlank, Certificate, ChatText, Clock, Copy, MapPin } from "@phosphor-icons/react";
@@ -22,7 +21,7 @@ import {
 } from "./actions";
 import { StatusBadge } from "./StatusBadge";
 import { TypeBadge } from "./TypeBadge";
-import { Breadcrumb } from "../_shell/Breadcrumb";
+import { PageHeader } from "../_components/PageHeader";
 import { copyText } from "@/lib/clipboard";
 
 type Phase = "draft" | "cancelled" | "upcoming" | "today" | "ended";
@@ -234,16 +233,11 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
 
   return (
     <>
-      <div className="ash-phead">
-        <div>
-          <Breadcrumb leaf={detail.name} />
-          <h1>{detail.name}</h1>
-        </div>
-        <div className="form-head-actions">
-          <StatusBadge status={detail.status} />
-          <Link href={`/dashboard/events/${detail.id}/edit`} className="abtn abtn-ghost abtn-md"><PencilSimple size={18} />تحرير</Link>
-        </div>
-      </div>
+      <PageHeader
+        title={detail.name}
+        status={<StatusBadge status={detail.status} />}
+        primary={{ label: "تحرير", icon: <PencilSimple size={18} />, href: `/dashboard/events/${detail.id}/edit` }}
+      />
 
       <div className="flex flex-wrap items-center gap-3 text-content-muted text-sm" style={{ marginBottom: 14 }}>
         <TypeBadge type={detail.type} />

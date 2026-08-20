@@ -4,7 +4,7 @@ import { getElectionDetail, getElectionLog, getVoteDetail } from "../data";
 import { ElectionDetailView } from "../ElectionDetailView";
 import { getCurrentAdmin } from "@/lib/auth";
 import { AccessDenied } from "../../_shell/AccessDenied";
-import { Breadcrumb } from "../../_shell/Breadcrumb";
+import { PageHeader } from "../../_components/PageHeader";
 
 export default async function ElectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // تفصيلُ الانتخاب غرفةُ الإدارة والاطّلاع: يفتحه حاملُ `view_election_candidates`
@@ -26,7 +26,7 @@ export default async function ElectionDetailPage({ params }: { params: Promise<{
   if (error) {
     return (
       <>
-        <div className="ash-phead"><div><Breadcrumb /><h1>الانتخابات</h1></div></div>
+        <PageHeader title="الانتخابات" />
         <Alert tone="warning" title="تعذّر جلب الانتخاب">{error}</Alert>
       </>
     );

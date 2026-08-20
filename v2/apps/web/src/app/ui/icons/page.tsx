@@ -231,7 +231,7 @@ export default function IconWeightsLab() {
         {/* ══ المستثنَون ══════════════════════════════════════════════════ */}
         <section className="mt-14">
           <h2 className="mb-1 font-display text-2xl font-black text-content">
-            المستثنَون <span className="font-latin text-lg text-content-muted">bold · {Object.keys(EXC).length}</span>
+            المستثنَون <span className="font-latin text-lg text-content-muted">bold, {Object.keys(EXC).length}</span>
           </h2>
           <p className="mb-5 max-w-2xl text-sm text-content-muted">
             سبعةُ صفوفٍ، لكلٍّ علّتُه. والقاعدةُ الحاكمة: duotone يليق بالأيقونة التي طبقتُها
@@ -239,7 +239,7 @@ export default function IconWeightsLab() {
           </p>
           {EXC_GROUPS.map((g) => (
             <div key={g.n} className="mt-6">
-              <h3 className="font-display text-lg font-black text-content">{g.n} · {g.title}</h3>
+              <h3 className="font-display text-lg font-black text-content">{g.n}. {g.title}</h3>
               <p className="mb-3 text-sm text-content-muted">{g.why}</p>
               <div className="iclab-grid">
                 {g.names.map((n) => <Tile key={n} name={n} Icon={EXC[n]} />)}
@@ -251,7 +251,7 @@ export default function IconWeightsLab() {
         {/* ══ البقيّة ═════════════════════════════════════════════════════ */}
         <section className="mt-14">
           <h2 className="mb-1 font-display text-2xl font-black text-content">
-            البقيّة <span className="font-latin text-lg text-content-muted">duotone · {Object.keys(DUO).length}</span>
+            البقيّة <span className="font-latin text-lg text-content-muted">duotone, {Object.keys(DUO).length}</span>
           </h2>
           <p className="mb-5 max-w-2xl text-sm text-content-muted">
             كلُّ ما يستورده الموقعُ فعلًا خارج القائمة. لا تكتب شاشةٌ وزنَه: يأتي من الجذر.

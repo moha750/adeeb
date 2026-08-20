@@ -12,7 +12,7 @@ import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
-import { fmtDate } from "@/lib/date";
+import { fmtDate } from "@/lib/dates";
 import { downloadCertificate, downloadCertificatePdf } from "@/lib/certificates/letter";
 import { certDate } from "@/lib/certificates/text";
 import { revokeCertificate } from "./actions";

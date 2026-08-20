@@ -13,6 +13,14 @@ export type CurrentAdmin = {
   gender: "male" | "female" | null; // لأيقونة الأفتار حين لا صورة
   caps: string[]; // القدرات الفعليّة (من get_user_permissions) — مصدر كلّ تفويض
   isAdmin: boolean; // يملك مفتاح غرفةٍ واحدة على الأقلّ (DASHBOARD_CAPS)
+  /**
+   * طلبُ حذف الحساب إن كان قائمًا — والمهلةُ ثلاثون يومًا منه (٢٠٢٦-٠٨-١٩).
+   * يُقرأ ههنا لا في كلّ غرفةٍ على حدة: من طلب أن يذهب لا يُترَك يعمل في اللوحة كأنّ شيئًا
+   * لم يكن، وبابُ العدول يُعرَض له حيثما حلّ.
+   */
+  deletionRequestedAt: string | null;
+  /** متى نُفِّذ الحذفُ فعلًا. صفٌّ بعده **أرشيفٌ لا حساب**، ولا جلسةَ تبلغه أصلًا. */
+  deletedAt: string | null;
   /** حاضرٌ حين تكون الهويّة **مستعارة** — واسمُ صاحب الجلسة الحقيقيّ معه. انظر `lib/view-as.ts`. */
   viewAs?: { realId: string; realName: string | null } | null;
 };
@@ -31,10 +39,20 @@ const loadIdentity = cache(async function loadIdentity(userId: string): Promise<
   const svc = service();
   if (!svc) return null;
 
-  const [profileRes, permsRes] = await Promise.all([
-    svc.from("profiles").select("full_name, email, avatar_url, gender").eq("id", userId).maybeSingle(),
+  const BASE = "full_name, email, avatar_url, gender";
+  const [firstRes, permsRes] = await Promise.all([
+    svc.from("profiles").select(`${BASE}, deletion_requested_at, deleted_at`).eq("id", userId).maybeSingle(),
     svc.rpc("get_user_permissions", { p_user_id: userId }),
   ]);
+
+  // **ارتدادٌ إن لم تكن أعمدةُ الحذف بعدُ في القاعدة.** ترحيلُها (`20260819_deletion_02`) قد
+  // يتأخّر عن نشر الكود، وعمودٌ مفقودٌ يُسقط الاستعلامَ كلَّه في PostgREST — فتعود الهويّةُ
+  // بلا اسمٍ ولا قدرات، ويُطرد الناسُ من اللوحة كلِّهم بسبب حقلٍ زائد. فالنقصُ يُحتمَل ولا
+  // يُعمَّم: تُقرأ الأعمدةُ الأصلُ وتُترك واقعةُ الحذف فارغةً حتّى ينزل الترحيل.
+  const profileRes = firstRes.error
+    ? await svc.from("profiles").select(BASE).eq("id", userId).maybeSingle()
+    : firstRes;
+  const life = (firstRes.data ?? null) as { deletion_requested_at?: string | null; deleted_at?: string | null } | null;
 
   const caps = ((permsRes.data ?? []) as Array<{ permission_key: string }>).map((p) => p.permission_key);
   const gender = profileRes.data?.gender;
@@ -48,6 +66,8 @@ const loadIdentity = cache(async function loadIdentity(userId: string): Promise<
     caps,
     // البوّابة: مفتاحُ غرفةٍ واحدة يكفي للدخول. من لا يملك أيّ مفتاحٍ لا شيء له في الداخل.
     isAdmin: caps.some((c) => DASHBOARD_CAPS.includes(c)),
+    deletionRequestedAt: life?.deletion_requested_at ?? null,
+    deletedAt: life?.deleted_at ?? null,
   };
 });
 
@@ -65,7 +85,10 @@ export const getSessionAdmin = cache(async function getSessionAdmin(): Promise<C
   const me = await loadIdentity(user.id);
   // بلا مفتاح خدمة لا نستطيع قراءة القدرات — نعامله كغير مخوّل (آمن افتراضًا).
   if (!me) {
-    return { id: user.id, email: user.email ?? null, fullName: null, avatarUrl: null, gender: null, caps: [], isAdmin: false };
+    return {
+      id: user.id, email: user.email ?? null, fullName: null, avatarUrl: null, gender: null,
+      caps: [], isAdmin: false, deletionRequestedAt: null, deletedAt: null,
+    };
   }
   return { ...me, email: me.email ?? user.email ?? null };
 });

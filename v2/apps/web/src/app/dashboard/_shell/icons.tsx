@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise,
+  PenNib, ClockCounterClockwise, Robot,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -36,6 +36,10 @@ export const IconCaretDown = (p: P) => <CaretDown aria-hidden {...p} />;
 export const IconChevrons = (p: P) => <CaretDoubleRight aria-hidden {...p} />;
 export const IconPlus = (p: P) => <Plus aria-hidden {...p} />;
 export const IconLife = (p: P) => <Lifebuoy aria-hidden {...p} />;
+/* البرغر — ويحمله «الكلّ» في جزيرة الجوّال (قرار المالك ٢٠٢٦-٠٨-٢٠). جُرّبت مكانه
+   تسعُ نقاطٍ (`DotsNine`) بحجّة أنّ البرغر عُرفٌ مكتبيٌّ لا يقول ما خلفه، فرُدّت وأُعدمت.
+   والحجّةُ الأصليّة عليه كانت **موضعَه** لا رسمَه: زاويةً عليا بعيدةً عن الإبهام،
+   وقد زال ذلك بنزوله إلى القاع. */
 export const IconMenu = (p: P) => <List aria-hidden {...p} />;
 export const IconPanel = (p: P) => <SidebarSimple aria-hidden {...p} />;
 export const IconChart = (p: P) => <ChartLineUp aria-hidden {...p} />;
@@ -88,6 +92,10 @@ export const IconCandidacy = (p: P) => <PenNib aria-hidden {...p} />;
 export const IconMyRuns = (p: P) => <ClockCounterClockwise aria-hidden {...p} />;
 // التصويت — علامتا الصحّ: إدلاءُ الصوت (فعلٌ لا إدارة)
 export const IconBallot = (p: P) => <Checks aria-hidden {...p} />;
+/* ديبو — الآليّ: هو ما يعترف به عن نفسه في شخصيّته («مساعدٌ آليّ، لا تراوغ»)، فأصدقُ
+   أيقونةٍ له ما يقوله هو. و`ChatCircleDots` ممنوعةٌ عمدًا: مأخوذةٌ لحقل السؤال في صفحته
+   العلنيّة، ولو حملها البندُ هنا لقالت «محادثةٌ» في موضعين لا يعني أحدهما الآخر. */
+export const IconDeebo = (p: P) => <Robot aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -98,7 +106,7 @@ export const ICONS = {
   cake: IconCake, tree: IconTree, assign: IconAssign, supervise: IconSupervise, unit: IconUnit, dept: IconDept, key: IconKey,
   tasks: IconTasks,
   mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
-  inbox: IconInbox,
+  inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
 } as const;
 export type IconKey = keyof typeof ICONS;

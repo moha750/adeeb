@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@/app/_components/glyphs";
 import { WarningCircle, Info, Warning, X } from "@/app/_components/glyphs";
@@ -47,9 +47,11 @@ function ToastItem({ toast, onClose }: { toast: ToastData; onClose: (id: number)
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
-  const [mounted, setMounted] = useState(false);
   const idRef = useRef(0);
-  useEffect(() => setMounted(true), []);
+  // البوّابةُ إلى `document.body`: **`useSyncExternalStore` لا حالةٌ في أثر** (سابقةُ
+  // `BallotLinkShare`) — لقطةُ الخادم `false` فلا يُصيَّر المنفذُ حيث لا وثيقة، ولقطةُ
+  // المتصفّح `true` بعد الترطيب مباشرةً. وضبطُ الحالة في أثرٍ يشعل رسمةً ثانيةً للوحة كلِّها.
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const remove = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
   const push = useCallback((tone: Tone, message: string, opts?: Opts) => {
