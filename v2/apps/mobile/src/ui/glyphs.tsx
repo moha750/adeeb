@@ -1,5 +1,6 @@
 import { color } from "@adeeb/theme-native";
 import type { ComponentType } from "react";
+import { Buildings as RawBuildingsIcon } from "phosphor-react-native/src/icons/Buildings";
 
 import { AppleLogo as RawAppleLogoIcon } from "phosphor-react-native/src/icons/AppleLogo";
 import { ArrowClockwise as RawArrowClockwiseIcon } from "phosphor-react-native/src/icons/ArrowClockwise";
@@ -87,3 +88,4 @@ export const UserIcon = glyph(RawUserIcon as unknown as Glyph);
 export const UserMinusIcon = glyph(RawUserMinusIcon as unknown as Glyph);
 export const WarningIcon = glyph(RawWarningIcon as unknown as Glyph);
 export const YoutubeLogoIcon = glyph(RawYoutubeLogoIcon as unknown as Glyph);
+export const BuildingsIcon = glyph(RawBuildingsIcon as unknown as Glyph);

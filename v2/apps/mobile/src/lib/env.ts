@@ -9,6 +9,7 @@
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const R2_PUBLIC_BASE = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE;
+const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
 
 function required(value: string | undefined, name: string): string {
   if (!value) throw new Error(`متغيّرٌ ناقص: ${name} — انسخ .env.example إلى .env.local واملأه`);
@@ -19,6 +20,11 @@ export const env = {
   supabaseUrl: required(SUPABASE_URL, "EXPO_PUBLIC_SUPABASE_URL"),
   supabaseAnonKey: required(SUPABASE_ANON_KEY, "EXPO_PUBLIC_SUPABASE_ANON_KEY"),
   r2PublicBase: required(R2_PUBLIC_BASE, "EXPO_PUBLIC_R2_PUBLIC_BASE"),
+  /**
+   * أصلُ الموقع — تفتح منه الغرفُ الإداريّةُ المحقونةُ وصفحةُ التحقّق من الشهادة.
+   * وله افتراضٌ لأنّه عنوانٌ ثابتٌ معلوم، فلا يُعطَّل التطبيقُ لو غاب من ملفّ البيئة.
+   */
+  siteUrl: (SITE_URL ?? "https://adeeb.club").replace(/\/+$/, ""),
 };
 
 /**
