@@ -20,6 +20,7 @@
     "./role-order": "./src/roleOrder.ts",
     "./member-status": "./src/memberStatus.ts",
     "./membership": "./src/membership.ts",
-    "./tasks": "./src/tasks.ts"
+    "./tasks": "./src/tasks.ts",
+    "./certificates": "./src/certificates.ts"
   }
 }

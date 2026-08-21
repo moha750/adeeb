@@ -1,8 +1,9 @@
+import { verifyUrl } from "@adeeb/core/certificates";
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { CaretDownIcon, CertificateIcon, SealCheckIcon, WarningIcon } from "phosphor-react-native";
+import { ArrowSquareOutIcon, CaretDownIcon, CertificateIcon, SealCheckIcon, WarningIcon } from "phosphor-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getMyMembership, type Membership } from "@/lib/membership";
@@ -130,8 +131,13 @@ export default function MembershipScreen() {
               <T size="lg" weight="bold">
                 شهاداتي
               </T>
+              {/*
+                الورقةُ نفسُها تُرسَم على قماش المتصفّح (قالبٌ ٣٥٠٨×٢٤٨٠)، ولا رسّامَ له في
+                الأصيل. فلا يُعاد بناؤه ههنا: يُفتح **عنوانُها العلنيّ** فيرى صاحبُها
+                شهادتَه موثَّقةً ويشاركها كما هي، ويبقى تنزيلُ الورقة في اللوحة.
+              */}
               {data.certificates.map((c) => (
-                <View key={c.id} style={styles.cert}>
+                <Pressable key={c.id} style={styles.cert} onPress={() => void Linking.openURL(verifyUrl(c.serial))}>
                   <CertificateIcon size={20} color={color.primary} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <T size="base" weight="medium">
@@ -144,8 +150,12 @@ export default function MembershipScreen() {
                       {c.serial}
                     </T>
                   </View>
-                </View>
+                  <ArrowSquareOutIcon size={18} color={color.textMuted} />
+                </Pressable>
               ))}
+              <T size="xs" color={color.textMuted}>
+                اضغط شهادةً لتفتح صفحةَ التحقّق العلنيّة بها
+              </T>
             </View>
           ) : null}
         </>
@@ -211,5 +221,5 @@ const styles = StyleSheet.create({
   },
   dotOn: { backgroundColor: color.success_, borderColor: color.success_ },
   warn: { flexDirection: "row", alignItems: "flex-start", gap: space[2] },
-  cert: { flexDirection: "row", alignItems: "flex-start", gap: space[2] },
+  cert: { flexDirection: "row", alignItems: "center", gap: space[2], minHeight: TOUCH },
 });

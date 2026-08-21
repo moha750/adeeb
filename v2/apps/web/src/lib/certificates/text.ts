@@ -59,17 +59,9 @@ export const period = (c: Certificate): string =>
   `خبرةٌ صُقلت بالإتقان طوال الفترة من ${certDate(c.from)} إلى ${certDate(c.to)}`;
 
 /** موضع التحقّق العلنيّ — نطاقُ النادي، ويُقرأ في الورقة وفي شاشة التحقّق سواء. */
-export const VERIFY_HOST = "adeeb.club";
-
-/**
- * ما يحمله الباركود: عنوانٌ يفتح صفحة التحقّق **بالرقم مملوءًا** — فمن مسحه رأى الجواب
- * بلا كتابة. (والرابط لا يُطبع نصًّا: شكلُ العنوان في وثيقةٍ رسميّة قبيح — قرار المالك.)
- */
-export const verifyUrl = (serial: string): string =>
-  `https://${VERIFY_HOST}/verify?code=${encodeURIComponent(serial)}`;
-
-/** سطرُ الوثيقة الصغير: رقمُها المرجعيّ وحده — يُقرأ بالعين ويُكتب باليد إن تعذّر المسح. */
-export const verifyLine = (serial: string): string => `الرقم المرجعيّ ${serial}`;
+// المضيفُ ورابطُ التحقّق وسطرُه **في النواة** (`@adeeb/core/certificates`) منذ ٢٠٢٦-٠٨-٢٠:
+// يقرؤها الباركودُ في الورقة وزرُّ «تحقَّق» في التطبيق من موضعٍ واحد.
+export { VERIFY_HOST, verifyLine, verifyUrl } from "@adeeb/core/certificates";
 
 /** تسميةُ الباركود تحته — كلمتان تقولان ما هو، فلا يبقى مربّعًا غامضًا. */
 export const QR_CAPTION = "امسح للتحقّق";
