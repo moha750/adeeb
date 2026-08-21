@@ -1,7 +1,7 @@
 import { verifyUrl } from "@adeeb/core/certificates";
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { ArrowSquareOutIcon, CaretDownIcon, CertificateIcon, SealCheckIcon, WarningIcon } from "phosphor-react-native";
+import { ArrowSquareOutIcon, CaretDownIcon, CertificateIcon, SealCheckIcon, WarningIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

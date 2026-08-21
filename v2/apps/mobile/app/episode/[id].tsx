@@ -1,7 +1,7 @@
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CaretDownIcon, HeartIcon, YoutubeLogoIcon } from "phosphor-react-native";
+import { CaretDownIcon, HeartIcon, YoutubeLogoIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

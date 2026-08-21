@@ -1,6 +1,6 @@
 import { color, type } from "@adeeb/theme-native";
 import { Tabs } from "expo-router";
-import { CalendarDotsIcon, NewspaperIcon, PaletteIcon, RadioIcon, UserIcon } from "phosphor-react-native";
+import { CalendarDotsIcon, NewspaperIcon, PaletteIcon, RadioIcon, UserIcon } from "@/ui/glyphs";
 
 /**
  * أبوابُ الزائر الثلاثة: الإذاعة · الأنشطة · الأخبار. ورابعُها «حسابي» وهو بابُ صاحبِه لا بابُ زائر.

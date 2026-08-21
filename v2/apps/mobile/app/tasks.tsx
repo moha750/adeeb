@@ -1,6 +1,6 @@
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { CaretDownIcon, ClipboardTextIcon } from "phosphor-react-native";
+import { CaretDownIcon, ClipboardTextIcon } from "@/ui/glyphs";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

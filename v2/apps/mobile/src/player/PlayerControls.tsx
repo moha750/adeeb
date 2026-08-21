@@ -7,7 +7,7 @@ import {
   MusicNotesIcon,
   PauseIcon,
   PlayIcon,
-} from "phosphor-react-native";
+} from "@/ui/glyphs";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { TOUCH } from "@/ui/layout";

@@ -1,7 +1,7 @@
 import { color, radius, shadow, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { PauseIcon, PlayIcon } from "phosphor-react-native";
+import { PauseIcon, PlayIcon } from "@/ui/glyphs";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 

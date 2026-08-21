@@ -2,7 +2,7 @@ import { fmtDate } from "@adeeb/core/dates";
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ClockIcon } from "phosphor-react-native";
+import { ClockIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 

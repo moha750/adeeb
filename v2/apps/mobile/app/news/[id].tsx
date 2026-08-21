@@ -2,7 +2,7 @@ import { fmtDate } from "@adeeb/core/dates";
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CameraIcon, CaretDownIcon, ClockIcon, EyeIcon, HeartIcon, UserIcon } from "phosphor-react-native";
+import { CameraIcon, CaretDownIcon, ClockIcon, EyeIcon, HeartIcon, UserIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

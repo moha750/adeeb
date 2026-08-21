@@ -13,7 +13,6 @@ import { ScreenTracker } from "@/lib/ScreenTracker";
 import { getStation } from "@/lib/radio";
 import { MiniPlayer } from "@/player/MiniPlayer";
 import { RadioPlayerProvider } from "@/player/PlayerProvider";
-import { IconDefaults } from "@/ui/icons";
 
 /**
  * جذرُ التطبيق.
@@ -62,7 +61,6 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <IconDefaults>
           <AuthProvider>
             {/* زياراتُ الشاشات تُسجَّل في جدول الموقع نفسِه، موسومةً بمخطَّط التطبيق (`lib/track`).
                 وهو ابنُ المزوّد لا أخوه: الهويّةُ تُقرأ من الجلسة القائمة لا من سؤالٍ للخادم. */}
@@ -85,7 +83,6 @@ export default function RootLayout() {
               {ready ? <MiniPlayer /> : null}
             </RadioPlayerProvider>
           </AuthProvider>
-        </IconDefaults>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

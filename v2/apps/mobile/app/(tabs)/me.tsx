@@ -1,6 +1,6 @@
 import { color, radius, space, stroke } from "@adeeb/theme-native";
 import { useRouter } from "expo-router";
-import { AppleLogoIcon, CalendarCheckIcon, CaretLeftIcon, ClipboardTextIcon, IdentificationCardIcon, SignOutIcon, UserIcon, UserMinusIcon } from "phosphor-react-native";
+import { AppleLogoIcon, CalendarCheckIcon, CaretLeftIcon, ClipboardTextIcon, IdentificationCardIcon, SignOutIcon, UserIcon, UserMinusIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 

@@ -1,7 +1,7 @@
 import { TRACK_DEV_KEY } from "@adeeb/core/tracking";
 import { color, radius, shadow, space, stroke } from "@adeeb/theme-native";
 import { Image } from "expo-image";
-import { PauseIcon, PlayIcon } from "phosphor-react-native";
+import { PauseIcon, PlayIcon } from "@/ui/glyphs";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
