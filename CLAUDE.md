@@ -332,7 +332,10 @@ Supabase Storage buckets in use: `images` (news), `library`, `election-files`, `
   `app/api/deebo/route.ts` (SSE streaming endpoint behind four guards: request shape → Turnstile →
   per-visitor rate limit + daily cap → provider), `lib/deebo/` (three providers — Claude, Gemini,
   DeepSeek; `guard.ts` a numeric-grounding guard the endpoint *does* import, with 14 tests;
-  `knowledge.ts` reading the live `faq` table; `limits.ts`, `persona.ts`, `questions.ts`,
+  `knowledge.ts` assembling the prompt from **two live tables** (`faq` + `deebo_knowledge`, read
+  through `knowledgeSource.ts`; the four hardcoded facts moved to the DB on 2026-08-22 and are
+  edited from `/dashboard/deebo/knowledge` — there is no in-code fallback, so apply the migration
+  before deploying); `limits.ts`, `persona.ts`, `questions.ts`,
   `useDeebo.ts`), the public `/deebo` page, `/ui/deebo-compare` (provider lab), and
   `/dashboard/deebo` (conversation log, capability `manage_deebo`).
   Live provider: DeepSeek (`DEEPSEEK_API_KEY`). Since 2026-08-20 the page is a full-height
@@ -340,9 +343,13 @@ Supabase Storage buckets in use: `images` (news), `library`, `election-files`, `
   a stored conversation history (`deebo_conversations.user_id`/`title`, own-row RLS, monthly
   `deebo_purge_owned(365)`) plus an identity briefing in the prompt (`lib/deebo/viewer.ts`:
   first name + standing + position, nothing else). A session skips Turnstile; anonymous
-  visitors keep their talk in `localStorage` only. **The persona is the owner's words, filled
-  2026-08-20** — `v2/المتطلبات/ديبو-الهويّة.md` is its only human entry point, and `persona.ts`
-  carries his decisions verbatim (emoji now allowed and moderate after being banned outright;
+  visitors keep their talk in `localStorage` only. **The persona now lives in the database**
+  (`deebo_persona`, single row, edited at `/dashboard/deebo/persona` since 2026-08-22);
+  `persona.ts` is only scaffolding — headings, order, the anti-hallucination bullet, and the
+  viewer-brief slot. A DB check constraint (`deebo_persona_no_digits`) forbids digits in every
+  column that reaches the prompt, because `guard.ts` whitelists every number it sees there.
+  `v2/المتطلبات/ديبو-الهويّة.md` is now a decision record, not a source. The words are still
+  the owner's, filled 2026-08-20 (emoji now allowed and moderate after being banned outright;
   the name story in his dialect; poems/songs now written, tied to Adeeb, after being refused;
   sixteen prohibitions). Never write a personality trait there that the sheet does not carry.
   Six items are still pending in the sheet's باب ز (the joining answer after registration was
@@ -352,6 +359,11 @@ Supabase Storage buckets in use: `images` (news), `library`, `election-files`, `
   deployed version (and its `verify_jwt`) before redeploying anything.
 - V1 (`adeeb/`) is gitignored and retired. Read it only to understand the domain or migrate data.
   Do not treat its behaviour as a requirement or block V2 work on it.
+- **`DataTable` never truncates, so a free-text column in `fr` forces horizontal scroll.** Every
+  flexible width is wrapped in `minmax(max-content, …)` on purpose (no `…` clipping ever), which
+  means a column holding long Arabic sentences pushes the grid to the width of its longest line and
+  the table scrolls sideways on a 375px phone. Give such a column `width: "auto"` (plus `wrap`).
+  This was the real cause of "the Deebo log table is hard to read" (2026-08-22).
 - **Dates: `lib/dates.ts` only.** It pins `Asia/Riyadh` via `Intl`. A twin `lib/date.ts` used the
   runtime's local zone and was deleted 2026-08-16 — Vercel runs UTC, so every timestamp after
   21:00 Riyadh rendered as the previous day on the live site while looking right on a dev machine.
