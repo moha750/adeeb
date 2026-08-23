@@ -1,15 +1,24 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { QrToolView } from "./QrToolView";
+import { getMyQrLinks } from "./data";
+import { SavedLinksView } from "./SavedLinksView";
 
 /**
- * **مولّد الباركود** — أداةٌ لا غرفةَ بيانات: تكتب نصًّا أو رابطًا فتأخذ صورةً بهويّة أديب.
- * لا تقرأ من القاعدة ولا تكتب فيها، فالصفحة كلُّها عميليّة خلف حارسها.
+ * **رموزي** — جذرُ غرفة الباركود.
+ *
+ * كان المحرّرُ هو ما يستقبلك هنا وقائمتُك تحته، فقُلب الترتيب ٢٠٢٦-٠٨-٢١ بأمر المالك:
+ * الغالبُ أنّك تدخل لترى رمزًا أو تبدّل وجهته، والإنشاءُ حدثٌ نادر. فصارت الغرفةُ ثلاثةَ
+ * أبواب على عُرف بقيّة اللوحة: قائمةٌ في الجذر، و`new` للإنشاء، و`[id]` للرمز وإحصائه.
+ *
+ * والقراءةُ بعميل الجلسة (`data.ts`) لا بمفتاح الخدمة: المدى «كلٌّ يرى رموزَه هو»
+ * تحكمه سياسةُ own-row في القاعدة، لا سطرُ `where` في التطبيق.
  */
-export const metadata = { title: "مولّد الباركود، بوّابة أديب" };
+export const metadata = { title: "باركوداتي، بوّابة أديب" };
 
 export default async function QrToolPage() {
   const denied = await denyUnless("/dashboard/tools/qr");
   if (denied) return denied;
 
-  return <QrToolView />;
+  const { rows, error } = await getMyQrLinks();
+
+  return <SavedLinksView rows={rows} error={error} />;
 }

@@ -79,7 +79,11 @@ export type EyeShape = "square" | "rounded";
 export type Paint =
   | { kind: "solid"; color: string }
   | { kind: "linear"; from: string; to: string; angle: number }
-  | { kind: "radial"; from: string; to: string };
+  /**
+   * الشعاعيّ: ومركزُه اختياريّ (`cx`/`cy` نسبةً من ضلع الرمز، ٠٫٥ هو القلب). ونصفُ قطره
+   * يتّسع كلّما ابتعد المركزُ عن القلب، وإلّا بقي ربعٌ من الرمز خارج التدرّج بلونٍ مصمَت.
+   */
+  | { kind: "radial"; from: string; to: string; cx?: number; cy?: number };
 
 /** الشعار في القلب — يُفرِّغ ما تحته ويرفع التصحيح إلى `H`. */
 export type QrLogo = {
@@ -224,7 +228,14 @@ function paintOf(paint: Paint, id: string): { def: string; ref: string } {
   if (paint.kind === "solid") return { def: "", ref: paint.color };
   const stops = `<stop offset="0" stop-color="${paint.from}"/><stop offset="1" stop-color="${paint.to}"/>`;
   if (paint.kind === "radial") {
-    return { def: `<radialGradient id="${id}">${stops}</radialGradient>`, ref: `url(#${id})` };
+    // المركزُ نسبةٌ من الضلع، والافتراضُ القلب. ونصفُ القطر يُحسَب من أبعدِ ركنٍ عن المركز
+    // فيبلغ التدرّجُ حافّةَ الرمز مهما أُزيح، ولا يبقى ركنٌ خارجَه بلونٍ واحدٍ مصمَت.
+    const cx = Math.min(Math.max(paint.cx ?? 0.5, 0), 1);
+    const cy = Math.min(Math.max(paint.cy ?? 0.5, 0), 1);
+    const r = Math.hypot(Math.max(cx, 1 - cx), Math.max(cy, 1 - cy));
+    const g =
+      `<radialGradient id="${id}" cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}">${stops}</radialGradient>`;
+    return { def: g, ref: `url(#${id})` };
   }
   // الزاوية بالدرجات إلى متّجهٍ داخل مربّع الوحدة (0° = يمينًا، وتدور مع عقارب الساعة)
   const a = (paint.angle * Math.PI) / 180;

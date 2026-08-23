@@ -5,7 +5,8 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
 /**
  * ما تفهرسه المحرّكات وما لا تفهرسه. المستثنى **ما خلف الباب وحده** (لوحة · دخول ·
  * تهيئة · مقابلة) — زحفُه بلا طائل. أمّا معارض المكوّنات (`/ui`) و`/story-preview`
- * فمكشوفةٌ مفهرسةٌ بقرار المالك، فلا تُدرَج هنا.
+ * فمكشوفةٌ مفهرسةٌ بقرار المالك، فلا تُدرَج هنا. و`/q` بابُ تحويلٍ لا صفحة: الفهرسُ
+ * يتبع الوجهةَ نفسَها لا وكيلَها.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -13,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/login", "/complete", "/me"],
+        disallow: ["/dashboard", "/login", "/complete", "/me", "/q"],
       },
     ],
     sitemap: `${SITE}/sitemap.xml`,

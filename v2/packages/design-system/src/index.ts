@@ -29,6 +29,11 @@ export { FieldMark } from "./components/FieldMark";
 export { Select, type SelectProps, type SelectOption } from "./components/Select";
 export { AnchoredPopover, type AnchoredPopoverProps, type PopoverAlign, type PopoverSide, type PopoverDismissReason } from "./components/AnchoredPopover";
 export { Segmented, type SegmentedProps, type SegmentedItem } from "./components/Segmented";
+export { AngleDial, type AngleDialProps } from "./components/AngleDial";
+export { DirectionPad, type DirectionPadProps } from "./components/DirectionPad";
+export { RangeField, type RangeFieldProps } from "./components/RangeField";
+export { PointPad, type PointPadProps } from "./components/PointPad";
+
 export { OptionList, type OptionListProps, type OptionListItem } from "./components/OptionList";
 export { Matrix, type MatrixProps, type MatrixColumn, type MatrixRow, type MatrixGroup } from "./components/Matrix";
 export { SectionCard, type SectionCardProps } from "./components/SectionCard";

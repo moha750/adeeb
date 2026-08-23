@@ -3,51 +3,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert, Button, SectionCard, ColorField, Field, Segmented, Select, Switch, } from "@adeeb/design-system";
-import { color } from "@adeeb/design-system/tokens";
 import {
-  Drop, FileSvg, Globe, ImageSquare, LinkSimple, PaintBucket, QrCode, Sparkle, Square, TextAa,
+  Drop, FileSvg, FloppyDisk, Globe, ImageSquare, PaintBucket, QrCode, Sparkle, Square, TextAa,
 } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { Eye, Trash, UploadSimple } from "@/app/_components/glyphs";
 import {
   contrast,
-  effectiveEcc,
   inkColors,
   qrPng,
   qrSvg,
   qrSvgBlob,
-  type DotShape,
-  type EyeShape,
   type Paint,
   type QrSpec,
 } from "@/lib/qr";
+import { qrShortUrl } from "@/lib/qrLinks";
 import { downloadBlob } from "@/lib/download";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+import { EXPORT, LOOK, SHAPE } from "./defaults";
+import { EmptyState } from "../../_components/EmptyState";
 import { PageHeader } from "../../_components/PageHeader";
 
 // وصفةُ شعار الرمز من قانون المرفقات (`lib/upload`)
 const LOGO_RULE = UPLOAD_RULES.qrLogo;
 
 /* ── مفردات المحرّر ─────────────────────────────────────────────────────── */
-
-/**
- * **شكلُ رمز أديب — مُقَرٌّ لا مُختار** (قرار المالك ٢٠٢٦-٠٨-٠٣): وحداتٌ سائلة وعينٌ
- * وبؤبؤٌ مستديران. أُزيلت الأشكال الأخرى من المحرّر **ومن الراسم معًا**، فلا خيارَ يُعرَض
- * ولا وصفةَ تُكتَب تُخرج رمزًا خارج الهوية.
- *
- * (والمربّع باقٍ في الراسم وحده لأنّ **ختم الشهادة** يطلبه صراحةً — وثيقةٌ رسميّة لا ملصق.)
- */
-const SHAPE = { dots: "fluid", eye: "rounded", pupil: "rounded" } as const satisfies {
-  dots: DotShape;
-  eye: EyeShape;
-  pupil: EyeShape;
-};
-
-const SIZES = [
-  { value: "512", label: "٥١٢ بكسل", hint: "للشاشة والمنشورات الرقميّة" },
-  { value: "1024", label: "١٠٢٤ بكسل", hint: "للطباعة الصغيرة (ملصق، بطاقة)" },
-  { value: "2048", label: "٢٠٤٨ بكسل", hint: "للطباعة الكبيرة (لوحة، رول‑أب)" },
-];
 
 const LOGO_SIZES = [
   { value: "0.18", label: "صغير", hint: "الأأمن مسحًا" },
@@ -64,6 +44,13 @@ const PREVIEW = 360;
 const CONTRAST_WARN = 4;
 const CONTRAST_FAIL = 3;
 
+/**
+ * مراسي الورقة: محرّرٌ كامل، فنصفان، فرمزٌ كامل. نسبةٌ من ارتفاع الشاشة لا بكسلٌ محفور.
+ * والمرسى الأخير 0.74 لا 0.86: رأسُ الورقة (المقبضُ وزرّا التنزيل) نحوُ ٩٠ بكسلًا، وجزيرةُ
+ * التنقّل تحجز ٨٢ من القاع — فما دونها يدفن الزرَّين تحت الجزيرة.
+ */
+const SHEET_STOPS = [0.18, 0.46, 0.74];
+
 /* ── المحرّر ────────────────────────────────────────────────────────────── */
 
 /**
@@ -75,40 +62,64 @@ const CONTRAST_FAIL = 3;
  * **ولا حالةَ في الخادم ولا سجلّ**: الأداة لا تعرف ما ولّدته، والشعارُ المرفوع لا يغادر
  * المتصفّح — يُقرأ data URL ويُضمَّن في الملفّ الخارج.
  */
-export function QrToolView() {
-  const [text, setText] = useState("");
-  const [size, setSize] = useState("1024");
+/**
+ * ما يفعله زرُّ الحفظ حين يكون المحرّرُ في غرفته: يحفظ **الوصفة** لا أكثر.
+ *
+ * الاسمُ والوجهةُ سبقا في بابِ الإنشاء، والرمزُ القصيرُ وُلِد هناك. فلا يبقى لهذه الشاشة
+ * إلّا الشكل. و**دالّةٌ تُمرَّر لا فعلٌ يُستورَد**، لأنّ المحرّرَ يُعرَض أيضًا في `/ui/qr-dock`
+ * بلا غرفةٍ ولا مزوّدِ توست: لو نادى `useToast` هنا لسقطت تلك الصفحة.
+ */
+export type QrSpecSaver = (spec: QrSpec) => Promise<{ ok: boolean; message: string }>;
+
+export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
+  /** الرمزُ القصير كما وُلِد في باب الإنشاء — هو ما يُحفَر، فالمعاينةُ رمزٌ حيٌّ يُمسح. */
+  code: string;
+  /** الوصفةُ المحفوظة إن كانت — يعود المحرّرُ إلى حالِه يومَ صُنع الرمز. */
+  initial?: QrSpec | null;
+  embedded?: boolean;
+  onSaveSpec?: QrSpecSaver;
+}) {
+  const seed = look(initial);
+
+  const [saving, setSaving] = useState(false);
 
   // الحبر
-  const [gradient, setGradient] = useState(false);
-  const [ink, setInk] = useState<string>(color.navy[700]);
-  const [ink2, setInk2] = useState<string>(color.steel[400]);
-  const [gradKind, setGradKind] = useState<"linear" | "radial">("linear");
-  const [angle, setAngle] = useState("135");
+  const [gradient, setGradient] = useState(seed.gradient);
+  const [ink, setInk] = useState(seed.ink);
+  const [ink2, setInk2] = useState(seed.ink2);
+  const [gradKind, setGradKind] = useState<"linear" | "radial">(seed.gradKind);
+  const [angle, setAngle] = useState(seed.angle);
 
   // الخلفيّة
-  const [bare, setBare] = useState(false);
-  const [bg, setBg] = useState("#ffffff");
+  const [bare, setBare] = useState(seed.bare);
+  const [bg, setBg] = useState(seed.bg);
 
   // الأشكال
-  const [eyeTinted, setEyeTinted] = useState(false);
-  const [eyeColor, setEyeColor] = useState<string>(color.navy[900]);
-  const [pupilColor, setPupilColor] = useState<string>(color.semantic.warning);
+  const [eyeTinted, setEyeTinted] = useState(seed.eyeTinted);
+  const [eyeColor, setEyeColor] = useState(seed.eyeColor);
+  const [pupilColor, setPupilColor] = useState(seed.pupilColor);
 
   // الشعار
-  const [logo, setLogo] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | null>(seed.logo);
   const [logoOk, setLogoOk] = useState<string | null>(null);
-  const [logoScale, setLogoScale] = useState("0.24");
+  const [logoScale, setLogoScale] = useState(seed.logoScale);
   const [logoError, setLogoError] = useState<string | null>(null);
   const logoInput = useRef<HTMLInputElement>(null);
 
   // الإطار
-  const [framed, setFramed] = useState(false);
-  const [caption, setCaption] = useState("امسحني");
-  const [frameColor, setFrameColor] = useState<string>(color.navy[700]);
-  const [captionColor, setCaptionColor] = useState("#ffffff");
+  const [framed, setFramed] = useState(seed.framed);
+  const [caption, setCaption] = useState(seed.caption);
+  const [frameColor, setFrameColor] = useState(seed.frameColor);
+  const [captionColor, setCaptionColor] = useState(seed.captionColor);
 
-  const trimmed = text.trim();
+  /**
+   * **ما يُحفَر: رابطُ الرمز القصير، دائمًا.**
+   *
+   * الاسمُ والوجهةُ سبقا في باب الإنشاء، فالرمزُ موجودٌ في القاعدة قبل أن يُصمَّم. وثمرةُ
+   * ذلك ثلاثٌ: المعاينةُ **تُمسح فتعمل** من أوّل نظرة، وعددُ وحداتها هو عددُ وحدات المطبوع
+   * لا يزيد، والوجهةُ تُبدَّل بعد الطباعة والملصقُ لا يتغيّر.
+   */
+  const payload = qrShortUrl(code);
 
   const paint = useMemo(
     (): Paint =>
@@ -120,11 +131,11 @@ export function QrToolView() {
     [gradient, gradKind, ink, ink2, angle],
   );
 
-  /** المواصفة — مصدرٌ واحد تقرؤه المعاينة والتنزيلان، فلا يفترق المعروض عن المنزَّل. */
+  /** المواصفة — مصدرٌ واحد تقرؤه المعاينة والتنزيلان والمحفوظ، فلا يفترق المعروض عن المنزَّل. */
   const spec = useMemo(
     (): QrSpec => ({
-      text: trimmed,
-      size: Number(size),
+      text: payload,
+      size: EXPORT,
       dots: { shape: SHAPE.dots, paint },
       eye: { shape: SHAPE.eye, color: eyeTinted ? eyeColor : null },
       pupil: { shape: SHAPE.pupil, color: eyeTinted ? pupilColor : null },
@@ -132,18 +143,17 @@ export function QrToolView() {
       logo: logo ? { href: logo, scale: Number(logoScale) } : null,
       frame: framed ? { color: frameColor, caption, textColor: captionColor } : null,
     }),
-    [trimmed, size, paint, eyeTinted, eyeColor, pupilColor, bare, bg, logo, logoScale, framed, frameColor, caption, captionColor],
+    [payload, paint, eyeTinted, eyeColor, pupilColor, bare, bg, logo, logoScale, framed, frameColor, caption, captionColor],
   );
 
   // الطول عيبُ مُدخَلٍ لا عطبُ نظام: `qrMatrix` ترمي برسالةٍ عربيّة تُعرَض كما هي.
   const preview = useMemo(() => {
-    if (!trimmed) return { svg: null as string | null, error: null as string | null };
     try {
-      return { svg: qrSvg({ ...spec, size: PREVIEW }), error: null };
+      return { svg: qrSvg({ ...spec, size: PREVIEW }), error: null as string | null };
     } catch (e) {
-      return { svg: null, error: e instanceof Error ? e.message : "تعذّر توليد الرمز." };
+      return { svg: null as string | null, error: e instanceof Error ? e.message : "تعذّر توليد الباركود." };
     }
-  }, [trimmed, spec]);
+  }, [spec]);
 
   /**
    * **حارس التباين** — يقيس أضعف حبرٍ في الرمز مقابل أرضيّته. والخلفيّة الشفّافة لا تُقاس:
@@ -153,7 +163,7 @@ export function QrToolView() {
     if (bare) return { tone: "info" as const, text: "الخلفيّة شفّافة، التباين رهنُ السطح الذي تضعه عليه، فتحقّق منه بعينك." };
     const worst = Math.min(...inkColors(spec).map((c) => contrast(c, bg)));
     const n = worst.toFixed(1);
-    if (worst < CONTRAST_FAIL) return { tone: "danger" as const, text: `التباين ${n}:١، هذا الرمز لن يُمسح. أعتِم الحبر أو فتِّح الأرضيّة.` };
+    if (worst < CONTRAST_FAIL) return { tone: "danger" as const, text: `التباين ${n}:١، هذا الباركود لن يُمسح. أعتِم اللون أو فتِّح الخلفيّة.` };
     if (worst < CONTRAST_WARN) return { tone: "warning" as const, text: `التباين ${n}:١، يُمسح على الشاشة وقد يُخفق مطبوعًا أو في ضوءٍ ضعيف.` };
     return { tone: "success" as const, text: `التباين ${n}:١، وافٍ للطباعة والمسح من بُعد.` };
   }, [bare, bg, spec]);
@@ -191,56 +201,81 @@ export function QrToolView() {
   };
 
   const savePng = async () => {
-    downloadBlob(await qrPng(spec), "رمز-أديب.png", "qr.png");
+    downloadBlob(await qrPng(spec), "باركود-أديب.png", "qr.png");
   };
   const saveSvg = () => {
-    downloadBlob(qrSvgBlob(spec), "رمز-أديب.svg", "qr.svg");
+    downloadBlob(qrSvgBlob(spec), "باركود-أديب.svg", "qr.svg");
   };
 
-  return (
-    <>
-      <PageHeader title="مولّد الباركود" />
+  /**
+   * حفظُ الوصفة: الشكلُ يُخزَّن في صفّ الرمز، فيُعاد رسمُه بعد سنةٍ كما رُسم اليوم.
+   * وخبرُ النجاح والفشل تقوله **الغرفةُ** بتوستها، فلا ينبت في المحرّر لسانٌ ثانٍ.
+   */
+  const saveDesign = async () => {
+    if (!onSaveSpec) return;
+    setSaving(true);
+    await onSaveSpec(spec);
+    setSaving(false);
+  };
 
-      <Alert tone="info" title="الرمز آلةٌ تُقرأ قبل أن يكون شكلًا">
-        اطبعه بضلعٍ لا يقلّ عن ٢ سم (٣ سم لِما يُمسح من بُعد)، واترك حوله الفراغَ المرسوم في
-        الملفّ فلا تقصّه. وللطباعة اختر <b>SVG</b>: يكبر بلا تحبّب مهما بلغ القياس.
-        والشعارُ يرفع تصحيح الخطأ إلى <b>{effectiveEcc(spec)}</b> ويُفرِّغ ما تحته، فلا يخنق بيانات.
-      </Alert>
+  const rootRef = useCanvasTop();
+
+  /** صفُّ الأفعال: تعريفٌ واحدٌ يقرؤه الموضعان (كرتُ المعاينة في الواسع، ورأسُ الورقة في الجوّال). */
+  const downloads = (
+    <>
+      {onSaveSpec ? (
+        <Button variant="primary" size="md" loading={saving} onClick={() => void saveDesign()}>
+          <FloppyDisk /> حفظ التصميم
+        </Button>
+      ) : null}
+      <Button variant="neutral" size="md" disabled={!preview.svg} onClick={() => void savePng()}>
+        <DownloadSimple /> تحميلها كصورة
+      </Button>
+      <Button variant="neutral" size="md" disabled={!preview.svg} onClick={saveSvg}>
+        {/* الحروفُ اللاتينيّة بخطّها: `font-latin` يقدّم Eras، و`dir="ltr"` يمنع الخوارزميّةَ
+            ثنائيّةَ الاتّجاه من قلب الاسم في سياقٍ عربيّ. */}
+        <FileSvg /> تحميل بصيغة <span className="font-latin" dir="ltr">SVG</span>
+      </Button>
+    </>
+  );
+
+  return (
+    /* غلافُ الشاشة: حاملُ رمزَي القسمة (`--qsheet-top` و`--qcanvas-top`) ومرجعُ قياسها. */
+    <div className="qtool" ref={rootRef}>
+      {embedded ? null : <PageHeader title="مولّد الباركود" />}
+
 
       <div className="card-grid mt-4">
-        {/* ── الضوابط ── */}
+        {/* ── الضوابط: في هيئة الورقة تصير ورقةً تُسحَب، وفي غيرها غلافان بلا أثر ── */}
+        <div className="qsheet">
+          {/* رأسُ الورقة: المقبضُ وزرّا التنزيل. وموضعُهما هنا لا على اللوحة عمدًا — اللوحةُ
+              تنكمش بسحب الورقة حتى لا تسع زرًّا، والفعلُ الأوّل لا يُقايض بمرسًى. ولا شرطَ في
+              الكود: `.qsheet-head` لا تُرسم إلّا دون ٨٦٠، وفوقها الكرتُ يحمل الزرَّين. */}
+          <div className="qsheet-head">
+            <SheetGrip rootRef={rootRef} />
+            <div className="qdock-acts">{downloads}</div>
+          </div>
+          <div className="qsheet-scroll">
         <div className="flex flex-col gap-4">
-          <SectionCard headerVariant="chip" icon={<QrCode />} title="ما يحمله الرمز">
-            <Field
-              label="الرابط أو النصّ"
-              icon={<LinkSimple />}
-              innerIcon={<Globe />}
-              placeholder="https://adeeb.club"
-              dir="ltr"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              helper="كلّما قصُر النصّ كبُرت وحدات الرمز وسهُل مسحه."
-              required
-            />
-            <div className="mt-4">
-              <Select label="مقاس التنزيل" icon={<DownloadSimple />} options={SIZES} value={size} onValueChange={setSize} />
-            </div>
-          </SectionCard>
-
-          <SectionCard headerVariant="chip" icon={<Drop />} title="الحبر والأرضيّة">
-            <Switch
-              row
-              label="تدرّج بدل لونٍ صلب"
-              description="لونان يتدرّجان عبر الرمز، والحارس أدناه يقيس أضعفهما."
-              checked={gradient}
-              onChange={(e) => setGradient(e.target.checked)}
+          {/* لا حقلَ للرابط ولا للاسم هنا: سبقا في باب الإنشاء (`new`)، وتُعدَّل الوجهةُ من
+              صفحة الرمز. وهذه الشاشةُ للشكل وحده، فلا يُسأل صاحبُها سؤالًا أجابه. */}
+          <SectionCard headerVariant="soft" icon={<Drop />} title="لون الباركود">
+            {/* خياران متعادلان لا حالةٌ تُشعَل: الشريطُ المقطعيّ يسمّيهما بالاسم، والمبدّلُ كان
+                يسمّي أحدَهما ويترك الآخرَ يُفهَم من إطفائه. */}
+            <Segmented
+              wide
+              aria-label="نوع اللون"
+              items={[{ value: "solid", label: "لون موحّد" }, { value: "gradient", label: "لون متدرّج" }]}
+              value={gradient ? "gradient" : "solid"}
+              onValueChange={(v) => setGradient(v === "gradient")}
             />
             <div className="mt-4 flex flex-col gap-4">
-              <ColorField label={gradient ? "اللون الأوّل" : "لون الحبر"} icon={<Drop />} value={ink} onValueChange={setInk} required />
+              <ColorField label={gradient ? "اللون الأوّل" : "اللون"} icon={<Drop />} value={ink} onValueChange={setInk} required />
               {gradient ? (
                 <>
                   <ColorField label="اللون الثاني" icon={<Sparkle />} value={ink2} onValueChange={setInk2} required />
                   <Segmented
+                    wide
                     aria-label="نوع التدرّج"
                     items={[{ value: "linear", label: "خطّيّ" }, { value: "radial", label: "شعاعيّ" }]}
                     value={gradKind}
@@ -262,23 +297,32 @@ export function QrToolView() {
                   ) : null}
                 </>
               ) : null}
-
-              <Switch
-                row
-                label="بلا خلفيّة"
-                description="أرضيّةٌ شفّافة لوضعه على تصميمٍ فاتح، وعلى الداكن لا يُقرأ."
-                checked={bare}
-                onChange={(e) => setBare(e.target.checked)}
-              />
-              {!bare ? <ColorField label="لون الأرضيّة" icon={<PaintBucket />} value={bg} onValueChange={setBg} /> : null}
             </div>
+          </SectionCard>
+
+          {/* الخلفيّةُ كرتٌ قائمٌ بذاته (أمرُ المالك ٢٠٢٦-٠٨-٢٢): قرارٌ مستقلٌّ عن اللون،
+              وكرتٌ يجمعهما كان يخلط سؤالين. وحارسُ التباين يسكن هنا لا هناك: هو حكمٌ على
+              **الاثنين معًا**، وموضعُه عند آخرِهما قرارًا. */}
+          <SectionCard headerVariant="soft" icon={<PaintBucket />} title="الخلفيّة">
+            <Switch
+              row
+              label="بلا خلفيّة"
+              description="خلفيّةٌ شفّافة لوضعه على تصميمٍ فاتح، وعلى الداكن لا يُقرأ."
+              checked={bare}
+              onChange={(e) => setBare(e.target.checked)}
+            />
+            {!bare ? (
+              <div className="mt-4">
+                <ColorField label="لون الخلفيّة" icon={<PaintBucket />} value={bg} onValueChange={setBg} />
+              </div>
+            ) : null}
 
             <div className="mt-4">
               <Alert tone={guard.tone} title="التباين مقيسٌ لا مظنون">{guard.text}</Alert>
             </div>
           </SectionCard>
 
-          <SectionCard headerVariant="chip" icon={<Eye />} title="العيون">
+          <SectionCard headerVariant="soft" icon={<Eye />} title="العيون">
             <div className="flex flex-col gap-4">
               <Switch
                 row
@@ -296,15 +340,15 @@ export function QrToolView() {
             </div>
           </SectionCard>
 
-          <SectionCard headerVariant="chip" icon={<ImageSquare />} title="الشعار في القلب">
+          <SectionCard headerVariant="soft" icon={<ImageSquare />} title="الشعار في القلب">
             <div className="flex flex-col gap-3 items-start">
               {logo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- صورةٌ مضمَّنة (data URL) لا أصلٌ ثابت
                 <img src={logo} alt="الشعار المختار" className="max-h-20 w-auto rounded" />
               ) : (
-                <p className="txt">لا شعار: الرمز يخرج نظيفًا. وإن أضفته رُفع التصحيح إلى H وفُرِّغ ما تحته.</p>
+                <p className="txt">لا شعار: الباركود يخرج نظيفًا. وإن أضفته رُفع التصحيح إلى H وفُرِّغ ما تحته.</p>
               )}
-              <div className="flex flex-wrap gap-2">
+              <div className="btn-row">
                 <Button variant="ghost" size="md" onClick={() => logoInput.current?.click()}>
                   <UploadSimple size={18} /> {logo ? "تغيير الشعار" : "رفع شعار"}
                 </Button>
@@ -328,11 +372,11 @@ export function QrToolView() {
             </div>
           </SectionCard>
 
-          <SectionCard headerVariant="chip" icon={<TextAa />} title="الإطار والنداء">
+          <SectionCard headerVariant="soft" icon={<TextAa />} title="الإطار والنداء">
             <Switch
               row
               label="إطارٌ ونداء تحته"
-              description="للملصقات: طوقٌ حول الرمز وشريطُ نصٍّ يدعو إلى مسحه."
+              description="للطباعة: طوقٌ حول الباركود وشريطُ نصٍّ يدعو إلى مسحه."
               checked={framed}
               onChange={(e) => setFramed(e.target.checked)}
             />
@@ -354,36 +398,164 @@ export function QrToolView() {
             ) : null}
           </SectionCard>
         </div>
+          </div>
+        </div>
 
-        {/* ── المعاينة ── */}
-        <div>
-          <SectionCard headerVariant="chip" icon={<QrCode />} title="المعاينة: ما تراه هو ما يُنزَّل">
-            {preview.error ? (
-              <Alert tone="warning" title="تعذّر توليد الرمز">{preview.error}</Alert>
-            ) : preview.svg ? (
-              <QrPreview svg={preview.svg} />
-            ) : (
-              <p className="txt">اكتب رابطًا أو نصًّا فيظهر رمزه هنا.</p>
-            )}
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" size="md" disabled={!preview.svg} onClick={() => void savePng()}>
-                <DownloadSimple /> تنزيل PNG
-              </Button>
-              <Button variant="neutral" size="md" disabled={!preview.svg} onClick={saveSvg}>
-                <FileSvg /> تنزيل SVG
-              </Button>
+        {/* ── المعاينة: في الواسع عمودٌ لاصقٌ بجوار الضوابط، وفي الجوّال لوحةٌ تحت الورقة ── */}
+        <div className="qdock qcanvas">
+          <SectionCard headerVariant="soft" icon={<QrCode />} title="المعاينة: ما تراه هو ما يُحمل">
+            <div className="qdock-full">
+              {preview.error ? (
+                <Alert tone="warning" title="تعذّر توليد الباركود">{preview.error}</Alert>
+              ) : preview.svg ? (
+                <QrPreview svg={preview.svg} />
+              ) : (
+                // لا تقع إلّا في عطلٍ لا يُتوقَّع: الرمزُ محفورٌ منذ باب الإنشاء، فالمعاينةُ
+                // لا تنتظر حرفًا من أحد.
+                <EmptyState variant="aurora" icon={<QrCode />} title="لا باركود بعد" />
+              )}
             </div>
 
-            <p className="fld-help mt-3">
-              وقبل الطباعة بالألف: امسحه بهاتفك من الشاشة، ثمّ اطبع نسخةً واحدة وامسحها. ما يُقرأ
-              على الشاشة قد يُخفق على الورق.
-            </p>
+            <div className="qdock-bar">
+              <div className="qdock-acts">{downloads}</div>
+            </div>
           </SectionCard>
         </div>
       </div>
-    </>
+
+    </div>
   );
+}
+
+/**
+ * **بذرةُ المحرّر من وصفةٍ محفوظة** — عكسُ بناء المواصفة: ما حُفظ يعود حقولًا في الشاشة.
+ * وما غاب يأخذ افتراضَ الهويّة من مصدره الواحد (`defaults`)، فلا رقمَ محفورٌ هنا.
+ */
+function look(spec?: QrSpec | null) {
+  const paint = spec?.dots?.paint;
+  const gradient = !!paint && paint.kind !== "solid";
+  return {
+    gradient,
+    ink: paint ? (paint.kind === "solid" ? paint.color : paint.from) : LOOK.ink,
+    ink2: paint && paint.kind !== "solid" ? paint.to : LOOK.ink2,
+    gradKind: (paint?.kind === "radial" ? "radial" : "linear") as "linear" | "radial",
+    angle: paint?.kind === "linear" ? String(paint.angle) : LOOK.angle,
+    bare: spec ? spec.bg === null : LOOK.bare,
+    bg: spec?.bg ?? LOOK.bg,
+    eyeTinted: !!spec?.eye?.color,
+    eyeColor: spec?.eye?.color ?? LOOK.eyeColor,
+    pupilColor: spec?.pupil?.color ?? LOOK.pupilColor,
+    logo: spec?.logo?.href ?? null,
+    logoScale: spec?.logo ? String(spec.logo.scale) : LOOK.logoScale,
+    framed: !!spec?.frame,
+    caption: spec?.frame?.caption ?? LOOK.caption,
+    frameColor: spec?.frame?.color ?? LOOK.frameColor,
+    captionColor: spec?.frame?.textColor ?? LOOK.captionColor,
+  };
+}
+
+/**
+ * **مقبضُ الورقة** — يقود حافّتَها بالإصبع ثمّ يرسو على أقرب مرسًى.
+ *
+ * والرمزُ يُكتب على **غلاف الشاشة** لا على الورقة: اللوحةُ (`.qcanvas`) والورقةُ (`.qsheet`)
+ * كلتاهما تقرأ `--qsheet-top`، فلا بدّ أن يكون في سلفٍ يجمعهما.
+ *
+ * و`setPointerCapture` يلاحق الإصبعَ ولو خرج من المقبض الصغير، و`data-drag` يقطع الانتقال
+ * أثناء السحب فلا تتخلّف الحافّةُ عن الإصبع، ويعود عند الإفلات فيقع الرسوّ ناعمًا.
+ */
+function SheetGrip({ rootRef }: { rootRef: React.RefObject<HTMLDivElement | null> }) {
+  /**
+   * **مقاسُ اللوحة يُضبَط عند الرسوّ لا تحت الإصبع** (أمرُ المالك ٢٠٢٦-٠٨-٢١، المسلك «ب»):
+   *
+   * ١) **الخفضُ يكبّره تحت الإصبع**: كلّما انكشف من اللوحة شيءٌ ملأه الرمزُ في حينه، فالنموُّ
+   *    يتبع اليدَ ولا ينتظر آخرَ الحركة (وبلا هذا كان يقفز عند الإفلات: «ليس سلسًا»).
+   * ٢) **والرفعُ لا يصغّره**: الورقةُ تنزلق فوقه فتغطّيه وحسب.
+   * ٣) **وعند الإفلات** يُضبَط المقاسُ على المرسى المستقَرّ، فيصغر إن كنتَ رفعتَ. وهذا
+   *    التصغيرُ يقع تحت الورقة وهي راسيةٌ فوقه، فلا تكاد تراه.
+   *
+   * فالوضعُ الطبيعيّ يعود كما كان بعد كلّ رحلة، ولا قفزةَ في الطريق.
+   */
+  const floor = useRef(0);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    // البداية على المرسى الأوسط، فلا يقفز الرمزُ مقاسًا عند أوّل سحبة
+    const apply = () => {
+      const base = Math.round(SHEET_STOPS[1] * window.innerHeight);
+      floor.current = base;
+      root.style.setProperty("--qcanvas-floor", `${base}px`);
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => window.removeEventListener("resize", apply);
+  }, [rootRef]);
+
+  const settle = (root: HTMLElement, y: number) => {
+    floor.current = Math.round(y);
+    root.style.setProperty("--qcanvas-floor", `${floor.current}px`);
+  };
+
+  const drag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const root = rootRef.current;
+    const sheet = root?.querySelector<HTMLElement>(".qsheet");
+    if (!root || !sheet) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    sheet.dataset.drag = "1";
+    // والغلافُ يُعلِن السحبَ أيضًا: اللوحةُ تقرؤه فتقطع انتقالَها، فلا تتخلّف عن الإصبع
+    root.dataset.drag = "1";
+    const h = window.innerHeight;
+    const move = (ev: PointerEvent) => {
+      const y = Math.min(Math.max(ev.clientY, h * SHEET_STOPS[0]), h * SHEET_STOPS[SHEET_STOPS.length - 1]);
+      root.style.setProperty("--qsheet-top", `${Math.round(y)}px`);
+      // نزولًا فقط: ما انكشف يُملأ في حينه، وصعودًا لا يُمسّ المقاس (تغطيةٌ محضة)
+      if (y > floor.current) settle(root, y);
+    };
+    const up = (ev: PointerEvent) => {
+      const y = ev.clientY / h;
+      const stop = SHEET_STOPS.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a));
+      delete sheet.dataset.drag;
+      delete root.dataset.drag;
+      root.style.setProperty("--qsheet-top", `${(stop * 100).toFixed(0)}%`);
+      // وهنا وحده يتبدّل المقاس: على المرسى المستقَرّ لا على آخر موضعٍ بلغه الإصبع
+      settle(root, stop * h);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  return <button type="button" className="qsheet-grip" aria-label="اسحب لتكبير المحرّر أو تصغيره" onPointerDown={drag} />;
+}
+
+/**
+ * **اللوحةُ تبدأ من تحت ما فوقها** — `.qcanvas` طبقةٌ ثابتة، فلا تعرف أين انتهى رأسُ الصفحة
+ * فوقها (وهو أخو المحرّر لا ابنُه: تكتبه الشاشةُ المستدعية، ويطول بطول عنوانه وبعرض الجهاز).
+ * فيُقاس رأسُ الغلاف نفسِه ويُكتب رمزًا (`--qcanvas-top`)، سابقتُه `--asave-h`.
+ *
+ * ولا شيءَ يُمرَّر تحت اللوحة في هذه الهيئة (العمودان كلاهما ثابت)، فالرقمُ لا يتبدّل بتمرير؛
+ * ويُعاد قياسُه عند تبدّل المقاس وعند تبدّل حاوية التمرير — وهناك يقع طولُ الرأس.
+ */
+function useCanvasTop() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const apply = () => {
+      const top = Math.round(el.getBoundingClientRect().top);
+      if (top > 0) el.style.setProperty("--qcanvas-top", `${top}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
+    window.addEventListener("resize", apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+  return root;
 }
 
 /**
@@ -394,10 +566,10 @@ export function QrToolView() {
  * والوسم مولَّدٌ عندنا بالكامل: الألوان مواصفةٌ مُقيَّدة، والنصّ الوحيد الذي يكتبه المستخدم
  * (النداء) يمرّ بـ`escapeXml` في الراسم — فلا مدخلَ لوسمٍ دخيل.
  */
-function QrPreview({ svg }: { svg: string }) {
+export function QrPreview({ svg, max = PREVIEW }: { svg: string; max?: number }) {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (host.current) host.current.innerHTML = svg;
   }, [svg]);
-  return <div ref={host} className="w-full" style={{ maxWidth: PREVIEW }} aria-label="معاينة الرمز" />;
+  return <div ref={host} className="qprev w-full" style={{ maxWidth: max }} aria-label="معاينة الباركود" />;
 }

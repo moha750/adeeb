@@ -8361,3 +8361,309 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 }
 .nvlab-body { flex: 1 1 auto; overflow: hidden; padding: 16px; }
 .nvlab-note { margin-top: 10px; font-size: 12.5px; line-height: 1.7; color: var(--color-text-muted); }
+
+/* ============================================================
+   المعاينةُ الحيّة في محرّر — الرمزُ لوحةٌ والمحرّرُ ورقةٌ تُسحَب فوقها
+   المستهلك: مولّد الباركود (`QrToolView`) · المعرض: /ui/qr-dock
+   ============================================================
+   المعاينةُ في محرّرٍ ليست محتوى الصفحة، هي **أداةُ قياس**. وكانت كرتًا في شبكةٍ عمودُها
+   الأوّل خمسةُ كروتٍ من الضوابط والثاني كرتُ معاينةٍ قصير: فتقف عند رأس الصفحة وتغادر
+   النظرَ بأوّل تمريرة، فيصير تغييرُ لونٍ صعودًا ونزولًا.
+
+   **والجوابُ يفترق بالشاشة:**
+   العرضُ الواسع فيه فراغٌ بجوار الضوابط، فيكفي أن يثبت العمود (`.qdock`).
+   والجوّالُ لا فراغَ فيه، وكلُّ ما يُرصَف في أعلاه يُقتطع من المحرّر — **ورصيفٌ دائمٌ
+   مزعج** (حكمُ المالك ٢٠٢٦-٠٨-٢١ على شكلَي «ينكمش» و«يُثبَّت»). فقُلبت الأدوارُ بقراره:
+   **الرمزُ هو الشاشة، والمحرّرُ ورقةٌ فوقه** تُرفع وتُخفض بمقبضها. فلا يُقتطع شيء: القسمةُ
+   بيد صاحب اليد، لا بيد الشاشة.
+   ------------------------------------------------------------ */
+
+/* **المعاينةُ تُقاد بصندوقها لا بوسمها:** الراسمُ يكتب `width`/`height` وسمَين بمقاسٍ ثابت
+   (360) ومعهما `viewBox`. فبلا قياسٍ بالصنف يطفح الرمزُ خارج عموده كلّما ضاق العمود (وقد
+   دفعه إلى 402 في شبكةٍ عرضُها 344)، والصنفُ يغلب الوسمَ فتُحفظ النسبةُ بـ`viewBox`. */
+.qprev svg { display: block; width: 100%; height: auto; }
+
+/* ── العرضُ الواسع: كرتُ المعاينة يمتدّ بطول الضوابط ──────────────────────────
+   كان العمودُ `align-self: flex-start` **لاصقًا** يتبع التمرير (سابقةُ `.asave`). وبأمر
+   المالك ٢٠٢٦-٠٨-٢١ صار **ممتدًّا إلى الأسفل**: يأخذ طولَ أطولِ إخوته في الصفّ، فيقع
+   الكرتان متساويَي الحافّة ولا يبقى تحت المعاينة فراغٌ معلَّق.
+   وثمنُه مذكورٌ كي لا يُنسى: **لا التصاقَ بعده**. اللاصقُ يحتاج مدًى يتحرّك فيه داخل
+   صفّه، والممتدُّ يملأ الصفَّ فلا مدى. فإن أُريد اللاصقُ يومًا فالكلمةُ `flex-start`
+   ترجع مكانها ويسقط ما تحتها من امتداد. */
+.qdock {
+  position: sticky; top: 22px; align-self: flex-start; z-index: 3;
+  /* **بطول شاشة المستخدم لا بطول الصفحة** (أمرُ المالك ٢٠٢٦-٠٨-٢١). كان `align-self: stretch`
+     يمدّه بطول عمود الضوابط، وذاك يطول بطول النموذج فيصير كرتًا لا تراه إلّا بالتمرير.
+
+     **والطولُ يُقاس ولا يُحسَب من أرقامٍ مركّبة.** جُرّب أوّلًا `100vh` ناقصًا حواشيَ اللوحة
+     ورأسَها، فطفح الكرتُ أسفلَ الشاشة: الحسابُ نسي **رأسَ الصفحة** فوق المحرّر، وهو ليس
+     رقمًا ثابتًا (يطول بطول عنوانه وبعرض الجهاز، وفي `‎/new` يكتبه غيرُ المحرّر أصلًا).
+     فالمقياسُ من الحيّ: `--qcanvas-top` يكتبه `useCanvasTop` من موضع المحرّر نفسِه، وهو ما
+     بقي فوقه من الشاشة. وما بقي تحته هو الكرت.
+
+     وثمنُه معلوم: حين تُمرَّر الضوابطُ يلتصق الكرتُ في الأعلى فيبقى تحته فراغٌ بمقدار ما
+     كان فوقه. والقصورُ أهونُ من الطفح: كرتٌ يفيض عن الشاشة يُخفي زرَّي التنزيل. */
+  height: calc(100vh - var(--qcanvas-top, 120px) - 22px);
+}
+/* الامتدادُ يُورَّث حتّى المعاينة: الكرتُ يملأ العمود، وجسمُه يملأ الكرت، والرمزُ يتوسّط
+   ما فضل. وبلا هذا يمتدّ الصندوقُ وحده ويبقى الرمزُ معلّقًا في رأسه. */
+.qdock > .acard { height: 100%; display: flex; flex-direction: column; }
+.qdock > .acard > .acard-body { flex: 1 1 auto; display: flex; flex-direction: column; }
+.qdock-full { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.qdock-bar { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
+/* زرّا التنزيل: **إمّا جنبًا إلى جنبٍ متساويَين، وإمّا تحت بعضهما بعرضٍ كامل** — وهو أمرُ
+   المالك ٢٠٢٦-٠٨-٢١ الذي **صار قانونًا عامًّا** بعده (ق١٦ · كتلةُ «قانون صفّ الأزرار»)، فسقط
+   نصُّه من هنا ولم يبقَ إلّا فجوتُه الأضيق. وكان أساسُه ‎140px، وصار ‎--btn-row-min المشترك. */
+.qdock-acts { gap: 8px; }
+/* رأسُ الورقة جهازُ جوّالٍ خالص: في العرض الواسع الكرتُ نفسُه يحمل زرَّي التنزيل */
+.qsheet-head { display: none; }
+
+/* ============================================================
+   الجوّال: العتبةُ عتبةُ اللوحة نفسِها (٨٦٠) — عندها يذهب الشريطُ الجانبيّ وتصير الصفحةُ
+   عمودًا واحدًا، وعندها بعينِها ينقلب الدورُ بين اللوحة والمحرّر.
+   ============================================================ */
+@media (max-width: 860px) {
+  /* اللوحةُ تبدأ من تحت ما فوقها لا من رأس النافذة: `--qcanvas-top` يقيسه المحرّرُ بنفسه
+     (رأسُ الصفحة أخوه لا ابنُه، ويطول بطول عنوانه)، وسابقتُه `--asave-h`. */
+  /* **وارتفاعُها من `--qcanvas-floor` لا من حافّة الورقة** (أمرُ المالك ٢٠٢٦-٠٨-٢١):
+     أثناء السحب لا يتغيّر الرمزُ ألبتّة — تنزلق الورقةُ فوقه فتغطّيه (هي أعلى منه طبقةً)
+     ولا يُعاد رسمُه تحت الإصبع. وعند الإفلات وحده يُضبَط المقاسُ على المرسى المستقَرّ،
+     فيكبر بالخفض ويصغر بالرفع (يكتبه `SheetGrip`).
+     والرمزُ يُرصَف في **رأس** اللوحة لا وسطها: ما تستره الورقةُ أسفلُه، فيبقى أعلاه مرئيًّا. */
+  .qcanvas {
+    position: fixed; inset-inline: 0; top: var(--qcanvas-top, 58px); z-index: 3;
+    /* و`max` حارسٌ لا زينة: الورقةُ ترسو أعلى من رأس اللوحة عند مرساها الأوّل، فيخرج الطرحُ
+       سالبًا — والارتفاعُ السالب تصريحٌ باطلٌ يسقط، فيعود الارتفاعُ تلقائيًّا ويطفح الرمزُ
+       بمقاسه الأصليّ فوق الصفحة كلِّها. */
+    height: max(0px, calc(var(--qcanvas-floor, var(--qsheet-top, 46%)) - var(--qcanvas-top, 58px)));
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px;
+    padding: 14px;
+    /* ويتبدّل المقاسُ مع الورقة نفسِها: هي تنتقل إلى مرساها، واللوحةُ تنتقل معها فلا تقفز.
+       و`--dur-slow` لا `--dur`: التبدّلُ هنا **قفزةُ مقاسٍ لا انزلاقُ موضع** (‏210 إلى 428
+       في ربع ثانية تُقرأ نقرةً لا حركة)، والزمنُ الأطول مع خروجٍ ليّن يجعل النموَّ يُرى
+       ينمو. والرقمُ واحدٌ للورقة واللوحة، فلا يسبق أحدُهما صاحبَه. */
+    transition: height var(--dur-slow) var(--ease-standard);
+  }
+  /* **الرمزُ يصير ابنَ اللوحة مباشرةً** (`display: contents` على الكرت وجسمه وحاضنه):
+     الرمزُ عنصرٌ مستبدَل، فإن كان ابنَ صندوقٍ ذي ارتفاعٍ معلوم كفاه `max-width` و`max-height`
+     معًا ليتقلّص محفوظَ النسبة. أمّا وهو تحت ثلاثة أغلفةٍ ارتفاعُها تلقائيّ فالنسبةُ المئويّة
+     لا تجد ما تُنسَب إليه: قُصّ الرمزُ من أسفله في أوّل قياس. */
+  .qcanvas > .acard,
+  /* **`> .acard >` لا `.qcanvas .acard-body`**: قاعدةُ العرض الواسع أعلاه تكتب على
+     `.qdock > .acard > .acard-body` بخصوصيّة (0,3,0)، فتغلب المختصرةَ (0,2,0) ويبقى الجسمُ
+     صندوقًا حقيقيًّا بلا `min-height: 0` — فلا ينكمش دون مقاس الرمز، ويطفح الرمزُ فوق رأس
+     الصفحة وتحت الورقة معًا (رُئي وقيس: صندوقٌ 322 في لوحةٍ 210). فتُساوى الخصوصيّةُ
+     ويسبق الأخيرُ في الترتيب. */
+  .qcanvas > .acard > .acard-body,
+  .qcanvas .qprev { display: contents; }
+
+  /* **ورأسُ اللوحة يُخفى في الجوّال** (أمرُ المالك ٢٠٢٦-٠٨-٢١، **ناقضًا إبقاءه** الذي كُتب
+     قبله في اليوم نفسِه بحجّة «النهج واحدٌ لا استثناء فيه»). وحجّةُ النقض أنّ العنوان هنا
+     **بلا معنى**: «المعاينة: ما تراه هو ما يُنزَّل» سطرٌ يشرح المرئيَّ بالمرئيّ فوق رمزٍ
+     يملأ نصفَ الشاشة، ويقتطع من لوحةٍ هي أضيقُ ما تكون.
+     ولا يعود ذلك استثناءً بلا قاعدة: العنوانُ يُعلِّم الكرتَ بين إخوته في عمودٍ يُمرَّر،
+     واللوحةُ هنا ليست كرتًا في عمود — هي **طبقةٌ ثابتةٌ وحدَها** فوق الورقة، لا جارَ لها
+     تُميَّز عنه. وفي العرض الواسع يبقى الرأسُ: هناك الكرتُ واحدٌ بين كروتٍ معنونة. */
+  .qcanvas .acard-header { display: none; }
+  /* والرمزُ يتوسّط ما بقي تحته. وحاضنُه صندوقٌ حقيقيٌّ هنا لا `contents`: ارتفاعُه محسومٌ
+     بـ`flex: 1` داخل عمودٍ معلوم الطول، فيجد `max-height: 100%` على الرمز ما يُنسَب إليه
+     (وبلا ذلك يُقصّ الرمزُ من أسفله في أوّل قياس). */
+  .qcanvas .qdock-full { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+  /* وزرّا التنزيل يبقيان في رأس الورقة: اللوحةُ تنكمش بسحبها، والفعلُ الأوّل لا يُقايض بمرسًى. */
+  .qcanvas .qdock-bar { display: none; }
+  .qcanvas svg { max-width: 100%; max-height: 100%; width: auto; height: auto; min-height: 0; }
+
+  /* الورقةُ: حافّتُها `--qsheet-top` يكتبه السحبُ ولا رقمَ محفور */
+  .qsheet {
+    position: fixed; inset-inline: 0; bottom: 0; top: var(--qsheet-top, 46%);
+    z-index: 4;
+    display: flex; flex-direction: column;
+    background: var(--color-bg);
+    border-top: var(--card-stroke-w) solid var(--card-stroke);
+    border-radius: var(--radius) var(--radius) 0 0;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    /* ولا انتقالَ أثناء السحب: الإصبعُ يقود الحافّة، والانتقالُ يجعلها تتخلّف عنه.
+       وزمنُ الرسوّ زمنُ اللوحة نفسُه (`--dur-slow`)، فالحركتان واحدةٌ لا اثنتان. */
+    transition: top var(--dur-slow) var(--ease-standard);
+  }
+  .qsheet[data-drag="1"] { transition: none; }
+  /* واللوحةُ تقطع انتقالَها أثناء السحب أيضًا: النموُّ يتبع الإصبعَ بكسلًا ببكسل، وانتقالٌ
+     مدّتُه أربعةُ أعشارٍ يجعله يتخلّف عنه فيُرى مطّاطًا. والانتقالُ للرسوّ وحده. */
+  .qtool[data-drag="1"] .qcanvas { transition: none; }
+  /* رأسُ الورقة: مقبضٌ وزرّا تنزيل. وهما هنا لا على اللوحة لأنّ اللوحة تنكمش بالسحب حتى
+     لا تسع زرًّا، فيضيع الفعلُ الأوّل عند أحد المراسي. */
+  .qsheet-head { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 14px 12px; }
+  .qsheet-head .qdock-acts { justify-content: center; }
+  /* ثلاثةُ أفعالٍ في رأس الورقة (حفظٌ وتحميلان): الحفظُ سطرٌ وحدَه والتحميلان يقتسمان
+     السطرَ الثاني — مرتبةٌ تُقرأ بلا شرحٍ، وارتفاعٌ لا يزيد عن سطرين. و`:has` تقصر ذلك
+     على حال الثلاثة: بابٌ بلا حفظٍ يبقى زرَّاه في سطرٍ واحد. */
+  .qsheet-head .qdock-acts:has(> :nth-child(3)) > :first-child { flex-basis: 100%; }
+  /* المقبضُ عريضُ اللمس وشعرتُه رفيعة: قانونُ اللمس لا يُقاس بما يُرى */
+  .qsheet-grip {
+    display: flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; width: 100%; height: 30px; border: 0; background: none;
+    touch-action: none; cursor: grab;
+  }
+  .qsheet-grip::before {
+    content: ""; width: 44px; height: 5px; border-radius: var(--radius-full);
+    background: var(--color-border);
+  }
+  /* وذيلُ الورقة يحجز مكانَ جزيرة التنقّل: طبقةٌ ثابتةٌ تحجب آخرَ ما فيها إن لم يُحجَز لها */
+  .qsheet-scroll {
+    flex: 1 1 auto; overflow-y: auto;
+    padding: 0 14px calc(104px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ------------------------------------------------------------
+   إطارُ معرضِ المعاينة (`/ui/qr-dock`) — نافذةٌ حقيقيّة لا صندوقٌ ضيّق
+   الشاشةُ داخل `iframe` عمدًا: استعلامُ الوسائط و`position: fixed` و`dvh` كلُّها تقيس
+   **النافذة**، فصندوقٌ عرضُه 390 داخل شاشةٍ عريضة يكذب في الثلاثة. صنفٌ معرضيٌّ لا
+   يُستعمل في شاشةٍ حيّة.
+   ------------------------------------------------------------ */
+.qdlab { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.qdlab-col { flex: 0 0 auto; width: var(--qdlab-w, 390px); max-width: 100%; }
+.qdlab-screen {
+  display: block; width: 100%; height: var(--qdlab-h, 780px);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+/* ============================================================
+   أدواتُ التدرّج — قرصٌ ولوحُ جهاتٍ ومزلقٌ ولوحُ نقطة
+   المكوّنات: AngleDial · DirectionPad · RangeField · PointPad · المعرض: /ui/gradient
+   ============================================================
+   بُنيت ٢٠٢٦-٠٨-٢٢ حين ضاقت أربعُ خاناتٍ مكتوبة («أفقيّ، رأسيّ، مائل، مائل معكوس») عن
+   اتّجاهٍ **شكلُه هو معناه**. والراسمُ يقبل الزوايا كلَّها أصلًا، فالقيدُ كان في الواجهة.
+   ------------------------------------------------------------ */
+
+/* ── قرصُ الاتّجاه ─────────────────────────────────────────────────────────
+   الذراعُ يُدار بالرمز `--adial-a`، ومنشؤه المركز: `transform-origin` عند القلب و`rotate`
+   واحدة، فلا حسابَ مثلّثيّ في CSS ولا موضعٌ يُحسب لكلّ زاوية. */
+.adial {
+  position: relative;
+  width: 132px; height: 132px;
+  border-radius: var(--radius-full);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--color-surface-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.adial:focus-visible { outline: none; box-shadow: var(--ring); }
+.adial:active { cursor: grabbing; }
+/* الذراع: خطٌّ من القلب إلى الحافّة يعلوه رأسٌ دائريّ — هو ما يُقرأ منه الاتّجاه */
+.adial-arm {
+  position: absolute; inset-inline-start: 50%; top: 50%;
+  width: calc(50% - 8px); height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transform-origin: 0 50%;
+  transform: translateY(-50%) rotate(var(--adial-a, 0deg));
+}
+.adial-arm::after {
+  content: ""; position: absolute; inset-inline-end: -7px; top: 50%;
+  width: 18px; height: 18px; margin-top: -9px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+.adial-val {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* ── لوحُ الجهات: ثلاثٌ في ثلاث، والسهمُ يُدار بزاوية خانته ───────────────── */
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 152px;
+}
+.dpad-cell {
+  display: grid; place-items: center;
+  aspect-ratio: 1;
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.dpad-cell:hover { background: var(--color-surface); color: var(--color-primary); }
+.dpad-cell:focus-visible { outline: none; box-shadow: var(--ring); }
+.dpad-cell.on { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
+.dpad-cell svg { width: 22px; height: 22px; transform: rotate(var(--dpad-a, 0deg)); }
+.dpad-mid {
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; color: var(--color-text-muted);
+}
+
+/* ── المزلق ────────────────────────────────────────────────────────────── */
+.rng { display: flex; flex-direction: column; gap: 6px; }
+.rng-lbl { font-size: 13px; font-weight: 700; color: var(--color-text); }
+.rng-row { display: flex; align-items: center; gap: 12px; }
+.rng-in {
+  flex: 1 1 auto; min-width: 0;
+  appearance: none; -webkit-appearance: none;
+  height: 44px; /* قانونُ اللمس: الهدفُ ٤٤ ولو كان القضيبُ أرقّ */
+  background: none;
+  cursor: pointer;
+}
+.rng-in:focus-visible { outline: none; }
+.rng-in::-webkit-slider-runnable-track {
+  height: 6px; border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.rng-in::-moz-range-track {
+  height: 6px; border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.rng-in::-webkit-slider-thumb {
+  appearance: none; -webkit-appearance: none;
+  width: 24px; height: 24px; margin-top: -10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+.rng-in::-moz-range-thumb {
+  width: 24px; height: 24px; border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+.rng-in:focus-visible::-webkit-slider-thumb { box-shadow: var(--ring); }
+.rng-val { flex: 0 0 auto; min-width: 52px; text-align: center; font-size: 13px; font-weight: 800; color: var(--color-text-muted); }
+
+/* ── لوحُ النقطة: خلفيّتُه المعاينةُ نفسُها، فما تحت إصبعك هو ما سيخرج ───────── */
+.ppad {
+  position: relative;
+  width: 152px; height: 152px;
+  border-radius: var(--radius-sm);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--ppad-bg, var(--color-surface-2));
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+.ppad:focus-visible { outline: none; box-shadow: var(--ring); }
+/* **`left` ماديّةٌ لا منطقيّة، عمدًا:** موضعُ النقطة إحداثيٌّ في فضاء الرسم (‏`cx` في SVG
+   يُقاس من اليسار دائمًا)، ولوحُها صورةٌ لذلك الفضاء لا نصٌّ عربيّ. و`inset-inline-start`
+   تنقلب في RTL فتذهب النقطةُ إلى الطرف المقابل لِما يُرسَم في الباركود — رُئي مقلوبًا. */
+.ppad-dot {
+  position: absolute; left: var(--ppad-x, 50%); top: var(--ppad-y, 50%);
+  width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  border-radius: var(--radius-full);
+  /* حلقةٌ بيضاء بحدٍّ داخليٍّ داكن: النقطةُ تقف على تدرّجٍ لا تُعرَف درجتُه، فحدٌّ واحدٌ
+     يذوب في نصف الحالات. واللونان من الرموز لا من `#hex` (ق١). */
+  border: 2px solid var(--color-on-primary);
+  background: transparent;
+  box-shadow: var(--shadow-md), inset 0 0 0 1px color-mix(in oklab, var(--navy-900) 45%, transparent);
+  pointer-events: none;
+}
