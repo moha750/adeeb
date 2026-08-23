@@ -15,10 +15,11 @@ import { useToast } from "../../_components/ToastProvider";
 import { fmtDate, fmtDateOnly } from "@/lib/dates";
 import { positionLine } from "@/lib/positionLabel";
 import { WARNING_CATEGORIES, categoryLabel, dots, remainingText, toneOf, warningTitle } from "@/lib/warnings/vocab";
-import { downloadWarningLetter } from "@/lib/warnings/letter";
+import { downloadWarningLetter, renderWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage } from "@/lib/warnings/message";
-import { waHref } from "@/lib/whatsapp";
-import { cancelWarning } from "./actions";
+import { DELIVERY_STATUSES, deliveryLabel, deliveryTone, maySend, sendBlockedWhy } from "@/lib/warnings/delivery";
+import { phoneRejection, toE164, waHref } from "@/lib/whatsapp";
+import { cancelWarning, sendWarningWhatsapp } from "./actions";
 import { IssueWarningModal } from "./IssueWarningModal";
 import type { WarningRow, WarningsData } from "./data";
 import { PageHeader } from "../../_components/PageHeader";
@@ -48,6 +49,8 @@ export function WarningsView({ data }: { data: WarningsData }) {
   const [cancelling, setCancelling] = useState<WarningRow | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [detail, setDetail] = useState<WarningRow | null>(null);
+  /** الإنذارُ الذي تُرسَل رسالتُه الآن — زرُّه وحده يدور، لا الجدولُ كلُّه. */
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -55,6 +58,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
       if (filters.category && r.category !== filters.category) return false;
       if (filters.status && r.status !== filters.status) return false;
       if (filters.committee && (r.committee ?? "") !== filters.committee) return false;
+      if (filters.delivery && (r.delivery?.status ?? "none") !== filters.delivery) return false;
       return true;
     });
   }, [rows, search, filters]);
@@ -122,6 +126,36 @@ export function WarningsView({ data }: { data: WarningsData }) {
     window.open(waHref(r.phone, warningWhatsappMessage(letterOf(r))), "_blank", "noopener");
   };
 
+  /**
+   * **إرسالُ القالب عبر واتساب** : الخطابُ يُرسَم ههنا (رسّامه يمسّ DOM)، ثمّ يُرفَع مع
+   * المعرّف وحده. والقفلُ ضدّ الإرسال المكرّر في القاعدة لا في هذا الزرّ (`maySend` عرضٌ
+   * لِما تقوله القاعدة، لا حكمٌ مستقلّ عنها).
+   */
+  const onSend = async (r: WarningRow) => {
+    const phone = toE164(r.phone);
+    if (!phone.ok) { toast.error(phoneRejection(phone.code)); return; }
+    if (!maySend(r.delivery?.status ?? null, r.delivery?.updatedAt)) {
+      toast.error(sendBlockedWhy(r.delivery!.status));
+      return;
+    }
+
+    setSendingId(r.id);
+    try {
+      const blob = await renderWarningLetter(letterOf(r));
+      const fd = new FormData();
+      fd.append("warningId", r.id);
+      fd.append("letter", blob, `${r.id}.png`);
+      const res = await sendWarningWhatsapp(fd);
+      if (!res.ok) { toast.error(res.message); return; }
+      toast.success(res.message);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذّر إرسال الرسالة.");
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const submitCancel = () => {
     const w = cancelling;
     if (!w) return;
@@ -164,6 +198,24 @@ export function WarningsView({ data }: { data: WarningsData }) {
     key: "state", header: "الإنذار", width: "150px",
     render: stateBadge,
   };
+  /**
+   * **عمودُ الإبلاغ** : أين بلغ خبرُ الإنذار صاحبَه عبر واتساب. الفارغُ يعني إنذارًا سبق
+   * هذه القناة (أو صفَّ تسليمٍ لم يُفتَح)، ولا يعني فشلًا. والفشلُ يقول سببَه في تلميحه.
+   */
+  const deliveryCol: Column<WarningRow> = {
+    key: "delivery", header: "الإبلاغ", width: "140px",
+    render: (r) => {
+      const d = r.delivery;
+      if (!d) return <span className="txt">—</span>;
+      const badge = (
+        <Badge tone={deliveryTone(d.status)} variant="soft" icon={<WhatsappLogo />}>
+          {deliveryLabel(d.status)}
+        </Badge>
+      );
+      // سببُ الفشل تلميحٌ على الشارة : خبرٌ نادرٌ لا يستحقّ عمودًا، ولا يُخفى فيُبحَث عنه
+      return d.status === "failed" && d.errorMessage ? <span title={d.errorMessage}>{badge}</span> : badge;
+    },
+  };
   const categoryCol: Column<WarningRow> = {
     key: "category", header: "التصنيف", width: "1fr",
     render: (r) => <span className="txt">{categoryLabel(r.category)}</span>,
@@ -187,7 +239,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
   };
 
   const columns = (withMember: boolean): Column<WarningRow>[] =>
-    [withMember ? memberCol : null, stateCol, categoryCol, reasonCol, issuerCol, dateCol]
+    [withMember ? memberCol : null, stateCol, deliveryCol, categoryCol, reasonCol, issuerCol, dateCol]
       .filter((c): c is Column<WarningRow> => !!c);
 
   const rowActions = (r: WarningRow) => [
@@ -195,7 +247,17 @@ export function WarningsView({ data }: { data: WarningsData }) {
       items: [
         { label: "عرض التفاصيل", icon: <Eye />, onSelect: () => setDetail(r) },
         { label: "تنزيل الخطاب", icon: <DownloadSimple />, onSelect: () => void onDownload(r) },
-        { label: "فتح واتساب", icon: <WhatsappLogo />, onSelect: () => onWhatsapp(r), disabled: !r.phone },
+        ...(r.mayManage && r.status === "active"
+          ? [{
+              label: r.delivery?.status === "failed" ? "إعادة الإرسال عبر واتساب" : "إرسال عبر واتساب",
+              icon: <WhatsappLogo />,
+              onSelect: () => void onSend(r),
+              // مُعطَّلٌ لما أُرسل فعلًا : القفلُ في القاعدة، وهذا وجهُه في الشاشة
+              disabled: !r.phone || sendingId !== null
+                || !maySend(r.delivery?.status ?? null, r.delivery?.updatedAt),
+            }]
+          : []),
+        { label: "فتح واتساب يدويًّا", icon: <WhatsappLogo />, onSelect: () => onWhatsapp(r), disabled: !r.phone },
       ],
     },
     ...(r.mayManage && r.status === "active"
@@ -206,6 +268,14 @@ export function WarningsView({ data }: { data: WarningsData }) {
   const filterDefs: FilterDef[] = [
     { key: "category", label: "التصنيف", options: WARNING_CATEGORIES.map((c) => ({ value: c.value, label: c.label })) },
     { key: "status", label: "الحالة", options: [{ value: "active", label: "سارٍ" }, { value: "cancelled", label: "ملغى" }] },
+    {
+      key: "delivery",
+      label: "الإبلاغ",
+      options: [
+        { value: "none", label: "لم يُطلَب" },
+        ...DELIVERY_STATUSES.map((d) => ({ value: d.value, label: d.label })),
+      ],
+    },
     {
       key: "committee",
       label: "اللجنة",
@@ -234,7 +304,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
 
   return (
     <>
-      <PageHeader title="الإنذارات" status={mayIssue ? null : <Badge tone="info" variant="soft" icon={<Eye />}>اطّلاعٌ لا إصدار</Badge>} />
+      <PageHeader title="الإنذارات" status={mayIssue ? undefined : { label: "اطّلاعٌ لا إصدار", tone: "info", variant: "soft", icon: <Eye /> }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Warning />} value={stats.active} label="إنذارات سارية" tone={stats.active > 0 ? "warning" : "brand"} />

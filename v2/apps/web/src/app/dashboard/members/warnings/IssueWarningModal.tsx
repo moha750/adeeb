@@ -9,15 +9,17 @@ import { Avatar } from "../../_components/Avatar";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import { WARNING_CATEGORIES, ordinalWord, remainingText, warningTitle } from "@/lib/warnings/vocab";
-import { downloadWarningLetter } from "@/lib/warnings/letter";
+import { downloadWarningLetter, renderWarningLetter } from "@/lib/warnings/letter";
 import { warningWhatsappMessage } from "@/lib/warnings/message";
-import { waHref } from "@/lib/whatsapp";
+import { phoneRejection, toE164, waHref } from "@/lib/whatsapp";
 import { positionLine } from "@/lib/positionLabel";
-import { issueWarning } from "./actions";
+import { issueWarning, sendWarningWhatsapp } from "./actions";
 import type { WarningTarget } from "./data";
 
 /** ما يُسلَّم بعد التسجيل — منه يُبنى الخطاب والرسالة (الرتبة من القاعدة لا من العدّ هنا). */
 type Issued = {
+  /** معرّفُ الصفّ في القاعدة : به يُرفَع الخطاب ويُرسَل القالب. */
+  id: string | null;
   target: WarningTarget;
   ordinal: number;
   activeCount: number;
@@ -63,6 +65,8 @@ export function IssueWarningModal({
   const [confirm, setConfirm] = useState(false);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const target = targets.find((t) => t.id === userId) ?? null;
   // رتبةُ هذا الإنذار لو سُجّل الآن — تقديرٌ للعرض، والقاعدة هي التي تقولها يقينًا بعد التسجيل.
@@ -89,6 +93,7 @@ export function IssueWarningModal({
     setOccurred("");
     setIssued(null);
     setConfirm(false);
+    setSent(false);
   };
 
   const close = () => {
@@ -113,6 +118,7 @@ export function IssueWarningModal({
       }
       toast.success(res.message);
       setIssued({
+        id: res.id ?? null,
         target,
         ordinal: res.ordinal ?? nextOrdinal,
         activeCount: res.activeCount ?? nextOrdinal,
@@ -150,6 +156,30 @@ export function IssueWarningModal({
     }
   };
 
+  /**
+   * **الإرسالُ الآليّ** : يُرسَم الخطابُ ههنا (رسّامُه يمسّ DOM فلا خادمَ يرسمه)، ثمّ
+   * يُرفَع مع المعرّف إلى إجراءٍ خادميّ يُشغّل القالبَ عبر YCloud. ولا يُمرَّر نصٌّ ولا رقمٌ ولا
+   * تاريخ: تقرؤها دالّةُ الحافة من القاعدة، فلا يُوجَّه إرسالٌ ببياناتٍ من المتصفّح.
+   */
+  const onSend = async (i: Issued) => {
+    if (!i.id) { toast.error("تعذّر معرفة الإنذار، أرسله من سجلّ الإنذارات."); return; }
+    setSending(true);
+    try {
+      const blob = await renderWarningLetter(letterOf(i));
+      const fd = new FormData();
+      fd.append("warningId", i.id);
+      fd.append("letter", blob, `${i.id}.png`);
+      const res = await sendWarningWhatsapp(fd);
+      if (!res.ok) { toast.error(res.message); return; }
+      setSent(true);
+      toast.success(res.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذّر إرسال الرسالة.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const memberOptions: SelectOption[] = targets.map((t) => ({
     value: t.id,
     label: t.name,
@@ -163,6 +193,12 @@ export function IssueWarningModal({
   // ── التسليم: الإنذار سُجّل، وبقي أن يبلغ صاحبَه ─────────────────────────
   if (issued) {
     const msg = warningWhatsappMessage(letterOf(issued));
+    // الرقمُ يُفحَص هنا قبل أن يُنادى الخادم : ردٌّ فوريٌّ خيرٌ من رحلةٍ تعود بالخطأ نفسه
+    const phone = toE164(issued.target.phone);
+    /* والبالغُ الحدَّ يُرسَل بقالبه الخاصّ (`YCLOUD_FINAL_WARNING_TEMPLATE`) لا بقالب
+       العامّة. وأمضبوطٌ ذلك السرُّ أم لا؟ **سرُّ الحافة لا يبلغه المتصفّح**، فلا يُخمَّن:
+       يُنادى الخادمُ، وإن غاب السرُّ قال ذلك في جوابه. */
+    const canSend = !!issued.id && phone.ok;
     return (
       <Modal
         open={open}
@@ -170,10 +206,23 @@ export function IssueWarningModal({
         size="md"
         className={issued.terminated ? "mdl-tone-danger" : undefined}
         title={`سُجِّل ${warningTitle(issued.ordinal)}: ${issued.target.name}`}
-        description="بقي أن يبلغ صاحبَه: نزّل الخطاب، ثمّ افتح محادثته وأرفقه بالرسالة."
+        description={canSend
+          ? "بقي أن يبلغ صاحبَه: أرسِله عبر واتساب، أو نزّل الخطاب وأرفقه بنفسك."
+          : "بقي أن يبلغ صاحبَه: نزّل الخطاب، ثمّ افتح محادثته وأرفقه بالرسالة."}
         footer={
           <>
-            <Button variant="primary" size="md" loading={busy} onClick={() => onDownload(issued)}>
+            {canSend ? (
+              <Button variant="primary" size="md" loading={sending} disabled={sent || busy} onClick={() => onSend(issued)}>
+                <WhatsappLogo aria-hidden /> {sent ? "أُرسل" : "إرسال عبر واتساب"}
+              </Button>
+            ) : null}
+            <Button
+              variant={canSend ? "ghost" : "primary"}
+              size="md"
+              loading={busy}
+              disabled={sending}
+              onClick={() => onDownload(issued)}
+            >
               <DownloadSimple aria-hidden /> تنزيل الخطاب
             </Button>
             {issued.target.phone ? (
@@ -182,7 +231,7 @@ export function IssueWarningModal({
                 size="md"
                 onClick={() => window.open(waHref(issued.target.phone!, msg), "_blank", "noopener")}
               >
-                <WhatsappLogo aria-hidden /> فتح واتساب
+                <WhatsappLogo aria-hidden /> فتح واتساب يدويًّا
               </Button>
             ) : null}
             <Button variant={issued.terminated ? "ghost-danger" : "ghost"} size="md" onClick={close}>إغلاق</Button>
@@ -198,9 +247,16 @@ export function IssueWarningModal({
             {issued.target.name} عليه الآن {issued.activeCount} من {limit}.
           </Alert>
         )}
-        {issued.target.phone ? null : (
-          <Alert tone="info" title="لا جوّال مسجّل">لا رقم لهذا العضو، فيُبلَّغ بوسيلةٍ أخرى.</Alert>
+        {phone.ok ? null : (
+          <Alert tone="info" title={phoneRejection(phone.code)}>
+            لا تخرج رسالةُ واتساب لهذا العضو، فيُبلَّغ بوسيلةٍ أخرى وخطابُه جاهزٌ للتنزيل.
+          </Alert>
         )}
+        {phone.ok && issued.terminated ? (
+          <Alert tone="info" title="هذا الإنذار يخرج بقالبه الخاصّ">
+            بلغ الحدَّ فسُحبت العضويّة، فيُرسَل بقالب الإنذار الأخير لا بقالب العامّة.
+          </Alert>
+        ) : null}
       </Modal>
     );
   }

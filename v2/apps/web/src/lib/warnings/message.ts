@@ -74,8 +74,14 @@ export const signature = "إدارة الموارد البشرية، نادي أ
 /** هل بلغ هذا الإنذارُ الحدَّ فسُحبت به العضويّة؟ */
 const isFinal = (l: WarningLetter): boolean => l.activeCount >= l.limit;
 
-/** «إنذارٌ واحد» · «إنذاران» · «٣ إنذارات» — تمييزٌ عربيّ لِما بقي قبل الحدّ. */
-function leftPhrase(l: WarningLetter): string {
+/**
+ * «إنذارٌ واحد» · «إنذاران» · «٣ إنذارات» — تمييزٌ عربيّ لِما بقي قبل الحدّ.
+ *
+ * **ومُصدَّرةٌ لأنّها صارت معاملَ قالبٍ لا جملةَ متنٍ فحسب**: `{{4}}` في قالب واتساب
+ * المعتمَد هو هذه الصيغةُ بعينها، وتوأمُها في `supabase/functions/_shared/fmt.ts`.
+ * فوجب أن تكون مصدرًا واحدًا مقيسًا لا دالّةً مخبوءةً في ملفّ.
+ */
+export function leftPhrase(l: Pick<WarningLetter, "activeCount" | "limit">): string {
   const left = Math.max(0, l.limit - l.activeCount);
   return left === 1 ? "إنذارٌ واحد" : left === 2 ? "إنذاران" : `${left} إنذارات`;
 }

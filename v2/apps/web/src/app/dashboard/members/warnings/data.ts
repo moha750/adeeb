@@ -1,6 +1,7 @@
 // يُستورَد من مكوّنات خادميّة وحدها (page.tsx) — المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
+import type { DeliveryStatus } from "@/lib/warnings/delivery";
 
 
 /** إنذارٌ كما يراه القارئ — مرآة `warnings_for_reader` (الترشيح في القاعدة لا هنا). */
@@ -34,6 +35,24 @@ export type WarningRow = {
   activeCount: number;
   /** هل يبلغ القارئُ إصدارَ إنذارٍ على صاحب هذا الصفّ (وإلغاءَه)؟ */
   mayManage: boolean;
+  /**
+   * **أين بلغ خبرُ هذا الإنذار صاحبَه** عبر واتساب : `null` يعني أنّ صفَّ التسليم لم
+   * يُفتَح بعد (إنذارٌ صدر قبل هذه القناة). والواقعةُ منفصلةٌ عن وصولها، فلا يُقرأ من
+   * هذا الحقل حكمٌ على الإنذار نفسه.
+   */
+  delivery: WarningDelivery | null;
+};
+
+/** حالُ التسليم كما يقرؤها الصفّ : مرآةُ `notification_deliveries` لقناةِ واتساب. */
+export type WarningDelivery = {
+  status: DeliveryStatus;
+  attemptCount: number;
+  errorMessage: string | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  readAt: string | null;
+  /** آخرُ لمسةٍ على الصفّ : منها يُعرَف المطالَبُ المتروك (`maySend`). */
+  updatedAt: string;
 };
 
 /** عضوٌ يبلغه إنذارُ القارئ — بِركةُ اختيار النافذة. */
@@ -77,14 +96,23 @@ export async function getWarnings(): Promise<WarningsData> {
   if (!me) return { ...empty, error: "جلستك غير صالحة." };
 
   const sb = createAdeebServiceClient(url, key);
-  const [wRes, tRes, lRes] = await Promise.all([
+  const [wRes, tRes, lRes, dRes] = await Promise.all([
     sb.rpc("warnings_for_reader", { p_actor: me.id }),
     sb.rpc("members_i_may_warn", { p_actor: me.id }),
     sb.rpc("warning_limit"),
+    /* التسليمُ يُقرأ **جدولًا مستقلًّا ويُوصَل هنا**، ولا يُحشَر في `warnings_for_reader`:
+       تلك دالّةُ حَكَمٍ ناضجةٌ تقرؤها شاشاتٌ أخرى، وتوسيعُ صفوفها لأجل عمودٍ في شاشةٍ
+       واحدة يشدّ خيطًا في غير موضعه. والوصلُ بالمعرّف، والحراسةُ سبقته في الدالّة. */
+    sb
+      .from("notification_deliveries")
+      .select("warning_id, status, attempt_count, error_message, sent_at, delivered_at, read_at, updated_at")
+      .eq("channel", "whatsapp"),
   ]);
 
   const err = wRes.error || tRes.error || lRes.error;
   if (err) return { ...empty, error: err.message };
+  // سقوطُ التسليم لا يُعمي الغرفة: السجلُّ يُعرَض، وعمودُ القناة يبقى فارغًا
+  if (dRes.error) console.error("[warnings] deliveries read failed", { error: dRes.error.message });
 
   type RawRow = {
     id: string; user_id: string; member_name: string; member_avatar: string | null; member_gender: string | null;
@@ -110,6 +138,25 @@ export async function getWarnings(): Promise<WarningsData> {
     scope: r.committee_name,
   });
 
+  type RawDelivery = {
+    warning_id: string; status: string; attempt_count: number; error_message: string | null;
+    sent_at: string | null; delivered_at: string | null; read_at: string | null; updated_at: string;
+  };
+  const deliveries = new Map<string, WarningDelivery>(
+    ((dRes.data ?? []) as RawDelivery[]).map((d) => [
+      d.warning_id,
+      {
+        status: d.status as DeliveryStatus,
+        attemptCount: d.attempt_count,
+        errorMessage: d.error_message,
+        sentAt: d.sent_at,
+        deliveredAt: d.delivered_at,
+        readAt: d.read_at,
+        updatedAt: d.updated_at,
+      },
+    ]),
+  );
+
   const rows: WarningRow[] = ((wRes.data ?? []) as RawRow[]).map((r) => ({
     id: r.id,
     userId: r.user_id,
@@ -133,6 +180,7 @@ export async function getWarnings(): Promise<WarningsData> {
     ordinal: r.ordinal,
     activeCount: r.active_count,
     mayManage: r.may_manage,
+    delivery: deliveries.get(r.id) ?? null,
   }));
 
   const targets: WarningTarget[] = ((tRes.data ?? []) as RawTarget[]).map((t) => ({
