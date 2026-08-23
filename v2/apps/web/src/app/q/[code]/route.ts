@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { NextResponse, type NextRequest } from "next/server";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { deviceFrom, isBotAgent, isQrCode, referrerHost } from "@/lib/qrLinks";
 import { clientIp, visitorHash } from "@/lib/visitor";
@@ -16,20 +15,31 @@ import { clientIp, visitorHash } from "@/lib/visitor";
  *   والكتابةُ بمفتاح الخدمة لأنّه لا سياسةَ إدراجٍ لأحدٍ على `qr_scans` (درسُ ديبو:
  *   ما دامت سياسةٌ تسمح بإدراجٍ من المتصفّح فالحارسُ زينة).
  *
- * والرمزُ المجهولُ والموقوفُ يخرجان من بابٍ واحد (`notFound`): من يجرّب الرموزَ لا
- * يُخبَر أنّه أصاب رمزًا موقوفًا.
+ * **ولمَ `route.ts` لا `page.tsx`** (قِيس ٢٠٢٦-٠٨-٢٣): كان صفحةً تنادي `redirect()`،
+ * فكان جوابُها **‏200 وصفحةً كاملةً** بالتخطيط والأنماط، وفيها `meta refresh` بمهلة
+ * **ثانية**. علّتُه أنّ التحويل يقع بعد أن يكون الهيكلُ قد تدفّق، فيسقط Next إلى
+ * تحويل المتصفّح. فالماسحُ يرى بياضًا ثمّ ينتقل — وهو عينُ ما بُني هذا البابُ لينفيه.
+ * ومنفذُ الطريق يردّ **‏307 بلا جسد**: لا تخطيطَ يُرسَم ولا مهلةَ تُنتظَر.
+ *
+ * والرمزُ المجهولُ والموقوفُ يخرجان من بابٍ واحد (‏404): من يجرّب الرموزَ لا يُخبَر
+ * أنّه أصاب رمزًا موقوفًا. ولا فهرسةَ لبابٍ يحوّل — الفهارسُ تتبع الوجهةَ نفسَها لا
+ * وكيلَها، و`robots.ts` يحجب `‎/q`‎ أصلًا.
  */
-export default async function QrRedirect({ params }: { params: Promise<{ code: string }> }) {
+
+const gone = () =>
+  new NextResponse(null, { status: 404, headers: { "x-robots-tag": "noindex, nofollow" } });
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
   // شكلُ الرمز يُفحَص قبل أيّ استعلام: الخُردةُ تُردّ بلا أن تلمس القاعدة.
-  if (!isQrCode(code)) notFound();
+  if (!isQrCode(code)) return gone();
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
-  if (!url || !key) notFound();
+  if (!url || !key) return gone();
 
-  const h = await headers();
+  const h = request.headers;
   const ua = h.get("user-agent");
 
   // البصمةُ تُحسب ولا تُخزَّن خامًا، وتدور كلّ يوم (انظر `lib/visitor`).
@@ -50,11 +60,9 @@ export default async function QrRedirect({ params }: { params: Promise<{ code: s
     p_is_bot: isBotAgent(ua),
   });
 
-  // عطلُ القاعدة لا يبتلع الزائر: يُردّ بصفحة «غير موجود» ولا يُترك في فراغ.
-  if (error || !data) notFound();
+  // عطلُ القاعدة لا يبتلع الزائر: يُردّ بـ«غير موجود» ولا يُترك في فراغ.
+  if (error || typeof data !== "string" || !data) return gone();
 
-  redirect(data as string);
+  // 307 لا 308: التحويلُ حالٌ تتبدّل بتبديل الوجهة، فلا يُحفظ في ذاكرة المتصفّح دائمًا.
+  return NextResponse.redirect(data, { status: 307, headers: { "cache-control": "no-store" } });
 }
-
-/** لا فهرسةَ لبابٍ يحوّل: الفهارسُ تتبع الوجهةَ نفسَها لا وكيلَها. */
-export const metadata = { robots: { index: false, follow: false } };
