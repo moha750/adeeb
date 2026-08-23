@@ -181,7 +181,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
 
   return (
     <>
-      <PageHeader title="شهادات الخبرة" status={<Badge tone="info" variant="soft" icon={<Certificate />}>{rows.length} شهادة</Badge>} />
+      <PageHeader title="شهادات الخبرة" status={{ label: `${rows.length} شهادة`, tone: "info", variant: "soft" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<SealCheck />} value={stats.valid} label="شهادات سارية" />

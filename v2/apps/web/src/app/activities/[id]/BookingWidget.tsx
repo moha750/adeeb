@@ -228,11 +228,11 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
           </span>
           {err ? <span className="text-danger text-sm">{err}</span> : null}
           {!showCancel ? (
-            <div><Button variant="ghost-danger" size="sm" onClick={() => setShowCancel(true)}>إلغاء الحجز</Button></div>
+            <div className="btn-row"><Button variant="ghost-danger" size="sm" onClick={() => setShowCancel(true)}>إلغاء الحجز</Button></div>
           ) : (
             <div className="flex flex-col gap-2">
               <Textarea label="سبب الإلغاء" icon={<PencilSimple />} innerIcon={<PencilSimple />} placeholder="اختياريّ" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} optional />
-              <div className="flex items-center gap-2">
+              <div className="btn-row">
                 <Button variant="danger" size="sm" loading={busy} onClick={cancel}>تأكيد الإلغاء</Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowCancel(false)} disabled={busy}>تراجع</Button>
               </div>
@@ -266,7 +266,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
           {TURNSTILE_SITE_KEY ? (
             <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
           ) : null}
-          <div className="flex items-center gap-2">
+          <div className="btn-row">
             <Button variant="primary" size="md" loading={busy} onClick={verify}>تأكيد</Button>
             <Button variant="ghost" size="md" onClick={sendOtp} disabled={busy}>إعادة الإرسال</Button>
           </div>

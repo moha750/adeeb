@@ -176,7 +176,7 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
             ) : (
               <div className="text-sm text-content-muted">{`لا غلاف بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}).`}</div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="btn-row">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
                 <UploadSimple size={18} />{cover ? "تغيير الصورة" : "رفع صورة الغلاف"}
               </Button>

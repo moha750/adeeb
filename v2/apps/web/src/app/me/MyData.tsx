@@ -151,7 +151,7 @@ export function MyData({ me }: { me: MyAccount }) {
         value={city} onChange={(e) => setCity(e.target.value)} error={fieldErrors.city} optional
       />
 
-      <div>
+      <div className="btn-row">
         <Button variant="primary" size="md" loading={working} onClick={me.hasProfile ? save : create}>
           حفظ البيانات
         </Button>

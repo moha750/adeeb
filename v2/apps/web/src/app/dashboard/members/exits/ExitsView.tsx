@@ -71,7 +71,7 @@ export function ExitsView({ data }: { data: ExitsData }) {
                   </p>
                 ) : null}
                 {r.canDecide ? (
-                  <div className="chip-row" style={{ marginTop: 14 }}>
+                  <div className="btn-row" style={{ marginTop: 14 }}>
                     <Button variant="danger" size="sm" loading={busy} onClick={() => decide(r, true)}>
                       اقبل الطلب
                     </Button>

@@ -103,7 +103,7 @@ export function WorksView({ works }: { works: WorkRow[] }) {
 
   return (
     <>
-      <PageHeader title="معرض الأعمال" primary={{ label: "عمل جديد", icon: <Plus size={18} />, href: "/dashboard/website/works/new" }} />
+      <PageHeader title="معرض الأعمال" action={{ label: "عمل جديد", icon: <Plus size={18} />, href: "/dashboard/website/works/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ImagesSquare />} value={works.length} label="أعمال في المعرض" />

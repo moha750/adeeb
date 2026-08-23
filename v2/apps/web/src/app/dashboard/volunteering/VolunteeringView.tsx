@@ -96,7 +96,7 @@ export function VolunteeringView({ rows, committees }: {
     <>
       <PageHeader
         title="الفرص التطوّعيّة"
-        primary={{ label: "فرصة جديدة", icon: <Plus size={18} />, onClick: openNew }}
+        action={{ label: "فرصة جديدة", icon: <Plus size={18} />, onClick: openNew }}
         menu={[{ items: [{
           label: "قروب المتطوّعين",
           onSelect: () => window.open(VOLUNTEERS_GROUP_URL, "_blank", "noopener"),

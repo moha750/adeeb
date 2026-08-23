@@ -93,7 +93,7 @@ export default function TouchTargetLab() {
               جهازٍ بالذات، حيث الإصبعُ وحدَه يعمل. وهذه علّةُ المقترح لا علّةُ القديم.
             </p>
             <div className="ttlab-row">
-              <Sample label="مُطلِق ⋯"><button type="button" className="abtn abtn-ghost abtn-md phd-more">⋯</button></Sample>
+              <Sample label="مُطلِق ⋯"><button type="button" className="abtn abtn-ghost abtn-md phn-more">⋯</button></Sample>
               <Sample label="فعلٌ sm"><Button variant="primary" size="sm"><PaperPlaneTilt size={16} />رفع</Button></Sample>
               <Sample label="ثانويّ sm"><Button variant="ghost" size="sm"><Eye size={16} />معاينة</Button></Sample>
             </div>

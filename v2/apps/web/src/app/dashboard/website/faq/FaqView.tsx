@@ -80,7 +80,7 @@ export function FaqView({ faqs }: { faqs: FaqRow[] }) {
 
   return (
     <>
-      <PageHeader title="الأسئلة الشائعة" primary={{ label: "سؤال جديد", icon: <Plus size={18} />, href: "/dashboard/website/faq/new" }} />
+      <PageHeader title="الأسئلة الشائعة" action={{ label: "سؤال جديد", icon: <Plus size={18} />, href: "/dashboard/website/faq/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Question />} value={faqs.length} label="أسئلة منشورة" />

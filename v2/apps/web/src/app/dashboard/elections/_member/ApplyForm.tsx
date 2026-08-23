@@ -187,7 +187,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
           <>
             <Alert tone="success" title="ترشّحُك معتمَد">اعتمدت إدارةُ الموارد ترشّحك، فلا يُقبل تعديلُه. هذا بيانك كما هو:</Alert>
             <p className="cjr-stmt">{ctx.existing?.statement}</p>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div className="btn-row">
               <Button variant="ghost" size="md" onClick={back}>رجوع</Button>
             </div>
           </>
@@ -259,7 +259,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
 
             {formErr ? <Alert tone="danger" title="تعذّر">{formErr}</Alert> : null}
 
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <div className="btn-row">
               <Button variant="ghost" size="md" onClick={back} disabled={pending}>رجوع</Button>
               <Button variant="primary" size="md" loading={pending} disabled={statementLen < STATEMENT_MIN || unchanged} onClick={submit}>
                 {isEdit ? "حفظ التعديل" : "إرسال الترشّح"}

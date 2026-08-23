@@ -85,7 +85,7 @@ export function DeleteAccount({ pending, dueLabel, hasPassword }: Props) {
         <Alert tone="danger" title="حسابُك في طريقه إلى الحذف">
           {dueLabel ? `يُنفَّذ في ${dueLabel}.` : "يُنفَّذ بعد انقضاء المهلة."} ولك أن تعدل إلى ذلك اليوم.
         </Alert>
-        <div className="chip-row">
+        <div className="btn-row">
           <Button variant="ghost-danger" size="sm" loading={busy} onClick={undo}>ألغِ الطلب</Button>
         </div>
         {err ? <Alert tone="danger">{err}</Alert> : null}

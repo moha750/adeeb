@@ -380,7 +380,7 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
                   <b>{settings.publicSlug}</b>
                   <span className="fld-help"> عنوانُك على <bdi dir="ltr" className="lat">adeeb.club</bdi>، يُشتقّ من اسمك ويتبعه إن تغيّر.</span>
                 </span>
-                <span className="chip-row">
+                <span className="btn-row">
                   <Button variant="ghost" size="sm" onClick={() => copySlug(slugUrl)}>نسخ الرابط</Button>
                   {/* وسمُه <a> لا <button>: وجهتُه عنوانٌ يُفتح في لسانٍ جديدٍ ويُصاد بالزرّ
                       الأوسط. و`Button` أزرارٌ فقط، وطبقتُه في المكتبة (`abtn`) تخدم الاثنين. */}

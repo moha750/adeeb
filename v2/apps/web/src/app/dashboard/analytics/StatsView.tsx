@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { Card, CardHeader, Stat, Segmented, SectionCard, BarList, Donut, AreaChart, HeatGrid, type BarItem } from "@adeeb/design-system";
 import { Users, Timer, Globe, Robot, DeviceMobile, MapPin, UserPlus, Clock } from "@phosphor-icons/react";
@@ -34,7 +34,15 @@ const U_VISIT = { one: "زيارة", two: "زيارتان", few: "زيارات" 
 const U_VISITOR = { one: "زائر", two: "زائران", few: "زوّار" };
 const U_SESSION = { one: "جلسة", two: "جلستان", few: "جلسات" };
 
-const RANGES: Array<[number, string]> = [[7, "٧ أيّام"], [30, "٣٠ يومًا"], [90, "٩٠ يومًا"], [3650, "الكلّ"]];
+// الرقمُ ملفوفٌ بـ`font-latin` كعدد الأبواب تحته — لا زينةً بل توحيدًا للوزن (٢٠٢٦-٠٨-٢١):
+// رقمٌ متروكٌ في نصٍّ عربيّ يُرسَم من وجه الأرقام المعلَن داخل عائلة Lyon (‎700 ← Eras Demi‎)، وملفوفُه
+// يُرسَم من عائلة Eras نفسِها (‎700 ← Eras Bold‎). فبلا لفٍّ يقع في الشريط الواحد وزنان لرقمٍ واحد.
+const RANGES: Array<[number, ReactNode]> = [
+  [7, <><span className="seg-num">7</span> أيّام</>],
+  [30, <><span className="seg-num">30</span> يومًا</>],
+  [90, <><span className="seg-num">90</span> يومًا</>],
+  [3650, "الكلّ"],
+];
 
 // بابُ الزيارة (عمود `source`، ٢٠٢٦-٠٨-٢٠): صار للنادي مدخلان، فرقمٌ يجمعهما لا يصف أحدَهما.
 // و«البابان» أوّلًا لأنّه ما كانت عليه الشاشةُ قبل اليوم، فلا يتبدّل ما يراه القادمُ بلا اختيار.
@@ -155,7 +163,7 @@ export function StatsView({ data, recent, days, source }: { data: Analytics; rec
 
   return (
     <div className="st">
-      <div className="st-tools">
+      <div className="seg-row">
         <Segmented aria-label="مدى المدّة" linkAs={Link} value={String(days)}
           items={RANGES.map(([d, lbl]) => ({ value: String(d), href: href(d, source), label: lbl }))} />
         <Segmented aria-label="باب الزيارة" linkAs={Link} value={source ?? "all"}
@@ -165,11 +173,10 @@ export function StatsView({ data, recent, days, source }: { data: Analytics; rec
             // العددُ في التسمية عمدًا: يقول لك إن كان وراء البابِ الآخر أحدٌ قبل أن تفتحه
             label: (
               <>
-                {lbl} <span className="font-latin">{nf(door ? data.sources[door] ?? 0 : total(data.sources))}</span>
+                {lbl} <span className="seg-num">{nf(door ? data.sources[door] ?? 0 : total(data.sources))}</span>
               </>
             ),
           }))} />
-        <span className="st-note">لا يشمل الصفحات الإداريّة ولا الروبوتات</span>
       </div>
 
       <div className="stat-grid">

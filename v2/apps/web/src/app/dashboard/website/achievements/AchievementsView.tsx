@@ -84,7 +84,7 @@ export function AchievementsView({ items }: { items: AchievementRow[] }) {
 
   return (
     <>
-      <PageHeader title="ملخص المسيرة" primary={{ label: "إحصائيّة جديدة", icon: <Plus size={18} />, href: "/dashboard/website/achievements/new" }} />
+      <PageHeader title="ملخص المسيرة" action={{ label: "إحصائيّة جديدة", icon: <Plus size={18} />, href: "/dashboard/website/achievements/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ChartBar />} value={items.length} label="إحصاءات في الملخّص" />

@@ -296,7 +296,7 @@ export function RadioView({
       <PageHeader
         title="إذاعة أدِيب"
         // «برنامج جديد» غايةُ تبويب البرامج وحدَه؛ وحفظُ المحطّة فعلُ تبويبها لا فعلُ الرأس.
-        primary={tab === "shows" ? { label: "برنامج جديد", icon: <Plus size={18} />, onClick: openCreate } : undefined}
+        action={tab === "shows" ? { label: "برنامج جديد", icon: <Plus size={18} />, onClick: openCreate } : undefined}
       />
 
       <Segmented
@@ -393,7 +393,7 @@ export function RadioView({
             onChange={(e) => setStForm((f) => ({ ...f, description: e.target.value }))} optional />
 
           {/* الحفظُ زرٌّ في ذيل النموذج كنظيره في «الهويّة والمنصّات» بصفحة البرنامج. */}
-          <div className="form-full">
+          <div className="form-full btn-row">
             <Button variant="primary" size="md" onClick={submitStation} loading={pending}>حفظ بيانات الإذاعة</Button>
           </div>
         </div>

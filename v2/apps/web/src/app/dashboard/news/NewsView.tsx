@@ -274,7 +274,7 @@ export function NewsView({
 
   return (
     <>
-      <PageHeader title="غرفة تحرير أدِيب" primary={isChief ? { label: "خبر جديد", icon: <Plus size={18} />, onClick: () => { setForm({ title: "", category: "coverage", committeeId: "" }); setFormErr(null); } } : undefined} />
+      <PageHeader title="غرفة تحرير أدِيب" action={isChief ? { label: "خبر جديد", icon: <Plus size={18} />, onClick: () => { setForm({ title: "", category: "coverage", committeeId: "" }); setFormErr(null); } } : undefined} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Newspaper />} value={rows.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />

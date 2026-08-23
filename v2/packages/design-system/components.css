@@ -706,8 +706,11 @@
   transition: inset-inline-start 1s ease;
   pointer-events: none;
 }
+/* نموُّ المرور: كان ‎4.5% فخُفض إلى **رُبعه** بأمر المالك ٢٠٢٦-٠٨-٢٢ (‎1.125%). وعلّتُه أنّ
+   قانونَ صفّ الأزرار (ق١٦) جعل أكثرَ الأزرار تملأ صفَّها، وزرٌّ عريضٌ يكبر ‎4.5% يزحف نحو
+   ‎7px من كلّ طرف — حركةٌ صُمّمت لزرٍّ صغيرٍ حولَه فراغ، لا للممتدّ. */
 .abtn:hover:not(:disabled) {
-  transform: scale(1.045);
+  transform: scale(1.011);
   /* ظلّ المرور لكلّ زرّ (المصمت يعلوه بـmd أدناه) — كان في globals.css */
   box-shadow: var(--shadow-sm);
 }
@@ -783,6 +786,56 @@
 .abtn-ghost-warning:hover:not(:disabled) { background: color-mix(in oklab, var(--warning-500) 14%, transparent); border-color: var(--warning-500); }
 /* الشبحيّ: حدّ أسمك (stroke) */
 .abtn-ghost, .abtn-ghost-danger, .abtn-ghost-success, .abtn-ghost-warning, .abtn-inverse-ghost { border-width: 2px; }
+
+/* ============================================================
+   قانونُ صفِّ الأزرار — واحدٌ يمتدّ، واثنان يقتسمان ثمّ ينزل أحدهما
+   (قرار المالك ٢٠٢٦-٠٨-٢١ · ق١٦ في DESIGN-RULES)
+
+   **المبدأ:** الزرُّ لا يترك في صفّه خلاءً. فإن انفرد بالصفِّ ملأه — في كلِّ
+   العروض، لا في الجوّال وحده (اختيارُ المالك صراحةً) — وإن كانا اثنين اقتسماه
+   بالسويّة، فإذا ضاق الصفُّ عنهما نزل أحدهما تحت الآخر كاملَ العرض.
+
+   **والنزولُ يقع بلا استعلامِ وسائط:** أساسُ الزرّ `--btn-row-min` (10.5rem)،
+   فمتى عجزت الحاويةُ عن حملِ أساسين وفجوةٍ التفّ الثاني وحدَه فامتدّ. وبهذا
+   يقيس القانونُ **الحاويةَ لا الشاشة** (ق١٥ بحرفها): نافذةٌ ضيّقةٌ في سطح
+   المكتب تُكدِّس، وشريطٌ عريضٌ في لوحٍ لا يُكدِّس — والعرضُ وحدَه يُخطئ الحكم.
+
+   **والثلاثةُ فأكثر تملأ سطرَها كذلك** — قرارُ المالك بعد أن رأى الحالين جنبًا
+   إلى جنب في `/ui/button-row`: عُرض عليه العرضُ الطبيعيّ (كلُّ زرٍّ بحجم كلمته)
+   والملءُ بالسويّة، **فاختار الملء** ليكون الحكمُ واحدًا لا يتبدّل بعدد
+   الساكنين. وإذا ضاق السطرُ التفّت وملأ كلُّ سطرٍ نفسَه (أربعةٌ في ‎375 تصير
+   اثنين واثنين). **وسقفُها أربعةٌ**، والخامس يذهب إلى قائمة `⋯`: صفٌّ بخمسة
+   أفعالٍ شاشةٌ لم تُرتَّب أولويّاتُها.
+
+   **وهذا مكانُه الوحيد:** حكمٌ عابرٌ للمكوّنات كقانون اللمس — فمن أضاف صفَّ
+   أزرارٍ جديدًا ألبسه `.btn-row` أو أضاف محدِّدَه إلى القائمة هنا، ولا ينسخ
+   القاعدة إلى تعريف مكوّنه. وقد أُعدمت به أربعُ رقعٍ كانت تقولُ بعضَه في
+   أربعة مواضع (`.mdl-foot` · `.mdl-alert` · `.acard-foot-row` · `.opp-act`).
+
+   **وحدُّه: صفُّ أفعالٍ معدودة، لا سحابةُ خياراتٍ تُبنى بـ`map`.** أسئلةُ ديبو المقترحة
+   (`.dchs-asks`) وتبويباتُ الاستبيانات المختصرة وروابطُ البروفايل الاجتماعيّة: عددُها متغيّرٌ
+   ومعناها «اختر واحدًا مِن»، فلو مُدّت لصار كلُّ اقتراحٍ لافتةً بعرض الشاشة. تلك تبقى شاراتٍ
+   بمقاسها. والقاعدةُ للأفعال: احفظ، ألغِ، اعتمد، ارفع، احذف.
+
+   ومعرضُه `/ui/button-row`.
+   ============================================================ */
+:where(.btn-row, .mdl-foot, .acard-foot-row, .blt-bar, .opp-act, .cjr-controls-btns, .svy-add, .qdock-acts) {
+  display: flex; flex-wrap: wrap; gap: 10px; width: 100%;
+  --btn-row-min: 10.5rem;
+}
+/* الحالُ الأساس (وهي حالُ الثلاثة فأكثر): كلُّ زرٍّ ينمو فيملأ سطرَه بالسويّة، والالتفافُ
+   عند الضيق يتكفّل بالباقي — كلُّ سطرٍ ملتفٍّ يملأ نفسَه (أربعةٌ في ‎375 تصير اثنين واثنين).
+   وبلا قياسِ شاشةٍ البتّة: كان النموُّ معلَّقًا بـ‎640px، وهو آخرُ قياسٍ بعرض الشاشة بقي في
+   القانون ويكذب على نافذةٍ ضيّقةٍ في سطح المكتب. فصار حكمًا دائمًا وسقط القياس. */
+:where(.btn-row, .mdl-foot, .acard-foot-row, .blt-bar, .opp-act, .cjr-controls-btns, .svy-add, .qdock-acts) > .abtn { flex: 1 1 auto; }
+/* واحدٌ: يملأ صفَّه (وهذا ما تزيده `100%` على الأساس: يملؤه ولو كان الصفُّ أضيق من محتواه) */
+:where(.btn-row, .mdl-foot, .acard-foot-row, .blt-bar, .opp-act, .cjr-controls-btns, .svy-add, .qdock-acts) > .abtn:only-child {
+  flex: 1 1 100%;
+}
+/* اثنان: يقتسمان، وينزلان حين لا يتّسع أساسان */
+:where(.btn-row, .mdl-foot, .acard-foot-row, .blt-bar, .opp-act, .cjr-controls-btns, .svy-add, .qdock-acts):has(> .abtn:first-child + .abtn:last-child) > .abtn {
+  flex: 1 1 var(--btn-row-min); min-width: 0;
+}
 
 /* زرُّ المرفق `FileButton` — هويّةٌ خاصّةٌ بالمرفقات: قرصٌ مصمَتٌ بتدرّج الهوية + جسمٌ بتينت
    العلامة وحدٍّ **متقطّع** + عنوانٌ وتلميح + أيقونةُ فعل. ليس شبحًا: التينتُ والقرصُ يميّزانه. */
@@ -2868,13 +2921,10 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   background: color-mix(in oklab, var(--fld-accent, var(--steel-500)) 3%, var(--color-surface));
   border-radius: 0 0 var(--radius) var(--radius);
 }
-/* التذييلُ يلتفّ ولا يفيض — ونصُّ الزرّ `nowrap` فلا مخرجَ له غير الالتفاف:
-   أكثرُ النوافذ فعلان فيسعهما السطر، لكنّ نافذةَ مراجعة المرشّح أربعة (إغلاق · رفض · طلب تعديل ·
-   اعتماد) تطلب نحو ٣٩٠px، والنافذةُ في شاشة 375 عرضُها 100vw−40 فيبقى لتذييلها ~٢٩٥ بعد حشوه.
-   والالتفافُ **بلا استعلام وسائط**: يقع حين لا يتّسع السطر وحدَه، فلا يمسّ نافذةً تسع أفعالَها.
-   وفي الضيّق تنمو الأزرارُ فتملأ صفَّها: هدفُ لمسٍ أوسع (قانون اللمس)، وسطرٌ ملتفٌّ لا يترك خلاءً
-   في طرفه — وسابقتُه `.mdl-alert .mdl-foot .abtn` التي تمدّ أزرارها بلا شرطٍ أصلًا. */
-@media (max-width: 640px) { .mdl-foot > .abtn { flex: 1 1 auto; } }
+/* التذييلُ يلتفّ ولا يفيض — ونصُّ الزرّ `nowrap` فلا مخرجَ له غير الالتفاف: أكثرُ النوافذ فعلان
+   فيسعهما السطر، لكنّ نافذةَ مراجعة المرشّح أربعة (إغلاق · رفض · طلب تعديل · اعتماد) تطلب نحو
+   ٣٩٠px، والنافذةُ في شاشة 375 عرضُها 100vw−40 فيبقى لتذييلها ~٢٩٥ بعد حشوه.
+   والتوزيعُ نفسُه صار من **قانون صفّ الأزرار** أعلى الملفّ (ق١٦) — لا يُنسَخ هنا. */
 /* ── التدفّق والاقتران: فجوةٌ واحدة لموضعين ──────────────────────────────────
    `.mdl-body` يتدفّق (ابنٌ = صفّ)، و`.form-grid` يُقرِن (ابنان في صفّ)؛ وما عداهما لا يباعد.
    الفجوة مكتوبةٌ مرّةً واحدة هنا فلا يفترق الموضعان يومًا، ونصفُها (7px) يُخصَم من الأساس ½.
@@ -2911,6 +2961,31 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .seg.seg-wide { width: 100%; }
 .seg.seg-wide > .seg-item { flex: 1 1 0; min-width: 0; text-align: center; }
 .tabs-segmented { padding: 4px; }
+/* صفُّ مبدّلات: يحمل شريطين مقطعيّين أو أكثر في سطرٍ واحد، طرفاه إلى طرفَي الصفّ.
+   وحين يضيق الصفُّ فلا يسعهما معًا، يمتدّ كلٌّ منهما على عرض سطره وتتقاسمه عناصرُه بالسويّة —
+   فلا يبقى مبدّلان ضامران فوق بعضهما ونصفُ كلّ سطرٍ فارغ (٢٠٢٦-٠٨-٢١).
+   والقياسُ **بالحاوية لا بالنافذة**: عرضُ ما تحت اللوحة يتغيّر بالشريط الجانبيّ لا بالشاشة وحدها،
+   فاستعلامُ النافذة يكذب. والعتبةُ 640 فوق أعرضِ ما قِيس (585) عمدًا: أن يمتدّا قبل الضيق بقليل
+   أهونُ من أن يضمرا بعده. والامتدادُ هو نفسُه `seg-wide` — لا قاعدةَ ثانية تُنازعها. */
+.seg-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; container-type: inline-size; }
+@container (max-width: 640px) {
+  .seg-row > .seg { width: 100%; }
+  .seg-row > .seg > .seg-item { flex: 1 1 0; min-width: 0; text-align: center; }
+}
+/* وفي الضيّق جدًّا: الرقمُ فوق وكلمتُه تحته (٢٠٢٦-٠٨-٢١). العتبةُ 360 مقيسةٌ لا مُقدَّرة: أعرضُ
+   عنصرٍ في الصفّ 107px، وثلاثةٌ منه مع حشوة القضيب تحتاج 331 — وهو **عينُ** عرض المحتوى على
+   جوّالٍ 375 (‏375 ناقص حشوتَي `.ash-content`). فالسطرُ الواحد هناك على حدِّه، وأيُّ عددٍ أطول
+   يطفح. وسطران يخفضان المطلوبَ إلى عرض أوسعِ القطعتين لا مجموعِهما.
+   و`order` هو الذي يرفع الرقم لا ترتيبُ الشجرة: الكلمةُ تسبق العددَ في «الموقع 1,180» ويسبقُها
+   في «7 أيّام»، فترتيبٌ واحدٌ في الـDOM لا يخدم الشكلين. */
+@container (max-width: 360px) {
+  .seg-row > .seg > .seg-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 6px; line-height: 1.3; }
+  .seg-row > .seg > .seg-item > .seg-num { order: -1; }
+}
+/* عددٌ داخل عنصرٍ مقطعيّ: اللفُّ بـEras مقصودٌ لتوحيد وزن الأرقام في الصفّ كلِّه — رقمٌ متروكٌ في
+   نصٍّ عربيّ يُرسَم من وجه الأرقام المعلَن داخل عائلة Lyon (‏700 ← Demi‏)، وملفوفُه من Eras
+   نفسِها (‏700 ← Bold‏)؛ فخلطُ الطريقتين يُظهر وزنين لرقمٍ واحد. */
+.seg-num { font-family: var(--font-latin); }
 .seg-item { font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-muted); background: 0; border: 0; border-radius: var(--radius-nested); padding: 7px 15px; cursor: pointer; text-decoration: none; transition: color var(--dur-fast); }
 .seg-item:hover, .tabs-segmented .tab:hover { color: var(--color-primary); }
 .seg-item.on, .tabs-segmented .tab.on { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
@@ -3289,7 +3364,6 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .mdl-alert .mdl-title { font-size: 19px; }
 .mdl-alert .mdl-atext { font-size: 14px; line-height: 1.8; color: var(--color-text-muted); }
 .mdl-alert .mdl-foot { justify-content: stretch; gap: 10px; border-top: 0; background: transparent; padding: 6px 22px 22px; }
-.mdl-alert .mdl-foot .abtn { flex: 1; }
 /* حركة الأيقونة حسب معنى الحالة: نجاح يُعيد رسم الصح · تحذير يتأرجح · خطر يرتجف */
 @keyframes tic-appear { from { transform: scale(.55); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .mdl-tone-success .mdl-tic { animation: tic-appear .3s var(--ease-standard) both, tic-pulse 1.9s ease-in-out .3s infinite; }
@@ -3599,13 +3673,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* تذييل كرت الشخص: قسم مستقلّ للأزرار (الزرّ الرئيسيّ بعرض كامل) — يخالف `.acard-footer` (المحتوى) عمدًا */
 .acard-foot { width: 100%; margin-top: 16px; padding: 14px 16px; border-top: 1px solid color-mix(in oklab, var(--steel-600) 12%, var(--color-border)); background: color-mix(in oklab, var(--steel-600) 4%, var(--color-surface)); display: flex; flex-direction: column; gap: 8px; }
 .acard-foot .abtn { width: 100%; }
-/* صفّ زرّين كحدّ أقصى (عرض · حذف نهائي)؛ على الجوال يُكدّسان كامليْ العرض */
-.acard-foot-row { display: flex; gap: 8px; }
-.acard-foot-row .abtn { width: auto; flex: 1; min-width: 0; }
-@media (max-width: 640px) {
-  .acard-foot-row { flex-direction: column; }
-  .acard-foot-row .abtn { flex: none; width: 100%; }
-}
+/* صفّ زرّين كحدّ أقصى (عرض · حذف نهائي) — اقتسامُه ونزولُه من قانون صفّ الأزرار (ق١٦)،
+   ولا يبقى له هنا إلّا فجوتُه الأضيق. */
+.acard-foot-row { gap: 8px; }
 
 /* تذييل الترقيم في عرض الكروت (منفصل) + الحالة الفارغة */
 .card-pager { margin-top: 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); box-shadow: var(--shadow-md); }
@@ -5326,9 +5396,10 @@ html:not(.js) .ldr-boot { display: none; }
 .shdr-sheet-login { margin-top: 8px; }
 .shdr-sheet-cta { margin-top: 4px; }
 
-/* **الزرُّ الممتدُّ لا يكبر** (قرار المالك ٢٠٢٦-٠٨-٠٢): `.abtn:hover` يكبر 4.5% —
-   وهي حركةٌ مصمَّمةٌ لزرٍّ بعرضه الطبيعيّ حولَه فراغ. أمّا زرّا اللوح فيملآن عرضَه،
-   فالنسبةُ تُخرجهما ‎≈9px من كلّ طرفٍ على حشوٍ قدره 10px — فيفيضان على الكبسولة.
+/* **الزرُّ الممتدُّ لا يكبر** (قرار المالك ٢٠٢٦-٠٨-٠٢): كان `.abtn:hover` يكبر ‎4.5%
+   فتُخرِج النسبةُ زرَّي اللوح ‎≈9px من كلّ طرفٍ على حشوٍ قدره ‎10px، فيفيضان على الكبسولة.
+   وخُفض النموُّ إلى ‎1.125% في ٢٠٢٦-٠٨-٢٢ فصار الفيضُ ‎≈2px، **والقرارُ باقٍ كما هو**:
+   ما لا فراغ حوله لا يتمدّد، والحدُّ حدُّ مبدأٍ لا حدُّ حساب.
    وليست هذه مخالفةً للمكتبة بل **حدُّ شرطها**: ما لا فراغ حوله لا يتمدّد. والحركةُ
    لا تضيع — يبقى للزرّ ظلُّه وسطحُه وحدُّه عند اللمس، وانتقالُ الضغط في المتصفّح. */
 .shdr-sheet .abtn:hover:not(:disabled) { transform: none; }
@@ -5708,7 +5779,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .opp-head { display: flex; align-items: center; gap: 10px; width: 100%; }
 .opp-tx { display: flex; flex-direction: column; gap: 3px; line-height: 1.4; min-width: 0; }
 .opp-act { margin-top: auto; width: 100%; padding-top: 6px; }
-.opp-act .abtn { width: 100%; }
 /* العدّادُ الحيّ تحت الموعد: سطرٌ خاصٌّ به، وأرقامُه جدوليّة فلا يهتزّ عرضُه كلّ ثانية */
 .opp-count { display: block; margin-top: 3px; font-size: var(--text-xs); font-weight: 600; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 /* التحكّم في `CardFooter` (فوتر الهوية: فاصلٌ علويّ + سطحٌ محايد + توزيعٌ طرفيّ) — يلتفّ على الجوّال */
@@ -6555,88 +6625,139 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .rad-bar-end { position: relative; z-index: 1; flex: none; }
 
 /* ============================================================
-   رأس الصفحة — الجيل الثاني · بادئة .phd
-   ------------------------------------------------------------
-   حيٌّ في `/ui/page-header` ينتظر إقرار المالك. متى أُقرّ أخذ اسمَ
-   `.ash-phead` وأُعدم القديمُ ومعه `.form-head-actions`.
+   رأس الصفحة — الرأسُ الجامع · بادئة .phn
+   المكوّن: PageHeaderNext · المعرض: /ui/page-header/next
+   ============================================================
+   القيدُ بكلمة المالك (٢٠٢٦-٠٨-٢٢): **لا يُستغنى عن الحال ولا زرِّ الرجوع ولا
+   الفتات.** وقبلها رُفض جيلٌ ثالثٌ لأنّه رتّب القطعَ ولم يحلّ، ورُفضت أربعةُ فروضٍ
+   لأنّ كلًّا منها كان يشتري حلَّه بإسقاط واحدةٍ من الثلاث. فالمسألةُ إذًا: تبقى
+   الثلاثُ كلُّها، وتزول الأعطالُ الثمانيةُ كلُّها، على 390 بكسلًا.
 
-   **العلّة:** رأسُ الصفحة صار لوحةَ تحكّم. أربعةُ أزرارٍ منصوصةٍ في عنقودٍ
-   لا `flex-wrap` له (`.form-head-actions`، سطرٌ واحدٌ في `globals.css`)،
-   ولا قاعدةَ `@media` واحدةً لرأس الصفحة في النظام كلّه — فتفيض على 375px.
+   **والمفتاحُ الذي كان غائبًا: الفتاتُ يُمرَّر ولا يُقصّ.** كلُّ محاولةٍ سابقةٍ
+   افترضت أنّ سطر الفتات لا بدّ أن يتّسع لما فيه، فإن ضاق قُصّ أو أُسقطت الشارة.
+   والصوابُ أن يكون **مضمارًا يُسحَب بالإصبع**: فلا يُقصّ مقطعٌ أبدًا مهما طال
+   المسار، ولا ينافس الشارةَ ولا الفعلَ على عرضٍ لأنّه لا يطلب منهما شيئًا.
+   وثمنُه صفر.
 
-   **والجولةُ الأولى أخطأت الجواب** (رُفضت ٢٠٢٦-٠٨-١٣): طوت الأزرارَ سطرًا
-   تحت العنوان أو صفّتها اثنين اثنين، فحلّت الفيضَ **بالارتفاع** — والرأسُ
-   صار يأكل ثلثَ الشاشة الأولى. من شكا الزحامَ لا يُعطى رأسًا أطول.
+   وأربعةٌ تلزم منه:
+   ١) **صفُّ الملاحة وحدَه**: زرُّ الرجوع ثابتٌ في صدره (هدفٌ من `.abtn` يبلغ 44
+      بانتسابه)، والفتاتُ يجري إلى جانبه. فلا الشارةُ تخنقه ولا هو يخنقها.
+   ٢) **الحالُ يلازم الاسم**: الشارةُ أوّلُ العنوان في سطره لا في سطر الفتات —
+      وهي صفةُ السجلّ لا صفةُ المسار، وفي سطر النصّ لا تكلّف ارتفاعًا.
+   ٣) **الأفعالُ تشارك العنوانَ سطرَه**: صفٌّ واحدٌ لهما، فيتحاذيان بمركزٍ واحدٍ
+      ولا يطفو الفعلُ فوق كتلةٍ من سطرين (كان ينزاح 30px).
+   ٤) **ولا يتبع التمرير**: جُرّب لاصقًا يتكثّف جزيرةً، فرفضه المالك (٢٠٢٦-٠٨-٢٢).
+      فالرأسُ يمرّ مع الصفحة ولا يبقى فوقها.
+   ------------------------------------------------------------ */
 
-   **والمعيارُ في الأنظمة الناضجة واحد** (‏Material top app bar · HIG
-   navigation bar · Polaris page header): رأسُ الصفحة **صفٌّ واحدٌ لا يلتفّ**،
-   وأفعالُه قليلةٌ ومضغوطة، والعنوانُ هو الذي يُهذَّب حين يضيق المكان لا
-   الأفعالُ التي تُكدَّس. وثلاثةُ أحكامٍ تلزم منه:
+/* الحاويةُ غلافٌ والمرسومُ ابنُه (سابقةُ `.shdr` ← `.shdr-bar`): العنصرُ لا يستعلم عن نفسه.
+   **ولا لصوقَ ولا تكثّف** (المالك ٢٠٢٦-٠٨-٢٢): الرأسُ يمرّ مع الصفحة كسائر محتواها. */
+.phn-c { container-type: inline-size; margin-bottom: 18px; }
+.phn {
+  /* **الأفعالُ تمتدّ على الصفّين**: لو سكنت صفَّ الاسم وحدَه لرفعته إلى 44 فطال الرأسُ
+     بلا مقابل (قِيس: 97 مقابل 76). وبالامتداد يبتلع صفُّ الملاحةِ ارتفاعَها، ويبقى
+     الفعلُ محاذيًا لأعلى الكتلة لا متوسّطًا فيها (وهو علاجُ انزياح الـ30px نفسُه). */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  /* **ثلاثةُ صفوفٍ على الجوّال** (ترتيبُ المالك ٢٠٢٦-٠٨-٢٢): أين أنا، ثمّ ما هذا، ثمّ ما
+     أفعل. وكلُّ صفٍّ يبدأ من حافّةٍ واحدةٍ ويضع تابعَه في مقابلها، فالمحورُ واحدٌ لا
+     ثلاثة.
 
-   ١) **العنوانُ يتهذّب ولا يدفع** — `min-width: 0` (فابنُ الفلكس لا ينكمش
-      دون مقاس محتواه بالافتراض) مع قصٍّ إلى سطرين. فالعنوانُ الطويل يقصر،
-      ولا يُخرج الأفعالَ من الرأس كما كان يفعل.
-   ٢) **الأفعالُ لا تنكمش ولا تلتفّ** — `flex: 0 0 auto`: فعلٌ واحدٌ منصوصٌ
-      (غايةُ الشاشة) وقائمةُ `⋯` لِما عداه. زرّان لا أربعة.
-   ٣) **والشارةُ حالٌ لا فعل** — كانت تسكن عنقودَ الأزرار فتُقرأ زرًّا رابعًا؛
-      موضعُها سطرُ الفتات، وهو سطرٌ قائمٌ أصلًا فلا تكلّف الرأسَ بكسلًا واحدًا.
-
-   **وفعلُ الالتزام ليس فعلَ رأسٍ أصلًا:** «حفظ» يعيش في `SaveBar` اللاصق —
-   لا يظهر حتى يوجد ما يُحفَظ، ووجودُه نفسُه هو التنبيه (وهو مكتوبٌ في
-   المكتبة منذ شاشة الحساب، فلا يُبنى ثانيةً). فيسقط زرٌّ ثالثٌ من الرأس.
-   ============================================================ */
-.phd {
-  /* حاويةُ استعلامٍ لنفسه: العتبةُ أدناه تقيس عرضَ الرأس لا عرضَ الشاشة —
-     فاللوحةُ لها شريطٌ جانبيّ، وعرضُ المحتوى ليس عرضَ النافذة. */
-  container-type: inline-size;
-  margin-bottom: 18px;
+     **وشكواه في ٢٠٢٦-٠٨-١٣ لم تكن طلبَ تقليل**: «أنا لم أقصد بشكواي الزحمة أنّه يحتاج
+     تقليلًا، بل أنّه يحتاج ترتيبًا فقط» (٢٠٢٦-٠٨-٢٢). ومختبرُ ذلك اليوم قرأها ارتفاعًا
+     فجعل «الارتفاعَ المقيس» هو المقياسَ المعروض، وجرت عليه أربعُ جولاتٍ بعده وهي تقايض
+     الترتيبَ ببكسلات. فالمقياسُ هنا **انتظامُ الصفوف** لا قِصَرُها. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "nav"
+    "main"
+    "acts";
+  align-items: center;
+  gap: 6px 10px;
+  padding: 0;
+  border: var(--card-stroke-w) solid transparent;
+  border-radius: var(--radius);
+  transition: padding var(--dur) var(--ease-standard), background var(--dur), box-shadow var(--dur), border-color var(--dur);
 }
-.phd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-/* الافتراض `min-width: auto` يمنع انكماشَ ابن الفلكس دون مقاس محتواه — وهو
-   بعينه ما كان يدفع الأفعالَ خارج الرأس. والقصُّ أدناه لا يعمل بدونه. */
-.phd-id { min-width: 0; flex: 1 1 auto; }
-/* سطرُ الفتات يحمل الشارةَ في طرفه — سطرٌ قائمٌ يُستثمَر، لا سطرٌ يُضاف */
-.phd-meta { display: flex; align-items: center; gap: 10px; }
-/* **والفتاتُ سطرٌ واحدٌ هنا لا يلتفّ** — وهذا شرطُ صحّةِ الرأس لا زينة: قِيس على 375px
-   فوجد فتاتُ محرّر المنشور يلتفّ **ثلاثةَ أسطر**، فصار الرأسُ «المُصلَح» أطولَ من
-   المعطوب (111px مقابل 109). و`flex-wrap: wrap` في `.ash-crumb ol` صوابٌ حيث الفتاتُ
-   وحدَه في سطره، وخطأٌ حيث يقاسمه الرأسُ ارتفاعَه — فيُقيَّد هنا وحدَه.
-   والورقةُ هي التي تُهذَّب لأنّها آخرُ ما يُقرأ، **وهي غالبًا اسمُ الصفحة نفسُه المكتوبُ
-   تحتها في العنوان** — فلا يضيع بقصّها معنًى. */
-.phd-meta .ash-crumb { min-width: 0; }
-.phd-meta .ash-crumb ol { flex-wrap: nowrap; }
-/* المقاطعُ السابقةُ لا تنكمش (`flex: 0 0 auto`) — ولولا هذا لانكمشت كلُّها دون مقاس نصّها
-   ولا يمنعُها `white-space: nowrap` من ذلك، بل يجعل نصّها يفيض على جارته فيتراكبان
-   (وقع فعلًا وقُرئ في اللقطة قبل أن يُصلَح). والورقةُ وحدَها هي المرنة. */
-.phd-meta .ash-crumb li { flex: 0 0 auto; white-space: nowrap; }
-.phd-meta .ash-crumb li:last-child { flex: 0 1 auto; min-width: 0; }
-.phd-meta .ash-crumb li:last-child > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.phd-title {
-  margin-top: 2px;
-  font-size: 22px; font-weight: 900; color: var(--color-primary);
-  /* سطران ثمّ حذف — الرأسُ لا يطول بطول العنوان، والعنوانُ كاملًا في `title` */
+
+/* ── صفُّ الملاحة ── */
+.phn-nav { grid-area: nav; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.phn-back { flex: 0 0 auto; }
+.phn-back svg { transition: transform var(--dur-fast) var(--ease-standard); }
+.phn-back:hover svg { transform: translateX(3px); }
+/* **المضمار**: يُمرَّر أفقيًّا ولا يلتفّ ولا يُقصّ. وشريطُ التمرير يُخفى لأنّه أثاثُ
+   حاسوبٍ في مكانٍ إصبعيّ، والحافّةُ المتلاشية تقول إنّ وراءها بقيّة. */
+.phn-trail {
+  flex: 1 1 auto; min-width: 0;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  mask-image: linear-gradient(to left, #000 calc(100% - 24px), transparent);
+}
+.phn-trail::-webkit-scrollbar { display: none; }
+.phn-trail .ash-crumb ol { flex-wrap: nowrap; }
+.phn-trail .ash-crumb li { flex: 0 0 auto; white-space: nowrap; }
+/* مقاطعُ الفتات أهدافٌ تُنقر لا نصوصٌ تُصاب: قِيس القائمُ 53×20 بجوار زرٍّ 44،
+   وهو المخرجُ الوحيد من الصفحة على الجوّال. والحدُّ هنا بالضلعين معًا. */
+@media (pointer: coarse) {
+  .phn-trail .ash-crumb-a,
+  .phn-trail .ash-crumb-grp { min-height: 44px; padding-inline: 8px; }
+}
+
+/* ── صفُّ الاسم ── */
+.phn-main { grid-area: main; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.phn-title {
+  /* `0 1 auto` لا `1 1 auto`: ينكمش عند الضيق ولا يتمدّد عند السعة، فتلازمه الشارة */
+  flex: 0 1 auto; min-width: 0; margin: 0;
+  font-size: 19px; font-weight: 900; color: var(--color-primary); line-height: 1.35;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   overflow: hidden;
+  transition: font-size var(--dur) var(--ease-standard);
 }
-.phd-acts { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-/* مُطلِقُ القائمة زرٌّ من المكتبة لا شكلٌ ثانٍ: يأخذ جلدَ `.abtn-ghost` كاملًا
-   (حدَّه وزاويتَه وارتفاعَه)، ولا يخصّه هنا إلّا ضيقُ حشوِه ليصير مربّعًا فيستوي
-   الصفُّ (خلافُ `.dm-trigger` وهو 30px، فيقصر عن جاره). */
-.phd-more { padding-inline: 11px; }
+/* الشارةُ تجري مع النصّ: `middle` يسندها إلى وسط السطر فلا ترفعه، والفجوةُ بعدها
+   لا قبلها (الاتّجاهُ منطقيّ فيصحّ في الوجهين). */
+/* **والشارةُ في سطر الاسم لا في سطر الملاحة** (ترتيبُ المالك ٢٠٢٦-٠٨-٢٢): فيصير الصفُّ
+   الأوّلُ كلُّه ما يُنقر، والثاني كلُّه ما يُقرأ — قسمةٌ أنظفُ من خلط شارةٍ خامدةٍ بصفّ
+   الأدوات. ومكسبُها المقيس أنّ مضمار الفتات يربح عرضَ الشارة كلَّه (‏68 إلى 101).
+   **وتلازم الاسمَ ولا تُرمى إلى الحافّة**: على شاشةٍ عريضةٍ تصير حبّةً وحيدةً في أقصى
+   اليسار بينها وبين ما تصفه فراغُ الشاشة، وهي علّةُ «الامتداد» بعينِها. وعلى الجوّال
+   يستوي الأمران لأنّ الاسمَ يملأ السطر. */
+/* عنصرٌ جارٍ مع النصّ لا صندوقٌ بجانبه: `middle` يسنده إلى وسط السطر الأخير فلا يرفعه */
+.phn-state { display: inline-flex; vertical-align: middle; margin-inline-start: 8px; }
+.phn-acts { grid-area: acts; justify-self: end; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+/* الفعلُ الأساسيُّ لا يصير توأمَ `⋯`: قِيسا 50×44 و49×44، مستطيلان لا يفرّقهما إلّا الحبر */
+.phn-acts > .abtn:not(.phn-more) { min-width: 84px; justify-content: center; }
+.phn-more { padding-inline: 11px; }
 
+/* **وعلى الجوّال يمتدّ صفُّ الفعل** (أمرُ المالك ٢٠٢٦-٠٨-٢٢): إن دُفع سطرٌ كاملٌ للفعل
+   فليُملأ. والزرّان يقتسمانه ولا يتساويان فيه: الفعلُ يأخذ ما بقي، والنقاطُ عرضٌ ثابتٌ
+   يسعُ الإبهام — فالتساوي يعيد عطبَ «التوأمين» الذي زال (كانا 50 و49 فلا يفرّقهما إلّا
+   الحبر)، وهنا يفرّقهما الحجمُ والحبرُ معًا. */
 @container (max-width: 480px) {
-  /* الرأسُ يخفّ ولا ينكسر: العنوانُ درجةً أصغر، والفعلُ مقاسَ `sm` — فيبقى
-     الصفُّ واحدًا على أضيق جهاز. (المقاسان من سلّم المكتبة لا رقمان جديدان.) */
-  .phd-title { font-size: 19px; }
-  .phd-acts .abtn { padding: 8px 15px; font-size: 14px; }
-  .phd-more { padding-inline: 10px; }
+  .phn-acts { justify-self: stretch; }
+  .phn-acts > .abtn:not(.phn-more) { flex: 1 1 auto; min-width: 0; }
+  .phn-more { flex: 0 0 58px; }
 }
+
+/* والشاشةُ الواسعةُ تردّ الفعلَ إلى جوار الاسم: السطرُ الثالثُ هناك يترك ثلثَي عرضٍ
+   فارغًا بلا معنًى، والفأرةُ دقيقةٌ فلا يعنيها اتّساعُ الهدف. فصفّان لا ثلاثة. */
+@container (min-width: 640px) {
+  .phn {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "nav  acts"
+      "main acts";
+  }
+  .phn-acts { align-self: start; }
+  .phn-title { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .phn, .phn-title { transition: none; } }
 
 /* ------------------------------------------------------------
-   إطارُ المعاينة في المعرض وحده · .phdlab
-   عرضٌ حقيقيٌّ لا محاكاة: الرأسُ داخله يقيس نفسَه (سابقةُ `.shdr-demo-phone`).
-   و`overflow-x: auto` يُظهر عَرَضَ العلّة كما هو على الجهاز — شريطُ تمريرٍ
-   أفقيّ، أي صفحةٌ تمتدّ تحت الإبهام.
+   عُدّةُ إطارات المعارض · .phdlab — مشتركةٌ بين ثمانِ صفحاتٍ في `/ui`
+   (‏nav-mobile · toolbar-mobile · deebo-log · radio-* · waveform · qr-dock…).
+   نشأت مع معرض رأس الصفحة وبقيت بعد إعدامه لأنّها إطارٌ لا رأس.
    ------------------------------------------------------------ */
 .phdlab { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
 .phdlab-col { flex: 0 0 auto; width: var(--phdlab-w, 375px); max-width: 100%; }
@@ -6647,7 +6768,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .phdlab-tag .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-border); }
 .phdlab-tag.bad .dot { background: var(--danger); }
 .phdlab-tag.good .dot { background: var(--success); }
-.phdlab-tag .h { margin-inline-start: auto; font-family: var(--font-latin); }
+.phdlab-tag .h { margin-inline-start: auto; direction: ltr; font-family: var(--font-latin); }
 .phdlab-frame {
   border: var(--card-stroke-w) solid var(--card-stroke);
   border-radius: var(--radius);
@@ -6655,82 +6776,26 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   padding: 14px 14px 0;
   overflow-x: auto;
 }
-/* خطُّ القياس: يرسم أسفلَ الرأس داخل الإطار فيُرى الارتفاعُ المشغول لا يُقرأ رقمًا فقط */
 .phdlab-rule { border-top: 2px dashed color-mix(in oklab, var(--danger) 45%, transparent); }
 .phdlab-body { padding: 10px 0 14px; font-size: 13px; color: var(--color-text-muted); }
 
-/* ══ المشغّلُ داخل الصفحة: مقترحا الهيئة (مختبر ٢٠٢٦-٠٨-١٣) ══════════
-   عيبُ الحاليّ أنّه يلبس ثوبَ الشريط: صفٌّ أفقيٌّ واحد تصطفّ فيه سبعُ أدواتٍ
-   بلا مراتب، فيبدو السيّدُ تابعًا. والمقترحان يعيدان إليه مرتبتَه. */
-
-.radp {
-  display: flex; flex-direction: column; gap: 14px;
-  padding: 20px;
-  border-radius: var(--radius);
+/* ------------------------------------------------------------
+   إطارُ معرض الجيل الثالث · .phnlab (المعرض وحدَه)
+   ------------------------------------------------------------ */
+.phnlab { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.phnlab-col { flex: 0 0 auto; width: var(--phnlab-w, 390px); max-width: 100%; }
+.phnlab-frame {
+  /* 240 لا 300: الإطارُ يجب أن **يفيض** ليُرى التكثّف، وبثلاثمائةٍ كان المحتوى يسعه
+     فلا يتحرّك الرأسُ ولا يظهر أهمُّ ما في المعاينة. */
+  height: 240px; overflow-y: auto; overscroll-behavior: contain;
   border: var(--card-stroke-w) solid var(--card-stroke);
-  background: var(--surface-aurora);
-  box-shadow: var(--shadow-md);
-}
-
-/* المرتبةُ الأولى: الزمنُ عريضًا يتصدّر */
-.radp-time { display: flex; align-items: center; gap: 12px; }
-.radp-time { width: 100%; }
-.radp-time .rad-scrub { flex: 1 1 auto; min-width: 0; }
-
-/* المرتبةُ الثانية: النقلُ في الوسط، والتشغيلُ أكبرُ ما فيه */
-.radp-transport { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.radp-transport .rad-play { width: 64px; height: 64px; }
-.radp-transport .rad-skip-n { font-size: .8125rem; }
-
-/* المرتبةُ الثالثة: الثانويّةُ أهدأُ، يفصلها خطٌّ لا فراغٌ وحده */
-.radp-aux {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  padding-top: 14px;
-  border-top: var(--card-stroke-w) solid var(--card-stroke);
-}
-
-/* ── الموجة ── */
-
-/**
- * **موجةٌ متناظرة**: كلُّ عمودٍ يمتدّ من الوسط صعودًا وهبوطًا بالقدر نفسِه،
- * لا ينبت من قاعدةٍ سفليّة (طلبُ المالك ٢٠٢٦-٠٨-١٣). وهذا شكلُ الموجة كما
- * تُرسَم في محرّرات الصوت، والقاعدةُ السفليّة تُقرأ مدرَّجَ أعمدةٍ لا صوتًا.
- *
- * **ولا تخرج عن لوحتها**: الأعمدةُ `flex: 1 1 0` بـ`min-width: 0`، فتنكمش
- * لتسع العرضَ مهما ضاق. وكانت بحدٍّ أدنى `1px` وعددُها أربعُمئة، فمجموعُها مع
- * الفجوات ١١٩٨px تفيض عن أيّ لوحة (رآه المالك). والعددُ المرسوم أقلُّ من
- * المخزون: أعمدةٌ غليظةٌ قليلة أوضحُ من شعيراتٍ كثيفة.
- */
-.radw {
-  position: relative; cursor: pointer;
-  display: flex; align-items: center; gap: 2px;
-  height: 72px; width: 100%;
-  overflow: hidden;
-}
-.radw-bar {
-  flex: 1 1 0; min-width: 0;
-  border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--color-text) 18%, transparent);
-  transition: background .12s linear;
-}
-/* المسموعُ يلبس نغمةَ البرنامج، والباقي يبقى محايدًا — فيُقرأ الموضعُ بالنظر. */
-.radw-bar.is-played { background: var(--rad-t, var(--color-secondary)); }
-/* والصمتُ يبقى له أثرٌ: نقطةٌ لا فجوة، وإلّا انقطعت الموجةُ وبدت معطوبة. */
-.radw-bar { min-height: 3px; }
-
-/**
- * حين تُرسَم الموجة، يبقى الزمنُ رقمين على طرفيها ويسقط مسارُه:
- * الموجةُ **هي** المسار، فمسارٌ ثانٍ تحتها تكرارٌ يقول الشيء مرّتين.
- */
-.rad-scrub-flat .rad-scrub-track { display: none; }
-.rad-scrub-flat { justify-content: space-between; }
-
-.radw-empty {
-  display: grid; place-items: center; height: 64px;
   border-radius: var(--radius);
-  border: 2px dashed var(--card-stroke);
-  color: var(--color-text-muted); font-size: .875rem;
+  background: var(--color-bg);
+  padding: 0 14px 14px;
 }
+.phnlab-fill { padding-top: 10px; font-size: 13px; line-height: 2; color: var(--color-text-muted); }
+.phnlab-note { max-width: 68ch; margin-top: 10px; font-size: 13px; line-height: 1.85; color: var(--color-text-muted); }
+
 
 /* ============================================================
    مقاسُ اللمس — مختبرٌ ينتظر الإقرار · بادئة .tt
@@ -7661,7 +7726,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    لا يُبحَث عنه، فبدا عائمًا يتبع القارئ. فصار خاتمةَ ما يُقرأ: يقع حيث انتهى المحتوى، وسطحُه
    سطحُ الصفحة بلا تدرّجٍ يفصله (لم يعد شيءٌ يمرّ تحته). */
 .blt-bar { display: flex; gap: 10px; padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
-.blt-bar .abtn { flex: 1 1 auto; }
 
 
 

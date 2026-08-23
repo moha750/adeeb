@@ -98,7 +98,7 @@ function ExitForm({ door, deciders, fullName, pending, lastAnswer }: Pick<Props,
         <Alert tone="info" title="طلبُك ينتظر القرار">
           أُرسل في {pending.at}، ويقضي فيه {deciders.join("، أو ")}. وسببُك المكتوب: {pending.reason}
         </Alert>
-        <div className="chip-row">
+        <div className="btn-row">
           <Button variant="ghost" size="sm" loading={busy} onClick={() => run(withdrawMembershipExit)}>
             اسحب الطلب
           </Button>
@@ -138,7 +138,7 @@ function ExitForm({ door, deciders, fullName, pending, lastAnswer }: Pick<Props,
         helper={`سببٌ مطلوب، ${EXIT_REASON_MIN} محارف على الأقلّ.`}
       />
 
-      <div className="chip-row">
+      <div className="btn-row">
         <Button
           variant="danger"
           size="md"

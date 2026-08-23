@@ -194,12 +194,7 @@ export function NewsEditorView({
           يُحفَظ. والشارةُ والنجمةُ حالان، فموضعُهما سطرُ الفتات لا عنقودُ الأزرار. */}
       <PageHeader
         title={row.title}
-        status={
-          <>
-            <Badge tone={meta.tone} dot>{meta.label}</Badge>
-            {row.isFeatured ? <Star size={18} className="text-warning" aria-label="مميّز" /> : null}
-          </>
-        }
+        status={{ label: meta.label, tone: meta.tone }}
       />
 
       {/* شريط الحالة — ما المطلوب منك الآن، لا ما حدث سابقًا */}
@@ -337,7 +332,7 @@ export function NewsEditorView({
                     value={f.coverPhotographer} onChange={(e) => edit({ coverPhotographer: e.target.value })} optional />
                 ) : null}
                 {may("image_url") ? (
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <div className="btn-row">
                     <Button variant="ghost" size="sm" onClick={() => coverInput.current?.click()} loading={uploading > 0}>
                       <UploadSimple size={16} />استبدال
                     </Button>
@@ -393,7 +388,7 @@ export function NewsEditorView({
       {/* ══ الطاقم ══ */}
       {tab === "crew" && isChief ? (
         <div style={{ display: "grid", gap: 16 }}>
-          <div>
+          <div className="btn-row">
             <Button variant="primary" size="md" onClick={() => setAssignOpen(true)}>
               <UsersThree size={18} />{detail.assignments.length ? "تعديل التكليف" : "تكليف كاتب"}
             </Button>
@@ -428,7 +423,7 @@ export function NewsEditorView({
             <Textarea label="تعليق داخليّ" icon={<ChatCircleDots />} innerIcon={<PencilSimple />} rows={3}
               placeholder="ملاحظةٌ للطاقم، لا يراها الجمهور."
               value={comment} onChange={(e) => setComment(e.target.value)} />
-            <div>
+            <div className="btn-row">
               <Button variant="primary" size="md" loading={pending} disabled={!comment.trim()}
                 onClick={() => startPending(async () => {
                   const r = await addCollabComment(row.id, comment);
@@ -482,7 +477,7 @@ export function NewsEditorView({
                   </div>
                   <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{c.content}</div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div className="btn-row">
                   {!c.isApproved ? (
                     <Button variant="ghost" size="sm" loading={pending}
                       onClick={() => run(() => moderatePublicComment(c.id, "approve"))}>

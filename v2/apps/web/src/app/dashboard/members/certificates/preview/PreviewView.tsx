@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Badge, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
+import { Alert, Button, Card, CardBody, CardHeader } from "@adeeb/design-system";
 import { Certificate as CertIcon } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { downloadCertificate, renderCertificate } from "@/lib/certificates/letter";
@@ -84,7 +84,7 @@ export function PreviewView() {
 
   return (
     <>
-      <PageHeader title="معاينة شهادة الخبرة" status={<Badge tone="info" variant="soft" icon={<CertIcon />}>عيّنةٌ لا سجلّ</Badge>} />
+      <PageHeader title="معاينة شهادة الخبرة" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ على قالبك بالرسّام الذي سيعمل عند الإصدار، والأسماء والأرقام
@@ -106,7 +106,7 @@ export function PreviewView() {
               ) : (
                 <p className="txt">تُولَّد…</p>
               )}
-              <div className="mt-4">
+              <div className="mt-4 btn-row">
                 <Button variant="neutral" size="md" onClick={() => void downloadCertificate(s.c)}>
                   <DownloadSimple /> تنزيل هذه العيّنة
                 </Button>

@@ -8,11 +8,11 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "هيكل الصفحة",
-    pages: [["header", "رأس الموقع"], ["footer", "تذييل الموقع"], ["nav-mobile", "تنقّل اللوحة على الجوّال"]],
+    pages: [["header", "رأس الموقع"], ["footer", "تذييل الموقع"], ["nav-mobile", "تنقّل اللوحة على الجوّال"], ["qr-dock", "المعاينة الحيّة في محرّر"], ["page-header", "رأس الصفحة"]],
   },
   {
     title: "الإدخال",
-    pages: [["buttons", "الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"]],
+    pages: [["buttons", "الأزرار"], ["button-row", "صفّ الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"], ["gradient", "أدوات التدرّج"]],
   },
   {
     title: "العرض",

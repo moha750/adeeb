@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Container, Segmented } from "@adeeb/design-system";
+import { Container, Segmented, type SegmentedItem } from "@adeeb/design-system";
 
 function Lab({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">{children}</p>;
@@ -13,6 +13,32 @@ const RANGES = [
   { value: "90", label: "٩٠ يومًا", href: "#90" },
   { value: "3650", label: "الكلّ", href: "#all" },
 ];
+
+// ————— صفُّ المبدّلات: نموذجُ شريط أدوات التحليلات —————
+// الرقمُ ملفوفٌ بـ`font-latin` في المبدّلين معًا، فوزنُه واحد. رقمٌ متروكٌ في نصٍّ عربيّ يُرسَم من
+// وجه الأرقام المعلَن داخل عائلة Lyon (‎700 ← Eras Demi‎)، وملفوفُه من عائلة Eras (‎700 ← Eras Bold‎)؛
+// فخلطُ الطريقتين في صفٍّ واحد يُظهر وزنين لرقمٍ واحد.
+const DAYS: SegmentedItem[] = [
+  { value: "7", label: <><span className="seg-num">7</span> أيّام</>, href: "#d7" },
+  { value: "30", label: <><span className="seg-num">30</span> يومًا</>, href: "#d30" },
+  { value: "90", label: <><span className="seg-num">90</span> يومًا</>, href: "#d90" },
+  { value: "3650", label: "الكلّ", href: "#dall" },
+];
+const DOORS: SegmentedItem[] = [
+  { value: "all", label: <>البابان <span className="seg-num">1,432</span></>, href: "#gall" },
+  { value: "web", label: <>الموقع <span className="seg-num">1,180</span></>, href: "#gweb" },
+  { value: "app", label: <>التطبيق <span className="seg-num">252</span></>, href: "#gapp" },
+];
+
+/** صفُّ المبدّلين داخل حاويةٍ بعرضٍ مفروض — كي يُرى السلوكان في صفحةٍ واحدة. */
+function Row() {
+  return (
+    <div className="seg-row">
+      <Segmented aria-label="مدى المدّة" value="30" items={DAYS} />
+      <Segmented aria-label="باب الزيارة" value="all" items={DOORS} />
+    </div>
+  );
+}
 
 export default function SegmentedPage() {
   const [status, setStatus] = useState("active");
@@ -60,6 +86,32 @@ export default function SegmentedPage() {
               في التحليلات يُمرَّر <code className="font-latin text-xs">linkAs={"{Link}"}</code> فيصير كلّ عنصرٍ رابطًا يغيّر
               <code className="font-latin text-xs"> ?days=</code> بتنقّلٍ عميليّ.
             </p>
+          </section>
+
+          <section>
+            <Lab>صفُّ مبدّلات: seg-row — يمتدّان حين لا يسعهما سطر</Lab>
+            <p className="max-w-2xl text-content-muted">
+              مبدّلان في سطرٍ واحد، طرفاهما إلى طرفَي الصفّ. وحين يضيق الصفُّ فلا يسعهما معًا، يمتدّ كلٌّ
+              منهما على عرض سطره وتتقاسمه عناصرُه بالسويّة، فلا يبقى مبدّلان ضامران فوق بعضهما ونصفُ كلّ
+              سطرٍ فارغ. والقياسُ <b>بالحاوية لا بالنافذة</b>: عرضُ ما تحت اللوحة يتغيّر بالشريط الجانبيّ
+              لا بالشاشة وحدها. والرقمُ ملفوفٌ بـ<code className="font-latin text-xs">font-latin</code> في
+              المبدّلين معًا، فوزنُه واحد.
+            </p>
+
+            <p className="mt-6 mb-2 text-sm text-content-muted">حاويةٌ واسعة: سطرٌ واحد، كلٌّ على طرف.</p>
+            <Row />
+
+            <p className="mt-8 mb-2 text-sm text-content-muted">حاويةٌ ضيّقة: سطران، وكلٌّ ممتدٌّ على عرضه.</p>
+            <div className="max-w-md">
+              <Row />
+            </div>
+
+            <p className="mt-8 mb-2 text-sm text-content-muted">
+              حاويةٌ ضيّقةٌ جدًّا (عرضُ المحتوى على جوّالٍ 375): الرقمُ فوق وكلمتُه تحته، فلا يُقتطع ولا يطفح.
+            </p>
+            <div className="max-w-[331px]">
+              <Row />
+            </div>
           </section>
         </div>
       </Container>

@@ -80,7 +80,7 @@ export function ContactForm() {
           </div>
           <p className="mt-3 font-display text-xl font-bold text-content">شكرًا لك! وصلتْنا رسالتك</p>
           <p className="mt-1 text-sm text-content-muted">سنردّ عليك في أقرب وقت.</p>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 btn-row">
             <Button variant="ghost" size="sm" onClick={() => setState("idle")}>
               إرسال رسالة أخرى
             </Button>

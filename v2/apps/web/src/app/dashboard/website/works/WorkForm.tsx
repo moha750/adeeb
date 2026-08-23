@@ -102,7 +102,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
             ) : (
               <div className="text-sm text-content-muted">{`لا صورة بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). الصورة هي وجه العمل في المعرض.`}</div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="btn-row">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
                 <UploadSimple size={18} />{image ? "تغيير الصورة" : "رفع صورة العمل"}
               </Button>

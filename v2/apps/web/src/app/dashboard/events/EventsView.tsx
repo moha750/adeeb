@@ -221,7 +221,7 @@ export function EventsView({ events }: { events: EventRow[] }) {
 
   return (
     <>
-      <PageHeader title="الفعاليّات" primary={{ label: "فعاليّة جديدة", icon: <Plus size={18} />, href: "/dashboard/events/new" }} />
+      <PageHeader title="الفعاليّات" action={{ label: "فعاليّة جديدة", icon: <Plus size={18} />, href: "/dashboard/events/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<CalendarBlank />} value={events.length} label="إجمالي الفعاليّات" />

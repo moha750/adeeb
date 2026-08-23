@@ -74,7 +74,7 @@ export function BallotLinkShare({ electionId, position, votingEnd }: {
         />
         {/* فعلان لا فعلٌ يتحوّل : المشاركةُ تسوق الرسالةَ إلى قناةٍ يختارها، والنسخُ يضع
             الرابطَ في يده ليصنع به ما شاء. وحيث لا ورقةَ مشاركة يبقى النسخُ وحدَه صدرًا. */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <div className="btn-row">
           {canShare ? (
             <Button variant="primary" size="md" onClick={share}>
               <ShareNetwork size={18} weight="fill" />شارك الرابط

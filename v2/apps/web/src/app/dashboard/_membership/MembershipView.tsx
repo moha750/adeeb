@@ -100,7 +100,7 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
                 {/* `viewbar` من المكتبة: صفٌّ يتباعد طرفاه ويلتفّ في الضيّق — ولا سطر CSS جديد */}
                 <div className="viewbar">
                   <span>من {certDate(c.periodFrom)} إلى {certDate(c.periodTo)}، صدرت في {c.date}</span>
-                  <span className="chip-row">
+                  <span className="btn-row">
                     <Button variant="ghost" size="sm" loading={busy === c.id} onClick={() => void download(c, "pdf")}>
                       <FilePdf aria-hidden /> PDF
                     </Button>

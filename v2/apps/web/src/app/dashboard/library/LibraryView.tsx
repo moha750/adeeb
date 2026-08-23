@@ -188,7 +188,7 @@ export function LibraryView({ books }: { books: BookRow[] }) {
 
   return (
     <>
-      <PageHeader title="مكتبة «إرثٌ يُروى»" primary={{ label: "منشور جديد", icon: <Plus size={18} />, onClick: openCreate }} />
+      <PageHeader title="مكتبة «إرثٌ يُروى»" action={{ label: "منشور جديد", icon: <Plus size={18} />, onClick: openCreate }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Books />} value={books.length} label="إجمالي المنشورات" />

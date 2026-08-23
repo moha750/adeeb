@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Badge, Card, CardBody, CardHeader, Segmented } from "@adeeb/design-system";
-import { ShieldWarning } from "@phosphor-icons/react";
+import { Alert, Card, CardBody, CardHeader, Segmented } from "@adeeb/design-system";
 import { Warning } from "@/app/_components/glyphs";
 import { WARNING_CATEGORIES, warningTitle } from "@/lib/warnings/vocab";
 import { renderWarningLetter } from "@/lib/warnings/letter";
@@ -73,7 +72,7 @@ export function PreviewView() {
 
   return (
     <>
-      <PageHeader title="معاينة الخطاب" status={<Badge tone="info" variant="soft" icon={<ShieldWarning />}>عيّنةٌ لا سجلّ</Badge>} />
+      <PageHeader title="معاينة الخطاب" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ بالرسّام نفسه الذي يعمل عند الإصدار، على قالبك، والاسم والسبب عيّنةٌ متخيَّلة.

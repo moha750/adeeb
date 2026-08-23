@@ -224,8 +224,8 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
           كلِّه إلى أسفل الصفحات — انظر أدناه. */}
       <PageHeader
         title={book.title}
-        status={<Badge tone={STATUS_META[status].tone} dot>{STATUS_META[status].label}</Badge>}
-        primary={status === "draft"
+        status={{ label: STATUS_META[status].label, tone: STATUS_META[status].tone }}
+        action={status === "draft"
           ? { label: "نشر", icon: <Megaphone size={18} />, loading: pending, onClick: () => runStatus("publish") }
           : undefined}
         menu={status === "draft"
@@ -265,7 +265,7 @@ export function BookEditorView({ book, initialPages }: { book: BookHeader; initi
           فوقه بشاشة (قرار المالك ٢٠٢٦-٠٨-١٦). ولا تُعرَض معطّلةً: بلا ما يُعاين لا وجودَ
           لها أصلًا (ق٧: الزرُّ لا يَعِد بما لا يملك). */}
       {pages.length > 0 ? (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 btn-row">
           <Button variant="ghost" size="md" onClick={() => setShowPreview(true)}>
             <Eye size={18} />معاينة المنشور
           </Button>

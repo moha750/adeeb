@@ -105,7 +105,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
             ) : (
               <div className="text-sm text-content-muted">{`لا شعار بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). يُفضّل شعارٌ بخلفيّة شفّافة.`}</div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="btn-row">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
                 <UploadSimple size={18} />{logo ? "تغيير الشعار" : "رفع الشعار"}
               </Button>

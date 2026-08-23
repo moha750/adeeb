@@ -1,96 +1,157 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@adeeb/design-system";
-import { Breadcrumb, CrumbTrail } from "../_shell/Breadcrumb";
-import type { CrumbStep } from "../_shell/crumb";
+import { usePathname } from "next/navigation";
+import { Badge, Button } from "@adeeb/design-system";
+import { ArrowRight } from "@/app/_components/glyphs";
+import { CrumbTrail } from "../_shell/Breadcrumb";
+import { crumbFor, type CrumbStep } from "../_shell/crumb";
+import { useNav } from "../_shell/nav-context";
 import { DropdownMenu, type MenuGroup } from "./DropdownMenu";
 
 /**
- * **رأس الصفحة** — هويّةُ الصفحة وفعلُها الواحد، **ورأسُ اللوحة الوحيد**: تمّت الهجرة
- * في ٢٠٢٦-٠٨-١٦، وأُعدم القديمُ `.ash-phead` ومعه `.form-head-actions`. ولم يبقَ منه
- * إلّا نسخةٌ مجمّدةٌ في المعرض (`.phdlab-was`) يعيش فيها لوحُ «قبل» ليبقى الفرقُ مرئيًّا.
+ * **رأسُ الصفحة** — أُقرّ ٢٠٢٦-٠٨-٢٢ وأُعدم سلَفُه (`.phd`) كما أُعدم الأوّلُ يوم أُقرّ هو.
  *
- * **وثلاثةُ أحكامٍ نزلت في تلك الهجرة، فلتَجْرِ عليها كلُّ شاشةٍ تُكتب بعدها:**
- * - **«رجوع» و«إلغاء» لا يُكتبان** — كلاهما يكرّر فتاتَ المسار الذي فوقه بسطر.
- * - **«حفظ» ينزل إلى `SaveBar`** — فعلُ التزامٍ لا فعلُ رأس (انظر آخرَ هذا التعليق).
- * - **وما ليس غايةَ الشاشة يذهب إلى `⋯`** — معاينةٌ، إلغاءُ نشرٍ، بابٌ إلى شاشةٍ أخرى.
+ * **قيدُ المالك: لا يُستغنى عن الحال ولا زرِّ الرجوع ولا الفتات.** ورُفض قبله جيلٌ رتّب
+ * القطعَ ولم يحلّ، وأربعةُ فروضٍ كلٌّ منها يشتري حلَّه بإسقاط واحدةٍ من الثلاث.
  *
- * **ولِمَ مكوّنٌ بعد أن كُتب الـCSS؟** لأنّ الـCSS يصف ولا يمنع. الشاشةُ التي تُكتب
- * غدًا تستطيع أن تحشر في `.phd-acts` أربعةَ أزرارٍ كما حشرتها اثنتا عشرة شاشةٌ في
- * عنقود القديم — والقاعدةُ التي تتّكل على انضباط كاتبها ليست قاعدة. فالحدُّ
- * هنا في **الأنماط لا في التعليق**: لا `children` ولا `actions: ReactNode`، بل
- * `primary` **واحدٌ** (مفردٌ في نوعه لا مصفوفة) و`menu` لِما عداه. فأربعةُ الأزرار
- * لا تُكتب أصلًا، ويردّها المترجم قبل أن تُرى. (سابقةُ ق١٢: «قانونٌ في المكتبة لا
- * خاصّيةٌ تُمرَّر» — فالمخالفةُ تصير مستحيلةً لا مذمومة.)
+ * **وترتيبُه بكلمته:** صفٌّ للملاحة (رجوعٌ ومسار)، وصفٌّ للاسم وحاله، وصفٌّ للفعل والنقاط.
+ * وعلى الشاشة الواسعة يعود الفعلُ إلى جوار الاسم، وعلى الجوّال يمتدّ صفُّه.
  *
- * **وثلاثةٌ يفرضها الشكلُ نفسُه:**
- * - **صفٌّ واحدٌ لا يلتفّ** — العنوانُ يُهذَّب (سطران ثمّ حذف) والأفعالُ لا تنكمش.
- *   فلا يطول الرأسُ بطول العنوان ولا بعدد الأزرار.
- * - **الشارةُ حالٌ لا فعل** — موضعُها سطرُ الفتات (سطرٌ قائمٌ يُستثمَر)، لا عنقودُ
- *   الأزرار حيث كانت تُقرأ زرًّا رابعًا.
- * - **ولا `leaf` للفتات** حين يقوله العنوانُ تحته — تكرارُه يستهلك سطرًا ثمّ يُقصّ
- *   فيبقى فاصلٌ معلَّقٌ بلا نصّ. فالفتاتُ ينتهي عند أبِ الصفحة.
+ * **والمفتاحُ: الفتاتُ يُمرَّر ولا يُقصّ.** كلُّ محاولةٍ قبله افترضت أنّ سطرَ الفتات لا بدّ
+ * أن يسع ما فيه، فإن ضاق قُصّ أو أُسقطت الشارة. وحين صار مضمارًا يُسحَب بالإصبع سقط
+ * التنازعُ من أصله.
  *
- * **وفعلُ الالتزام ليس من شأن هذا المكوّن:** «حفظ» يعيش في `SaveBar` اللاصق — لا
- * يظهر حتى يوجد ما يُحفَظ، ووجودُه نفسُه هو التنبيه. فلا تمرّره `primary`.
+ * وثمانيةُ أعطالٍ مقيسةٍ زالت به (`v2/PAGE-HEADER.md`): هدفُ الفتات كان 53×20 فصار 44
+ * بالضلعين · والورقةُ كانت تعيد العنوانَ في ٣٦ شاشةً من ٥٤ فتُسقَط حين تساويه وحدَه ·
+ * والشارةُ كانت تخنق الفتات فانتقلت إلى سطر الاسم · والمنشورُ كان يعرض `⋯` صامتةً فصار
+ * `action.kind: "reverse"` يسمّي الفعلَ العكسيّ · وانزياحُ 30px زال · وتوأمُ الحجم زال ·
+ * وخانةُ الحال صارت نوعًا مضيَّقًا يرسمه المكوّن.
+ *
+ * **ولا يتبع التمرير** (قرارُه ٢٠٢٦-٠٨-٢٢): جُرّب لاصقًا يتكثّف جزيرةً فرُفض.
  */
+
+export type HeaderTone = "neutral" | "info" | "success" | "warning" | "danger";
+
+/** حالُ السجلّ. نوعٌ مضيَّقٌ يرسمه المكوّن، فلا تُحشَر فيه أزرارٌ ولا عناصرُ أخرى. */
+export type HeaderStatus = {
+  label: string;
+  tone: HeaderTone;
+  variant?: "soft" | "solid" | "outline";
+  icon?: React.ReactNode;
+  /** نبضٌ للحيّ (اقتراعٌ جارٍ · بثٌّ مباشر) */
+  live?: boolean;
+};
+
+export type HeaderAction = {
+  label: string;
+  icon?: React.ReactNode;
+  loading?: boolean;
+  disabled?: boolean;
+  /** `primary` فعلُ التقدّم، و`reverse` الفعلُ العكسيُّ مسمًّى لا مطويًّا في `⋯` */
+  kind?: "primary" | "reverse";
+} & ({ onClick: () => void; href?: never } | { href: string; onClick?: never });
+
 export type PageHeaderProps = {
   title: string;
-  /** ورقةُ الفتات حين لا يقولها العنوان (نادر) — والافتراضُ ألّا تُمرَّر */
+  /** اسمُ الصفحة في الفتات حين لا يقوله بندُ الخريطة (سجلٌّ بعينه · «تحرير» · «معاينة») */
   crumbLeaf?: string;
-  /**
-   * فتاتٌ مرسومٌ يحلّ محلَّ المشتقِّ من المسار — **للمعارض وحدَها**: صفحةٌ في `/ui`
-   * ليست في خريطة اللوحة، فمسارُها لا يُخرج فتاتًا يشبه الحقيقة. ولا تمرّره شاشةٌ حيّة.
-   */
+  /** فتاتٌ مرسومٌ يحلّ محلَّ المشتقِّ من المسار — **للمعارض وحدَها** */
   crumb?: CrumbStep[];
-  /** حالُ السجلّ: مسودّة · منشور · ينتظر المراجعة. عنصرُ `Badge` من المكتبة. */
-  status?: React.ReactNode;
-  /**
-   * الفعلُ الواحد الذي هو غايةُ الشاشة (نشر · رفع إلى المراجعة · سجلٌّ جديد).
-   * **مفردٌ عمدًا:** لا مصفوفةَ ولا `ReactNode` — فلا يُحشر ثانٍ ولا ثالث.
-   *
-   * **و`href` لأنّ غايةَ الشاشة قد تكون تنقّلًا** (صفحةُ إنشاء)، ولو لم يُقبل الرابطُ
-   * هنا لالتفّت الشاشاتُ عليه بـ`router.push` داخل `onClick` — تنقّلٌ لا يُفتح في
-   * تبويبٍ جديدٍ ولا يعرفه المتصفّح رابطًا. وأحدُهما لا كلاهما (يمنعه النوع).
-   */
-  primary?: { label: string; icon?: React.ReactNode; loading?: boolean; disabled?: boolean } & (
-    | { onClick: () => void; href?: never }
-    | { href: string; onClick?: never }
-  );
-  /** ما عدا الفعلَ الواحد: معاينة · إلغاء النشر · حذف. يُعرض في `⋯`. */
+  /** وجهةُ زرّ الرجوع. تُشتقّ من الفتات حين لا تُمرَّر. */
+  parent?: { label: string; href: string };
+  status?: HeaderStatus;
+  /** الفعلُ الواحد الذي هو غايةُ الشاشة. مفردٌ عمدًا: لا مصفوفةَ ولا `ReactNode`. */
+  action?: HeaderAction;
+  /** ما دون الفعل الواحد: معاينةٌ · إلغاءُ نشرٍ · حذف. */
   menu?: MenuGroup[];
 };
 
-export function PageHeader({ title, crumbLeaf, crumb, status, primary, menu }: PageHeaderProps) {
+export function PageHeader({ title, crumbLeaf, crumb, parent, status, action, menu }: PageHeaderProps) {
+  const pathname = usePathname();
+  const nav = useNav();
+  const steps = crumb ?? crumbFor(pathname, nav, crumbLeaf);
+
+  /**
+   * الورقةُ تُسقَط **حين تساوي العنوانَ وحدَه**: هذا هو التكرارُ المقيس (٣٦ شاشةً من ٥٤)،
+   * وما عداه مقطعٌ يحمل معنًى فيبقى. فالفتاتُ لم يُنقَص، والمحذوفُ ليس منه.
+   */
+  const trail = steps.filter(
+    (s, i) => !(i === steps.length - 1 && s.kind === "leaf" && s.label.trim() === title.trim()),
+  );
+
+  /** وجهةُ الرجوع: آخرُ مقطعٍ يُنقر في المسار، فهي أبُ الصفحة بلا أن تكتبه كلُّ شاشة */
+  const up =
+    parent ??
+    [...trail].reverse().reduce<{ label: string; href: string } | undefined>(
+      (found, s) => found ?? (s.kind === "link" ? { label: s.label, href: s.href } : undefined),
+      undefined,
+    );
+
   return (
-    <div className="phd">
-      <div className="phd-row">
-        <div className="phd-id">
-          <div className="phd-meta">
-            {crumb ? <CrumbTrail steps={crumb} /> : <Breadcrumb leaf={crumbLeaf} />}
-            {status}
+    <div className="phn-c">
+      <header className="phn">
+        {up || trail.length ? (
+          <div className="phn-nav">
+            {up ? (
+              <Link href={up.href} className="abtn abtn-ghost abtn-sm phn-back" aria-label={`رجوع إلى ${up.label}`}>
+                <ArrowRight size={18} aria-hidden />
+                رجوع
+              </Link>
+            ) : null}
+            {trail.length ? (
+              <div className="phn-trail">
+                <CrumbTrail steps={trail} />
+              </div>
+            ) : null}
           </div>
-          {/* العنوانُ كاملًا في `title` — فما قصّه السطران يُقرأ بالوقوف عليه */}
-          <h1 className="phd-title" title={title}>{title}</h1>
+        ) : null}
+
+        <div className="phn-main">
+          {/* الشارةُ **داخلَ** العنوان لا إلى جانبه: إلى جانبه تتوسّط الكتلةَ رأسيًّا فتقع
+              بين السطرين، وداخلَه تجري مع النصّ فتستقرّ في نهاية آخر سطر. */}
+          <h1 className="phn-title" title={title}>
+            {title}
+            {status ? (
+              <span className="phn-state">
+                <Badge tone={status.tone} variant={status.variant} dot live={status.live} icon={status.icon}>
+                  {status.label}
+                </Badge>
+              </span>
+            ) : null}
+          </h1>
         </div>
-        {(primary || menu?.length) ? (
-          <div className="phd-acts">
-            {primary ? (
-              primary.href ? (
-                <Link href={primary.href} className="abtn abtn-primary abtn-md">{primary.icon}{primary.label}</Link>
+
+        {action || menu?.length ? (
+          <div className="phn-acts">
+            {action ? (
+              action.href ? (
+                <Link
+                  href={action.href}
+                  className={`abtn abtn-${action.kind === "reverse" ? "ghost" : "primary"} abtn-md`}
+                >
+                  {action.icon}
+                  {action.label}
+                </Link>
               ) : (
-                <Button variant="primary" size="md" onClick={primary.onClick} loading={primary.loading} disabled={primary.disabled}>
-                  {primary.icon}{primary.label}
+                <Button
+                  variant={action.kind === "reverse" ? "ghost" : "primary"}
+                  size="md"
+                  loading={action.loading}
+                  disabled={action.disabled}
+                  onClick={action.onClick}
+                >
+                  {action.icon}
+                  {action.label}
                 </Button>
               )
             ) : null}
             {menu?.length ? (
-              <DropdownMenu groups={menu} ariaLabel="أفعالٌ أخرى" triggerClassName="abtn abtn-ghost abtn-md phd-more" />
+              <DropdownMenu groups={menu} ariaLabel="أفعالٌ أخرى" triggerClassName="abtn abtn-ghost abtn-md phn-more" />
             ) : null}
           </div>
         ) : null}
-      </div>
+      </header>
     </div>
   );
 }

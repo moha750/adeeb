@@ -225,7 +225,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
           والشاشةُ المحرِّرة لا فعلَ رأسٍ لها أصلًا: كلُّ ما فيها التزامٌ. */}
       <PageHeader
         title={editing ? `تحرير: ${survey.title}` : "استبيان جديد"}
-        primary={editing ? undefined : {
+        action={editing ? undefined : {
           label: "نشر",
           loading: saving && pendingAction === "publish",
           disabled: !canPublish || (saving && pendingAction === "draft"),

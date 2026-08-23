@@ -85,7 +85,7 @@ export function MyDataStep({ onSaved }: { onSaved: () => void }) {
           value={city} onChange={(e) => setCity(e.target.value)} optional
         />
 
-        <div>
+        <div className="btn-row">
           <Button variant="primary" size="lg" loading={busy} onClick={submit}>حفظ ومتابعة</Button>
         </div>
       </CardBody>

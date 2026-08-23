@@ -144,7 +144,7 @@ export function MyVolunteering({ data }: { data: Data }) {
                       <span className="flex items-center gap-1"><UsersThree size={16} aria-hidden />{o.committee}</span>
                     ) : null}
                   </div>
-                  <div>
+                  <div className="btn-row">
                     <Button
                       variant="primary" size="sm"
                       loading={busy === o.id}
@@ -171,7 +171,7 @@ export function MyVolunteering({ data }: { data: Data }) {
                   <span className="font-bold">{c.opportunityTitle}</span>
                   <span className="text-content-muted text-sm">{`صدرت في ${c.issuedLabel}، برقم ${c.serial}`}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="btn-row">
                   <Button
                     variant="primary" size="sm" loading={busy === `${c.id}-png`}
                     onClick={() => draw(c, "png")}
@@ -214,7 +214,7 @@ export function MyVolunteering({ data }: { data: Data }) {
                   <p className="text-content-muted text-sm">سُجّل غيابُك عن هذه الفرصة.</p>
                 ) : null}
                 {a.status === "pending" ? (
-                  <div>
+                  <div className="btn-row">
                     <Button
                       variant="ghost-danger" size="sm"
                       loading={busy === a.id}

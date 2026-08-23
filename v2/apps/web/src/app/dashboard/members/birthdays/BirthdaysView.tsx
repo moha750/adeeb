@@ -204,7 +204,7 @@ export function BirthdaysView({
       {/* النطاق يُقال حيث يُرى — فلا يُحسب الجزءُ كلًّا. وموضعُه سطرُ الفتات: حالٌ لا فعل. */}
       <PageHeader
         title="أعياد الميلاد"
-        status={scope === "supervised" ? <Badge tone="info" variant="soft" icon={<UsersFour />}>مواليد من تشرف عليهم</Badge> : undefined}
+        status={scope === "supervised" ? { label: "مواليد من تشرف عليهم", tone: "info", variant: "soft", icon: <UsersFour /> } : undefined}
       />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>

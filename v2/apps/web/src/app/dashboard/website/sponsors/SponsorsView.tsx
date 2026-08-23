@@ -98,7 +98,7 @@ export function SponsorsView({ sponsors }: { sponsors: SponsorRow[] }) {
 
   return (
     <>
-      <PageHeader title="الرعاة والشركاء" primary={{ label: "راعٍ جديد", icon: <Plus size={18} />, href: "/dashboard/website/sponsors/new" }} />
+      <PageHeader title="الرعاة والشركاء" action={{ label: "راعٍ جديد", icon: <Plus size={18} />, href: "/dashboard/website/sponsors/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Handshake />} value={sponsors.length} label="رعاة وشركاء" />

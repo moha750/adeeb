@@ -127,7 +127,7 @@ export function JoinForm({
             />
           ))}
 
-          <div>
+          <div className="btn-row">
             <Button variant="primary" size="lg" loading={busy} onClick={submit} disabled={!complete}>
               {isVolunteer ? "حفظ الرغبات" : "تقديم الطلب"}
             </Button>

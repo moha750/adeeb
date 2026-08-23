@@ -233,7 +233,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
       <Avatar name={name} src={avatar ?? undefined} gender={gender} size="2xl" />
       <div className="flex flex-col items-start gap-2">
         {/* «حذف» لا يظهر لمن لا صورة له — زرٌّ لا يفعل شيئًا وعدٌ كاذب */}
-        <span className="chip-row">
+        <span className="btn-row">
           <Button variant="ghost" size="md" onClick={() => pick.current?.click()}>
             <UploadSimple size={18} aria-hidden />
             {avatar ? "تغيير الصورة" : "رفع صورة"}

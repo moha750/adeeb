@@ -362,7 +362,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
 
   return (
     <>
-      <PageHeader title="الاستبيانات" primary={{ label: "استبيان جديد", icon: <Plus size={18} />, href: "/dashboard/surveys/new" }} />
+      <PageHeader title="الاستبيانات" action={{ label: "استبيان جديد", icon: <Plus size={18} />, href: "/dashboard/surveys/new" }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ClipboardText />} value={kept.length} label="إجمالي الاستبيانات" />

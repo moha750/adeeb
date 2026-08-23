@@ -66,13 +66,10 @@ export function OpportunityView({ opp, rows }: { opp: OppDetail; rows: AppRow[] 
       <PageHeader
         title={opp.title}
         crumbLeaf={opp.title}
-        status={
-          <div className="flex items-center gap-2">
-            <Badge tone={opp.seats != null && opp.accepted >= opp.seats ? "danger" : "neutral"}>
-              {opp.seats == null ? `مفتوح، قُبل ${opp.accepted}` : `المطلوب ${opp.seats}، قُبل ${opp.accepted}`}
-            </Badge>
-          </div>
-        }
+        status={{
+          tone: opp.seats != null && opp.accepted >= opp.seats ? "danger" : "neutral",
+          label: opp.seats == null ? `مفتوح، قُبل ${opp.accepted}` : `المطلوب ${opp.seats}، قُبل ${opp.accepted}`,
+        }}
       />
 
       <Card>
@@ -114,7 +111,7 @@ export function OpportunityView({ opp, rows }: { opp: OppDetail; rows: AppRow[] 
                   <span className="font-bold">{r.name}</span>
                   <span className="text-content-muted text-sm" dir="ltr">{r.phone}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="btn-row">
                   <Button
                     variant="primary" size="sm" loading={busy === r.id}
                     disabled={opp.seats != null && opp.accepted >= opp.seats}

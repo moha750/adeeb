@@ -79,7 +79,7 @@ export function VolunteersView({ rows, committees }: {
     <>
       <PageHeader
         title="سجلّ المتطوّعين"
-        primary={{ label: "نسخُ الأرقام", onClick: copyPhones }}
+        action={{ label: "نسخُ الأرقام", onClick: copyPhones }}
       />
 
       <div className="flex flex-wrap items-end gap-3" style={{ marginBottom: 16 }}>
@@ -136,7 +136,7 @@ export function VolunteersView({ rows, committees }: {
                 ) : null}
 
                 {r.status === "active" ? (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="btn-row">
                     <Button variant="primary" size="sm" loading={busy === r.userId} onClick={() => openAsk("grant", r)}>
                       إهداءُ العضويّة
                     </Button>

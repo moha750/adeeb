@@ -41,7 +41,7 @@ export function TasksView({ data }: { data: TasksData }) {
 
   return (
     <>
-      <PageHeader title="مهامّي" status={data.canManage ? null : <Badge tone="info" variant="soft">ما كُلِّفتَ به</Badge>} />
+      <PageHeader title="مهامّي" status={data.canManage ? undefined : { label: "ما كُلِّفتَ به", tone: "info", variant: "soft" }} />
 
       {data.error ? <Alert tone="warning" title="تعذّر جلب المهامّ">{data.error}</Alert> : null}
 
@@ -161,7 +161,7 @@ function UnitTasks({
 
   return (
     <>
-      <div className="flex justify-end" style={{ marginBottom: 14 }}>
+      <div className="btn-row" style={{ marginBottom: 14 }}>
         <Button variant="primary" size="md" onClick={() => setOpen(true)}>
           <Plus /> مهمّة جديدة
         </Button>
@@ -331,7 +331,7 @@ function PersonRow({
         <p className="text-content-muted text-sm">لا تسليم بعد.</p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="btn-row">
         {MARKABLE.map((s: TaskState) => (
           <Button
             key={s}

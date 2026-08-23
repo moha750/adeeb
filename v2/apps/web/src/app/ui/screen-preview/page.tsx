@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import Link from "next/link";
-import { Badge, Button, Container, Segmented } from "@adeeb/design-system";
-import { ArrowRight, Eye, EyeSlash, Trash } from "@/app/_components/glyphs";
-import { DownloadSimple } from "@/app/_components/glyphs";
-import { CrumbTrail } from "../../dashboard/_shell/Breadcrumb";
+import { Badge, Container, Segmented } from "@adeeb/design-system";
+import { DownloadSimple, Eye, EyeSlash, Trash } from "@/app/_components/glyphs";
 import type { CrumbStep } from "../../dashboard/_shell/crumb";
 import { DataTable, type Column } from "../../dashboard/_components/DataTable";
 import { Toolbar, type FilterDef, type ViewMode } from "../../dashboard/_components/Toolbar";
@@ -141,17 +138,13 @@ function HeadPair({ title }: { title: string }) {
         <div className="phdlab-tag bad"><span className="dot" aria-hidden />الآن<span className="h">{hOld ? hOld + "px" : ""}</span></div>
         <div className="phdlab-frame" style={{ paddingBottom: 14 }}>
           <div ref={refOld}>
-            <div className="phdlab-was">
-              <div>
-                <CrumbTrail steps={CRUMB} />
-                <h1>{title}</h1>
-              </div>
-              <div className="phdlab-was-acts">
-                <Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>
-                <Button variant="ghost" size="md"><Eye size={18} />معاينة</Button>
-                <Button variant="primary" size="md"><DownloadSimple size={18} />تصدير</Button>
-              </div>
-            </div>
+            <PageHeader
+              title={title}
+              crumb={CRUMB}
+              status={{ label: "١٢٤ عضوًا", tone: "info", variant: "soft" }}
+              action={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
+              menu={[{ items: [{ label: "معاينة", icon: <Eye /> }] }]}
+            />
           </div>
         </div>
       </div>
@@ -162,8 +155,8 @@ function HeadPair({ title }: { title: string }) {
             <PageHeader
               title={title}
               crumb={CRUMB}
-              status={<Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>}
-              primary={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
+              status={{ label: "١٢٤ عضوًا", tone: "info", variant: "soft" }}
+              action={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
               menu={MENU}
             />
           </div>
@@ -199,18 +192,13 @@ export default function ScreenPreviewLab() {
         <div className="mt-12" style={{ ["--phdlab-w" as string]: w + "px" }}>
           <div className="phdlab">
             <Frame tag="الآن" tone="bad">
-              <div className="phdlab-was">
-                <div>
-                  <CrumbTrail steps={CRUMB} />
-                  <h1>سجلّ الأعضاء</h1>
-                </div>
-                <div className="phdlab-was-acts">
-                  <Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>
-                  <Button variant="ghost" size="md"><Eye size={18} />معاينة</Button>
-                  <Link href="#" className="abtn abtn-ghost abtn-md"><ArrowRight size={18} />رجوع</Link>
-                  <Button variant="primary" size="md"><DownloadSimple size={18} />تصدير</Button>
-                </div>
-              </div>
+              <PageHeader
+                title="سجلّ الأعضاء"
+                crumb={CRUMB}
+                status={{ label: "١٢٤ عضوًا", tone: "info", variant: "soft" }}
+                action={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
+                menu={[{ items: [{ label: "معاينة", icon: <Eye /> }] }]}
+              />
               <Toolbar
                 searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
                 search={s1} onSearch={setS1}
@@ -225,8 +213,8 @@ export default function ScreenPreviewLab() {
               <PageHeader
                 title="سجلّ الأعضاء"
                 crumb={CRUMB}
-                status={<Badge tone="info" variant="soft">١٢٤ عضوًا</Badge>}
-                primary={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
+                status={{ label: "١٢٤ عضوًا", tone: "info", variant: "soft" }}
+                action={{ label: "تصدير", icon: <DownloadSimple size={18} />, onClick: () => {} }}
                 menu={MENU}
               />
               <Toolbar

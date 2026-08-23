@@ -153,7 +153,7 @@ export function CredentialsView({ members }: { members: CredMember[] }) {
               </Alert>
             ) : null}
 
-            <div className="cred-actions">
+            <div className="btn-row">
               <Button variant="primary" size="md" loading={pending} disabled={!canSubmit} onClick={submit}>
                 حفظ التغييرات
               </Button>

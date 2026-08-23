@@ -234,8 +234,8 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
       <PageHeader
         title={agg.title}
         crumbLeaf="النتائج"
-        status={<Badge tone={statusMeta.tone} variant="soft" dot live={agg.status === "active"}>{statusMeta.label}</Badge>}
-        primary={{
+        status={{ label: statusMeta.label, tone: statusMeta.tone, variant: "soft", live: agg.status === "active" }}
+        action={{
           label: "تصدير CSV",
           icon: <DownloadSimple size={18} />,
           onClick: () => {

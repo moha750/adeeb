@@ -436,8 +436,8 @@ export function ShowEditorView({
           فنزلت إلى `⋯`، والنشرُ وحده يبقى فعلًا أساسيًّا (حكمُ `/ui/page-header`). */}
       <PageHeader
         title={show.title}
-        status={<Badge tone={SHOW_STATUS_META[show.status].tone} dot>{SHOW_STATUS_META[show.status].label}</Badge>}
-        primary={show.status === "published" ? undefined : {
+        status={{ label: SHOW_STATUS_META[show.status].label, tone: SHOW_STATUS_META[show.status].tone }}
+        action={show.status === "published" ? undefined : {
           label: "نشر البرنامج", icon: <Megaphone size={18} />, loading: pending,
           onClick: () => runShowStatus("publish"),
         }}
@@ -526,7 +526,7 @@ export function ShowEditorView({
               optional
             />
           ))}
-          <div className="form-full">
+          <div className="form-full btn-row">
             <Button variant="primary" size="md" onClick={saveLinks} loading={pending}>حفظ روابط المنصّات</Button>
           </div>
         </div>

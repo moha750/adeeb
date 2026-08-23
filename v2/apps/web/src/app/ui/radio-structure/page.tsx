@@ -148,7 +148,7 @@ export default function RadioStructureLab() {
                 <PageHeader
                   title="إذاعة أدِيب"
                   crumb={CRUMB_ONE}
-                  primary={{ label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} }}
+                  action={{ label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} }}
                   menu={[{ items: [{ label: "إعدادات المحطّة", icon: <SlidersHorizontal size={18} /> }] }]}
                 />
                 <ShowsBody id="a" />
@@ -166,7 +166,7 @@ export default function RadioStructureLab() {
                 <PageHeader
                   title="إذاعة أدِيب"
                   crumb={CRUMB_ONE}
-                  primary={tab === "shows" ? { label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} } : undefined}
+                  action={tab === "shows" ? { label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} } : undefined}
                 />
                 <Segmented
                   items={[{ value: "shows", label: "البرامج (٣)" }, { value: "station", label: "هويّة الإذاعة" }]}
@@ -187,7 +187,7 @@ export default function RadioStructureLab() {
                 <PageHeader
                   title="البرامج"
                   crumb={CRUMB_SPLIT}
-                  primary={{ label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} }}
+                  action={{ label: "برنامج جديد", icon: <Plus size={18} />, onClick: () => {} }}
                 />
                 <ShowsBody id="c" />
               </div>

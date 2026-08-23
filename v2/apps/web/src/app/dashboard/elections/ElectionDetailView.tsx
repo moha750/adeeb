@@ -17,8 +17,7 @@ import { ElectionLog } from "./ElectionLog";
 import type { AppointOption, CandidateRow, ElectionDetail, ElectionLogEvent, VoteDetailRow } from "./data";
 import type { ElectionResult } from "./actions";
 import { useElectionApi } from "./actions-context";
-import { byGender, CANDIDATE_CARD_TONE, CANDIDATE_STATUS_META, decisionLine } from "./vocab";
-import { StatusBadge } from "./StatusBadge";
+import { byGender, CANDIDATE_CARD_TONE, CANDIDATE_STATUS_META, decisionLine, STATUS_META } from "./vocab";
 import { PageHeader } from "../_components/PageHeader";
 import { fromClubInput, toClubInput } from "@/lib/dates";
 import { firstAndLastOf } from "@/lib/personName";
@@ -325,7 +324,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   return (
     <>
       {/* و«رجوع» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر (حكمُ `/ui/page-header`) */}
-      <PageHeader title={election.positionLabel} status={<StatusBadge status={s} stalled={stalled} />} />
+      <PageHeader title={election.positionLabel} status={stalled ? { label: "بانتظار قرار", tone: "warning", variant: "soft" } : { label: STATUS_META[s].label, tone: STATUS_META[s].tone, variant: "soft", live: STATUS_META[s].live }} />
 
       {s === "completed" && election.winnerName ? (
         <Alert tone="success" title="اكتمل الانتخاب">
@@ -336,7 +335,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
               وتُعرَض للمطّلِع أيضًا: صورةُ نتيجةٍ مُعلَنة نشرٌ لا تصريف. */}
           {/* بابٌ واحدٌ لا زرّان: الصورةُ تُرى والتهنئةُ تُقرأ قبل أن تُرسَلا (`ShareResultModal`) */}
           {winnerRow ? (
-            <div style={{ marginTop: 10 }}>
+            <div className="btn-row" style={{ marginTop: 10 }}>
               <Button variant="ghost" size="sm" onClick={() => openShare(resultOf(winnerRow))}>
                 <ImageSquare size={18} />شارك النتيجة
               </Button>

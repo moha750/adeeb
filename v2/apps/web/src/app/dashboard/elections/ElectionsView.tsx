@@ -218,7 +218,7 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
 
   return (
     <>
-      <PageHeader title="الانتخابات" primary={readOnly ? undefined : { label: "انتخاب جديد", icon: <Plus size={18} />, onClick: () => setNewOpen(true) }} />
+      <PageHeader title="الانتخابات" action={readOnly ? undefined : { label: "انتخاب جديد", icon: <Plus size={18} />, onClick: () => setNewOpen(true) }} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Scales />} value={elections.length} label="إجمالي الانتخابات" />

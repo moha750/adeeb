@@ -14,12 +14,11 @@ import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import type { EventDetail, ReservationRow } from "./data";
-import { ACCOUNT_TYPE_LABEL, AUDIENCE_LABEL, STAGE_META, TYPE_META, reservationStage } from "./vocab";
+import { ACCOUNT_TYPE_LABEL, AUDIENCE_LABEL, STAGE_META, STATUS_META, TYPE_META, reservationStage } from "./vocab";
 import {
   batchConfirmWhatsapp, batchMarkCertificatesSent, cancelReservation,
   confirmWhatsapp, markAttendance, markCertificateSent, type EventResult,
 } from "./actions";
-import { StatusBadge } from "./StatusBadge";
 import { TypeBadge } from "./TypeBadge";
 import { PageHeader } from "../_components/PageHeader";
 import { copyText } from "@/lib/clipboard";
@@ -235,8 +234,8 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
     <>
       <PageHeader
         title={detail.name}
-        status={<StatusBadge status={detail.status} />}
-        primary={{ label: "تحرير", icon: <PencilSimple size={18} />, href: `/dashboard/events/${detail.id}/edit` }}
+        status={{ label: STATUS_META[detail.status].label, tone: STATUS_META[detail.status].tone, variant: "soft", live: detail.status === "published" }}
+        action={{ label: "تحرير", icon: <PencilSimple size={18} />, href: `/dashboard/events/${detail.id}/edit` }}
       />
 
       <div className="flex flex-wrap items-center gap-3 text-content-muted text-sm" style={{ marginBottom: 14 }}>

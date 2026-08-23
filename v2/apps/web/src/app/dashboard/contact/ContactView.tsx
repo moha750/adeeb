@@ -285,7 +285,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
               onChange={(e) => setNotes(e.target.value)}
               optional
             />
-            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div className="btn-row">
               <Button
                 variant="ghost"
                 size="sm"
