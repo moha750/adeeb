@@ -6,6 +6,9 @@ import { pickGreeting } from "@/lib/deebo/greeting";
 import type { Turn } from "@/lib/deebo/useDeebo";
 import { DeeboScreen } from "../../deebo/DeeboScreen";
 
+/** أسئلةُ عيّنةٍ للمعرِض: الحيّةُ في `deebo_persona` وهذه صفحةٌ لا تبلغ القاعدة. */
+const LAB_ASKS = ["ما نادي أديب؟", "كيف أنضمّ إليكم؟", "ما أنواع فعاليّاتكم؟", "هل أحضر بلا عضويّة؟"];
+
 /**
  * معرِضُ **شاشة محادثة ديبو** (`.dchs-*`) — المكوّنُ الحيُّ نفسُه كسائر صفحات `/ui`.
  *
@@ -90,6 +93,9 @@ function Frame({ tag, note, start, record = false }: { tag: string; note: string
       </div>
       <div className="nvlab-frame">
         <DeeboScreen
+          /* أسئلةُ المعرِض مكتوبةٌ ههنا: الأسئلةُ الحيّةُ صارت في `deebo_persona` وهذه
+             صفحةٌ ساكنةٌ لا تبلغ القاعدة، فتُعرَض عيّنةٌ كي تبقى الرقائقُ في اللقطة. */
+          questions={LAB_ASKS}
           turns={turns}
           greeting={pickGreeting({ seed: 0, hour: 10, name: null })}
           busy={false}

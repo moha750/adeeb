@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildSystemPrompt } from "@/lib/deebo/persona";
 import { PROVIDERS, type Answer } from "@/lib/deebo/providers";
 import { TEST_QUESTIONS } from "@/lib/deebo/questions";
-import type { FaqRow } from "@/lib/deebo/knowledge";
+import { loadDeeboMind } from "@/lib/deebo/knowledgeSource";
 
 export type CompareResult = {
   providerId: string;
@@ -29,13 +29,6 @@ export type CompareResponse =
   | { ok: true; question: string; results: CompareResult[] }
   | { ok: false; message: string };
 
-/** يقرأ معرفة ديبو الحيّة من جدول الأسئلة الشائعة. */
-async function loadFaq(): Promise<{ rows: FaqRow[]; error: string | null }> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("faq").select("question, answer").order("id");
-  if (error) return { rows: [], error: "تعذّر قراءة جدول الأسئلة الشائعة من القاعدة." };
-  return { rows: (data ?? []) as FaqRow[], error: null };
-}
 
 export async function askAll(questionIndex: number): Promise<CompareResponse> {
   if (process.env.NODE_ENV === "production") {
@@ -45,13 +38,16 @@ export async function askAll(questionIndex: number): Promise<CompareResponse> {
   const question = TEST_QUESTIONS[questionIndex];
   if (!question) return { ok: false, message: "سؤالٌ غير موجود." };
 
-  const { rows, error } = await loadFaq();
-  if (error) return { ok: false, message: error };
-  if (rows.length === 0) {
-    return { ok: false, message: "جدول الأسئلة الشائعة فارغ، فلا معرفة لدى ديبو ليجيب منها." };
+  // العقلُ من مصدره الواحد — الجداولُ الثلاثةُ كما يقرؤها مِنفذُ ديبو نفسُه، وإلّا
+  // حُكِم في المختبر على جوابٍ بعقلٍ ليس عقلَه.
+  const load = await loadDeeboMind(await createClient());
+  if (!load.ok) return { ok: false, message: load.message };
+  const { persona, knowledge } = load.mind;
+  if (knowledge.faq.length === 0 && knowledge.facts.length === 0) {
+    return { ok: false, message: "معرفةُ ديبو فارغةٌ في القاعدة، فلا شيء يجيب منه." };
   }
 
-  const system = buildSystemPrompt(rows);
+  const system = buildSystemPrompt(persona, knowledge);
   const results = await Promise.all(
     PROVIDERS.map(async (p): Promise<CompareResult> => ({
       providerId: p.id,

@@ -23,6 +23,8 @@ export type DeeboConversation = {
   lastAt: string;
   /** بصمةٌ تدور يوميًّا: تكفي للتمييز داخل اليوم ولا تصل زيارتَي يومين بشخصٍ واحد. */
   visitorHash: string;
+  /** حذفها صاحبُها من سجلّه في هذا الوقت — والمحادثةُ ههنا كما هي (حكمُ المالك ٢٠٢٦-٠٨-٢١). */
+  hiddenAt: string | null;
   /** اسمُ صاحبها إن كان له حساب — `null` للزائر المجهول (وله بصمتُه وحدَها). */
   ownerName: string | null;
   entryPath: string | null;
@@ -48,9 +50,9 @@ const KEY_HINT = "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local 
  * والقراءةُ بمفتاح الخدمة كسائر غرف اللوحة: **التفويض عند الباب** (`manage_deebo` في
  * `denyUnless`) لا في الاستعلام. وسياستا RLS في القاعدة تحرسان من ينادي القاعدةَ مباشرةً.
  *
- * **وما حذفه صاحبُه لا يُقرأ ههنا** (كلمةُ المالك ٢٠٢٦-٠٨-٢٠: «حذفك للمحادثة يعني حذفها
- * من كلّ مكان»): الصفُّ يذهب من القاعدة فلا يبقى ما يُعرَض. وحدُّ الحفظ باقٍ على حاله:
- * سنةٌ ثمّ تذهب المملوكةُ كلُّها بمهمّة `deebo_purge_owned`.
+ * **وما حذفه صاحبُه يبقى ههنا كما هو** (حكمُ المالك ٢٠٢٦-٠٨-٢١): الحذفُ عنده لا عندنا،
+ * و`hidden_at` خبرٌ يُعرَض للأدمن لا مرشِّحٌ يُطبَّق (ومفتاحُ الخدمة يتجاوز سياسةَ الحجب
+ * أصلًا). وحدُّ الحفظ باقٍ: سنةٌ ثمّ تذهب المملوكةُ كلُّها بمهمّة `deebo_purge_owned`.
  */
 export async function getDeeboLog(): Promise<DeeboLogData> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -61,7 +63,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
   const { data: convs, error } = await sb
     .from("deebo_conversations")
     .select(
-      "id, started_at, last_at, visitor_hash, user_id, entry_path, model, message_count, total_input_tokens, total_output_tokens, total_cached_tokens",
+      "id, started_at, last_at, visitor_hash, user_id, hidden_at, entry_path, model, message_count, total_input_tokens, total_output_tokens, total_cached_tokens",
     )
     .order("started_at", { ascending: false })
     .limit(200);
@@ -69,7 +71,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
 
   type RawConv = {
     id: string; started_at: string; last_at: string; visitor_hash: string;
-    user_id: string | null;
+    user_id: string | null; hidden_at: string | null;
     entry_path: string | null; model: string; message_count: number;
     total_input_tokens: number; total_output_tokens: number; total_cached_tokens: number;
   };
@@ -126,6 +128,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
       startedAt: c.started_at,
       lastAt: c.last_at,
       visitorHash: c.visitor_hash,
+      hiddenAt: c.hidden_at,
       ownerName: c.user_id ? names.get(c.user_id) ?? "صاحبُ حسابٍ لا اسمَ له" : null,
       entryPath: c.entry_path,
       model: c.model,
@@ -135,6 +138,96 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
       cachedTokens: c.total_cached_tokens,
       messages: byConv.get(c.id) ?? [],
     })),
+    error: null,
+  };
+}
+
+/**
+ * محادثةٌ واحدةٌ برسائلها — قارئُ صفحة الحوار (`/dashboard/deebo/[id]`).
+ *
+ * **ولِمَ قارئٌ ثانٍ ولا يُنخَل من قائمة الغرفة؟** لأنّ القائمةَ محدودةٌ بمئتَي محادثةٍ من
+ * الأحدث، فمحادثةٌ من الشهر الماضي يُفتَح رابطُها لا تكون فيها أصلًا. والرابطُ يُنسَخ ويُرسَل
+ * (وهو نصفُ علّة اختيار الصفحة على النافذة ٢٠٢٦-٠٨-٢٢)، فلا يصحّ أن يعمل حينًا ويخيب حينًا.
+ *
+ * والتفويضُ عند الباب كسائر الغرفة (`manage_deebo` في `denyUnless`)، والقراءةُ بمفتاح الخدمة.
+ * **وما حذفه صاحبُه يبقى مقروءًا ههنا** كما يبقى في القائمة (حكمُ المالك ٢٠٢٦-٠٨-٢١).
+ */
+export async function getDeeboTalk(
+  id: string,
+): Promise<{ talk: DeeboConversation | null; error: string | null }> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
+  if (!url || !key) return { talk: null, error: KEY_HINT };
+
+  const sb = createAdeebServiceClient(url, key);
+  const { data: conv, error } = await sb
+    .from("deebo_conversations")
+    .select(
+      "id, started_at, last_at, visitor_hash, user_id, hidden_at, entry_path, model, message_count, total_input_tokens, total_output_tokens, total_cached_tokens",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return { talk: null, error: error.message };
+  if (!conv) return { talk: null, error: null };
+
+  const c = conv as {
+    id: string; started_at: string; last_at: string; visitor_hash: string;
+    user_id: string | null; hidden_at: string | null; entry_path: string | null;
+    model: string; message_count: number;
+    total_input_tokens: number; total_output_tokens: number; total_cached_tokens: number;
+  };
+
+  // الاسمُ من `profiles` لا من صفّ المحادثة (العلّةُ في `getDeeboLog`: من غيّر اسمَه غيّره
+  // في سجلّه معه، ومن خرج من أديب صار `user_id` فيها `null` فعادت مجهولةً بلا أثرٍ لاسمه).
+  let ownerName: string | null = null;
+  if (c.user_id) {
+    const { data: person } = await sb
+      .from("profiles")
+      .select("full_name")
+      .eq("id", c.user_id)
+      .maybeSingle();
+    ownerName = (person as { full_name: string | null } | null)?.full_name ?? "صاحبُ حسابٍ لا اسمَ له";
+  }
+
+  const { data: msgs, error: msgErr } = await sb
+    .from("deebo_messages")
+    .select("id, at, role, content, input_tokens, output_tokens, cached_tokens, latency_ms, guard_blocked")
+    .eq("conversation_id", c.id)
+    .order("at", { ascending: true });
+  if (msgErr) return { talk: null, error: msgErr.message };
+
+  type RawOne = {
+    id: number; at: string; role: string; content: string;
+    input_tokens: number | null; output_tokens: number | null; cached_tokens: number | null;
+    latency_ms: number | null; guard_blocked: boolean;
+  };
+
+  return {
+    talk: {
+      id: c.id,
+      startedAt: c.started_at,
+      lastAt: c.last_at,
+      visitorHash: c.visitor_hash,
+      hiddenAt: c.hidden_at,
+      ownerName,
+      entryPath: c.entry_path,
+      model: c.model,
+      messageCount: c.message_count,
+      inputTokens: c.total_input_tokens,
+      outputTokens: c.total_output_tokens,
+      cachedTokens: c.total_cached_tokens,
+      messages: ((msgs ?? []) as RawOne[]).map((m) => ({
+        id: String(m.id),
+        at: m.at,
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content,
+        inputTokens: m.input_tokens,
+        outputTokens: m.output_tokens,
+        cachedTokens: m.cached_tokens,
+        latencyMs: m.latency_ms,
+        guardBlocked: m.guard_blocked,
+      })),
+    },
     error: null,
   };
 }

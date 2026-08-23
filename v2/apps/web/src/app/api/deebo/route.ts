@@ -24,7 +24,7 @@ import { createSentenceGuard, allowedNumbers } from "@/lib/deebo/guard";
 import { liveProvider, readableError, type ChatMessage } from "@/lib/deebo/providers";
 import { checkGate, clientIp, deeboService, visitorHash } from "@/lib/deebo/limits";
 import { loadDeeboViewer, viewerBriefing } from "@/lib/deebo/viewer";
-import type { FaqRow } from "@/lib/deebo/knowledge";
+import { loadDeeboMind } from "@/lib/deebo/knowledgeSource";
 
 /** أطولُ سؤالٍ يُقبل. ما زاد إفراطٌ أو عبث، وكلاهما يُكلّف رموزًا بلا فائدة. */
 const MAX_QUESTION = 600;
@@ -109,8 +109,9 @@ export async function POST(req: Request) {
 
   /* ── ١٫٦) أهذه المحادثةُ محادثتُك؟ ────────────────────────────────────────
      معرّفُ المحادثة يأتي من المتصفّح، وحتّى اليوم كان يُصدَّق كما جاء: فمن حمل معرّفَ
-     محادثةِ غيره كتب فيها. فالمعرّفُ يُصدَّق بشرطين لا ثالثَ لهما:
-       · صاحبُ الجلسة يُكمل ما هو **له**.
+     محادثةِ غيره كتب فيها، ومن حذف محادثتَه من سجلّه أحياها بأن يكمل الكلامَ فيها.
+     فالمعرّفُ يُصدَّق بشرطين لا ثالثَ لهما:
+       · صاحبُ الجلسة يُكمل ما هو **له** وما لم يحذفه من سجلّه (`hidden_at is null`).
        · والمجهولُ يُكمل ما لا صاحبَ له وحدَه، فلا يُلحِق كلامَه بسجلّ عضو.
      وما لم يجتَزْ يُهمَل بلا خطأ: تُفتح له محادثةٌ جديدة، ويعود الدرعُ شرطًا كما لو
      لم يرسل معرّفًا أصلًا (وإلّا كان المعرّفُ المخترَعُ بابًا يتخطّى Turnstile). */
@@ -121,11 +122,11 @@ export async function POST(req: Request) {
   if (conversationId) {
     const { data: own } = await supabase
       .from("deebo_conversations")
-      .select("id, user_id")
+      .select("id, user_id, hidden_at")
       .eq("id", conversationId)
       .maybeSingle();
-    const row = own as { id: string; user_id: string | null } | null;
-    if (row && (row.user_id ?? null) === userId) resumeId = row.id;
+    const row = own as { id: string; user_id: string | null; hidden_at: string | null } | null;
+    if (row && !row.hidden_at && (row.user_id ?? null) === userId) resumeId = row.id;
   }
 
   /* ── ٢) الدرع، وأوّلَ رسالةٍ فقط ────────────────────────────────────────── */
@@ -150,20 +151,23 @@ export async function POST(req: Request) {
   }
 
   const provider = liveProvider();
-  const gate = await checkGate(supabase, hash, provider.rates);
+  const gate = await checkGate(supabase, hash, provider);
   if (!gate.ok) return fail(gate.status, gate.message);
 
   /* ── ٤) المعرفة ───────────────────────────────────────────────────────── */
-  const { data: faq, error: faqErr } = await supabase
-    .from("faq")
-    .select("question, answer")
-    .order("id");
-  if (faqErr) return fail(503, "تعذّر قراءة معرفة ديبو الآن.");
+  // ثلاثةُ جداولَ معًا: طبعُه (`deebo_persona`) وأجوبتُه (`faq`) ووقائعُه
+  // (`deebo_knowledge`) — كلُّها تُحرَّر من اللوحة، وتُقرأ من مصدرٍ واحد
+  // (`knowledgeSource`) فلا يفترق ما يقرؤه ديبو ههنا عمّا يقرؤه في مختبر المقارنة.
+  const load = await loadDeeboMind(supabase);
+  if (!load.ok) return fail(503, load.message);
 
-  const rows = (faq ?? []) as FaqRow[];
   // صفةُ صاحب الجلسة (إن كان له حساب) — بإذن المالك ٢٠٢٦-٠٨-٢٠: الاسمُ الأوّل والصفة لا أكثر.
   const viewer = userId ? await loadDeeboViewer(userId) : null;
-  const system = buildSystemPrompt(rows, viewer ? viewerBriefing(viewer) : null);
+  const system = buildSystemPrompt(
+    load.mind.persona,
+    load.mind.knowledge,
+    viewer ? viewerBriefing(viewer) : null,
+  );
 
   // ما يُسمح لديبو أن يذكره من أعداد: ما في معرفته، وما كتبه الزائر بنفسه.
   const guard = createSentenceGuard(allowedNumbers(system, question));

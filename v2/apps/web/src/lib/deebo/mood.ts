@@ -31,12 +31,11 @@
  * ولا يُشحن منه إلى المتصفّح إلّا ما تطلبه صفحةٌ بعينها.
  *
  * ## وكشفُ «لا أعرف» مشتقٌّ لا محفور
- * الجملةُ تُقرأ من `UNKNOWN_ANSWER` في `persona.ts` نفسِه، فإذا بدّلها المالك تبعه الكشفُ
- * بلا سطرٍ ثانٍ (وقد أبقاها كما هي حين ملأ ورقةَ الهويّة في ٢٠٢٦-٠٨-٢٠). وهي مقارنةٌ **بصدر الجملة** لا بها كاملةً،
- * لأنّ النموذج قد يزيد عليها. **وخطؤها لا يضرّ**: أسوأُ ما يقع أن يشرح ديبو بوجهٍ
- * شارحٍ جملةَ اعتذار، وهي زلّةٌ تُرى ولا تكذب على أحد.
+ * الجملةُ تنزل من القاعدة (`deebo_persona.unknown_answer`) خاصّيةً إلى الشاشة، فإذا
+ * بدّلها المالك من اللوحة تبعه الكشفُ في اللحظة بلا نشر. وهي مقارنةٌ **بصدر الجملة** لا
+ * بها كاملةً، لأنّ النموذج قد يزيد عليها. **وخطؤها لا يضرّ**: أسوأُ ما يقع أن يشرح ديبو
+ * بوجهٍ شارحٍ جملةَ اعتذار، وهي زلّةٌ تُرى ولا تكذب على أحد.
  */
-import { UNKNOWN_ANSWER } from "./persona";
 
 /**
  * الوجوهُ المستعمَلة. أسماؤها أسماءُ الملفّات في `public/brand/deebo`.
@@ -80,17 +79,20 @@ export const MOOD_ALT: Record<Mood, string> = {
 };
 
 /** صدرُ جملة «لا أعرف» — بقدرٍ يكفي للتمييز ولا يطول فيكسره حرفٌ زائد. */
-const UNKNOWN_HEAD = UNKNOWN_ANSWER.slice(0, 14);
+const headOf = (unknownAnswer: string) => unknownAnswer.trim().slice(0, 14);
 
 /**
  * وجهُ الجواب الواحد.
  * @param content نصُّ الجواب كما وصل (قد يكون فارغًا وهو يُبثّ).
  * @param streaming هل ما زال يُكتب؟
+ * @param unknownAnswer جملةُ «لا أعرف» كما هي اليوم في القاعدة. وغيابُها لا يُسقط
+ *   الوجهَ كلَّه: يبقى الشرحُ والحيرةُ، ويسقط وجهُ الاعتذار وحدَه.
  */
-export function moodFor(content: string, streaming?: boolean): Mood {
+export function moodFor(content: string, streaming?: boolean, unknownAnswer?: string): Mood {
   if (streaming && !content) return "thinking";
   // انقطع البثُّ ولم يصل حرفٌ واحد: جوابٌ خاوٍ لا خطأَ مُعلَن، فالحيرةُ أصدقُ من الشرح.
   if (!content.trim()) return "unsure";
-  if (content.trimStart().startsWith(UNKNOWN_HEAD)) return "sorry";
+  const head = unknownAnswer ? headOf(unknownAnswer) : null;
+  if (head && content.trimStart().startsWith(head)) return "sorry";
   return "explaining";
 }

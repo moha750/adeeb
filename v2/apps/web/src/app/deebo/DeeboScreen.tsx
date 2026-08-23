@@ -23,7 +23,6 @@ import type { ConversationRow } from "./actions";
 import { DeeboIsle } from "./DeeboIsle";
 import type { Greeting } from "@/lib/deebo/greeting";
 import { MOOD_ALT, moodFor, moodSrc } from "@/lib/deebo/mood";
-import { SHOWN_QUESTIONS } from "@/lib/deebo/persona";
 import type { Turn } from "@/lib/deebo/useDeebo";
 
 export type DeeboScreenProps = {
@@ -52,6 +51,13 @@ export type DeeboScreenProps = {
   onDeleteConversation?: (id: string) => void;
   /** يُنادى عند فتح الدرج: القائمةُ تُقرأ من الخادم عند القصد لا في كلّ رسم. */
   onOpenDrawer?: () => void;
+  /**
+   * أسئلةُ الشاشة الفارغة كما هي في القاعدة اليوم (`deebo_persona`)، وقد قُصّت على
+   * العدد الذي اختاره المالك. كانت ثابتًا في `persona.ts` حتى ٢٠٢٦-٠٨-٢٢.
+   */
+  questions?: readonly string[];
+  /** جملةُ «لا أعرف» — يقيس بها `moodFor` وجهَ الاعتذار. */
+  unknownAnswer?: string;
 };
 
 /* سطرُ القاع بنصّ المالك ٢٠٢٦-٠٨-٢٠. وكان قبله إفصاحًا: «محادثتك تُعالَج لدى مزوّدٍ
@@ -66,10 +72,12 @@ function Hello({
   greeting,
   disabled,
   onPick,
+  questions,
 }: {
   greeting: Greeting;
   disabled: boolean;
   onPick: (q: string) => void;
+  questions: readonly string[];
 }) {
   return (
     <div className="dchs-hello">
@@ -84,7 +92,7 @@ function Hello({
       />
       <p className="text-lg text-content">{greeting.text}</p>
       <div className="dchs-asks">
-        {SHOWN_QUESTIONS.map((q) => (
+        {questions.map((q) => (
           <Button key={q} size="sm" variant="ghost" onClick={() => onPick(q)} disabled={disabled}>
             {q}
           </Button>
@@ -97,14 +105,14 @@ function Hello({
 }
 
 /** المتنُ: أدوارٌ بفقاعات المكتبة نفسِها، والوجهُ يقوله `mood` لا مَن يرسم. */
-function Thread({ turns }: { turns: Turn[] }) {
+function Thread({ turns, unknownAnswer }: { turns: Turn[]; unknownAnswer?: string }) {
   return (
     <ul className="dch">
       {turns.map((t, i) => (
         <li key={i} className="dch-turn" data-who={t.role}>
           {t.role === "assistant"
             ? (() => {
-                const mood = moodFor(t.content, t.streaming);
+                const mood = moodFor(t.content, t.streaming, unknownAnswer);
                 return <img className="dch-av" src={moodSrc(mood)} alt={MOOD_ALT[mood]} width={40} height={40} />;
               })()
             : null}
@@ -146,6 +154,8 @@ export function DeeboScreen({
   onOpenConversation,
   onDeleteConversation,
   onOpenDrawer,
+  questions = [],
+  unknownAnswer,
 }: DeeboScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -217,9 +227,9 @@ export function DeeboScreen({
       <div className="dchs-scroll" ref={scrollRef} onScroll={onScroll}>
         <div className="dchs-col">
           {started ? (
-            <Thread turns={turns} />
+            <Thread turns={turns} unknownAnswer={unknownAnswer} />
           ) : (
-            <Hello greeting={greeting} disabled={busy || blocked} onPick={onSend} />
+            <Hello greeting={greeting} disabled={busy || blocked} onPick={onSend} questions={questions} />
           )}
           {error ? (
             <Alert tone="danger" title="تعذّر">

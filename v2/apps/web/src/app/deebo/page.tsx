@@ -2,6 +2,7 @@ import { SiteHeader } from "../_components/SiteHeader";
 import { clubHour } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { loadDeeboFirstName } from "@/lib/deebo/viewer";
+import { loadDeeboVoice } from "@/lib/deebo/knowledgeSource";
 import { DeeboChat } from "./DeeboChat";
 import { listMyConversations, openMyConversation } from "./actions";
 
@@ -56,11 +57,17 @@ export default async function DeeboPage({
   // eslint-disable-next-line react-hooks/purity
   const greetingSeed = Math.floor(Math.random() * 1_000_000);
   const viewerName = data.user ? await loadDeeboFirstName(data.user.id) : null;
+  /* أسئلتُه المعروضةُ وجملةُ «لا أعرف» من `deebo_persona` (٢٠٢٦-٠٨-٢٢): كانتا ثابتَين في
+     الكود، فصارتا ممّا يكتبه المالك في اللوحة. وتُقرآن ههنا لا في الشاشة: الشاشةُ عميليّةٌ
+     لا تبلغ القاعدة، والقراءةُ في الخادم تنزل معها في أوّل رسمٍ بلا ومضة. */
+  const voice = await loadDeeboVoice(sb);
 
   return (
     <div className="dchs-shell">
       <SiteHeader activeHref="/deebo" />
       <DeeboChat
+        questions={voice.questions}
+        unknownAnswer={voice.unknownAnswer}
         siteKey={signedIn ? null : rawKey}
         signedIn={signedIn}
         initialConversations={conversations}

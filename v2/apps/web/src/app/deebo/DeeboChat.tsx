@@ -10,7 +10,7 @@
  *
  * **والسِّجلُّ لصاحب الحساب وحده** (إذنُ المالك ٢٠٢٦-٠٨-٢٠): محادثاتُه في القاعدة يقرؤها
  * ويحذفها بجلسته (RLS)، ومن لا حسابَ له تبقى محادثتُه في جهازه ولا سِجلَّ له عندنا.
- * **والحذفُ حذفٌ من كلّ مكان** (كلمتُه في اليوم نفسه): لا تبقى في غرفة اللوحة.
+ * **والحذفُ عنده لا عند النادي** (حكمُه): تخرج من دَرَجه، ويبقى سجلُّها في اللوحة كما هو.
  */
 
 import { useState } from "react";
@@ -29,6 +29,8 @@ export function DeeboChat({
   greetingSeed,
   greetingHour,
   viewerName = null,
+  questions = [],
+  unknownAnswer,
 }: {
   siteKey: string | null;
   /** له حساب؟ فسجلُّه في القاعدة، وذاكرةُ الجهاز لا تُستعمل له. */
@@ -41,6 +43,9 @@ export function DeeboChat({
   greetingHour: number;
   /** الاسمُ الأوّل لصاحب الجلسة، أو `null` للزائر المجهول. */
   viewerName?: string | null;
+  /** أسئلةُ الشاشة الفارغة وجملةُ «لا أعرف» — من `deebo_persona` عبر الخادم (٢٠٢٦-٠٨-٢٢). */
+  questions?: readonly string[];
+  unknownAnswer?: string;
 }) {
   const [token, setToken] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -70,6 +75,8 @@ export function DeeboChat({
 
   return (
     <DeeboScreen
+      questions={questions}
+      unknownAnswer={unknownAnswer}
       turns={turns}
       greeting={pickGreeting({ seed: greet.seed, hour: greet.hour, name: viewerName })}
       busy={busy}

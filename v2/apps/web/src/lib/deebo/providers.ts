@@ -19,13 +19,49 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * ثمنُ المليون رمزٍ بالدولار. للعرض والتقدير لا للمحاسبة.
+ * ثمنُ المليون رمزٍ بالدولار — قائمةُ الذروة كما نشرها المزوّد.
+ *
+ * ولا تُقرأ للحساب مباشرةً بعد ٢٠٢٦-٠٨-٢١: بعضُ المزوّدين ينصّف خارج الذروة،
+ * فالحسابُ يمرّ بـ`ratesAt` ليأخذ ثمنَ اللحظة. ومن قرأ القائمةَ خامًا أخطأ
+ * الضِّعف، وقد أخطأناه.
  *
  * و`cachedIn` بندٌ مستقلٌّ لا نسبةٌ من `in`، لأنّ الخصم يختلف اختلافًا كبيرًا:
  * Claude يقرأ المخزَّن بعُشر الثمن، وDeepSeek بنحو ثلاثة بالمئة. فاشتقاقُه
  * بنسبةٍ واحدةٍ يكذب على أحدهما.
  */
 export type Rates = { in: number; cachedIn: number; out: number };
+
+/**
+ * ساعاتُ الذروة عند DeepSeek بتوقيت UTC: 01:00-04:00 و06:00-10:00، وما عداها
+ * وفرةٌ بنصف الثمن (سياستُهم منذ ٢٠٢٦-٠٨-١٦، وصفحةُ أسعارهم مصدرُها).
+ *
+ * ولماذا `getUTCHours` وقد مُنع `getHours` في هذا المستودع؟ لأنّ المنعَ على
+ * قراءة ساعةِ **الجهاز** (تختلف بين حاسوبِ المطوّر وخادمِ Vercel)، وهذه ساعةُ
+ * UTC صريحةً وهي التي عرّف بها المزوّدُ نافذتَه. فلا ساعةَ محلّيّةَ هنا أصلًا.
+ */
+const DEEPSEEK_PEAK_UTC: readonly (readonly [number, number])[] = [
+  [1, 4],
+  [6, 10],
+];
+
+/** أفي ساعةِ الذروة نحن؟ الحدُّ الأدنى داخلٌ والأعلى خارج. */
+export function isDeepseekPeak(at: Date): boolean {
+  const hour = at.getUTCHours();
+  return DEEPSEEK_PEAK_UTC.some(([from, to]) => hour >= from && hour < to);
+}
+
+/**
+ * ثمنُ المزوّد **في لحظةٍ بعينها**.
+ *
+ * وفصلُه عن `rates` مقصود: القائمةُ تبقى أسعارَ الذروة كما نشرها المزوّد،
+ * والوفرةُ قاعدةٌ تُطبَّق عليها. فمن أراد الثمنَ المعلن قرأ `rates`، ومن أراد
+ * ما سيُدفع فعلًا نادى هذه. والمزوّدُ الذي لا وفرةَ عنده يردّ قائمتَه كما هي.
+ */
+export function ratesAt(provider: Provider, at: Date): Rates {
+  if (!provider.offPeakAt?.(at)) return provider.rates;
+  const { in: i, cachedIn, out } = provider.rates;
+  return { in: i / 2, cachedIn: cachedIn / 2, out: out / 2 };
+}
 
 export type Usage = {
   inputTokens: number;
@@ -48,7 +84,10 @@ export type Provider = {
   id: string;
   label: string;
   model: string;
+  /** أسعارُ الذروة المعلنة. لا تُستعمل للحساب مباشرةً: نادِ `ratesAt`. */
   rates: Rates;
+  /** متى يكون الثمنُ نصفًا؟ غيابُه يعني ثمنًا واحدًا لا يتبدّل بالساعة. */
+  offPeakAt?: (at: Date) => boolean;
   /** اسمُ متغيّر البيئة الذي يحمل مفتاحه، ليُقال للناظر أيُّها ناقص. */
   envKey: string;
   /** يرمي عند العطب؛ المستدعي يمسك ويترجم. */
@@ -194,7 +233,12 @@ function makeClaude(id: string, label: string, model: string, rates: Rates): Pro
         outputTokens: final.usage.output_tokens,
         cachedTokens: final.usage.cache_read_input_tokens ?? 0,
       };
-      yield { type: "done", usage, ms: Date.now() - started, costUsd: costOf(usage, rates) };
+      yield {
+        type: "done",
+        usage,
+        ms: Date.now() - started,
+        costUsd: costOf(usage, ratesAt(p, new Date(started))),
+      };
     },
     ask: (system, question) => collect(p, system, question),
   };
@@ -243,7 +287,12 @@ const gemini: Provider = {
       outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
       cachedTokens: 0,
     };
-    yield { type: "done", usage, ms: Date.now() - started, costUsd: costOf(usage, gemini.rates) };
+    yield {
+      type: "done",
+      usage,
+      ms: Date.now() - started,
+      costUsd: costOf(usage, ratesAt(gemini, new Date(started))),
+    };
   },
   ask: (system, question) => collect(gemini, system, question),
 };
@@ -254,10 +303,13 @@ const deepseek: Provider = {
   id: "deepseek",
   label: "DeepSeek",
   model: MODELS.deepseek,
-  // أسعارُ الذروة من صفحتهم الرسميّة (٢٠٢٦-٠٨-١٨). والوفرةُ نصفُها، وساعاتُ
-  // الذروة 01:00-04:00 و06:00-10:00 بتوقيت UTC. نحسب بالذروة عمدًا: تقديرٌ
-  // أعلى من الواقع خيرٌ من فاتورةٍ تفاجئ.
+  // أسعارُ الذروة من صفحتهم الرسميّة (٢٠٢٦-٠٨-١٨).
+  //
+  // وكنّا نحسب بالذروة دائمًا تحوّطًا، فتبيّن ٢٠٢٦-٠٨-٢١ أنّ التحوّطَ يضرّ من
+  // حيثُ أراد أن ينفع: حسابُنا قال ٣ سنتات ولوحةُ المزوّد قالت سنتًا، فسقفُ
+  // اليوم كان يقفل بابَ ديبو عند ثلث ما أذن به المالك. فالوفرةُ صارت تُحسب.
   rates: { in: 0.44, cachedIn: 0.014, out: 1.32 },
+  offPeakAt: (at) => !isDeepseekPeak(at),
   envKey: "DEEPSEEK_API_KEY",
   async *stream(system, messages) {
     const started = Date.now();
@@ -312,7 +364,12 @@ const deepseek: Provider = {
       }
     }
 
-    yield { type: "done", usage, ms: Date.now() - started, costUsd: costOf(usage, deepseek.rates) };
+    yield {
+      type: "done",
+      usage,
+      ms: Date.now() - started,
+      costUsd: costOf(usage, ratesAt(deepseek, new Date(started))),
+    };
   },
   ask: (system, question) => collect(deepseek, system, question),
 };
