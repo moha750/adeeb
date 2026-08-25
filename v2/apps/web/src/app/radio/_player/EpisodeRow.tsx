@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Play, Pause, Waveform } from "@phosphor-icons/react";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
+import { CaretLeft } from "@/app/_components/glyphs";
 import { episodeLabel, formatDuration } from "../../dashboard/radio/vocab";
 import { useSavedPosition } from "@/lib/radio/progress";
 import { useRadioPlayer, type Track } from "./PlayerProvider";
@@ -15,6 +16,12 @@ import { useRadioPlayer, type Track } from "./PlayerProvider";
  * لأنّ الهدفين **مفصولان بصريًّا**، لا لأنّها لم تنتبه. وثمنُ الوحدة أنّ التشغيل
  * كان يكلّف صفحتين دائمًا في منتجٍ صوتيّ. فههنا: العنوانُ رابطٌ ممدودٌ على الصفّ،
  * وزرُّ التشغيل جارٌ مستقلٌّ يعلوه بطبقةٍ فينجو من ظلّه.
+ *
+ * **والسهمُ يقول إنّ الصفَّ يفتح مكانًا** (طلبُ المالك ٢٠٢٦-٠٨-٢٥): زرُّ التشغيل
+ * وحدَه في الطرف يجعل بقيّةَ الصفّ صامتةً عن وظيفتها، فلا يُعرَف أنّها تُبحر إلّا
+ * بالتجربة، ولا `:hover` على الجوّال يشرحها. فيقف في الطرف الأقصى سهمُ الدخول
+ * نفسُه الذي يحمله الكرتُ الممتدّ: **شكلان مختلفان لفعلين مختلفين، يُرَيان معًا**.
+ * وهو `aria-hidden` وغيرُ قابلٍ للنقر: الرابطُ الممدودُ يغطّيه، فلا هدفَ ثالث.
  *
  * **والوزنُ هو الفاصل.** قاعدةُ «لا فاصلَ مرسومًا» صحيحة، لكنّها كانت تترك أربعَ
  * حقائقَ بلونٍ واحدٍ ووزنٍ واحدٍ يفصلها فراغ، فتُقرأ «‏2026 20:28» ختمًا زمنيًّا
@@ -89,6 +96,8 @@ export function EpisodeRow({
           ? <Pause size={16} weight="fill" aria-hidden />
           : <Play size={16} weight="fill" aria-hidden />}
       </button>
+
+      <span className="radn-chev" aria-hidden><CaretLeft size={18} /></span>
     </div>
   );
 }

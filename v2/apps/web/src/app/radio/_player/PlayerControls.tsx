@@ -9,7 +9,7 @@ import {
 import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
 import { useWaveBars } from "@/lib/radio/useWaveBars";
 import { useSavedPosition } from "@/lib/radio/progress";
-import { formatDuration, MUSIC_STOPS, nearestStop, SKIP_SECONDS } from "../../dashboard/radio/vocab";
+import { formatDuration, SKIP_SECONDS } from "../../dashboard/radio/vocab";
 import { useRadioPlayer, type Track } from "./PlayerProvider";
 
 /**
@@ -194,17 +194,31 @@ export function PlayerControls({
    * فيقرؤها الويبُ والجوّالُ من بيتٍ واحد.
    */
   const hasStems = Boolean(shown.plainUrl && shown.stemUrl);
-  const atStop = nearestStop(p.musicLevel);
 
+  /**
+   * **مقدارُ الموسيقى مِزلاقٌ متّصل** (طلبُ المالك ٢٠٢٦-٠٨-٢٥).
+   *
+   * كان ثلاثَ مراتبَ مسمّاة (قرارُه ٢٠٢٦-٠٨-١٨)، وحجّتُها أنّ المِزلاقَ يُخفي مداه.
+   * فنُقض إلى تحكّمٍ أغنى: المستمعُ يضع المزجَ حيث يشاء لا حيث سمّينا له.
+   * وبدائيّتُه `.rad-music` مكتوبةٌ في المكتبة منذ ذلك اليوم ولم تُشحَن قطّ.
+   *
+   * **ويقول اسمَه**: هو ومقبضُ الصوت متطابقا الشكل، والأيقونةُ وحدَها لا تفرّق
+   * بين جهارةِ الجهاز ومزجِ الحلقة، فكلٌّ يحمل كلمتَه.
+   *
+   * **والمكسُ القديم يبقى مبدّلًا بطرفين**: ملفّان لا يُمزَجان فليس فيهما ما يُخفَت.
+   */
   const takes = hasStems ? (
-    <div className="rad-takes" role="group" aria-label="مقدار الموسيقى">
-      {MUSIC_STOPS.map((stop) => (
-        <button key={stop.level} type="button" className="rad-take"
-          aria-pressed={atStop === stop.level}
-          onClick={() => p.setMusicLevel(stop.level)} disabled={!isThis}>
-          <span className="rad-take-t">{stop.label}</span>
-        </button>
-      ))}
+    <div className="rad-music">
+      <span className="rad-ctl-lbl"><MusicNotes size={15} aria-hidden />الموسيقى</span>
+      <input
+        className="rad-vol-input"
+        type="range" min={0} max={1} step={0.05}
+        value={p.musicLevel}
+        onChange={(e) => p.setMusicLevel(Number(e.target.value))}
+        disabled={!isThis}
+        aria-label="مقدار الموسيقى"
+        aria-valuetext={pctText(p.musicLevel)}
+      />
     </div>
   ) : shown.plainUrl ? (
     <div className="rad-takes" role="group" aria-label="نسخة الاستماع">
@@ -221,8 +235,8 @@ export function PlayerControls({
 
   const rate = (
     <button type="button" className="rad-chip" onClick={p.cycleRate}
-      aria-label={`سرعة التشغيل ${p.rate} أضعاف، اضغط لتغييرها`}>
-      <bdi dir="ltr">{p.rate}×</bdi>
+      aria-label={`سرعة التشغيل ${p.rate}، اضغط لتغييرها`}>
+      السرعة <bdi dir="ltr" className="font-latin">{p.rate}×</bdi>
     </button>
   );
 
@@ -232,6 +246,7 @@ export function PlayerControls({
         aria-label={p.muted ? "إلغاء الكتم" : "كتم الصوت"}>
         {p.muted ? <SpeakerSlash size={17} aria-hidden /> : <SpeakerHigh size={17} aria-hidden />}
       </button>
+      <span className="rad-ctl-lbl">الصوت</span>
       <input
         className="rad-vol-input"
         type="range" min={0} max={1} step={0.05}

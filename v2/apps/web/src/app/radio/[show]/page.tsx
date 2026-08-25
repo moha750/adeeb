@@ -54,9 +54,6 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
 
   const playable = episodes.filter(isPlayable);
   const tracks: Track[] = playable.map((e) => toTrack(e, show));
-  const listen = platforms.filter((p) => PLATFORM_META[p.platform].kind === "listen");
-  const social = platforms.filter((p) => PLATFORM_META[p.platform].kind === "social");
-
   /** رابطُ منصّةٍ واحد، يخدم الصفّين فلا يُكتب مرّتين. */
   const platformLink = (p: (typeof platforms)[number]) => {
     const Icon = PLATFORM_ICON[p.platform];
@@ -116,17 +113,8 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                     <Play size={18} weight={ICON_WEIGHT} aria-hidden />استمع لآخر حلقة
                   </Link>
                 ) : null}</div>
-                {listen.length ? (
-                  <div className="mt-3">
-                    <div className="radn-subs-h">استمع على</div>
-                    <div className="radn-subs">{listen.map(platformLink)}</div>
-                  </div>
-                ) : null}
-                {social.length ? (
-                  <div className="mt-3">
-                    <div className="radn-subs-h">تابِع البرنامج على</div>
-                    <div className="radn-subs">{social.map(platformLink)}</div>
-                  </div>
+                {platforms.length ? (
+                  <div className="radn-subs mt-3">{platforms.map(platformLink)}</div>
                 ) : null}
               </div>
             </div>

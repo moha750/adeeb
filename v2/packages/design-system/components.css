@@ -6361,6 +6361,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    حاويةَ المبدّل وتستمدّ سطحَها منها). زاويتُها `--radius-sm` لأنّها صغيرةٌ
    قائمةٌ بنفسها فلا تنقلب كبسولةً (ق٢). */
 .rad-chip {
+  min-height: 44px; min-width: 44px; justify-content: center;
   flex: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 10px;
@@ -6382,7 +6383,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 
 /* القفزُ خمسَ عشرةَ: أكثرُ زرٍّ يُضغط في البودكاست، فيُجاور التشغيلَ لا يُزوى. */
 .rad-skip {
-  flex: none; width: 34px; height: 34px;
+  flex: none; width: 44px; height: 44px;
   border: 0; cursor: pointer;
   border-radius: 50%;
   background: transparent;
@@ -6408,7 +6409,13 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    واحد — **لا يُخفى على اللمس**. فذاك جهارةُ الجهاز وللجوّال أزرارُه
    الماديّة، وهذا مزجُ الحلقة نفسِها وهو ما لا تعطيه منصّةٌ أخرى، فحجبُه عن
    أكثر من يسمعنا يُلغي الميزةَ لا يؤجّلها. */
+/* **المقبضُ يقول اسمَه.** المِزلاقان متطابقا الشكل، والأيقونةُ وحدَها لا تفرّق
+   بين جهارةِ الجهاز ومزجِ الحلقة. وكلمةٌ واحدةٌ تكفي ولا تحتاج شرحًا. */
 .rad-vol, .rad-music { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.rad-ctl-lbl {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .78125rem; font-weight: 700; color: var(--color-text-muted); white-space: nowrap;
+}
 .rad-vol-input {
   width: 68px; height: 6px; cursor: pointer;
   -webkit-appearance: none; appearance: none;
@@ -8845,7 +8852,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   font-size: .9375rem; font-weight: 700; line-height: 1.4; color: var(--color-text);
 }
 .radn-t::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
-.radn-t:hover { text-decoration: underline; text-underline-offset: 3px; }
 .radn-t:focus-visible { outline: none; }
 .radn-row:has(.radn-t:focus-visible) { box-shadow: var(--ring); border-color: var(--ctl-stroke); }
 .radn-m {
@@ -8910,7 +8916,10 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .radn-wide-c img { width: 100%; height: 100%; object-fit: cover; }
 /* سهمُ الدخول ليس زرًّا: دائرةٌ بمقاس زرِّ التشغيل تُقرأ فعلًا ثانيًا لا وجهة */
 .radn-chev { flex: none; width: 26px; height: 44px; display: grid; place-items: center; color: var(--color-text-muted); }
-.radn-wide:hover .radn-chev { color: var(--color-secondary); }
+.radn-wide:hover .radn-chev,
+.radn-row:hover .radn-chev { color: var(--color-secondary); }
+/* السهمُ إشارةٌ لا هدف: الرابطُ الممدودُ يغطّيه فلا ينازعه، وزرُّ التشغيل يعلوهما. */
+.radn-row .radn-chev { pointer-events: none; margin-inline-start: -2px; }
 
 /* ── وجهاتُ الاستماع ───────────────────────────────────────────────
    «أين تسمع» و«أين تتابعنا» وظيفتان، وجمعُهما في عائلةٍ واحدةٍ يُفقد كلتيهما.
@@ -9035,8 +9044,11 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .radn-chap-at { flex: none; min-width: 40px; font-family: var(--font-latin); font-size: .75rem; color: var(--color-secondary); }
 
 /* ── الشريط الملازم ──────────────────────────────────────────────── */
+/* **مثبَّتٌ بالشاشة لا بالقسم.** كُتب `absolute` أوّلًا لأنّ معاينتَه تسكن إطارًا،
+   فالتصق في الإنتاج بأسفل `.rad` (وهو `relative`) وافترش عرضَ القسم كلَّه. */
 .radn-bar {
-  position: absolute; inset-inline: 10px; bottom: 10px; z-index: 30;
+  position: fixed; inset-inline: 12px; bottom: 12px; z-index: 30;
+  max-width: 72rem; margin-inline: auto;
   display: flex; align-items: center; gap: 10px;
   padding: 8px 12px 8px 8px;
   border-radius: var(--radius);
@@ -9055,6 +9067,9 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .radn-bar-art img { width: 100%; height: 100%; object-fit: cover; }
 .radn-bar-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
 .radn-bar-t { font-size: .875rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* الصفُّ كلُّه يعيد إلى الحلقة، والزرُّ يعلوه بطبقةٍ فينجو من ظلّه. */
+.radn-bar-t::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.radn-bar-b { position: relative; z-index: 1; }
 /* واسمُ البرنامج يُقصّ كما يُقصّ العنوان، وإلّا التفّ فكبّر الشريطَ فوق فسحته */
 .radn-bar-s { font-size: .75rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .radn-bar-time { display: none; flex: none; font-family: var(--font-latin); font-variant-numeric: tabular-nums; font-size: .78125rem; color: var(--color-text-muted); }
@@ -9096,7 +9111,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 
   /* البرنامجُ والحلقةُ عمودان: هويّةٌ لاصقةٌ لا تغيب وأنت تمرّر مئةَ حلقة */
   .radn-cols { display: grid; grid-template-columns: 300px 1fr; gap: 36px; align-items: start; }
-  .radn-aside { position: sticky; top: 0; }
   .radn-aside .rad-hero { display: block; padding-block: 0; }
   .radn-aside .rad-hero-lg .rad-hero-logo { width: 100%; height: auto; aspect-ratio: 1; }
   .radn-aside .rad-hero-txt { margin-top: 14px; }
@@ -9117,41 +9131,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   .radn-bar-time { display: block; }
 }
 
-/* ── إطارُ المعاينة (مختبرٌ فقط) · بادئة .radnlab ────────────────────
-   سابقتُه `.phdlab`: أثاثُ المعرض يُسمّى ولا يُخترَع في الشاشة. ولا يُستعمل
-   خارج `/ui/radio-next`، ويسقط معه يوم يُقَرّ البديلُ ويحلّ محلَّ الحيّ. */
-.radnlab-stage { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; }
-.radnlab-stage.is-wide { flex-direction: column; align-items: center; gap: 34px; }
-.radnlab-dev { flex: 0 0 auto; width: 375px; max-width: 100%; }
-.radnlab-stage.is-wide .radnlab-dev { width: min(1180px, 100%); }
-.radnlab-cap { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; padding-inline-start: 4px; }
-.radnlab-cap b { font-family: var(--font-display); font-size: 1rem; font-weight: 800; }
-.radnlab-cap span { font-family: var(--font-latin); font-size: .71875rem; color: var(--color-text-muted); direction: ltr; unicode-bidi: isolate; }
-.radnlab-frame {
-  position: relative; display: flex; flex-direction: column; overflow: hidden;
-  height: 790px;
-  border-radius: 26px;
-  border: var(--card-stroke-w) solid var(--card-stroke);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-lg);
-}
-.radnlab-stage.is-wide .radnlab-frame { height: 820px; border-radius: 18px; }
-.radnlab-top {
-  flex: none; display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px; z-index: 3;
-  background: var(--color-surface);
-  border-bottom: var(--card-stroke-w) solid var(--card-stroke);
-}
-.radnlab-top b { font-family: var(--font-display); font-weight: 800; font-size: .9375rem; }
-.radnlab-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-.radnlab-pad { padding: 16px 14px 20px; }
-@container (min-width: 900px) {
-  .radnlab-pad { padding: 30px 34px 34px; max-width: 1080px; margin-inline: auto; }
-  .radnlab-top { padding: 12px 34px; }
-}
 
-/* فسحةٌ في التدفّق بقدر الشريط الملازم — وكانت 96px لشريطٍ يقيس 65، فبقي في ذيل
-   كلّ صفحةٍ نحوُ 23px من التمرير الميّت. */
 .radn-bar-space { height: 74px; }
 /* المِزلاقُ الشفّاف: يسكن الموجةَ ولا يفلت منها. وفلاتُه في الجيل الأوّل فرشَه
    على القسم كلِّه (375×1604) فابتلع «أعجبتني» و«مشاركة» — قِيس حيًّا ٢٠٢٦-٠٨-٢٥. */
