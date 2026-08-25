@@ -6624,6 +6624,69 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .rad-bar-slim .rad-bar-title:hover { text-decoration: underline; text-underline-offset: 3px; }
 .rad-bar-end { position: relative; z-index: 1; flex: none; }
 
+/* ══ المشغّلُ داخل الصفحة والموجة · بادئة .radp/.radw ═══════════════════
+   **أُعيدت ٢٠٢٦-٠٨-٢٥ بعد سقوطٍ عرَضيّ.** حذفها الترحيلُ `524a61b` (رأسُ الصفحة)
+   مع أصنافِ `.phd` المقصودة، فبقيت الأصنافُ منادَاةً في `InlinePlayer` و
+   `PlayerControls` بلا تعريف: المشغّلُ ينهار عمودًا بلا سطح، والموجةُ بارتفاع
+   صفر، و`.rad-scrub-input` المطلقُ يفلت من `.radw` إلى `.rad` فيفرش نفسَه
+   على القسم كلِّه (٣٧٥×١٦٠٤) ويبتلع «أعجبتني» و«مشاركة» — قِيس حيًّا. */
+
+.radp {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 20px;
+  border-radius: var(--radius);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--surface-aurora);
+  box-shadow: var(--shadow-md);
+}
+
+/* المرتبةُ الأولى: الزمنُ عريضًا يتصدّر */
+.radp-time { display: flex; align-items: center; gap: 12px; width: 100%; }
+.radp-time .rad-scrub { flex: 1 1 auto; min-width: 0; }
+
+/* المرتبةُ الثانية: النقلُ في الوسط، والتشغيلُ أكبرُ ما فيه */
+.radp-transport { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.radp-transport .rad-play { width: 64px; height: 64px; }
+.radp-transport .rad-skip-n { font-size: .8125rem; }
+
+/* المرتبةُ الثالثة: الثانويّةُ أهدأُ، يفصلها خطٌّ لا فراغٌ وحده */
+.radp-aux {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: var(--card-stroke-w) solid var(--card-stroke);
+}
+
+/**
+ * **موجةٌ متناظرة**: كلُّ عمودٍ يمتدّ من الوسط صعودًا وهبوطًا بالقدر نفسِه،
+ * لا ينبت من قاعدةٍ سفليّة (طلبُ المالك ٢٠٢٦-٠٨-١٣).
+ * **ولا تخرج عن لوحتها**: `flex: 1 1 0` بـ`min-width: 0` فتنكمش لتسع العرض.
+ */
+.radw {
+  position: relative; cursor: pointer;
+  display: flex; align-items: center; gap: 2px;
+  height: 72px; width: 100%;
+  overflow: hidden;
+}
+.radw-bar {
+  flex: 1 1 0; min-width: 0; min-height: 3px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-text) 18%, transparent);
+  transition: background .12s linear;
+}
+/* المسموعُ يلبس نغمةَ البرنامج، والباقي يبقى محايدًا — فيُقرأ الموضعُ بالنظر. */
+.radw-bar.is-played { background: var(--rad-t, var(--color-secondary)); }
+
+/* حين تُرسَم الموجة يبقى الزمنُ رقمين على طرفيها ويسقط مسارُه: الموجةُ **هي** المسار. */
+.rad-scrub-flat .rad-scrub-track { display: none; }
+.rad-scrub-flat { justify-content: space-between; }
+
+.radw-empty {
+  display: grid; place-items: center; height: 64px;
+  border-radius: var(--radius);
+  border: 2px dashed var(--card-stroke);
+  color: var(--color-text-muted); font-size: .875rem;
+}
+
 /* ============================================================
    رأس الصفحة — الرأسُ الجامع · بادئة .phn
    المكوّن: PageHeaderNext · المعرض: /ui/page-header/next
