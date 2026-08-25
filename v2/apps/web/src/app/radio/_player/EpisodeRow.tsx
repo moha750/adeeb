@@ -1,52 +1,94 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, countPhrase } from "@adeeb/design-system";
-import { episodeLabel, formatDuration, PLAYS_UNIT } from "../../dashboard/radio/vocab";
+import { Play, Pause, Waveform } from "@phosphor-icons/react";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
+import { episodeLabel, formatDuration } from "../../dashboard/radio/vocab";
+import { useSavedPosition } from "@/lib/radio/progress";
 import { useRadioPlayer, type Track } from "./PlayerProvider";
 
 /**
- * صفُّ حلقة — **يُبحر ولا يُشغّل** (قرار المالك ٢٠٢٦-٠٨-١٢).
+ * صفُّ حلقة — **يُبحر ويُشغّل، والهدفان مفترقان.**
  *
- * كان في طرفه زرُّ تشغيل، فأُزيل: القائمةُ تدلّ على الحلقات والتشغيلُ يقع في
- * صفحتها. فالصفُّ كلُّه هدفٌ واحدٌ لا هدفان، ولا يحتار الضاغطُ أيَّهما قصد.
+ * كان الصفُّ هدفًا واحدًا يُبحر ولا يُشغّل، بحجّةِ ألّا يحتار الضاغطُ أيَّهما قصد.
+ * والحجّةُ سليمةٌ للعنوان لا للصفّ: أبل وسبوتيفاي وبوكِت كاستس تفعل الاثنين معًا
+ * لأنّ الهدفين **مفصولان بصريًّا**، لا لأنّها لم تنتبه. وثمنُ الوحدة أنّ التشغيل
+ * كان يكلّف صفحتين دائمًا في منتجٍ صوتيّ. فههنا: العنوانُ رابطٌ ممدودٌ على الصفّ،
+ * وزرُّ التشغيل جارٌ مستقلٌّ يعلوه بطبقةٍ فينجو من ظلّه.
  *
- * ويبقى فيه أثرُ المشغّل شاهدًا لا زمامًا: شارةُ «يُذاع الآن» على الحلقة
- * العاملة، فيعرف القارئُ أين هو ممّا يسمع.
+ * **والوزنُ هو الفاصل.** قاعدةُ «لا فاصلَ مرسومًا» صحيحة، لكنّها كانت تترك أربعَ
+ * حقائقَ بلونٍ واحدٍ ووزنٍ واحدٍ يفصلها فراغ، فتُقرأ «‏2026 20:28» ختمًا زمنيًّا
+ * واحدًا. فاسمُ البرنامج يثقُل، والتاريخُ يخفُت، والمدّةُ تدخل حبّة.
+ *
+ * **والغلافُ يحمل شريطَ سماعِه**، فيُقرأ «كم بقي» بالنظر لا بكلمةٍ تُكتب.
  */
-
 export function EpisodeRow({
-  track, number, dateLabel, summary, showName, plays = 0,
+  track, number, dateLabel, summary, showName, queue = [], artUrl,
 }: {
   track: Track;
   number: number;
   dateLabel: string;
   summary: string | null;
+  /** اسمُ البرنامج يُعرَض في الفهرس حيث تختلط البرامج، ويسقط داخل البرنامج الواحد. */
   showName: string | null;
-  plays?: number;
+  /** ما يلي هذه الحلقةَ في القائمة التي ضُغطت منها، فتتلوها أختُها بلا نقرة. */
+  queue?: Track[];
+  /** غلافُ البرنامج. وفي الفهرس هو ما تمسحه العين، لا رقمُ الحلقة. */
+  artUrl?: string | null;
 }) {
   const player = useRadioPlayer();
   const isCurrent = player.isCurrent(track.id);
+  const playing = isCurrent && player.playing;
+  const seconds = track.seconds ?? 0;
+  const saved = useSavedPosition(track.id, seconds);
+  const at = isCurrent && player.time > 0 ? player.time : saved;
+  const pct = seconds > 0 ? Math.min(100, (at / seconds) * 100) : 0;
 
   return (
-    <div className={"rad-ep" + (isCurrent ? " is-playing" : "")}>
-      <span className="rad-ep-num">{number}</span>
+    <div className={"radn-row" + (isCurrent ? " is-playing" : "")}>
+      <span className="radn-art">
+        {artUrl
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={artUrl} alt="" />
+          : showName
+            ? <Waveform size={24} weight={ICON_WEIGHT} aria-hidden />
+            : <span className="radn-art-num">{number}</span>}
+        {at > 0 ? (
+          <span className="radn-art-prog" aria-hidden><i style={{ width: `${pct}%` }} /></span>
+        ) : null}
+      </span>
 
-      <div className="rad-ep-txt">
-        <Link href={`/radio/${track.showSlug}/${track.episodeSlug}`} className="rad-ep-title">
+      <span className="radn-txt">
+        <Link href={`/radio/${track.showSlug}/${track.episodeSlug}`} className="radn-t">
           {track.title}
         </Link>
-        <div className="rad-ep-sub">
-          {showName ? <span>{showName}</span> : null}
-          <span>{dateLabel}</span>
-          {track.seconds ? <span className="font-latin"><bdi dir="ltr">{formatDuration(track.seconds)}</bdi></span> : null}
-          {plays > 0 ? <span>{countPhrase(plays, PLAYS_UNIT)}</span> : null}
-          {isCurrent ? <Badge tone="success" variant="soft" dot>يُذاع الآن</Badge> : null}
+        <span className="radn-m">
+          {showName ? <span className="radn-show">{showName}</span> : null}
+          <span className="radn-date">{dateLabel}</span>
+          {seconds ? (
+            <span className="radn-chip"><bdi className="radn-n" dir="ltr">{formatDuration(seconds)}</bdi></span>
+          ) : null}
+          {at > 0 ? (
+            <span className={"radn-chip " + (at >= seconds ? "radn-chip-done" : "radn-chip-left")}>
+              {at >= seconds ? "سُمعت" : `بقي ${formatDuration(seconds - at)}`}
+            </span>
+          ) : null}
           <span className="sr-only">{episodeLabel(number)}</span>
-        </div>
-        {summary ? <p className="rad-ep-sum">{summary}</p> : null}
-      </div>
+        </span>
+        {summary ? <span className="radn-s">{summary}</span> : null}
+      </span>
+
+      {/* الاسمُ يحمل عنوانَ الحلقة: عشرةُ أزرارٍ تُنطَق «تشغيل» ليست عشرةَ أزرار */}
+      <button
+        type="button"
+        className={"radn-play" + (playing ? " is-on" : "")}
+        aria-label={`${playing ? "إيقاف" : "تشغيل"} ${track.title}`}
+        onClick={() => (isCurrent ? player.toggle() : player.play(track, queue))}
+      >
+        {playing
+          ? <Pause size={16} weight="fill" aria-hidden />
+          : <Play size={16} weight="fill" aria-hidden />}
+      </button>
     </div>
   );
 }
-

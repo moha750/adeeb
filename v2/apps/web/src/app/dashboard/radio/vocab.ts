@@ -145,11 +145,21 @@ export const TONE_OPTIONS = TONE_VALUES.map((v) => ({ value: v, label: TONE_META
 // فالحلقةُ لا تصل سبوتيفاي ولا آبل، وإدراجُهما هنا يَعِد بما لا نفي به.
 export type Platform = "youtube" | "x" | "instagram" | "tiktok";
 
-export const PLATFORM_META: Record<Platform, { label: string }> = {
-  youtube: { label: "يوتيوب" },
-  x: { label: "إكس" },
-  instagram: { label: "إنستغرام" },
-  tiktok: { label: "تيك توك" },
+/**
+ * **جنسُ المنصّة**: أهي وجهةُ استماعٍ أم حسابُ متابعة؟
+ *
+ * كانت الأربعُ في سلّةٍ واحدةٍ تُعرَض صفًّا واحدًا، فلمّا صار للصفّ عنوانٌ ظهر
+ * الخلطُ عاريًا: «استمع على تيك توك» جملةٌ لا تصحّ. والوظيفتان مختلفتان،
+ * وجمعُهما في عائلةٍ واحدةٍ يُفقد كلتيهما.
+ *
+ * وأبل بودكاست وسبوتيفاي ينقصان `kind: "listen"` وينتظران ترحيلًا يوسّع قيدَ
+ * `radio_show_platforms.platform` في القاعدة.
+ */
+export const PLATFORM_META: Record<Platform, { label: string; kind: "listen" | "social" }> = {
+  youtube: { label: "يوتيوب", kind: "listen" },
+  x: { label: "إكس", kind: "social" },
+  instagram: { label: "إنستغرام", kind: "social" },
+  tiktok: { label: "تيك توك", kind: "social" },
 };
 export const PLATFORM_VALUES = Object.keys(PLATFORM_META) as Platform[];
 export const PLATFORM_OPTIONS = PLATFORM_VALUES.map((v) => ({ value: v, label: PLATFORM_META[v].label }));
@@ -195,3 +205,6 @@ export { SKIP_SECONDS } from "@adeeb/core";
  * والمفرداتُ ملفٌّ بلا إطار (انظر رأسَ هذا الملفّ)، فهو مسكنُ ما يقرؤه الطرفان.
  */
 export const PLAYS_UNIT = { one: "استماعة", two: "استماعتان", few: "استماعات" };
+
+/** تصريفُ «حلقة» عربيًّا. كان محفورًا «{n} حلقة» في موضعين، فيقول الموقعُ «3 حلقة». */
+export const EPISODES_UNIT = { one: "حلقة", two: "حلقتان", few: "حلقات" };

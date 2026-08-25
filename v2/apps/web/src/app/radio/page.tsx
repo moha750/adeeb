@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Alert, Container, Footer } from "@adeeb/design-system";
+import { Alert, Container, Footer, countPhrase } from "@adeeb/design-system";
 import { MicrophoneStage, Play } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "../_components/SiteHeader";
 import { getLatestEpisodes, getPublicShows, getPublicStation, isPlayable, toTrack } from "./data";
 import { EpisodeRow } from "./_player/EpisodeRow";
+import { ContinueRail, type RailItem } from "./_player/ContinueRail";
+import { EPISODES_UNIT } from "../dashboard/radio/vocab";
 import type { Track } from "./_player/PlayerProvider";
 
 export const revalidate = 60;
@@ -36,15 +38,24 @@ export default async function RadioPage() {
   const [station, showsRes, latest] = await Promise.all([
     getPublicStation(),
     getPublicShows(),
-    getLatestEpisodes(6),
+    getLatestEpisodes(24),
   ]);
   const { shows, error: showsError } = showsRes;
 
-  const tracks: Track[] = latest
-    .filter((l) => isPlayable(l.episode))
-    .map((l) => toTrack(l.episode, {
-      title: l.showTitle, slug: l.showSlug, logoUrl: l.showLogoUrl, tone: l.showTone,
-    }));
+  const playable = latest.filter((l) => isPlayable(l.episode));
+  const tracks: Track[] = playable.map((l) => toTrack(l.episode, {
+    title: l.showTitle, slug: l.showSlug, logoUrl: l.showLogoUrl, tone: l.showTone,
+  }));
+  /* حوضُ «تابع الاستماع»: الخادمُ لا يعرف ما سمعه الزائر، فيرسل ما عنده ويُنخَل عميليًّا. */
+  const pool: RailItem[] = playable.map((l, i) => ({
+    track: tracks[i],
+    number: l.episode.number,
+    dateLabel: l.episode.dateLabel,
+    summary: l.episode.summary,
+    showName: l.showTitle,
+    artUrl: l.showLogoUrl,
+  }));
+  const shelf = playable.slice(0, 6);
 
   return (
     <>
@@ -75,6 +86,8 @@ export default async function RadioPage() {
               <p className="max-w-2xl leading-relaxed text-content-muted">{station.description}</p>
             ) : null}
 
+            <ContinueRail pool={pool} />
+
             {/* رفُّ البرامج */}
             {shows.length ? (
               <>
@@ -90,7 +103,7 @@ export default async function RadioPage() {
                       </div>
                       <div className="rad-prog-name">{s.title}</div>
                       {s.tagline ? <div className="rad-prog-sub">{s.tagline}</div> : null}
-                      <div className="rad-prog-sub"><span className="font-latin">{s.episodeCount}</span> حلقة</div>
+                      <div className="rad-prog-sub">{countPhrase(s.episodeCount, EPISODES_UNIT)}</div>
                     </Link>
                   ))}
                 </div>
@@ -108,8 +121,8 @@ export default async function RadioPage() {
             {tracks.length ? (
               <>
                 <h2 className="mb-3 mt-10 font-display text-lg font-black">أحدث الحلقات</h2>
-                <div className="rad-eps">
-                  {latest.filter((l) => isPlayable(l.episode)).map((l, i) => (
+                <div className="radn-rows">
+                  {shelf.map((l, i) => (
                     <EpisodeRow
                       key={l.episode.id}
                       track={tracks[i]}
@@ -117,7 +130,8 @@ export default async function RadioPage() {
                       dateLabel={l.episode.dateLabel}
                       summary={l.episode.summary}
                       showName={l.showTitle}
-                      plays={l.episode.plays}
+                      artUrl={l.showLogoUrl}
+                      queue={tracks.slice(i + 1, 6)}
                     />
                   ))}
                 </div>

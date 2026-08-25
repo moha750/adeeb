@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { PlayerControls } from "./PlayerControls";
+import { ChapterList } from "./ChapterList";
+import type { Chapter } from "@/lib/radio/chapters";
 import { INLINE_PLAYER, useRadioPlayer, type Track } from "./PlayerProvider";
 
 /**
@@ -14,7 +16,11 @@ import { INLINE_PLAYER, useRadioPlayer, type Track } from "./PlayerProvider";
  * ويعود إن غاب (تمريرٌ إلى التفريغ أو مغادرةُ الصفحة). فالشريطُ خلَفٌ لا أصل:
  * لا يظهر إلّا حين يغيب أصلُه فعلًا، ولا يزاحم الصفحةَ إلّا حين يلزم.
  */
-export function InlinePlayer({ track, rest = [], startAt = 0 }: { track: Track; rest?: Track[]; startAt?: number }) {
+export function InlinePlayer({ track, rest = [], startAt = 0, chapters = null }: {
+  track: Track; rest?: Track[]; startAt?: number;
+  /** المحاورُ تسكن اللوحةَ نفسَها: يُقرأ الحاليُّ مضيئًا وأنت تسمع، لا في قسمٍ أسفلَ الصفحة. */
+  chapters?: Chapter[] | null;
+} ) {
   const { setInlineVisible } = useRadioPlayer();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -35,8 +41,10 @@ export function InlinePlayer({ track, rest = [], startAt = 0 }: { track: Track; 
   if (!INLINE_PLAYER) return null;
 
   return (
-    <div ref={ref} className="radp">
-      <PlayerControls compact={false} track={track} rest={rest} startAt={startAt} />
+    <div ref={ref} className="radn-player">
+      <PlayerControls compact={false} track={track} rest={rest} startAt={startAt}
+        marks={chapters?.map((c) => c.at)} />
+      {chapters ? <ChapterList chapters={chapters} track={track} rest={rest} /> : null}
     </div>
   );
 }

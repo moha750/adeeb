@@ -82,6 +82,42 @@ export function saveProgress(episodeId: string, at: number, duration: number): v
   write(store);
 }
 
+/**
+ * كلُّ ما بدأه المستمعُ ولم يُتمّه، أحدثُه أوّلًا.
+ *
+ * المخزنُ مرتّبٌ بالإدخال والأقدمُ في رأسه (انظر `saveProgress`)، فالعكسُ يعطي
+ * «آخرُ ما سمعتَ» بلا حقلِ وقتٍ يُخزَّن. وهذا هو البيانُ الذي يبني رفَّ
+ * «تابع الاستماع» في واجهة المحطّة، وكان محفوظًا ولا يُعرَض.
+ *
+ * **واللقطةُ مُخبَّأةٌ بمفتاحها الخام**: `useSyncExternalStore` يقارن بالمرجع،
+ * فمصفوفةٌ جديدةٌ في كلّ نداءٍ تُبقيه يدور بلا نهاية. فتُبنى مرّةً ما دام النصُّ
+ * في المخزن كما هو.
+ */
+export type ProgressEntry = { id: string; at: number };
+
+const EMPTY: ProgressEntry[] = [];
+let cachedRaw: string | null = null;
+let cachedList: ProgressEntry[] = EMPTY;
+
+export function readProgressAll(): ProgressEntry[] {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(PROGRESS_KEY);
+  } catch {
+    return EMPTY;
+  }
+  if (raw === cachedRaw) return cachedList;
+  const store = read();
+  cachedRaw = raw;
+  cachedList = Object.keys(store).reverse().map((id) => ({ id, at: store[id] }));
+  return cachedList;
+}
+
+/** رفُّ «تابع الاستماع» — يُقرأ كما يُقرأ الموضعُ المفرد، بلا حالةٍ في أثر. */
+export function useProgressAll(): ProgressEntry[] {
+  return useSyncExternalStore(() => () => {}, readProgressAll, () => EMPTY);
+}
+
 /** تُمسَح عند الانتهاء: حلقةٌ سُمعت إلى آخرها تبدأ من أوّلها إن عاد إليها. */
 export function clearProgress(episodeId: string): void {
   const store = read();

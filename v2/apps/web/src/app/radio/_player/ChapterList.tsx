@@ -35,18 +35,17 @@ export function ChapterList({
   const active = at < 0 ? -1 : chapters.reduce((acc, c, i) => (at >= c.at ? i : acc), -1);
 
   return (
-    <ol className="rad-chaps">
+    <div className="radn-chaps">
       {chapters.map((c, i) => (
-        <li key={c.at}>
-          <button type="button"
-            className={"rad-chap" + (i === active ? " is-playing" : "")}
-            aria-current={i === active ? "true" : undefined}
-            onClick={() => p.play(track, rest, c.at)}>
-            <span className="rad-chap-at font-latin"><bdi dir="ltr">{formatDuration(c.at)}</bdi></span>
-            <span className="rad-chap-t">{c.title}</span>
-          </button>
-        </li>
+        <button key={c.at} type="button"
+          className="radn-chap"
+          aria-current={i === active ? "true" : undefined}
+          aria-label={`المحور ${c.title}، من الدقيقة ${formatDuration(c.at)}`}
+          onClick={() => p.play(track, rest, c.at)}>
+          <span className="radn-chap-at" dir="ltr">{formatDuration(c.at)}</span>
+          <span>{c.title}</span>
+        </button>
       ))}
-    </ol>
+    </div>
   );
 }

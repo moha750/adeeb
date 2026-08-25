@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accordion, Container, Footer, countPhrase } from "@adeeb/design-system";
+import { Accordion, Container, Footer } from "@adeeb/design-system";
 import { MicrophoneStage, YoutubeLogo } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
+import { CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../../_components/SiteHeader";
-import { episodeLabel, formatDuration, PLAYS_UNIT } from "../../../dashboard/radio/vocab";
+import { episodeLabel, formatDuration } from "../../../dashboard/radio/vocab";
 import { youtubeId, youtubeThumb } from "@/lib/radio/youtube";
 import { breadcrumbLd, ldScript, podcastEpisodeLd } from "@/lib/radio/jsonld";
 import { getPublicEpisode, isPlayable, toTrack } from "../../data";
@@ -14,7 +15,6 @@ import { ShareEpisode } from "../../_player/ShareEpisode";
 import { LikeEpisode } from "../../_player/LikeEpisode";
 import { YoutubeThumb } from "../../_player/YoutubeThumb";
 import { FoldedText } from "../../_player/FoldedText";
-import { ChapterList } from "../../_player/ChapterList";
 import { parseChapters } from "@/lib/radio/chapters";
 
 export const revalidate = 60;
@@ -87,13 +87,16 @@ export default async function EpisodePage({
       )} />
       <SiteHeader activeHref="/radio" />
       <main>
-        <section className={`rad rad-tone-${show.tone} py-10 md:py-14`}>
+        <section className={`rad radn-page rad-tone-${show.tone} py-10 md:py-14`}>
           <Container>
-            <div className="rad-ep-sub">
+            <nav className="radn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio">الإذاعة</Link>
+              <span className="radn-crumb-sep" aria-hidden><CaretLeft size={13} /></span>
               <Link href={`/radio/${show.slug}`}>{show.title}</Link>
-            </div>
+            </nav>
 
+            <div className="radn-cols">
+            <div className="radn-aside">
             <div className="rad-hero rad-hero-lg">
               <div className="rad-hero-logo">
                 {show.logoUrl
@@ -110,9 +113,6 @@ export default async function EpisodePage({
                     <span className="font-latin"><bdi dir="ltr">{formatDuration(episode.musicSeconds)}</bdi></span>
                   ) : null}
                   {episode.hostName ? <span>تقديم {episode.hostName}</span> : null}
-                  {episode.plays > 0 ? (
-                    <span>{countPhrase(episode.plays, PLAYS_UNIT)}</span>
-                  ) : null}
                 </div>
                 <div className="rad-hero-cta flex items-center gap-2">
                   <LikeEpisode episodeId={episode.id} initial={episode.likes} />
@@ -122,8 +122,16 @@ export default async function EpisodePage({
               </div>
             </div>
 
+            </div>
+            <div className="radn-main">
+
             {/* المشغّلُ حيث يقع الفعل، لا في أسفل الشاشة بعيدًا عمّا ضُغط */}
-            <InlinePlayer track={toTrack(episode, show)} rest={more.map((e) => toTrack(e, show))} startAt={startAt} />
+            <InlinePlayer
+              track={toTrack(episode, show)}
+              rest={more.map((e) => toTrack(e, show))}
+              startAt={startAt}
+              chapters={chapters}
+            />
 
             {episode.summary ? (
               <div className="mt-6 max-w-2xl"><FoldedText text={episode.summary} /></div>
@@ -139,15 +147,6 @@ export default async function EpisodePage({
               * والدعوةُ **سطرٌ تحت الصورة** لا شارةٌ عليها: الشارةُ تُقرأ وسمًا لا
               * دعوة، وقد تختفي وراء ما هو مكتوبٌ في المصغّرة أصلًا.
               */}
-            {episode.youtubeUrl ? (
-              <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="rad-yt mt-6">
-                {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
-                <span className="rad-yt-cta">
-                  <YoutubeLogo size={18} weight={ICON_WEIGHT} aria-hidden />
-                  شاهِد الحلقة على يوتيوب
-                </span>
-              </a>
-            ) : null}
 
             {/**
               * **محاورُ الحلقة**: إن حملت سطورُها أوقاتًا صارت أبوابًا تُنقَر،
@@ -155,18 +154,10 @@ export default async function EpisodePage({
               * الوقتُ يُقرأ من النصّ نفسِه (`lib/radio/chapters`)، وهو النصُّ الذي
               * يكتبه المحرّرُ لوصف يوتيوب على كلّ حال.
               */}
-            {episode.notes ? (
+            {episode.notes && !chapters ? (
               <div className="mt-10 max-w-2xl">
                 <h2 className="mb-3 font-display text-lg font-black">محاور الحلقة</h2>
-                {chapters ? (
-                  <ChapterList
-                    chapters={chapters}
-                    track={toTrack(episode, show)}
-                    rest={more.map((e) => toTrack(e, show))}
-                  />
-                ) : (
-                  <FoldedText text={episode.notes} />
-                )}
+                <FoldedText text={episode.notes} />
               </div>
             ) : null}
 
@@ -188,10 +179,20 @@ export default async function EpisodePage({
               </div>
             ) : null}
 
+            {episode.youtubeUrl ? (
+              <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="rad-yt mt-6">
+                {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
+                <span className="rad-yt-cta">
+                  <YoutubeLogo size={18} weight={ICON_WEIGHT} aria-hidden />
+                  شاهِد الحلقة على يوتيوب
+                </span>
+              </a>
+            ) : null}
+
             {more.length ? (
               <>
                 <h2 className="mb-3 mt-10 font-display text-lg font-black">التالي في البرنامج</h2>
-                <div className="rad-eps">
+                <div className="radn-rows">
                   {more.map((e) => (
                     <EpisodeRow
                       key={e.id}
@@ -200,12 +201,14 @@ export default async function EpisodePage({
                       dateLabel={e.dateLabel}
                       summary={e.summary}
                       showName={null}
-                      plays={e.plays}
+                      queue={more.filter((x) => x.number < e.number).map((x) => toTrack(x, show))}
                     />
                   ))}
                 </div>
               </>
             ) : null}
+            </div>
+            </div>
           </Container>
         </section>
       </main>

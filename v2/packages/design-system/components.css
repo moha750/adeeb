@@ -9081,6 +9081,8 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    العلّةُ المقيسةُ على الجيل الأوّل: صفٌّ بعرض 1150px حشوُه في يمينه 300px،
    فثلثا الشاشة خواء. والعلاجُ أن تُوزَّع الحقائقُ أعمدةً لا أن تتكدّس في طرف.
    ============================================================ */
+/* الاستعلامُ يحتاج وعاءً مُعلَنًا: القسمُ في الإنتاج، وإطارُ المعاينة في المعرض. */
+.radn-page,
 .radn-frame { container-type: inline-size; }
 
 @container (min-width: 900px) {
@@ -9093,8 +9095,12 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   .radn-m .radn-date { min-width: 86px; }
 
   /* البرنامجُ والحلقةُ عمودان: هويّةٌ لاصقةٌ لا تغيب وأنت تمرّر مئةَ حلقة */
-  .radn-cols { display: grid; grid-template-columns: 288px 1fr; gap: 36px; align-items: start; }
+  .radn-cols { display: grid; grid-template-columns: 300px 1fr; gap: 36px; align-items: start; }
   .radn-aside { position: sticky; top: 0; }
+  .radn-aside .rad-hero { display: block; padding-block: 0; }
+  .radn-aside .rad-hero-lg .rad-hero-logo { width: 100%; height: auto; aspect-ratio: 1; }
+  .radn-aside .rad-hero-txt { margin-top: 14px; }
+  .radn-main > :first-child { margin-top: 0; }
 
   .radn-player { padding: 20px 22px 18px; }
   .radn-wave { height: 88px; gap: 2px; }
@@ -9143,3 +9149,15 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   .radnlab-pad { padding: 30px 34px 34px; max-width: 1080px; margin-inline: auto; }
   .radnlab-top { padding: 12px 34px; }
 }
+
+/* فسحةٌ في التدفّق بقدر الشريط الملازم — وكانت 96px لشريطٍ يقيس 65، فبقي في ذيل
+   كلّ صفحةٍ نحوُ 23px من التمرير الميّت. */
+.radn-bar-space { height: 74px; }
+/* المِزلاقُ الشفّاف: يسكن الموجةَ ولا يفلت منها. وفلاتُه في الجيل الأوّل فرشَه
+   على القسم كلِّه (375×1604) فابتلع «أعجبتني» و«مشاركة» — قِيس حيًّا ٢٠٢٦-٠٨-٢٥. */
+.radn-seek {
+  position: absolute; inset: -8px 0; width: 100%; margin: 0;
+  opacity: 0; cursor: pointer; appearance: none; background: transparent;
+}
+.radn-seek:focus-visible { outline: none; }
+.radn-wave:has(.radn-seek:focus-visible) { box-shadow: var(--ring); border-radius: var(--radius-xs); }

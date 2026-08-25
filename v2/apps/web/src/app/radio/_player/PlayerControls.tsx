@@ -30,27 +30,41 @@ import { useRadioPlayer, type Track } from "./PlayerProvider";
  * ومكوّنٌ مستقلٌّ لأنّ فيه خطّافًا: أصلُ الأدوات يرجع باكرًا حين لا حلقةَ معروضة،
  * فلا يصحّ أن يُعلَّق خطّافٌ بعد ذلك الرجوع.
  */
-function Wave({ peaks, pct, seeker }: { peaks: number[]; pct: number; seeker: React.ReactNode }) {
+function Wave({ peaks, pct, seconds, marks, seeker }: {
+  peaks: number[]; pct: number; seconds: number;
+  /** أوقاتُ المحاور تُرسَم علاماتٍ فوق الموجة، فيُرى المفصلُ قبل أن يُقرأ. */
+  marks: number[];
+  seeker: React.ReactNode;
+}) {
   const { ref, bars } = useWaveBars(peaks);
   const played = Math.round(bars.length * (pct / 100));
 
   return (
-    <div className="radw" ref={ref}>
-      {bars.map((v, i) => (
-        <span key={i} className={"radw-bar" + (i < played ? " is-played" : "")}
-          style={{ height: `${v}%` }} />
-      ))}
-      {seeker}
+    <div className="radn-wave-wrap">
+      {marks.length && seconds > 0 ? (
+        <div className="radn-marks" aria-hidden>
+          {marks.map((at) => <b key={at} style={{ insetInlineStart: `${(at / seconds) * 100}%` }} />)}
+        </div>
+      ) : null}
+      <div className="radn-wave" ref={ref}>
+        {bars.map((v, i) => (
+          <i key={i} className={i < played ? "is-played" : undefined} style={{ height: `${v}%` }} />
+        ))}
+        <span className="radn-head" style={{ insetInlineStart: `${pct}%` }} aria-hidden />
+        {seeker}
+      </div>
     </div>
   );
 }
 
 export function PlayerControls({
-  compact, track, rest = [], startAt = 0,
+  compact, track, rest = [], startAt = 0, marks,
 }: {
   compact: boolean;
   track?: Track;
   rest?: Track[];
+  /** أوقاتُ المحاور، تُرسَم علاماتٍ على الموجة. */
+  marks?: number[];
   /** موضعُ بدءٍ جاء من الرابط (`?t=`). يسبق ما حفظه المخزن، فالرابطُ قصدٌ صريح. */
   startAt?: number;
 }) {
@@ -96,7 +110,7 @@ export function PlayerControls({
    */
   const seeker = (
     <input
-      className="rad-scrub-input"
+      className="radn-seek"
       type="range" min={0} max={seconds || 0} step={1}
       value={Math.min(time, seconds || time)}
       onChange={(e) => p.seek(Number(e.target.value))}
@@ -124,36 +138,43 @@ export function PlayerControls({
   const skipPhrase = countPhrase(SKIP_SECONDS, { one: "ثانية", two: "ثانيتان", few: "ثوانٍ" });
 
   const transport = (
-    <div className={compact ? "rad-bar-ctrl" : "radp-transport"}>
-      <button type="button" className="rad-skip rad-skip-n" onClick={() => p.skip(-SKIP_SECONDS)}
-        disabled={!isThis} aria-label={`${skipPhrase} إلى الوراء`}>
-        <ArrowCounterClockwise size={16} aria-hidden /><span className="font-latin">{SKIP_SECONDS}</span>
+    <div className="radn-transport">
+      <button type="button" className="radn-skip" onClick={() => p.skip(-SKIP_SECONDS)}
+        disabled={!isThis} aria-label={`الرجوع ${skipPhrase}`}>
+        <span className="radn-skip-g">
+          <ArrowCounterClockwise size={26} aria-hidden /><b>{SKIP_SECONDS}</b>
+        </span>
       </button>
-      <button type="button" className="rad-play" onClick={onPlay}
+      <button type="button" className="radn-big" onClick={onPlay}
         aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
-        {playing ? <Pause size={compact ? 18 : 24} aria-hidden /> : <Play size={compact ? 18 : 24} aria-hidden />}
+        {playing ? <Pause size={22} weight="fill" aria-hidden /> : <Play size={22} weight="fill" aria-hidden />}
       </button>
-      <button type="button" className="rad-skip rad-skip-n" onClick={() => p.skip(SKIP_SECONDS)}
-        disabled={!isThis} aria-label={`${skipPhrase} إلى الأمام`}>
-        <ArrowClockwise size={16} aria-hidden /><span className="font-latin">{SKIP_SECONDS}</span>
+      <button type="button" className="radn-skip" onClick={() => p.skip(SKIP_SECONDS)}
+        disabled={!isThis} aria-label={`التقدّم ${skipPhrase}`}>
+        <span className="radn-skip-g">
+          <ArrowClockwise size={26} aria-hidden /><b>{SKIP_SECONDS}</b>
+        </span>
       </button>
     </div>
   );
 
-  const wave = hasWave ? <Wave peaks={peaks!} pct={pct} seeker={seeker} /> : null;
+  const chapterMarks = marks ?? [];
+  const wave = hasWave
+    ? <Wave peaks={peaks!} pct={pct} seconds={seconds} marks={chapterMarks} seeker={seeker} />
+    : null;
 
-  // حين تُرسَم الموجة يبقى الرقمان ويسقط المسار: الموجةُ **هي** المسار.
+  /**
+   * **الثلاثةُ بثواني المادّة، ولا يُقسَم أحدُها على السرعة.**
+   *
+   * جرّبتُ قسمةَ «بقي» وحدَها فصار السطرُ يقول ‏0:02 و‏5:47 و‏11:36 معًا، وهو
+   * تناقضٌ حسابيٌّ على سطرٍ واحد. فزمنُ المستمع يُقال في سطرٍ **مستقلٍّ مسمًّى**
+   * لا يظهر إلّا حين تتغيّر السرعة.
+   */
   const times = (
-    <div className={"rad-scrub" + (hasWave ? " rad-scrub-flat" : "")}>
-      <span className="rad-scrub-time"><bdi dir="ltr">{formatDuration(time) || "0:00"}</bdi></span>
-      {hasWave ? null : (
-        <div className="rad-scrub-track">
-          <div className="rad-scrub-fill" style={{ width: `${pct}%` }} />
-          <div className="rad-scrub-knob" style={{ insetInlineStart: `${pct}%` }} />
-          {seeker}
-        </div>
-      )}
-      <span className="rad-scrub-time"><bdi dir="ltr">{formatDuration(seconds) || "0:00"}</bdi></span>
+    <div className="radn-times">
+      <span><bdi dir="ltr">{formatDuration(time) || "0:00"}</bdi></span>
+      {seconds > 0 ? <span className="radn-left">بقي {formatDuration(seconds - time)}</span> : null}
+      <span><bdi dir="ltr">{formatDuration(seconds) || "0:00"}</bdi></span>
     </div>
   );
 
@@ -238,25 +259,28 @@ export function PlayerControls({
   if (compact) {
     return (
       <>
-        <span className="rad-slimline" aria-hidden><i style={{ width: `${pct}%` }} /></span>
-        <span className="rad-bar-cover">
+        <span className="radn-bar-line" aria-hidden><i style={{ width: `${pct}%` }} /></span>
+        <span className="radn-bar-art">
           {shown.coverUrl
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={shown.coverUrl} alt="" />
             : <MicrophoneStage size={20} aria-hidden />}
         </span>
-        <div className="rad-bar-meta">
-          <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="rad-bar-title">
+        <span className="radn-bar-txt">
+          <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="radn-bar-t">
             {shown.title}
           </Link>
-          <div className="rad-bar-show">{shown.showTitle}</div>
-        </div>
-        <div className="rad-bar-end">
-          <button type="button" className="rad-play" onClick={onPlay}
-            aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
-            {playing ? <Pause size={16} weight="fill" aria-hidden /> : <Play size={16} weight="fill" aria-hidden />}
-          </button>
-        </div>
+          <span className="radn-bar-s">{shown.showTitle}</span>
+        </span>
+        {seconds > 0 ? (
+          <span className="radn-bar-time">
+            <bdi dir="ltr">{formatDuration(time)} / {formatDuration(seconds)}</bdi>
+          </span>
+        ) : null}
+        <button type="button" className="radn-bar-b" onClick={onPlay}
+          aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
+          {playing ? <Pause size={16} weight="fill" aria-hidden /> : <Play size={16} weight="fill" aria-hidden />}
+        </button>
       </>
     );
   }
@@ -272,9 +296,15 @@ export function PlayerControls({
         <Alert tone="warning" compact>تعذّر تحميلُ الصوت. تحقّق من اتّصالك ثمّ أعِد المحاولة.</Alert>
       ) : null}
       {wave}
-      <div className="radp-time">{times}</div>
+      {times}
+      {p.rate !== 1 && seconds > 0 ? (
+        <p className="radn-rate-note">
+          بسرعة <bdi dir="ltr" className="font-latin">{p.rate}×</bdi>، ينتهي بعد{" "}
+          {formatDuration((seconds - time) / p.rate)} من وقتك
+        </p>
+      ) : null}
       {transport}
-      <div className="radp-aux">
+      <div className="radn-aux">
         {takes}
         <div className="flex items-center gap-3">{rate}{volume}</div>
       </div>

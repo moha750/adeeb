@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Container, Footer } from "@adeeb/design-system";
+import { Container, Footer, countPhrase } from "@adeeb/design-system";
 import {
   MicrophoneStage, Playlist, Play,
   YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
+import { CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../_components/SiteHeader";
-import { PLATFORM_META } from "../../dashboard/radio/vocab";
+import { EPISODES_UNIT, PLATFORM_META } from "../../dashboard/radio/vocab";
 import { getPublicShowPage, isPlayable, toTrack } from "../data";
 import { EpisodeRow } from "../_player/EpisodeRow";
 import { FoldedText } from "../_player/FoldedText";
@@ -53,6 +54,19 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
 
   const playable = episodes.filter(isPlayable);
   const tracks: Track[] = playable.map((e) => toTrack(e, show));
+  const listen = platforms.filter((p) => PLATFORM_META[p.platform].kind === "listen");
+  const social = platforms.filter((p) => PLATFORM_META[p.platform].kind === "social");
+
+  /** رابطُ منصّةٍ واحد، يخدم الصفّين فلا يُكتب مرّتين. */
+  const platformLink = (p: (typeof platforms)[number]) => {
+    const Icon = PLATFORM_ICON[p.platform];
+    return (
+      <a key={p.platform} href={p.url} target="_blank" rel="noreferrer" className="radn-dir"
+        aria-label={`${show.title} على ${PLATFORM_META[p.platform].label}`}>
+        <Icon size={17} weight={ICON_WEIGHT} aria-hidden />{PLATFORM_META[p.platform].label}
+      </a>
+    );
+  };
 
   return (
     <>
@@ -65,10 +79,16 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
       )} />
       <SiteHeader activeHref="/radio" />
       <main>
-        <section className={`rad rad-tone-${show.tone} py-10 md:py-14`}>
+        <section className={`rad radn-page rad-tone-${show.tone} py-10 md:py-14`}>
           <Container>
-            <Link href="/radio" className="text-sm text-content-muted">الإذاعة</Link>
+            <nav className="radn-crumb" aria-label="مسار الصفحة">
+              <Link href="/radio">الإذاعة</Link>
+              <span className="radn-crumb-sep" aria-hidden><CaretLeft size={13} /></span>
+              <span className="radn-crumb-here">{show.title}</span>
+            </nav>
 
+            <div className="radn-cols">
+            <div className="radn-aside">
             <div className="rad-hero rad-hero-lg">
               <div className="rad-hero-logo">
                 {show.logoUrl
@@ -82,7 +102,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                 <div className="rad-ep-sub" style={{ marginTop: 8 }}>
                   {show.hostName ? <span>تقديم {show.hostName}</span> : null}
                   <span className="inline-flex items-center gap-1.5">
-                    <Playlist weight={ICON_WEIGHT} aria-hidden /><span className="font-latin">{episodes.length}</span> حلقة
+                    <Playlist weight={ICON_WEIGHT} aria-hidden />{countPhrase(episodes.length, EPISODES_UNIT)}
                   </span>
                 </div>
                 {/**
@@ -90,28 +110,29 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                   * الروابطُ هويّةُ البرنامج لا محتواه، فموضعُها حيث اسمُه وشعارُه.
                   * والشارةُ النصّيّة تُقرأ وسمًا يصنّفه لا بابًا يُضغط.
                   */}
-                {platforms.length ? (
-                  <div className="rad-links">
-                    {platforms.map((p) => {
-                      const Icon = PLATFORM_ICON[p.platform];
-                      return (
-                        <a key={p.platform} href={p.url} target="_blank" rel="noreferrer"
-                          className={`rad-link rad-link-${p.platform}`}
-                          aria-label={`${show.title} على ${PLATFORM_META[p.platform].label}`}>
-                          <Icon size={19} weight={ICON_WEIGHT} aria-hidden />
-                        </a>
-                      );
-                    })}
-                  </div>
-                ) : null}
+                {/* الفعلُ الأوّلُ يتصدّر، والوجهاتُ تحته: من فتح صفحةَ برنامجٍ يريد أن يسمع. */}
                 <div className="rad-hero-cta">{tracks[0] ? (
                   <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="rad-cta">
                     <Play size={18} weight={ICON_WEIGHT} aria-hidden />استمع لآخر حلقة
                   </Link>
                 ) : null}</div>
+                {listen.length ? (
+                  <div className="mt-3">
+                    <div className="radn-subs-h">استمع على</div>
+                    <div className="radn-subs">{listen.map(platformLink)}</div>
+                  </div>
+                ) : null}
+                {social.length ? (
+                  <div className="mt-3">
+                    <div className="radn-subs-h">تابِع البرنامج على</div>
+                    <div className="radn-subs">{social.map(platformLink)}</div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
+            </div>
+            <div className="radn-main">
             {show.description ? (
               <div className="max-w-2xl"><FoldedText text={show.description} /></div>
             ) : null}
@@ -121,7 +142,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
             {playable.length === 0 ? (
               <p className="text-content-muted">لا حلقات منشورة بعد.</p>
             ) : (
-              <div className="rad-eps">
+              <div className="radn-rows">
                 {playable.map((e, i) => (
                   <EpisodeRow
                     key={e.id}
@@ -130,11 +151,13 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                     dateLabel={e.dateLabel}
                     summary={e.summary}
                     showName={null}
-                    plays={e.plays}
+                    queue={tracks.slice(i + 1)}
                   />
                 ))}
               </div>
             )}
+            </div>
+            </div>
           </Container>
         </section>
       </main>
