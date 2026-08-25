@@ -8794,3 +8794,352 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   box-shadow: var(--shadow-md), inset 0 0 0 1px color-mix(in oklab, var(--navy-900) 45%, transparent);
   pointer-events: none;
 }
+
+/* ============================================================
+   الإذاعة، الجيل الثاني — بادئة .radn
+   المعرض: /ui/radio-next · النموذج المُقَرّ ٢٠٢٦-٠٨-٢٥
+   ------------------------------------------------------------
+   **لِمَ عائلةٌ ثانيةٌ بجوار `.rad-*` لا تعديلٌ عليها:** الجيلُ الأوّلُ حيٌّ على
+   `/radio` اليوم، والقانونُ عندنا أن يُعرَض البديلُ بجوار الحيّ حتّى يُقَرّ ثمّ
+   يأخذ اسمَه ويُعدِمه (سابقةُ `.chartn-*` و`.phn`). فلا يُلمَس الحيُّ قبل الإقرار.
+
+   **والمقاسان تخطيطٌ واحد:** الكتلةُ الأخيرةُ استعلامُ **حاوية** لا شاشة، فالوسمُ
+   واحدٌ والأنماطُ تقرأ عرضَ الوعاء نفسِه. وذلك ما يجعل المعاينةَ في إطارِ ١١٨٠
+   داخلَ `/ui` مطابقةً لما ينزل على متصفّحٍ عريض، ويمنع أن يُكتب المكوّنُ مرّتين.
+   ============================================================ */
+
+/* ── صفُّ الحلقة ─────────────────────────────────────────────────────
+   العلّةُ المقيسةُ في الجيل الأوّل: الصفُّ كتلةُ نصٍّ بلا غلافٍ ولا زرّ، وأربعُ
+   حقائقَ بلونٍ واحدٍ ووزنٍ واحدٍ يفصلها فراغ. وقاعدةُ «لا فاصلَ مرسومًا» صحيحة،
+   لكنّها تحتاج عوضًا: **الوزنُ هو الفاصل**، والغلافُ هو ما تمسحه العين. */
+.radn-rows { display: flex; flex-direction: column; }
+.radn-row + .radn-row { margin-top: 2px; }
+.radn-row {
+  position: relative;
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px;
+  border-radius: var(--radius-sm);
+  border: var(--card-stroke-w) solid transparent;
+}
+.radn-row:hover { background: var(--color-surface); border-color: var(--card-stroke); }
+.radn-row.is-playing { background: var(--surface-aurora); border-color: var(--border-aurora); }
+
+/* الغلافُ يحمل شريطَ سماعِه في حافّته، فيُقرأ «كم بقي» بالنظر لا بكلمة */
+.radn-art {
+  position: relative; overflow: hidden; flex: none;
+  width: 54px; height: 54px;
+  border-radius: var(--radius-nested);
+  background: var(--rad-grad, var(--grad-primary));
+  display: grid; place-items: center;
+  color: var(--color-on-primary);
+}
+.radn-art img { width: 100%; height: 100%; object-fit: cover; }
+.radn-art-num { font-family: var(--font-latin); font-size: .9375rem; font-weight: 700; }
+.radn-art-prog { position: absolute; inset-inline: 0; inset-block-end: 0; height: 4px; background: rgba(12,20,32,.45); }
+.radn-art-prog > i { display: block; height: 100%; background: #f2f6fb; }
+
+.radn-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* العنوانُ يُقصّ آخِرَ ما يُقصّ: سطران له وسطران للملخّص، وكان العكس */
+.radn-t {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: .9375rem; font-weight: 700; line-height: 1.4; color: var(--color-text);
+}
+.radn-t::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.radn-t:hover { text-decoration: underline; text-underline-offset: 3px; }
+.radn-t:focus-visible { outline: none; }
+.radn-row:has(.radn-t:focus-visible) { box-shadow: var(--ring); border-color: var(--ctl-stroke); }
+.radn-m {
+  margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap;
+  gap: 5px 8px; font-size: .78125rem; line-height: 1.6;
+}
+.radn-m .radn-show { color: var(--color-text); font-weight: 700; }
+.radn-m .radn-date { color: var(--color-text-muted); }
+.radn-s {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-top: 3px; font-size: .8125rem; color: var(--color-text-muted); line-height: 1.6;
+}
+
+/* الحبّةُ الساكنة: مدّةٌ أو «بقي» أو «سُمعت». الأخيرتان تلبسان نغمتَهما. */
+.radn-chip {
+  font-size: .71875rem; line-height: 1.75; padding: 1px 8px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+}
+.radn-chip .radn-n { font-family: var(--font-latin); }
+.radn-chip-left { color: var(--color-secondary); background: var(--surface-aurora); border-color: var(--border-aurora); font-weight: 700; }
+.radn-chip-done { color: var(--success-700); background: var(--success-50); border-color: var(--success-200); font-weight: 700; }
+
+/* **زرُّ التشغيل جارٌ للرابط لا ابنٌ له.** الجيلُ الأوّلُ جعل الصفَّ كلَّه هدفًا
+   واحدًا بحجّة ألّا يحتار الضاغط، فصار التشغيلُ يكلّف صفحتين دائمًا. والحلُّ أن
+   يفترق الهدفان شكلًا وموضعًا لا أن يُلغى أحدُهما: الصفُّ يُبحر (رابطٌ ممدود)،
+   والزرُّ يعلوه بطبقةٍ فينجو من ظلّه. وهو مقاسُ اللمس كاملًا: 44. */
+.radn-play {
+  position: relative; z-index: 1; flex: none;
+  width: 44px; height: 44px;
+  border-radius: var(--radius-full);
+  display: grid; place-items: center;
+  border: var(--card-stroke-w) solid var(--ctl-stroke);
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  transition: transform .12s ease, border-color .15s ease;
+}
+.radn-play:hover { border-color: var(--card-stroke-active); }
+.radn-play:active { transform: scale(.94); }
+.radn-play:focus-visible { outline: none; box-shadow: var(--ring); }
+.radn-play.is-on { background: var(--rad-grad, var(--grad-primary)); border-color: transparent; color: var(--color-on-primary); }
+
+/* ── كرت البرنامج الممتدّ ──────────────────────────────────────────
+   رفٌّ أفقيٌّ لا يُقرأ رفًّا إلّا بثلاثةٍ فأكثر، والواحدُ يمتدّ (ق٦). */
+.radn-wide {
+  position: relative;
+  display: flex; align-items: center; gap: 13px;
+  padding: 11px;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+}
+.radn-wide:hover { border-color: var(--card-stroke-active); }
+.radn-wide-c {
+  flex: none; width: 76px; height: 76px;
+  border-radius: var(--radius-nested);
+  background: var(--rad-grad, var(--grad-primary));
+  display: grid; place-items: center; color: var(--color-on-primary); overflow: hidden;
+}
+.radn-wide-c img { width: 100%; height: 100%; object-fit: cover; }
+/* سهمُ الدخول ليس زرًّا: دائرةٌ بمقاس زرِّ التشغيل تُقرأ فعلًا ثانيًا لا وجهة */
+.radn-chev { flex: none; width: 26px; height: 44px; display: grid; place-items: center; color: var(--color-text-muted); }
+.radn-wide:hover .radn-chev { color: var(--color-secondary); }
+
+/* ── وجهاتُ الاستماع ───────────────────────────────────────────────
+   «أين تسمع» و«أين تتابعنا» وظيفتان، وجمعُهما في عائلةٍ واحدةٍ يُفقد كلتيهما.
+   وهذه للمسموع وحدَه، وتُمرَّر ولا تلتفّ فلا يبقى آخرُها وحدَه في سطر. */
+/* فتاتُ المسار — كان في الجيل الأوّل نصًّا رماديًّا بارتفاع 21px بلا هيئةِ رابطٍ
+   ولا حدِّ تركيز: يُقرأ وصفًا لا بابًا. وههنا رابطٌ بلونه وهدفُ لمسه كامل. */
+.radn-crumb { display: flex; align-items: center; gap: 2px; font-size: .84375rem; }
+.radn-crumb a {
+  min-height: 44px; display: inline-flex; align-items: center;
+  padding: 0 8px; margin-inline-start: -8px;
+  border-radius: var(--radius-xs);
+  color: var(--color-secondary); font-weight: 600;
+}
+.radn-crumb a:hover { background: var(--surface-aurora); text-decoration: underline; text-underline-offset: 3px; }
+.radn-crumb a:focus-visible { outline: none; box-shadow: var(--ring); }
+.radn-crumb-sep { display: inline-grid; place-items: center; color: var(--color-text-muted); }
+.radn-crumb-here { color: var(--color-text-muted); }
+
+.radn-subs-h { font-size: .75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 7px; }
+.radn-subs { display: flex; gap: 7px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.radn-subs::-webkit-scrollbar { height: 0; }
+.radn-dir {
+  flex: 0 0 auto;
+  min-height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-size: .78125rem; font-weight: 600; color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--card-stroke-w) solid var(--ctl-stroke);
+  transition: transform .12s ease, border-color .15s ease;
+}
+.radn-dir:hover { border-color: var(--card-stroke-active); }
+.radn-dir:active { transform: scale(.97); }
+.radn-dir:focus-visible { outline: none; box-shadow: var(--ring); }
+.radn-dir svg { flex: none; color: var(--color-text-muted); }
+
+/* ── المشغّل ───────────────────────────────────────────────────────── */
+.radn-player {
+  margin-top: 13px; padding: 13px 12px 11px;
+  border-radius: var(--radius);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+.radn-wave-wrap { position: relative; padding-top: 36px; }
+.radn-wave {
+  position: relative; display: flex; align-items: center; gap: 1.5px;
+  height: 56px; width: 100%;
+  touch-action: pan-y; cursor: pointer;
+}
+.radn-wave > i { flex: 1 1 0; min-width: 0; min-height: 3px; border-radius: 1.5px; background: var(--wave-track); }
+.radn-wave > i.is-played { background: var(--wave-played); }
+.radn-wave:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--radius-xs); }
+.radn-head { position: absolute; inset-block: -3px; width: 2.5px; border-radius: 2px; background: var(--color-text); pointer-events: none; }
+/* علاماتُ المحاور على الموجة: تُرى وتُلوَّن، وكانت شعرةً رماديّةً لا تكاد تُلمَح */
+.radn-marks { position: absolute; inset-inline: 0; top: 24px; height: 9px; pointer-events: none; }
+.radn-marks > b { position: absolute; top: 0; width: 2.5px; height: 9px; border-radius: 2px; background: var(--wave-played); }
+/* كبسولةُ السحب: الإصبعُ يغطّي المؤشّر، فيُرفَع الرقمُ فوقه، ولا تخرج عن لوحتها */
+.radn-bubble {
+  position: absolute; top: -4px; transform: translateX(50%);
+  padding: 3px 9px; border-radius: var(--radius-xs);
+  background: var(--color-text); color: var(--color-surface);
+  font-family: var(--font-latin); font-size: .75rem; font-weight: 700;
+  white-space: nowrap; pointer-events: none; box-shadow: var(--shadow-md);
+  opacity: 0; transition: opacity .12s;
+}
+.radn-bubble.is-on { opacity: 1; }
+
+/* الثلاثةُ بثواني المادّة فلا يتناقض سطرٌ واحد، وزمنُك أنت في سطرٍ مسمًّى */
+.radn-times {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 7px;
+  font-family: var(--font-latin); font-variant-numeric: tabular-nums;
+  font-size: .78125rem; color: var(--color-text-muted);
+}
+.radn-times .radn-left { font-family: var(--font-body); font-weight: 700; color: var(--color-secondary); }
+.radn-rate-note { margin-top: 4px; text-align: center; font-size: .71875rem; color: var(--color-text-muted); line-height: 1.5; }
+
+.radn-transport { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 6px; }
+/* الرقمُ يسكن داخل السهم كعُرف المشغّلات: السهمان متناظران فلا يفرّقهما شكلٌ وحدَه */
+.radn-skip { width: 48px; height: 48px; border-radius: var(--radius-full); display: grid; place-items: center; color: var(--color-text-muted); }
+.radn-skip:hover { background: var(--color-surface-2); color: var(--color-text); }
+.radn-skip:active { transform: scale(.94); }
+.radn-skip:focus-visible { outline: none; box-shadow: var(--ring); }
+.radn-skip-g { position: relative; display: grid; place-items: center; width: 26px; height: 26px; }
+.radn-skip-g > b { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-latin); font-size: .59375rem; font-weight: 700; line-height: 1; padding-top: 1px; }
+.radn-big {
+  width: 60px; height: 60px; border-radius: var(--radius-full);
+  background: var(--rad-grad, var(--grad-primary)); color: var(--color-on-primary);
+  display: grid; place-items: center; box-shadow: var(--shadow-md); position: relative;
+}
+.radn-big:hover { transform: scale(1.04); }
+.radn-big:active { transform: scale(.96); }
+.radn-big:focus-visible { outline: none; box-shadow: var(--ring), var(--shadow-md); }
+/* تعثّرُ البدء يُقال: زرٌّ يومض بلا خبرٍ يُقرأ عطبًا في الموقع لا في الشبكة */
+.radn-big.is-busy > svg { opacity: 0; }
+.radn-spin { position: absolute; display: none; width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid color-mix(in oklab, var(--color-on-primary) 35%, transparent);
+  border-top-color: var(--color-on-primary); animation: radn-spin .7s linear infinite; }
+.radn-big.is-busy .radn-spin { display: block; }
+@keyframes radn-spin { to { transform: rotate(360deg); } }
+
+.radn-aux {
+  display: flex; align-items: center; justify-content: space-between; gap: 9px; flex-wrap: wrap;
+  margin-top: 10px; padding-top: 10px;
+  border-top: var(--card-stroke-w) solid var(--card-stroke);
+}
+
+/* ── المحاور ───────────────────────────────────────────────────────
+   تسلسلٌ زمنيّ، فيبقى عمودًا واحدًا ولو اتّسع العرض: عمودان يجعلان ترتيبَه
+   لغزًا يُحلّ بالقراءة لا بالنظر. */
+.radn-chaps { margin-top: 9px; padding-top: 9px; border-top: var(--card-stroke-w) solid var(--card-stroke); }
+.radn-chap {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  min-height: 46px; padding: 0 9px;
+  border-radius: var(--radius-sm);
+  font-size: .875rem; text-align: start;
+}
+.radn-chap + .radn-chap { border-top: var(--card-stroke-w) solid var(--card-stroke); }
+.radn-chap:hover { background: var(--color-surface-2); }
+.radn-chap:focus-visible { outline: none; box-shadow: var(--ring); }
+.radn-chap[aria-current="true"] { background: var(--surface-aurora); font-weight: 700; border-top-color: transparent; }
+.radn-chap-at { flex: none; min-width: 40px; font-family: var(--font-latin); font-size: .75rem; color: var(--color-secondary); }
+
+/* ── الشريط الملازم ──────────────────────────────────────────────── */
+.radn-bar {
+  position: absolute; inset-inline: 10px; bottom: 10px; z-index: 30;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px 8px 8px;
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--color-surface) 93%, transparent);
+  backdrop-filter: blur(10px);
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  box-shadow: var(--shadow-lg);
+  transition: transform .22s ease, opacity .22s ease;
+}
+.radn-bar.is-out { transform: translateY(130%); opacity: 0; }
+.radn-bar-line { position: absolute; inset-inline: 0; top: 0; height: 3px; overflow: hidden;
+  border-start-start-radius: var(--radius); border-start-end-radius: var(--radius); background: var(--color-surface-2); }
+.radn-bar-line > i { display: block; height: 100%; background: var(--wave-played); }
+.radn-bar-art { flex: none; width: 40px; height: 40px; border-radius: var(--radius-sm);
+  background: var(--rad-grad, var(--grad-primary)); display: grid; place-items: center; color: var(--color-on-primary); overflow: hidden; }
+.radn-bar-art img { width: 100%; height: 100%; object-fit: cover; }
+.radn-bar-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.radn-bar-t { font-size: .875rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* واسمُ البرنامج يُقصّ كما يُقصّ العنوان، وإلّا التفّ فكبّر الشريطَ فوق فسحته */
+.radn-bar-s { font-size: .75rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.radn-bar-time { display: none; flex: none; font-family: var(--font-latin); font-variant-numeric: tabular-nums; font-size: .78125rem; color: var(--color-text-muted); }
+.radn-bar-b { flex: none; width: 44px; height: 44px; border-radius: var(--radius-full);
+  background: var(--rad-grad, var(--grad-primary)); color: var(--color-on-primary); display: grid; place-items: center; }
+.radn-bar-b:active { transform: scale(.94); }
+.radn-bar-b:focus-visible { outline: none; box-shadow: var(--ring); }
+/* فسحةٌ في التدفّق بقدر الشريط، ومعها مسافةُ تمريرٍ كي لا يختفي المركَّزُ خلفه */
+.radn-scroll { scroll-padding-block-end: 86px; }
+.radn-tail { height: 14px; }
+.radn-scroll.has-bar .radn-tail { height: 80px; }
+
+/* ── حال «لم يسمع شيئًا بعد» ───────────────────────────────────────── */
+.radn-empty {
+  margin-top: 10px; padding: 16px 14px; text-align: center;
+  border-radius: var(--radius);
+  border: var(--card-stroke-w) dashed var(--ctl-stroke);
+  background: var(--color-surface);
+  font-size: .875rem; color: var(--color-text-muted); line-height: 1.7;
+}
+
+/* ============================================================
+   سطحُ المكتب — استعلامُ حاوية لا شاشة
+   العلّةُ المقيسةُ على الجيل الأوّل: صفٌّ بعرض 1150px حشوُه في يمينه 300px،
+   فثلثا الشاشة خواء. والعلاجُ أن تُوزَّع الحقائقُ أعمدةً لا أن تتكدّس في طرف.
+   ============================================================ */
+.radn-frame { container-type: inline-size; }
+
+@container (min-width: 900px) {
+  .radn-art { width: 64px; height: 64px; }
+  .radn-row { gap: 18px; padding: 12px; }
+  .radn-txt { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 28px; }
+  .radn-t { grid-column: 1; grid-row: 1; font-size: 1.03125rem; -webkit-line-clamp: 1; }
+  .radn-s { grid-column: 1; grid-row: 2; -webkit-line-clamp: 1; margin-top: 3px; font-size: .84375rem; }
+  .radn-m { grid-column: 2; grid-row: 1 / span 2; justify-content: flex-end; flex-wrap: nowrap; gap: 18px; margin-top: 0; }
+  .radn-m .radn-date { min-width: 86px; }
+
+  /* البرنامجُ والحلقةُ عمودان: هويّةٌ لاصقةٌ لا تغيب وأنت تمرّر مئةَ حلقة */
+  .radn-cols { display: grid; grid-template-columns: 288px 1fr; gap: 36px; align-items: start; }
+  .radn-aside { position: sticky; top: 0; }
+
+  .radn-player { padding: 20px 22px 18px; }
+  .radn-wave { height: 88px; gap: 2px; }
+  .radn-times { font-size: .84375rem; margin-top: 9px; }
+  .radn-transport { gap: 26px; margin-top: 10px; }
+  .radn-big { width: 68px; height: 68px; }
+  .radn-skip { width: 54px; height: 54px; }
+  .radn-chap { min-height: 50px; font-size: .9375rem; }
+
+  .radn-subs { flex-wrap: wrap; overflow: visible; }
+  .radn-bar { inset-inline: 34px; bottom: 14px; padding: 10px 16px 10px 10px; gap: 14px; }
+  .radn-bar-art { width: 48px; height: 48px; }
+  .radn-bar-t { font-size: .9375rem; }
+  .radn-bar-time { display: block; }
+}
+
+/* ── إطارُ المعاينة (مختبرٌ فقط) · بادئة .radnlab ────────────────────
+   سابقتُه `.phdlab`: أثاثُ المعرض يُسمّى ولا يُخترَع في الشاشة. ولا يُستعمل
+   خارج `/ui/radio-next`، ويسقط معه يوم يُقَرّ البديلُ ويحلّ محلَّ الحيّ. */
+.radnlab-stage { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; }
+.radnlab-stage.is-wide { flex-direction: column; align-items: center; gap: 34px; }
+.radnlab-dev { flex: 0 0 auto; width: 375px; max-width: 100%; }
+.radnlab-stage.is-wide .radnlab-dev { width: min(1180px, 100%); }
+.radnlab-cap { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; padding-inline-start: 4px; }
+.radnlab-cap b { font-family: var(--font-display); font-size: 1rem; font-weight: 800; }
+.radnlab-cap span { font-family: var(--font-latin); font-size: .71875rem; color: var(--color-text-muted); direction: ltr; unicode-bidi: isolate; }
+.radnlab-frame {
+  position: relative; display: flex; flex-direction: column; overflow: hidden;
+  height: 790px;
+  border-radius: 26px;
+  border: var(--card-stroke-w) solid var(--card-stroke);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+.radnlab-stage.is-wide .radnlab-frame { height: 820px; border-radius: 18px; }
+.radnlab-top {
+  flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; z-index: 3;
+  background: var(--color-surface);
+  border-bottom: var(--card-stroke-w) solid var(--card-stroke);
+}
+.radnlab-top b { font-family: var(--font-display); font-weight: 800; font-size: .9375rem; }
+.radnlab-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.radnlab-pad { padding: 16px 14px 20px; }
+@container (min-width: 900px) {
+  .radnlab-pad { padding: 30px 34px 34px; max-width: 1080px; margin-inline: auto; }
+  .radnlab-top { padding: 12px 34px; }
+}
