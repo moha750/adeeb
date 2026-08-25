@@ -1641,10 +1641,10 @@
    تُعلَن هنا مرّةً ويقرؤها تلوينُ أجزاء الشخص (الشريط/الأفتار/الاسم/الصفوف/التذييل) في قسم ‎.acard-profile‎.
    كرت المحتوى بلا تلك الأجزاء فلا يقرؤها — العمق تقرّره الأجزاء الحاضرة. البراند خارجها عمدًا (شريط محايد). */
 .acard-tone-brand   { --shadow-tone: var(--shadow-tone-brand);  --surface-aurora: linear-gradient(135deg, var(--aurora-brand), var(--color-surface) 62%); --border-aurora: var(--card-stroke-brand); background: var(--surface-aurora); border-color: var(--border-aurora); }
-.acard-tone-neutral { --shadow-tone: var(--shadow-tone-neutral); --surface-aurora: linear-gradient(135deg, var(--aurora-neutral), var(--color-surface) 62%); --border-aurora: var(--card-stroke-neutral); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--neutral-600); --card-tx: var(--neutral-700); --card-grad: var(--grad-neutral); }
-.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--success-600); --card-tx: var(--success-700); --card-grad: var(--grad-success); }
-.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--warning-600); --card-tx: var(--warning-800); --card-grad: var(--grad-warning); }
-.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--danger-600); --card-tx: var(--danger-700); --card-grad: var(--grad-danger); }
+.acard-tone-neutral { --shadow-tone: var(--shadow-tone-neutral); --surface-aurora: linear-gradient(135deg, var(--aurora-neutral), var(--color-surface) 62%); --border-aurora: var(--card-stroke-neutral); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--neutral-600); --card-tx: var(--neutral-700); --card-grad: var(--grad-neutral); --card-aurora: var(--aurora-neutral); }
+.acard-tone-success { --shadow-tone: var(--shadow-tone-success);  --surface-aurora: linear-gradient(135deg, var(--aurora-success), var(--color-surface) 62%); --border-aurora: var(--card-stroke-success); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--success-600); --card-tx: var(--success-700); --card-grad: var(--grad-success); --card-aurora: var(--aurora-success); }
+.acard-tone-warning { --shadow-tone: var(--shadow-tone-warning); --surface-aurora: linear-gradient(135deg, var(--aurora-warning), var(--color-surface) 62%); --border-aurora: var(--card-stroke-warning); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--warning-600); --card-tx: var(--warning-800); --card-grad: var(--grad-warning); --card-aurora: var(--aurora-warning); }
+.acard-tone-danger  { --shadow-tone: var(--shadow-tone-danger);  --surface-aurora: linear-gradient(135deg, var(--aurora-danger), var(--color-surface) 62%); --border-aurora: var(--card-stroke-danger); background: var(--surface-aurora); border-color: var(--border-aurora); --card-t: var(--danger-600); --card-tx: var(--danger-700); --card-grad: var(--grad-danger); --card-aurora: var(--aurora-danger); }
 .acard-tone-neutral .acard-chip { background: var(--grad-neutral); }
 .acard-tone-success .acard-chip { background: var(--grad-success); }
 .acard-tone-warning .acard-chip { background: var(--grad-warning); }
@@ -2206,6 +2206,9 @@
 
 /* ---- المنطقة الرئيسية ---- */
 .ash-main {
+  /* مرجعُ تموضعِ لوحة الباركود وورقتها (`.qcanvas`/`.qsheet`): حدُّهما لوحُ المحتوى لا
+     النافذة، وإلّا امتدّتا تحت الشريط الجانبيّ فغطّتاه فوق عتبة الجوّال. */
+  position: relative;
   flex: 1;
   min-width: 0;
   height: calc(100vh - 28px);
@@ -3691,11 +3694,16 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .dcard-head { display: flex; align-items: center; gap: 11px; padding: 15px 16px; min-width: 0; }
 .dcard-lead { flex: 0 0 auto; display: inline-flex; }
 .dcard-id { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-/* سطران ثمّ القصّ: عنوانُ الصفّ خبرُه، وقصُّه من أوّل كلمةٍ يُذهب معناه (كان سطرًا واحدًا فصار
-   «طلب انضم…»). وسطرانِ سقفٌ لا اثنان دائمًا، فلا يتفاوت ارتفاعُ الرؤوس في الصفّ الواحد. */
-.dcard-title { font-size: 15.5px; font-weight: 800; line-height: 1.35; color: var(--card-tx, var(--color-primary)); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* **سطرٌ واحدٌ ثمّ القصّ** (أمرُ المالك ٢٠٢٦-٠٨-٢٥، ناسخًا السطرين): الكرتُ صفٌّ في قائمةٍ
+   تُمسَح بالعين، وسطرٌ ثانٍ يهبط بالحقائق والفعل ويُفاوت ارتفاعَ الرؤوس في الصفّ الواحد.
+   وتمامُ العنوان يقع خلف الزرّ. وكان السطرُ الواحدُ قد قُصّ يومًا فصار «طلب انضم…»، وعلّتُه
+   يومئذٍ عمودُ الزرّ في الرأس يقاسمه العرضَ — وقد زال، فالعنوانُ اليوم يأخذ العرضَ كلَّه. */
+.dcard-title { font-size: 15.5px; font-weight: 800; line-height: 1.35; color: var(--card-tx, var(--color-primary)); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; overflow-wrap: anywhere; }
 .dcard-sub { font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dcard-end { margin-inline-start: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+/* ركنُ الرأس (قائمةٌ وشارة): **إلى أعلى الرأس لا إلى وسطه** (أمرُ المالك ٢٠٢٦-٠٨-٢٥).
+   الرأسُ يطول بطول العنوان وسطرِ الحقائق تحته، فالمقبضُ المتوسّطُ يهبط مع كلّ سطرٍ يُضاف
+   ويختلف موضعُه من كرتٍ إلى كرت في الشبكة الواحدة. وثباتُه في الأعلى يجعله مقصدًا واحدًا. */
+.dcard-end { margin-inline-start: auto; flex: 0 0 auto; align-self: flex-start; display: flex; align-items: center; gap: 6px; }
 /* النصُّ الحرّ يُقصّ بعد ثلاثة أسطر: الكرتُ لمحةٌ تُقرأ في مسحةِ عين، وتمامُ النصّ في صفحته.
    ولولا القصُّ لصار كرتُ رسالةٍ طويلةٍ أطولَ من الشاشة، ولانكسر تراصُّ الشبكة (ق٦). */
 /* والفسحةُ السفلى **هامشٌ لا حشو**: مع القصّ (`-webkit-line-clamp`) يسيل السطرُ الزائد في
@@ -3706,7 +3714,9 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    السطحُ يلبس لون الحدّ والخلايا تلبس لون الكرت، فما بينها يُرى شعرةً رأسيّةً بين المتجاورَين
    وأفقيّةً بين المتراكبَين بلا شرطٍ ولا استعلامِ وسائط). والدفعُ إلى القاع (`margin-top:auto`)
    يجعل أشرطةَ الكروت في الصفّ الواحد تتراصّ رغم تفاوت عناوينها. */
-.dcard-facts { margin: auto 0 0; display: flex; flex-wrap: wrap; gap: var(--card-stroke-w); background: var(--card-stroke); border-top: var(--card-stroke-w) solid var(--card-stroke); }
+/* والخيطُ بين الخانات من حدّ النغمة لا من الفولاذيّ الثابت: الكرتُ المنغَّم لا يبقى
+   مشقوقًا بلونٍ دخيل (أمرُ المالك ٢٠٢٦-٠٨-٢٥). */
+.dcard-facts { margin: auto 0 0; display: flex; flex-wrap: wrap; gap: var(--card-stroke-w); background: var(--border-aurora, var(--card-stroke)); border-top: var(--card-stroke-w) solid var(--border-aurora, var(--card-stroke)); }
 /* بذرةُ الخليّة 150 لا أقلّ: البريدُ أطولُ قيمةٍ في اللوحة ولا موضعَ كسرٍ فيه، فبذرةٌ أضيق
    تُجلس حقيقتين في صفٍّ فينكسر البريد بحرفه («‎majed@exam / ple.com»). وعندها تنزل الحقيقةُ
    صفًّا وحدها متى ضاق الكرت، وتعود جارتَها متى اتّسع (ق٦: الفردُ يمتدّ فلا فراغَ في الصفّ). */
@@ -3731,10 +3741,14 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    (`.dcard-facts` شريطُ الحقائق)، فورث الكرتُ `margin-top:auto` من جزئه فتساوت قيعانُ الكروت
    واختلفت رؤوسُها في الصفّ الواحد. المساحةُ الواحدة تُقسَم: جزءٌ باسمه، وهيئةٌ ببادئتها. */
 .dcard-v-compact .dcard-head { padding: 12px 14px; }
-.dcard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 12px; margin-top: 2px; }
+/* سطرُ الحقائق في المضغوط — **صفٌّ مستقلٌّ بعرض الكرت** لا ذيلٌ في عمود العنوان (أمرُ المالك
+   ٢٠٢٦-٠٨-٢٥)، فيحمل حشوَه الأفقيَّ بنفسه ويقاسم الرأسَ الفراغَ الرأسيّ. */
+.dcard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 0 14px 12px; }
+.dcard-v-compact:has(> .dcard-meta) .dcard-head { padding-bottom: 8px; }
 .dcard-mi { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
 .dcard-mk { font-size: 11.5px; font-weight: 600; color: var(--color-text-muted); }
 .dcard-mv { font-size: 12.5px; font-weight: 700; color: var(--card-tx, var(--color-primary)); }
+
 
 /* شريطُ المجموعة في عرض الكروت — شريطُ الجدول نفسُه (لكنةً وحبرًا ودوّارةً)، إلّا أنّه هنا
    **سطحٌ قائمٌ بذاته**: الجدولُ يحويه إطارُه فيسقط عنه الإطار (ق١٢)، والكروتُ لا إطارَ فوقها
@@ -3744,6 +3758,30 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* عمودُ المعاينة في المعرض وحده (`/ui/cards-view`) — عرضُ جوّالٍ حقيقيّ يُحكَم عليه، فاللوحةُ
    منتَجُ جوّال. صنفٌ معرضيٌّ كنظرائه (`.phdlab-col`) لا يُستعمل في شاشةٍ حيّة. */
 .cvlab { width: 390px; max-width: 100%; }
+
+/* شريطُ الفعل (`.dcard-act`) — **زرُّ الفتح في التذييل لا في الرأس** (اختيارُ المالك ٢٠٢٦-٠٨-٢٥
+   من ثلاث هيئاتٍ عُرضت في `/ui/dcard-shapes`، والهيئتان الأخريان أُعدمتا). كان الرأسُ عمودين:
+   نصٌّ وزرٌّ. وعلى ٣٧٥ لا يبقى للعنوان إلّا ٦٠٪ من العرض فيُقصّ من نصف كلمة، ويقف الزرُّ في
+   عمودٍ طويلٍ فارغٍ تحتَه، ثمّ تنزل الشارةُ سطرًا ثالثًا. فصار العنوانُ يأخذ العرضَ كلَّه،
+   ونزل الفعلُ والشارةُ إلى شريطٍ واحدٍ أسفلَ الكرت: الشارةُ في أوّله والفعلُ في آخره.
+   **ثمّ صعدت القائمةُ (⋮) وحدَها إلى ركن الرأس** بأمره في اليوم نفسِه: هي مقبضٌ بمقاس أيقونة
+   لا زرٌّ بكلمة، فلا تقتطع من العنوان ما كان يقتطعه زرُّ «فتح»، وموضعُها في الرأس عرفُ
+   الكروت في كلّ مكان. فلم يبقَ في الشريط إلّا الشارةُ والفتح.
+   و`margin-top:auto` كي تستوي أشرطةُ الكروت في الصفّ الواحد مهما تفاوتت رؤوسُها (ق٦).
+   **وينساب** (`flex-wrap`): شارةٌ طويلةٌ (اسمُ ثلاثيٌّ) بجانب زرٍّ على ٣٧٥ كانت تُقصّ
+   بحرفٍ ناقص — والقصُّ في الشارة كذبٌ، فالنزولُ سطرًا أهون. */
+.dcard-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; padding: 7px 8px 7px 14px; border-top: 1px solid color-mix(in oklab, var(--card-t, var(--steel-600)) 14%, var(--color-border)); background: color-mix(in oklab, var(--card-t, var(--steel-600)) 5%, var(--color-surface)); }
+/* والشارةُ لا تنكمش: العنصرُ في صفٍّ مرنٍ ينكمش افتراضًا، فتضيق الكبسولةُ عن حروفها
+   ويُقصّ الاسمُ في وسطه. تأخذ حجمَها كاملًا وتنزل سطرًا إن ضاق الصفّ. */
+.dcard-act > :not(.dcard-act-end) { flex: 0 0 auto; }
+.dcard-act-end { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px; }
+/* وزرُّ الشريط يلبس نغمةَ كرته (أمرُ المالك ٢٠٢٦-٠٨-٢٥): الفولاذيُّ الحياديُّ في كرتٍ
+   أحمرَ يبدو غريبًا عن سطحه. ولا نغمةَ تُمرَّر إلى الزرّ في كلّ شاشة — يقرأ رمزَي الكرت
+   (--card-tx/--card-t) كسائر أجزائه (ق٤)، فينغَّم حيث نُغِّم كرتُه وحدَه. */
+:is(.acard-tone-neutral, .acard-tone-success, .acard-tone-warning, .acard-tone-danger) .dcard-act .abtn {
+  --btn-ghost-fg: var(--card-tx);
+  --btn-ghost-border: color-mix(in oklab, var(--card-t) 42%, transparent);
+}
 
 /* ── كرت الشخص منغَّمًا بحالته الدلاليّة ─────────────────────────────────────────
    نظام النغمة موحَّد: `.acard-tone-*` (أعلى الملفّ) يُعلن رموزه (--card-t/--card-tx/--card-grad)
@@ -3867,6 +3905,27 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .tico-warning { --tico-fg: var(--warning-600); --tico-bg: linear-gradient(135deg, var(--aurora-warning), transparent 62%); }
 .tico-neutral { --tico-fg: var(--neutral-600); --tico-bg: linear-gradient(135deg, var(--aurora-neutral), transparent 62%); }
 .tico-danger  { --tico-fg: var(--danger-600);  --tico-bg: linear-gradient(135deg, var(--aurora-danger),  transparent 62%); }
+/* والمصمتة (`.tico-solid`) — رقاقةُ **الهويّة** لا رقاقةُ الحقيقة (أمرُ المالك ٢٠٢٦-٠٨-٢٥):
+   سطرٌ فيه ثلاثُ رقاقاتٍ متساويةِ الشدّة يستوي فيه من تكلّم مع متى تكلّم. فصاحبُ الكلام
+   يلبس لونَ النغمة مصمتًا وحرفُه أبيض، وتبقى الحقائقُ في رقاقتها الناعمة. واللونُ لونُ
+   النغمة نفسِها، فالفرقُ شدّةٌ لا لون. */
+.tico-solid.tico-steel   { --tico-fg: var(--color-on-primary); --tico-bg: var(--grad-primary); }
+.tico-solid.tico-success { --tico-fg: var(--color-on-primary); --tico-bg: var(--grad-success); }
+.tico-solid.tico-warning { --tico-fg: var(--color-on-primary); --tico-bg: var(--grad-warning); }
+.tico-solid.tico-neutral { --tico-fg: var(--color-on-primary); --tico-bg: var(--grad-neutral); }
+.tico-solid.tico-danger  { --tico-fg: var(--color-on-primary); --tico-bg: var(--grad-danger); }
+/* ورقاقةُ **صدرِ الكرت** (`.tico-lead`) — أيقونةٌ بيضاء على تدرّجٍ يتبع **نغمةَ الكرت**
+   (أمرُ المالك ٢٠٢٦-٠٨-٢٥، حلّت محلّ مصغّرِ الباركود في كرت الرمز). وهي رقاقةُ هويّةٍ مكبَّرة:
+   مقاسُها 44 فزاويتُها الأساس لا `--radius-xs` (ق٢: الزاويةُ بالحجم)، ولونُها من `--card-grad`
+   الذي تعلنه نغمةُ الكرت مرّةً (ق٤) وافتراضُه تدرّجُ الهويّة، فلا يُكتب لونٌ في الشاشة. */
+.tico-lead { width: 44px; height: 44px; border-radius: var(--radius); color: var(--color-on-primary); background: var(--card-grad, var(--grad-primary)); box-shadow: var(--shadow-sm); }
+.tico-lead svg { width: 24px; height: 24px; }
+
+/* ورقاقةُ الحقيقة داخل الكرت (`.tico-card`) — **تتبع نغمةَ الكرت لا تثبت على الفولاذيّ**
+   (أمرُ المالك ٢٠٢٦-٠٨-٢٥: «كلُّ العناصر بلون النغمة»). كانت `.tico-steel` محفورةً في الكرت،
+   فيصير في الكرت الأخضر رقاقتان زرقاوان تنشزان عن سطحهما. وتقرأ ما تعلنه النغمةُ مرّةً
+   (`--card-t` و`--card-aurora`، ق٤)، وافتراضُها هويّةُ البراند حين لا نغمةَ للكرت. */
+.tico-card { --tico-fg: var(--card-t, var(--steel-600)); --tico-bg: linear-gradient(135deg, var(--card-aurora, var(--aurora-brand)), transparent 62%); }
 
 /* card checkbox removed */
 
@@ -5286,6 +5345,51 @@ html:not(.js) .ldr-boot { display: none; }
 }
 
 .shdr-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+
+/* ── هويّةُ صاحب الجلسة في الرأس (`.shdr-me*`) ─────────────────────────────
+   حين تُعرَف الجلسةُ سقط ما لا يعنيه: «بوّابة أَدِيب» لمن هو داخلها، و«انضمّ إلينا»
+   عن العضو. وموضعُهما تأخذه الهويّة — **كبسولةٌ من لغة اللوحة نفسِها** (`.ash-greet`):
+   أفتارٌ ثمّ اسمٌ ثمّ شيفرونٌ يقول إنّ ههنا قائمةً تُفتح. مصدرُ المظهر واحدٌ في
+   الموضعين، فلا هويّتان تفترقان.
+
+   اعتُمدت هذه الهيئةُ من ثلاثٍ عُرِضت في `/ui/header-account` (المالك ٢٠٢٦-٠٨-٢٥)،
+   وأُعدم أخواها: أفتارٌ مجرّدٌ بلا اسم، وبوّابةٌ صريحةٌ يجاورها أفتار. */
+.shdr-me {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  border: 0; background: transparent; color: inherit; font: inherit;
+  /* حشوٌ في طرف الاسم وحدَه — والأفتارُ يملأ طرفَه الآخر */
+  padding: 4px; padding-inline-end: 10px; cursor: pointer;
+  /* الزاويةُ من الأساس لا كبسولةً مستديرة: `--radius-full` للمفاتيح والشارات وحدها (ق٢)،
+     والأفتارُ داخلها squircle — فدائرةٌ حوله تناقضُ لغةَ الزوايا. */
+  border-radius: var(--radius);
+  transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+/* اللمسُ تينتُ الهويّة ممزوجةً بالشفّاف لا بالأبيض — الكبسولةُ زجاجيّةٌ يمرّ من تحتها الشفق،
+   فسطحٌ معتمٌ فوقها يُقرأ ملصقًا عليها (درسُ زرّ القائمة نفسُه). */
+.shdr-me:hover, .shdr-me[aria-expanded="true"] { background: color-mix(in oklab, var(--steel-500) 12%, transparent); }
+/* الضغطُ والتركيزُ لغةُ الرأس الواحدة: انكماشةٌ خاطفة وحلقةُ الهوية (ق٥-ب) */
+.shdr-me:active { transform: scale(.96); }
+.shdr-me:focus-visible { outline: none; box-shadow: var(--ring); }
+/* مقاسُ الشريط 36px — وأفتارُ اللوحة (42px) يطغى في صفٍّ ارتفاعُه 64px.
+   **والزاويةُ تنزل مع المقاس** (`--av-r`): الأفتارُ مربّعٌ مدوّر لا دائرة، وزاويةُ الأساس
+   (16px) على جسمٍ صغيرٍ = نصفُ ضلعه فينقلب دائرةً — وهو ما وقع في أوّل رسمٍ.
+   و36px داخل نطاق `--radius-sm` (28–38px) بنصّ نظام الزوايا، فهذه قاعدةُ النظام لا استثناء
+   (وهي عينُ ما تفعله `.av-xs`/`.av-sm`). */
+.shdr-me .av { width: 36px; height: 36px; --av-r: var(--radius-sm); }
+.shdr-me svg { opacity: .7; transition: transform var(--dur-fast) var(--ease-standard); }
+.shdr-me[aria-expanded="true"] svg { transform: rotate(180deg); }
+.shdr-me-tx {
+  font-size: 14.5px; font-weight: 800; color: var(--color-primary);
+  max-width: 10ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* المنسدلة: الاسمُ كاملًا ومنزلتُه — الشريطُ يختصر، وههنا يُقال تمامًا */
+.shdr-me-menu { min-width: 210px; padding: 6px; }
+.shdr-me-hd { display: grid; gap: 2px; padding: 7px 11px 5px; }
+.shdr-me-hd b { font-size: 14.5px; font-weight: 800; color: var(--color-primary); }
+.shdr-me-hd span { font-size: 12px; color: var(--color-text-muted); }
+/* زرُّ الخروج داخل المنسدلة عنصرُ `button` لا `a` — فيُسوّى بصفوفها (`.dm-item` مبنيّةٌ للرابط) */
+.shdr-me-menu button.dm-item { width: 100%; border: 0; background: transparent; font: inherit; text-align: start; cursor: pointer; }
+
 /* «بوّابة أَدِيب» صارت **زرًّا شبحيًّا** (`abtn-ghost`) بقرار المالك ٢٠٢٦-٠٨-٠٢: زرٌّ
    كامل البنية كزرّ الطلب — لا رابطًا نصّيًّا بجانبه — لكنّه **مفرَّغٌ بحدٍّ وحبر**،
    فيُقرأ فعلًا ثانيًا لا ينافس «انضمّ إلينا». (جُرّب صلبًا محايدًا قبله فرُدّ: صلبان
@@ -5396,6 +5500,7 @@ html:not(.js) .ldr-boot { display: none; }
 .shdr-sheet-login { margin-top: 8px; }
 .shdr-sheet-cta { margin-top: 4px; }
 
+
 /* **الزرُّ الممتدُّ لا يكبر** (قرار المالك ٢٠٢٦-٠٨-٠٢): كان `.abtn:hover` يكبر ‎4.5%
    فتُخرِج النسبةُ زرَّي اللوح ‎≈9px من كلّ طرفٍ على حشوٍ قدره ‎10px، فيفيضان على الكبسولة.
    وخُفض النموُّ إلى ‎1.125% في ٢٠٢٦-٠٨-٢٢ فصار الفيضُ ‎≈2px، **والقرارُ باقٍ كما هو**:
@@ -5416,6 +5521,14 @@ html:not(.js) .ldr-boot { display: none; }
   .shdr-bar > .shdr-nav, .shdr-measure, .shdr-actions .abtn { display: none; }
   .shdr-burger { display: inline-flex; }
   .shdr-sheet { display: grid; }
+
+  /* **الحسابُ يبقى في الشريط ولا ينزوي إلى اللوح** (المالك ٢٠٢٦-٠٨-٢٥، من وجهين عُرِضا):
+     البرغرُ للتنقّل وحده، والأفتارُ بابُ الحساب بجواره. ولو دُفن في اللوح لبقي رأسُ الجوّال
+     مطابقًا لرأس المجهول — فلا يُرى أثرُ «أنت داخل» أصلًا.
+     **والاسمُ وحدَه يسقط**: في الضيّق تصير الصورةُ هدفَ لمسٍ لا تسميةً، والتسميةُ باقيةٌ
+     لقارئ الشاشة في `aria-label`. */
+  .shdr-me-tx { display: none; }
+  .shdr-me { padding-inline-end: 4px; }
 }
 
 /* إطارُ الجوّال في المعرض — عرضٌ حقيقيٌّ لا محاكاة: الرأسُ داخله يقيس نفسَه فيجد
@@ -6362,6 +6475,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    قائمةٌ بنفسها فلا تنقلب كبسولةً (ق٢). */
 .rad-chip {
   min-height: 44px; min-width: 44px; justify-content: center;
+  min-height: 44px; min-width: 44px; justify-content: center;
   flex: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 10px;
@@ -6410,8 +6524,14 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
    الماديّة، وهذا مزجُ الحلقة نفسِها وهو ما لا تعطيه منصّةٌ أخرى، فحجبُه عن
    أكثر من يسمعنا يُلغي الميزةَ لا يؤجّلها. */
 /* **المقبضُ يقول اسمَه.** المِزلاقان متطابقا الشكل، والأيقونةُ وحدَها لا تفرّق
+   بين جهارةِ الجهاز ومزجِ الحلقة. وكلمةٌ واحدةٌ تكفي، ولا تحتاج شرحًا. */
+/* **المقبضُ يقول اسمَه.** المِزلاقان متطابقا الشكل، والأيقونةُ وحدَها لا تفرّق
    بين جهارةِ الجهاز ومزجِ الحلقة. وكلمةٌ واحدةٌ تكفي ولا تحتاج شرحًا. */
 .rad-vol, .rad-music { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.rad-ctl-lbl {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .78125rem; font-weight: 700; color: var(--color-text-muted); white-space: nowrap;
+}
 .rad-ctl-lbl {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: .78125rem; font-weight: 700; color: var(--color-text-muted); white-space: nowrap;
@@ -7586,6 +7706,12 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .tb2 .tb-fs-x {
   align-self: center; position: relative; isolation: isolate; flex: 0 0 auto;
   width: 36px; height: 36px;
+  /* **والعلامةُ في وسط مربّعها كالدوّارة سواءً.** كانت `.tb-fs-x` تكتفي بالمقاس ولا تقول
+     كيف يجلس ابنُها، فيرثه من الزرّ (مرنٌ يبدأ من الطرف) فيلتصق ✕ بحافّة الهدف ‎36px بينما
+     مربّعُه المرئيّ ‎26px موسَّطٌ فيه: ‏‎11.5px انزياحًا يُخرج نصفَ العلامة من سطحها الورديّ.
+     ولم يظهر في الحساب لأنّ الهدفَ والمربّعَ عنصران، أحدُهما زائف. والضبطُ من مصدره:
+     `place-items: center` هو نفسُه ما في `.asel-chev`. */
+  display: grid; place-items: center;
   /* **يقع مربّعُه حيث يقع مربّعُ الدوّارة بالضبط.** الدوّارةُ ابنةُ الزرّ فتبعُد عن
      الحافّة بحشوه (‎14px)، و✕ خليّةٌ أختٌ للزرّ فتبعُد بهامشها. وهامشٌ ثابتٌ ‎7px
      كان يضعه على ‎13px مقابل ‎15px للدوّارة — انزياحٌ رآه المالك. فيُحسَب: حشوُ الزرّ
@@ -8544,7 +8670,26 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .qdock > .acard { height: 100%; display: flex; flex-direction: column; }
 .qdock > .acard > .acard-body { flex: 1 1 auto; display: flex; flex-direction: column; }
 .qdock-full { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.qdock-bar { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
+/**
+ * **المعاينةُ تُقاس بالضلعين لا بالعرض وحده.**
+ *
+ * الكرتُ ذو ارتفاعٍ معلوم (شاشةُ المستخدم ناقصَ ما فوقه)، والباركودُ يُرسَم بعرض عموده.
+ * فمتى ضاقت الشاشةُ أو أُضيف إطارٌ (والمؤطَّرُ أطولُ من عرضه) فاض الرمزُ عن الكرت **ودفع
+ * صفَّ الأزرار إلى خارجه**، فيُرى نصفُ زرٍّ تحت حافّة الكرت (قِيس: صفٌّ ينتهي عند ٧٤٥
+ * وكرتٌ ينتهي عند ٧٣٨).
+ *
+ * فيُقاس الرمزُ بالحدَّين معًا: عرضُ العمود وارتفاعُ ما بقي بعد صفّ الأزرار. والعنصرُ
+ * المستبدَل يقبل الحدَّين ويحفظ نسبتَه بينهما.
+ */
+/* **وجسمُ الكرت يقبل الانكماش**: `min-height` التلقائيّ في عمودٍ مرنٍ يمنع الابنَ من النزول
+   دون مقاس محتواه، فيبقى الجسمُ أطولَ من الكرت بثلاثة بكسلات ويخرج صفُّ الأزرار من حافّته.
+   وهي العلّةُ الأولى، وما دونها فرعٌ عنها. */
+.qdock > .acard > .acard-body { min-height: 0; }
+.qdock .qdock-full { min-height: 0; display: flex; align-items: center; justify-content: center; }
+.qdock .qdock-full .qprev { height: 100%; display: flex; align-items: center; justify-content: center; }
+.qdock .qdock-full .qprev svg { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+/* وصفُّ الأزرار لا يتقلّص ولا يُدفَع: حقُّه محفوظٌ قبل الرمز */
+.qdock-bar { flex: 0 0 auto; margin-top: 16px; display: flex; align-items: center; gap: 12px; }
 /* زرّا التنزيل: **إمّا جنبًا إلى جنبٍ متساويَين، وإمّا تحت بعضهما بعرضٍ كامل** — وهو أمرُ
    المالك ٢٠٢٦-٠٨-٢١ الذي **صار قانونًا عامًّا** بعده (ق١٦ · كتلةُ «قانون صفّ الأزرار»)، فسقط
    نصُّه من هنا ولم يبقَ إلّا فجوتُه الأضيق. وكان أساسُه ‎140px، وصار ‎--btn-row-min المشترك. */
@@ -8553,10 +8698,18 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .qsheet-head { display: none; }
 
 /* ============================================================
-   الجوّال: العتبةُ عتبةُ اللوحة نفسِها (٨٦٠) — عندها يذهب الشريطُ الجانبيّ وتصير الصفحةُ
-   عمودًا واحدًا، وعندها بعينِها ينقلب الدورُ بين اللوحة والمحرّر.
-   ============================================================ */
-@media (max-width: 860px) {
+   الورقةُ واللوحة: **متى صارت الصفحةُ عمودًا واحدًا** لا متى ضاقت النافذة.
+   ============================================================
+   كانت العتبةُ ٨٦٠ (عتبةَ اللوحة)، فبقي بينها وبين التفاف الشبكة شريطٌ ضيّق (‏٨٦١ إلى
+   نحو ٩٨٠) تلتفّ فيه الشبكةُ ولا تُشعَل الورقة، فتهبط المعاينةُ إلى ذيل الصفحة — **رآه
+   المالك عند ٨٧٠**. فرُفعت العتبةُ إلى ٩٨٠ فلا يبقى بينهما فراغ: إمّا عمودان، وإمّا
+   لوحةٌ وورقةٌ تُسحَب. **ولا هيئةَ ثالثة** (قرارُ المالك ٢٠٢٦-٠٨-٢٥).
+
+   **واللوحةُ والورقةُ `absolute` في `.ash-main` لا `fixed` في النافذة**: فوق ٨٦٠ يبقى
+   الشريطُ الجانبيّ حاضرًا، والثابتُ في النافذة كان يمتدّ تحته فيغطّيه. ولوحُ المحتوى هو
+   حدُّهما الصحيح في الحالين، وعلى الجوّال يملأ الشاشةَ فلا فرق.
+   ------------------------------------------------------------ */
+@media (max-width: 980px) {
   /* اللوحةُ تبدأ من تحت ما فوقها لا من رأس النافذة: `--qcanvas-top` يقيسه المحرّرُ بنفسه
      (رأسُ الصفحة أخوه لا ابنُه، ويطول بطول عنوانه)، وسابقتُه `--asave-h`. */
   /* **وارتفاعُها من `--qcanvas-floor` لا من حافّة الورقة** (أمرُ المالك ٢٠٢٦-٠٨-٢١):
@@ -8565,7 +8718,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
      فيكبر بالخفض ويصغر بالرفع (يكتبه `SheetGrip`).
      والرمزُ يُرصَف في **رأس** اللوحة لا وسطها: ما تستره الورقةُ أسفلُه، فيبقى أعلاه مرئيًّا. */
   .qcanvas {
-    position: fixed; inset-inline: 0; top: var(--qcanvas-top, 58px); z-index: 3;
+    position: absolute; inset-inline: 0; top: var(--qcanvas-top, 58px); z-index: 3;
     /* و`max` حارسٌ لا زينة: الورقةُ ترسو أعلى من رأس اللوحة عند مرساها الأوّل، فيخرج الطرحُ
        سالبًا — والارتفاعُ السالب تصريحٌ باطلٌ يسقط، فيعود الارتفاعُ تلقائيًّا ويطفح الرمزُ
        بمقاسه الأصليّ فوق الصفحة كلِّها. */
@@ -8609,7 +8762,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 
   /* الورقةُ: حافّتُها `--qsheet-top` يكتبه السحبُ ولا رقمَ محفور */
   .qsheet {
-    position: fixed; inset-inline: 0; bottom: 0; top: var(--qsheet-top, 46%);
+    position: absolute; inset-inline: 0; bottom: 0; top: var(--qsheet-top, 46%);
     z-index: 4;
     display: flex; flex-direction: column;
     background: var(--color-bg);
@@ -8643,6 +8796,10 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
     content: ""; width: 44px; height: 5px; border-radius: var(--radius-full);
     background: var(--color-border);
   }
+  /* **ولا شريطَ حفظٍ لاصقًا في هيئة الورقة**: زرُّ الحفظ في رأسها لا يغيب أصلًا، وشريطٌ
+     يلتصق بقاع الشاشة يقع فوق الورقة فيزاحمها ويزاحم جزيرةَ التنقّل معها. */
+  .qtool > .asave { display: none; }
+
   /* وذيلُ الورقة يحجز مكانَ جزيرة التنقّل: طبقةٌ ثابتةٌ تحجب آخرَ ما فيها إن لم يُحجَز لها */
   .qsheet-scroll {
     flex: 1 1 auto; overflow-y: auto;
@@ -8667,10 +8824,14 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 
 /* ============================================================
    أدواتُ التدرّج — قرصٌ ولوحُ جهاتٍ ومزلقٌ ولوحُ نقطة
-   المكوّنات: AngleDial · DirectionPad · RangeField · PointPad · المعرض: /ui/gradient
+   المكوّنان: AngleDial · PointPad · المعرض: /ui/gradient
    ============================================================
-   بُنيت ٢٠٢٦-٠٨-٢٢ حين ضاقت أربعُ خاناتٍ مكتوبة («أفقيّ، رأسيّ، مائل، مائل معكوس») عن
+   بُنيا ٢٠٢٦-٠٨-٢٢ حين ضاقت أربعُ خاناتٍ مكتوبة («أفقيّ، رأسيّ، مائل، مائل معكوس») عن
    اتّجاهٍ **شكلُه هو معناه**. والراسمُ يقبل الزوايا كلَّها أصلًا، فالقيدُ كان في الواجهة.
+
+   وعُرض معهما في `/ui/gradient` **لوحُ جهاتٍ ثمانيّ** و**مزلقٌ برقم**، فاختار المالكُ القرصَ
+   (لقطةُ الخمسَ عشرةَ درجةً تصيب جهاتِ اللوح الثمانيَ وتزيد)، وأُعدم المرفوضان فلم يبقَ
+   منهما سطرٌ ولا صنف.
    ------------------------------------------------------------ */
 
 /* ── قرصُ الاتّجاه ─────────────────────────────────────────────────────────
@@ -8689,8 +8850,11 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .adial:focus-visible { outline: none; box-shadow: var(--ring); }
 .adial:active { cursor: grabbing; }
 /* الذراع: خطٌّ من القلب إلى الحافّة يعلوه رأسٌ دائريّ — هو ما يُقرأ منه الاتّجاه */
+/* **مادّيّةٌ لا منطقيّة (`left`/`right`)، عمدًا:** الذراعُ شكلٌ هندسيٌّ يدور حول مركزه، لا
+   نصٌّ يتبع اتّجاه القراءة. و`inset-inline-start` تنقلب في العربيّة فيصير منشأُ الدوران
+   طرفَه الخارجيّ: يخرج الذراعُ من القرص كلَّه (رُئي قبل أن يُصحَّح). */
 .adial-arm {
-  position: absolute; inset-inline-start: 50%; top: 50%;
+  position: absolute; left: 50%; top: 50%;
   width: calc(50% - 8px); height: 4px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
@@ -8698,82 +8862,27 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   transform: translateY(-50%) rotate(var(--adial-a, 0deg));
 }
 .adial-arm::after {
-  content: ""; position: absolute; inset-inline-end: -7px; top: 50%;
+  content: ""; position: absolute; right: -7px; top: 50%;
   width: 18px; height: 18px; margin-top: -9px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
   box-shadow: var(--shadow-sm);
 }
+/* الرقمُ على كبسولةٍ من سطح البطاقة: الذراعُ يمرّ فوق القلب في نصف الزوايا، فرقمٌ عارٍ
+   يتقاطع معه ويصير غيرَ مقروء. */
 .adial-val {
   position: absolute; inset: 0;
   display: grid; place-items: center;
-  font-size: 13px; font-weight: 800; color: var(--color-text-muted);
   pointer-events: none;
 }
-
-/* ── لوحُ الجهات: ثلاثٌ في ثلاث، والسهمُ يُدار بزاوية خانته ───────────────── */
-.dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  width: 152px;
-}
-.dpad-cell {
-  display: grid; place-items: center;
-  aspect-ratio: 1;
-  border: var(--card-stroke-w) solid var(--card-stroke);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
-}
-.dpad-cell:hover { background: var(--color-surface); color: var(--color-primary); }
-.dpad-cell:focus-visible { outline: none; box-shadow: var(--ring); }
-.dpad-cell.on { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
-.dpad-cell svg { width: 22px; height: 22px; transform: rotate(var(--dpad-a, 0deg)); }
-.dpad-mid {
-  display: grid; place-items: center;
-  font-size: 12px; font-weight: 800; color: var(--color-text-muted);
-}
-
-/* ── المزلق ────────────────────────────────────────────────────────────── */
-.rng { display: flex; flex-direction: column; gap: 6px; }
-.rng-lbl { font-size: 13px; font-weight: 700; color: var(--color-text); }
-.rng-row { display: flex; align-items: center; gap: 12px; }
-.rng-in {
-  flex: 1 1 auto; min-width: 0;
-  appearance: none; -webkit-appearance: none;
-  height: 44px; /* قانونُ اللمس: الهدفُ ٤٤ ولو كان القضيبُ أرقّ */
-  background: none;
-  cursor: pointer;
-}
-.rng-in:focus-visible { outline: none; }
-.rng-in::-webkit-slider-runnable-track {
-  height: 6px; border-radius: var(--radius-full);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-}
-.rng-in::-moz-range-track {
-  height: 6px; border-radius: var(--radius-full);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-}
-.rng-in::-webkit-slider-thumb {
-  appearance: none; -webkit-appearance: none;
-  width: 24px; height: 24px; margin-top: -10px;
+.adial-val::before {
+  content: attr(data-deg);
+  padding: 3px 9px;
   border-radius: var(--radius-full);
-  background: var(--color-primary);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
+  font-size: 12.5px; font-weight: 800; color: var(--color-text-muted);
 }
-.rng-in::-moz-range-thumb {
-  width: 24px; height: 24px; border: 0;
-  border-radius: var(--radius-full);
-  background: var(--color-primary);
-  box-shadow: var(--shadow-sm);
-}
-.rng-in:focus-visible::-webkit-slider-thumb { box-shadow: var(--ring); }
-.rng-val { flex: 0 0 auto; min-width: 52px; text-align: center; font-size: 13px; font-weight: 800; color: var(--color-text-muted); }
 
 /* ── لوحُ النقطة: خلفيّتُه المعاينةُ نفسُها، فما تحت إصبعك هو ما سيخرج ───────── */
 .ppad {
@@ -8800,6 +8909,258 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
   background: transparent;
   box-shadow: var(--shadow-md), inset 0 0 0 1px color-mix(in oklab, var(--navy-900) 45%, transparent);
   pointer-events: none;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   لوحُ الكلمة (خمّن الكلمة) — البدائيّةُ الوحيدة التي تعرض الكلمةَ الجارية.
+
+   تخدم ثلاثةَ سياقاتٍ برسمٍ واحد: بروجكتر القاعة (1920) · مِقوَدُ المضيف (جوّال) ·
+   شاشةُ اللاعب (375). ولذلك **تقيس حاويتَها لا الشاشة** (`container-type`): هي في
+   البروجكتر تملأ العرضَ، وفي المِقوَد تجلس في كرتٍ عرضُه ثلثُ الصفحة، وقياسُ الشاشة
+   يعطي الاثنين مقاسًا واحدًا فيصغر هناك أو يفيض هنا.
+
+   **هيئةٌ واحدة، مُقَرّةٌ من المالك ٢٠٢٦-٠٨-٢٥:** سطحٌ مؤطَّرٌ قائمٌ بذاته. وأُعدمت
+   معها `.gwrd-board` (لوحٌ بلا إطار) بقواعدها كلِّها، فلا خيارَ يُمرَّر ولا صنفٌ
+   يُتذكَّر — ق١: المخالفةُ تصير مستحيلةً لا مذمومة.
+
+   **والنغمةُ تُعلَن مرّةً والأنماطُ تقرؤها** (ق٤): كلُّ حالٍ تضبط ثلاثةَ رموزٍ لا غير
+   (`--gw-stroke` · `--gw-aurora` · `--shadow-tone`) ورمزَ حبرٍ واحدًا (`--gw-ink`)،
+   فيتبعها الحدُّ والسطحُ والظلُّ والساعةُ والمضمارُ معًا. ولا لونَ يُكرَّر في جزء.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+.gwrd {
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: clamp(180px, 28cqi, 520px);
+  padding: clamp(20px, 5cqi, 56px);
+  border-radius: var(--radius);
+  text-align: center;
+  overflow: hidden;
+
+  /* النغمةُ الافتراضيّة: هويّةٌ فولاذيّة. وتُنقَض بالحال أدناه. */
+  --gw-stroke: var(--card-stroke-brand);
+  --gw-aurora: var(--aurora-brand);
+  --gw-ink: var(--color-text-muted);
+  /* حبرُ الكلمة: **لونُ الكرت غامقًا** (قرارُ المالك ٢٠٢٦-٠٨-٢٥) — درجةُ 900 من
+     نغمة الحال. فالكلمةُ تنتمي إلى لوحها ولا تبقى حبرًا محايدًا غريبًا عنه.
+     ومقيسٌ لا مظنون: أدنى تباينٍ في الحالات الأربع **10.41** على تينت Aurora
+     (وحدُّ AAA سبعة)، فالأربعُ تجتازه بفارق. */
+  --gw-word: var(--navy-900);
+  --shadow-tone: var(--shadow-tone-brand);
+
+  background:
+    linear-gradient(135deg, var(--gw-aurora), transparent 62%),
+    var(--color-surface);
+  border: var(--card-stroke-w) solid var(--gw-stroke);
+  box-shadow: var(--shadow-md);
+  /* الحدُّ والسطحُ والظلُّ تتبع النغمةَ بانتقالٍ واحد، فالتحوّلُ يُقرأ حدثًا لا وميضًا. */
+  transition: border-color .3s ease, box-shadow .3s ease, background .3s ease;
+}
+
+/* الموقوفةُ صفراء، والمُشرِفةُ على الانتهاء حمراء، والمنتهيةُ بفائزٍ خضراء.
+   واللونُ يُقرأ من آخر القاعة قبل أن يُقرأ الرقم. */
+.gwrd[data-state="paused"] {
+  --gw-stroke: var(--card-stroke-warning);
+  --gw-aurora: var(--aurora-warning);
+  --gw-ink: var(--warning-700);
+  --gw-word: var(--warning-900);
+  --shadow-tone: var(--shadow-tone-warning);
+}
+.gwrd[data-urgent="true"] {
+  --gw-stroke: var(--card-stroke-danger);
+  --gw-aurora: var(--aurora-danger);
+  --gw-ink: var(--danger-700);
+  --gw-word: var(--danger-900);
+  --shadow-tone: var(--shadow-tone-danger);
+}
+.gwrd[data-state="ended"] {
+  --gw-stroke: var(--card-stroke-success);
+  --gw-aurora: var(--aurora-success);
+  --gw-ink: var(--success-700);
+  --gw-word: var(--success-900);
+  --shadow-tone: var(--shadow-tone-success);
+}
+
+/* ── رقمُ الجولة: كبسولةٌ بأيقونة، تُقال همسًا فوق الكلمة ───────────────────── */
+.gwrd-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--gw-ink) 10%, var(--color-surface));
+  font-family: var(--font-latin);
+  font-size: clamp(11px, 1.5cqi, 16px);
+  font-weight: 700;
+  /* ق٣: لا تباعدَ لحروفٍ قد تكون عربيّة — يقطع وصلَها. */
+  letter-spacing: 0;
+  color: var(--gw-ink);
+}
+.gwrd-meta svg { width: 1.1em; height: 1.1em; flex: none; }
+
+/* ── الكلمةُ نفسُها: بطلُ اللوح ─────────────────────────────────────────────── */
+.gwrd-word {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 17cqi, 11rem);
+  line-height: 1.12;
+  color: var(--gw-word);
+  /* تتبع النغمةَ بالمدّة نفسِها التي يتبعها بها الحدُّ والسطح، فيتحوّل اللوحُ كتلةً
+     واحدةً لا أجزاءً يسبق بعضُها بعضًا. */
+  transition: color .3s ease;
+  /* كلمةٌ طويلةٌ لا تُقصّ ولا تفيض: تلتفّ وتضيق باللوح. */
+  overflow-wrap: anywhere;
+  /* تدخل صاعدةً مع كلّ جولةٍ جديدة (المفتاح `key` عند المستدعي يُعيد تركيبها). */
+  animation: gwrd-enter .42s cubic-bezier(.22, 1, .36, 1) both;
+}
+/* الموقوفةُ تخفت ولا تختفي: الكلمةُ باقيةٌ أمام الناس والحقلُ مقفَل. */
+.gwrd[data-state="paused"] .gwrd-word { opacity: .4; }
+
+@keyframes gwrd-enter {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── الساعة: أيقونةٌ ورقمٌ لا يرقص ──────────────────────────────────────────── */
+.gwrd-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-latin);
+  font-variant-numeric: tabular-nums;   /* الرقمُ لا يرقص وهو ينزل */
+  font-weight: 800;
+  font-size: clamp(1.1rem, 3.4cqi, 2.4rem);
+  color: var(--gw-ink);
+}
+.gwrd-clock svg { width: 1em; height: 1em; flex: none; }
+/* آخرُ عشرِ ثوانٍ: نبضةٌ على الأيقونة وحدها لا على الرقم — الرقمُ يُقرأ، والنبضُ يُرى. */
+.gwrd[data-urgent="true"] .gwrd-clock svg { animation: gwrd-beat 1s ease-in-out infinite; }
+/* والموقوفةُ تُظهر أيقونةَ وقفٍ ساكنة: حركةٌ في حالٍ متجمّدة تكذب. */
+.gwrd[data-state="paused"] .gwrd-clock svg { animation: none; }
+
+@keyframes gwrd-beat {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+/* ── المضمار: الوقتُ يُرى قبل أن يُقرأ ──────────────────────────────────────── */
+.gwrd-rail {
+  width: min(100%, 640px);
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-text) 10%, transparent);
+  overflow: hidden;
+}
+.gwrd-rail > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gw-ink);
+  /* الانتقالُ خطّيٌّ بمقدار النبضة: أيُّ تنعيمٍ آخر يجعل المضمار يتخلّف عن الرقم. */
+  transition: width .25s linear, background .3s ease;
+}
+/* الموقوفُ يُخطَّط: السكونُ وحده يُقرأ «انتهى» أيضًا، والخطُّ يقول «متوقّف». */
+.gwrd[data-state="paused"] .gwrd-rail > span {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--color-surface) 55%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+/* ── لا جولةَ مفتوحة: لوحٌ خالٍ يبدو معطوبًا، فيقول ما ينتظره ───────────────── */
+.gwrd-idle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1rem, 3cqi, 2rem);
+  color: var(--color-text-muted);
+}
+.gwrd-idle svg {
+  width: 1.15em; height: 1.15em; flex: none;
+  color: var(--color-text-muted);
+  animation: gwrd-drift 2.4s ease-in-out infinite;
+}
+@keyframes gwrd-drift {
+  0%, 100% { opacity: .55; }
+  50%      { opacity: 1; }
+}
+
+/* ── الفائز: يُعلَن بوثبةٍ لأنّه الحدث ─────────────────────────────────────── */
+.gwrd-winner {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--success-600) 14%, var(--color-surface));
+  border: var(--card-stroke-w) solid var(--card-stroke-success);
+  font-weight: 800;
+  font-size: clamp(.95rem, 2.4cqi, 1.5rem);
+  color: var(--success-700);
+  /* وثبةُ صحِّ زرّ النسخ نفسُها (‏.3 ← 1.18 ← 1 في .34s) — إشارةُ «تمّ» واحدةٌ في الموقع. */
+  animation: gwrd-pop .34s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.gwrd-winner svg { width: 1.15em; height: 1.15em; flex: none; }
+
+@keyframes gwrd-pop {
+  0%   { opacity: 0; transform: scale(.3); }
+  60%  { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── الزينةُ المتطايرة: قصاصاتٌ تسقط لحظةَ إعلان الفائز ────────────────────────
+   طبقةٌ فوق اللوح لا تُلمَس ولا تُقرأ (`pointer-events` مرفوعة و`aria-hidden`)،
+   ومحصورةٌ بحدوده (`overflow: hidden` على `.gwrd`) فلا تتساقط على الصفحة كلِّها.
+   والقصاصةُ تسقط وتلتفّ وتذوب مرّةً واحدة (`forwards`) فلا تدور بلا نهايةٍ خلف
+   الكلمة. وألوانُها من السلّم لا من `#hex` (ق١). */
+.gwrd-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.gwrd-confetti > span {
+  position: absolute;
+  top: -12%;
+  inset-inline-start: var(--x);
+  width: 9px;
+  height: 14px;
+  /* زاويةٌ صغيرةٌ من السلّم لا قيمةٌ صريحة (ق٢). */
+  border-radius: var(--radius-xs);
+  background: var(--c);
+  opacity: 0;
+  animation: gwrd-fall var(--t) var(--d) cubic-bezier(.25, .6, .4, 1) forwards;
+}
+/* واحدةٌ من كلّ ثلاثٍ دائرةٌ لا مستطيل: الخلطُ يجعلها زينةً لا شبكةً منتظمة. */
+.gwrd-confetti > span:nth-child(3n) {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+/* وواحدةٌ من كلّ أربعٍ أنحف وأطول. */
+.gwrd-confetti > span:nth-child(4n) { width: 5px; height: 17px; }
+
+@keyframes gwrd-fall {
+  0%   { opacity: 0; transform: translateY(0) rotate(0); }
+  8%   { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(clamp(240px, 46cqi, 640px)) rotate(var(--r)); }
+}
+
+/* **ومن طلب سكونًا سكنت**: القاعةُ فيها من يؤذيه الوميض، والحركةُ هنا زينةُ معنًى
+   لا معنًى بنفسها — فتسقط كلُّها ويبقى اللونُ والرقمُ يقولان الحال. */
+@media (prefers-reduced-motion: reduce) {
+  .gwrd-word, .gwrd-winner, .gwrd-clock svg, .gwrd-idle svg { animation: none; }
+  .gwrd, .gwrd-rail > span, .gwrd-word { transition: none; }
+  /* والزينةُ تُرفَع كلَّها لا تُجمَّد: قصاصةٌ واقفةٌ في الهواء عطبٌ يُرى، والفوزُ
+     تقوله الكبسولةُ الخضراءُ ونغمةُ اللوح. */
+  .gwrd-confetti { display: none; }
 }
 
 /* ============================================================
@@ -9045,7 +9406,7 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 
 /* ── الشريط الملازم ──────────────────────────────────────────────── */
 /* **مثبَّتٌ بالشاشة لا بالقسم.** كُتب `absolute` أوّلًا لأنّ معاينتَه تسكن إطارًا،
-   فالتصق في الإنتاج بأسفل `.rad` (وهو `relative`) وافترش عرضَ القسم كلَّه. */
+   فالتصق في الإنتاج بأسفل `.rad` وافترش عرضَ القسم كلَّه. */
 .radn-bar {
   position: fixed; inset-inline: 12px; bottom: 12px; z-index: 30;
   max-width: 72rem; margin-inline: auto;
@@ -9067,7 +9428,6 @@ svg.cur-trail { width: 100%; height: 100%; overflow: visible; transition: opacit
 .radn-bar-art img { width: 100%; height: 100%; object-fit: cover; }
 .radn-bar-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
 .radn-bar-t { font-size: .875rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* الصفُّ كلُّه يعيد إلى الحلقة، والزرُّ يعلوه بطبقةٍ فينجو من ظلّه. */
 .radn-bar-t::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
 .radn-bar-b { position: relative; z-index: 1; }
 /* واسمُ البرنامج يُقصّ كما يُقصّ العنوان، وإلّا التفّ فكبّر الشريطَ فوق فسحته */

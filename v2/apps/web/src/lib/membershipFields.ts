@@ -21,6 +21,23 @@ export const DEGREES: { value: string; label: string }[] = [
 export const DEGREE_VALUES: string[] = DEGREES.map((d) => d.value);
 
 /**
+ * مفردات الجنس — مصدر واحد للتسميتين العربيّتين والرمزين الإنجليزيّين.
+ * الرمز يحرسه القيد في القاعدة (`profiles.gender`)، والتسمية للعرض وحدَه. وكانت
+ * التسميتان مكتوبتين حرفًا حرفًا في ثلاثة مواضع (نموذج الإكمال · بطاقة الملفّ الشخصيّ ·
+ * مرشِّح كشف الأعضاء)، فجُمعت هنا كما جُمعت الدرجة.
+ *
+ * والقيمة **تحتمل الغياب**: الموقوف ومن لم يُكمل سجلَّه بلا جنسٍ عمدًا، فلا يُفترض ذكرًا.
+ */
+export const GENDERS: { value: string; label: string }[] = [
+  { value: "male", label: "ذكر" },
+  { value: "female", label: "أنثى" },
+];
+
+/** الرمز → التسمية؛ و`null` لمن لا جنسَ في سجلّه (فتقولها الشاشةُ بخانةٍ فارغة لا بتخمين). */
+export const genderLabel = (v: string | null | undefined): string | null =>
+  GENDERS.find((g) => g.value === v)?.label ?? null;
+
+/**
  * هل تصحب الدرجةَ كلّيةٌ وتخصّصٌ ورقمٌ أكاديميّ؟ — مصدر واحد للطبقات الثلاث:
  * النموذج (يُظهر الحقول ويُلزمها) · الفعل الخادميّ (يكتب أو يمحو) · القيد member_details_academic_fields_check.
  *

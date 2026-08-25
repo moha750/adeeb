@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { ICONS, IconDashboard, IconMenu } from "./icons";
 import type { NavGroup, NavItem } from "./nav";
-import { DuotoneZone, X } from "@/app/_components/glyphs";
+import { DuotoneZone, GlyphZone, X } from "@/app/_components/glyphs";
 import { HelpCenter } from "./HelpCenter";
 
 /**
@@ -130,7 +130,9 @@ export function MobileTabs({
  * موضعُها ومقاسُها ومقبضُها. (قرار المالك ٢٠٢٦-٠٨-٢٠: «أريد تصميم mnsh مثل الشريط».)
  *
  * و`DuotoneZone` تردّ المستثنى من الأيقونات إلى وزن الموقع ما دام على لوحٍ مذهّب —
- * كما تفعل في الشريط سواءً بسواء.
+ * كما تفعل في الشريط سواءً بسواء. **إلّا زرَّ الإغلاق**: ليس بندَ تنقّلٍ حتى يلبس لبسَه،
+ * فيُثقَب له في المنطقة ثقبٌ (`GlyphZone`) تبقى فيه `×` على وزن الاستثناء
+ * (أمرُ المالك ٢٠٢٦-٠٨-٢٣).
  */
 export function MobileSheet({
   nav,
@@ -197,7 +199,9 @@ export function MobileSheet({
         <div className="ash-brand">
           <span className="ash-mark" aria-hidden><IconDashboard /></span>
           <b className="ash-name">بوّابة أديب</b>
-          <button type="button" className="mnsh-x" aria-label="إغلاق القائمة" onClick={onClose}><X /></button>
+          <button type="button" className="mnsh-x" aria-label="إغلاق القائمة" onClick={onClose}>
+            <GlyphZone><X /></GlyphZone>
+          </button>
         </div>
         <div className="ash-rule" aria-hidden />
 

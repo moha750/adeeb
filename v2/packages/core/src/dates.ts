@@ -50,18 +50,6 @@ export const fmtDayMonth = (iso: string | null | undefined): string => {
   return `${p.day} ${MONTHS[p.month - 1]}`;
 };
 
-/**
- * «١٥ أغسطس ٢٠٢٦، ١٤:٣٠» — حين تلزم الساعةُ بأربعٍ وعشرين (تلميحاتُ مواعيد الاستبيانات).
- * وهي غيرُ `fmtStamp` عمدًا: تلك اثنتا عشرةَ بصباحٍ ومساءٍ لعرضِ العضو، وهذه لسطرٍ إداريٍّ مضغوط.
- * (نُقلت من `lib/date.ts` في ٢٠٢٦-٠٨-١٦ وكانت تقرأ **ساعة الجهاز** فتكذب على الخادم.)
- */
-export const fmtDateAndTime = (iso: string | null | undefined): string => {
-  const day = fmtDate(iso);
-  if (!day) return "";
-  const p = parts(new Date(iso as string));
-  return `${day}، ${p.hour}:${p.minute}`;
-};
-
 /** شهرٌ وسنةٌ بلا يوم — اسمُ الدورة الانتخابيّة («أغسطس 2026»)، فاليومُ لا يميّز دورةً عن دورة. */
 export const fmtMonthYear = (iso: string | null): string => {
   if (!iso) return "";
@@ -77,8 +65,13 @@ export const fmtMonthYear = (iso: string | null): string => {
  * والساعةُ **اثنتا عشرةَ بصباحٍ ومساء** (قرار المالك): «11:59 م» لا «23:59» — هكذا يقرأ
  * الناسُ الوقتَ عندنا. والحسابُ هنا لا بـ`hour12` من `Intl`، إذ يُخرج «PM» أو «م» بحسب
  * اللغة المطلوبة، والصيغةُ يجب أن تكون واحدةً لا تتبدّل بلغة التنسيق.
+ *
+ * **وهي الطابعُ الوحيد** منذ ٢٠٢٦-٠٨-٢٥: كانت بجانبها `fmtDateAndTime` بأربعٍ وعشرين
+ * («٢١ أغسطس ٢٠٢٦، ٠٢:٠٦») بحجّة أنّ السطر الإداريَّ أضيق، فصار للحظةِ الواحدة صيغتان
+ * تختلفان بحسب الشاشة التي وقعت فيها. أمر المالك بصيغةٍ واحدةٍ بصباحٍ ومساء، فأُعدمت
+ * الأخرى وورثت هذه مواضعَها الأربعة.
  */
-export const fmtStamp = (iso: string | null): string => {
+export const fmtStamp = (iso: string | null | undefined): string => {
   const day = fmtDate(iso);
   if (!day) return "";
   const p = parts(new Date(iso as string));

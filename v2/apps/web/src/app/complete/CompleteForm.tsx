@@ -9,16 +9,11 @@ import {
   User, Phone, Hash, Envelope, At, IdentificationCard, CalendarBlank, Certificate, GraduationCap, Buildings, BookOpen, Books, GenderIntersex, Palette,
   XLogo, InstagramLogo, TiktokLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { PencilSimple } from "@/app/_components/glyphs";
-import { DEGREES, hasAcademicFields, NATIONAL_ID_LEN, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX } from "@/lib/membershipFields";
+import { DEGREES, GENDERS, hasAcademicFields, NATIONAL_ID_LEN, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX } from "@/lib/membershipFields";
 import { completeSchema, emptyComplete, type CompleteInput } from "./vocab";
 import { completeMyRecord } from "./actions";
 
 export type Prefill = { fullName: string; phone: string; email: string };
-
-const GENDERS = [
-  { value: "male", label: "ذكر" },
-  { value: "female", label: "أنثى" },
-];
 
 /**
  * نموذج إكمال السجلّ — نسخةٌ مجرّدةٌ من نموذج الالتحاق القديم بلا كلمة مرورٍ ولا تفعيل:

@@ -82,10 +82,18 @@ export type ToolbarProps = {
  * **وزرّان متجاوران لا زرٌّ داخل زرّ** — الثاني وسمٌ غيرُ صالحٍ ولا تصل إليه لوحةُ
  * المفاتيح؛ فالحدُّ والسطحُ على الغلاف، والزرّان شفّافان بداخله يبدوان واحدًا.
  */
+/**
+ * خياراتُ المرشِّح **بلا خيار «الكل»**: صفُّ «الكل» يرسمه المرشِّحُ نفسُه (في المنسدل
+ * وفي نافذة الجوّال)، فإن كتبته الشاشةُ في خياراتها ظهر مرّتين — وكلتاهما مؤشَّرةٌ
+ * بعلامة الاختيار، لأنّ قيمتهما واحدةٌ (خالية). فالخيارُ الخالي يُنخَل هنا: مصدرُ
+ * «الكل» واحدٌ في المكوّن، والشاشةُ تقول ما يخصُّها فقط.
+ */
+const realOpts = (def: FilterDef): FilterOption[] => def.options.filter((o) => o.value !== "");
+
 export function FilterSelect({ def, value, onChange, icon }: { def: FilterDef; value: string; onChange: (v: string) => void; icon?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const selected = def.options.find((o) => o.value === value);
+  const selected = realOpts(def).find((o) => o.value === value);
   return (
     <div className={"tb-fs" + (open ? " open" : "") + (value ? " set" : "")}>
       <button ref={btnRef} type="button" className={"tb-fs-btn" + (value ? " on" : "")} onClick={() => setOpen((o) => !o)}>
@@ -108,7 +116,7 @@ export function FilterSelect({ def, value, onChange, icon }: { def: FilterDef; v
           <span className="tb-fs-txt">الكل</span>
           <Check className="tb-fs-ck" aria-hidden />
         </button>
-        {def.options.map((o) => (
+        {realOpts(def).map((o) => (
           <button key={o.value} type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
             <span className="tb-fs-txt">{o.label}</span>
             <Check className="tb-fs-ck" aria-hidden />
@@ -126,7 +134,7 @@ function SheetRow({ def, value, onChange }: { def: FilterDef; value: string; onC
       <div className="tbs-label">{def.label}</div>
       <div className="tbs-opts">
         <button type="button" className={"tbs-opt" + (!value ? " on" : "")} onClick={() => onChange("")}>الكل</button>
-        {def.options.map((o) => (
+        {realOpts(def).map((o) => (
           <button key={o.value} type="button" className={"tbs-opt" + (o.value === value ? " on" : "")} onClick={() => onChange(o.value)}>
             {o.label}
           </button>
@@ -156,6 +164,19 @@ export function Toolbar({
   }
 
   const activeCount = Object.values(filterValues).filter(Boolean).length;
+
+  /**
+   * **الرفعُ الجَمعيُّ لا يُنتظر من الشاشة.** كان زرُّ «إعادة تعيين» في ذيل النافذة ينادي
+   * `onReset` وحدَها وهي **اختياريّة**: فالشاشةُ التي لم تمرّرها (سجلُّ ديبو) يظهر لها زرٌّ
+   * حيٌّ — لأنّ تعطيلَه معلَّقٌ بعدد المرشّحات لا بوجود المُنادى — فيُنقر فتُغلق النافذةُ
+   * ولا يُرفع مرشِّح. والجذرُ أنّ الرفع كان مُلقًى على المستدعي وهو ليس مِلكَه: الشريطُ
+   * يملك أسماءَ المرشّحات وقيمَها ومنفذَ تغييرها، فيرفعها بنفسه `onFilter(key, "")`.
+   * و`onReset` تبقى **نقضًا** لمن أراد أن يرفع البحثَ معها (السجلّ المحفوظ للباركود).
+   */
+  const resetFilters = () => {
+    if (onReset) { onReset(); return; }
+    filters?.forEach((f) => { if (filterValues[f.key]) onFilter?.(f.key, ""); });
+  };
 
   return (
     <>
@@ -208,7 +229,7 @@ export function Toolbar({
         size="sm"
         footer={
           <>
-            <Button variant="ghost" size="md" onClick={() => { onReset?.(); setSheet(false); }} disabled={!activeCount}>
+            <Button variant="ghost" size="md" onClick={() => { resetFilters(); setSheet(false); }} disabled={!activeCount}>
               إعادة تعيين
             </Button>
             <Button variant="primary" size="md" onClick={() => setSheet(false)}>تمّ</Button>

@@ -1,6 +1,6 @@
 import {
   Buildings, IdentificationBadge, UsersThree, SealCheck, Tag,
-  CalendarBlank, Bank, LockSimple,
+  CalendarBlank, Bank, LockSimple, GenderIntersex,
 } from "@phosphor-icons/react";
 import { FunnelSimple } from "@/app/_components/glyphs";
 
@@ -20,6 +20,7 @@ const ICONS: Record<string, React.ReactNode> = {
   dept: <Buildings />,           // القسم
   role: <IdentificationBadge />, // الدور · المنصب
   committee: <UsersThree />,     // اللجنة
+  gender: <GenderIntersex />,    // الجنس
   council: <Bank />,             // المجلس
   organizer: <Buildings />,      // الجهة المنظِّمة
   type: <Tag />,                 // النوع

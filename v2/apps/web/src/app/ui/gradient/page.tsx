@@ -1,22 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AngleDial, Container, DirectionPad, PointPad, RangeField, SectionCard } from "@adeeb/design-system";
+import { AngleDial, Container, PointPad, SectionCard } from "@adeeb/design-system";
 import { color } from "@adeeb/design-system/tokens";
 import { qrSvg, type Paint, type QrSpec } from "@/lib/qr";
 import { QrPreview } from "../../dashboard/tools/qr/QrToolView";
 import { SHAPE } from "../../dashboard/tools/qr/defaults";
 
 /**
- * معرضُ **أدوات التدرّج** — ثلاثُ أدواتٍ للاتّجاه ورابعةٌ لمركز الشعاعيّ، تُجرَّب على
- * باركودٍ حيّ.
+ * معرضُ **أدوات التدرّج** — قرصُ الاتّجاه ولوحُ مركز الوهج، على باركودٍ حيّ.
  *
  * العلّةُ أنّ اتّجاه التدرّج كان قائمةً بأربع كلمات، و«مائل معكوس» تُقرأ ثمّ تُترجَم في
  * الذهن إلى صورة. والراسمُ يقبل الزوايا كلَّها أصلًا (يحسبها بالجيب لا من قائمة)، فالقيدُ
  * كان في الواجهة وحدها.
  *
- * **والأدواتُ الثلاثُ تقود زاويةً واحدة**: أدِر القرصَ فيتحرّك المزلقُ وتُضيء خانةُ اللوح،
- * والباركودُ فوقها يتبدّل. فالحكمُ على **إحساس الأداة** لا على مخرَجها، إذ مخرجُها واحد.
+ * وعُرض هنا معهما مقترحان آخران للاتّجاه (لوحُ جهاتٍ ثمانيّ، ومزلقٌ برقم)، فاختار المالكُ
+ * القرصَ ٢٠٢٦-٠٨-٢٢ وأُعدم المرفوضان. فما بقي في هذه الصفحة هو **المعتمَد** لا مقارنة.
  */
 
 const INK = color.navy[700];
@@ -57,35 +56,18 @@ export default function GradientLab() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Gradient Controls</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">أدواتُ التدرّج</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
-          الاتّجاهُ <b>شكلٌ لا كلمة</b>، وكان أربعَ خاناتٍ مكتوبة. وهذه ثلاثُ أدواتٍ تقود
-          الزاويةَ نفسَها: أدِر واحدةً فترى الأخريين والباركودَ يتبعنها. والحكمُ على إحساس
-          الأداة لا على مخرجها، فمخرجُها واحد.
+          الاتّجاهُ <b>شكلٌ لا كلمة</b>، وكان أربعَ خاناتٍ مكتوبة («أفقيّ، رأسيّ، مائل، مائل
+          معكوس»). فصار قرصًا يُدار، والزوايا كلُّها مفتوحة. وللشعاعيّ لوحٌ يُنقل به مركزُ
+          الوهج بعد أن كان في القلب دائمًا.
         </p>
       </Container>
 
       <div className="mx-auto w-full max-w-[1320px] px-6">
         <div className="card-grid mt-12">
-          <SectionCard headerVariant="soft" title="الاتّجاه: ثلاثُ أدواتٍ لزاويةٍ واحدة">
-            <div className="flex flex-wrap items-start gap-8">
-              <div className="flex flex-col items-center gap-3">
-                <span className="text-sm font-bold text-content-muted">أ: قرصٌ يُدار</span>
-                <AngleDial value={angle} onValueChange={setAngle} aria-label="اتّجاه التدرّج" />
-                <span className="fld-help">اسحب على القرص. يلتقط كلَّ ١٥ درجة، ومع Shift درجةً درجة.</span>
-              </div>
-
-              <div className="flex flex-col items-center gap-3">
-                <span className="text-sm font-bold text-content-muted">ب: لوحُ جهات</span>
-                <DirectionPad value={angle} onValueChange={setAngle} aria-label="اتّجاه التدرّج" />
-                <span className="fld-help">ثماني جهاتٍ بنقرة، بلا تصويب.</span>
-              </div>
-
-              <div className="min-w-[240px] flex-1">
-                <span className="text-sm font-bold text-content-muted">ج: مزلقٌ برقم</span>
-                <div className="mt-3">
-                  <RangeField value={angle} onValueChange={setAngle} min={0} max={359} step={1} unit="°" />
-                </div>
-                <span className="fld-help">دقّةُ درجةٍ واحدة، وأضعفُها بيانًا: رقمٌ لا يقول شكلًا.</span>
-              </div>
+          <SectionCard headerVariant="soft" title="اتّجاه التدرّج الخطّيّ">
+            <div className="flex flex-col items-center gap-3">
+              <AngleDial value={angle} onValueChange={setAngle} aria-label="اتّجاه التدرّج" />
+              <span className="fld-help">اسحب على القرص. يلتقط كلَّ ١٥ درجة، ومع Shift درجةً درجة، والأسهمُ تقوده من لوحة المفاتيح.</span>
             </div>
 
             <div className="mt-6 flex justify-center">
@@ -98,12 +80,8 @@ export default function GradientLab() {
               كان الوهجُ في القلب دائمًا. واللوحُ يحرّكه إلى أيّ موضع، وخلفيّتُه التدرّجُ نفسُه
               فما تحت إصبعك هو ما سيخرج.
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-8">
+            <div className="mt-4 flex justify-center">
               <PointPad x={cx} y={cy} onChange={(x, y) => { setCx(x); setCy(y); }} preview={padBg} aria-label="مركز التدرّج" />
-              <div className="flex-1 min-w-[220px] flex flex-col gap-3">
-                <RangeField label="الأفقيّ" value={cx * 100} onValueChange={(v) => setCx(v / 100)} min={0} max={100} unit="%" />
-                <RangeField label="الرأسيّ" value={cy * 100} onValueChange={(v) => setCy(v / 100)} min={0} max={100} unit="%" />
-              </div>
             </div>
 
             <div className="mt-6 flex justify-center">

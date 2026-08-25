@@ -215,6 +215,7 @@ export default function CardsViewPage() {
           </div>
         </div>
       </Sec>
+
     </Container>
   );
 }

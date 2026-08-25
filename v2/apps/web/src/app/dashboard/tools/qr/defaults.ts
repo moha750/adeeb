@@ -32,20 +32,41 @@ export const SHAPE = { dots: "fluid", eye: "rounded", pupil: "rounded" } as cons
  */
 export const EXPORT = 2048;
 
+/**
+ * **مقاسُ الشعار مثبَّتٌ على الأكبر** (أمرُ المالك ٢٠٢٦-٠٨-٢٥). كان ثلاثةَ خيارات
+ * (صغيرٌ ومتوسّطٌ وكبير)، وحُذفت: **حدُّ المواصفة نفسُه** هو ٠٫٣ من ضلع الباركود، وما دونه
+ * يصغّر الشعارَ ولا يزيد أمانَ المسح شيئًا يُذكر (التصحيحُ يرتفع إلى `H` بمجرّد وجوده).
+ * فيُؤخذ الأكبرُ دائمًا ولا يُسأل صاحبُ الشعار سؤالًا لا جوابَ خاطئًا له.
+ */
+export const LOGO_SCALE = 0.3;
+
 /** الهيئةُ الأولى: حبرٌ كحليٌّ على أرضٍ بيضاء، بلا تدرّجٍ ولا شعارٍ ولا إطار. */
 export const LOOK = {
   ink: color.navy[700],
   ink2: color.steel[400],
   gradKind: "linear" as const,
-  angle: "135",
-  bare: false,
+  angle: 135,
+  /** مركزُ الوهج في التدرّج الشعاعيّ: القلب، نسبةً من الضلع. */
+  cx: 0.5,
+  cy: 0.5,
+  /**
+   * **الخلفيّةُ مطفأةٌ في الأصل** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): الغالبُ أنّ الباركود يُوضَع على
+   * تصميمٍ له لونُه، فأرضيّةٌ بيضاءُ مفروضةٌ تُقصّ باليد. ومن أرادها أشعل المبدّل فأخذ اللون
+   * أدناه.
+   *
+   * **والمبدّلُ يُشعِل الخلفيّةَ لا ينفيها**: كان «بلا خلفيّة» يُشعَل ليُطفئها، ومبدّلٌ
+   * إشعالُه نفيٌ يقرأه المستعملُ مرّتين قبل أن يفهمه.
+   */
+  hasBg: false,
   bg: "#ffffff",
   eyeTinted: false,
   eyeColor: color.navy[900],
   pupilColor: color.semantic.warning,
-  logoScale: "0.24",
   framed: false,
-  caption: "امسحني",
+  /** شكلُ الإطار وموضعُ ندائه حين يُشعَل (المعتمَد ٢٠٢٦-٠٨-٢٥، معرضُه `/ui/qr-frames`). */
+  frameStyle: "band" as const,
+  framePlace: "bottom" as const,
+  caption: "امسح الباركود",
   frameColor: color.navy[700],
   captionColor: "#ffffff",
 };
@@ -57,7 +78,7 @@ export const defaultQrSpec = (text: string): QrSpec => ({
   dots: { shape: SHAPE.dots, paint: { kind: "solid", color: LOOK.ink } },
   eye: { shape: SHAPE.eye, color: null },
   pupil: { shape: SHAPE.pupil, color: null },
-  bg: LOOK.bg,
+  bg: null,
   logo: null,
   frame: null,
 });

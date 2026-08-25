@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CLUB_TZ, fmtDate, fmtDayMonth, fmtMonthYear, fmtStamp, fromClubInput, toClubInput } from "@/lib/dates";
-import { fmtDateAndTime, fmtDateOnly, fmtSince } from "@/lib/dates";
+import { fmtDateOnly, fmtSince } from "@/lib/dates";
 
 /**
  * ساعةُ النادي — **الرياض لا ساعةُ الجهاز**. وهذا الملفُّ هو الجواب المكتوب على العطب الذي
@@ -160,7 +160,7 @@ describe("toClubInput و fromClubInput", () => {
  * ساعةَ الجهاز فيكذب على الخادم. فأُعدم وانتقلت دالّتاه إلى هذا المصدر الواحد،
  * وههنا يُثبَّت أنّهما قِيسَتا بعد النقل لا قبله.
  */
-describe("الوافدتان: fmtDateOnly و fmtDateAndTime", () => {
+describe("الوافدة: fmtDateOnly", () => {
   /**
    * عمودُ `date` الخالص **لا يمرّ بـ`Date`** عمدًا: `new Date("2026-01-16")` يُفسَّر منتصفَ
    * ليلٍ بغرينتش، ثمّ تُقرأ أجزاؤه بمنطقةٍ أخرى فينقص التاريخ يومًا. والشطرُ النصّيّ يُنجيه:
@@ -190,27 +190,15 @@ describe("الوافدتان: fmtDateOnly و fmtDateAndTime", () => {
     expect(fmtDateOnly("لا شيء")).toBe("");
   });
 
-  // بأربعٍ وعشرين لا باثنتي عشرة — وهي غيرُ `fmtStamp` عمدًا: تلك لعرض العضو وهذه لسطرٍ إداريّ
-  it("fmtDateAndTime ساعةٌ بأربعٍ وعشرين مصفوفةٌ بخانتين", () => {
-    expect(fmtDateAndTime("2026-08-16T12:00:00Z")).toBe("16 أغسطس 2026، 15:00");
-    expect(fmtDateAndTime("2026-08-16T05:05:00Z")).toBe("16 أغسطس 2026، 08:05");
-  });
-
-  // وهي بساعة الرياض كأخواتها بعد النقل — وكانت قبله تقرأ ساعةَ الجهاز
-  it("fmtDateAndTime يتبع ساعةَ النادي لا ساعةَ المُشغِّل", () => {
-    expect(fmtDateAndTime("2026-08-16T21:30:00Z")).toBe("17 أغسطس 2026، 00:30");
-  });
-
-  it("fmtDateAndTime يردّ الفارغ والفاسد", () => {
-    expect(fmtDateAndTime(null)).toBe("");
-    expect(fmtDateAndTime("لا شيء")).toBe("");
-  });
-
-  // والملفّان صارا واحدًا: من أعاد `lib/date` أعاد معه احتمالَ يومين لتاريخٍ واحد
-  it("لا `fmtStamp` ولا `fmtDateAndTime` يفترقان عن يوم `fmtDate`", () => {
+  /**
+   * والطابعُ صار واحدًا (٢٠٢٦-٠٨-٢٥): `fmtDateAndTime` بأربعٍ وعشرين أُعدمت، وورثت
+   * `fmtStamp` مواضعَها. وما يُثبَّت ههنا أثرُ الإعدام: يومُ الطابع لا يفارق `fmtDate`
+   * — وهي العلّةُ التي أعدمت `lib/date.ts` أصلًا (ساعةُ الجهاز تُنقص يومًا بعد ٢١:٠٠).
+   */
+  it("طابعُ اللحظة لا يفارق يومَ fmtDate", () => {
     const iso = "2026-08-16T21:30:00Z";
     expect(fmtStamp(iso).startsWith(fmtDate(iso))).toBe(true);
-    expect(fmtDateAndTime(iso).startsWith(fmtDate(iso))).toBe(true);
+    expect(fmtStamp(iso)).toBe("17 أغسطس 2026 الساعة 12:30 ص");
   });
 });
 

@@ -18,8 +18,6 @@
  * · **العيون الثلاث** بنيةٌ يبحث عنها القارئ أوّلًا، فتُرسَم كاملةً مهما تغيّر شكلُها.
  * · **الشعارُ يُفرِّغ ما تحته ولا يُغطّيه**، ويرفع تصحيح الخطأ إلى `H` — فالثلاثون بالمئة
  *   تستعيد ما فُرِّغ. والتغطيةُ بلا تفريغٍ تُبقي حبرًا يُربك القارئ تحت صورةٍ تحجبه.
- * · **التباين يُقاس لا يُظَنّ** (`contrast`): تدرّجٌ فاتحٌ على خلفيّةٍ فاتحة يخرج جميلًا
- *   في الشاشة ولا يُمسح في الورق.
  */
 
 import qrcode from "qrcode-generator";
@@ -94,7 +92,30 @@ export type QrLogo = {
 };
 
 /** الإطار — طوقٌ ونداءٌ تحته، للملصقات. */
-export type QrFrame = { color: string; caption: string; textColor: string };
+/**
+ * **شكلُ الإطار** (معرضُه `/ui/qr-frames`): `band` طوقٌ وشريطُ نداء · `ring` طوقٌ صامتٌ بلا
+ * نداء · `bubble` فقاعةُ كلامٍ بذيلٍ تشير إلى الباركود.
+ *
+ * وأُعدمت `corners` (أربعُ زوايا مفتوحة) بأمر المالك ٢٠٢٦-٠٨-٢٥ بعد عرضها في المعرض.
+ */
+export type QrFrameStyle = "band" | "ring" | "bubble";
+
+/**
+ * **موضعُ النداء**: فوق الباركود أو تحته، واحدٌ لا اثنان (قرارُ المالك ٢٠٢٦-٠٨-٢٥ بعد أن
+ * جُرّبت فقاعتان معًا). و`ring` لا يعنيه الموضعُ إذ لا نداءَ فيه.
+ *
+ * **والموضعُ مستقلٌّ عن الشكل** عمدًا: سؤالان لا سؤالٌ واحد، فلا تتضاعف الأشكالُ بعدد
+ * المواضع كلّما زِيد موضعٌ أو شكل.
+ */
+export type QrFramePlace = "top" | "bottom";
+
+export type QrFrame = {
+  color: string;
+  caption: string;
+  textColor: string;
+  style?: QrFrameStyle;
+  place?: QrFramePlace;
+};
 
 /** كلّ ما يصف رمزًا واحدًا. */
 export type QrSpec = {
@@ -246,40 +267,87 @@ function paintOf(paint: Paint, id: string): { def: string; ref: string } {
   return { def: g, ref: `url(#${id})` };
 }
 
-/**
- * نسبةُ التباين بين لونين (WCAG). **تُقاس ولا تُظَنّ** — الرمز يُقرأ بالتباين، وحبرٌ جميلٌ
- * على خلفيّةٍ قريبةٍ منه يخرج في الشاشة ويُخفق في الورق. تقبل `#rgb` و`#rrggbb`.
- */
-export function contrast(a: string, b: string): number {
-  const lum = (hex: string): number => {
-    const h = hex.replace("#", "").trim();
-    const full = h.length === 3 ? h.split("").map((x) => x + x).join("") : h;
-    const v = [0, 2, 4].map((i) => {
-      const c = parseInt(full.slice(i, i + 2), 16) / 255;
-      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
-  };
-  try {
-    const [x, y] = [lum(a), lum(b)];
-    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
-  } catch {
-    return 0;
-  }
-}
-
-/** ألوانُ الحبر كلُّها — لِيُقاس أضعفُها تباينًا مع الخلفيّة. */
-export function inkColors(spec: QrSpec): string[] {
-  const p = spec.dots?.paint ?? { kind: "solid" as const, color: "#000000" };
-  const base = p.kind === "solid" ? [p.color] : [p.from, p.to];
-  const eyes = [spec.eye?.color, spec.pupil?.color].filter((c): c is string => !!c);
-  return [...base, ...eyes];
-}
 
 /* ── الرسم ──────────────────────────────────────────────────────────────── */
 
 /** الإطار بنسبٍ من ضلع الرمز — فلا مقاسَ محفورٌ يكسر عند تغيير الحجم. */
-const FRAME = { pad: 0.06, radius: 0.08, caption: 0.17, text: 0.5, stroke: 0.02 };
+/**
+ * قياساتُ الإطار نسبةً إلى ضلع الرمز. والحشوةُ ضاقت ثلاثَ مرّاتٍ بأمر المالك (٦٪ فـ٣٫٥٪
+ * فـ٢٪ فـ١٫٢٪): الطوقُ حدٌّ يلاصق الرمزَ لا لوحٌ يحمله.
+ */
+const FRAME = {
+  radius: 0.08,
+  caption: 0.17,
+  text: 0.5,
+  /** سُمكُ الطوق. وتغليظُه لا يوسّع الفراغَ حول الرمز: الحدُّ الداخليّ يبقى حيث هو، ويكبر
+   *  اللوحُ من خارجه (انظر `edge` في `frameGeom`). */
+  stroke: 0.018,
+  /**
+   * فراغٌ بين الرمز والفقاعة، **يُزاد إلى ارتفاع اللوح لا يُقتطع منه**.
+   *
+   * كانت الفقاعةُ تُزاح داخل حيّزها فتخرج من أسفله وتُقصّ (رآها المالك مقصوصةً
+   * ٢٠٢٦-٠٨-٢٥). والفرقُ أنّ الإزاحةَ تحرّك ما في الصندوق، والفراغَ يكبّر الصندوق.
+   */
+  bubbleGap: 0.03,
+  /**
+   * وكم يُقتطع من الهامش الصامت للطوق والشريط: القدرُ نفسُه (وحدتان من أربع). فالإطارُ
+   * يلاصق الرمزَ ويبقى للقارئ نصفُ هامشه، وهو ما تفعله مولّداتُ الأطر.
+   */
+  quietBite: 0.055,
+};
+
+/**
+ * **هندسةُ الإطار — مصدرٌ واحد.** يقرؤها ثلاثة: راسمُ SVG، وحاسبُ أبعاد البكسل، وكاتبُ
+ * النداء على canvas في PNG. وكانت محسوبةً في كلٍّ منها على حدة (`h - w` هناك، و`cap` هنا)،
+ * فأوّلُ هيئةٍ يعلو فيها الشريطُ كانت ستكتب النصَّ في القاع.
+ *
+ * والوحدةُ وحدةُ المصفوفة (`side` = وحداتُ الرمز مع هامشه الصامت)، لا البكسل.
+ */
+function frameGeom(spec: QrSpec, side: number) {
+  const fr = spec.frame ?? null;
+  const style: QrFrameStyle = fr?.style ?? "band";
+  // الطوقُ الصامت لا نداءَ له، وغيرُه يأخذ شريطًا إن كان في النداء حرف
+  const wants = !!fr && style !== "ring" && !!fr.caption.trim();
+  const top = (fr?.place ?? "bottom") === "top";
+
+  /**
+   * **حدُّ الإطار الداخليّ خطٌّ واحدٌ من الجهات الأربع.**
+   *
+   * كان الحسابُ يضع حشوةً حول الرمز ثمّ يرسم الطوقَ داخلها ويضع الشريطَ **بعد الحشوة**،
+   * فيخرج الفراغُ أسفلَ الرمز ضعفَ الفراغ عن جانبيه (قِيس: ‏٠٫١٢ من الضلع تحت، و٠٫٠٦ على
+   * الجانب). **رآه المالكُ بعينه قبل أن يُقاس.**
+   *
+   * فصار البناءُ من الحدّ الداخليّ لا من الحشوة: `edge` هو بُعدُ الحدّ الداخليّ للطوق عن
+   * حافّة اللوح (إزاحةٌ زائدُ سُمك)، ويُبنى عليه كلُّ شيء: مربّعُ الرمز يبدأ عنده،
+   * **وشريطُ النداء يبدأ عند حافّة المربّع بعينها**. فالمسافةُ من الحبر إلى كلّ حدٍّ
+   * واحدةٌ: هي الهامشُ الصامت وحدَه (أربعُ وحدات).
+   */
+  const edge = fr ? side * FRAME.stroke * 3 : 0;
+  const cap = wants ? side * FRAME.caption : 0;
+  /**
+   * **اللوحُ يقضم من الهامش الصامت** ليقترب الإطارُ من الحبر: الهامشُ أربعُ وحداتٍ بالمواصفة،
+   * فيُقتطع منه وحدتان ويبقى وحدتان. والقصُّ من الجهات الأربع بالسويّة، فالمربّعُ المرئيّ
+   * أصغرُ من مربّع الرمز، والرمزُ يُرسَم كاملًا ويقع ما قُصّ خارج اللوح (وهو هامشٌ لا حبرَ فيه).
+   */
+  const bite = fr ? side * FRAME.quietBite : 0;
+  const box = side - bite * 2;
+  // فراغُ الفقاعة يُضاف إلى الارتفاع، فتسع الفقاعةَ كاملةً ولا تُقصّ
+  const gap = style === "bubble" && cap ? side * FRAME.bubbleGap : 0;
+  const W = box + edge * 2;
+  const H = cap ? edge + box + gap + cap : W;
+  return {
+    fr, style, cap, top, W, H, edge, box, gap,
+    /** إزاحةُ الرمز أفقيًّا: يخرج طرفُه المقصوص خارج اللوح. */
+    dx: edge - bite,
+    /** إزاحةُ الرمز رأسيًّا: النداءُ العلويّ يدفعه إلى أسفل بقدره، والقصُّ يرفعه بقدره. */
+    dy: (top && cap ? cap + gap : edge) - bite,
+    /**
+     * مراكزُ سطور النداء رأسيًّا (بوحدة المصفوفة). قائمةٌ لا رقمٌ واحد: يقرؤها الراسمُ
+     * وكاتبُ النصّ على canvas معًا، فلا موضعان يفترقان.
+     */
+    capMids: !cap ? [] : top ? [cap / 2] : [H - cap / 2],
+  };
+}
 
 /** التصحيح الفعليّ — الشعار يفرضه `H` مهما طُلب غيره. */
 export const effectiveEcc = (spec: QrSpec): Ecc => (spec.logo ? "H" : spec.ecc ?? "M");
@@ -305,42 +373,100 @@ export function qrSvg(spec: QrSpec, withText = true): string {
   const pupil = spec.pupil ?? { shape: "square" as EyeShape, color: null };
   const { ring, pupil: pupilPath } = eyePaths(m.n, eye.shape, pupil.shape);
 
-  // الإطار يزيد لوحًا حول الرمز: حشوةٌ من كلّ جهة وشريطُ نداءٍ تحته.
-  const fr = spec.frame ?? null;
-  const pad = fr ? side * FRAME.pad : 0;
-  // **الحيّز لا يتبع `withText`** — يتبعه النصّ وحده. ولو سقط الشريط مع نصّه لاختلف
+  // الإطار يزيد لوحًا حول الرمز: حشوةٌ من كلّ جهة وشريطُ نداء. وهيئتُه إحدى خمس.
+  // **والحيّز لا يتبع `withText`** — يتبعه النصّ وحده. ولو سقط الشريط مع نصّه لاختلف
   // اللوحُ عن canvas الذي يُرسَم فيه، فتُمطّ الصورة. (عيبٌ وقع ثمّ صُحّح هنا.)
-  const cap = fr && fr.caption.trim() ? side * FRAME.caption : 0;
-  const W = side + pad * 2;
-  const H = side + pad * 2 + cap;
+  const g = frameGeom(spec, side);
+  const { fr, style, cap, W, H, edge, box } = g;
   const px = spec.size;
   const py = Math.round((px * H) / W);
 
-  // أرضيّةٌ بزوايا مدوّرة خفيفًا كسائر أسطح العلامة — والتدوير يقع في الهامش الصامت فلا يمسّ رمزًا.
+  // قياساتُ الطوق: سُمكُه وإزاحتُه واستدارتُه. تُعلَن قبل الأرضيّة لأنّ الأرضيّةَ تستعير
+  // استدارتَه حين يكون إطار.
+  const sw = side * FRAME.stroke * 2;
+  const inset = side * FRAME.stroke;
+  const rad = side * FRAME.radius;
+
+  /**
+   * أرضيّةٌ بزوايا مدوّرة خفيفًا كسائر أسطح العلامة (والتدوير يقع في الهامش الصامت فلا يمسّ
+   * رمزًا). **ومع الإطار تفرش اللوحَ كلَّه** لا مربّعَ الباركود وحدَه: المؤطَّرُ بطاقةٌ قائمةٌ
+   * بذاتها، فلو بقيت الأرضيّةُ تحت الباركود وحدَه لظهر لونُ الملصق بين الطوق والرمز وبَدا
+   * الطوقُ عائمًا لا محيطًا. وهذا هو المتّبع في مولّدات الأطر: الإطارُ بطاقةٌ تُقصّ.
+   */
+  // والهيئتان الخفيفتان (زوايا وفقاعة) لا تفرشان: ليستا بطاقةً تُقصّ، إنّما علامتان تعومان
+  // على ما تحتهما. فتبقى أرضيّةُ الباركود وحدَها (أمرُ المالك ٢٠٢٦-٠٨-٢٥).
+  const carded = style !== "bubble";
   const plate = spec.bg
-    ? `<rect x="${f(pad)}" y="${f(pad)}" width="${f(side)}" height="${f(side)}" rx="${f(side * 0.05)}" fill="${spec.bg}"/>`
+    ? fr && carded
+      ? `<path d="${boxPath(0, 0, W, H, [rad, rad, rad, rad])}" fill="${spec.bg}"/>`
+      : `<rect x="${f(edge)}" y="${f(g.dy + (side - box) / 2)}" width="${f(box)}" height="${f(box)}" rx="${f(side * 0.05)}" fill="${spec.bg}"/>`
     : "";
 
-  const frameBox = fr
-    ? `<rect x="${f(side * FRAME.stroke)}" y="${f(side * FRAME.stroke)}"` +
-      ` width="${f(W - side * FRAME.stroke * 2)}" height="${f(H - side * FRAME.stroke * 2)}"` +
-      ` rx="${f(side * FRAME.radius)}" fill="none" stroke="${fr.color}" stroke-width="${f(side * FRAME.stroke * 2)}"/>`
-    : "";
+  const frameBox = !fr || style === "bubble"
+    ? ""
+    : `<rect x="${f(inset)}" y="${f(inset)}"` +
+      ` width="${f(W - inset * 2)}" height="${f(H - inset * 2)}"` +
+      ` rx="${f(rad)}" fill="none" stroke="${fr.color}" stroke-width="${f(sw)}"/>`;
 
-  const capBar = fr && cap
-    ? `<path d="${boxPath(0, H - cap, W, cap, [0, 0, side * FRAME.radius, side * FRAME.radius])}" fill="${fr.color}"/>` +
-      (withText
-        ? `<text x="${f(W / 2)}" y="${f(H - cap / 2)}" fill="${fr.textColor}" font-size="${f(cap * FRAME.text)}"` +
-          ` font-family='${FONT}' font-weight="700" text-anchor="middle" dominant-baseline="central"` +
-          ` direction="rtl">${escapeXml(fr.caption)}</text>`
-        : "")
-    : "";
+  /**
+   * سريرُ النداء: شريطٌ يملأ عرضَ اللوح في الهيئتين `band` و`bandTop` و`corners`، وفقاعةٌ
+   * بذيلٍ تشير إلى الباركود في `bubble`. والنصُّ يُكتب في مركزه أيًّا كان موضعُه.
+   */
+  /** فقاعةٌ في مركزٍ معلوم، ذيلُها يشير إلى الباركود: إلى أسفل إن كانت فوقه، وإلى أعلى إن كانت تحته. */
+  const bubbleAt = (mid: number) => {
+    if (!fr) return "";
+    /**
+     * جسمٌ أطولُ وذيلٌ أقصر، **ورفعٌ إلى داخل الهامش الصامت** (`bubbleLift`): أكثرُ ما بين
+     * الفقاعة والحبر ليس فراغًا نختاره، بل الهامشُ الصامتُ نفسُه (أربعُ وحداتٍ = ٦٣٪ من
+     * ارتفاع الشريط). فتزحف الفقاعةُ إليه وحدتين ويبقى وحدتان، وهو ما تفعله مولّداتُ الأطر.
+     *
+     * وزوايا الفقاعة **من زاوية الهوية لا نصفَ دائرة** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): الكبسولةُ
+     * لغةُ الشارات لا لغةُ الأسطح، والفقاعةُ سطحٌ يحمل كلامًا.
+     */
+    const bw = W * 0.72, bx = (W - bw) / 2, bh = cap * 0.9, by = mid - bh / 2;
+    // الذيلُ كان عُشرَ الشريط فلم يكد يُرى (المالك ٢٠٢٦-٠٨-٢٥)، فكبُر مرّتين حتى استبان
+    const tail = cap * 0.26;
+    const br = bh * 0.35;
+    const up = mid < H / 2; // فوق الباركود ⇒ الذيلُ إلى أسفل
+    const ty = up ? by + bh : by;
+    const tip = up ? ty + tail : ty - tail;
+    return (
+      `<path d="${boxPath(bx, by, bw, bh, [br, br, br, br])}" fill="${fr.color}"/>` +
+      `<path d="M${f(W / 2 - tail * 0.9)},${f(ty)}L${f(W / 2)},${f(tip)}L${f(W / 2 + tail * 0.9)},${f(ty)}Z" fill="${fr.color}"/>`
+    );
+  };
+  const capBed = (mid: number) => {
+    if (!fr || !cap) return "";
+    // الفقاعةُ للهيئتين الخفيفتين: شريطٌ ممتدٌّ بعرض اللوح يفترض بطاقةً، وهاتان لا بطاقةَ لهما.
+    if (style === "bubble") return bubbleAt(mid);
+    const y = g.top ? 0 : H - cap;
+    const corners: [number, number, number, number] = g.top ? [rad, rad, 0, 0] : [0, 0, rad, rad];
+    return `<path d="${boxPath(0, y, W, cap, corners)}" fill="${fr.color}"/>`;
+  };
+  const capBar = !fr
+    ? ""
+    : g.capMids
+        .map(
+          (mid) =>
+            capBed(mid) +
+            (withText
+              ? `<text x="${f(W / 2)}" y="${f(mid)}" fill="${fr.textColor}" font-size="${f(cap * FRAME.text)}"` +
+                ` font-family='${FONT}' font-weight="700" text-anchor="middle" dominant-baseline="central"` +
+                ` direction="rtl">${escapeXml(fr.caption)}</text>`
+              : ""),
+        )
+        .join("");
 
+  /**
+   * **الشعارُ بلا لوحٍ خلفه** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): كان يُرسَم تحته مستطيلٌ بلون أرضيّة
+   * الباركود، وهو في الأرضيّة الملوّنة **لا يُرى** (اللونُ نفسُه على اللون نفسِه)، وفي
+   * الأرضيّة الشفّافة يفرض بياضًا لم يطلبه أحد.
+   *
+   * وحذفُه آمنٌ لا مجازفة: الوحداتُ تحت الشعار **مفرَّغةٌ أصلًا** بالمساحة نفسِها التي كان
+   * يغطّيها اللوح (`hole ± LOGO_PAD` في `dotsPath`)، فلا حبرَ يظهر من تحته.
+   */
   const logo = hole
-    ? `<rect x="${f(pad + QUIET + hole.x - LOGO_PAD)}" y="${f(pad + QUIET + hole.y - LOGO_PAD)}"` +
-      ` width="${f(hole.s + LOGO_PAD * 2)}" height="${f(hole.s + LOGO_PAD * 2)}"` +
-      ` rx="${f((hole.s + LOGO_PAD * 2) * 0.18)}" fill="${spec.bg ?? "#ffffff"}"/>` +
-      `<image x="${f(pad + QUIET + hole.x)}" y="${f(pad + QUIET + hole.y)}"` +
+    ? `<image x="${f(g.dx + QUIET + hole.x)}" y="${f(g.dy + QUIET + hole.y)}"` +
       ` width="${f(hole.s)}" height="${f(hole.s)}"` +
       // `href` للمتصفّحات و`xlink:href` لأدوات التصميم القديمة — الملفّ يُفتَح في كلَيهما
       ` href="${escapeXml(spec.logo!.href)}" xlink:href="${escapeXml(spec.logo!.href)}"` +
@@ -352,7 +478,7 @@ export function qrSvg(spec: QrSpec, withText = true): string {
     ` width="${px}" height="${py}" viewBox="0 0 ${f(W)} ${f(H)}" role="img" aria-label="رمز QR">` +
     (def ? `<defs>${def}</defs>` : "") +
     plate +
-    `<g transform="translate(${f(pad)},${f(pad)})">` +
+    `<g transform="translate(${f(g.dx)},${f(g.dy)})">` +
     `<path d="${dotsPath(m, dots.shape, hole)}" fill="${ref}"/>` +
     `<path d="${ring}" fill="${eye.color ?? ref}" fill-rule="evenodd"/>` +
     `<path d="${pupilPath}" fill="${pupil.color ?? ref}"/>` +
@@ -368,11 +494,7 @@ export function qrSvg(spec: QrSpec, withText = true): string {
 function pixelSize(spec: QrSpec): { w: number; h: number } {
   const m = qrMatrix(spec.text, effectiveEcc(spec));
   const side = m.n + QUIET * 2;
-  const fr = spec.frame ?? null;
-  const pad = fr ? side * FRAME.pad : 0;
-  const cap = fr && fr.caption.trim() ? side * FRAME.caption : 0;
-  const W = side + pad * 2;
-  const H = side + pad * 2 + cap;
+  const { W, H } = frameGeom(spec, side);
   return { w: spec.size, h: Math.round((spec.size * H) / W) };
 }
 
@@ -408,16 +530,26 @@ export async function qrPng(spec: QrSpec): Promise<Blob> {
     await ensureFonts();
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      const capH = h - w; // شريطُ النداء هو ما زاد به الطولُ عن العرض
-      const fs = capH * FRAME.text;
-      ctx.save();
-      ctx.direction = "rtl";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `700 ${fs}px ${FONT}`;
-      ctx.fillStyle = fr.textColor;
-      ctx.fillText(caption, w / 2, h - capH / 2);
-      ctx.restore();
+      /**
+       * موضعُ النداء **من هندسة الإطار نفسِها** لا من `h - w`: الهيئةُ العلويّة تضع الشريطَ
+       * فوق، فالطرحُ القديم كان يكتب النصَّ في القاع على لوحٍ فارغ.
+       * والنسبةُ تُحوَّل إلى بكسل بمعامل `w / W` (عرضُ اللوح هو المرجع في الحالين).
+       */
+      const m = qrMatrix(spec.text, effectiveEcc(spec));
+      const side = m.n + QUIET * 2;
+      const g = frameGeom(spec, side);
+      if (g.cap) {
+        const k = w / g.W;
+        const fs = g.cap * k * FRAME.text;
+        ctx.save();
+        ctx.direction = "rtl";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `700 ${fs}px ${FONT}`;
+        ctx.fillStyle = fr.textColor;
+        for (const mid of g.capMids) ctx.fillText(caption, w / 2, mid * k);
+        ctx.restore();
+      }
     }
   }
 

@@ -70,7 +70,7 @@ export function AngleDial({ value, onValueChange, step = 15, "aria-label": label
       onKeyDown={onKey}
     >
       <i className="adial-arm" aria-hidden />
-      <span className="adial-val font-latin" aria-hidden>{Math.round(value)}°</span>
+      <span className="adial-val font-latin" data-deg={`${Math.round(value)}°`} aria-hidden />
     </div>
   );
 }

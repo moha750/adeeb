@@ -28,6 +28,7 @@ export function DropdownMenu({
   triggerClassName = "dm-trigger",
   trigger,
   tone,
+  matchWidth,
 }: {
   groups: MenuGroup[];
   ariaLabel?: string;
@@ -39,6 +40,12 @@ export function DropdownMenu({
   trigger?: React.ReactNode;
   /** نغمة القائمة كاملةً (سطح Aurora + حدّ بلون الحالة) — تُطابق حالة الصفّ/العنصر */
   tone?: "neutral" | "success" | "warning" | "danger";
+  /**
+   * تُساوي القائمةُ عرضَ مُطلِقها. تُطلَب حين يكون المُطلِق **زرَّ فعلٍ عريضًا** يفتح صيغًا
+   * أو خيارات (كزرّ التحميل في محرّر الباركود): قائمةٌ أضيقُ أو أعرضُ منه تبدو غريبةً عنه.
+   * ولا تُطلَب لمُطلِق النقاط الثلاث: عرضُه عرضُ أيقونة، فمساواتُه تخنق البنود.
+   */
+  matchWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -187,6 +194,7 @@ export function DropdownMenu({
         anchorRef={triggerRef}
         onDismiss={(reason) => close(reason === "escape")}
         align="start"
+        matchWidth={matchWidth}
         className={"dm-menu" + (tone ? ` dm-tone-${tone}` : "")}
         role="menu"
         id={menuId}

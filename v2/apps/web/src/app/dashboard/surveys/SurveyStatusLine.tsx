@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { Trash } from "@/app/_components/glyphs";
 import { arCountdown } from "@/lib/duration";
-import { fmtDateAndTime, fmtDayMonth } from "@/lib/dates";
+import { fmtDayMonth, fmtStamp } from "@/lib/dates";
 import type { SurveyRow } from "./data";
 
 /** ساعةٌ عميليّة تبدأ بعد التركيب (0 على الخادم/أوّل رندر فلا عدّاد حتى يتّسق التمييه)، ثمّ تنبض كلّ دقيقة. */
@@ -41,21 +41,21 @@ function viewOf(s: SurveyRow, now: number): View {
   if (s.status === "paused") return { icon: <PauseCircle />, text: "موقوفٌ مؤقّتًا", tone: "warning" };
   if (s.status === "closed") {
     return s.endDate
-      ? { icon: <LockSimple />, text: `انتهى في ${fmtDayMonth(s.endDate)}`, title: fmtDateAndTime(s.endDate), tone: "neutral" }
+      ? { icon: <LockSimple />, text: `انتهى في ${fmtDayMonth(s.endDate)}`, title: fmtStamp(s.endDate), tone: "neutral" }
       : { icon: <LockSimple />, text: "مغلق", tone: "neutral" };
   }
   // نشط — العدّاد يظهر بعد التركيب (now>0)، وقبله جملةٌ ذات معنًى فلا وميض فارغ
   if (s.scheduled && startAt != null) {
     const c = now > 0 ? countdown(startAt, now) : "";
-    return { icon: <Hourglass />, text: c ? `يفتح ${c}` : "مجدولٌ للفتح", title: fmtDateAndTime(s.startDate), tone: "steel" };
+    return { icon: <Hourglass />, text: c ? `يفتح ${c}` : "مجدولٌ للفتح", title: fmtStamp(s.startDate), tone: "steel" };
   }
   if (s.expired && endAt != null) {
     const c = now > 0 ? countdown(endAt, now) : "";
-    return { icon: <FlagCheckered />, text: c ? `انتهت مدّته ${c}` : "انتهت مدّته", title: fmtDateAndTime(s.endDate), tone: "neutral" };
+    return { icon: <FlagCheckered />, text: c ? `انتهت مدّته ${c}` : "انتهت مدّته", title: fmtStamp(s.endDate), tone: "neutral" };
   }
   if (endAt != null) {
     const c = now > 0 ? countdown(endAt, now) : "";
-    return { icon: <Timer />, text: c ? `يُغلق ${c}` : "مفتوحٌ للمشاركة", title: fmtDateAndTime(s.endDate), tone: "success" };
+    return { icon: <Timer />, text: c ? `يُغلق ${c}` : "مفتوحٌ للمشاركة", title: fmtStamp(s.endDate), tone: "success" };
   }
   return { icon: <InfinityIcon />, text: "متاحٌ دائمًا", tone: "success" };
 }

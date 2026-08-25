@@ -3,8 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Badge, Button, Field, Modal, Stat, matchesSearch } from "@adeeb/design-system";
-import { ChartLineUp, Copy, Globe, LinkSimple, Pause, Play, QrCode, TextAa } from "@phosphor-icons/react";
+import { Badge, Button, Field, Modal, Stat, countPhrase, matchesSearch } from "@adeeb/design-system";
+import { CalendarBlank, ChartLineUp, Copy, Globe, LinkSimple, Pause, Play, QrCode, TextAa } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { DataCards, type CardSpec } from "../../_components/DataCards";
@@ -16,18 +16,30 @@ import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";
 import { formatThousands as fmt } from "@/app/_components/format";
-import { qrShortUrl } from "@/lib/qrLinks";
-import { fmtDateOnly } from "@/lib/dates";
+import { qrShortUrl, targetHost } from "@/lib/qrLinks";
+import { fmtDate } from "@/lib/dates";
 import type { QrLinkRow } from "./data";
 import { deleteQrLink, setQrLinkActive, updateQrLink } from "./actions";
 
-/** أيُّ عمودٍ يصير أيَّ موضعٍ في الكرت — الأعمدةُ هي هي، والهيئةُ وحدَها تتبدّل. */
+/**
+ * أيُّ عمودٍ يصير أيَّ موضعٍ في الكرت. **مُقَرَّةٌ ٢٠٢٦-٠٨-٢٥** بعد أن عُرضت إلى جانب الحاليّة
+ * بعرض جوّالٍ حقيقيّ في `/ui/cards-view`: خمسةُ صفوفٍ كانت ‏1641px فصارت ‏799.
+ *
+ * وقرارُها ثلاثةٌ: **أيقونةُ باركودٍ تتصدّر** الكرتَ بتدرّجٍ يتبع نغمتَه، و**مضيفُ الوجهة
+ * تحت العنوان مكانَ الرمز القصير** (`/q/f9e6efk` رفاهيةٌ في الكرت، والرمزُ باقٍ في الجدول
+ * وفي صفحة الرمز والبحثُ يشمله)، و**المسحاتُ والتاريخُ سطرٌ واحدٌ بأيقونتيهما** بلا تسميات.
+ */
 const CARD_SPEC: CardSpec = {
+  lead: "qr",
   title: "title",
-  subtitle: "code",
+  subtitle: "target",
   badge: "state",
-  facts: ["target", "scans", "created"],
+  facts: ["scans", "created"],
+  bareFacts: true,
 };
+
+/** وحدةُ عدّ المسحات — تُصرَّف عربيًّا في الكرت حيث لا ترويسةَ تسمّي العمود. */
+const SCAN_UNIT = { one: "مسحة", two: "مسحتان", few: "مسحات" };
 
 const FILTERS: FilterDef[] = [
   { key: "state", label: "الحالة", options: [
@@ -117,23 +129,49 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
     ] },
   ];
 
+  /**
+   * أعمدةُ الجدول. **بلا «رابطه» ولا «الوجهة»** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): عمودان لاتينيّان
+   * طويلان بلا سقف، والجدولُ لا يقصّ أبدًا فيجرّان الشبكةَ إلى عرض أطولِ رابطٍ فيها ويصير
+   * التمرير الأفقيُّ شرطًا لقراءة أيّ صفّ. والوجهةُ كاملةً في صفحة الرمز وفي نافذة تعديلها،
+   * ومضيفُها في الكرت، والرمزُ القصير يبقى مبحوثًا عنه في خانة البحث.
+   */
   const columns: Column<QrLinkRow>[] = [
     { key: "title", header: "الباركود", width: "minmax(180px, 2fr)", render: (r) => <span className="txt"><b>{r.title}</b></span> },
-    {
-      key: "code", header: "رابطه", width: "minmax(150px, 1.4fr)",
-      // الرابطُ لاتينيٌّ فيُعزَل اتّجاهُه: بدونه يقفز الشرطةُ المائلةُ إلى الطرف الخطأ.
-      render: (r) => <span className="txt font-latin" dir="ltr">/q/{r.code}</span>,
-    },
-    {
-      key: "target", header: "الوجهة", width: "minmax(200px, 2.4fr)",
-      render: (r) => <span className="txt font-latin" dir="ltr">{r.targetUrl.replace(/^https?:\/\//, "")}</span>,
-    },
     { key: "scans", header: "المسحات", width: "0.9fr", align: "center", render: (r) => <span className="txt num">{fmt(r.scanCount)}</span> },
     {
       key: "state", header: "الحالة", width: "0.9fr", align: "center",
       render: (r) => <Badge tone={r.active ? "success" : "neutral"} size="sm">{r.active ? "يعمل" : "موقوف"}</Badge>,
     },
-    { key: "created", header: "أُنشئ", width: "1fr", align: "center", render: (r) => <span className="txt num">{fmtDateOnly(r.createdAt)}</span> },
+    // `fmtDate` لا `fmtDateOnly`: الأخيرةُ تشطر نصَّ عمودِ `date` عند الشرطة، و`created_at`
+    // طابعٌ بوقتٍ ومنطقة (`2026-08-22T06:19:…`) فينكسر شطرُها ويردّ **فراغًا**. كان التاريخُ
+    // خاليًا في الجدول والكرت معًا حتّى رُئي في الكروت (٢٠٢٦-٠٨-٢٥).
+    { key: "created", header: "أُنشئ", width: "1fr", align: "center", render: (r) => <span className="txt num">{fmtDate(r.createdAt)}</span> },
+  ];
+
+  /**
+   * أعمدةُ الكرت: **أعمدةُ الجدول نفسُها إلّا ما يقتضيه ضيقُه**، فالقيمةُ تبقى من مصدرٍ واحد
+   * ولا تُصاغ صياغةً ثانية. والفروقُ أربعةٌ لكلٍّ حجّتُه:
+   * · **الوجهةُ مضيفُها** (`targetHost`): عمودٌ لا وجودَ له في الجدول أصلًا.
+   * · **المسحاتُ تسمّي نفسَها** («٨٥ مسحة»): لا ترويسةَ فوقها هنا، ورقمٌ عارٍ بجانب تاريخٍ
+   *   لا يُعرَف ما هو.
+   * · **أيقونتان للمسحات والتاريخ** يلبسهما الكرتُ رقاقتَه المنغَّمة.
+   * · **الشارةُ تقول ما يعمل**: في الجدول تعلوها ترويسةُ «الحالة» فتكفي كلمة، وفي الكرت
+   *   تقف وحدَها في شريط الفعل.
+   * ويُزاد عمودٌ لا وجودَ له في الجدول: صدرُ الكرت.
+   */
+  const cardColumns: Column<QrLinkRow>[] = [
+    { key: "qr", header: "", render: () => <span className="tico tico-lead" aria-hidden><QrCode /></span> },
+    // الوجهةُ عمودُ كرتٍ لا عمودَ جدول: مضيفُها يسع سطرًا تحت الاسم، وكاملُها لا يسع صفًّا.
+    { key: "target", header: "الوجهة", render: (r) => <span className="txt font-latin" dir="ltr">{targetHost(r.targetUrl)}</span> },
+    ...columns.map((c) =>
+      c.key === "scans"
+          ? { ...c, icon: <ChartLineUp />, render: (r: QrLinkRow) => <span className="txt num">{countPhrase(r.scanCount, SCAN_UNIT)}</span> }
+          : c.key === "created"
+            ? { ...c, icon: <CalendarBlank /> }
+            : c.key === "state"
+              ? { ...c, render: (r: QrLinkRow) => <Badge tone={r.active ? "success" : "neutral"} size="sm">{r.active ? "الباركود يعمل" : "الباركود موقوف"}</Badge> }
+              : c,
+    ),
   ];
 
   const emptyState = (
@@ -159,7 +197,7 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
       </div>
 
       <Toolbar
-        searchPlaceholder="ابحث باسم الباركود أو وجهته"
+        searchPlaceholder="ابحث باسم الباركود أو رمزه أو وجهته"
         search={search}
         onSearch={setSearch}
         filters={FILTERS}
@@ -184,14 +222,13 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
         />
       ) : (
         // خدمةُ الكروت ترسم الكرتَ من أعمدة الجدول نفسِها، فلا كرتٌ يُخترَع لهذه الشاشة.
-        // والهيئةُ `facts` اختيارٌ مبدئيٌّ: الهيئاتُ الثلاثُ معروضةٌ في `/ui/cards-view`،
-        // وتبديلُها حين تُختار سطرٌ واحدٌ هنا.
+        // والهيئةُ **المضغوطة** مُقَرَّةٌ ٢٠٢٦-٠٨-٢٥ (معرضُها `/ui/cards-view`).
         <DataCards
-          columns={columns}
+          columns={cardColumns}
           rows={filtered}
           getRowId={(r) => r.id}
           spec={CARD_SPEC}
-          variant="facts"
+          variant="compact"
           emptyState={emptyState}
           rowActions={actionsFor}
           onRowClick={openStats}

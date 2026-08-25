@@ -53,7 +53,12 @@ export function arabicNameError(raw: string | null | undefined): string | null {
   return ARABIC_NAME_RE.test(name) ? null : ARABIC_NAME_HINT;
 }
 
-export function firstAndLastOf(full: string): string {
+/**
+ * شطرُ الاسم الكامل إلى **أسماءٍ لا كلمات**: «عبد الله بن سالم آل ناصر» أربعُ أسماءٍ
+ * لا سبعُ كلمات. وهي مقسِّمُ الجميع، فمن أراد الأوّلَ أو الأخيرَ أخذه من هنا ولا يعيد
+ * حلقةَ الوصل في موضعه (كانت محبوسةً داخل `firstAndLastOf` فتُنسَخ عند كلّ حاجةٍ جديدة).
+ */
+export function namesOf(full: string): string[] {
   const parts = full.trim().split(/\s+/).filter(Boolean);
   const names: string[] = [];
   for (let i = 0; i < parts.length; i++) {
@@ -65,6 +70,16 @@ export function firstAndLastOf(full: string): string {
     }
     names.push(name);
   }
+  return names;
+}
+
+/** الاسمُ الأوّل وحدَه — لمخاطبةٍ قصيرةٍ أو شارةٍ ضيّقة («حذفها محمّد»). */
+export function firstNameOf(full: string): string {
+  return namesOf(full)[0] ?? full.trim();
+}
+
+export function firstAndLastOf(full: string): string {
+  const names = namesOf(full);
   if (names.length < 2) return names[0] ?? full;
   return `${names[0]} ${names[names.length - 1]}`;
 }

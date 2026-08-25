@@ -91,7 +91,7 @@ export function NewQrView() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="primary" size="md" disabled={!ready} loading={busy} onClick={() => void start()}>
-              <ArrowLeft size={18} /> ابدأ تصميم الباركود
+              ابدأ بتصميم الباركود <ArrowLeft size={18} />
             </Button>
           </div>
         </SectionCard>

@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Robot,
+  PenNib, ClockCounterClockwise, Robot, GameController, TextAa,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -96,6 +96,12 @@ export const IconBallot = (p: P) => <Checks aria-hidden {...p} />;
    أيقونةٍ له ما يقوله هو. و`ChatCircleDots` ممنوعةٌ عمدًا: مأخوذةٌ لحقل السؤال في صفحته
    العلنيّة، ولو حملها البندُ هنا لقالت «محادثةٌ» في موضعين لا يعني أحدهما الآخر. */
 export const IconDeebo = (p: P) => <Robot aria-hidden {...p} />;
+/* خمّن الكلمة — المِقوَد: البندُ غرفةُ **قيادةٍ** لا شاشةُ لعب. والمضيفُ يفتحها ليبدأ
+   ويوقف ويحكم، فأصدقُ رسمٍ لها ما يُمسَك باليد. */
+export const IconGame = (p: P) => <GameController aria-hidden {...p} />;
+/* بنك الكلمات — الحرف: مادّةُ اللعبة كلماتٌ تُكتَب وتُصنَّف. و`BookOpen` مأخوذةٌ
+   للمكتبة، ولو حملها البندُ هنا لقالت «كتبٌ» في موضعين لا يعني أحدهما الآخر. */
+export const IconWords = (p: P) => <TextAa aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -108,5 +114,6 @@ export const ICONS = {
   mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
+  game: IconGame, words: IconWords,
 } as const;
 export type IconKey = keyof typeof ICONS;

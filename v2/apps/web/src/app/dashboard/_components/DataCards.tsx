@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { CaretDown } from "@/app/_components/glyphs";
+import { CaretDown, CaretLeft } from "@/app/_components/glyphs";
+import { Button } from "@adeeb/design-system";
 import { DropdownMenu, type MenuGroup } from "./DropdownMenu";
 import { Skeleton } from "./Skeleton";
 import type { Column, Group } from "./DataTable";
@@ -37,6 +38,13 @@ export type CardSpec = {
   body?: string;
   /** أعمدةُ الحقائق بترتيب عرضها. */
   facts?: string[];
+  /**
+   * في الهيئة المضغوطة: **القيمُ تسمّي نفسَها فلا تُطبَع تسمياتُها**. تسميةُ الحقيقة تلزم
+   * الجدولَ (ترويسةُ عمودٍ فوق عمود) ولا تلزم السطرَ الواحد: ساعةٌ تسبق الوقتَ وفقاعتان
+   * تسبقان العدد تقولان ما تقوله الكلمة، وتُنفَق عليها نصفُ عرض الجوّال. والاسمُ يبقى
+   * ترويسةً في الجدول، فالمصدرُ واحدٌ والقرارُ في موضع العرض.
+   */
+  bareFacts?: boolean;
 };
 
 type Props<T> = {
@@ -55,6 +63,11 @@ type Props<T> = {
   footer?: React.ReactNode;
   /** عمودٌ واحدٌ بدل الانسياب — للقوائم المرتّبة يدويًّا ولنصوصٍ تطلب عرضًا. */
   oneColumn?: boolean;
+  /**
+   * كلمةُ زرّ الفتح («فتح المحادثة» · «فتح الإحصاء»). لا تُلغي الزرَّ ولا تُظهره:
+   * وجودُه من `onRowClick` وحدَه (انظر أسفل)، وهذه تقول ماذا يُفتح.
+   */
+  openLabel?: string;
 } & ({ rows: T[]; groups?: never } | { groups: Group<T>[]; rows?: never });
 
 /** قيمةُ عمودٍ في صفّ — برسّامِ الجدول إن وُجد، وإلّا فالقيمةُ الخام. */
@@ -70,18 +83,24 @@ function cellOf<T>(columns: Column<T>[], key: string | undefined, row: T, index:
 /** تسميةُ عمودٍ كما في ترويسة الجدول — فلا يُكتب اسمُ الحقيقة مرّتين. */
 const headerOf = <T,>(columns: Column<T>[], key: string): string => columns.find((c) => c.key === key)?.header ?? "";
 
-/** هل للعمود قيمةٌ في هذا الصفّ؟ حقيقةٌ خاليةٌ تُطوى ولا تترك سطرًا فارغًا (الجدولُ يلزمه عمودُه، والكرتُ لا). */
-function hasValue<T>(columns: Column<T>[], key: string, row: T): boolean {
-  const col = columns.find((c) => c.key === key);
-  if (!col) return false;
-  if (col.render) return true;
-  const raw = (row as Record<string, unknown>)[key];
-  return raw !== null && raw !== undefined && raw !== "";
+/** أيقونةُ العمود إن أُعلنت — تقوم مقامَ التسمية في السطر المضغوط. */
+const iconOf = <T,>(columns: Column<T>[], key: string): React.ReactNode => columns.find((c) => c.key === key)?.icon ?? null;
+
+/**
+ * حقائقُ الصفّ مرسومةً، **وما خلا منها يسقط**: الجدولُ يلزمه عمودُه فيترك خليّةً فارغة،
+ * والكرتُ لا يلزمه شيء. وتُرسَم القيمةُ مرّةً ثمّ يُحكَم عليها — وكان الحكمُ قبلها على
+ * **وجود الرسّام** لا على ما يُخرجه، فحقيقةٌ رسّامُها يعيد `null` (شارةُ حالٍ لا حالَ لها)
+ * كانت تُبقي خانةً خاليةً وفجوتَها في السطر.
+ */
+function factsOf<T>(columns: Column<T>[], keys: string[], row: T, index: number): Array<[string, React.ReactNode]> {
+  return keys
+    .map((k) => [k, cellOf(columns, k, row, index)] as [string, React.ReactNode])
+    .filter(([, v]) => v !== null && v !== undefined && v !== "");
 }
 
 export function DataCards<T>({
   columns, rows, groups, getRowId, spec, variant = "facts", rowActions, onRowClick, rowTone,
-  emptyState, loading, skeletonRows = 4, footer, oneColumn,
+  emptyState, loading, skeletonRows = 4, footer, oneColumn, openLabel = "فتح",
 }: Props<T>) {
   // الطيُّ بنفس عهد الجدول: الافتراضُ فتحٌ، والمطويُّ من نيّة المستدعي (`defaultOpen: false`).
   const shutByIntent = () => new Set((groups ?? []).filter((g) => g.defaultOpen === false).map((g) => g.key));
@@ -127,7 +146,15 @@ export function DataCards<T>({
     const lead = cellOf(columns, spec.lead, row, index);
     const badge = cellOf(columns, spec.badge, row, index);
     const body = cellOf(columns, spec.body, row, index);
-    const facts = (spec.facts ?? []).filter((k) => hasValue(columns, k, row));
+    const facts = factsOf(columns, spec.facts ?? [], row, index);
+    /* **شريطُ فعلٍ لا ركنٌ مزدحم**: قيامُه من الفعل نفسِه لا خاصّيةً تُمرَّر — فلا تنسى شاشةٌ
+       شريطَها ولا تخترع كلُّ واحدةٍ موضعًا لفعلها.
+       و**الفتحُ وحده هو ما يُقيمه** منذ ٢٠٢٦-٠٨-٢٥: القائمةُ (⋮) صعدت إلى ركن الرأس بأمر
+       المالك، فلم يبقَ للشريط إلّا زرُّ الفتح وشارتُه. وحيث لا فتحَ تبقى الشارةُ في الرأس
+       بجانب القائمة كما كانت. */
+    const bar = Boolean(onRowClick);
+    /** القائمةُ: في ركن الرأس دائمًا. مقبضٌ صغيرٌ لا يزاحم العنوانَ ولا يقتطع من عرضه إلّا قدرَه. */
+    const menu = live ? <DropdownMenu groups={acts} tone={tone} /> : null;
 
     const head = (
       <div className="dcard-head">
@@ -135,56 +162,79 @@ export function DataCards<T>({
         <span className="dcard-id">
           <span className="dcard-title">{cellOf(columns, spec.title, row, index)}</span>
           {spec.subtitle ? <span className="dcard-sub">{cellOf(columns, spec.subtitle, row, index)}</span> : null}
-          {/* المضغوطُ يقول حقائقَه سطرًا تحت العنوان — لا شبكةَ خلايا: القائمةُ الطويلة تُمسَح بالعين مسحًا. */}
-          {variant === "compact" && facts.length > 0 ? (
-            <span className="dcard-meta">
-              {facts.map((k) => (
-                <span key={k} className="dcard-mi">
-                  <span className="dcard-mk">{headerOf(columns, k)}</span>
-                  <span className="dcard-mv">{cellOf(columns, k, row, index)}</span>
-                </span>
-              ))}
-            </span>
-          ) : null}
         </span>
-        <span className="dcard-end">
-          {badge}
-          {live ? (
-            <span onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu groups={acts} tone={tone} />
-            </span>
-          ) : null}
-        </span>
+        {/* ركنُ الرأس: القائمةُ دائمًا، والشارةُ معها **إن لم يكن للكرت شريطُ فعل** (كرتٌ لا
+            يُفتح لا شريطَ له، فتبقى حالُه في ركن رأسه كما كانت). */}
+        {menu || (badge && !bar) ? (
+          <span className="dcard-end">
+            {badge && !bar ? badge : null}
+            {menu}
+          </span>
+        ) : null}
       </div>
     );
 
+    /* **سطرُ الحقائق صفٌّ مستقلٌّ تحت الرأس** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): كان داخل عمود
+       العنوان فيبدأ من حيث ينتهي صدرُ الكرت، فيقع سطران مزاحان عن حافّتين مختلفتين ويضيق
+       ما بقي منه على ٣٧٥. فالرأسُ سطرٌ أوّل (صدرٌ ثمّ اسمٌ ووجهة)، والحقائقُ سطرٌ ثانٍ
+       يأخذ عرضَ الكرت كلَّه. ولا شبكةَ خلايا: القائمةُ الطويلة تُمسَح بالعين مسحًا. */
+    const metaRow = variant === "compact" && facts.length > 0 ? (
+      <span className="dcard-meta">
+        {facts.map(([k, v]) => (
+          <span key={k} className="dcard-mi">
+            {/* رقاقةُ الحقيقة (`.tico` من المكتبة): مربّعٌ متراكزٌ بخلفيّة Aurora خفيفة بنغمة
+                الكرت، فلا تذوب الأيقونةُ في سطرٍ صغير. ويُلبسها **الكرتُ** لا الشاشة. */}
+            {iconOf(columns, k) ? <span className="tico tico-card" aria-hidden>{iconOf(columns, k)}</span> : null}
+            {!spec.bareFacts && headerOf(columns, k) ? <span className="dcard-mk">{headerOf(columns, k)}</span> : null}
+            <span className="dcard-mv">{v}</span>
+          </span>
+        ))}
+      </span>
+    ) : null;
+
     return (
-      <div
-        key={id}
-        className={"acard dcard" + (tone ? ` acard-tone-${tone}` : "") + (onRowClick ? " acard-interactive" : "") + ` dcard-v-${variant}`}
-        onClick={onRowClick ? () => onRowClick(row) : undefined}
-      >
+      <div key={id} className={"acard dcard" + (tone ? ` acard-tone-${tone}` : "") + ` dcard-v-${variant}`}>
         {head}
+        {metaRow}
         {body ? <p className="dcard-body">{body}</p> : null}
         {variant === "facts" && facts.length > 0 ? (
           <dl className="dcard-facts">
-            {facts.map((k) => (
+            {facts.map(([k, v]) => (
               <div key={k} className="dcard-fact">
                 <dt>{headerOf(columns, k)}</dt>
-                <dd>{cellOf(columns, k, row, index)}</dd>
+                <dd>{v}</dd>
               </div>
             ))}
           </dl>
         ) : null}
         {variant === "rows" && facts.length > 0 ? (
           <dl className="dcard-rows">
-            {facts.map((k) => (
+            {facts.map(([k, v]) => (
               <div key={k} className="dcard-row">
                 <dt>{headerOf(columns, k)}</dt>
-                <dd>{cellOf(columns, k, row, index)}</dd>
+                <dd>{v}</dd>
               </div>
             ))}
           </dl>
+        ) : null}
+        {/* **الكرتُ الذي يُفتح يقول إنّه يُفتح** (حكمُ المالك ٢٠٢٦-٠٨-٢٣: «المستخدم لن يعرف
+            أنّه المفروض يضغط»): سطحٌ قابلٌ للنقر بلا علامةٍ يعتمد على المرور، والمرورُ لا وجودَ
+            له على الجوّال — وهو مقياسُ اللوحة. **وبالكلمة لا بالسهم وحدَه** (أمرُه في اليوم
+            نفسِه): السهمُ يعرفه من جرّب، والكلمةُ تكفي من يفتح الشاشةَ أوّلَ مرّة.
+            **وبابًا واحدًا لا بابين**: السطحُ لا يُنقر، فالفعلُ الواحد له مقبضٌ واحدٌ يُرى
+            ويبلغه الإصبعُ ولوحةُ المفاتيح والقارئُ الصوتيّ سواءً. */}
+        {bar ? (
+          <div className="dcard-act">
+            {badge}
+            <span className="dcard-act-end">
+              {onRowClick ? (
+                <Button variant="ghost" size="sm" onClick={() => onRowClick(row)}>
+                  {openLabel}
+                  <CaretLeft aria-hidden />
+                </Button>
+              ) : null}
+            </span>
+          </div>
         ) : null}
       </div>
     );

@@ -18,6 +18,29 @@ const IconChevron = (
   </svg>
 );
 
+/* أيقوناتُ منسدلة الهويّة — على منوال الشيفرون: خطٌّ بـ`currentColor` بلا تبعيّة. */
+const IconPortal = (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="3" y="3" width="7.5" height="7.5" rx="2" />
+    <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" />
+    <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" />
+    <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" />
+  </svg>
+);
+const IconAccount = (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="8.5" r="3.6" />
+    <path d="M4.8 20a7.2 7.2 0 0 1 14.4 0" />
+  </svg>
+);
+const IconExit = (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M14.5 4.5H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3.5" />
+    <path d="M10 8l-4 4 4 4" />
+    <path d="M6 12h8.5" />
+  </svg>
+);
+
 /* القائمةُ خرجت إلى `lib/nav` يوم صار للتذييل روابطُ — مصدرٌ واحدٌ يقرؤه الاثنان،
    فلا نسختان تفترقان يومَ يُضاف رابط. وتسميتُها هنا `defaultNav` كما كانت: هي
    **افتراضُ** الرأس، ويبقى للمستهلك أن يمرّر غيرها. */
@@ -54,6 +77,10 @@ export function Header({
   moreLabel = "المزيد",
   activeHref,
   className,
+  viewer,
+  portalHref = "/dashboard",
+  accountHref = "/me",
+  onSignOut,
 }: {
   logoSrc?: string;
   nav?: NavItem[];
@@ -71,6 +98,32 @@ export function Header({
   /** الرابطُ المطابق للصفحة الحاليّة — يلبس `aria-current` فيظهر أثرُ التظليل. */
   activeHref?: string;
   className?: string;
+  /**
+   * **صاحبُ الجلسة إن عُرف.** حين يُمرَّر تبدّلت أفعالُ الرأس: «بوّابة أَدِيب» لا معنى
+   * لها لمن هو داخلها، و«انضمّ إلينا» لا معنى لها لمن انضمّ — فتُستبدل الهويّةُ بها،
+   * ويبقى الفعلُ الذي ما زال يعنيه (الانضمام لصاحب حسابٍ ليس عضوًا).
+   * والأفتارُ يُمرَّر **عقدةً** لا رابطًا: رسمُه في التطبيق (`Avatar`) بأيقونة الجنس
+   * والأحرف، فلا تُنسَخ قواعدُه في المكتبة.
+   */
+  viewer?: {
+    name: string;
+    avatar?: React.ReactNode;
+    isMember?: boolean;
+    /**
+     * سطرُ الهويّة الثاني — **مسمّى منصبه** كما يُقرأ («قائد لجنة التصميم»)، يُركَّب في
+     * `positionLabel` لا هنا. وحين لا منصبَ له تُقال منزلتُه العامّة.
+     */
+    standing?: string | null;
+    /**
+     * جنسُه — ولا يُستعمل إلّا في منزلةِ **صاحب الحساب**: «صاحبُ حساب» تُقال للمرأة
+     * «صاحبةُ حساب»، ولا ثالثَ في الرأس يتبدّل به. وحين يُجهَل فالمذكَّرُ أصلٌ.
+     */
+    gender?: "male" | "female" | null;
+  };
+  portalHref?: string;
+  accountHref?: string;
+  /** الخروجُ فعلٌ لا وِجهة — يمرّره المستهلك لأنّ المكتبة لا تعرف Supabase. */
+  onSignOut?: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -78,11 +131,13 @@ export function Header({
   const actionsRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
+  const meRef = useRef<HTMLButtonElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
 
   const [stuck, setStuck] = useState(false);
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [meOpen, setMeOpen] = useState(false);
   /** كم رابطًا يتّسع له الصفّ الآن — يبدأ بالكلّ ثمّ يصحّحه القياسُ قبل الرسم. */
   const [fit, setFit] = useState(nav.length);
 
@@ -214,10 +269,121 @@ export function Header({
       </a>
     );
 
+  /* ── هويّةُ صاحب الجلسة ───────────────────────────────────────────────────
+     الاسمُ الأوّل وحدَه في الشريط: الرأسُ صفٌّ ضيّقٌ يتنازع عليه الشعارُ والتوجّهات،
+     والاسمُ الكاملُ يُقصّ بنقاطٍ فيبدو عطبًا — وهو كاملٌ في رأس المنسدلة.
+     والمنسدلةُ تقول **المنزلة** تحت الاسم، فيعرف صاحبُ الحساب لمَ لا يرى البوّابة. */
+  const first = viewer ? (viewer.name.trim().split(/\s+/)[0] ?? viewer.name) : "";
+
+  const meTrigger = (
+    <button
+      ref={meRef}
+      type="button"
+      className="shdr-me"
+      aria-expanded={meOpen}
+      aria-haspopup="menu"
+      /* الاسمُ يختفي في الضيّق فيبقى الزرُّ صورةً بلا كلمة — والتسميةُ تُقال دائمًا لقارئ الشاشة */
+      aria-label={`حسابك، ${viewer?.name ?? ""}`}
+      onClick={() => setMeOpen((v) => !v)}
+    >
+      {viewer?.avatar}
+      <span className="shdr-me-tx">{first}</span>
+      {IconChevron}
+    </button>
+  );
+
+  const meItem = (href: string, label: string, icon: React.ReactNode) => (
+    <a href={href} role="menuitem" className="dm-item" onClick={() => setMeOpen(false)}>
+      <span className="dm-ic">{icon}</span>
+      {label}
+    </a>
+  );
+
+  const meMenu = viewer ? (
+    <AnchoredPopover
+      open={meOpen}
+      anchorRef={meRef}
+      onDismiss={() => setMeOpen(false)}
+      align="end"
+      className="dm-menu shdr-me-menu"
+      role="menu"
+    >
+      <div className="shdr-me-hd">
+        <b>{viewer.name}</b>
+        <span>
+          {viewer.standing ||
+            (viewer.isMember
+              ? "عضوٌ في أَدِيب"
+              : viewer.gender === "female"
+                ? "صاحبةُ حساب"
+                : "صاحبُ حساب")}
+        </span>
+      </div>
+      <div className="dm-sep" />
+      {/* **بابٌ واحدٌ لكلّ منزلة** (قرار المالك ٢٠٢٦-٠٨-٢٥): كانا بابين فسأل «قائدُ لجنةٍ
+          يرى حسابك والبوّابة معًا؟» — وهو محقّ: ما في `/me` صار في اللوحة (الملفُّ الشخصيّ
+          والإعداداتُ وبابُ الخروج نفسُه)، فالبابُ الثاني تكرارٌ يُثقل. فللعضو بوّابتُه،
+          ولصاحب الحساب حسابُه — وهو بيتُه كلُّه لا نصفُه. */}
+      {viewer.isMember ? meItem(portalHref, loginLabel, IconPortal) : meItem(accountHref, "حسابك", IconAccount)}
+      <div className="dm-sep" />
+      <button
+        type="button"
+        role="menuitem"
+        className="dm-item dg"
+        onClick={() => {
+          setMeOpen(false);
+          onSignOut?.();
+        }}
+      >
+        <span className="dm-ic">{IconExit}</span>
+        تسجيل الخروج
+      </button>
+    </AnchoredPopover>
+  ) : null;
+
+  /**
+   * **أفعالُ الشريط.** للزائر المجهول فعلان كما كانا. ولصاحب الجلسة: تسقط «بوّابة
+   * أَدِيب» (هو فيها) وتسقط «انضمّ إلينا» عن العضو وحدَه — ويبقى الانضمامُ لصاحب
+   * حسابٍ لم ينضمّ بعد، فهو غايةُ الموقع منه لا زخرفة.
+   */
+  const barActions = !viewer ? (
+    <>
+      <a href={loginHref} className="abtn abtn-ghost abtn-sm">
+        {loginLabel}
+      </a>
+      {ctaEl("abtn abtn-primary abtn-sm")}
+    </>
+  ) : (
+    meTrigger
+  );
+
+  /**
+   * **أفعالُ اللوح — للزائر المجهول وحدَه.**
+   *
+   * أمّا صاحبُ الجلسة فحسابُه **لا يسكن اللوح**: البرغرُ عقدٌ على أنّ خلفه تنقّلٌ، والحسابُ
+   * مهمّةٌ أخرى — فبابُه الأفتارُ الباقي في الشريط بجواره. وهذا الوجهُ اختيرَ من وجهين
+   * عُرِضا في `/ui/header-account` (المالك ٢٠٢٦-٠٨-٢٥) وأُعدم الآخر، وحجّتُه أنّ إخفاءَ
+   * الهويّة في اللوح يترك رأسَ الجوّال **مطابقًا لرأس المجهول** — فتُنفَق الميزةُ ولا
+   * يراها أحد، ومعظمُ الأعضاء لا يفتحون إلّا الجوّال.
+   */
+  const sheetActions = !viewer ? (
+    <>
+      <a href={loginHref} className="abtn abtn-ghost abtn-sm shdr-sheet-login" onClick={() => setOpen(false)}>
+        {loginLabel}
+      </a>
+      {ctaEl("abtn abtn-primary abtn-sm shdr-sheet-cta", () => setOpen(false))}
+    </>
+  ) : null;
+
   // `data-open` على الجذر لا على اللوح وحده: الحالةُ حالةُ الرأس كلِّه — السطحُ
   // يمتلئ ما دامت القائمةُ مفتوحة، كما يمتلئ بالنزول.
   return (
-    <header ref={ref} className={cn("shdr", className)} data-stuck={stuck} data-open={open}>
+    <header
+      ref={ref}
+      className={cn("shdr", className)}
+      data-stuck={stuck}
+      data-open={open}
+    >
       <div className="shdr-main">
         <Container>
           <div ref={barRef} className="shdr-bar">
@@ -257,10 +423,7 @@ export function Header({
             </div>
 
             <div ref={actionsRef} className="shdr-actions">
-              <a href={loginHref} className="abtn abtn-ghost abtn-sm">
-                {loginLabel}
-              </a>
-              {ctaEl("abtn abtn-primary abtn-sm")}
+              {barActions}
               <button
                 ref={burgerRef}
                 type="button"
@@ -280,13 +443,10 @@ export function Header({
             <Container>
               <nav className="shdr-sheet-in" aria-label="قائمة الجوّال">
                 {nav.map((n) => link(n, () => setOpen(false)))}
-                <a href={loginHref} className="abtn abtn-ghost abtn-sm shdr-sheet-login" onClick={() => setOpen(false)}>
-                  {loginLabel}
-                </a>
                 {/* **الزرُّ نفسُه الذي في الشريط حرفًا بحرف** (`abtn-primary abtn-sm`):
                     لا مقاسَ خاصّ ولا زاويةَ خاصّة — الزرُّ في المكتبة واحدٌ يُستعمل
                     كما هو، و`.shdr-sheet-cta` تخصّ **موضعَه في العمود** لا هيئتَه. */}
-                {ctaEl("abtn abtn-primary abtn-sm shdr-sheet-cta", () => setOpen(false))}
+                {sheetActions}
               </nav>
             </Container>
           </div>
@@ -315,6 +475,8 @@ export function Header({
           </a>
         ))}
       </AnchoredPopover>
+
+      {meMenu}
     </header>
   );
 }

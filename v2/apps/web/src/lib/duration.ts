@@ -5,13 +5,13 @@
  * كان الخياران: نسخُها (توأمٌ يفترق يومًا) أو رفعُها. ورُفعت.
  */
 
-/** جمعٌ عربيّ للمعدود: [مفرد · مثنّى · جمع ٣–١٠ · مفرد منصوب ١١+]. */
-const ar = (n: number, f: readonly [string, string, string, string]): string =>
-  n === 1 ? f[0] : n === 2 ? f[1] : n >= 3 && n <= 10 ? `${n} ${f[2]}` : `${n} ${f[3]}`;
+// جمعُ المعدود رُفع إلى `lib/arabicCount` يومَ طلبه عدُّ الكلمات والأسطر — القاعدةُ
+// واحدةٌ لا تخصّ المدّة، ونسخُها توأمٌ يفترق يومًا.
+import { arCount as ar, type ArForms } from "./arabicCount";
 
-const DAY: readonly [string, string, string, string] = ["يوم", "يومين", "أيّام", "يومًا"];
-const HOUR: readonly [string, string, string, string] = ["ساعة", "ساعتين", "ساعات", "ساعة"];
-const MIN: readonly [string, string, string, string] = ["دقيقة", "دقيقتين", "دقائق", "دقيقة"];
+const DAY: ArForms = ["يوم", "يومين", "أيّام", "يومًا"];
+const HOUR: ArForms = ["ساعة", "ساعتين", "ساعات", "ساعة"];
+const MIN: ArForms = ["دقيقة", "دقيقتين", "دقائق", "دقيقة"];
 
 /**
  * المدّةُ مقروءةً **بأدقّ وحدةٍ وحدها** (لا «٣ أيّام و٤ ساعات»): «٥ أيّام» · «ساعتين» · «دقيقة».

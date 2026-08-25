@@ -20,7 +20,7 @@ import { useUnsavedGuard } from "../_components/useUnsavedGuard";
 import { color } from "@adeeb/design-system/tokens";
 import {
   DEGREES, DEGREE_VALUES, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, PHONE_RE, SOCIAL_KEYS, hasAcademicFields, socialHandle,
-  socialLabelOf, RECORD_NO_MAX,
+  socialLabelOf, RECORD_NO_MAX, genderLabel,
 } from "@/lib/membershipFields";
 import { AvatarEditor } from "./AvatarEditor";
 import { updateMyProfile } from "./actions";
@@ -165,7 +165,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
               <Cell full noCopy label="الاسم المعروض" icon={<User />} value={profile.name} />
               {profile.tripleName ? <Cell full noCopy label="الاسم الثلاثيّ" icon={<PencilSimple />} value={profile.tripleName} /> : null}
               <Cell lat label="رقم الهويّة" icon={<IdentificationCard />} value={profile.nationalId} />
-              <Cell noCopy label="الجنس" icon={<GenderIntersex />} value={profile.gender === "male" ? "ذكر" : profile.gender === "female" ? "أنثى" : null} />
+              <Cell noCopy label="الجنس" icon={<GenderIntersex />} value={genderLabel(profile.gender)} />
               {/* لا «تاريخ انضمام» هنا: تلك حقيقةُ **عضويّة** لا هويّة، وبطاقةُ «عضويتي» تقولها
                   ومعها مدّةُ العضوية — فذِكرُها هنا تكرارٌ لِما يملكه تبويبٌ آخر (٢٠٢٦-٠٨-٠٤). */}
               <Cell noCopy label="تاريخ الميلاد" icon={<CalendarBlank />} value={profile.birthDate} />

@@ -37,7 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus, MoveTarget } from "./data";
-import { DEGREES, DEGREE_VALUES, PHONE_RE, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
+import { DEGREES, DEGREE_VALUES, GENDERS, PHONE_RE, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
 import { endMembership, restoreMembership, updateMember } from "./actions";
 // النقل إسنادٌ لا فعلٌ ثانٍ: البابُ نفسه الذي يفتحه تبويب التعيينات (`assign_position`)، وهي
 // تُخلي الموضع القديم وتكتب الجديد في معاملةٍ واحدة. فلا فعلَ خادميّ ثالثٌ يفترق عنهما يومًا.
@@ -104,6 +104,9 @@ const SECTION: Record<"all" | MemberStatus, { title: string; noun: string }> = {
 };
 
 const uniq = (arr: string[]) => [...new Set(arr)];
+
+/** قيمةُ «من لا جنسَ في سجلّه» في مرشِّح الجنس — رمزٌ صريحٌ لا خالٍ، فالخالي هو «الكل». */
+const GENDER_NONE = "none";
 
 const Ico = {
   eye: <Eye />,
@@ -381,11 +384,22 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const deptOpts = useMemo(() => uniq(scope.map((m) => m.dept).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
   const roleOpts = useMemo(() => uniq(scope.map((m) => m.role).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
   const committeeOpts = useMemo(() => uniq(scope.map((m) => m.committee).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
+  /**
+   * الجنسُ قيمةٌ **مغلقة** لا تُشتقّ من الكشف كالأقسام واللجان — رمزان يحرسهما القيد،
+   * فيُقالان كما هما ولو خلا منهما القسمُ المعروض. وإنّما يُشتقّ الخيارُ الثالث وحدَه:
+   * «غير محدّد» لا يُعرَض إلّا حين يكون في الكشف من لا جنسَ في سجلّه (الموقوف ومن لم
+   * يُكمل تُركا بلا جنسٍ عمدًا)، فلا يقف المستعملُ أمام خيارٍ لا يردّ صفًّا واحدًا.
+   */
+  const genderOpts = useMemo(
+    () => (scope.some((m) => !m.gender) ? [...GENDERS, { value: GENDER_NONE, label: "غير محدّد" }] : GENDERS),
+    [scope],
+  );
   const filters: FilterDef[] = useMemo(() => [
     { key: "role", label: "الدور", options: roleOpts },
     { key: "dept", label: "القسم", options: deptOpts },
     { key: "committee", label: "اللجنة", options: committeeOpts },
-  ], [roleOpts, deptOpts, committeeOpts]);
+    { key: "gender", label: "الجنس", options: genderOpts },
+  ], [roleOpts, deptOpts, committeeOpts, genderOpts]);
 
   const rows = useMemo(() => {
     return scope.filter((m) => {
@@ -395,6 +409,8 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
       if (fv.role && m.role !== fv.role) return false;
       if (fv.dept && m.dept !== fv.dept) return false;
       if (fv.committee && m.committee !== fv.committee) return false;
+      // «غير محدّد» قيمةٌ يُنخَل بها كسائر القيم — القيمةُ الخالية محجوزةٌ لـ«الكل» في الشريط
+      if (fv.gender && (fv.gender === GENDER_NONE ? m.gender != null : m.gender !== fv.gender)) return false;
       return true;
     });
   }, [scope, search, fv]);

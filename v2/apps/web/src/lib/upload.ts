@@ -94,9 +94,13 @@ export const UPLOAD_RULES = {
     accept: "audio/mpeg,audio/mp4,audio/aac,audio/x-m4a",
     formats: "MP3 أو M4A",
   },
-  /** شعارٌ يُضمَّن في قلب رمز QR — يُنسخ في كلّ صورةٍ تُصدَّر، فحدُّه ضيّقٌ عمدًا. */
+  /**
+   * شعارٌ يُضمَّن في قلب الباركود. وحدُّه رحبٌ (٥ ميغابايت) لأنّ **المرفوعَ ليس المحفوظ**:
+   * المتصفّحُ يصغّره إلى ٦٤٠ بكسلًا ويعيد ترميزه WEBP قبل أن يُضمَّن (`shrinkLogo` في
+   * محرّر الباركود)، فيبقى الصفُّ في القاعدة خفيفًا مهما ثقُل الملفّ الذي اختاره صاحبُه.
+   */
   qrLogo: {
-    maxBytes: 512 * 1024,
+    maxBytes: 5 * MB,
     mimes: ["image/png", "image/svg+xml", "image/webp", "image/jpeg"],
     accept: "image/png,image/svg+xml,image/webp,image/jpeg",
     formats: "PNG أو SVG أو WEBP أو JPG",
