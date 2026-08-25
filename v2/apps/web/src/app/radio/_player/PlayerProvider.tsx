@@ -1,7 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { DRIFT_TOLERANCE, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES } from "@adeeb/core";
+import {
+  DRIFT_TOLERANCE, DRIFT_DEADBAND, DRIFT_HARD_RESYNC, DRIFT_NUDGE_MAX, DRIFT_NUDGE_GAIN,
+  PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES,
+} from "@adeeb/core";
 import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
 import { DEFAULT_MUSIC_LEVEL, MUSIC_LEVEL_KEY, SKIP_SECONDS } from "../../dashboard/radio/vocab";
@@ -247,6 +250,8 @@ export function RadioPlayerProvider({
   const seeking = useRef(false);
   /** آخرُ موضعٍ كُتب في المخزن، فلا يُكتَب مع كلّ حدث. */
   const savedAt = useRef(0);
+  /** سرعةُ المستمع في مرجع: مستمعُ `timeupdate` يُسجَّل مرّةً فلا يرى الحالةَ تتبدّل. */
+  const rateRef = useRef(1);
 
   /**
    * المقاديرُ تُضبَط على العنصرين معًا لا على العامل وحده، وإلّا رجع المستمعُ
@@ -256,9 +261,12 @@ export function RadioPlayerProvider({
    * فيبقى الكلامُ ثابتًا مهما تحرّك المقبض. وهذا هو المقبضُ كلُّه في سطر.
    */
   useEffect(() => {
+    rateRef.current = rate;
     const a = aRef.current, b = bRef.current;
     for (const el of [a, b]) {
       if (!el) continue;
+      // سرعةُ التابع يملكها مُلاحِقُ الانزياح، ولا تُضبَط هنا إلّا حين يكون واقفًا
+      if (el === b && mode === "stems" && !el.paused) continue;
       el.playbackRate = rate;
       el.muted = muted;
     }
@@ -325,8 +333,22 @@ export function RadioPlayerProvider({
        * في موضعه، وإيقافُ الحديث لأجلها أسوأُ من غيابها.
        */
       const s = stemEl();
-      if (s && !s.paused && s.readyState >= 3 && Math.abs(s.currentTime - t) > DRIFT_TOLERANCE) {
-        s.currentTime = t;
+      if (s && !s.paused && s.readyState >= 3) {
+        const off = s.currentTime - t;           // موجبٌ: الموسيقى متقدّمةٌ على الكلام
+        const abs = Math.abs(off);
+        const base = rateRef.current;
+        if (abs > DRIFT_HARD_RESYNC) {
+          // انقطاعٌ كبير: القفزُ أرحمُ من زحفٍ لا ينتهي، وهو نادرٌ لا يتكرّر
+          s.currentTime = t;
+          if (s.playbackRate !== base) s.playbackRate = base;
+        } else if (abs > DRIFT_DEADBAND) {
+          // ملاحقةٌ بالسرعة: تُبطَّأ إن تقدّمت وتُسرَّع إن تأخّرت، بلا قفزةٍ تُسمَع
+          const nudge = Math.min(DRIFT_NUDGE_MAX, abs * DRIFT_NUDGE_GAIN);
+          const next = base * (off > 0 ? 1 - nudge : 1 + nudge);
+          if (Math.abs(s.playbackRate - next) > 0.001) s.playbackRate = next;
+        } else if (Math.abs(s.playbackRate - base) > 0.001) {
+          s.playbackRate = base;                 // التقيا، فتعود السرعةُ إلى سرعته
+        }
       }
 
       /* تكملةُ ما سمعت: الموضعُ يُحفَظ كلَّ خمس ثوانٍ لا كلَّ حدث. و`timeupdate`
