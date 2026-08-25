@@ -1,6 +1,6 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { getPersona } from "./data";
+import { getPersona, getPersonaHistory } from "./data";
 import { PersonaView } from "./PersonaView";
 import { PageHeader } from "../../_components/PageHeader";
 
@@ -17,7 +17,7 @@ export default async function DeeboPersonaPage() {
   const denied = await denyUnless("/dashboard/deebo/persona");
   if (denied) return denied;
 
-  const { persona, error } = await getPersona();
+  const [{ persona, error }, history] = await Promise.all([getPersona(), getPersonaHistory()]);
 
   if (error || !persona) {
     return (
@@ -28,5 +28,5 @@ export default async function DeeboPersonaPage() {
     );
   }
 
-  return <PersonaView persona={persona} />;
+  return <PersonaView persona={persona} history={history.versions} historyReady={history.ready} />;
 }

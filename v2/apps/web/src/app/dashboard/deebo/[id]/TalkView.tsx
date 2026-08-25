@@ -1,14 +1,14 @@
 "use client";
 
-import { Badge } from "@adeeb/design-system";
+import { Badge, ModalSectionHeading } from "@adeeb/design-system";
 import { ChatCircleDots, ChatsCircle, Clock, Fingerprint, SignIn, UserCircle } from "@phosphor-icons/react";
-import { Trash } from "@/app/_components/glyphs";
+import { Info, Trash } from "@/app/_components/glyphs";
 import { PageHeader, type HeaderStatus } from "../../_components/PageHeader";
 import { Section } from "../../_components/Section";
 import { Cell } from "../../_components/Cell";
-import { fmtDateAndTime } from "@/lib/dates";
+import { fmtStamp } from "@/lib/dates";
 import { moodSrc, MOOD_ALT } from "@/lib/deebo/mood";
-import { hasGuardBlock } from "../talk";
+import { askerLine, hasGuardBlock } from "../talk";
 import type { DeeboConversation } from "../data";
 
 /**
@@ -37,12 +37,15 @@ import type { DeeboConversation } from "../data";
  * حارسُ `glyph-weights` لأنّه يتجاوز سياقَ الـduotone فتخرج أيقونةٌ بوزنٍ يتيم.
  */
 export function TalkView({ talk }: { talk: DeeboConversation }) {
-  /** حالُ المحادثة: نوعٌ مضيَّقٌ يرسمه الرأس، وواحدةٌ لا اثنتان (فالأشدُّ أولى). */
+  /**
+   * حالُ المحادثة في الرأس: **الحجبُ وحدَه**. كان الحذفُ حالًا ثانيةً تصعد إليه، وهو
+   * أسفلُ خليّةٌ بوقتها («حذفها صاحبُها: ٢١ أغسطس …») — فقيل الخبرُ مرّتين في شاشةٍ
+   * واحدة، مرّةً بلا متى ومرّةً بمتى (أمرُ المالك ٢٠٢٦-٠٨-٢٥). والحجبُ يبقى ههنا لأنّ
+   * لا خليّةَ له: حكمٌ على المحادثة كلِّها لا واقعةٌ لها ساعة.
+   */
   const status: HeaderStatus | undefined = hasGuardBlock(talk)
     ? { label: "حجب الحارسُ رقمًا", tone: "warning" }
-    : talk.hiddenAt
-      ? { label: "حذفها صاحبُها", tone: "neutral", variant: "outline" }
-      : undefined;
+    : undefined;
 
   return (
     <>
@@ -50,11 +53,11 @@ export function TalkView({ talk }: { talk: DeeboConversation }) {
           (`crumbFor`)، ومنه يشتقّ الرأسُ زرَّ الرجوع. */}
       <PageHeader title="محادثةٌ مع ديبو" crumbLeaf="محادثة" status={status} />
 
-      <Section icon={<ChatCircleDots />} title="عن المحادثة">
+      <Section icon={<Info />} title="معلومات المحادثة">
         <Cell
           label="السائل"
           icon={<UserCircle />}
-          value={talk.ownerName ?? "زائرٌ مجهول"}
+          value={askerLine(talk)}
           noCopy={!talk.ownerName}
         />
         <Cell label="الرسائل" icon={<ChatsCircle />} value={`${talk.messages.length}`} noCopy />
@@ -63,16 +66,21 @@ export function TalkView({ talk }: { talk: DeeboConversation }) {
         {talk.ownerName ? null : (
           <Cell label="بصمةُ الزائر" icon={<Fingerprint />} lat value={talk.visitorHash.slice(0, 8)} />
         )}
-        {/* `full` لأنّ القيمةَ سطرٌ واحدٌ لا يلتفّ (`.pva-val` تقتطع بـ«…»)، و«22 أغسطس 2026،
-            14:30» أطولُ من نصف الصفّ على جوّالٍ 375 فكانت تُقصّ. */}
-        <Cell full label="بدأت" icon={<Clock />} value={fmtDateAndTime(talk.startedAt)} noCopy />
+        {/* `full` لأنّ القيمةَ سطرٌ واحدٌ لا يلتفّ (`.pva-val` تقتطع بـ«…»)، و«22 أغسطس 2026
+            الساعة 2:30 م» أطولُ من نصف الصفّ على جوّالٍ 375 فكانت تُقصّ. */}
+        <Cell full label="بدأت" icon={<Clock />} value={fmtStamp(talk.startedAt)} noCopy />
         {talk.entryPath ? (
           <Cell full lat label="دخل من صفحة" icon={<SignIn />} value={talk.entryPath} noCopy />
         ) : null}
         {talk.hiddenAt ? (
-          <Cell full label="حذفها صاحبُها" icon={<Trash />} value={fmtDateAndTime(talk.hiddenAt)} noCopy />
+          <Cell full label="حذفها صاحبُها" icon={<Trash />} value={fmtStamp(talk.hiddenAt)} noCopy />
         ) : null}
       </Section>
+
+      {/* فاصلٌ ثانٍ للحوار: كتلتان في صفحةٍ واحدة، إحداهما معنونةٌ والأخرى معلَّقةٌ بلا اسم
+          تُقرأ زائدةً لا قسمًا. والعنوانُ هو `ModalSectionHeading` وحدَه لا `Section`، لأنّ
+          `Section` يلفّ أبناءَه بـ`.pva-grid` (شبكةُ خلايا بنصفَي صفّ) والحوارُ ليس خلايا. */}
+      <ModalSectionHeading className="mt-5" icon={<ChatCircleDots />} title="الحوار" />
 
       <ul className="dch">
         {talk.messages.map((m) => (

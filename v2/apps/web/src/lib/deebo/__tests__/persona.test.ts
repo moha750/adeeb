@@ -6,7 +6,10 @@ import { allowedNumbers } from "../guard";
 const persona: DeeboPersona = {
   identity: "تتحدّث عن نفسك بصيغة المتكلّم.",
   tone: "ودود، مختصر.",
-  boundaries: "- لا تخترع رقمًا.",
+  boundaryRules: [
+    { body: "لا تخترع رقمًا.", enabled: true },
+    { body: "حكمٌ معطَّلٌ لا يدخل التوجيه.", enabled: false },
+  ],
   prohibitions: ["لا تعِد أحدًا بقبول عضويّة.", "لا تتحدّث باسم المجلس."],
   unknownAnswer: "هذا ما لا أعرفه.",
   suggestedQuestions: ["ما نادي أديب؟", "كيف أنضمّ إليكم؟", "هل أحضر بلا عضويّة؟"],
@@ -16,6 +19,14 @@ const persona: DeeboPersona = {
 const empty = { faq: [], facts: [] };
 
 describe("نصُّ التوجيه يُركَّب من الصفّ", () => {
+  /* م١٠: الحدودُ أحكامٌ مفردة، والمعطَّلُ منها **لا يُرسَل**. وهذا هو معنى المفتاح: يُطفأ
+     الحكمُ ليُعرَف أثرُه، فلو بقي في النصّ لَما دلّ الإطفاءُ على شيء. */
+  test("الحكمُ المعطَّل لا يدخل التوجيه، والعاملُ يدخل بشَرطته", () => {
+    const p = buildSystemPrompt(persona, empty);
+    expect(p).toContain("- لا تخترع رقمًا.");
+    expect(p).not.toContain("حكمٌ معطَّلٌ لا يدخل التوجيه.");
+  });
+
   test("العناوينُ الخمسةُ بترتيبها، والمعرفةُ آخرًا", () => {
     const p = buildSystemPrompt(persona, empty);
     const order = ["## من أنت", "## نبرتك", "## حدودك", "## ما لا تفعله أبدًا", "## معرفتك"];

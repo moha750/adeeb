@@ -2,7 +2,7 @@ import "server-only";
 
 import type { createClient } from "@/lib/supabase/server";
 import type { DeeboKnowledge, FaqRow, KnowledgeChunk } from "./knowledge";
-import type { DeeboPersona } from "./persona";
+import type { BoundaryRule, DeeboPersona } from "./persona";
 
 /**
  * **قراءةُ عقل ديبو** — طبعُه ومعرفتُه في موضعٍ واحد.
@@ -30,7 +30,7 @@ export async function loadDeeboMind(sb: DeeboReader): Promise<MindLoad> {
   const [personaRes, faqRes, factRes] = await Promise.all([
     sb
       .from("deebo_persona")
-      .select("identity, tone, boundaries, prohibitions, unknown_answer, suggested_questions, shown_questions")
+      .select("identity, tone, boundary_rules, prohibitions, unknown_answer, suggested_questions, shown_questions")
       .eq("id", 1)
       .maybeSingle(),
     sb.from("faq").select("question, answer").order("id"),
@@ -56,7 +56,7 @@ export async function loadDeeboMind(sb: DeeboReader): Promise<MindLoad> {
       persona: {
         identity: row.identity,
         tone: row.tone,
-        boundaries: row.boundaries,
+        boundaryRules: (row.boundary_rules ?? []) as BoundaryRule[],
         prohibitions: row.prohibitions ?? [],
         unknownAnswer: row.unknown_answer,
         suggestedQuestions: row.suggested_questions ?? [],
@@ -73,7 +73,7 @@ export async function loadDeeboMind(sb: DeeboReader): Promise<MindLoad> {
 type PersonaRow = {
   identity: string;
   tone: string;
-  boundaries: string;
+  boundary_rules: BoundaryRule[] | null;
   prohibitions: string[] | null;
   unknown_answer: string;
   suggested_questions: string[] | null;

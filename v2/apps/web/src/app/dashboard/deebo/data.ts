@@ -27,6 +27,14 @@ export type DeeboConversation = {
   hiddenAt: string | null;
   /** اسمُ صاحبها إن كان له حساب — `null` للزائر المجهول (وله بصمتُه وحدَها). */
   ownerName: string | null;
+  /**
+   * صفتُه في أديب — تُقرأ من القاعدة لا تُخمَّن من وجود الحساب: **صاحبُ الحساب ليس عضوًا
+   * بالضرورة** (م١ وحّدت `profiles` فسكنه من لم ينضمّ بعد). والثلاثُ هي صفاتُ
+   * `lib/deebo/viewer.ts` نفسُها، فلا صفتان لشخصٍ واحدٍ في المنتج.
+   */
+  ownerStanding: "member" | "volunteer" | "account" | null;
+  /** جنسُ صاحبها — للفعل المسنَد إليه («حذفها» / «حذفتها»)، لا لغيره. */
+  ownerGender: "male" | "female" | null;
   entryPath: string | null;
   model: string;
   messageCount: number;
@@ -83,12 +91,31 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
      معه، ومن خرج من أديب صار `user_id` فيها `null` (م١) فعادت مجهولةً بلا أثرٍ لاسمه. */
   const ownerIds = [...new Set(raw.map((c) => c.user_id).filter((v): v is string => !!v))];
   const names = new Map<string, string>();
+  const genders = new Map<string, "male" | "female">();
+  const members = new Set<string>();
+  const volunteers = new Set<string>();
   if (ownerIds.length) {
-    const { data: people } = await sb.from("profiles").select("id, full_name").in("id", ownerIds);
-    for (const p of (people ?? []) as Array<{ id: string; full_name: string | null }>) {
+    /* ثلاثةُ نداءاتٍ لأصحاب المحادثات جميعًا لا ثلاثةٌ لكلّ واحد، وتجري معًا.
+       و`members` **عرضٌ مفتاحُه `id`** لا `user_id` (سابقةُ `viewer.ts`: الاستعلامُ
+       بـ`user_id` يتعثّر صامتًا فيصير العضوُ «صاحبَ حساب»). والمتطوّعُ صفٌّ لم يُنهَ. */
+    const [people, mem, vol] = await Promise.all([
+      sb.from("profiles").select("id, full_name, gender").in("id", ownerIds),
+      sb.from("members").select("id").in("id", ownerIds),
+      sb.from("volunteers").select("user_id, ended_at").in("user_id", ownerIds),
+    ]);
+    for (const p of (people.data ?? []) as Array<{ id: string; full_name: string | null; gender: string | null }>) {
       if (p.full_name) names.set(p.id, p.full_name);
+      if (p.gender === "male" || p.gender === "female") genders.set(p.id, p.gender);
+    }
+    for (const m of (mem.data ?? []) as Array<{ id: string }>) members.add(m.id);
+    for (const v of (vol.data ?? []) as Array<{ user_id: string; ended_at: string | null }>) {
+      if (!v.ended_at) volunteers.add(v.user_id);
     }
   }
+
+  /** صفةُ صاحب الحساب: عضويّةٌ قائمة، ثمّ تطوّعٌ قائم، ثمّ حسابٌ لا غير. */
+  const standingOf = (id: string | null): DeeboConversation["ownerStanding"] =>
+    !id ? null : members.has(id) ? "member" : volunteers.has(id) ? "volunteer" : "account";
 
   // رسائلُ المحادثات كلِّها في نداءٍ واحد — لا محادثةٌ تجرّ نداءَها (سابقةُ أسماء الرادّين
   // في رسائل التواصل). والترتيبُ بالوقت صاعدًا فتُقرأ كما جرت.
@@ -130,6 +157,8 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
       visitorHash: c.visitor_hash,
       hiddenAt: c.hidden_at,
       ownerName: c.user_id ? names.get(c.user_id) ?? "صاحبُ حسابٍ لا اسمَ له" : null,
+      ownerStanding: standingOf(c.user_id),
+      ownerGender: c.user_id ? genders.get(c.user_id) ?? null : null,
       entryPath: c.entry_path,
       model: c.model,
       messageCount: c.message_count,
@@ -180,13 +209,19 @@ export async function getDeeboTalk(
   // الاسمُ من `profiles` لا من صفّ المحادثة (العلّةُ في `getDeeboLog`: من غيّر اسمَه غيّره
   // في سجلّه معه، ومن خرج من أديب صار `user_id` فيها `null` فعادت مجهولةً بلا أثرٍ لاسمه).
   let ownerName: string | null = null;
+  let ownerStanding: DeeboConversation["ownerStanding"] = null;
+  let ownerGender: DeeboConversation["ownerGender"] = null;
   if (c.user_id) {
-    const { data: person } = await sb
-      .from("profiles")
-      .select("full_name")
-      .eq("id", c.user_id)
-      .maybeSingle();
-    ownerName = (person as { full_name: string | null } | null)?.full_name ?? "صاحبُ حسابٍ لا اسمَ له";
+    const [person, mem, vol] = await Promise.all([
+      sb.from("profiles").select("full_name, gender").eq("id", c.user_id).maybeSingle(),
+      sb.from("members").select("id").eq("id", c.user_id).maybeSingle(),
+      sb.from("volunteers").select("ended_at").eq("user_id", c.user_id).maybeSingle(),
+    ]);
+    const row = person.data as { full_name: string | null; gender: string | null } | null;
+    ownerName = row?.full_name ?? "صاحبُ حسابٍ لا اسمَ له";
+    ownerGender = row?.gender === "male" || row?.gender === "female" ? row.gender : null;
+    const volRow = vol.data as { ended_at: string | null } | null;
+    ownerStanding = mem.data ? "member" : volRow && !volRow.ended_at ? "volunteer" : "account";
   }
 
   const { data: msgs, error: msgErr } = await sb
@@ -210,6 +245,8 @@ export async function getDeeboTalk(
       visitorHash: c.visitor_hash,
       hiddenAt: c.hidden_at,
       ownerName,
+      ownerStanding,
+      ownerGender,
       entryPath: c.entry_path,
       model: c.model,
       messageCount: c.message_count,

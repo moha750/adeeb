@@ -1,6 +1,7 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getDeeboLog } from "./data";
+import { clubDayKey } from "@/lib/dates";
 import { DeeboLogView } from "./DeeboLogView";
 import { PageHeader } from "../_components/PageHeader";
 
@@ -29,5 +30,7 @@ export default async function DeeboDashboardPage() {
     );
   }
 
-  return <DeeboLogView rows={rows} />;
+  // مفتاحُ اليوم من الخادم لا من المتصفّح: القسمةُ الزمنيّة تُحسب مرّةً بساعة النادي،
+  // فيرسم الاثنان سواءً ولا يسقط الترطيبُ عند منتصف الليل (سابقةُ درج `/deebo`).
+  return <DeeboLogView rows={rows} todayKey={clubDayKey(new Date().toISOString())} />;
 }

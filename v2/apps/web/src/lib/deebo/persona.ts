@@ -27,6 +27,16 @@
 import { buildKnowledge, type DeeboKnowledge } from "./knowledge";
 
 /**
+ * حكمٌ من حدوده. **والعنوانُ للمحرّر لا للنموذج**: يُعرَف به الحكمُ في الشاشة وفي سطر
+ * الفرق، ولا يُكتب في التوجيه — كلُّ حرفٍ يُرسَل يُنفَق من انتباه النموذج ومن ثمنه.
+ */
+export type BoundaryRule = { title?: string; body: string; enabled: boolean };
+
+/** الأحكامُ العاملةُ نصًّا كما تدخل التوجيه. */
+export const boundariesText = (rules: readonly BoundaryRule[]): string =>
+  rules.filter((r) => r.enabled).map((r) => `- ${r.body.trim()}`).join("\n");
+
+/**
  * طبعُ ديبو كما يُقرأ من صفّه الواحد.
  *
  * **ولا قيمةَ افتراضيّةً ههنا**: نسخةٌ في الكود ونسخةٌ في القاعدة تفترقان صامتتَين، ثمّ
@@ -37,8 +47,12 @@ export type DeeboPersona = {
   /** «من أنت» — صيغةُ الحديث عن نفسه، وقصّةُ اسمه، وجوابُ «هل أنت إنسان؟». */
   identity: string;
   tone: string;
-  /** «حدودك» عدا بندَها الأوّل، فهو سقالةٌ أدناه. */
-  boundaries: string;
+  /**
+   * «حدودك» — **أحكامٌ مفردةٌ لا جدارُ نصّ** (م١٠): لكلٍّ متنُه ومفتاحُ تعطيله. والمعطَّل
+   * لا يدخل التوجيه أصلًا، فيُطفَأ حكمٌ ليُعرَف أثرُه بلا حذفه. وبندُها الأوّل (لا تجيب
+   * إلّا ممّا في معرفتك) سقالةٌ أدناه لا حكمٌ يُطفأ.
+   */
+  boundaryRules: readonly BoundaryRule[];
   prohibitions: readonly string[];
   /** ما يقوله حين لا يعرف. يقرؤه معه `mood.ts` ليختار وجهَ الاعتذار. */
   unknownAnswer: string;
@@ -71,7 +85,7 @@ ${persona.tone}
 
 ## حدودك
 - لا تجيب إلّا ممّا في «معرفتك» أدناه. وما ليس فيها قل: ${persona.unknownAnswer}
-${persona.boundaries}
+${boundariesText(persona.boundaryRules)}
 
 ## ما لا تفعله أبدًا
 ${never}
