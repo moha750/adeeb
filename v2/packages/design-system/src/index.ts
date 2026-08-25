@@ -30,8 +30,6 @@ export { Select, type SelectProps, type SelectOption } from "./components/Select
 export { AnchoredPopover, type AnchoredPopoverProps, type PopoverAlign, type PopoverSide, type PopoverDismissReason } from "./components/AnchoredPopover";
 export { Segmented, type SegmentedProps, type SegmentedItem } from "./components/Segmented";
 export { AngleDial, type AngleDialProps } from "./components/AngleDial";
-export { DirectionPad, type DirectionPadProps } from "./components/DirectionPad";
-export { RangeField, type RangeFieldProps } from "./components/RangeField";
 export { PointPad, type PointPadProps } from "./components/PointPad";
 
 export { OptionList, type OptionListProps, type OptionListItem } from "./components/OptionList";
@@ -57,3 +55,6 @@ export { Header } from "./components/Header";
 export { Footer } from "./components/Footer";
 export { siteNav, footerGroups, type NavItem } from "./lib/nav";
 export { Cursor, type CursorProps } from "./components/Cursor";
+
+/* لوحُ الكلمة — «خمّن الكلمة». هيئةٌ واحدةٌ مُقَرّة، وأيقوناتُها تُمرَّر (معرضُها `/ui/game-screens`). */
+export { WordBoard, type WordBoardProps, type WordBoardState, type WordBoardIcons } from "./components/WordBoard";
