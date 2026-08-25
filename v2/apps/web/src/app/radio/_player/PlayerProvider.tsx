@@ -105,6 +105,16 @@ type Api = {
   setVolume: (v: number) => void;
   setMuted: (v: boolean) => void;
   setMusicLevel: (v: number) => void;
+  /**
+   * **مقدارٌ يُسمَع ولا يُخزَّن** — لأجل السحب المتّصل.
+   *
+   * `setMusicLevel` يكتب في المخزن ويُنادي قارئيه، فيُعاد الرسمُ ويُعاد معه أثرُ
+   * مزامنة المسارين، فيُضبَط `currentTime` لمسار الموسيقى من جديد. ومِزلاقٌ يُسحَب
+   * بالإصبع يُطلق ذلك عشراتِ المرّات في الثانية: **قطعٌ مسموع**، رصده المالك على
+   * جوّاله ٢٠٢٦-٠٨-٢٥. فههنا تُمسّ الجهارةُ وحدَها، ويُختَم بـ`setMusicLevel`
+   * مرّةً واحدةً عند رفع الإصبع.
+   */
+  previewMusicLevel: (v: number) => void;
   switchTo: (v: Variant) => void;
   /** يُخبر المشغّلَ أنّ سطحًا داخليًّا حاضرٌ في النظر، فيكفّ الشريطُ الملازم. */
   setInlineVisible: (v: boolean) => void;
@@ -158,7 +168,7 @@ export function useRadioPlayer(): Api {
     variant: "music", time: 0, duration: 0, rate: 1, volume: 1, muted: false,
     musicLevel: DEFAULT_MUSIC_LEVEL,
     toggle: () => {}, seek: () => {}, skip: () => {}, cycleRate: () => {},
-    setVolume: () => {}, setMuted: () => {}, setMusicLevel: () => {},
+    setVolume: () => {}, setMuted: () => {}, setMusicLevel: () => {}, previewMusicLevel: () => {},
     switchTo: () => {}, setInlineVisible: () => {},
   };
 }
@@ -460,6 +470,13 @@ export function RadioPlayerProvider({
    * المقبض. وإنزالُه إلى الصفر في المقدّمة الموسيقيّة ينقل المستمعَ إلى الكلام،
    * فلا يجلس في صمتٍ لا يفهم سببَه — وهو سلوكُ المبدّل نفسُه لا سلوكٌ مستحدَث.
    */
+  /** الجهارةُ وحدَها، بلا حالةٍ ولا مخزنٍ ولا مزامنة: تُنادى مع كلّ حركةِ إصبع. */
+  const previewMusicLevel = useCallback((v: number) => {
+    const b = bRef.current;
+    if (!b || mode !== "stems") return;
+    b.volume = muted ? 0 : volume * Math.max(0, Math.min(1, v));
+  }, [mode, muted, volume]);
+
   const setMusicLevel = useCallback((v: number) => {
     const level = Math.max(0, Math.min(1, v));
     // المخزنُ هو المصدر: يُكتَب ثمّ يُنادى قارئوه (فيُعاد الرسمُ بمقدارٍ واحدٍ لا بنسختين)
@@ -597,12 +614,12 @@ export function RadioPlayerProvider({
       current, playing, failed, play, isCurrent: (id: string) => current?.id === id,
       variant, time, duration, rate, volume, muted,
       musicLevel,
-      toggle, seek, skip, cycleRate, setVolume, setMuted, setMusicLevel,
+      toggle, seek, skip, cycleRate, setVolume, setMuted, setMusicLevel, previewMusicLevel,
       switchTo: (v: Variant) => void switchTo(v),
       setInlineVisible,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current, playing, failed, play, variant, time, duration, rate, volume, muted, musicLevel, mode],
+    [current, playing, failed, play, variant, time, duration, rate, volume, muted, musicLevel, mode, previewMusicLevel],
   );
 
   return (

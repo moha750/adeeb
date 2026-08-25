@@ -7,6 +7,7 @@ import {
   SpeakerHigh, SpeakerSlash,
 } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
+import { useState } from "react";
 import { useWaveBars } from "@/lib/radio/useWaveBars";
 import { useSavedPosition } from "@/lib/radio/progress";
 import { formatDuration, SKIP_SECONDS } from "../../dashboard/radio/vocab";
@@ -53,6 +54,48 @@ function Wave({ peaks, pct, seconds, marks, seeker }: {
         <span className="radn-head" style={{ insetInlineStart: `${pct}%` }} aria-hidden />
         {seeker}
       </div>
+    </div>
+  );
+}
+
+/**
+ * **مقبضُ الموسيقى** — يُسمَع وهو يُسحَب، ويُخزَّن حين يُترَك.
+ *
+ * المقدارُ المعروضُ حالةٌ محلّيّة، فلا ينتظر الإبهامُ دورةَ رسمٍ ليتحرّك المقبض.
+ * والصوتُ يتبعه فورًا بـ`previewMusicLevel` (جهارةٌ فقط)، ولا يُكتَب في المخزن
+ * إلّا عند رفع الإصبع أو ترك التركيز. وبهذا لا تُعاد مزامنةُ المسارين مع كلّ
+ * حركة، وهي التي كانت تُسمَع قطعًا على الجوّال.
+ */
+function MusicKnob({ p, disabled }: { p: ReturnType<typeof useRadioPlayer>; disabled: boolean }) {
+  const [live, setLive] = useState(p.musicLevel);
+  /* حين يتبدّل المقدارُ من مكانٍ آخر (مبدّلُ المكس القديم مثلًا) يتبعه المقبض.
+     وهو نمطُ «اضبط الحالَ حين تتبدّل الخاصّيّة» بحالةِ آخرِ ما رأيناه، لا بمرجعٍ
+     يُقرأ في الرسم. ولا يزاحم الإصبعَ: المخزنُ لا يتبدّل إلّا عند الختم. */
+  const [seen, setSeen] = useState(p.musicLevel);
+  if (seen !== p.musicLevel) { setSeen(p.musicLevel); setLive(p.musicLevel); }
+
+  const commit = (v: number) => p.setMusicLevel(v);
+
+  return (
+    <div className="rad-music">
+      <span className="rad-ctl-lbl"><MusicNotes size={15} aria-hidden />الموسيقى</span>
+      <input
+        className="rad-vol-input"
+        type="range" min={0} max={1} step={0.05}
+        value={live}
+        disabled={disabled}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          setLive(v);
+          p.previewMusicLevel(v);
+        }}
+        onPointerUp={() => commit(live)}
+        onPointerCancel={() => commit(live)}
+        onKeyUp={() => commit(live)}
+        onBlur={() => commit(live)}
+        aria-label="مقدار الموسيقى"
+        aria-valuetext={`${Math.round(live * 100)}٪`}
+      />
     </div>
   );
 }
@@ -208,18 +251,7 @@ export function PlayerControls({
    * **والمكسُ القديم يبقى مبدّلًا بطرفين**: ملفّان لا يُمزَجان فليس فيهما ما يُخفَت.
    */
   const takes = hasStems ? (
-    <div className="rad-music">
-      <span className="rad-ctl-lbl"><MusicNotes size={15} aria-hidden />الموسيقى</span>
-      <input
-        className="rad-vol-input"
-        type="range" min={0} max={1} step={0.05}
-        value={p.musicLevel}
-        onChange={(e) => p.setMusicLevel(Number(e.target.value))}
-        disabled={!isThis}
-        aria-label="مقدار الموسيقى"
-        aria-valuetext={pctText(p.musicLevel)}
-      />
-    </div>
+    <MusicKnob p={p} disabled={!isThis} />
   ) : shown.plainUrl ? (
     <div className="rad-takes" role="group" aria-label="نسخة الاستماع">
       <button type="button" className="rad-take" aria-pressed={p.variant === "music"}
