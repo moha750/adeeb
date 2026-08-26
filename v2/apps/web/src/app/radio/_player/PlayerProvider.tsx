@@ -513,9 +513,6 @@ export function RadioPlayerProvider({
    */
   useMediaSession({
     current, playing, time, rate,
-    // زرُّ «التالية» يظهر حين يكون في الطابور تاليةٌ فعلًا، ويغيب فتعود مكانَه
-    // أزرارُ القفز — فلا زرَّ ميّتٌ في شاشة القفل.
-    hasNext: queue.length > 0,
     // المدّةُ من العنصر إن قرأها، وإلّا فالمحفوظةُ مع الحلقة — فالشريطُ في شاشة
     // القفل يقول زمنَه الصحيح من أوّل ثانيةٍ لا بعد أن يجهز الملفّ.
     duration: duration || current?.seconds || 0,

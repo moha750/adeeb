@@ -37,13 +37,24 @@ type Reins = {
 
 const ACTIONS = ["play", "pause", "seekbackward", "seekforward", "seekto", "nexttrack", "previoustrack"] as const;
 
+/** مقاساتٌ يُعلَن أنّ الغلافَ يصلح لها، والنظامُ يختار ويحجّم. */
+const ARTWORK_SIZES = ["96x96", "192x192", "512x512"] as const;
+
+/** نوعُ الصورة من امتدادها. ونوعٌ خاطئٌ أسوأُ من لا نوع، فلا يُخمَّن ما لا يُعرَف. */
+function artType(url: string): string | undefined {
+  const ext = url.split("?")[0].split(".").pop()?.toLowerCase();
+  if (ext === "png") return "image/png";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "webp") return "image/webp";
+  return undefined;
+}
+
 export function useMediaSession({
   current,
   playing,
   time,
   duration,
   rate,
-  hasNext,
   stationName,
   stationLogoUrl,
   reins,
@@ -53,8 +64,6 @@ export function useMediaSession({
   time: number;
   duration: number;
   rate: number;
-  /** أفي الطابور تاليةٌ؟ عليه يتوقّف ظهورُ زرّ «التالية». */
-  hasNext: boolean;
   stationName: string;
   stationLogoUrl: string | null;
   reins: Reins;
@@ -88,9 +97,19 @@ export function useMediaSession({
       title: current.title,
       artist: current.showTitle,
       album: stationName,
-      // بلا `sizes`: نحن لا نعرف مقاسَ الشعار المرفوع، والكذبُ فيه يجعل المتصفّحَ
-      // يختار خطأً أو يهمل الصورة. وواحدةٌ بلا مقاسٍ تُقبَل عند الجميع.
-      artwork: art ? [{ src: art }] : [],
+      /**
+       * **المقاسُ والنوعُ يُعلَنان** (رآه المالك في شاشة قفله ٢٠٢٦-٠٨-٢٦: النصُّ
+       * يظهر والصورةُ لا).
+       *
+       * كانت تُرسَل بلا `sizes` بحجّة أنّنا لا نعرف مقاسَ المرفوع، وأنّ الكذبَ فيه
+       * يُضلّل المتصفّح. والحجّةُ سقطت بالتجربة: **آيفون يتجاهل الغلافَ بلا مقاس.**
+       * والإعلانُ ليس كذبًا: هو يقول «هذه الصورةُ تصلح لهذه المقاسات»، والنظامُ
+       * يختار واحدًا ويحجّم بنفسه — وهو عُرفُ الويب لا استثناءَنا.
+       *
+       * ولا يُغني هذا عن **غلافٍ صغيرٍ مربّعٍ يُحفَظ عند الرفع**: الشعارُ اليوم
+       * ٥٨٣٤×٥٨٣٤ و٤٨٤ كيلوبايت (قِيس)، وذلك ثقيلٌ على شاشةِ قفلٍ مهما أُعلن.
+       */
+      artwork: art ? ARTWORK_SIZES.map((sizes) => ({ src: art, sizes, type: artType(art) })) : [],
     });
   }, [current, stationName, stationLogoUrl]);
 
@@ -132,8 +151,20 @@ export function useMediaSession({
     set("seekbackward", (d) => latest.current.reins.skip(-(d.seekOffset ?? SKIP_SECONDS)));
     set("seekforward", (d) => latest.current.reins.skip(d.seekOffset ?? SKIP_SECONDS));
     set("seekto", (d) => { if (typeof d.seekTime === "number") latest.current.reins.seek(d.seekTime); });
-    // صريحًا لا سهوًا: المشغّلُ لا يحفظ ما مضى، فلا رجعةَ إلى سابقة.
+    /**
+     * **القفزُ ±١٠ دائمًا، ولا زرَّ مسارٍ يزيحه** (قرارُ المالك ٢٠٢٦-٠٨-٢٦).
+     *
+     * النظامُ يعرض **إمّا** زرّي المسار **وإمّا** زرّي القفز، لا الأربعة. وكان
+     * `nexttrack` يُسجَّل حين يكون في الطابور تاليةٌ فعلًا، فاختلفت شاشةُ القفل
+     * من حلقةٍ إلى حلقة: القديماتُ لهنّ تاليةٌ فظهر ⏪⏩، والأحدثُ لا تاليةَ لها
+     * فظهر القفز. رآه المالكُ في جهازه وسأل: لماذا الاختلاف؟
+     *
+     * والصوابُ الثبات، وعُرفُ مشغّلات البودكاست كلِّها (أبل وأوفركاست وبوكِت
+     * كاستس) أنّ شاشةَ القفل للقفز لا للمسارات — فالحلقةُ طويلةٌ يُتنقَّل داخلها
+     * لا بينها. والانتقالُ إلى التالية يبقى تلقائيًّا عند الانتهاء.
+     */
     set("previoustrack", null);
+    set("nexttrack", null);
 
     return () => {
       for (const a of ACTIONS) set(a, null);
@@ -142,14 +173,4 @@ export function useMediaSession({
     };
   }, []);
 
-  /* ── «التالية»: أثرٌ على حِدَة لأنّه وحدَه يتبدّل بالطابور ── */
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
-    try {
-      navigator.mediaSession.setActionHandler(
-        "nexttrack",
-        hasNext ? () => latest.current.reins.next() : null,
-      );
-    } catch { /* فعلٌ لا يعرفه هذا المتصفّح */ }
-  }, [hasNext]);
 }
