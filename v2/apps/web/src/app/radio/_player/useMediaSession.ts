@@ -37,16 +37,28 @@ type Reins = {
 
 const ACTIONS = ["play", "pause", "seekbackward", "seekforward", "seekto", "nexttrack", "previoustrack"] as const;
 
-/** مقاساتٌ يُعلَن أنّ الغلافَ يصلح لها، والنظامُ يختار ويحجّم. */
-const ARTWORK_SIZES = ["96x96", "192x192", "512x512"] as const;
+/**
+ * **الغلافُ يمرّ بمُصغِّر Next قبل أن يبلغ شاشةَ القفل.**
+ *
+ * أُعلنت المقاساتُ أوّلًا فلم تكفِ: الشعارُ يُرفَع بمقاسه الأصليّ (قِيس على
+ * المنشور: ٥٨٣٤×٥٨٣٤ و٤٨٤ كيلوبايت)، وآيفون يتجاهله مهما قلنا عنه. فيمرّ
+ * بالمُصغِّر: **٤٨٤ كيلوبايت تصير ١١٫٥** (قِيس)، بلا رفعٍ جديدٍ ولا حقلٍ في القاعدة.
+ *
+ * والعروضُ من سلّم Next الافتراضيّ (`imageSizes`) لا من هوانا: ما خرج عنه يُردّ
+ * بـ٤٠٠. و٥١٢ ليست منه، فأقصى المتاح ٣٨٤ — جُرِّبت الأربعةُ فثبت ذلك.
+ *
+ * ولا يُعلَن `type`: المُصغِّرُ يردّ WebP أو أصلَ الصورة بحسب ما يقبله الطالب،
+ * فنوعٌ محفورٌ هنا قد يكذب.
+ */
+const ARTWORK_WIDTHS = [96, 256, 384] as const;
 
-/** نوعُ الصورة من امتدادها. ونوعٌ خاطئٌ أسوأُ من لا نوع، فلا يُخمَّن ما لا يُعرَف. */
-function artType(url: string): string | undefined {
-  const ext = url.split("?")[0].split(".").pop()?.toLowerCase();
-  if (ext === "png") return "image/png";
-  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
-  if (ext === "webp") return "image/webp";
-  return undefined;
+function artworkList(src: string): MediaImage[] {
+  const origin = typeof location !== "undefined" ? location.origin : "";
+  return ARTWORK_WIDTHS.map((w) => ({
+    // مطلقٌ لا نسبيّ: الطالبُ هنا نظامُ التشغيل لا الصفحة.
+    src: `${origin}/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=75`,
+    sizes: `${w}x${w}`,
+  }));
 }
 
 export function useMediaSession({
@@ -109,22 +121,37 @@ export function useMediaSession({
        * ولا يُغني هذا عن **غلافٍ صغيرٍ مربّعٍ يُحفَظ عند الرفع**: الشعارُ اليوم
        * ٥٨٣٤×٥٨٣٤ و٤٨٤ كيلوبايت (قِيس)، وذلك ثقيلٌ على شاشةِ قفلٍ مهما أُعلن.
        */
-      artwork: art ? ARTWORK_SIZES.map((sizes) => ({ src: art, sizes, type: artType(art) })) : [],
+      artwork: art ? artworkList(art) : [],
     });
   }, [current, stationName, stationLogoUrl]);
 
-  /* ── الحالُ والموضع: يُعادان مع كلّ خطوةِ شريط ── */
+  /* ── الحال: تُعلَن حين تتبدّل، لا مع كلّ خطوةِ شريط ── */
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (!current) return;
+    navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+  }, [current, playing]);
+
+  /**
+   * ── الموضع: **مرّةً في الثانية لا أربعًا** ──
+   *
+   * `timeupdate` يقع نحوَ أربع مرّاتٍ في الثانية، وكان كلُّ وقوعٍ يُعيد
+   * `setPositionState`. وذاك حِملٌ على جسرِ الوسائط في iOS: **تختفي بطاقةُ «ما
+   * يُذاع الآن»** ويتوقّف الصوتُ عند الخروج من المتصفّح أو قفلِ الشاشة. رصده
+   * المالك على جهازه ٢٠٢٦-٠٨-٢٦.
+   *
+   * والنظامُ لا يحتاج أكثر: شريطُ شاشة القفل **يتقدّم بنفسه** من الموضع والسرعة
+   * المُعلَنين، فإعلانٌ في الثانية يُبقيه دقيقًا. ويُعلَن فورًا حين تتبدّل الحالُ
+   * أو السرعةُ أو الحلقة، فالوثبةُ لا تنتظر دورَها.
+   */
+  const lastPos = useRef(0);
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
-    if (!current) return;
-
-    // يُعاد التأكيدُ في كلّ خطوة لا عند التبدّل وحدَه: وقوفُ مسار الموسيقى
-    // (حين يُنزَل المقبضُ إلى الصفر) قد يجعل المتصفّحَ يظنّ الإذاعةَ متوقّفة.
-    ms.playbackState = playing ? "playing" : "paused";
-
-    if (typeof ms.setPositionState !== "function") return;
+    if (!current || typeof ms.setPositionState !== "function") return;
     if (!Number.isFinite(duration) || duration <= 0) return;
+    if (Math.abs(time - lastPos.current) < 1) return;
+    lastPos.current = time;
     try {
       ms.setPositionState({
         duration,
@@ -134,6 +161,9 @@ export function useMediaSession({
       });
     } catch { /* مدّةٌ لم تستقرّ بعد: تُصحَّح في الخطوة التالية */ }
   }, [current, playing, time, duration, rate]);
+
+  /* وثبةٌ أو تبدّلُ سرعةٍ أو حلقةٍ: يُعلَن فورًا ولا ينتظر عتبةَ الثانية. */
+  useEffect(() => { lastPos.current = -999; }, [current, playing, rate]);
 
   /* ── المقابض: تُسجَّل مرّةً وتُرفَع عند الخروج ── */
   useEffect(() => {
