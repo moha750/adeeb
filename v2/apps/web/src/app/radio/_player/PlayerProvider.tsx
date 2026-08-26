@@ -1,13 +1,10 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import {
-  DRIFT_TOLERANCE, DRIFT_DEADBAND, DRIFT_HARD_RESYNC, DRIFT_NUDGE_MAX, DRIFT_NUDGE_GAIN,
-  PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES,
-} from "@adeeb/core";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES } from "@adeeb/core";
 import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
-import { DEFAULT_MUSIC_LEVEL, MUSIC_LEVEL_KEY, SKIP_SECONDS } from "../../dashboard/radio/vocab";
+import { SKIP_SECONDS } from "../../dashboard/radio/vocab";
 import { PlayerControls } from "./PlayerControls";
 import { useMediaSession } from "./useMediaSession";
 
@@ -67,7 +64,6 @@ export type Track = {
 export const INLINE_PLAYER = true;
 
 type Variant = "music" | "plain";
-type Mode = "stems" | "legacy";
 
 
 
@@ -100,66 +96,15 @@ type Api = {
    * مقدارُ الموسيقى من صفرٍ إلى واحد. لا معنى له إلّا حين تكون الحلقةُ مسارين،
    * وحضورُ أداته يقرّره السطحُ من الحلقة المعروضة لا من هنا.
    */
-  musicLevel: number;
   toggle: () => void;
   seek: (t: number) => void;
   skip: (by: number) => void;
   cycleRate: () => void;
   setVolume: (v: number) => void;
   setMuted: (v: boolean) => void;
-  setMusicLevel: (v: number) => void;
-  /**
-   * **مقدارٌ يُسمَع ولا يُخزَّن** — لأجل السحب المتّصل.
-   *
-   * `setMusicLevel` يكتب في المخزن ويُنادي قارئيه، فيُعاد الرسمُ ويُعاد معه أثرُ
-   * مزامنة المسارين، فيُضبَط `currentTime` لمسار الموسيقى من جديد. ومِزلاقٌ يُسحَب
-   * بالإصبع يُطلق ذلك عشراتِ المرّات في الثانية: **قطعٌ مسموع**، رصده المالك على
-   * جوّاله ٢٠٢٦-٠٨-٢٥. فههنا تُمسّ الجهارةُ وحدَها، ويُختَم بـ`setMusicLevel`
-   * مرّةً واحدةً عند رفع الإصبع.
-   */
-  previewMusicLevel: (v: number) => void;
   switchTo: (v: Variant) => void;
   /** يُخبر المشغّلَ أنّ سطحًا داخليًّا حاضرٌ في النظر، فيكفّ الشريطُ الملازم. */
   setInlineVisible: (v: boolean) => void;
-};
-
-/**
- * ══ مقبضُ الموسيقى: مخزنٌ خارجيٌّ يُقرأ، لا نسخةٌ منه في حالة ═══════════
- *
- * كان يُنسَخ من `localStorage` إلى حالةٍ داخل أثرٍ بعد التركيب، فيُرسَم المشغّلُ
- * مرّةً بالمقدار الافتراضيّ ثمّ يُعاد رسمُه بمقدار صاحبه (رسمتان، وقفزةُ مقبضٍ
- * تُرى). وهو ما تردّه قاعدةُ المصرّف `set-state-in-effect`. فصار المخزنُ هو
- * المصدرَ يُقرأ بـ`useSyncExternalStore` (سابقةُ `lib/useDraft`).
- *
- * **والغيابُ يُفحَص قبل التحويل**: `getItem` يردّ `null` لمن لم يضبط شيئًا،
- * و`Number(null)` صفرٌ صحيحٌ مقبولٌ في المدى — فكان كلُّ زائرٍ جديدٍ يسمع الحلقةَ
- * بلا موسيقى ولا يدري لماذا. رُصد في المعاينة، ٢٠٢٦-٠٨-١٤.
- *
- * **ونسخةٌ في الذاكرة فوق المخزن**: متصفّحٌ يمنع التخزين (تصفّحٌ خاصّ) يجعل
- * الكتابةَ ترمي، فلولا هذه النسخةُ لعاد المقبضُ إلى مكانه كلّما حُرّك.
- */
-const levelListeners = new Set<() => void>();
-let levelCache: number | null = null;
-
-const readStoredLevel = (): number => {
-  try {
-    const raw = localStorage.getItem(MUSIC_LEVEL_KEY);
-    if (raw === null) return DEFAULT_MUSIC_LEVEL;
-    const saved = Number(raw);
-    return Number.isFinite(saved) && saved >= 0 && saved <= 1 ? saved : DEFAULT_MUSIC_LEVEL;
-  } catch { return DEFAULT_MUSIC_LEVEL; /* متصفّحٌ يمنع التخزين: يبقى الافتراضيّ */ }
-};
-
-/** لقطةٌ ثابتةٌ بين الكتابتين — قراءةُ المخزن في كلّ رسمةٍ لا داعيَ لها. */
-const levelSnapshot = (): number => (levelCache ??= readStoredLevel());
-const subscribeLevel = (cb: () => void) => {
-  levelListeners.add(cb);
-  return () => { levelListeners.delete(cb); };
-};
-const writeLevel = (level: number) => {
-  levelCache = level;
-  try { localStorage.setItem(MUSIC_LEVEL_KEY, String(level)); } catch { /* مُنع التخزين */ }
-  levelListeners.forEach((cb) => cb());
 };
 
 const Ctx = createContext<Api | null>(null);
@@ -169,9 +114,8 @@ export function useRadioPlayer(): Api {
   return useContext(Ctx) ?? {
     current: null, playing: false, failed: false, play: () => {}, isCurrent: () => false,
     variant: "music", time: 0, duration: 0, rate: 1, volume: 1, muted: false,
-    musicLevel: DEFAULT_MUSIC_LEVEL,
     toggle: () => {}, seek: () => {}, skip: () => {}, cycleRate: () => {},
-    setVolume: () => {}, setMuted: () => {}, setMusicLevel: () => {}, previewMusicLevel: () => {},
+    setVolume: () => {}, setMuted: () => {},
     switchTo: () => {}, setInlineVisible: () => {},
   };
 }
@@ -203,7 +147,6 @@ export function RadioPlayerProvider({
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   // المقبضُ من المخزن لا من حالةٍ تنسخه — والخادمُ لا مخزنَ له فلقطتُه الافتراضيّ
-  const musicLevel = useSyncExternalStore(subscribeLevel, levelSnapshot, () => DEFAULT_MUSIC_LEVEL);
   const [queue, setQueue] = useState<Track[]>([]);
   const [inlineVisible, setInlineVisible] = useState(false);
   /**
@@ -217,20 +160,33 @@ export function RadioPlayerProvider({
    */
   const [failed, setFailed] = useState(false);
 
-  const mode: Mode = current?.plainUrl && current?.stemUrl ? "stems" : "legacy";
-  const srcA = mode === "stems" ? current?.plainUrl : current?.musicUrl;
-  const srcB = mode === "stems" ? current?.stemUrl : current?.plainUrl;
+  /**
+   * ══ ملفٌّ واحدٌ يعمل، لا مساران يتزامنان (قرارُ المالك ٢٠٢٦-٠٨-٢٦) ═══════
+   *
+   * كانت الحلقةُ تُذاع بعنصرَي صوتٍ معًا (كلامٌ وموسيقى) يُمزَجان في المتصفّح،
+   * فيتحرّك المقبضُ بينهما متّصلًا. وiOS معادٍ لهذا بطبعه: يخنق العنصرَ الثاني
+   * أو يقاطعه، فتتقطّع الموسيقى بلا نمطٍ نملكه. رُصد على آيفون في سفاري وكروم
+   * معًا (وكلاهما WebKit) على واي فاي، ٢٠٢٦-٠٨-٢٦.
+   *
+   * **والقيدُ فيزيائيٌّ لا عطب:** مقبضٌ متّصلٌ يعني مزجًا في المتصفّح، والمزجُ
+   * لا يقع إلّا بعنصرين (مكسورٌ على iOS) أو بتنزيل الملفّ كاملًا وفكِّه قبل أوّل
+   * كلمة (‏53 ميغا). فسقط المقبضُ المتّصل، وعاد الاختيارُ **ملفّين ممزوجَين
+   * مسبقًا**: `music` كاملةً و`plain` بلا موسيقى. واحدٌ يعمل والآخرُ ساكن.
+   *
+   * وبه سقطت مزامنةُ الانزياح كلُّها: لا قائدَ ولا تابع، فلا شيءَ يُلاحَق.
+   * ومسارُ `stem` يبقى في القاعدة للتطبيق الأصيل، ولا يقرؤه الويبُ بعد اليوم.
+   */
+  const srcA = current?.musicUrl;
+  const srcB = current?.plainUrl;
 
   /** النسخةُ المسموعة: تُشتقّ من المقبض بالمسارين، وتُختار بالمبدّل في المكس. */
-  const variant: Variant = mode === "stems" ? (musicLevel > 0 ? "music" : "plain") : legacyVariant;
+  const variant: Variant = legacyVariant;
 
   /** المسارُ الذي يملك الزمن: الصوتُ دائمًا بالمسارين، والعاملُ في المكس. */
   const leadEl = useCallback(
-    () => (mode === "stems" || legacyVariant === "music" ? aRef.current : bRef.current),
-    [mode, legacyVariant],
+    () => (legacyVariant === "music" ? aRef.current : bRef.current),
+    [legacyVariant],
   );
-  /** مسارُ الموسيقى — تابعٌ لا يملك زمنًا. `null` في المكس القديم. */
-  const stemEl = useCallback(() => (mode === "stems" ? bRef.current : null), [mode]);
 
   /**
    * عدّادُ الاستماع — يُقاس **سماعًا حقيقيًّا لا زمنًا يمرّ**.
@@ -250,6 +206,14 @@ export function RadioPlayerProvider({
   const seeking = useRef(false);
   /** آخرُ موضعٍ كُتب في المخزن، فلا يُكتَب مع كلّ حدث. */
   const savedAt = useRef(0);
+  /**
+   * **مبدّلٌ جارٍ**: التبديلُ بين الملفّين يوقف الخارجَ بعد أن يبدأ الداخل، و
+   * `pause` الخارجِ يُطلق مستمعَه فيقول «توقّف التشغيل» وهو لم يتوقّف. فكان
+   * الزرُّ يقول «تشغيل» والصوتُ يعمل، وشاشةُ القفل تقول «متوقّف». وهذا الطريقُ
+   * كان ميّتًا قبل اليوم (المسارانِ كانا يُمزَجان لا يتبادلان)، فظهر عيبُه حين
+   * صار الطريقَ الوحيد.
+   */
+  const switching = useRef(false);
   /** سرعةُ المستمع في مرجع: مستمعُ `timeupdate` يُسجَّل مرّةً فلا يرى الحالةَ تتبدّل. */
   const rateRef = useRef(1);
 
@@ -266,13 +230,12 @@ export function RadioPlayerProvider({
     for (const el of [a, b]) {
       if (!el) continue;
       // سرعةُ التابع يملكها مُلاحِقُ الانزياح، ولا تُضبَط هنا إلّا حين يكون واقفًا
-      if (el === b && mode === "stems" && !el.paused) continue;
       el.playbackRate = rate;
       el.muted = muted;
     }
     if (a) a.volume = volume;
-    if (b) b.volume = mode === "stems" ? volume * musicLevel : volume;
-  }, [rate, volume, muted, musicLevel, mode, current]);
+    if (b) b.volume = volume;
+  }, [rate, volume, muted, current]);
 
   /**
    * **الانتقالُ إلى التالية — مصدرٌ واحدٌ لبابين.**
@@ -332,25 +295,6 @@ export function RadioPlayerProvider({
        * وأثناء تعثّرها **لا يُوقَف الكلام**: الموسيقى سريرٌ يغيب لحظةً ثمّ يعود
        * في موضعه، وإيقافُ الحديث لأجلها أسوأُ من غيابها.
        */
-      const s = stemEl();
-      if (s && !s.paused && s.readyState >= 3) {
-        const off = s.currentTime - t;           // موجبٌ: الموسيقى متقدّمةٌ على الكلام
-        const abs = Math.abs(off);
-        const base = rateRef.current;
-        if (abs > DRIFT_HARD_RESYNC) {
-          // انقطاعٌ كبير: القفزُ أرحمُ من زحفٍ لا ينتهي، وهو نادرٌ لا يتكرّر
-          s.currentTime = t;
-          if (s.playbackRate !== base) s.playbackRate = base;
-        } else if (abs > DRIFT_DEADBAND) {
-          // ملاحقةٌ بالسرعة: تُبطَّأ إن تقدّمت وتُسرَّع إن تأخّرت، بلا قفزةٍ تُسمَع
-          const nudge = Math.min(DRIFT_NUDGE_MAX, abs * DRIFT_NUDGE_GAIN);
-          const next = base * (off > 0 ? 1 - nudge : 1 + nudge);
-          if (Math.abs(s.playbackRate - next) > 0.001) s.playbackRate = next;
-        } else if (Math.abs(s.playbackRate - base) > 0.001) {
-          s.playbackRate = base;                 // التقيا، فتعود السرعةُ إلى سرعته
-        }
-      }
-
       /* تكملةُ ما سمعت: الموضعُ يُحفَظ كلَّ خمس ثوانٍ لا كلَّ حدث. و`timeupdate`
          يقع نحوَ أربع مرّاتٍ في الثانية، فالكتابةُ عنده آلافُ نداءاتِ تخزينٍ في
          حلقةٍ واحدة. وخمسٌ أقصى ما يخسره من أُغلق جهازُه فجأة. */
@@ -365,6 +309,7 @@ export function RadioPlayerProvider({
     const onPlay = () => setPlaying(true);
     // الوقوفُ يحفظ فورًا: هو أشهرُ ما يسبق إغلاقَ التبويب، فلا يُنتظَر به الخمس.
     const onPause = () => {
+      if (switching.current) return;   // وقفةُ الخارجِ في التبديل ليست وقفةَ استماع
       setPlaying(false);
       if (current) saveProgress(current.id, a.currentTime, a.duration || current.seconds || 0);
     };
@@ -399,31 +344,7 @@ export function RadioPlayerProvider({
       a.removeEventListener("pause", onPause);
       a.removeEventListener("ended", onEnded);
     };
-  }, [leadEl, stemEl, variant, current, advance]);
-
-  /**
-   * مصالحةُ مسار الموسيقى بالحال — مكانٌ واحدٌ يقرّر أيعمل أم يقف، فلا تتفرّق
-   * القرارات على كلّ زرّ.
-   *
-   * **ولا يُبَثّ ما لا يُسمَع**: من أنزل المقبضَ إلى الصفر أُوقف مسارُه فلم
-   * يُحمَّل أصلًا، فوفّر عليه بضعةَ ميغاباياتٍ من باقيته.
-   */
-  useEffect(() => {
-    if (mode !== "stems") return;
-    const a = aRef.current, b = bRef.current;
-    if (!a || !b) return;
-    if (playing && musicLevel > 0) {
-      if (Math.abs(b.currentTime - a.currentTime) > DRIFT_TOLERANCE) b.currentTime = a.currentTime;
-      // **والضبطُ يُعاد بعد أن يبدأ فعلًا**: الضبطُ قبل `play()` يقع على زمنٍ
-      // يعتّق، فمُهلةُ البدء (نحو ٨٦ ملّي ثانية، قِيست) تصير تأخّرًا ثابتًا
-      // يرافق الحلقةَ إلى آخرها. وضبطةٌ ثانيةٌ بعد البدء تمحوه مرّةً واحدة.
-      if (b.paused) {
-        void b.play()
-          .then(() => { b.currentTime = a.currentTime; })
-          .catch(() => { /* يُعاد عند أوّل ضبطِ انزياح */ });
-      }
-    } else if (!b.paused) b.pause();
-  }, [playing, musicLevel, mode, current]);
+  }, [leadEl, variant, current, advance]);
 
   /** الموضعُ الذي تبدأ عنده الحلقةُ القادمة. يُملأ قبل `setCurrent` ويُقرأ بعد التركيب. */
   const startAt = useRef(0);
@@ -435,11 +356,10 @@ export function RadioPlayerProvider({
       if (!a) return;
       if (at !== undefined) {
         a.currentTime = at;
-        stemEl() && (stemEl()!.currentTime = at);
         setTime(at);
       }
       if (a.paused) void a.play().catch(() => setPlaying(false));
-      else if (at === undefined) { a.pause(); stemEl()?.pause(); }
+      else if (at === undefined) a.pause();
       return;
     }
     aRef.current?.pause();
@@ -455,7 +375,7 @@ export function RadioPlayerProvider({
     // استماعةٌ جديدة تبدأ، فيُسلَّح العدّادُ من جديد ويسقط إنذارُ ما قبلها.
     heard.current = 0; reported.current = false; lastAt.current = from; savedAt.current = from;
     setFailed(false);
-  }, [current, leadEl, stemEl]);
+  }, [current, leadEl]);
 
   // حلقةٌ جديدة: تُحمَّل ثمّ تبدأ. والتشغيلُ هنا نتيجةُ نقرةِ المستخدم فلا يمنعه المتصفّح.
   useEffect(() => {
@@ -470,10 +390,8 @@ export function RadioPlayerProvider({
     const a = leadEl();
     if (!a) return;
     a.currentTime = t;
-    const s = stemEl();
-    if (s) s.currentTime = t;
     setTime(t);
-  }, [leadEl, stemEl]);
+  }, [leadEl]);
 
   const toggle = () => {
     const a = leadEl();
@@ -482,39 +400,11 @@ export function RadioPlayerProvider({
       const at = landing(variant === "plain", a.currentTime);
       if (at !== a.currentTime) seek(at);
       void a.play().catch(() => setPlaying(false));
-    } else {
-      a.pause();
-      stemEl()?.pause();
-    }
+    } else a.pause();
   };
 
   /**
-   * المقبض. وإنزالُه إلى الصفر في المقدّمة الموسيقيّة ينقل المستمعَ إلى الكلام،
-   * فلا يجلس في صمتٍ لا يفهم سببَه — وهو سلوكُ المبدّل نفسُه لا سلوكٌ مستحدَث.
-   */
-  /** الجهارةُ وحدَها، بلا حالةٍ ولا مخزنٍ ولا مزامنة: تُنادى مع كلّ حركةِ إصبع. */
-  const previewMusicLevel = useCallback((v: number) => {
-    const b = bRef.current;
-    if (!b || mode !== "stems") return;
-    b.volume = muted ? 0 : volume * Math.max(0, Math.min(1, v));
-  }, [mode, muted, volume]);
-
-  const setMusicLevel = useCallback((v: number) => {
-    const level = Math.max(0, Math.min(1, v));
-    // المخزنُ هو المصدر: يُكتَب ثمّ يُنادى قارئوه (فيُعاد الرسمُ بمقدارٍ واحدٍ لا بنسختين)
-    writeLevel(level);
-
-    if (level === 0 && mode === "stems") {
-      const a = aRef.current;
-      if (a) {
-        const at = landing(true, a.currentTime);
-        if (at !== a.currentTime) seek(at);
-      }
-    }
-  }, [mode, landing, seek]);
-
-  /**
-   * المبدّل — طرفا المقبض بالمسارين، وقفزةٌ بين ملفّين في المكس القديم.
+   * المبدّل — قفزةٌ بين ملفّين ممزوجَين مسبقًا، بلا لحظةِ صمت.
    *
    * وفي المكس: الهدفُ يبدأ **ثمّ** يقف المصدر فلا تقع بينهما لحظةُ صمت، **ولا
    * يُسكَت المصدرُ إن لم يبدأ الهدف** — فإن ردّ المتصفّحُ `play()` (وهو يردّه
@@ -523,8 +413,6 @@ export function RadioPlayerProvider({
    */
   const switchTo = async (next: Variant) => {
     if (next === variant) return;
-
-    if (mode === "stems") { setMusicLevel(next === "music" ? 1 : 0); return; }
 
     if (!current?.plainUrl) return;
     const from = legacyVariant === "music" ? aRef.current : bRef.current;
@@ -539,8 +427,12 @@ export function RadioPlayerProvider({
     });
 
     if (!from.paused) {
-      try { await to.play(); } catch { return; }
+      switching.current = true;
+      try { await to.play(); }
+      catch { switching.current = false; return; }
       from.pause();
+      // تُرفَع بعد دورةِ أحداثٍ كي يمرّ `pause` الخارجِ وهي مرفوعة
+      setTimeout(() => { switching.current = false; }, 0);
     }
     setLegacyVariant(next);
     setTime(t);
@@ -612,7 +504,7 @@ export function RadioPlayerProvider({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, mode, legacyVariant, duration, variant]);
+  }, [current, legacyVariant, duration, variant]);
 
   /**
    * **ما يقوله الجهازُ عن الحلقة** — شاشةُ القفل ومركزُ التحكّم وأزرارُ
@@ -635,13 +527,12 @@ export function RadioPlayerProvider({
     () => ({
       current, playing, failed, play, isCurrent: (id: string) => current?.id === id,
       variant, time, duration, rate, volume, muted,
-      musicLevel,
-      toggle, seek, skip, cycleRate, setVolume, setMuted, setMusicLevel, previewMusicLevel,
+      toggle, seek, skip, cycleRate, setVolume, setMuted,
       switchTo: (v: Variant) => void switchTo(v),
       setInlineVisible,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current, playing, failed, play, variant, time, duration, rate, volume, muted, musicLevel, mode, previewMusicLevel],
+    [current, playing, failed, play, variant, time, duration, rate, volume, muted],
   );
 
   return (
