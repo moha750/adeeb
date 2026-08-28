@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Alert, countPhrase } from "@adeeb/design-system";
 import {
-  MicrophoneStage, MusicNotes, Play, Pause, SpeakerSimpleNone,
+  MusicNotes, Play, Pause, SpeakerSimpleNone,
   SpeakerHigh, SpeakerSlash,
 } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
@@ -40,17 +40,17 @@ function Wave({ peaks, pct, seconds, marks, seeker }: {
   const played = Math.round(bars.length * (pct / 100));
 
   return (
-    <div className="radn-wave-wrap">
+    <div className="stn-wave-wrap">
       {marks.length && seconds > 0 ? (
-        <div className="radn-marks" aria-hidden>
+        <div className="stn-marks" aria-hidden>
           {marks.map((at) => <b key={at} style={{ insetInlineStart: `${(at / seconds) * 100}%` }} />)}
         </div>
       ) : null}
-      <div className="radn-wave" ref={ref}>
+      <div className="stn-wave" ref={ref}>
         {bars.map((v, i) => (
-          <i key={i} className={i < played ? "is-played" : undefined} style={{ height: `${v}%` }} />
+          <i key={i} className={i < played ? "on" : undefined} style={{ height: `${v}%` }} />
         ))}
-        <span className="radn-head" style={{ insetInlineStart: `${pct}%` }} aria-hidden />
+        <span className="stn-head" style={{ insetInlineStart: `${pct}%` }} aria-hidden />
         {seeker}
       </div>
     </div>
@@ -110,7 +110,7 @@ export function PlayerControls({
    */
   const seeker = (
     <input
-      className="radn-seek"
+      className="stn-seek"
       type="range" min={0} max={seconds || 0} step={1}
       value={Math.min(time, seconds || time)}
       onChange={(e) => p.seek(Number(e.target.value))}
@@ -138,22 +138,20 @@ export function PlayerControls({
   const skipPhrase = countPhrase(SKIP_SECONDS, { one: "ثانية", two: "ثانيتان", few: "ثوانٍ" });
 
   const transport = (
-    <div className="radn-transport">
-      <button type="button" className="radn-skip" onClick={() => p.skip(-SKIP_SECONDS)}
+    <div className="stn-trans">
+      <button type="button" className="stn-skip" onClick={() => p.skip(-SKIP_SECONDS)}
         disabled={!isThis} aria-label={`الرجوع ${skipPhrase}`}>
-        <span className="radn-skip-g">
-          <ArrowCounterClockwise size={26} aria-hidden /><b>{SKIP_SECONDS}</b>
-        </span>
+        <ArrowCounterClockwise aria-hidden />
+        <b>{SKIP_SECONDS}</b>
       </button>
-      <button type="button" className="radn-big" onClick={onPlay}
+      <button type="button" className="stn-play" onClick={onPlay}
         aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
         {playing ? <Pause size={22} weight="fill" aria-hidden /> : <Play size={22} weight="fill" aria-hidden />}
       </button>
-      <button type="button" className="radn-skip" onClick={() => p.skip(SKIP_SECONDS)}
+      <button type="button" className="stn-skip" onClick={() => p.skip(SKIP_SECONDS)}
         disabled={!isThis} aria-label={`التقدّم ${skipPhrase}`}>
-        <span className="radn-skip-g">
-          <ArrowClockwise size={26} aria-hidden /><b>{SKIP_SECONDS}</b>
-        </span>
+        <ArrowClockwise aria-hidden />
+        <b>{SKIP_SECONDS}</b>
       </button>
     </div>
   );
@@ -171,9 +169,9 @@ export function PlayerControls({
    * لا يظهر إلّا حين تتغيّر السرعة.
    */
   const times = (
-    <div className="radn-times">
+    <div className="stn-times">
       <span><bdi dir="ltr">{formatDuration(time) || "0:00"}</bdi></span>
-      {seconds > 0 ? <span className="radn-left">بقي {formatDuration(seconds - time)}</span> : null}
+      {seconds > 0 ? <span className="stn-left">بقي {formatDuration(seconds - time)}</span> : null}
       <span><bdi dir="ltr">{formatDuration(seconds) || "0:00"}</bdi></span>
     </div>
   );
@@ -201,34 +199,33 @@ export function PlayerControls({
    * جاهزين: واحدٌ يعمل والآخرُ ساكن، فلا شيءَ يُزامَن ولا شيءَ يتقطّع.
    */
   const takes = shown.plainUrl ? (
-    <div className="rad-takes" role="group" aria-label="نسخة الاستماع">
-      <button type="button" className="rad-take" aria-pressed={p.variant === "music"}
+    <div className="stn-takes" role="group" aria-label="نسخة الاستماع">
+      <button type="button" className="stn-opt" aria-pressed={p.variant === "music"}
         onClick={() => void p.switchTo("music")} disabled={!isThis}>
-        <MusicNotes size={14} style={{ verticalAlign: "-2px" }} aria-hidden /><span className="rad-take-t">بموسيقى</span>
+        <MusicNotes size={14} style={{ verticalAlign: "-2px" }} aria-hidden /><span>بموسيقى</span>
       </button>
-      <button type="button" className="rad-take" aria-pressed={p.variant === "plain"}
+      <button type="button" className="stn-opt" aria-pressed={p.variant === "plain"}
         onClick={() => void p.switchTo("plain")} disabled={!isThis}>
-        <SpeakerSimpleNone size={14} style={{ verticalAlign: "-2px" }} aria-hidden /><span className="rad-take-t">بلا موسيقى</span>
+        <SpeakerSimpleNone size={14} style={{ verticalAlign: "-2px" }} aria-hidden /><span>بلا موسيقى</span>
       </button>
     </div>
   ) : null;
 
   const rate = (
-    <button type="button" className="rad-chip" onClick={p.cycleRate}
+    <button type="button" className="stn-opt" onClick={p.cycleRate}
       aria-label={`سرعة التشغيل ${p.rate}، اضغط لتغييرها`}>
       السرعة <bdi dir="ltr" className="font-latin">{p.rate}×</bdi>
     </button>
   );
 
   const volume = (
-    <div className="rad-vol">
-      <button type="button" className="rad-skip" onClick={() => p.setMuted(!p.muted)}
+    <div className="stn-vol">
+      <button type="button" className="stn-vol-b" onClick={() => p.setMuted(!p.muted)}
         aria-label={p.muted ? "إلغاء الكتم" : "كتم الصوت"}>
         {p.muted ? <SpeakerSlash size={17} aria-hidden /> : <SpeakerHigh size={17} aria-hidden />}
       </button>
-      <span className="rad-ctl-lbl">الصوت</span>
       <input
-        className="rad-vol-input"
+        className="stn-vol-input"
         type="range" min={0} max={1} step={0.05}
         value={p.muted ? 0 : p.volume}
         onChange={(e) => { const v = Number(e.target.value); p.setVolume(v); p.setMuted(v === 0); }}
@@ -254,25 +251,25 @@ export function PlayerControls({
   if (compact) {
     return (
       <>
-        <span className="radn-bar-line" aria-hidden><i style={{ width: `${pct}%` }} /></span>
-        <span className="radn-bar-art">
+        <span className="stn-bar-line" aria-hidden><i style={{ width: `${pct}%` }} /></span>
+        <span className="stn-bar-art">
           {shown.coverUrl
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={shown.coverUrl} alt="" />
-            : <MicrophoneStage size={20} aria-hidden />}
+            : <span className="stn-art-n">{shown.showTitle.trim()[0]}</span>}
         </span>
-        <span className="radn-bar-txt">
-          <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="radn-bar-t">
+        <span className="stn-bar-b">
+          <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="stn-bar-t">
             {shown.title}
           </Link>
-          <span className="radn-bar-s">{shown.showTitle}</span>
+          <span className="stn-bar-s">{shown.showTitle}</span>
         </span>
         {seconds > 0 ? (
-          <span className="radn-bar-time">
+          <span className="stn-bar-time">
             <bdi dir="ltr">{formatDuration(time)} / {formatDuration(seconds)}</bdi>
           </span>
         ) : null}
-        <button type="button" className="radn-bar-b" onClick={onPlay}
+        <button type="button" className="stn-bar-btn is-main" onClick={onPlay}
           aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
           {playing ? <Pause size={16} weight="fill" aria-hidden /> : <Play size={16} weight="fill" aria-hidden />}
         </button>
@@ -293,15 +290,16 @@ export function PlayerControls({
       {wave}
       {times}
       {p.rate !== 1 && seconds > 0 ? (
-        <p className="radn-rate-note">
+        <p className="stn-rate-note">
           بسرعة <bdi dir="ltr" className="font-latin">{p.rate}×</bdi>، ينتهي بعد{" "}
           {formatDuration((seconds - time) / p.rate)} من وقتك
         </p>
       ) : null}
       {transport}
-      <div className="radn-aux">
+      <div className="stn-opts">
         {takes}
-        <div className="flex items-center gap-3">{rate}{volume}</div>
+        {rate}
+        {volume}
       </div>
     </>
   );

@@ -35,15 +35,15 @@ export function ChapterList({
   const active = at < 0 ? -1 : chapters.reduce((acc, c, i) => (at >= c.at ? i : acc), -1);
 
   return (
-    <div className="radn-chaps">
+    <div className="stn-chaps">
       {chapters.map((c, i) => (
         <button key={c.at} type="button"
-          className="radn-chap"
+          className="stn-chap"
           aria-current={i === active ? "true" : undefined}
           aria-label={`المحور ${c.title}، من الدقيقة ${formatDuration(c.at)}`}
           onClick={() => p.play(track, rest, c.at)}>
-          <span className="radn-chap-at" dir="ltr">{formatDuration(c.at)}</span>
-          <span>{c.title}</span>
+          <span className="stn-chap-at" dir="ltr">{formatDuration(c.at)}</span>
+          <span className="stn-chap-t">{c.title}</span>
         </button>
       ))}
     </div>

@@ -21,7 +21,7 @@ export function YoutubeThumb({ id, alt }: { id: string; alt: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      className="rad-yt-img"
+      className="stn-yt-img"
       src={src}
       alt={alt}
       loading="lazy"

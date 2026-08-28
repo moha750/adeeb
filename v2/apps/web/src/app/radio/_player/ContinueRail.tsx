@@ -10,7 +10,7 @@ export type RailItem = {
   dateLabel: string;
   summary: string | null;
   showName: string;
-  artUrl: string | null;
+  quote?: string | null;
 };
 
 /**
@@ -36,9 +36,11 @@ export function ContinueRail({ pool, max = 4 }: { pool: RailItem[]; max?: number
   const queue = items.map((i) => i.track);
 
   return (
-    <>
-      <h2 className="mb-3 mt-10 font-display text-lg font-black">تابع الاستماع</h2>
-      <div className="radn-rows">
+    <section className="stn-sec">
+      <div className="stn-shead">
+        <h2>تابع الاستماع</h2>
+      </div>
+      <div className="stn-rows">
         {items.map((i, n) => (
           <EpisodeRow
             key={i.track.id}
@@ -47,11 +49,10 @@ export function ContinueRail({ pool, max = 4 }: { pool: RailItem[]; max?: number
             dateLabel={i.dateLabel}
             summary={null}
             showName={i.showName}
-            artUrl={i.artUrl}
             queue={queue.slice(n + 1)}
           />
         ))}
       </div>
-    </>
+    </section>
   );
 }

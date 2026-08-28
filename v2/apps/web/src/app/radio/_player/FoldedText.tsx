@@ -12,7 +12,7 @@ import { useState } from "react";
  */
 const CHARS_PER_SIX_LINES = 420;
 
-export function FoldedText({ text, className = "rad-fold" }: { text: string; className?: string }) {
+export function FoldedText({ text, className = "stn-desc" }: { text: string; className?: string }) {
   const foldable = text.length > CHARS_PER_SIX_LINES;
   const [open, setOpen] = useState(false);
 
@@ -20,7 +20,7 @@ export function FoldedText({ text, className = "rad-fold" }: { text: string; cla
     <div>
       <p className={`${className}${foldable && !open ? " is-clamped" : ""}`}>{text}</p>
       {foldable ? (
-        <button type="button" className="rad-more" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <button type="button" className="stn-textbtn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           {open ? "أقلّ" : "المزيد"}
         </button>
       ) : null}

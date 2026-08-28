@@ -68,7 +68,7 @@ export function LikeEpisode({ episodeId, initial }: { episodeId: string; initial
   };
 
   return (
-    <button type="button" className="rad-chip" aria-pressed={liked}
+    <button type="button" className="stn-opt" aria-pressed={liked}
       onClick={() => void toggle()}
       aria-label={liked ? "إلغاء الإعجاب" : "أعجبتني الحلقة"}>
       <Heart size={16} weight={liked ? "fill" : "regular"} aria-hidden />

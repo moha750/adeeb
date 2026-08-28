@@ -543,8 +543,8 @@ export function RadioPlayerProvider({
       {current && !(INLINE_PLAYER && inlineVisible) ? (
         <>
         {/* فسحةٌ في التدفّق بقدر الشريط، فلا يحجب آخرَ صفٍّ في الصفحة */}
-        <div className="radn-bar-space" aria-hidden />
-        <div className={`radn-bar rad-tone-${current.tone}`}>
+        <div className="stn-bar-space" aria-hidden />
+        <div className="stn-bar">
           <PlayerControls compact />
         </div>
         </>

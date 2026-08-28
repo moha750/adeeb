@@ -2,14 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Footer, countPhrase } from "@adeeb/design-system";
 import {
-  MicrophoneStage, Playlist, Play,
-  YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
+  Play, YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { EPISODES_UNIT, PLATFORM_META } from "../../dashboard/radio/vocab";
 import { getPublicShowPage, isPlayable, toTrack } from "../data";
+import { pullQuote } from "@/lib/radio/quote";
 import { EpisodeRow } from "../_player/EpisodeRow";
 import { FoldedText } from "../_player/FoldedText";
 import { breadcrumbLd, ldScript, podcastSeriesLd } from "@/lib/radio/jsonld";
@@ -58,12 +58,21 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
   const platformLink = (p: (typeof platforms)[number]) => {
     const Icon = PLATFORM_ICON[p.platform];
     return (
-      <a key={p.platform} href={p.url} target="_blank" rel="noreferrer" className="radn-dir"
+      <a key={p.platform} href={p.url} target="_blank" rel="noreferrer" className="stn-sub"
         aria-label={`${show.title} على ${PLATFORM_META[p.platform].label}`}>
         <Icon size={17} weight={ICON_WEIGHT} aria-hidden />{PLATFORM_META[p.platform].label}
       </a>
     );
   };
+
+  /**
+   * **«ابدأ من هنا»** — جوابُ الغريب عن «من أين أبدأ»، وهو أوّلُ ما يسأله من
+   * فتح برنامجًا لا يعرفه. والاختيارُ اليومَ **الحلقةُ الأولى** لأنّ برامجنا
+   * متسلسلة؛ ويومَ ينزل عمودُ اختيارِ المحرّر يسبقه.
+   */
+  const first = playable.length > 1 ? playable[playable.length - 1] : null;
+  const firstTrack = first ? tracks[playable.indexOf(first)] : null;
+  const firstQuote = first ? pullQuote(first) : null;
 
   return (
     <>
@@ -75,79 +84,94 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
         ]),
       )} />
       <SiteHeader activeHref="/radio" />
-      <main>
-        <section className={`rad radn-page rad-tone-${show.tone} py-10 md:py-14`}>
-          <Container>
-            <nav className="radn-crumb" aria-label="مسار الصفحة">
-              <Link href="/radio">الإذاعة</Link>
-              <span className="radn-crumb-sep" aria-hidden><CaretLeft size={13} /></span>
-              <span className="radn-crumb-here">{show.title}</span>
+      <main className="stn">
+        <Container>
+          <div className="stn-page">
+            <nav className="stn-crumb" aria-label="مسار الصفحة">
+              <Link href="/radio"><b>الإذاعة</b></Link>
+              <CaretLeft aria-hidden />
+              <span>{show.title}</span>
             </nav>
 
-            <div className="radn-cols">
-            <div className="radn-aside">
-            <div className="rad-hero rad-hero-lg">
-              <div className="rad-hero-logo">
-                {show.logoUrl
+            <div className="stn-hero">
+              <span className="stn-art stn-art-72" aria-hidden>
+                {show.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={show.logoUrl} alt="" />
-                  : <MicrophoneStage size={40} weight={ICON_WEIGHT} aria-hidden />}
-              </div>
-              <div className="rad-hero-txt">
-                <h1 className="rad-hero-name">{show.title}</h1>
-                {show.tagline ? <p className="rad-hero-deck">{show.tagline}</p> : null}
-                <div className="rad-ep-sub" style={{ marginTop: 8 }}>
-                  {show.hostName ? <span>تقديم {show.hostName}</span> : null}
-                  <span className="inline-flex items-center gap-1.5">
-                    <Playlist weight={ICON_WEIGHT} aria-hidden />{countPhrase(episodes.length, EPISODES_UNIT)}
-                  </span>
-                </div>
-                {/**
-                  * منصّاتُ البرنامج **أيقوناتٌ في صدره** لا شاراتٌ نصّيّة:
-                  * الروابطُ هويّةُ البرنامج لا محتواه، فموضعُها حيث اسمُه وشعارُه.
-                  * والشارةُ النصّيّة تُقرأ وسمًا يصنّفه لا بابًا يُضغط.
-                  */}
-                {/* الفعلُ الأوّلُ يتصدّر، والوجهاتُ تحته: من فتح صفحةَ برنامجٍ يريد أن يسمع. */}
-                <div className="rad-hero-cta">{tracks[0] ? (
-                  <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="rad-cta">
-                    <Play size={18} weight={ICON_WEIGHT} aria-hidden />استمع لآخر حلقة
-                  </Link>
-                ) : null}</div>
-                {platforms.length ? (
-                  <div className="radn-subs mt-3">{platforms.map(platformLink)}</div>
-                ) : null}
+                  <img src={show.logoUrl} alt="" />
+                ) : (
+                  <span className="stn-art-n">{show.title.trim()[0]}</span>
+                )}
+              </span>
+              <div className="stn-hero-b">
+                <h1 className="stn-hero-name">{show.title}</h1>
+                <p className="stn-hero-sub">
+                  {show.tagline ? <>{show.tagline}<br /></> : null}
+                  {show.hostName ? <>يقدّمه {show.hostName}، </> : null}
+                  {countPhrase(episodes.length, EPISODES_UNIT)}
+                </p>
               </div>
             </div>
 
-            </div>
-            <div className="radn-main">
-            {show.description ? (
-              <div className="max-w-2xl"><FoldedText text={show.description} /></div>
+            {/* الفعلُ الأوّلُ يتصدّر: من فتح صفحةَ برنامجٍ يريد أن يسمع. */}
+            {tracks[0] ? (
+              <div className="stn-acts">
+                <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="stn-btn">
+                  <Play size={17} weight="fill" aria-hidden />
+                  استمع لآخر حلقة
+                </Link>
+              </div>
             ) : null}
 
+            {/**
+              * منصّاتُ البرنامج **أيقوناتٌ في صدره** لا شاراتٌ نصّيّة: الروابطُ
+              * هويّةُ البرنامج لا محتواه، فموضعُها حيث اسمُه وشعارُه.
+              */}
+            {platforms.length ? <div className="stn-subs">{platforms.map(platformLink)}</div> : null}
 
-            <h2 className="mb-3 mt-10 font-display text-lg font-black">الحلقات</h2>
-            {playable.length === 0 ? (
-              <p className="text-content-muted">لا حلقات منشورة بعد.</p>
-            ) : (
-              <div className="radn-rows">
-                {playable.map((e, i) => (
-                  <EpisodeRow
-                    key={e.id}
-                    track={tracks[i]}
-                    number={e.number}
-                    dateLabel={e.dateLabel}
-                    summary={e.summary}
-                    showName={null}
-                    queue={tracks.slice(i + 1)}
-                  />
-                ))}
+            {show.description ? <FoldedText text={show.description} className="stn-desc" /> : null}
+
+            {first && firstTrack && firstQuote ? (
+              <section className="stn-sec">
+                <div className="stn-shead">
+                  <h2>ابدأ من هنا</h2>
+                </div>
+                <div className="stn-start">
+                  <span className="stn-start-kick">أوّلُ الحكاية</span>
+                  <Link href={`/radio/${show.slug}/${first.slug}`} className="stn-start-t">
+                    {first.title}
+                  </Link>
+                  <p className="stn-start-q">{firstQuote}</p>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="stn-sec">
+              <div className="stn-shead">
+                <h2>الحلقات</h2>
               </div>
-            )}
-            </div>
-            </div>
-          </Container>
-        </section>
+              {playable.length === 0 ? (
+                <div className="stn-empty">
+                  <p>لا حلقات منشورة بعد. تابعنا لتصلك الأولى.</p>
+                </div>
+              ) : (
+                <div className="stn-rows">
+                  {playable.map((e, i) => (
+                    <EpisodeRow
+                      key={e.id}
+                      track={tracks[i]}
+                      number={e.number}
+                      dateLabel={e.dateLabel}
+                      summary={e.summary}
+                      quote={pullQuote(e)}
+                      showName={null}
+                      queue={tracks.slice(i + 1)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </Container>
       </main>
       <Footer />
     </>

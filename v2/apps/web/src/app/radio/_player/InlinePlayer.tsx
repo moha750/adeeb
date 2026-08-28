@@ -41,7 +41,7 @@ export function InlinePlayer({ track, rest = [], startAt = 0, chapters = null }:
   if (!INLINE_PLAYER) return null;
 
   return (
-    <div ref={ref} className="radn-player">
+    <div ref={ref} className="stn-player">
       <PlayerControls compact={false} track={track} rest={rest} startAt={startAt}
         marks={chapters?.map((c) => c.at)} />
       {chapters ? <ChapterList chapters={chapters} track={track} rest={rest} /> : null}

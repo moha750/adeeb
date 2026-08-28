@@ -65,7 +65,7 @@ export function ShareEpisode({
 
   return (
     <>
-      <button ref={btnRef} type="button" className="rad-chip"
+      <button ref={btnRef} type="button" className="stn-opt"
         aria-expanded={hasAt ? open : undefined}
         onClick={() => (hasAt ? setOpen((v) => !v) : void share(false))}>
         {shared ? <Check size={15} aria-hidden /> : <ShareNetwork size={15} aria-hidden />}

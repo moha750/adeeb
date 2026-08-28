@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Accordion, Container, Footer } from "@adeeb/design-system";
-import { MicrophoneStage, YoutubeLogo } from "@phosphor-icons/react/dist/ssr";
+import { YoutubeLogo, Clock, BookOpen } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../../_components/SiteHeader";
@@ -16,6 +16,7 @@ import { LikeEpisode } from "../../_player/LikeEpisode";
 import { YoutubeThumb } from "../../_player/YoutubeThumb";
 import { FoldedText } from "../../_player/FoldedText";
 import { parseChapters } from "@/lib/radio/chapters";
+import { pullQuote } from "@/lib/radio/quote";
 
 export const revalidate = 60;
 
@@ -62,6 +63,7 @@ export default async function EpisodePage({
   const startAt =
     Number.isFinite(tParam) && tParam > 0 ? Math.min(Math.floor(tParam), Math.max(0, total - 1)) : 0;
   const chapters = parseChapters(episode.notes);
+  const quote = pullQuote(episode);
 
   return (
     <>
@@ -86,131 +88,135 @@ export default async function EpisodePage({
         ]),
       )} />
       <SiteHeader activeHref="/radio" />
-      <main>
-        <section className={`rad radn-page rad-tone-${show.tone} py-10 md:py-14`}>
-          <Container>
-            <nav className="radn-crumb" aria-label="مسار الصفحة">
+      <main className="stn">
+        <Container>
+          <div className="stn-page">
+            <nav className="stn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio">الإذاعة</Link>
-              <span className="radn-crumb-sep" aria-hidden><CaretLeft size={13} /></span>
-              <Link href={`/radio/${show.slug}`}>{show.title}</Link>
+              <CaretLeft aria-hidden />
+              <Link href={`/radio/${show.slug}`}><b>{show.title}</b></Link>
             </nav>
 
-            <div className="radn-cols">
-            <div className="radn-aside">
-            <div className="rad-hero rad-hero-lg">
-              <div className="rad-hero-logo">
-                {show.logoUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={show.logoUrl} alt="" />
-                  : <MicrophoneStage size={40} weight={ICON_WEIGHT} aria-hidden />}
-              </div>
-              <div className="rad-hero-txt">
-                <h1 className="rad-hero-name">{episode.title}</h1>
-                <div className="rad-ep-sub" style={{ marginTop: 8 }}>
-                  <span>{episodeLabel(episode.number)}</span>
-                  <span>{episode.dateLabel}</span>
+            <div className="stn-cols">
+              <div>
+                <h1 className="stn-ep-t">{episode.title}</h1>
+                <div className="stn-ep-meta">
                   {episode.musicSeconds ? (
-                    <span className="font-latin"><bdi dir="ltr">{formatDuration(episode.musicSeconds)}</bdi></span>
+                    <span className="stn-chip">
+                      <Clock size={12} weight={ICON_WEIGHT} aria-hidden />
+                      <bdi dir="ltr">{formatDuration(episode.musicSeconds)}</bdi>
+                    </span>
                   ) : null}
-                  {episode.hostName ? <span>تقديم {episode.hostName}</span> : null}
+                  <span className="stn-chip">{episode.dateLabel}</span>
+                  {episode.hostName ? <span className="stn-chip">تقديم {episode.hostName}</span> : null}
+                  {episode.transcript ? (
+                    <span className="stn-chip">
+                      <BookOpen size={12} weight={ICON_WEIGHT} aria-hidden />
+                      مكتوبةٌ كاملة
+                    </span>
+                  ) : null}
+                  <span className="sr-only">{episodeLabel(episode.number)}</span>
                 </div>
-                <div className="rad-hero-cta flex items-center gap-2">
-                  <LikeEpisode episodeId={episode.id} initial={episode.likes} />
-                  <ShareEpisode title={episode.title} showTitle={show.title}
-                    episodeId={episode.id} seconds={episode.musicSeconds ?? episode.plainSeconds} />
-                </div>
-              </div>
-            </div>
 
-            </div>
-            <div className="radn-main">
+                {/**
+                  * **الجملةُ قبل المشغّل** — أطروحةُ المحطّة: ما يقرّر أتُسمَع
+                  * الحلقةُ أم لا هو ما يقوله الصوتُ نفسُه، لا وصفٌ كُتب عنه.
+                  */}
+                {quote ? <p className="stn-pull">{quote}</p> : null}
 
-            {/* المشغّلُ حيث يقع الفعل، لا في أسفل الشاشة بعيدًا عمّا ضُغط */}
-            <InlinePlayer
-              track={toTrack(episode, show)}
-              rest={more.map((e) => toTrack(e, show))}
-              startAt={startAt}
-              chapters={chapters}
-            />
-
-            {episode.summary ? (
-              <div className="mt-6 max-w-2xl"><FoldedText text={episode.summary} /></div>
-            ) : null}
-
-            {/**
-              * الصورةُ **بابٌ لا شاشة**: لا يُضمَّن مشغّلُ يوتيوب في الصفحة.
-              * فالقسمُ غرفةُ استماع، وشاشةٌ تعمل وسطها تكسب العينَ دائمًا فيتوقّف
-              * من كان يقرأ التفريغ. والفيديوُ المضمَّن يعرض عند انتهائه مقاطعَ
-              * **قنواتٍ أخرى** داخل صفحتنا. أمّا الخروجُ إلى يوتيوب فمشاهدةٌ
-              * تُحسَب للقناة، فهو ربحٌ لا خسارة. (قرار المالك ٢٠٢٦-٠٨-١٣.)
-              *
-              * والدعوةُ **سطرٌ تحت الصورة** لا شارةٌ عليها: الشارةُ تُقرأ وسمًا لا
-              * دعوة، وقد تختفي وراء ما هو مكتوبٌ في المصغّرة أصلًا.
-              */}
-
-            {/**
-              * **محاورُ الحلقة**: إن حملت سطورُها أوقاتًا صارت أبوابًا تُنقَر،
-              * وإلّا عُرضت نصًّا كما كُتبت. ولا حقلَ جديدًا في اللوحة ولا ترحيل:
-              * الوقتُ يُقرأ من النصّ نفسِه (`lib/radio/chapters`)، وهو النصُّ الذي
-              * يكتبه المحرّرُ لوصف يوتيوب على كلّ حال.
-              */}
-            {episode.notes && !chapters ? (
-              <div className="mt-10 max-w-2xl">
-                <h2 className="mb-3 font-display text-lg font-black">محاور الحلقة</h2>
-                <FoldedText text={episode.notes} />
-              </div>
-            ) : null}
-
-            {/**
-              * التفريغُ النصّيّ — كان يُكتب في اللوحة ولا يراه أحد.
-              * ويُطوى لا يُبسط: نصٌّ يبلغ آلافَ الكلمات لو انفرش لدفع كلَّ ما بعده
-              * خارج الصفحة، فيُفتح بنقرةٍ ممّن أراده. والأكورديون مكوّنُ المكتبة
-              * كما هو (ق١، المسار الأوّل)، ولا تنسيقَ يُخترع له.
-              */}
-            {episode.transcript ? (
-              <div className="mt-10 max-w-2xl" id="transcript">
-                <h2 className="mb-3 font-display text-lg font-black">التفريغ النصّيّ</h2>
-                <Accordion
-                  items={[{
-                    q: "اقرأ الحلقة مكتوبةً",
-                    a: <p className="rad-transcript">{episode.transcript}</p>,
-                  }]}
+                {/* المشغّلُ حيث يقع الفعل، لا في أسفل الشاشة بعيدًا عمّا ضُغط */}
+                <InlinePlayer
+                  track={toTrack(episode, show)}
+                  rest={more.map((e) => toTrack(e, show))}
+                  startAt={startAt}
+                  chapters={chapters}
                 />
-              </div>
-            ) : null}
 
-            {episode.youtubeUrl ? (
-              <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="rad-yt mt-6">
-                {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
-                <span className="rad-yt-cta">
-                  <YoutubeLogo size={18} weight={ICON_WEIGHT} aria-hidden />
-                  شاهِد الحلقة على يوتيوب
-                </span>
-              </a>
-            ) : null}
-
-            {more.length ? (
-              <>
-                <h2 className="mb-3 mt-10 font-display text-lg font-black">التالي في البرنامج</h2>
-                <div className="radn-rows">
-                  {more.map((e) => (
-                    <EpisodeRow
-                      key={e.id}
-                      track={toTrack(e, show)}
-                      number={e.number}
-                      dateLabel={e.dateLabel}
-                      summary={e.summary}
-                      showName={null}
-                      queue={more.filter((x) => x.number < e.number).map((x) => toTrack(x, show))}
-                    />
-                  ))}
+                <div className="stn-epacts">
+                  <LikeEpisode episodeId={episode.id} initial={episode.likes} />
+                  <ShareEpisode
+                    title={episode.title}
+                    showTitle={show.title}
+                    episodeId={episode.id}
+                    seconds={episode.musicSeconds ?? episode.plainSeconds}
+                  />
                 </div>
-              </>
-            ) : null}
+
+                {episode.summary ? (
+                  <section className="stn-sec">
+                    <div className="stn-shead">
+                      <h2>عن الحلقة</h2>
+                    </div>
+                    <FoldedText text={episode.summary} />
+                  </section>
+                ) : null}
+
+                {/* المحاورُ تسكن لوحَ المشغّل حين تُقرأ موقّتةً؛ وحين لا، تُعرَض نصًّا كما كُتبت */}
+                {episode.notes && !chapters ? (
+                  <section className="stn-sec">
+                    <div className="stn-shead">
+                      <h2>محاور الحلقة</h2>
+                    </div>
+                    <FoldedText text={episode.notes} />
+                  </section>
+                ) : null}
+
+                {/**
+                  * التفريغُ النصّيّ **يُطوى لا يُبسط**: نصٌّ يبلغ آلافَ الكلمات لو
+                  * انفرش لدفع كلَّ ما بعده خارج الصفحة. والأكورديون مكوّنُ المكتبة.
+                  */}
+                {episode.transcript ? (
+                  <section className="stn-sec" id="transcript">
+                    <div className="stn-shead">
+                      <h2>الحلقة مكتوبة</h2>
+                    </div>
+                    <Accordion
+                      items={[{ q: "اقرأ الحلقة كاملةً", a: <p className="stn-transcript">{episode.transcript}</p> }]}
+                    />
+                  </section>
+                ) : null}
+
+                {episode.youtubeUrl ? (
+                  <a href={episode.youtubeUrl} target="_blank" rel="noreferrer" className="stn-yt">
+                    {ytId ? <YoutubeThumb id={ytId} alt={`صورة ${episode.title} على يوتيوب`} /> : null}
+                    <span className="stn-yt-cta">
+                      <YoutubeLogo size={18} weight={ICON_WEIGHT} aria-hidden />
+                      شاهِد الحلقة على يوتيوب
+                    </span>
+                  </a>
+                ) : null}
+              </div>
+
+              <div>
+                {more.length ? (
+                  <section className="stn-sec">
+                    <div className="stn-shead">
+                      <h2>التالي في البرنامج</h2>
+                      <Link href={`/radio/${show.slug}`} className="stn-more">
+                        كلُّ الحلقات
+                        <CaretLeft aria-hidden />
+                      </Link>
+                    </div>
+                    <div className="stn-rows">
+                      {more.map((e, i) => (
+                        <EpisodeRow
+                          key={e.id}
+                          track={toTrack(e, show)}
+                          number={e.number}
+                          dateLabel={e.dateLabel}
+                          summary={e.summary}
+                          quote={pullQuote(e)}
+                          showName={null}
+                          queue={more.slice(i + 1).map((x) => toTrack(x, show))}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
             </div>
-            </div>
-          </Container>
-        </section>
+          </div>
+        </Container>
       </main>
       <Footer />
     </>
