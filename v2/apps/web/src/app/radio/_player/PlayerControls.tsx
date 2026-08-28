@@ -251,28 +251,34 @@ export function PlayerControls({
   if (compact) {
     return (
       <>
-        <span className="stn-bar-line" aria-hidden><i style={{ width: `${pct}%` }} /></span>
-        <span className="stn-bar-art">
-          {shown.coverUrl
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={shown.coverUrl} alt="" />
-            : <span className="stn-art-n">{shown.showTitle.trim()[0]}</span>}
+        <span className="stn-bar-line" aria-hidden>
+          <i style={{ width: `${pct}%` }} />
         </span>
-        <span className="stn-bar-b">
-          <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="stn-bar-t">
-            {shown.title}
-          </Link>
-          <span className="stn-bar-s">{shown.showTitle}</span>
-        </span>
-        {seconds > 0 ? (
-          <span className="stn-bar-time">
-            <bdi dir="ltr">{formatDuration(time)} / {formatDuration(seconds)}</bdi>
+        {/* صفٌّ واحدٌ يحمل الخمسةَ: بلا حاويةٍ صريحةٍ تتراصف العناصرُ أعمدةً،
+            لأنّ `.stn-bar` كتلةٌ وأبناؤها سطريّون (رُصد على الإنتاج ٢٠٢٦-٠٨-٢٨). */}
+        <span className="stn-bar-in">
+          <span className="stn-bar-art">
+            {shown.coverUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={shown.coverUrl} alt="" />
+              : <span className="stn-art-n">{shown.showTitle.trim()[0]}</span>}
           </span>
-        ) : null}
-        <button type="button" className="stn-bar-btn is-main" onClick={onPlay}
-          aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
-          {playing ? <Pause size={16} weight="fill" aria-hidden /> : <Play size={16} weight="fill" aria-hidden />}
-        </button>
+          <span className="stn-bar-b">
+            <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="stn-bar-t">
+              {shown.title}
+            </Link>
+            <span className="stn-bar-s">{shown.showTitle}</span>
+          </span>
+          {seconds > 0 ? (
+            <span className="stn-bar-time">
+              <bdi dir="ltr">{formatDuration(time)} / {formatDuration(seconds)}</bdi>
+            </span>
+          ) : null}
+          <button type="button" className="stn-bar-btn is-main" onClick={onPlay}
+            aria-label={playing ? `إيقاف ${shown.title}` : `تشغيل ${shown.title}`}>
+            {playing ? <Pause size={18} weight="fill" aria-hidden /> : <Play size={18} weight="fill" aria-hidden />}
+          </button>
+        </span>
       </>
     );
   }
