@@ -10,6 +10,7 @@ import { cache } from "react";
 import { createAdeebServerClient } from "@adeeb/core";
 import { fmtDate } from "@/lib/dates";
 import { publicUrl } from "@/lib/radio/r2";
+import { parseChapters } from "@/lib/radio/chapters";
 import type { Platform, ShowTone } from "../dashboard/radio/vocab";
 import type { Track } from "./_player/PlayerProvider";
 
@@ -273,6 +274,9 @@ export function toTrack(
     musicPeaks: e.musicPeaks,
     plainPeaks: e.plainPeaks,
     tone: show.tone,
+    /* المحاورُ تُشتقّ هنا مرّةً وتُحمَل مع الصفّ: الشاشةُ الكاملة تُفتَح من أيّ
+       سطحٍ في المحطّة ولا سبيلَ لها إلى `notes` هناك. */
+    chapters: parseChapters(e.notes),
   };
 }
 

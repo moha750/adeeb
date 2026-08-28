@@ -6,6 +6,8 @@ import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
 import { SKIP_SECONDS } from "../../dashboard/radio/vocab";
 import { PlayerControls } from "./PlayerControls";
+import { PlayerSheet } from "./PlayerSheet";
+import type { Chapter } from "@/lib/radio/chapters";
 import { useMediaSession } from "./useMediaSession";
 
 /**
@@ -52,6 +54,11 @@ export type Track = {
   plainPeaks: number[] | null;
   /** نغمةُ البرنامج — يلبسها الشريطُ فيُعرَف البرنامجُ بلونه وهو يُذاع. */
   tone: string;
+  /**
+   * محاورُ الحلقة تُحمَل مع الصفّ لا تُقرأ من الصفحة: الشاشةُ الكاملة تُفتَح من
+   * أيّ سطحٍ في المحطّة، ولا سبيلَ لها إلى `notes` هناك.
+   */
+  chapters?: Chapter[] | null;
 };
 
 /**
@@ -105,6 +112,13 @@ type Api = {
   switchTo: (v: Variant) => void;
   /** يُخبر المشغّلَ أنّ سطحًا داخليًّا حاضرٌ في النظر، فيكفّ الشريطُ الملازم. */
   setInlineVisible: (v: boolean) => void;
+  /** ما ينتظر بعد الحالية. تقرؤه الشاشةُ الكاملة لتقول «التالي». */
+  queue: Track[];
+  /** الانتقالُ إلى التالية بيدِ المستمع، لا بانتهاء الحلقة وحدَه. */
+  playNext: () => void;
+  /** الشاشةُ الكاملة: تُفتَح من الشريط الملازم وتُغلَق منها. */
+  sheetOpen: boolean;
+  setSheetOpen: (v: boolean) => void;
 };
 
 const Ctx = createContext<Api | null>(null);
@@ -117,6 +131,7 @@ export function useRadioPlayer(): Api {
     toggle: () => {}, seek: () => {}, skip: () => {}, cycleRate: () => {},
     setVolume: () => {}, setMuted: () => {},
     switchTo: () => {}, setInlineVisible: () => {},
+    queue: [], playNext: () => {}, sheetOpen: false, setSheetOpen: () => {},
   };
 }
 
@@ -148,6 +163,7 @@ export function RadioPlayerProvider({
   const [muted, setMuted] = useState(false);
   // المقبضُ من المخزن لا من حالةٍ تنسخه — والخادمُ لا مخزنَ له فلقطتُه الافتراضيّ
   const [queue, setQueue] = useState<Track[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [inlineVisible, setInlineVisible] = useState(false);
   /**
    * **تعثّرٌ يُقال.** كان عطلُ الصوت صامتًا تمامًا: لا مستمعَ لحدث `error`، وكلُّ
@@ -262,6 +278,15 @@ export function RadioPlayerProvider({
     setDuration(next.seconds ?? 0);
     return true;
   }, [queue]);
+
+  /**
+   * **التاليةُ بيدِ المستمع.** `advance` وحدَها تبدّل الحلقة، وهذه تُتبعها
+   * بالتشغيل: من ضغط «التالية» يريد أن يسمعها لا أن يقف عندها.
+   */
+  const playNext = useCallback(() => {
+    const wasPlaying = playing;
+    if (advance() && wasPlaying) setTimeout(() => void aRef.current?.play().catch(() => {}), 0);
+  }, [advance, playing]);
 
   /** الصمتُ لا يُبدأ فيه: من أطفأ الموسيقى والمقدّمةُ لم تنتهِ يُنقَل إلى الكلام. */
   const landing = useCallback(
@@ -527,9 +552,10 @@ export function RadioPlayerProvider({
       toggle, seek, skip, cycleRate, setVolume, setMuted,
       switchTo: (v: Variant) => void switchTo(v),
       setInlineVisible,
+      queue, playNext, sheetOpen, setSheetOpen,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current, playing, failed, play, variant, time, duration, rate, volume, muted],
+    [current, playing, failed, play, variant, time, duration, rate, volume, muted, queue, playNext, sheetOpen],
   );
 
   return (
@@ -547,6 +573,8 @@ export function RadioPlayerProvider({
         <div className="stn-bar">
           <PlayerControls compact />
         </div>
+        {/* الشاشةُ الكاملة: حالةٌ لا انتقالُ صفحة، فلا ينقطع الصوتُ بفتحها */}
+        <PlayerSheet />
         </>
       ) : null}
     </Ctx.Provider>

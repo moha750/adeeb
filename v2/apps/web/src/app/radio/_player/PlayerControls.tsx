@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Alert, countPhrase } from "@adeeb/design-system";
 import {
   MusicNotes, Play, Pause, SpeakerSimpleNone,
@@ -256,6 +255,10 @@ export function PlayerControls({
         </span>
         {/* صفٌّ واحدٌ يحمل الخمسةَ: بلا حاويةٍ صريحةٍ تتراصف العناصرُ أعمدةً،
             لأنّ `.stn-bar` كتلةٌ وأبناؤها سطريّون (رُصد على الإنتاج ٢٠٢٦-٠٨-٢٨). */}
+        {/* جسدُ الشريط يفتح الشاشةَ الكاملة (اختيارُ المالك ٢٠٢٦-٠٨-٢٨: «أ»)،
+            وهو ما تفعله المنصّاتُ جميعًا. وبابُ صفحة الحلقة داخلَ الشاشة. */}
+        <button type="button" className="stn-bar-open" onClick={() => p.setSheetOpen(true)}
+          aria-label={`افتح مشغّلَ ${shown.title}`} aria-haspopup="dialog" />
         <span className="stn-bar-in">
           <span className="stn-bar-art">
             {shown.coverUrl
@@ -264,9 +267,7 @@ export function PlayerControls({
               : <span className="stn-art-n">{shown.showTitle.trim()[0]}</span>}
           </span>
           <span className="stn-bar-b">
-            <Link href={`/radio/${shown.showSlug}/${shown.episodeSlug}`} className="stn-bar-t">
-              {shown.title}
-            </Link>
+            <span className="stn-bar-t">{shown.title}</span>
             <span className="stn-bar-s">{shown.showTitle}</span>
           </span>
           {/**
