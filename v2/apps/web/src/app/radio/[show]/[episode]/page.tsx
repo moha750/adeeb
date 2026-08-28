@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accordion, Container, Footer } from "@adeeb/design-system";
+import { Accordion, Footer } from "@adeeb/design-system";
 import { YoutubeLogo, Clock, BookOpen } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { CaretLeft } from "@/app/_components/glyphs";
@@ -16,7 +16,7 @@ import { LikeEpisode } from "../../_player/LikeEpisode";
 import { YoutubeThumb } from "../../_player/YoutubeThumb";
 import { FoldedText } from "../../_player/FoldedText";
 import { parseChapters } from "@/lib/radio/chapters";
-import { pullQuote } from "@/lib/radio/quote";
+import { isEcho, pullQuote } from "@/lib/radio/quote";
 
 export const revalidate = 60;
 
@@ -64,6 +64,8 @@ export default async function EpisodePage({
     Number.isFinite(tParam) && tParam > 0 ? Math.min(Math.floor(tParam), Math.max(0, total - 1)) : 0;
   const chapters = parseChapters(episode.notes);
   const quote = pullQuote(episode);
+  /* والملخّصُ يسقط إن كان صدًى للجملة: المعنى لا يُطبَع مرّتين في صفحةٍ واحدة. */
+  const summary = isEcho(quote, episode.summary) ? null : episode.summary;
 
   return (
     <>
@@ -89,8 +91,7 @@ export default async function EpisodePage({
       )} />
       <SiteHeader activeHref="/radio" />
       <main className="stn">
-        <Container>
-          <div className="stn-page">
+        <div className="stn-page">
             <nav className="stn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio">الإذاعة</Link>
               <CaretLeft aria-hidden />
@@ -142,12 +143,12 @@ export default async function EpisodePage({
                   />
                 </div>
 
-                {episode.summary ? (
+                {summary ? (
                   <section className="stn-sec">
                     <div className="stn-shead">
                       <h2>عن الحلقة</h2>
                     </div>
-                    <FoldedText text={episode.summary} />
+                    <FoldedText text={summary} />
                   </section>
                 ) : null}
 
@@ -215,8 +216,7 @@ export default async function EpisodePage({
                 ) : null}
               </div>
             </div>
-          </div>
-        </Container>
+        </div>
       </main>
       <Footer />
     </>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Alert, Container, Footer, countPhrase } from "@adeeb/design-system";
+import { Alert, Footer, countPhrase } from "@adeeb/design-system";
 import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { EPISODES_UNIT } from "../../dashboard/radio/vocab";
@@ -32,8 +32,7 @@ export default async function ShowsPage() {
     <>
       <SiteHeader activeHref="/radio" />
       <main className="stn">
-        <Container>
-          <div className="stn-page">
+        <div className="stn-page">
             <nav className="stn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio">
                 <b>{station.name}</b>
@@ -42,7 +41,7 @@ export default async function ShowsPage() {
               <span>البرامج</span>
             </nav>
 
-            <div className="stn-mast" style={{ marginTop: 16 }}>
+            <div className="stn-mast">
               <span className="stn-mast-txt">
                 <h1 className="stn-mast-name">برامجُ المحطّة</h1>
                 <span className="stn-mast-sub">كلُّ ما يُذاع في مكانٍ واحد</span>
@@ -57,7 +56,7 @@ export default async function ShowsPage() {
             {shows.length ? (
               <>
                 <p className="stn-count">{countPhrase(shows.length, { one: "برنامج", two: "برنامجان", few: "برامج" })}</p>
-                <section className="stn-sec" style={{ marginTop: 18 }}>
+                <section className="stn-sec">
                   <div className="stn-grid">
                     {shows.map((s) => (
                       <Link key={s.id} href={`/radio/${s.slug}`}>
@@ -94,8 +93,7 @@ export default async function ShowsPage() {
                 <p>لا برامج منشورة بعد. تابعنا لتصلك الأولى.</p>
               </div>
             )}
-          </div>
-        </Container>
+        </div>
       </main>
       <Footer />
     </>

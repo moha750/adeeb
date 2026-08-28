@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bestSentence, isStandalone, pullQuote } from "../quote";
+import { bestSentence, isEcho, isStandalone, pullQuote } from "../quote";
 
 /**
  * اختباراتُ الجملة الدالّة — النصوصُ أدناه **مقتطَعةٌ من حلقات منعطف الحقيقيّة**
@@ -86,5 +86,27 @@ describe("ما رُصد حيًّا", () => {
 
   it("ترفض ما طال عن لوحٍ يُقرأ", () => {
     expect(isStandalone("ا".repeat(140))).toBe(false);
+  });
+});
+
+describe("isEcho", () => {
+  it("تمسك صياغتين لمعنًى واحد", () => {
+    expect(isEcho(
+      "سؤال يبدو بسيطًا، لكنه من أصعب الأسئلة التي قد يواجهها الشخص في حياته",
+      "سؤال يبدو بسيطًا، لكنه من أصعب ما يواجهه الإنسان في حياته",
+    )).toBe(true);
+  });
+
+  it("تُفرّق بين فكرتين متجاورتين", () => {
+    expect(isEcho(
+      "الفرق بين الحلم والواقع ليس مسافة، بل الاستمرار في السير",
+      "الحلم وحده لا يكفي، فبين الحلم والواقع طريق طويل من العمل والتعلم والتجربة",
+    )).toBe(false);
+  });
+
+  it("لا تحكم على القصير ولا على الفارغ", () => {
+    expect(isEcho("كلمتان فقط", "كلمتان فقط")).toBe(false);
+    expect(isEcho(null, "نص")).toBe(false);
+    expect(isEcho("نص", null)).toBe(false);
   });
 });

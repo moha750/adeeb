@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Container, Footer } from "@adeeb/design-system";
+import { Footer } from "@adeeb/design-system";
 import { Play } from "@phosphor-icons/react/dist/ssr";
 import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
 import { SiteHeader } from "../../_components/SiteHeader";
@@ -83,8 +83,7 @@ export default async function RadioSearchPage({
     <>
       <SiteHeader activeHref="/radio" />
       <main className="stn">
-        <Container>
-          <div className="stn-page">
+        <div className="stn-page">
             <nav className="stn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio">
                 <b>{station.name}</b>
@@ -107,7 +106,7 @@ export default async function RadioSearchPage({
 
             {q ? (
               <>
-                <div className="stn-sec" style={{ marginTop: 16 }}>
+                <div className="stn-sec">
                   <div className="stn-tools">
                     {tab("all", "الكلّ", total)}
                     {tab("shows", "برامج", showHits.length)}
@@ -223,8 +222,7 @@ export default async function RadioSearchPage({
                 </div>
               </section>
             )}
-          </div>
-        </Container>
+        </div>
       </main>
       <Footer />
     </>

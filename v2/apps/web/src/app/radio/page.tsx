@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Alert, Container, Footer, countPhrase } from "@adeeb/design-system";
+import { Alert, Footer, countPhrase } from "@adeeb/design-system";
 import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
 import { Play } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
@@ -70,8 +70,7 @@ export default async function RadioPage() {
     <>
       <SiteHeader activeHref="/radio" />
       <main className="stn">
-        <Container>
-          <div className="stn-page">
+        <div className="stn-page">
             {/* الترويسة: من نحن، وبابُ البحث ظاهرٌ لا مخفيّ خلف أيقونة */}
             <div className="stn-mast">
               <span className="stn-mast-logo" aria-hidden>
@@ -192,8 +191,7 @@ export default async function RadioPage() {
                 )}
               </div>
             </div>
-          </div>
-        </Container>
+        </div>
       </main>
       <Footer />
     </>

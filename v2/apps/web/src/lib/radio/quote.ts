@@ -132,3 +132,26 @@ export function pullQuote(e: QuoteSource): string | null {
   const summary = e.summary?.trim();
   return summary || null;
 }
+
+/**
+ * **أهما يقولان الشيءَ نفسَه؟**
+ *
+ * الملخّصُ يُكتب غالبًا من أوّل الحلقة، والجملةُ تُنتقى من نصّها، فيلتقيان
+ * أحيانًا فيُطبَع المعنى مرّتين في صفحةٍ واحدة (رُصد على الإنتاج ٢٠٢٦-٠٨-٢٨:
+ * «سؤالٌ يبدو بسيطًا، لكنه من أصعب الأسئلة…» فوق «سؤالٌ يبدو بسيطًا، لكنه من
+ * أصعب ما يواجهه…»).
+ *
+ * والمقارنةُ **بالكلمات لا بالحروف**: الصياغتان تختلفان في آخرهما ويتّفقان في
+ * أوّلهما، فمسافةُ الحروف تقول «مختلفان» والعينُ تقول «مكرّران». والعتبةُ ٦٠٪
+ * من كلمات الأقصر: دونها فكرتان متجاورتان، وفوقها جملةٌ واحدةٌ بلفظين.
+ */
+export function isEcho(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const words = (t: string) => new Set(normalizeArabic(t).split(" ").filter((w) => w.length > 2));
+  const A = words(a);
+  const B = words(b);
+  if (A.size < 3 || B.size < 3) return false;
+  let shared = 0;
+  for (const w of A) if (B.has(w)) shared++;
+  return shared / Math.min(A.size, B.size) >= 0.6;
+}

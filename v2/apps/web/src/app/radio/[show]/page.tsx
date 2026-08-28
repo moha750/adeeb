@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Container, Footer, countPhrase } from "@adeeb/design-system";
+import { Footer, countPhrase } from "@adeeb/design-system";
 import {
   Play, YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
 } from "@phosphor-icons/react/dist/ssr";
@@ -85,8 +85,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
       )} />
       <SiteHeader activeHref="/radio" />
       <main className="stn">
-        <Container>
-          <div className="stn-page">
+        <div className="stn-page">
             <nav className="stn-crumb" aria-label="مسار الصفحة">
               <Link href="/radio"><b>الإذاعة</b></Link>
               <CaretLeft aria-hidden />
@@ -170,8 +169,7 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
                 </div>
               )}
             </section>
-          </div>
-        </Container>
+        </div>
       </main>
       <Footer />
     </>
