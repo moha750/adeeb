@@ -269,9 +269,20 @@ export function PlayerControls({
             </Link>
             <span className="stn-bar-s">{shown.showTitle}</span>
           </span>
+          {/**
+            * **الموضعُ يسبق المدّة في القراءة العربيّة.**
+            * كان الاثنان في `bdi dir="ltr"` واحد، فيُرسَم «‏19:24 / 20:28» من
+            * اليسار إلى اليمين، فتقع **المدّةُ** في صدر السطر عند القارئ العربيّ
+            * وتقع الحالُ في عَجُزه: أي أنّه يقرأ العكس (بلاغُ المالك ٢٠٢٦-٠٨-٢٨).
+            * فلكلّ رقمٍ جزيرتُه، والترتيبُ يتبع اتّجاه الصفحة: الموضعُ أوّلًا.
+            */}
           {seconds > 0 ? (
             <span className="stn-bar-time">
-              <bdi dir="ltr">{formatDuration(time)} / {formatDuration(seconds)}</bdi>
+              <bdi dir="ltr">{formatDuration(time)}</bdi>
+              {/* الشرطةُ تُرى ولا تُنطَق، و«من» تُنطَق ولا تُرى: «‏19:24 من 20:28» */}
+              <span aria-hidden> / </span>
+              <span className="sr-only"> من </span>
+              <bdi dir="ltr">{formatDuration(seconds)}</bdi>
             </span>
           ) : null}
           <button type="button" className="stn-bar-btn is-main" onClick={onPlay}
