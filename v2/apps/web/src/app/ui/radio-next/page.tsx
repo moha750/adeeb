@@ -634,7 +634,7 @@ function Episode() {
         </div>
 
         <div className="stn-sec">
-          <SecHead title="التالي في البرنامج" more={null} />
+          <SecHead title="التالي في منعطف" more={null} />
           <div>
             {EPS.slice(0, 2).map((e) => (
               <Row e={e} key={e.n} />

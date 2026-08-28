@@ -191,7 +191,7 @@ export default async function EpisodePage({
                 {more.length ? (
                   <section className="stn-sec">
                     <div className="stn-shead">
-                      <h2>التالي في البرنامج</h2>
+                      <h2>التالي في {show.title}</h2>
                       <Link href={`/radio/${show.slug}`} className="stn-more">
                         كلُّ الحلقات
                         <CaretLeft aria-hidden />
