@@ -7,6 +7,7 @@ import { SiteHeader } from "../_components/SiteHeader";
 import { getLatestEpisodes, getPublicShows, getPublicStation, isPlayable, toTrack } from "./data";
 import { EpisodeRow } from "./_player/EpisodeRow";
 import { ContinueRail, type RailItem } from "./_player/ContinueRail";
+import { LaterRail } from "./_player/LaterRail";
 import { EPISODES_UNIT } from "../dashboard/radio/vocab";
 import { pullQuote } from "@/lib/radio/quote";
 import type { Track } from "./_player/PlayerProvider";
@@ -121,6 +122,7 @@ export default async function RadioPage() {
             <div className="stn-cols">
               <div>
                 <ContinueRail pool={pool} />
+                <LaterRail pool={pool} />
 
                 {tracks.length ? (
                   <section className="stn-sec">

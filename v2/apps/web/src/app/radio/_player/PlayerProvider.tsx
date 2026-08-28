@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES } from "@adeeb/core";
+import { LATER_KEY, LATER_LIMIT, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES, RATE_KEY } from "@adeeb/core";
 import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
 import { SKIP_SECONDS } from "../../dashboard/radio/vocab";
@@ -119,6 +119,13 @@ type Api = {
   /** الشاشةُ الكاملة: تُفتَح من الشريط الملازم وتُغلَق منها. */
   sheetOpen: boolean;
   setSheetOpen: (v: boolean) => void;
+  /**
+   * **مؤقّتُ النوم**: دقائقُ، أو `-1` لنهاية الحلقة، أو `0` إطفاء.
+   * و`sleepLeft` ثوانٍ متبقّيةٌ تُعرَض، و`null` حين لا مؤقّت.
+   */
+  sleep: number;
+  setSleep: (minutes: number) => void;
+  sleepLeft: number | null;
 };
 
 const Ctx = createContext<Api | null>(null);
@@ -132,6 +139,7 @@ export function useRadioPlayer(): Api {
     setVolume: () => {}, setMuted: () => {},
     switchTo: () => {}, setInlineVisible: () => {},
     queue: [], playNext: () => {}, sheetOpen: false, setSheetOpen: () => {},
+    sleep: 0, setSleep: () => {}, sleepLeft: null,
   };
 }
 
@@ -158,12 +166,33 @@ export function RadioPlayerProvider({
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  /**
+   * **السرعةُ عادةُ أذنٍ لا اختيارُ حلقة**، فتُقرأ من الجهاز وتُكتَب فيه.
+   *
+   * **وتُقرأ بعد الترطيب لا في المُهيِّئ**: جرّبتُ المُهيِّئَ الكسولَ فانكسر
+   * الترطيبُ فعلًا (رُصد ٢٠٢٦-٠٨-٢٨: `Hydration failed`) — الخادمُ يرسم
+   * «السرعة ١×» ويقرأ المتصفّحُ ١٫٢٥ من مخزنه، فيختلف الشجران. والثمنُ
+   * المقبولُ رسمةٌ واحدةٌ بالواحد قبل أن تصحّ، وهي حبّةٌ صغيرةٌ لا صوتٌ يُسمَع:
+   * المشغّلُ لا يبدأ إلّا بضغطة، والضغطةُ بعد الترطيب بيقين.
+   */
   const [rate, setRate] = useState(1);
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem(RATE_KEY));
+      if (PLAYBACK_RATES.includes(v as (typeof PLAYBACK_RATES)[number])) setRate(v);
+    } catch {
+      /* متصفّحٌ يمنع التخزين: تعمل السرعةُ ولا تُستعاد */
+    }
+  }, []);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   // المقبضُ من المخزن لا من حالةٍ تنسخه — والخادمُ لا مخزنَ له فلقطتُه الافتراضيّ
   const [queue, setQueue] = useState<Track[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
+  /** مؤقّتُ النوم: المقدارُ المختار، ولحظةُ الانتهاء بتوقيت الجهاز. */
+  const [sleep, setSleepState] = useState(0);
+  const [sleepEnd, setSleepEnd] = useState<number | null>(null);
+  const [sleepLeft, setSleepLeft] = useState<number | null>(null);
   const [inlineVisible, setInlineVisible] = useState(false);
   /**
    * **تعثّرٌ يُقال.** كان عطلُ الصوت صامتًا تمامًا: لا مستمعَ لحدث `error`، وكلُّ
@@ -283,6 +312,43 @@ export function RadioPlayerProvider({
    * **التاليةُ بيدِ المستمع.** `advance` وحدَها تبدّل الحلقة، وهذه تُتبعها
    * بالتشغيل: من ضغط «التالية» يريد أن يسمعها لا أن يقف عندها.
    */
+  /**
+   * **مؤقّتُ النوم** — يوقف ما يُسمَع عند بلوغ الموعد، ولا يُغلق شيئًا.
+   *
+   * والمقدارُ يُترجَم إلى **لحظةِ انتهاءٍ مطلقة** لا إلى عدٍّ تنازليّ: العدُّ
+   * التنازليُّ يتوقّف حين يخنق المتصفّحُ المؤقّتاتِ في التبويب الخامل، فينام
+   * المستمعُ ولا يُطفَأ الصوت. واللحظةُ المطلقةُ تصمد لأنّها تُقارَن بالساعة.
+   *
+   * و«نهاية الحلقة» (`-1`) شرطٌ لا مدّة: يُحرَس في `onEnded` لا هنا.
+   */
+  const setSleep = useCallback((minutes: number) => {
+    setSleepState(minutes);
+    setSleepEnd(minutes > 0 ? Date.now() + minutes * 60_000 : null);
+    setSleepLeft(minutes > 0 ? minutes * 60 : null);
+  }, []);
+
+  useEffect(() => {
+    if (sleepEnd === null) {
+      setSleepLeft(null);
+      return;
+    }
+    const tick = () => {
+      const left = Math.round((sleepEnd - Date.now()) / 1000);
+      if (left <= 0) {
+        aRef.current?.pause();
+        bRef.current?.pause();
+        setSleepState(0);
+        setSleepEnd(null);
+        setSleepLeft(null);
+        return;
+      }
+      setSleepLeft(left);
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [sleepEnd]);
+
   const playNext = useCallback(() => {
     const wasPlaying = playing;
     if (advance() && wasPlaying) setTimeout(() => void aRef.current?.play().catch(() => {}), 0);
@@ -341,6 +407,14 @@ export function RadioPlayerProvider({
     // حلقةٌ سُمعت إلى آخرها تبدأ من أوّلها إن عاد إليها، فيُمسَح موضعُها.
     const onEnded = () => {
       if (current) clearProgress(current.id);
+      /* «نهاية الحلقة» في مؤقّت النوم: تُحرَس ههنا لا في عدٍّ زمنيّ، فهي شرطٌ
+         لا مدّة. ولا تتلوها التالية، وإلّا لم يكن للمؤقّت معنًى. */
+      if (sleep === -1) {
+        setSleepState(0);
+        setPlaying(false);
+        setTime(0);
+        return;
+      }
       if (!advance()) { setPlaying(false); setTime(0); }
     };
     const onSeeking = () => { seeking.current = true; };
@@ -369,7 +443,7 @@ export function RadioPlayerProvider({
       a.removeEventListener("pause", onPause);
       a.removeEventListener("ended", onEnded);
     };
-  }, [leadEl, variant, current, advance]);
+  }, [leadEl, variant, current, advance, sleep]);
 
   /** الموضعُ الذي تبدأ عنده الحلقةُ القادمة. يُملأ قبل `setCurrent` ويُقرأ بعد التركيب. */
   const startAt = useRef(0);
@@ -470,7 +544,15 @@ export function RadioPlayerProvider({
   };
 
   const cycleRate = () =>
-    setRate((r) => PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(r as (typeof PLAYBACK_RATES)[number]) + 1) % PLAYBACK_RATES.length] ?? 1);
+    setRate((r) => {
+      const next = PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(r as (typeof PLAYBACK_RATES)[number]) + 1) % PLAYBACK_RATES.length] ?? 1;
+      try {
+        localStorage.setItem(RATE_KEY, String(next));
+      } catch {
+        /* تصفّحٌ خاصّ: تعمل السرعةُ ولا تُحفَظ، ولا يُكسَر شيء */
+      }
+      return next;
+    });
 
   /**
    * **اختصاراتُ لوحة المفاتيح** — لا يملكها سبوتيفاي ولا أبل في الوِب، ويملكها
@@ -553,9 +635,10 @@ export function RadioPlayerProvider({
       switchTo: (v: Variant) => void switchTo(v),
       setInlineVisible,
       queue, playNext, sheetOpen, setSheetOpen,
+      sleep, setSleep, sleepLeft,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current, playing, failed, play, variant, time, duration, rate, volume, muted, queue, playNext, sheetOpen],
+    [current, playing, failed, play, variant, time, duration, rate, volume, muted, queue, playNext, sheetOpen, sleep, setSleep, sleepLeft],
   );
 
   return (

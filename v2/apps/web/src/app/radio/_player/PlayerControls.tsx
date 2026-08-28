@@ -3,9 +3,10 @@
 import { Alert, countPhrase } from "@adeeb/design-system";
 import {
   MusicNotes, Play, Pause, SpeakerSimpleNone,
-  SpeakerHigh, SpeakerSlash,
+  SpeakerHigh, SpeakerSlash, Moon, FastForward,
 } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
+import { SLEEP_STOPS } from "@adeeb/core";
 import { useWaveBars } from "@/lib/radio/useWaveBars";
 import { useSavedPosition } from "@/lib/radio/progress";
 import { formatDuration, SKIP_SECONDS } from "../../dashboard/radio/vocab";
@@ -217,6 +218,46 @@ export function PlayerControls({
     </button>
   );
 
+  /**
+   * **تخطّي المقدّمة** — حبّةٌ تظهر ما دام الصوتُ في المقدّمة الموسيقيّة وتغيب
+   * بعدها. وثانيةُ بدء الحديث معروفةٌ عندنا لكلّ حلقة (`talkStartsAt`) وكانت
+   * تُستعمل لشيءٍ واحد: ألّا يجلس من أطفأ الموسيقى في صمت. فههنا تُستعمل لما
+   * صُنعت له عند كلّ مشغّلٍ يحترم وقت سامعه.
+   *
+   * ولا تظهر إن كانت المقدّمةُ أقصرَ من خمس ثوانٍ: زرٌّ يوفّر ثانيتين ضجيج.
+   */
+  const introLeft = shown.talkStartsAt - time;
+  const skipIntro = isThis && shown.talkStartsAt >= 5 && introLeft > 1 ? (
+    <button type="button" className="stn-opt" onClick={() => p.seek(shown.talkStartsAt)}>
+      <FastForward size={14} aria-hidden />
+      تخطَّ المقدّمة
+    </button>
+  ) : null;
+
+  /**
+   * **مؤقّتُ النوم** — يدور على مقاديره بضغطة، ويقول ما بقي حين يعمل.
+   * ولا يُعرَض في الشريط النحيل: ذاك تذكيرٌ لا لوحةُ قيادة.
+   */
+  const sleepIdx = SLEEP_STOPS.findIndex((x) => x.minutes === p.sleep);
+  const sleepLabel =
+    p.sleepLeft !== null
+      ? `ينام بعد ${formatDuration(p.sleepLeft)}`
+      : p.sleep === -1
+        ? "ينام بنهايتها"
+        : "مؤقّتُ النوم";
+  const sleepBtn = (
+    <button
+      type="button"
+      className="stn-opt"
+      aria-pressed={p.sleep !== 0}
+      onClick={() => p.setSleep(SLEEP_STOPS[(sleepIdx + 1) % SLEEP_STOPS.length]?.minutes ?? 0)}
+      aria-label={`مؤقّتُ النوم: ${SLEEP_STOPS[sleepIdx]?.label ?? "مطفأ"}، اضغط لتغييره`}
+    >
+      <Moon size={14} aria-hidden />
+      {sleepLabel}
+    </button>
+  );
+
   const volume = (
     <div className="stn-vol">
       <button type="button" className="stn-vol-b" onClick={() => p.setMuted(!p.muted)}
@@ -315,8 +356,10 @@ export function PlayerControls({
       ) : null}
       {transport}
       <div className="stn-opts">
+        {skipIntro}
         {takes}
         {rate}
+        {sleepBtn}
         {volume}
       </div>
     </>

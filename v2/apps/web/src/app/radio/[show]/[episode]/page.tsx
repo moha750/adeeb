@@ -13,6 +13,7 @@ import { EpisodeRow } from "../../_player/EpisodeRow";
 import { InlinePlayer } from "../../_player/InlinePlayer";
 import { ShareEpisode } from "../../_player/ShareEpisode";
 import { LikeEpisode } from "../../_player/LikeEpisode";
+import { LaterButton } from "../../_player/LaterButton";
 import { YoutubeThumb } from "../../_player/YoutubeThumb";
 import { FoldedText } from "../../_player/FoldedText";
 import { parseChapters } from "@/lib/radio/chapters";
@@ -135,6 +136,7 @@ export default async function EpisodePage({
 
                 <div className="stn-epacts">
                   <LikeEpisode episodeId={episode.id} initial={episode.likes} />
+                  <LaterButton episodeId={episode.id} title={episode.title} />
                   <ShareEpisode
                     title={episode.title}
                     showTitle={show.title}
@@ -158,7 +160,7 @@ export default async function EpisodePage({
                     <div className="stn-shead">
                       <h2>محاور الحلقة</h2>
                     </div>
-                    <FoldedText text={episode.notes} />
+                    <FoldedText text={episode.notes} className="stn-desc stn-notes" />
                   </section>
                 ) : null}
 
