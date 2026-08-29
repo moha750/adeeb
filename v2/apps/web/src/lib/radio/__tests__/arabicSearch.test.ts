@@ -1,22 +1,40 @@
 import { describe, it, expect } from "vitest";
 import { normalizeArabic, matches, findSnippet } from "../arabicSearch";
 
-/** بحثٌ عربيٌّ بلا تطبيعٍ معطوبٌ لا ناقص: هذه الحالاتُ هي ما يفشل بغيره. */
+/**
+ * **جدولُ التوأمين** — هذه الحالاتُ بعينها مكتوبةٌ في تعليق `arabic_norm` في
+ * `supabase/migrations/20260830100000_radio_10_arabic_norm.sql`، والقيمُ قِيست
+ * في الاثنين معًا (٢٠٢٦-٠٨-٣٠) فتطابقت.
+ *
+ * **وتوقُّعاتٌ حرفيّةٌ لا مقارنةُ طرفين ببعضهما.** كانت `expect(f("أسطورة")).toBe(f("اسطورة"))`
+ * وهي تنجح **ولو تبدّل التطبيعُ كلُّه**: يكفيها أن يتساوى الطرفان في أيّ شيء.
+ * فمن غيّر التطبيعَ في جافاسكربت وحدَه سقط عنده هذا الجدول، فيُذكَّر بتوأمه.
+ */
+const TWINS: [string, string][] = [
+  ["۹۹٪", "99٪"],
+  ["٩٩٪", "99٪"],
+  ["المنعطف", "المنعطف"],
+  ["أسطورة", "اسطوره"],
+  ["حياة", "حياه"],
+  ["مُنعَطَف", "منعطف"],
+  ["50%", "50%"],
+  ["على", "علي"],
+  ["ســلام", "سلام"],
+  ["١٬٢٠٠", "1٬200"],
+  ["٣٫٥", "3٫5"],
+  ["إذاعة", "اذاعه"],
+];
+
 describe("normalizeArabic", () => {
-  it("توحّد الهمزات", () => {
-    expect(normalizeArabic("أسطورة")).toBe(normalizeArabic("اسطورة"));
-    expect(normalizeArabic("إذاعة")).toBe(normalizeArabic("اذاعه"));
-    expect(normalizeArabic("آل")).toBe(normalizeArabic("ال"));
+  it.each(TWINS)("«%s» ⇒ «%s» (جدولُ التوأمين)", (input, expected) => {
+    expect(normalizeArabic(input)).toBe(expected);
   });
 
-  it("توحّد التاء المربوطة والألف المقصورة", () => {
-    expect(normalizeArabic("حياة")).toBe(normalizeArabic("حياه"));
-    expect(normalizeArabic("على")).toBe(normalizeArabic("علي"));
-  });
-
-  it("تُسقط التشكيل والتطويل", () => {
-    expect(normalizeArabic("مُنعَطَف")).toBe("منعطف");
+  it("تُسقط التشكيل والتطويل ولا تُسقط ٪ ولا ٫ ولا ٬", () => {
     expect(normalizeArabic("منــــعطف")).toBe("منعطف");
+    /* مدى التشكيل U+064B–U+065F، و٪ هو U+066A فينجو. وهذه الحالةُ هي التي
+       أوقعت فاحصَين أعادا كتابةَ التعبير العربيّ بأيديهما فوسّعا المدى. */
+    expect(normalizeArabic("٪")).toBe("٪");
   });
 
   it("تحوّل الأرقام العربيّة", () => {
