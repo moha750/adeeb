@@ -699,10 +699,19 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 /* ============================================================
    الحالات الأولية للعناصر المتحركة — فقط حين تعمل القصة الحركية
    (html.js موجودة قبل الرسم؛ النسخة الساكنة st-static تُستثنى)
+
+   وشرطُ `[data-story-booting]` ليس زينةً: هذه الأصنافُ تُخفي نصوصَ القصّة كلَّها
+   انتظارًا لحركةٍ تكشفها، فإن لم تصل الحركةُ أصلًا (تعطّل الترطيب · حزمةٌ لم تنزل)
+   بقي المشهدُ سوادًا لا نصَّ فيه. فصار الإخفاءُ لا يبدأ إلّا حين يعلن مكوّنُ القصّة
+   بنفسه أنّه شرع في الإقلاع — فالعطبُ يظهر نصًّا مقروءًا لا شاشةً سوداء.
+
+   والعَلَمُ على `<html>` لا على جذر القصّة، وواحدٌ لا اثنان: تقرؤه هذه الورقةُ
+   لتُخفي، وتقرؤه `components.css` لتمنع مهلةَ شاشة البدء الاحتياطيّة من كشف
+   مشهدٍ يُجهَّز. فالحقيقةُ واحدةٌ («القصّةُ في إقلاعها») ومكتوبةٌ مرّةً واحدة.
    ============================================================ */
 /* لا تسري حالات الإخفاء على مفضّلي تقليل الحركة — نسختهم الساكنة مقروءة من أول paint */
 @media (prefers-reduced-motion: no-preference) {
-  html.js #adeeb-story:not(.st-static) :is(
+  html.js[data-story-booting] #adeeb-story:not(.st-static) :is(
     .st-line,
     .st-oldlogo, .st-ch1-copy,
     .st-ch2-head, .st-track,
@@ -710,7 +719,7 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
     .st-oldlogo2, .st-ch4-copy,
     .st-wall-kicker, .st-frame, .st-wall-tribute, .st-wall-tail
   ) { opacity: 0; }
-  html.js #adeeb-story:not(.st-static) .st-ltr { opacity: 0; }
+  html.js[data-story-booting] #adeeb-story:not(.st-static) .st-ltr { opacity: 0; }
 }
 
 /* ============================================================

@@ -8,7 +8,7 @@ import { Hash, Timer, UsersThree } from "@phosphor-icons/react";
 import { Eye, Plus, Trash } from "@/app/_components/glyphs";
 import { IconGame } from "../_shell/icons";
 import { DataTable, type Column } from "../_components/DataTable";
-import { DataCards } from "../_components/DataCards";
+import { GameCard } from "./GameCard";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { EmptyState } from "../_components/EmptyState";
@@ -82,6 +82,18 @@ export function GamesView({ rows }: { rows: RoomRow[] }) {
       ],
     },
   ];
+
+  /**
+   * **قائمةُ الكرت تُسقِط ما يفعله زرُّه** (رآه المالك: «ما فائدة النقاط الثلاث؟»).
+   *
+   * الكرتُ يحمل «فتحُ المِقوَد» زرًّا في تذييله، فتكرارُه في نقاطه بابان لفعلٍ واحد —
+   * وهو ما تمنعه قاعدةُ الكروت نفسُها («بابًا واحدًا لا بابين»). وتبقى القائمةُ
+   * كاملةً في **الجدول** إذ لا زرَّ فيه. سابقةُ `KnowledgeView` حرفًا بحرف.
+   */
+  const cardActionsFor = (r: RoomRow): MenuGroup[] =>
+    actionsFor(r)
+      .map((g) => ({ ...g, items: g.items.filter((it) => it.label !== "فتحُ المِقوَد") }))
+      .filter((g) => g.items.length > 0);
 
   const columns: Column<RoomRow>[] = [
     {
@@ -195,23 +207,15 @@ export function GamesView({ rows }: { rows: RoomRow[] }) {
           rowActions={actionsFor}
           onRowClick={open}
         />
+      ) : filtered.length === 0 ? (
+        <div className="card-empty">{emptyState}</div>
       ) : (
-        <DataCards
-          columns={columns}
-          rows={filtered}
-          getRowId={(r) => r.id}
-          spec={{
-            title: "title",
-            subtitle: "code",
-            badge: "status",
-            facts: ["words", "players", "created"],
-            bareFacts: true,
-          }}
-          emptyState={emptyState}
-          rowActions={actionsFor}
-          onRowClick={open}
-          openLabel="فتحُ المِقوَد"
-        />
+        /* شبكةُ الكروت من `.card-grid` — ق٦: الصفُّ الأخير يمتدّ ولا يترك خلاءً. */
+        <div className="card-grid">
+          {filtered.map((r) => (
+            <GameCard key={r.id} room={r} actions={cardActionsFor(r)} onOpen={() => open(r)} />
+          ))}
+        </div>
       )}
 
       <ConfirmDialog

@@ -75,6 +75,7 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
           ? {
               name: viewer.name ?? "",
               isMember: viewer.isMember,
+              hasPortal: viewer.hasPortal,
               standing: viewer.position,
               gender: viewer.gender,
               avatar: (

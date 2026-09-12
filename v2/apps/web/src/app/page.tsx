@@ -8,11 +8,15 @@ import { LatestNews } from "./_components/LatestNews";
 import { FaqSection } from "./_components/FaqSection";
 import { ContactForm } from "./_components/ContactForm";
 import { SiteHeader } from "./_components/SiteHeader";
+import { Hero } from "./_components/Hero";
+import { getHeroSlides } from "./_components/heroSlides";
 
 // يُعاد توليد الصفحة كل 60 ثانية بأحدث البيانات من Supabase (ISR)
 export const revalidate = 60;
 
-export default function Home() {
+export default async function Home() {
+  const slides = await getHeroSlides();
+
   return (
     <>
       {/* قصة أديب الافتتاحية — طبقة تسبق الموقع وتسلّم إليه، مرّةً واحدة لكل دخولٍ
@@ -23,24 +27,10 @@ export default function Home() {
           وتُخفى عند التخطّي، فتعليقُها على `body` يجعل تركيبتها تتبدّل بين الحالين. */}
       <main className="amb-host">
         <Ambient />
-        {/* (1) قصة أديب — الافتتاحية (النسخة القصصية بالأنيميشن تُبنى لاحقًا) */}
-        <section id="story" className="py-20 text-center md:py-28">
-          <Container>
-            <p className="mb-4 font-latin text-sm font-bold tracking-[0.2em] text-secondary">
-              ADEEB CLUB, KFU
-            </p>
-            <h1 className="mx-auto max-w-3xl font-display text-5xl font-black leading-tight text-content md:text-6xl">
-              حيثُ تُولَدُ الكلمة
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-content-muted">
-              نادٍ ثقافي إبداعي بجامعة الملك فيصل، يدعم المواهب الشابة عبر ورشٍ وبرامج ومحتوى متميّز.
-            </p>
-            <div className="mt-8 flex justify-center gap-3">
-              <Link href="/login" className="abtn abtn-primary abtn-lg">تسجيل الدخول</Link>
-              <a href="#works" className="abtn abtn-ghost abtn-lg">تصفّح الأعمال</a>
-            </div>
-          </Container>
-        </section>
+        {/* (1) الصدر — تخطيطُ المالك: صورةٌ يسارًا وحكايةٌ يمينًا وريشةٌ تعبر
+            الحروف. شرائحُه أخبارٌ حقيقيّةٌ تُجلَب في الخادم، وخطابُه يتبدّل
+            بمنزلة الزائر في المتصفّح (الصفحةُ ساكنةٌ للجميع). */}
+        <Hero slides={slides} />
 
         {/* (2) معرض الأعمال — حيّ (carousel) */}
         <section id="works" className="py-20 md:py-28">

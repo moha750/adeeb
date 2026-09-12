@@ -23,17 +23,33 @@ import {
   SpeakerSlash,
   VideoCamera,
 } from "@phosphor-icons/react";
-import { fmtDigits, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, storySeen, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { fmtDigits, markStorySeen, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, storySeen, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { degradeStory, markStoryReady, onStoryReady } from "./ready";
 import "./story.css";
 
 /* بوابة ما قبل الرسم: تُقرَّر قبل أي paint (سكربت inline) فلا وميض للقصة عند التخطي.
-   ?story=skip أو رابط عميق (#قسم) ← تخطٍّ · ?story=force ← يتجاهل sessionStorage. */
+   ?story=skip أو رابط عميق (#قسم) ← تخطٍّ · ?story=force ← يتجاهل sessionStorage.
+
+   وحيث تعمل القصّةُ يُعطَّل استردادُ التمرير: المتصفّح يعيد الزائرَ إلى موضعه
+   السابق عند التحديث، فيستيقظ في منتصف قصّةٍ تبدأ من أوّلها — مشهدٌ لا يُفهَم.
+   والاستردادُ يُردّ إلى «auto» بعد الجاهزيّة (في التأثير أدناه) فلا يُسلَب بقيّةَ
+   الجلسة. */
 const GATE_SCRIPT = `(function(){try{
 var q=new URLSearchParams(location.search),f=q.get("story"),h=location.hash;
 var skip=f==="skip"||(!!h&&h.length>1);
 if(!skip&&${STORY_CONFIG.showOncePerSession}&&f!=="force"&&sessionStorage.getItem("${SESSION_KEY}"))skip=true;
 if(skip)document.documentElement.setAttribute("data-adeeb-story","skip");
+else if("scrollRestoration" in history){history.scrollRestoration="manual";window.scrollTo(0,0);}
 }catch(e){}})();`;
+
+/* سقفُ انتظار القصّة: بعده تسقط إلى نسختها الساكنة فلا يبقى الزائرُ محجوبًا.
+
+   ويُقاس **من لحظة الإقلاع** لا من بدء التنقّل — وهذا فرقٌ قيس لا يُخمَّن: على
+   اتّصال 4G عاديّ استغرق الترطيبُ وحدَه ٣٫٦ث، فسقفٌ مطلقٌ قصيرٌ كان يُعدم القصّةَ
+   قبل أن تنزل حزمتُها ويعرض النسخةَ الساكنة على من كان يسعه انتظارُ ثانيةٍ أخرى.
+   وهو دون سقف شاشة البدء (`STORY_MAX_MS`) كي يقع السقوطُ أوّلًا فتجد الشاشةُ
+   محتوًى مقروءًا حين تنزاح. */
+const READY_CAP_MS = 6000;
 
 /* حروف الفصل الأول المتناثرة — بينها أحرف «أديب» بنغمة ذهبية */
 const LETTERS: Array<{ ch: string; x: string; y: string; r: string; d: number; accent?: boolean }> = [
@@ -128,26 +144,67 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
     else if (!new URLSearchParams(location.search).get("story") && (storySeen() || location.hash.length > 1))
       html.setAttribute("data-adeeb-story", "skip");
 
-    if (html.getAttribute("data-adeeb-story") === "skip") return;
+    if (html.getAttribute("data-adeeb-story") === "skip") {
+      /* تُخطَّت: فالموقعُ جاهزٌ من جهتها، ولا تُبقِ شاشةَ البدء منتظرةً شيئًا. */
+      markStoryReady();
+      return;
+    }
 
     let destroyed = false;
+    /* جهزت أو سقطت إلى الساكنة — أيّهما أوّلًا يُغلق البابَ على الآخر */
+    let settled = false;
     let destroy: (() => void) | undefined;
 
-    // تهيئة كسولة بعد تحميل الصفحة (لا تنافس المحتوى الحرج)
-    const boot = () => {
-      void import("./story").then(async (m) => {
-        if (destroyed) return;
+    /* إعلانُ الإقلاع — عَلَمٌ واحدٌ على `<html>` يقرؤه اثنان: `story.css` فيُخفي
+       نصوصَ القصّة انتظارًا للحركة، و`components.css` فيمنع مهلةَ شاشة البدء
+       الاحتياطيّة من كشف مشهدٍ يُجهَّز. وما لم يصل هذا السطرُ (تعطّل الترطيب) بقي
+       المشهدُ نصًّا مقروءًا لا سوادًا، وسرت المهلةُ كما كانت. */
+    html.setAttribute("data-story-booting", "");
+
+    /* سقفُ الانتظار: بعده تُعرَض النسخةُ الساكنةُ المقروءة — فلا تنزاح شاشةُ
+       البدء يومًا عن سوادٍ لا نصَّ فيه، مهما تعطّلت الشبكةُ أو الحزمة. */
+    const capTimer = setTimeout(() => {
+      if (!destroyed) degradeStory();
+    }, READY_CAP_MS);
+
+    /* الجاهزيّةُ من أيّ بابٍ جاءت (القصّةُ نفسُها · السقوطُ الآمن · سقفُ شاشة
+       البدء): هنا تُختم — تُرفع المهلةُ، ويُردّ استردادُ التمرير، وتُكتب
+       «رُئيت». وكتابتُها هنا لا عند الخاتمة هي إصلاحُ عطلٍ ثانٍ: من حدّث الصفحةَ
+       في وسط القصّة كانت تُعاد عليه من أوّلها في كلّ مرّة. */
+    const offReady = onStoryReady(() => {
+      settled = true;
+      clearTimeout(capTimer);
+      if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+      /* وصفحةُ المعاينة (`force`) ليست زيارةً: عرضُ القصّة فيها موضوعُ الصفحة، فلا
+         يُحسَب رؤيةً تحرم الزائرَ منها في هبوطه. */
+      if (!force) markStorySeen();
+    });
+
+    /* الحزمةُ تُطلَب وتُهيَّأ مع الترطيب، ولا تُعلَّق على `load` كما كانت.
+
+       وذلك لسببين مُقاسَين: أوّلهما أنّ تنزيلها (gsap + ScrollTrigger + SplitText
+       + Lenis) هو أطولُ ما في زمن الانتظار، وتأخيرُه إلى ما بعد `load` يُسلسِل ما
+       يصحّ أن يتوازى مع الصور والخطوط. وثانيهما أنّ `load` نفسَه قد يتأخّر طويلًا
+       في هذه الصفحة (بثٌّ على دفعات وأصولٌ متأخّرة) — فتبقى القصّةُ رهينةَ حدثٍ لا
+       يخصّها. والمقاساتُ لا تضيع: `story.ts` يعيد القياس عند `load` إن تأخّر.
+
+       أمّا الحجّةُ القديمة («لا تنافس المحتوى الحرج») فقد انقلبت: في صفحة الهبوط
+       القصّةُ **هي** المحتوى الحرج — أوّلُ ما يراه الزائر، وكلُّ ما سواها تحتها. */
+    void import("./story")
+      .then(async (m) => {
+        if (destroyed || settled) return;
         destroy = await m.initStory(root);
         // احتمال سباق: أُلغي التركيب أثناء انتظار الخطوط/الصور داخل initStory
         if (destroyed) destroy?.();
+      })
+      .catch(() => {
+        if (!destroyed) degradeStory();
       });
-    };
-    if (document.readyState === "complete") boot();
-    else window.addEventListener("load", boot, { once: true });
 
     return () => {
       destroyed = true;
-      window.removeEventListener("load", boot);
+      offReady();
+      clearTimeout(capTimer);
       destroy?.();
     };
   }, [force]);

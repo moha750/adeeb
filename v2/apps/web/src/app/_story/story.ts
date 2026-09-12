@@ -9,7 +9,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { AUDIO, AUDIO_KEY, fmtDigits, markStorySeen, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { AUDIO, AUDIO_KEY, fmtDigits, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
+import { markStoryReady } from "./ready";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -255,6 +256,8 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
       { threshold: 0.35 }
     );
     $$(".st-station-static, .st-shot").forEach((b) => io.observe(b));
+    /* النسخةُ الساكنة مقروءةٌ من أوّل رسم — فالموقعُ جاهزٌ الآن، وتنزاح شاشةُ البدء */
+    markStoryReady();
     return () => {
       io.disconnect();
       root.classList.remove("st-static");
@@ -267,8 +270,12 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   /* انتظار الخطوط والصور الحرجة قبل أي كشف — لا وميض */
   const fly = $(".st-newlogo") as HTMLImageElement;
   const shield = $(".st-shield") as HTMLImageElement;
-  const oldLogo = await mountOldLogo($(".st-oldlogo")!);
-  await Promise.allSettled([document.fonts.ready, fly.decode(), shield.decode()]);
+  /* الانتظاران متوازيان لا متتاليان: جلبُ الشعار القديم رحلةُ شبكةٍ مستقلّةٌ عن
+     الخطوط والصور، وتسلسلُهما كان يضيف رحلةً كاملةً إلى زمنِ حجبِ شاشة البدء. */
+  const [oldLogo] = await Promise.all([
+    mountOldLogo($(".st-oldlogo")!),
+    Promise.allSettled([document.fonts.ready, fly.decode(), shield.decode()]),
+  ]);
 
   root.classList.add("st-live");
 
@@ -305,10 +312,12 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   gsap.ticker.lagSmoothing(0);
 
   let extraCleanup: (() => void) | undefined;
+  let offLoadRefresh: (() => void) | undefined;
   let destroyed = false;
   const destroy = () => {
     if (destroyed) return;
     destroyed = true;
+    offLoadRefresh?.();
     extraCleanup?.();
     ctx.revert(); /* يقتل التايملاينات والـtriggers ويسترد أنماط الهيدر وكل inline styles */
     gsap.ticker.remove(tickerFn);
@@ -1424,9 +1433,6 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
         scrub: 1,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        onLeave() {
-          markStorySeen(); /* بلغت الخاتمة — لا تُعاد في هذه الجلسة */
-        },
       },
     });
 
@@ -1768,7 +1774,6 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
       skipping = true;
       /* التخطّي صمتٌ فوريّ: تلاشٍ قصيرٌ مع تلاشي القصة نفسها لا قطعٌ فجّ */
       gsap.to(snd, { exit: 0, duration: 0.45, ease: "none", overwrite: "auto" });
-      markStorySeen(); /* التخطّي رؤيةٌ أيضًا — لا تُعاد في هذه الجلسة */
       gsap.to(root, {
         autoAlpha: 0,
         duration: 0.5,
@@ -1809,6 +1814,20 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
 
   /* بعد بناء المشاهد كلها: قياسات نهائية */
   ScrollTrigger.refresh();
+
+  /* وقياسٌ ثانٍ بعد `load` إن لم يكن قد وقع: التهيئةُ لم تعد تنتظره (كانت تنتظره
+     فيتأخّر الكشفُ خلف شاشة البدء، و`load` في هذه الصفحة قد يتأخّر طويلًا)، وبعضُ
+     المقاسات يقرأ شعارَ الهيدر — فإن وصلت صورتُه متأخّرةً أُعيد القياس مرّة. */
+  if (document.readyState !== "complete") {
+    const onLoad = () => ScrollTrigger.refresh();
+    window.addEventListener("load", onLoad, { once: true });
+    offLoadRefresh = () => window.removeEventListener("load", onLoad);
+  }
+
+  /* الآن وحدَه يُقال «جاهزة»: المشاهدُ مبنيّةٌ والمقاساتُ نهائيّةٌ والسطرُ الأوّل
+     في أوّل إطارٍ من دخوله. وقبل هذا السطر كانت شاشةُ البدء تنزاح على `load`
+     فتكشف سوادًا لا نصَّ فيه — انظر `ready.ts`. */
+  markStoryReady();
 
   return destroy;
 }
