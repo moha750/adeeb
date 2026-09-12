@@ -12,7 +12,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "الإدخال",
-    pages: [["buttons", "الأزرار"], ["button-row", "صفّ الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"], ["gradient", "أدوات التدرّج"], ["qr-frames", "هيئات إطار الباركود"]],
+    pages: [["buttons", "الأزرار"], ["button-row", "صفّ الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"], ["gradient", "أدوات التدرّج"], ["qr-frames", "هيئات إطار الباركود"], ["qr-stats", "صفحة الباركود وإحصاؤه"], ["qr-deep", "القراءة الأعمق للباركود"], ["qr-alert-mail", "بريد تنبيه الوجهة"], ["qr-list/screen", "قائمة الباركودات والحملات"], ["qr-card", "كرت الباركود ووجهته"], ["qr-end", "ذيل صفحة الإحصاء"]],
   },
   {
     title: "العرض",
@@ -25,7 +25,7 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "التفاعل والتنبيه",
-    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["cursor", "مؤشّر الفأرة"], ["deebo-bubble", "فقاعة محادثة ديبو"], ["deebo-screen", "شاشة محادثة ديبو"], ["game-screens", "لوح الكلمة: هيئتان"]],
+    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["cursor", "مؤشّر الفأرة"], ["deebo-bubble", "فقاعة محادثة ديبو"], ["deebo-screen", "شاشة محادثة ديبو"], ["game-screens", "لوح الكلمة"], ["game-cards", "كرت غرفة اللعب"]],
   },
   {
     title: "البيانات",

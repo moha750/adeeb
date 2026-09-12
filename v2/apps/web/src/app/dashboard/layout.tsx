@@ -23,8 +23,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // (م١) إذ سكن `profiles` أصحابُ حساباتٍ لم ينضمّوا — فلولا هذا السطر لَسِيقوا إلى شاشة
   // إكمال سجلٍّ ليس لهم. والترتيبُ مقصود: «أعضوٌ هو؟» قبل «أسجلُّه تامّ؟».
   const session = await getSessionAdmin();
-  if (session && !(await isAdeebMember(session.id))) redirect("/me");
-  if (session && !(await hasMemberRecord(session.id))) redirect("/complete");
+  /**
+   * **وحاملُ المفاتيح ليس بابُه `/me` ولو لم يكن عضوًا** (٢٠٢٦-٠٩-٠٥): البوّابتان كانتا
+   * تسألان عن العضويّة وحدَها، فحسابُ النادي «أَدِيب» — يملك مفاتيحَ النظام كلَّها ولا
+   * عضويّةَ له ولا سجلَّ تفاصيل — يُساق إلى بيت الحساب ويُحرَم غرفَه.
+   *
+   * والتصحيحُ إعمالٌ للقانون لا استثناء: **التفويضُ قدرةٌ والعضويّةُ واقعة**، وخلطُهما هو
+   * العطب. فمن لا مفتاحَ له يُساق إلى `/me` كما كان، ومن له مفتاحٌ يدخل غرفتَه ولو لم ينضمّ.
+   * ولا يُمنَح بذلك مفتاحٌ جديد: `denyUnless` في كلّ غرفةٍ هو الحَكَم كما كان.
+   */
+  const sessionHasKeys = session?.isAdmin ?? false;
+  if (session && !sessionHasKeys && !(await isAdeebMember(session.id))) redirect("/me");
+  if (session && !sessionHasKeys && !(await hasMemberRecord(session.id))) redirect("/complete");
 
   // **ومن طلب أن يذهب لا يُترَك يعمل** (٢٠٢٦-٠٨-١٩): الحسابُ في مهلته مجمَّدٌ لا مقفَل —
   // فيُساق إلى `/me` حيث خبرُ الطلب وبابُ العدول، لا إلى غرفِ العمل. وشرطُه صاحبُ الجلسة

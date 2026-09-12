@@ -30,3 +30,4 @@ export const arCount = (n: number, f: ArForms): string =>
 export const AR_WORD: ArForms = ["كلمةٌ واحدة", "كلمتان", "كلمات", "كلمةً"];
 export const AR_LINE: ArForms = ["سطرٌ واحد", "سطران", "أسطرٍ", "سطرًا"];
 export const AR_CATEGORY: ArForms = ["تصنيفٌ واحد", "تصنيفان", "تصنيفات", "تصنيفًا"];
+export const AR_PLAYER: ArForms = ["لاعبٌ واحد", "لاعبان", "لاعبين", "لاعبًا"];

@@ -28,6 +28,19 @@ export default function StatPage() {
 
         <div className="mt-12 space-y-12">
           <section>
+            <Lab>سطرٌ فرعيّ (نصيبٌ من الرقم)</Lab>
+            <p className="mb-3 max-w-2xl text-sm text-content-muted">
+              يُستعمل لِما هو **جزءٌ** من الرقم لا رقمٌ ثانٍ: «منهم كذا». أُضيف حين دُمج كرتُ
+              زيارات الأعضاء في كرت الزوّار، فوحدتان مختلفتان في كرتين متجاورين تغريان بطرحٍ
+              لا معنى له.
+            </p>
+            <div className="stat-grid">
+              <Stat icon={<UsersThree />} value="286" label="زائر" note={<>منهم <b>47</b> عضوًا</>} />
+              <Stat icon={<Eye />} value="1,099" label="مشاهدة" />
+            </div>
+          </section>
+
+          <section>
             <Lab>النغمات الأربع</Lab>
             <div className="stat-grid">
               <Stat icon={<UsersThree />} value="800" label="إجمالي الأعضاء" tone="brand" />

@@ -110,6 +110,12 @@ export function Header({
     avatar?: React.ReactNode;
     isMember?: boolean;
     /**
+     * **له بابٌ في البوّابة** — عضويّةً أو مفتاحًا. يُقدَّم على `isMember` في اختيار الوجهة
+     * (٢٠٢٦-٠٩-٠٥): حسابُ النادي يملك المفاتيحَ كلَّها ولا عضويّةَ له، وكان يُدَلّ على بيت
+     * الحساب. ويرتدّ إلى `isMember` حين لا يُمرَّر، فلا يتغيّر شيءٌ لمن لم يُحدِّث.
+     */
+    hasPortal?: boolean;
+    /**
      * سطرُ الهويّة الثاني — **مسمّى منصبه** كما يُقرأ («قائد لجنة التصميم»)، يُركَّب في
      * `positionLabel` لا هنا. وحين لا منصبَ له تُقال منزلتُه العامّة.
      */
@@ -324,7 +330,7 @@ export function Header({
           يرى حسابك والبوّابة معًا؟» — وهو محقّ: ما في `/me` صار في اللوحة (الملفُّ الشخصيّ
           والإعداداتُ وبابُ الخروج نفسُه)، فالبابُ الثاني تكرارٌ يُثقل. فللعضو بوّابتُه،
           ولصاحب الحساب حسابُه — وهو بيتُه كلُّه لا نصفُه. */}
-      {viewer.isMember ? meItem(portalHref, loginLabel, IconPortal) : meItem(accountHref, "حسابك", IconAccount)}
+      {(viewer.hasPortal ?? viewer.isMember) ? meItem(portalHref, loginLabel, IconPortal) : meItem(accountHref, "حسابك", IconAccount)}
       <div className="dm-sep" />
       <button
         type="button"

@@ -15,6 +15,14 @@ export interface DonutProps {
   unit?: ChartUnit;
   /** رسالة القائمة الفارغة. */
   empty?: ReactNode;
+  /**
+   * **الحلقةُ فوق وأسطورتُها تحتها** بدل جنبًا إلى جنب.
+   *
+   * تُطلَب حين يكون الكرتُ **ضيّقًا طويلًا** (حلقةٌ في نصف صفٍّ بجوار مخطّطٍ أطولَ منها):
+   * فالركنُ الطوليّ يملأه الترتيبُ الرأسيّ، وتكبر الحلقةُ بعرض الكرت بدل أن تُحبَس في
+   * عمودٍ عرضُه ٢٣٠. وتُترَك في الكرت **العريض القصير**، فالصفُّ هناك أوفقُ للعين.
+   */
+  stack?: boolean;
 }
 
 // ألوان الفئات بترتيبٍ ثابت — لا تدوير (ق١٠·٢). الزائد على الستّة يُطوى في «أخرى».
@@ -33,7 +41,10 @@ const nf = (n: number) => n.toLocaleString("en-US");
  * - **الضغط** يُخفي الفئة، و**النسبة من المجموع الكامل دائمًا** فلا تقفز حين تُخفى أختها
  *   (كانت ٣٢٪ تصير ٨٤٪ فتُقرأ عطلًا لا تصفية)، والمخفيّ يبقى مشطوبًا بنسبته.
  */
-export function Donut({ items, unit, empty }: DonutProps) {
+/** نصفُ قطر الحلقة — تقرؤه الفارغةُ والمملوءةُ معًا، فيتّحد قطرُ الخاتمين. */
+const R = 56;
+
+export function Donut({ items, unit, empty, stack }: DonutProps) {
   const [hidden, setHidden] = useState<Set<number>>(() => new Set());
   const [act, setAct] = useState<number | null>(null);
 
@@ -47,7 +58,17 @@ export function Donut({ items, unit, empty }: DonutProps) {
           ],
     [items],
   );
-  if (!items.length) return <p className="chart-empty">{empty ?? "لا بيانات."}</p>;
+  /**
+   * **الفارغةُ مكوّنُ الموقع لا سطرٌ خاصّ** (المالك ٢٠٢٦-٠٨-٣١): `EmptyState` هو المتّبع في
+   * الشاشات كلّها، فيُمرَّر كما هو ولا يُلفّ في فقرة (فقرةٌ داخل فقرةٍ يشقّها المتصفّح).
+   * والنصُّ المجرَّد يبقى مقبولًا فيُعطى ثوبَ `chart-empty`.
+   */
+  if (!items.length)
+    return typeof empty === "string" || empty == null ? (
+      <p className="chart-empty">{empty ?? "لا بيانات."}</p>
+    ) : (
+      <>{empty}</>
+    );
 
   const fullTotal = slices.reduce((s, it) => s + it.value, 0) || 1;
   const visible = slices.reduce((s, it, i) => (hidden.has(i) ? s : s + it.value), 0);
@@ -63,13 +84,13 @@ export function Donut({ items, unit, empty }: DonutProps) {
       return next;
     });
 
-  const R = 56, C = 2 * Math.PI * R, GAP = slices.length - hidden.size > 1 ? 2.5 : 0;
+  const C = 2 * Math.PI * R, GAP = slices.length - hidden.size > 1 ? 2.5 : 0;
   let acc = 0;
   const shown = act != null ? slices[act] : null;
 
   return (
     // القطر يتبع عدد الصفوف (السياسة في الأنماط، والعدد وحده يُمرَّر) — والصفوف تنضغط متى كثرت.
-    <div className={"chart-donut" + (slices.length >= 5 ? " many" : "")} style={{ "--donut-rows": slices.length } as CSSProperties}>
+    <div className={"chart-donut" + (stack ? " stack" : "") + (slices.length >= 5 ? " many" : "")} style={{ "--donut-rows": slices.length } as CSSProperties}>
       <div className="chart-donut-ring">
         <svg
           viewBox="0 0 148 148" role="img"

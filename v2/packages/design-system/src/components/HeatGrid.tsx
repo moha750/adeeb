@@ -41,7 +41,13 @@ export function HeatGrid({
   rows, cols, values, max, tone = "var(--chart-1)", formatValue = nf,
   legend = true, legendLow = "أقلّ نشاطًا", legendHigh = "أكثر نشاطًا", empty,
 }: HeatGridProps) {
-  if (!rows.length || !cols.length) return <p className="chart-empty">{empty ?? "لا بيانات."}</p>;
+  /** الفارغةُ تُمرَّر كما هي حين تكون مكوّنًا (`EmptyState`)، وتُلبَس `chart-empty` حين تكون نصًّا. */
+  if (!rows.length || !cols.length)
+    return typeof empty === "string" || empty == null ? (
+      <p className="chart-empty">{empty ?? "لا بيانات."}</p>
+    ) : (
+      <>{empty}</>
+    );
   const top = max ?? Math.max(1, ...values.flat());
 
   // الذروة — أكبر خليّةٍ (لإبرازها ولوصف aria).

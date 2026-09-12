@@ -11,6 +11,17 @@ const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "ماي�
 
 export const CLUB_TZ = "Asia/Riyadh";
 
+/**
+ * **سنةُ النادي الجارية** — لسطر الحقوق في التذييل.
+ *
+ * و`Intl` لا `getFullYear()`: فيرسِل يعمل بالتوقيت العالميّ، فليلةَ رأس السنة
+ * تكون الرياضُ في السنة الجديدة والخادمُ في القديمة ثلاثَ ساعات، فيُطبَع
+ * تاريخٌ ماضٍ في القاع. وهو عطبُ `lib/date.ts` المُعدَم نفسُه.
+ */
+export function clubYear(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TZ, year: "numeric" }).format(now);
+}
+
 /** أجزاء التاريخ بتوقيت النادي (أرقامٌ لاتينيّة، فالخطّ يعرّبها عند الحاجة). */
 function parts(d: Date): { day: number; month: number; year: number; hour: string; minute: string } {
   const f = new Intl.DateTimeFormat("en-US", {
@@ -193,6 +204,42 @@ export const fmtSince = (iso: string | null | undefined): string => {
  * **وكونُها من مصدرٍ واحدٍ يجعلها آمنةً عند الترطيب**: الخادمُ والمتصفّح يقرآن المنطقةَ
  * نفسَها، فلا يختلف رسمُهما.
  */
+/**
+ * **يومُ الأسبوع بتوقيت النادي** — ٠ للأحد إلى ٦ للسبت.
+ *
+ * ولمَ لا يُقرأ من `getDay()`: تلك ساعةُ الجهاز، ومسحةٌ وقعت الأحدَ الثانيةَ عشرةَ ونصفًا
+ * ليلًا بالرياض تُقرأ سبتًا في غرينتش (درسُ `lib/date.ts` المُعدَم). فيُقرأ من المفتاح
+ * اليوميّ نفسِه الذي تُبنى منه الأيّام، وهو محسوبٌ بمنطقة النادي.
+ */
+/**
+ * **ساعةٌ باثنتي عشرةَ بصباحٍ ومساء** (قرارُ المالك، وهو حكمُ `fmtStamp` نفسُه): «11 ص»
+ * و«7 م» لا «11:00» و«19:00». تأخذ رقمَ الساعة ٠..٢٣ لا طابعًا، فتُستعمل في محاور الرسوم.
+ * و`pad` للمحاور الضيّقة: «11ص» بلا مسافةٍ حين يزدحم أربعةٌ وعشرون عمودًا.
+ */
+export const hour12 = (h: number, pad = true): string => {
+  const n = ((h % 24) + 24) % 24;
+  const twelve = n % 12 === 0 ? 12 : n % 12;
+  return `${twelve}${pad ? " " : ""}${n < 12 ? "ص" : "م"}`;
+};
+
+/**
+ * **الساعةُ بكلمتها كاملةً**: «٩ مساءً» لا «٩ م» (المالك ٢٠٢٦-٠٩-٠٥).
+ *
+ * والفرقُ موضعيٌّ لا ذوقيّ: المختصرُ لمحورٍ فيه أربعةٌ وعشرون عمودًا لا يسع كلمة، والكاملُ
+ * لكرتٍ يقف الرقمُ فيه وحدَه فيُقرأ كما يُنطَق.
+ */
+export const hour12Long = (h: number): string => {
+  const n = ((h % 24) + 24) % 24;
+  const twelve = n % 12 === 0 ? 12 : n % 12;
+  return `${twelve} ${n < 12 ? "صباحًا" : "مساءً"}`;
+};
+
+export const clubWeekday = (iso?: string | null): number => {
+  const key = clubDayKey(iso ?? new Date().toISOString());
+  const t = Date.parse(`${key}T12:00:00Z`);
+  return Number.isNaN(t) ? 0 : new Date(t).getUTCDay();
+};
+
 export const clubHour = (iso?: string | null): number => {
   const d = iso ? new Date(iso) : new Date();
   if (Number.isNaN(d.getTime())) return 12;

@@ -20,6 +20,12 @@ export interface ColumnBarsProps {
   barMaxWidth?: number;
   /** تنسيق القيمة في سطر القراءة. */
   formatValue?: (n: number) => string;
+  /**
+   * تسمياتٌ كاملةٌ تحت الأعمدة تلتفّ أسطرًا — لا رموزًا مختصرة (٢٠٢٦-٠٩-٠٥).
+   * التسميةُ الافتراضيّة سطرٌ واحدٌ بخطّ الأرقام، تصلح لـ«13:00» ولا تصلح لـ«من دقيقة إلى
+   * ٥ دقائق». وبها يُحجز أسفلَ الرسم متّسعُ ثلاثة أسطر.
+   */
+  fullTicks?: boolean;
 }
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -45,14 +51,14 @@ const niceMax = (v: number) => {
  *
  * المصدر الواحد: التوزيع الساعيّ (تحليلات) · توزيع أوقات الإجابة (استبيانات).
  */
-export function ColumnBars({ bars, max, height = 132, barMaxWidth, formatValue = nf }: ColumnBarsProps) {
+export function ColumnBars({ bars, max, height = 132, barMaxWidth, formatValue = nf, fullTicks }: ColumnBarsProps) {
   const [act, setAct] = useState<number | null>(null);
   const top = niceMax(max ?? Math.max(1, ...bars.map((b) => b.value)));
   const cur = act != null ? bars[act] : null;
 
   return (
     <div
-      className="chart-cols-wrap"
+      className={"chart-cols-wrap" + (fullTicks ? " chart-fullticks" : "")}
       style={{ "--chart-cols-h": `${height}px`, ...(barMaxWidth ? { "--chart-col-max": `${barMaxWidth}px` } : null) } as CSSProperties}
     >
       <div className="chart-readout" aria-live="polite">

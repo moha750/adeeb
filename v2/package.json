@@ -16,11 +16,6 @@
     "check": "node scripts/check.mjs",
     "auth:config": "node scripts/auth-config.mjs",
     "web": "pnpm --filter web dev",
-    "app": "pnpm --filter mobile start",
-    "app:ios": "pnpm --filter mobile ios",
-    "app:phone": "pnpm --filter mobile ios:device",
-    "app:android": "pnpm --filter mobile android",
-    "theme:native": "node scripts/theme-native.mjs",
     "r2:cors": "node scripts/r2-cors.mjs",
     "deebo:art": "node scripts/deebo-art.mjs",
     "test": "turbo run test"
@@ -38,8 +33,7 @@
       }
     },
     "overrides": {
-      "react": "19.2.4",
-      "@react-native/metro-config": "0.86.2"
+      "react": "19.2.4"
     }
   }
 }

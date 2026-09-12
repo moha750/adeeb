@@ -13,6 +13,7 @@
  * `profiles` إلّا أربعةُ حقولٍ يراها كلُّ من نظر إلى صاحبها.
  */
 import { NextResponse } from "next/server";
+import { DASHBOARD_CAPS } from "@/lib/capabilities";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { positionLine } from "@/lib/positionLabel";
 import { roleRank } from "@/lib/roleOrder";
@@ -20,12 +21,32 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * أيملك مفتاحَ غرفةٍ في اللوحة؟ يُسأل عن غير العضو وحدَه (العضوُ له بابُه أصلًا)، فلا
+ * نداءَ يُهدر على الأكثرين. والمصدرُ واحد: `get_user_permissions` نفسُها التي يقرؤها
+ * `lib/auth`، و`DASHBOARD_CAPS` نفسُها التي تُشتقّ من خريطة الأقفال.
+ */
+async function hasDashboardKeys(sb: ReturnType<typeof createAdeebServiceClient>, userId: string) {
+  const { data } = await sb.rpc("get_user_permissions", { p_user_id: userId });
+  const keys = ((data ?? []) as { permission_key: string }[]).map((r) => r.permission_key);
+  return keys.some((k) => (DASHBOARD_CAPS as readonly string[]).includes(k));
+}
+
 export type MeBrief = {
   name: string | null;
   avatarUrl: string | null;
   gender: "male" | "female" | null;
   /** عضوٌ في النادي — حدُّه `joined_date` كما في `isAdeebMember` و`is_adeeb_member` سواءً. */
   isMember: boolean;
+  /**
+   * **له بابٌ في البوّابة** — عضويّةً أو مفتاحًا (٢٠٢٦-٠٩-٠٥).
+   *
+   * كان الرأسُ يقسم الناسَ بالعضويّة وحدَها: عضوٌ يرى «بوّابة أديب»، وغيرُه يرى «حسابك».
+   * فحسابُ النادي «أَدِيب» — يملك مفاتيحَ النظام كلَّها ولا عضويّةَ له — كان يُدَلّ على بيت
+   * الحساب ويُحجَب عنه بابُ غرفه. والقانونُ أنّ **التفويضَ قدرةٌ والعضويّةَ واقعة**، فبابُ
+   * البوّابة يتبع المفاتيح، وبقيَ `isMember` لما هو عضويّةٌ حقًّا (وسمُ الهويّة ومنصبُها).
+   */
+  hasPortal: boolean;
   /**
    * مسمّى منصبه القائم كما يُقرأ: «قائد لجنة التصميم». يُركَّب في `positionLabel` وحدَه
    * (المصدرُ الواحد)، والقاعدةُ تُخرج القطعتين خامًا. و`null` لمن لا منصبَ له.
@@ -105,6 +126,7 @@ export async function GET() {
     avatarUrl: data?.avatar_url ?? null,
     gender: data?.gender === "male" || data?.gender === "female" ? data.gender : null,
     isMember: data?.joined_date != null,
+    hasPortal: data?.joined_date != null || (await hasDashboardKeys(sb, user.id)),
     // المنصبُ يُسأل عنه لمن انضمّ وحدَه: لا مناصبَ لصاحب حسابٍ ليس عضوًا، فلا استعلامَ يُهدر.
     position: data?.joined_date != null ? await currentPosition(sb, user.id) : null,
   };

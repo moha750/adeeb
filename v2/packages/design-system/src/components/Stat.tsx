@@ -14,6 +14,12 @@ export interface StatProps {
   tone?: StatTone;
   /** عنصر يسار الأيقونة في الصفّ العلويّ — مؤشّر اتّجاه غالبًا (`<Badge>`). */
   trend?: ReactNode;
+  /**
+   * سطرٌ فرعيٌّ تحت التسمية — **لنصيبٍ من الرقم لا لرقمٍ ثانٍ**: «منهم ٤٧ عضوًا».
+   * أُضيف ٢٠٢٦-٠٨-٣١ حين دُمج «مشاهدة عضو» في كرت «زائر»: كرتان بوحدتين مختلفتين
+   * (أجهزةٌ وصفحات) يغريان بطرحِ أحدهما من الآخر، ونصيبٌ داخل الكرت يقول العلاقةَ بلا لبس.
+   */
+  note?: ReactNode;
   className?: string;
 }
 
@@ -24,7 +30,7 @@ export interface StatProps {
  * مصدر واحد لكلّ كروت الإحصاء: نظرة عامّة · الأعضاء · التحليلات · الهيكلة · تعيين المناصب.
  * (حلّ محلّ `.org-stat` المؤقّت الذي كان في globals.css بحدّ 1px صريح يخالف القاعدة ٤.)
  */
-export function Stat({ icon, value, label, tone = "brand", trend, className }: StatProps) {
+export function Stat({ icon, value, label, tone = "brand", trend, note, className }: StatProps) {
   return (
     <div className={cn("stat", `stat-${tone}`, className)}>
       <div className="stat-top">
@@ -33,6 +39,7 @@ export function Stat({ icon, value, label, tone = "brand", trend, className }: S
       </div>
       <div className="stat-val">{value}</div>
       <div className="stat-label">{label}</div>
+      {note ? <div className="stat-note">{note}</div> : null}
     </div>
   );
 }

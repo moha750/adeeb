@@ -229,15 +229,22 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           subtitle="بريدُ دخولك ومفتاحُه، لا يتغيّران إلّا بإثبات"
         />
         <CardBody>
-          <div className="setl">
-            <div className="viewbar">
-              <span>
-                <b className="txt lat"><bdi dir="ltr">{settings.email}</bdi></b>
-                <span className="fld-help"> بريدُ دخولك، تغييرُه يحتاج تأكيدًا من العنوان الجديد.</span>
+          {/* **صفُّ القائمة المصقول** (اعتمده المالك ٢٠٢٦-٠٩-٠٧ بعد أربع جولاتٍ رُدَّت):
+              مرساةٌ في البداية، وسطران بدل سطرٍ تتنازعه التسميةُ والقيمة، ولا خطوطَ فاصلة،
+              والفعلُ في طرفٍ بعرضٍ ثابت. والقيمةُ نزلت سطرًا ثانيًا: بريدٌ لاتينيٌّ طويلٌ
+              في صدر السطر كان يزاحم تسميتَه. */}
+          <div className="lrow">
+            <div className="lrow-i">
+              <span className="lrow-ic"><Envelope /></span>
+              <span className="lrow-tx">
+                <b>بريدُ دخولك</b>
+                <span className="lat"><bdi dir="ltr">{settings.email}</bdi></span>
               </span>
-              <Button variant="ghost" size="sm" onClick={() => setMailOpen(true)}>
-                <Envelope size={16} aria-hidden /> تغيير البريد
-              </Button>
+              <span className="lrow-end">
+                <Button variant="ghost" size="sm" onClick={() => setMailOpen(true)}>
+                  <Envelope size={16} aria-hidden /> تغيير
+                </Button>
+              </span>
             </div>
             {/* طلبٌ معلّق: `new_email` يبقى مملوءًا حتى يُفتح الرابط — والصمتُ عنه يُنسي العضوَ طلبَه */}
             {settings.pendingEmail ? (
@@ -245,14 +252,17 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
                 أُرسل رابطُ تأكيدٍ إلى <bdi dir="ltr" className="lat">{settings.pendingEmail}</bdi>، ولا يسري التغيير قبل فتحه. ودخولُك إلى حينه بالبريد الحاليّ.
               </Alert>
             ) : null}
-            <div className="viewbar">
-              <span>
+            <div className="lrow-i">
+              <span className="lrow-ic"><Lock /></span>
+              <span className="lrow-tx">
                 <b>كلمة المرور</b>
-                <span className="fld-help"> يلزمك إدخال الحاليّة قبل الجديدة.</span>
+                <span>يلزمك إدخال الحاليّة قبل الجديدة.</span>
               </span>
-              <Button variant="ghost" size="sm" onClick={() => setPassOpen(true)}>
-                <Lock size={16} aria-hidden /> تغيير كلمة المرور
-              </Button>
+              <span className="lrow-end">
+                <Button variant="ghost" size="sm" onClick={() => setPassOpen(true)}>
+                  <Lock size={16} aria-hidden /> تغيير
+                </Button>
+              </span>
             </div>
           </div>
         </CardBody>
@@ -267,35 +277,43 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           subtitle="بمَ يُفتح حسابُك، وما الذي يُضاف إليه أو يُنزَع عنه"
         />
         <CardBody>
-          <div className="setl">
+          {/* وأيقونةُ المزوّد صارت **مرساةَ الصفّ** بدل أن تلتصق بالكلمة: هي الفارقُ الذي
+              تُعرَف به الطريقةُ من لمحة، فموضعُها الصدر لا حاشيةُ التسمية. */}
+          <div className="lrow">
             {settings.methods.map((m) => (
-              <div className="viewbar" key={m.id}>
-                <span>
-                  <b className="seg-lbl">{PROVIDER_ICON[m.provider]}{PROVIDER_LABEL[m.provider]}</b>
-                  <span className="fld-help">
-                    {m.provider !== "email" && m.account ? <> <bdi dir="ltr" className="lat">{m.account}</bdi>،</> : null}
+              <div className="lrow-i" key={m.id}>
+                <span className="lrow-ic">{PROVIDER_ICON[m.provider]}</span>
+                <span className="lrow-tx">
+                  <b>{PROVIDER_LABEL[m.provider]}</b>
+                  <span>
+                    {m.provider !== "email" && m.account ? <><bdi dir="ltr" className="lat">{m.account}</bdi>،</> : null}
                     {m.lastUsed ? ` آخرُ دخولٍ ${m.lastUsed}.` : " لم يُدخَل به بعد."}
                   </span>
                 </span>
-                {m.provider === "email" ? (
-                  // البريدُ لا يُفكّ: هو أصلُ الحساب وبابُ استعادته، وفكُّه يُغلق البابين معًا
-                  <Badge tone="neutral" variant="soft">الأساس</Badge>
-                ) : (
-                  <Button variant="ghost-danger" size="sm" disabled={!canUnlink} onClick={() => setUnlinking(m)}>
-                    <Trash size={16} aria-hidden /> فكّ الربط
-                  </Button>
-                )}
+                <span className="lrow-end">
+                  {m.provider === "email" ? (
+                    // البريدُ لا يُفكّ: هو أصلُ الحساب وبابُ استعادته، وفكُّه يُغلق البابين معًا
+                    <Badge tone="neutral" variant="soft">الأساس</Badge>
+                  ) : (
+                    <Button variant="ghost-danger" size="sm" disabled={!canUnlink} onClick={() => setUnlinking(m)}>
+                      <Trash size={16} aria-hidden /> فكّ الربط
+                    </Button>
+                  )}
+                </span>
               </div>
             ))}
             {LINKABLE.filter((p) => !linked.has(p)).map((p) => (
-              <div className="viewbar" key={p}>
-                <span>
-                  <b className="seg-lbl">{PROVIDER_ICON[p]}{PROVIDER_LABEL[p]}</b>
-                  <span className="fld-help"> غيرُ مربوط، ورَبطُه يجعله بابًا ثانيًا لحسابك نفسِه.</span>
+              <div className="lrow-i" key={p}>
+                <span className="lrow-ic">{PROVIDER_ICON[p]}</span>
+                <span className="lrow-tx">
+                  <b>{PROVIDER_LABEL[p]}</b>
+                  <span>غيرُ مربوط، ورَبطُه يجعله بابًا ثانيًا لحسابك نفسِه.</span>
                 </span>
-                <Button variant="ghost" size="sm" loading={busy} onClick={() => link(p)}>
-                  <Plus size={16} aria-hidden /> ربط
-                </Button>
+                <span className="lrow-end">
+                  <Button variant="ghost" size="sm" loading={busy} onClick={() => link(p)}>
+                    <Plus size={16} aria-hidden /> ربط
+                  </Button>
+                </span>
               </div>
             ))}
           </div>
@@ -373,14 +391,15 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           subtitle="ما يراه الناسُ عنك خارج اللوحة"
         />
         <CardBody>
-          <div className="setl">
+          <div className="lrow">
             {slugUrl ? (
-              <div className="viewbar">
-                <span>
+              <div className="lrow-i">
+                <span className="lrow-ic"><UserCircle /></span>
+                <span className="lrow-tx">
                   <b>{settings.publicSlug}</b>
-                  <span className="fld-help"> عنوانُك على <bdi dir="ltr" className="lat">adeeb.club</bdi>، يُشتقّ من اسمك ويتبعه إن تغيّر.</span>
+                  <span>عنوانُك على <bdi dir="ltr" className="lat">adeeb.club</bdi>، يُشتقّ من اسمك ويتبعه إن تغيّر.</span>
                 </span>
-                <span className="btn-row">
+                <span className="lrow-end">
                   <Button variant="ghost" size="sm" onClick={() => copySlug(slugUrl)}>نسخ الرابط</Button>
                   {/* وسمُه <a> لا <button>: وجهتُه عنوانٌ يُفتح في لسانٍ جديدٍ ويُصاد بالزرّ
                       الأوسط. و`Button` أزرارٌ فقط، وطبقتُه في المكتبة (`abtn`) تخدم الاثنين. */}
@@ -395,14 +414,17 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
                 تُفتح صفحتُك حين يكون لك منصبٌ فعّالٌ في الهيكل. ونبذتُك محفوظةٌ إلى ذلك الحين.
               </Alert>
             )}
-            <div className="viewbar">
-              <span>
+            <div className="lrow-i">
+              <span className="lrow-ic"><Quotes /></span>
+              <span className="lrow-tx">
                 <b>نبذتك</b>
-                <span className="fld-help"> {settings.bio || "لا نبذةَ بعد، وسطرٌ عنك خيرٌ من فراغ."}</span>
+                <span>{settings.bio || "لا نبذةَ بعد، وسطرٌ عنك خيرٌ من فراغ."}</span>
               </span>
-              <Button variant="ghost" size="sm" onClick={() => { setBio(settings.bio); setBioOpen(true); }}>
-                <Quotes size={16} aria-hidden /> {settings.bio ? "تحرير النبذة" : "كتابة نبذة"}
-              </Button>
+              <span className="lrow-end">
+                <Button variant="ghost" size="sm" onClick={() => { setBio(settings.bio); setBioOpen(true); }}>
+                  <Quotes size={16} aria-hidden /> {settings.bio ? "تحرير" : "كتابة"}
+                </Button>
+              </span>
             </div>
           </div>
         </CardBody>

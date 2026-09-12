@@ -134,9 +134,12 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
-    // أدواتٌ لا غرفَ بيانات: تأخذ مُدخَلًا فتعطي ملفًّا، ولا تكتب في القاعدة شيئًا.
     head: "أدوات",
-    items: [{ label: "مولّد الباركود", icon: "qr", href: "/dashboard/tools/qr" }],
+    items: [
+      { label: "مولّد الباركود", icon: "qr", href: "/dashboard/tools/qr" },
+      // بندٌ لا يراه إلّا حاملُ مفتاحه (`navFor` ينخُل بالقدرات): عينُ النادي على ملصقاته.
+      { label: "إشراف الباركود", icon: "qr", href: "/dashboard/tools/qr/oversight" },
+    ],
   },
 ];
 

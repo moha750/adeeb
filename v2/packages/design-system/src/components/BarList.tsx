@@ -28,6 +28,11 @@ export interface BarListProps {
    * تُصرَّف عربيًّا بـ`Intl.PluralRules`: «زيارتان» للاثنين و«زيارات» للثلاث إلى العشر.
    */
   unit?: ChartUnit;
+  /**
+   * تنسيقُ القيمة المكتوبة — لِما لا يُقرأ عددًا مجرّدًا: الزمنُ نموذجًا («٤٠د ٢٧ث» لا «2,427»).
+   * ومعه تُترك `unit` فارغةً، إذ المنسّقُ يحمل وحدتَه في نصّه (٢٠٢٦-٠٩-٠٥).
+   */
+  formatValue?: (n: number) => string;
   /** رسالة القائمة الفارغة. */
   empty?: ReactNode;
 }
@@ -59,8 +64,14 @@ const pctText = (v: number, total: number) => {
  *
  * المصدر الواحد: أعلى الصفحات · الدول · المتصفّحات · المصادر (تحليلات) · توزيع خيارات الاستبيان.
  */
-export function BarList({ items, tone = "var(--grad-chart-bar)", max, total, unit, empty }: BarListProps) {
-  if (!items.length) return <p className="chart-empty">{empty ?? "لا بيانات."}</p>;
+export function BarList({ items, tone = "var(--grad-chart-bar)", max, total, unit, formatValue, empty }: BarListProps) {
+  /** الفارغةُ تُمرَّر كما هي حين تكون مكوّنًا (`EmptyState`)، وتُلبَس `chart-empty` حين تكون نصًّا. */
+  if (!items.length)
+    return typeof empty === "string" || empty == null ? (
+      <p className="chart-empty">{empty ?? "لا بيانات."}</p>
+    ) : (
+      <>{empty}</>
+    );
   const top = max ?? Math.max(1, ...items.map((i) => i.value));
   const hasIcons = items.some((it) => it.icon != null);
   const tinted = items.some((it) => it.color != null);
@@ -87,7 +98,7 @@ export function BarList({ items, tone = "var(--grad-chart-bar)", max, total, uni
                 {/* التلميح هنا للنصّ المقصوص وحده (لا للقيمة): القيمة والنسبة مكتوبتان بجانبه. */}
                 <span className="chart-bar-label" title={label}>{label}</span>
                 <span className="chart-bar-val">
-                  {nf(it.value)}
+                  {formatValue ? formatValue(it.value) : nf(it.value)}
                   {unit ? <span className="chart-unit">{unitWord(it.value, unit)}</span> : null}
                 </span>
               </div>

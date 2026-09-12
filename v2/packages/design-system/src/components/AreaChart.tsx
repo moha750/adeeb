@@ -12,12 +12,26 @@ export type AreaSeries = {
 };
 
 export interface AreaChartProps {
+  /**
+   * **مخطّطٌ أطول** (٣٢٠ بدل ٢٤٠). يُطلَب حين يقف المخطّطُ في صفٍّ مع كرتٍ أطولَ منه، فيبقى
+   * تحته خواءٌ بمقدار الفرق؛ والطولُ هنا مكسبٌ مزدوج: يملأ صفَّه ويُبيّن الاتّجاهَ أوضح.
+   */
+  tall?: boolean;
   /** تسميات المحور الزمنيّ (تاريخٌ مُنسّق) — طولُها يحكم عدد النقاط. */
   labels: string[];
   /** سلسلةٌ أو أكثر بمقياسٍ **مشترك** (ق١٠·١: لا محورين بمقياسين مختلفين). */
   series: AreaSeries[];
   /** تنسيق القيم في التلميح (الافتراضي toLocaleString en-US). */
   formatValue?: (n: number) => string;
+  /**
+   * **يأذن بالتجميع الأسبوعيّ** حين تطول المدّة (فوق `groupOver` نقطة). يُمرَّر للمخطّطات
+   * **اليوميّة** وحدها: نقاطٌ ساعاتٌ أو فئاتٌ لا تُجمَع سبعًا سبعًا.
+   */
+  groupable?: boolean;
+  /** عتبةُ التجميع بالنقاط. الافتراضُ ٦٠ (شهران): دونها تُقرأ يومًا يومًا بلا زحام. */
+  groupOver?: number;
+  /** تسميةُ نقطة الأسبوع من تسميتَي طرفيه. الافتراضُ «أسبوع <أوّل يوم>». */
+  groupLabel?: (start: string, end: string) => string;
 }
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -76,7 +90,16 @@ function useEased(target: number) {
 }
 
 type Pt = [number, number];
-// منحنى ناعم (Catmull-Rom → Bézier) يمرّ بكلّ النقاط — انسيابٌ لا زوايا حادّة.
+/**
+ * منحنى ناعم (Catmull-Rom → Bézier) يمرّ بكلّ النقاط — انسيابٌ لا زوايا حادّة.
+ *
+ * **وضوابطُه محبوسةٌ بين طرفَي القطعة** (صُحّح ٢٠٢٦-٠٩-٠٥): كان المنحنى يتجاوز نقاطَه
+ * رأسيًّا حين يقفز الرقمُ فجأةً (صفرٌ ثمّ اثنان)، فينزل الخطُّ **تحت خطّ الصفر** ويُقرأ
+ * «مسحاتٌ بالسالب» — رآه المالك في باركودٍ أوّلُ مسحاته أمس. والحبسُ يُبقي النعومةَ
+ * أفقيًّا ويمنع التجاوزَ رأسيًّا، فلا يخرج الخطُّ عن مدى بياناته.
+ */
+const clampTo = (v: number, a: number, b: number) => Math.max(Math.min(a, b), Math.min(Math.max(a, b), v));
+
 const smooth = (pts: Pt[]) => {
   if (pts.length < 2) return pts.length ? `M ${pts[0][0]},${pts[0][1]}` : "";
   let d = `M ${pts[0][0]},${pts[0][1]}`;
@@ -85,7 +108,9 @@ const smooth = (pts: Pt[]) => {
     const [x1, y1] = pts[i];
     const [x2, y2] = pts[i + 1];
     const [x3, y3] = pts[i + 2] ?? pts[i + 1];
-    d += ` C ${x1 + (x2 - x0) / 6},${y1 + (y2 - y0) / 6} ${x2 - (x3 - x1) / 6},${y2 - (y3 - y1) / 6} ${x2},${y2}`;
+    const c1y = clampTo(y1 + (y2 - y0) / 6, y1, y2);
+    const c2y = clampTo(y2 - (y3 - y1) / 6, y1, y2);
+    d += ` C ${x1 + (x2 - x0) / 6},${c1y} ${x2 - (x3 - x1) / 6},${c2y} ${x2},${y2}`;
   }
   return d;
 };
@@ -101,7 +126,46 @@ const smooth = (pts: Pt[]) => {
  * ويُعاد المقياسُ على الظاهر وحده **منزلقًا** إلى سقفه الجديد فتتّضح تفاصيلُ السلسلة الصغيرة بلا
  * قفزة. ولا تُخفى آخرُ سلسلةٍ ظاهرة. (كأسطورة الحلقة سواءً بسواء.)
  */
-export function AreaChart({ labels, series, formatValue = nf }: AreaChartProps) {
+/**
+ * **التجميعُ الزمنيُّ في المخطّط لا في كلّ شاشة** (أُقِرّ ٢٠٢٦-٠٩-٠٦ من معاينة `\/ui\/qr-trend`):
+ * مدّةٌ طويلةٌ برسمٍ يوميٍّ تصير مئةً وعشرين نقطةً في عرضٍ لا يتّسع لثلاثين، فيصير الخطُّ
+ * أسنانَ منشارٍ وتغرق القمّةُ في الضجيج. فحين تتجاوز النقاطُ العتبةَ تُجمَع **سبعًا سبعًا**
+ * ويصير للأسبوع نقطةٌ واحدةٌ مجموعُها. وموضعُه هنا لا في الشاشات: كلُّ مخطّطٍ زمنيٍّ يرثه.
+ */
+function groupWeekly(
+  labels: string[],
+  series: AreaSeries[],
+  groupLabel: (start: string, end: string) => string,
+) {
+  const n = labels.length;
+  const weeks = Math.ceil(n / 7);
+  const at = (i: number) => labels[Math.min(i, n - 1)] ?? "";
+  return {
+    labels: Array.from({ length: weeks }, (_, w) => groupLabel(at(w * 7), at(w * 7 + 6))),
+    series: series.map((s) => ({
+      ...s,
+      values: Array.from({ length: weeks }, (_, w) =>
+        s.values.slice(w * 7, w * 7 + 7).reduce((a, b) => a + (b ?? 0), 0),
+      ),
+    })),
+  };
+}
+
+export function AreaChart({
+  labels: rawLabels,
+  series: rawSeries,
+  formatValue = nf,
+  tall,
+  groupable,
+  groupOver = 60,
+  groupLabel = (start) => `أسبوع ${start}`,
+}: AreaChartProps) {
+  /** المدّةُ الطويلةُ تُجمَع أسبوعيًّا، والقصيرةُ تبقى يومًا يومًا. */
+  const { labels, series } =
+    groupable && rawLabels.length > groupOver
+      ? groupWeekly(rawLabels, rawSeries, groupLabel)
+      : { labels: rawLabels, series: rawSeries };
+
   const gid = useId();
   const [hi, setHi] = useState<number | null>(null);
   const [off, setOff] = useState<Set<number>>(() => new Set());
@@ -152,7 +216,12 @@ export function AreaChart({ labels, series, formatValue = nf }: AreaChartProps) 
   const gy = [0, 0.25, 0.5, 0.75, 1].map((f) => ({ f, y: PT + plotH - f * plotH, v: max * f }));
   // التسميات كما هي، إلّا أن يضيق العرض فتُنخَل نخلًا متساويًا (الطرفان يبقيان) بدل أن تتراكب.
   const wanted = n <= 8 ? labels.map((_, i) => i) : [0, Math.floor(n / 3), Math.floor((2 * n) / 3), n - 1];
-  const room = Math.max(2, Math.floor(plotW / 62));
+  /**
+   * **عرضُ التسمية ٩٦ لا ٦٢** (قِيس ٢٠٢٦-٠٩-٠٥): تسميةُ اليوم عندنا «٢ سبتمبر ٢٠٢٦» لا
+   * «٢/٩»، وهي نحوُ ٩٥ بكسلًا. فبالسِّتّين كانت ثمانيةٌ تُقبَل في عرضٍ لا يسع خمسًا، فتتراكب
+   * أسماءُ الأيّام بعضُها فوق بعض (رآه المالك في مدّةٍ قصيرة).
+   */
+  const room = Math.max(2, Math.floor(plotW / 96));
   const labelIdx =
     wanted.length <= room ? wanted : Array.from({ length: room }, (_, i) => Math.round((i * (n - 1)) / (room - 1)));
 
@@ -172,7 +241,7 @@ export function AreaChart({ labels, series, formatValue = nf }: AreaChartProps) 
 
   return (
     <div
-      className="chart-area" ref={wrapRef} dir="ltr" tabIndex={0} role="img"
+      className={"chart-area" + (tall ? " tall" : "")} ref={wrapRef} dir="ltr" tabIndex={0} role="img"
       aria-label={`${series.map((s) => s.name).join(" و")} عبر الزمن، الأقصى ${formatValue(max)}`}
       onMouseMove={onMove} onMouseLeave={() => setHi(null)}
       onKeyDown={(e) => {
