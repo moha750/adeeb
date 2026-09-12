@@ -21,23 +21,36 @@ import { clientIp, visitorHash } from "@/lib/visitor";
  * تحويل المتصفّح. فالماسحُ يرى بياضًا ثمّ ينتقل — وهو عينُ ما بُني هذا البابُ لينفيه.
  * ومنفذُ الطريق يردّ **‏307 بلا جسد**: لا تخطيطَ يُرسَم ولا مهلةَ تُنتظَر.
  *
- * والرمزُ المجهولُ والموقوفُ يخرجان من بابٍ واحد (‏404): من يجرّب الرموزَ لا يُخبَر
- * أنّه أصاب رمزًا موقوفًا. ولا فهرسةَ لبابٍ يحوّل — الفهارسُ تتبع الوجهةَ نفسَها لا
+ * والرمزُ المجهولُ والموقوفُ يخرجان من بابٍ واحد (صفحةُ «غير متاح»): من يجرّب الرموزَ لا
+ * يُخبَر أنّه أصاب رمزًا موقوفًا. ولا فهرسةَ لبابٍ يحوّل — الفهارسُ تتبع الوجهةَ نفسَها لا
  * وكيلَها، و`robots.ts` يحجب `‎/q`‎ أصلًا.
  */
 
-const gone = () =>
-  new NextResponse(null, { status: 404, headers: { "x-robots-tag": "noindex, nofollow" } });
+/**
+ * **ما لا يقود إلى وجهةٍ يقود إلى صفحةٍ تقول ذلك.**
+ *
+ * كان يُردّ ‏٤٠٤ **بلا جسد**، فيرى الماسحُ صفحةَ المتصفّح السوداء بالإنجليزيّة — وذاك
+ * عطبٌ في عينه لا رسالةٌ من نادٍ (رآها المالك ٢٠٢٦-٠٨-٣٠ بعد إيقاف باركود).
+ *
+ * والبابُ واحدٌ للثلاث (موقوفٌ، ومجهولٌ، وعطبُ قراءة): من يجرّب الرموزَ لا يُخبَر أنّه
+ * أصاب رمزًا موقوفًا. و`no-store` كي لا يحفظ المتصفّحُ تحويلَ الموقوف فيبقى عليه بعد
+ * أن يعود يعمل.
+ */
+const gone = (request: NextRequest) =>
+  NextResponse.redirect(new URL("/q/unavailable", request.url), {
+    status: 307,
+    headers: { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow" },
+  });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
   // شكلُ الرمز يُفحَص قبل أيّ استعلام: الخُردةُ تُردّ بلا أن تلمس القاعدة.
-  if (!isQrCode(code)) return gone();
+  if (!isQrCode(code)) return gone(request);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
-  if (!url || !key) return gone();
+  if (!url || !key) return gone(request);
 
   const h = request.headers;
   const ua = h.get("user-agent");
@@ -61,7 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   // عطلُ القاعدة لا يبتلع الزائر: يُردّ بـ«غير موجود» ولا يُترك في فراغ.
-  if (error || typeof data !== "string" || !data) return gone();
+  if (error || typeof data !== "string" || !data) return gone(request);
 
   // 307 لا 308: التحويلُ حالٌ تتبدّل بتبديل الوجهة، فلا يُحفظ في ذاكرة المتصفّح دائمًا.
   return NextResponse.redirect(data, { status: 307, headers: { "cache-control": "no-store" } });

@@ -3,8 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Badge, Button, Field, Modal, Stat, countPhrase, matchesSearch } from "@adeeb/design-system";
-import { CalendarBlank, ChartLineUp, Copy, Globe, LinkSimple, Pause, Play, QrCode, TextAa } from "@phosphor-icons/react";
+import { Badge, Button, Stat, countPhrase, matchesSearch } from "@adeeb/design-system";
+import { CalendarBlank, ChartLineUp, Globe, LinkSimple, Pause, Play, QrCode, TextAa, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { DataCards, type CardSpec } from "../../_components/DataCards";
@@ -16,10 +16,11 @@ import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";
 import { formatThousands as fmt } from "@/app/_components/format";
-import { qrShortUrl, targetHost } from "@/lib/qrLinks";
+import { targetHost } from "@/lib/qrLinks";
 import { fmtDate } from "@/lib/dates";
+import { killText, SCAN_UNIT } from "./copy";
 import type { QrLinkRow } from "./data";
-import { deleteQrLink, setQrLinkActive, updateQrLink } from "./actions";
+import { deleteQrLink, setQrLinkActive } from "./actions";
 
 /**
  * أيُّ عمودٍ يصير أيَّ موضعٍ في الكرت. **مُقَرَّةٌ ٢٠٢٦-٠٨-٢٥** بعد أن عُرضت إلى جانب الحاليّة
@@ -38,10 +39,8 @@ const CARD_SPEC: CardSpec = {
   bareFacts: true,
 };
 
-/** وحدةُ عدّ المسحات — تُصرَّف عربيًّا في الكرت حيث لا ترويسةَ تسمّي العمود. */
-const SCAN_UNIT = { one: "مسحة", two: "مسحتان", few: "مسحات" };
 
-const FILTERS: FilterDef[] = [
+const BASE_FILTERS: FilterDef[] = [
   { key: "state", label: "الحالة", options: [
     { value: "active", label: "يعمل" },
     { value: "paused", label: "موقوف" },
@@ -58,16 +57,22 @@ const FILTERS: FilterDef[] = [
  * **والإيقافُ يسبق الحذفَ رتبةً**: الورقةُ في الشارع لا تُسحب، فرمزٌ موقوفٌ يردّ قاصدَه
  * ويُبقي أثرَه، والمحذوفُ يذهب بمسحاته كلِّها.
  */
-export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: string | null }) {
+export function SavedLinksView({
+  rows,
+  error,
+  meId = null,
+}: {
+  rows: QrLinkRow[];
+  error: string | null;
+  /** صاحبُ الجلسة: القائمةُ تحمل ما يملكه وما شُورِك فيه، والمشاركةُ للمالك وحدَه. */
+  meId?: string | null;
+}) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
   const [view, changeView] = usePersistentView("qr-links-view");
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const [editing, setEditing] = useState<QrLinkRow | null>(null);
-  const [title, setTitle] = useState("");
-  const [target, setTarget] = useState("");
   const [confirmKill, setConfirmKill] = useState<QrLinkRow | null>(null);
 
   const filtered = useMemo(
@@ -85,20 +90,6 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
 
   const openStats = (r: QrLinkRow) => router.push(`/dashboard/tools/qr/${r.id}`);
 
-  const openEdit = (r: QrLinkRow) => {
-    setEditing(r);
-    setTitle(r.title);
-    setTarget(r.targetUrl);
-  };
-
-  const copyLink = async (r: QrLinkRow) => {
-    try {
-      await navigator.clipboard.writeText(qrShortUrl(r.code));
-      toast.success("نُسخ رابطُ الباركود.");
-    } catch {
-      toast.error("تعذّر النسخ. انسخ الرابطَ بيدك من صفحة الباركود.");
-    }
-  };
 
   const toggleActive = (r: QrLinkRow) => {
     startPending(async () => {
@@ -107,25 +98,28 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
     });
   };
 
-  const saveEdit = () => {
-    if (!editing) return;
-    startPending(async () => {
-      const res = await updateQrLink(editing.id, { title, target });
-      if (res.ok) { toast.success(res.message); setEditing(null); router.refresh(); } else toast.error(res.message);
-    });
-  };
-
   const actionsFor = (r: QrLinkRow): MenuGroup[] => [
     { header: "إجراءات", items: [
-      { label: "تعديل الوجهة", icon: <PencilSimple />, onSelect: () => openEdit(r) },
-      { label: "نسخ رابط الباركود", icon: <Copy />, onSelect: () => void copyLink(r) },
+      // **البندُ يذهب إلى بابه** (المالك ٢٠٢٦-٠٩-٠٥): صار للباركود صفحتان، فالإحصاءات
+      // إلى بابها والإعداداتُ إلى بابه، بدل نافذةٍ تفتح فوق القائمة.
+      { label: "الإعدادات", icon: <PencilSimple />, onSelect: () => router.push(`/dashboard/tools/qr/${r.id}/settings`) },
       { label: "الإحصاءات", icon: <ChartLineUp />, onSelect: () => openStats(r) },
+      // **طريقٌ مختصرٌ إلى المشاركة** (المالك ٢٠٢٦-٠٩-٠٦): تحمل إلى بابها وتفتح نافذتَها،
+      // فلا يُقال «افتح الإعدادات ثمّ انزل ثمّ انقر». وتغيب عمّا شُورِكتَ فيه: المشاركةُ
+      // للمالك وحدَه، والقاعدةُ تردّ غيرَه ولو نبت له بندٌ في قائمة.
+      ...(!meId || r.ownerId === meId
+        ? [{
+            label: "المشاركة",
+            icon: <UsersThree />,
+            onSelect: () => router.push(`/dashboard/tools/qr/${r.id}/settings?share=1`),
+          }]
+        : []),
       r.active
-        ? { label: "إيقاف", icon: <Pause />, disabled: pending, onSelect: () => toggleActive(r) }
+        ? { label: "إيقاف الباركود", icon: <Pause />, disabled: pending, onSelect: () => toggleActive(r) }
         : { label: "إعادة التشغيل", icon: <Play />, disabled: pending, onSelect: () => toggleActive(r) },
     ] },
     { header: "منطقة الخطر", danger: true, items: [
-      { label: "حذف", icon: <Trash />, danger: true, onSelect: () => setConfirmKill(r) },
+      { label: "حذف الباركود", icon: <Trash />, danger: true, onSelect: () => setConfirmKill(r) },
     ] },
   ];
 
@@ -200,7 +194,7 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
         searchPlaceholder="ابحث باسم الباركود أو رمزه أو وجهته"
         search={search}
         onSearch={setSearch}
-        filters={FILTERS}
+        filters={BASE_FILTERS}
         filterValues={filters}
         onFilter={(key, value) => setFilters((f) => ({ ...f, [key]: value }))}
         onReset={() => { setSearch(""); setFilters({}); }}
@@ -236,53 +230,13 @@ export function SavedLinksView({ rows, error }: { rows: QrLinkRow[]; error: stri
         />
       )}
 
-      <Modal
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        size="md"
-        title="تعديل الباركود"
-        description="الوجهةُ تتبدّل والباركود المطبوعُ لا يتغيّر، فمن يمسحه بعد الحفظ يصل إلى الوجهة الجديدة."
-        footer={
-          <>
-            <Button variant="primary" size="md" loading={pending} onClick={saveEdit}>حفظ</Button>
-            <Button variant="ghost" size="md" disabled={pending} onClick={() => setEditing(null)}>إلغاء</Button>
-          </>
-        }
-      >
-        <div className="form-grid">
-          <Field
-            label="اسم الباركود"
-            icon={<TextAa />}
-            innerIcon={<QrCode />}
-            placeholder="اكتب اسم الباركود"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            helper="تكتبه لك أنت لتعرفه بين باركوداتك، ولا يظهر لمن يمسحه."
-            required
-          />
-          <Field
-            label="الوجهة"
-            icon={<LinkSimple />}
-            innerIcon={<Globe />}
-            placeholder="https://adeeb.club"
-            dir="ltr"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            helper="حيثما يصل من يمسح الباركود."
-            required
-          />
-        </div>
-      </Modal>
-
       <ConfirmDialog
         open={confirmKill !== null}
         onClose={() => setConfirmKill(null)}
         tone="danger"
         icon={<Trash />}
         title="حذف الباركود؟"
-        text={confirmKill
-          ? `سيُحذف «${confirmKill.title}» ومسحاتُه كلُّها. وكلُّ ملصقٍ مطبوعٍ يحمله يصير رمزًا ميّتًا. والإيقافُ يكفي إن أردتَ تعطيلَه فحسب.`
-          : undefined}
+        text={confirmKill ? killText(confirmKill.title) : undefined}
         confirmLabel="حذف"
         loading={pending}
         onConfirm={() => {

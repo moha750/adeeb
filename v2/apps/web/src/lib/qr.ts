@@ -74,6 +74,23 @@ export type DotShape = "square" | "fluid";
 export type EyeShape = "square" | "rounded";
 
 /** حبرُ الوحدات — صلبٌ أو تدرّج. */
+/**
+ * **لونٌ يُقبَل رسمًا** — سِتّي عشريٌّ وحده (`#rgb` · `#rrggbb` · `#rrggbbaa`).
+ *
+ * وعلّتُه أمنيّة لا ذوقيّة: قيمُ الألوان تُقحَم في سمات SVG ثمّ يُوضَع الناتجُ في الصفحة،
+ * فقيمةٌ مثل `#000" onmouseover="…` محفوظةٌ في وصفةٍ تخرج من السمة إلى وسمٍ جديد. والوصفةُ
+ * صفٌّ في القاعدة يُكتَب من المتصفّح (امتيازُ `authenticated` قائم)، فلا يُوثَق بمصدرها.
+ * والمحرّرُ لا يُخرج غيرَ السِّتّي عشريّ أصلًا (`ColorField`)، فالقيدُ لا يمنع أحدًا شيئًا.
+ *
+ * وهي **الحارسُ عند الرسم** — الشبكةُ الأخيرة. والخادمُ يصدّق قبلها عند الحفظ.
+ */
+export const isHexColor = (v: unknown): v is string =>
+  typeof v === "string" && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(v);
+
+/** لونٌ آمنٌ للرسم: ما لم يكن سِتّيًّا عشريًّا يسقط إلى بديلٍ من الهويّة لا إلى السمة. */
+const safeColor = (v: string | null | undefined, fallback: string): string =>
+  isHexColor(v) ? v : fallback;
+
 export type Paint =
   | { kind: "solid"; color: string }
   | { kind: "linear"; from: string; to: string; angle: number }
@@ -246,8 +263,8 @@ const escapeXml = (s: string) =>
 
 /** تعريفُ التدرّج ومرجعُه — الصلبُ بلا تعريف، فلا `defs` فارغة في ملفٍّ لا يحتاجها. */
 function paintOf(paint: Paint, id: string): { def: string; ref: string } {
-  if (paint.kind === "solid") return { def: "", ref: paint.color };
-  const stops = `<stop offset="0" stop-color="${paint.from}"/><stop offset="1" stop-color="${paint.to}"/>`;
+  if (paint.kind === "solid") return { def: "", ref: safeColor(paint.color, "#000000") };
+  const stops = `<stop offset="0" stop-color="${safeColor(paint.from, "#000000")}"/><stop offset="1" stop-color="${safeColor(paint.to, "#000000")}"/>`;
   if (paint.kind === "radial") {
     // المركزُ نسبةٌ من الضلع، والافتراضُ القلب. ونصفُ القطر يُحسَب من أبعدِ ركنٍ عن المركز
     // فيبلغ التدرّجُ حافّةَ الرمز مهما أُزيح، ولا يبقى ركنٌ خارجَه بلونٍ واحدٍ مصمَت.
@@ -398,15 +415,15 @@ export function qrSvg(spec: QrSpec, withText = true): string {
   const carded = style !== "bubble";
   const plate = spec.bg
     ? fr && carded
-      ? `<path d="${boxPath(0, 0, W, H, [rad, rad, rad, rad])}" fill="${spec.bg}"/>`
-      : `<rect x="${f(edge)}" y="${f(g.dy + (side - box) / 2)}" width="${f(box)}" height="${f(box)}" rx="${f(side * 0.05)}" fill="${spec.bg}"/>`
+      ? `<path d="${boxPath(0, 0, W, H, [rad, rad, rad, rad])}" fill="${safeColor(spec.bg, "#ffffff")}"/>`
+      : `<rect x="${f(edge)}" y="${f(g.dy + (side - box) / 2)}" width="${f(box)}" height="${f(box)}" rx="${f(side * 0.05)}" fill="${safeColor(spec.bg, "#ffffff")}"/>`
     : "";
 
   const frameBox = !fr || style === "bubble"
     ? ""
     : `<rect x="${f(inset)}" y="${f(inset)}"` +
       ` width="${f(W - inset * 2)}" height="${f(H - inset * 2)}"` +
-      ` rx="${f(rad)}" fill="none" stroke="${fr.color}" stroke-width="${f(sw)}"/>`;
+      ` rx="${f(rad)}" fill="none" stroke="${safeColor(fr.color, "#000000")}" stroke-width="${f(sw)}"/>`;
 
   /**
    * سريرُ النداء: شريطٌ يملأ عرضَ اللوح في الهيئتين `band` و`bandTop` و`corners`، وفقاعةٌ
@@ -431,8 +448,8 @@ export function qrSvg(spec: QrSpec, withText = true): string {
     const ty = up ? by + bh : by;
     const tip = up ? ty + tail : ty - tail;
     return (
-      `<path d="${boxPath(bx, by, bw, bh, [br, br, br, br])}" fill="${fr.color}"/>` +
-      `<path d="M${f(W / 2 - tail * 0.9)},${f(ty)}L${f(W / 2)},${f(tip)}L${f(W / 2 + tail * 0.9)},${f(ty)}Z" fill="${fr.color}"/>`
+      `<path d="${boxPath(bx, by, bw, bh, [br, br, br, br])}" fill="${safeColor(fr.color, "#000000")}"/>` +
+      `<path d="M${f(W / 2 - tail * 0.9)},${f(ty)}L${f(W / 2)},${f(tip)}L${f(W / 2 + tail * 0.9)},${f(ty)}Z" fill="${safeColor(fr.color, "#000000")}"/>`
     );
   };
   const capBed = (mid: number) => {
@@ -441,7 +458,7 @@ export function qrSvg(spec: QrSpec, withText = true): string {
     if (style === "bubble") return bubbleAt(mid);
     const y = g.top ? 0 : H - cap;
     const corners: [number, number, number, number] = g.top ? [rad, rad, 0, 0] : [0, 0, rad, rad];
-    return `<path d="${boxPath(0, y, W, cap, corners)}" fill="${fr.color}"/>`;
+    return `<path d="${boxPath(0, y, W, cap, corners)}" fill="${safeColor(fr.color, "#000000")}"/>`;
   };
   const capBar = !fr
     ? ""
@@ -450,7 +467,7 @@ export function qrSvg(spec: QrSpec, withText = true): string {
           (mid) =>
             capBed(mid) +
             (withText
-              ? `<text x="${f(W / 2)}" y="${f(mid)}" fill="${fr.textColor}" font-size="${f(cap * FRAME.text)}"` +
+              ? `<text x="${f(W / 2)}" y="${f(mid)}" fill="${safeColor(fr.textColor, "#ffffff")}" font-size="${f(cap * FRAME.text)}"` +
                 ` font-family='${FONT}' font-weight="700" text-anchor="middle" dominant-baseline="central"` +
                 ` direction="rtl">${escapeXml(fr.caption)}</text>`
               : ""),
@@ -480,8 +497,8 @@ export function qrSvg(spec: QrSpec, withText = true): string {
     plate +
     `<g transform="translate(${f(g.dx)},${f(g.dy)})">` +
     `<path d="${dotsPath(m, dots.shape, hole)}" fill="${ref}"/>` +
-    `<path d="${ring}" fill="${eye.color ?? ref}" fill-rule="evenodd"/>` +
-    `<path d="${pupilPath}" fill="${pupil.color ?? ref}"/>` +
+    `<path d="${ring}" fill="${eye.color ? safeColor(eye.color, ref) : ref}" fill-rule="evenodd"/>` +
+    `<path d="${pupilPath}" fill="${pupil.color ? safeColor(pupil.color, ref) : ref}"/>` +
     `</g>` +
     logo +
     frameBox +
@@ -546,7 +563,7 @@ export async function qrPng(spec: QrSpec): Promise<Blob> {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = `700 ${fs}px ${FONT}`;
-        ctx.fillStyle = fr.textColor;
+        ctx.fillStyle = safeColor(fr.textColor, "#ffffff");
         for (const mid of g.capMids) ctx.fillText(caption, w / 2, mid * k);
         ctx.restore();
       }

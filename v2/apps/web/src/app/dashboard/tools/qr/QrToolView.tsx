@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert, AngleDial, Button, SaveBar, SectionCard, ColorField, Field, PointPad, Segmented, Switch, } from "@adeeb/design-system";
+  Alert, AngleDial, Button, SectionCard, ColorField, Field, PointPad, Segmented, Switch, } from "@adeeb/design-system";
 import {
   Drop, FileSvg, FloppyDisk, Globe, ImageSquare, PaintBucket, QrCode, Sparkle, Square, TextAa,
 } from "@phosphor-icons/react";
@@ -18,9 +18,9 @@ import {
   type QrSpec,
 } from "@/lib/qr";
 import { qrShortUrl } from "@/lib/qrLinks";
+import { look } from "./look";
 import { downloadBlob } from "@/lib/download";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
-import { EXPORT, LOGO_SCALE, LOOK, SHAPE } from "./defaults";
 import { EmptyState } from "../../_components/EmptyState";
 import { DropdownMenu } from "../../_components/DropdownMenu";
 import { PageHeader } from "../../_components/PageHeader";
@@ -32,9 +32,12 @@ const LOGO_RULE = UPLOAD_RULES.qrLogo;
 
 
 /** ضلع المعاينة على الشاشة — ثابتٌ لا يتبع مقاس التنزيل: الاثنان سؤالان مختلفان. */
+/** مهلةُ السكون قبل الحفظ، وسقفُ الانتظار مهما تتابع التبدّل. */
+const IDLE_MS = 1500;
+const MAX_WAIT_MS = 5000;
+
 const PREVIEW = 360;
 
-/** أقصى حجمٍ لملفّ الشعار — يُضمَّن في الرمز نفسه، فالكبيرُ يُثقل كلّ نسخةٍ منه. */
 
 /**
  * مراسي الورقة: محرّرٌ كامل، فنصفان، فرمزٌ كامل. نسبةٌ من ارتفاع الشاشة لا بكسلٌ محفور.
@@ -61,17 +64,24 @@ const SHEET_STOPS = [0.18, 0.46, 0.74];
  * إلّا الشكل. و**دالّةٌ تُمرَّر لا فعلٌ يُستورَد**، لأنّ المحرّرَ يُعرَض أيضًا في `/ui/qr-dock`
  * بلا غرفةٍ ولا مزوّدِ توست: لو نادى `useToast` هنا لسقطت تلك الصفحة.
  */
-export type QrSpecSaver = (spec: QrSpec) => Promise<{ ok: boolean; message: string }>;
+export type QrSpecSaver = (
+  spec: QrSpec,
+  /** صامتًا: الحفظُ التلقائيّ لا يُعلن نجاحَه بتوست، فتوستٌ كلَّ ثانيتين ضجيج. والخطأُ يُقال دائمًا. */
+  opts?: { silent?: boolean },
+) => Promise<{ ok: boolean; message: string }>;
 
-export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
+export function QrToolView({ code, title, initial, embedded = false, onSaveSpec }: {
   /** الرمزُ القصير كما وُلِد في باب الإنشاء — هو ما يُحفَر، فالمعاينةُ رمزٌ حيٌّ يُمسح. */
   code: string;
+  /** اسمُ الباركود — يُسمّى به الملفُّ المنزَّل، فخمسةُ تصاميمَ لا تخرج بخمسِ نسخٍ لاسمٍ واحد. */
+  title?: string;
   /** الوصفةُ المحفوظة إن كانت — يعود المحرّرُ إلى حالِه يومَ صُنع الرمز. */
   initial?: QrSpec | null;
   embedded?: boolean;
   onSaveSpec?: QrSpecSaver;
 }) {
   const seed = look(initial);
+  const fileStem = title?.trim() || "باركود-أديب";
 
   const [saving, setSaving] = useState(false);
 
@@ -130,14 +140,15 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
   const spec = useMemo(
     (): QrSpec => ({
       text: payload,
-      size: EXPORT,
-      dots: { shape: SHAPE.dots, paint },
-      eye: { shape: SHAPE.eye, color: eyeTinted ? eyeColor : null },
-      pupil: { shape: SHAPE.pupil, color: eyeTinted ? pupilColor : null },
+      size: seed.size,
+      dots: { shape: seed.dotsShape, paint },
+      eye: { shape: seed.eyeShape, color: eyeTinted ? eyeColor : null },
+      pupil: { shape: seed.pupilShape, color: eyeTinted ? pupilColor : null },
       bg: hasBg ? bg : null,
-      logo: logo ? { href: logo, scale: LOGO_SCALE } : null,
+      logo: logo ? { href: logo, scale: seed.logoScale } : null,
       frame: framed ? { color: frameColor, caption, textColor: captionColor, style: frameStyle, place: framePlace } : null,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `seed` ثابتٌ بعد أوّل رسم (بذرةُ الصفّ المحفوظ)
     [payload, paint, eyeTinted, eyeColor, pupilColor, hasBg, bg, logo, framed, frameStyle, framePlace, frameColor, caption, captionColor],
   );
 
@@ -186,19 +197,35 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
     }
   };
 
+  /**
+   * **التنزيلُ يُحرَس** (٢٠٢٦-٠٨-٣١): كان `qrPng` يُنتظَر بلا حارس، ففشلُ فكِّ الشعار أو
+   * فشلُ اللوح يسقط الوعدَ صامتًا — يضغط صاحبُه فلا شيء يحدث ولا شيء يُقال. والمحرّرُ بلا
+   * توست عمدًا (يُعرَض في المعرض بلا مزوّد)، فالرسالةُ تنبيهٌ يقيم بجوار الزرّ كأخيه.
+   */
+  const [dlError, setDlError] = useState<string | null>(null);
+
   const savePng = async () => {
-    downloadBlob(await qrPng(spec), "باركود-أديب.png", "qr.png");
+    try {
+      setDlError(null);
+      downloadBlob(await qrPng(spec), `${fileStem}.png`, "qr.png");
+    } catch {
+      setDlError("تعذّر رسمُ الصورة. جرّب مرّةً أخرى، وإن تكرّر فأزِل الشعار ثمّ أعِد المحاولة.");
+    }
   };
   const saveSvg = () => {
-    downloadBlob(qrSvgBlob(spec), "باركود-أديب.svg", "qr.svg");
+    try {
+      setDlError(null);
+      downloadBlob(qrSvgBlob(spec), `${fileStem}.svg`, "qr.svg");
+    } catch {
+      setDlError("تعذّر إخراجُ الملفّ. جرّب مرّةً أخرى.");
+    }
   };
 
   /**
    * **بصمةُ آخرِ ما حُفظ** — يُقاس بها «هل تغيّر شيء؟».
    *
-   * والسؤالُ لزم يوم سُئل: «لو صمّم ثمّ رجع أو بدّل التبويب؟» — كان الشكلُ يضيع بلا كلمة.
-   * فصار شريطُ الحفظ يظهر ما دام في اليد تغييرٌ لم يُكتب (اختيارُ المالك «ب» ٢٠٢٦-٠٨-٢٥،
-   * والحفظُ التلقائيُّ رُدّ).
+   * وثمرتُها اليوم واحدة: **زرُّ الحفظ يُعطَّل ما لم يتغيّر شيء**، فيُقال «لا جديدَ» بلا
+   * كلمة. (وشريطُ «لديك تغييراتٌ لم تُحفَظ» جُرّب ثمّ رُدّ ٢٠٢٦-٠٨-٢٧.)
    *
    * **وتُبذَر من المواصفة المبنيّة لا من الصفّ الخام**: المحفوظُ يمرّ ببذرة `look` ثمّ يُعاد
    * بناؤه، فقد يختلف نصُّه عن نصّ الصفّ (ترتيبُ مفاتيحَ أو حقلٌ لم يكن) وهو هو معنًى.
@@ -211,15 +238,88 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
   /**
    * حفظُ الوصفة: الشكلُ يُخزَّن في صفّ الرمز، فيُعاد رسمُه بعد سنةٍ كما رُسم اليوم.
    * وخبرُ النجاح والفشل تقوله **الغرفةُ** بتوستها، فلا ينبت في المحرّر لسانٌ ثانٍ.
+   *
+   * **ولا يتسابق طلبان** (٢٠٢٦-٠٨-٣١): كان كلُّ نداءٍ يمضي وحدَه، فإن تأخّرت الشبكةُ وصل
+   * الأقدمُ أخيرًا فكتب وصفةً قديمةً فوق الجديدة، والبصمةُ تُحدَّث به فيُقال «حُفظ» كذبًا.
+   * فصار الحفظُ **مصفوفًا**: واحدٌ في الطريق، ومن جاء وهو سائرٌ يُؤجَّل ويُطلَق بعده،
+   * فآخرُ ما يبلغ القاعدةَ هو آخرُ ما رسمه صاحبُه.
    */
-  const saveDesign = async () => {
+  const specRef = useRef(spec);
+  const savedRef = useRef(savedFingerprint);
+  // المرجعان يُزامَنان **بعد** الرسم لا فيه: القراءةُ من مرجعٍ أثناء الرسم عطبٌ يمسكه الحارس،
+  // والحاجةُ إليهما في المؤقّت وفي مغادرة الشاشة — وكلاهما بعد الرسم.
+  useEffect(() => {
+    specRef.current = spec;
+    savedRef.current = savedFingerprint;
+  }, [spec, savedFingerprint]);
+  const inFlight = useRef(false);
+  const queued = useRef(false);
+  /** مرجعُ الدالّة إلى نفسها: النداءُ الذاتيُّ داخل `useCallback` يقرأ ما لم يُعرَّف بعد. */
+  const saveRef = useRef<(silent?: boolean) => Promise<void>>(async () => {});
+
+  const saveDesign = useCallback(
+    async (silent = false): Promise<void> => {
+      if (!onSaveSpec) return;
+      if (inFlight.current) { queued.current = true; return; }
+      inFlight.current = true;
+      setSaving(true);
+      const snapshot = specRef.current;
+      const print = JSON.stringify(snapshot);
+      const res = await onSaveSpec(snapshot, { silent });
+      inFlight.current = false;
+      setSaving(false);
+      // البصمةُ تُحدَّث بالمحفوظ لا بالمعروض: لو ردّ الخادمُ خطأً بقي «لم يُحفَظ» قائمًا
+      if (res.ok) setSavedFingerprint(print);
+      // ما تبدّل والطلبُ سائرٌ يُكتب الآن، فلا ينام تعديلٌ في انتظار تبدّلٍ جديد
+      const again = queued.current && JSON.stringify(specRef.current) !== print;
+      queued.current = false;
+      if (again) void saveRef.current(true);
+    },
+    [onSaveSpec],
+  );
+
+  useEffect(() => { saveRef.current = saveDesign; }, [saveDesign]);
+
+  /**
+   * **الحفظُ التلقائيّ** (اختيارُ المالك ٢٠٢٦-٠٨-٢٧، بعد أن رُدّ الشريطُ ورُدّت النافذة).
+   *
+   * علّتُه سؤالٌ سُئل: «لو صمّم ثمّ رجع أو بدّل التبويب؟» — كان الشكلُ يضيع بلا كلمة.
+   *
+   * **وبمهلةِ سكون وسقفِ انتظار** (السقفُ أُضيف ٢٠٢٦-٠٨-٣١): العبثُ بمنتقي لونٍ يولّد
+   * عشراتِ التبدّلات في الثانية، فتُنتظَر ثانيةٌ ونصفٌ من الهدوء. لكنّ السكونَ وحدَه يُؤجّل
+   * إلى الأبد: سحبةٌ متّصلةٌ نصفَ دقيقةٍ كانت تُصفّر المؤقّتَ في كلّ إطارٍ فلا يُكتب شيء.
+   * فصار للانتظار سقفٌ خمسُ ثوانٍ من أوّل تبدّل، يُكتب عنده ولو لم يسكن.
+   */
+  const firstDirtyAt = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!dirty) { firstDirtyAt.current = null; return; }
+    if (firstDirtyAt.current === null) firstDirtyAt.current = Date.now();
+    const waited = Date.now() - firstDirtyAt.current;
+    const delay = Math.max(0, Math.min(IDLE_MS, MAX_WAIT_MS - waited));
+    const t = setTimeout(() => { firstDirtyAt.current = null; void saveDesign(true); }, delay);
+    return () => clearTimeout(t);
+  }, [spec, dirty, saveDesign]);
+
+  /**
+   * **وما لم يسكن يُحفَظ عند المغادرة** (٢٠٢٦-٠٨-٣١): تبدّلٌ في آخرِ ثانيةٍ ونصفٍ ثمّ نقرةٌ
+   * على الفتات كان يذهب بلا كلمة، والمهلةُ تُلغى في التنظيف ولا يخلفها شيء. فبابان:
+   * إخفاءُ اللسان (وهو ما يعِد به المتصفّح عند إغلاقه أو تبديله) والخروجُ من الشاشة.
+   */
+  useEffect(() => {
     if (!onSaveSpec) return;
-    setSaving(true);
-    const res = await onSaveSpec(spec);
-    setSaving(false);
-    // البصمةُ تُحدَّث بالمحفوظ لا بالمعروض: لو ردّ الخادمُ خطأً بقي الشريطُ قائمًا يُنذر
-    if (res.ok) setSavedFingerprint(JSON.stringify(spec));
-  };
+    const flush = () => {
+      if (JSON.stringify(specRef.current) !== savedRef.current) void saveDesign(true);
+    };
+    const onHide = () => { if (document.visibilityState === "hidden") flush(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, [onSaveSpec, saveDesign]);
 
   const rootRef = useCanvasTop();
 
@@ -228,7 +328,7 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
     <>
       {onSaveSpec ? (
         <Button variant="primary" size="md" loading={saving} disabled={!dirty} onClick={() => void saveDesign()}>
-          <FloppyDisk /> حفظ التصميم
+          <FloppyDisk /> {dirty ? "حفظ التصميم" : "حُفظ التصميم"}
         </Button>
       ) : null}
       {/* **زرٌّ واحدٌ يفتح الصيغتين** (أمرُ المالك ٢٠٢٦-٠٨-٢٥): كان زرَّين متجاورين، والصيغةُ
@@ -246,6 +346,7 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
           ],
         }]}
       />
+      {dlError ? <Alert tone="danger" title="تعذّر التحميل">{dlError}</Alert> : null}
     </>
   );
 
@@ -473,13 +574,6 @@ export function QrToolView({ code, initial, embedded = false, onSaveSpec }: {
         </div>
       </div>
 
-      {/* شريطُ الحفظ: بدائيّةُ المكتبة نفسُها (`SaveBar`)، ولا يُرسَم في هيئة الورقة —
-          هناك زرُّ الحفظ في رأسها لا يغيب، وشريطٌ لاصقٌ فوقها يزاحمها. */}
-      <SaveBar open={dirty} message="لديك تغييراتٌ في التصميم لم تُحفَظ">
-        <Button variant="primary" size="md" loading={saving} onClick={() => void saveDesign()}>
-          <FloppyDisk /> حفظ التصميم
-        </Button>
-      </SaveBar>
     </div>
   );
 }
@@ -499,62 +593,33 @@ const LOGO_PX = 640;
  *
  * **و`SVG` يمرّ كما هو**: متّجهاتٌ نصّيّةٌ خفيفة، وتحويلُها إلى بكسلاتٍ خسارةٌ صافية.
  */
-async function shrinkLogo(file: File): Promise<{ href: string; bytes: number }> {
+async function shrinkLogo(file: File): Promise<{ href: string }> {
   const raw = await new Promise<string>((res, rej) => {
     const r = new FileReader();
     r.onload = () => res(typeof r.result === "string" ? r.result : "");
     r.onerror = () => rej(new Error("read"));
     r.readAsDataURL(file);
   });
-  if (file.type === "image/svg+xml") return { href: raw, bytes: raw.length };
+  if (file.type === "image/svg+xml") return { href: raw };
 
   const img = new Image();
   img.src = raw;
   await img.decode();
   const side = Math.max(img.naturalWidth, img.naturalHeight);
-  if (side <= LOGO_PX && raw.length < 120_000) return { href: raw, bytes: raw.length };
+  if (side <= LOGO_PX && raw.length < 120_000) return { href: raw };
 
   const k = Math.min(1, LOGO_PX / side);
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(img.naturalWidth * k));
   canvas.height = Math.max(1, Math.round(img.naturalHeight * k));
   const ctx = canvas.getContext("2d");
-  if (!ctx) return { href: raw, bytes: raw.length };
+  if (!ctx) return { href: raw };
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const out = canvas.toDataURL("image/webp", 0.9);
   // حارسٌ: لو خرج الترميزُ أثقلَ من الأصل (شعارٌ صغيرٌ مسطّح) بقي الأصلُ كما هو
-  return out.length < raw.length ? { href: out, bytes: out.length } : { href: raw, bytes: raw.length };
+  return { href: out.length < raw.length ? out : raw };
 }
 
-/**
- * **بذرةُ المحرّر من وصفةٍ محفوظة** — عكسُ بناء المواصفة: ما حُفظ يعود حقولًا في الشاشة.
- * وما غاب يأخذ افتراضَ الهويّة من مصدره الواحد (`defaults`)، فلا رقمَ محفورٌ هنا.
- */
-function look(spec?: QrSpec | null) {
-  const paint = spec?.dots?.paint;
-  const gradient = !!paint && paint.kind !== "solid";
-  return {
-    gradient,
-    ink: paint ? (paint.kind === "solid" ? paint.color : paint.from) : LOOK.ink,
-    ink2: paint && paint.kind !== "solid" ? paint.to : LOOK.ink2,
-    gradKind: (paint?.kind === "radial" ? "radial" : "linear") as "linear" | "radial",
-    angle: paint?.kind === "linear" ? paint.angle : LOOK.angle,
-    cx: paint?.kind === "radial" ? paint.cx ?? LOOK.cx : LOOK.cx,
-    cy: paint?.kind === "radial" ? paint.cy ?? LOOK.cy : LOOK.cy,
-    hasBg: spec ? spec.bg !== null : LOOK.hasBg,
-    bg: spec?.bg ?? LOOK.bg,
-    eyeTinted: !!spec?.eye?.color,
-    eyeColor: spec?.eye?.color ?? LOOK.eyeColor,
-    pupilColor: spec?.pupil?.color ?? LOOK.pupilColor,
-    logo: spec?.logo?.href ?? null,
-    framed: !!spec?.frame,
-    frameStyle: (spec?.frame?.style ?? LOOK.frameStyle) as QrFrameStyle,
-    framePlace: (spec?.frame?.place ?? LOOK.framePlace) as QrFramePlace,
-    caption: spec?.frame?.caption ?? LOOK.caption,
-    frameColor: spec?.frame?.color ?? LOOK.frameColor,
-    captionColor: spec?.frame?.textColor ?? LOOK.captionColor,
-  };
-}
 
 /**
  * **مقبضُ الورقة** — يقود حافّتَها بالإصبع ثمّ يرسو على أقرب مرسًى.

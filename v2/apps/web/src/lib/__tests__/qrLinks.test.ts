@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   QR_ALPHABET,
   QR_CODE_LEN,
+  checkCode,
   checkTarget,
   deviceFrom,
   isBotAgent,
@@ -28,13 +29,33 @@ describe("رمزُ الرابط القصير", () => {
     for (const ch of "01oli") expect(QR_ALPHABET).not.toContain(ch);
   });
 
-  it("يردّ ما ليس على شكله: طولًا زائدًا أو ناقصًا أو محرفًا خارج الأبجديّة", () => {
-    expect(isQrCode("abc")).toBe(false);
-    expect(isQrCode("abcdefgh")).toBe(false);
-    expect(isQrCode("abcde0f")).toBe(false); // صفر
+  /**
+   * **اتّسع الشكلُ للمختار ٢٠٢٦-٠٩-٠٥** (`‎/q/majles`): حروفٌ صغيرةٌ وأرقامٌ وشرطةٌ في الوسط،
+   * من ٣ إلى ٣٢. فما كان يُردّ لطولٍ زائدٍ أو لصفرٍ صار مقبولًا، وبقي المردودُ ما ليس على
+   * شكل رابطٍ أصلًا. والمولَّدُ لم يتغيّر: سبعةٌ بلا ملتبِس.
+   */
+  it("يقبل المختارَ في حدوده", () => {
+    expect(isQrCode("majles")).toBe(true);
+    expect(isQrCode("adeeb-2026")).toBe(true);
+    expect(isQrCode("abcde0f")).toBe(true);
+    expect(isQrCode("a".repeat(32))).toBe(true);
+  });
+
+  it("يردّ ما ليس على شكله: طولًا أو محرفًا أو محجوزًا", () => {
+    expect(isQrCode("ab")).toBe(false);
+    expect(isQrCode("a".repeat(33))).toBe(false);
     expect(isQrCode("ABCDEFG")).toBe(false); // كبيرة
     expect(isQrCode("")).toBe(false);
     expect(isQrCode("abcde f")).toBe(false);
+    expect(isQrCode("-majles")).toBe(false); // شرطةٌ في الطرف
+    expect(isQrCode("majles-")).toBe(false);
+    expect(isQrCode("unavailable")).toBe(false); // صفحةٌ قائمةٌ تحت /q
+  });
+
+  it("ويقصّ المختارَ ويخفضه قبل الحكم", () => {
+    expect(checkCode("  Majles ")).toEqual({ ok: true, code: "majles" });
+    expect(checkCode("ملتقى")).toMatchObject({ ok: false });
+    expect(checkCode("unavailable")).toMatchObject({ ok: false });
   });
 
   it("يبني الرابط بلا شرطتين ولو انتهى الأصلُ بشرطة", () => {

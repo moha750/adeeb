@@ -26,8 +26,45 @@ export const QR_CODE_LEN = 7;
 /** أقصى طولٍ لاسم الرمز — يطابق قيدَ `title`. */
 export const QR_TITLE_MAX = 120;
 
-/** هل هذا رمزٌ صالحُ الشكل؟ يُسأل قبل أيّ نداءِ قاعدة، فالخُردةُ تُردّ بلا استعلام. */
-export const isQrCode = codeShapeGuard(QR_CODE_LEN, QR_ALPHABET);
+/**
+ * **حدُّ وسوم الحملة** — يطابق `qr_tags_ok` في القاعدة حرفًا.
+ *
+ * ومحلُّها هنا لا في `actions`: ملفُّ `"use server"` **لا يُصدِّر إلّا دوالَّ غير متزامنة**،
+ * فثابتٌ فيه يُسقط تصدير الملفّ كلِّه (أُمسك في البناء ٢٠٢٦-٠٩-٠٥).
+ */
+export const QR_TAGS_MAX = 6;
+export const QR_TAG_LEN = 32;
+
+/**
+ * **هل هذا رمزٌ صالحُ الشكل؟** يُسأل قبل أيّ نداءِ قاعدة، فالخُردةُ تُردّ بلا استعلام.
+ *
+ * ويتّسع للمختار (٢٠٢٦-٠٩-٠٥): حروفٌ لاتينيّةٌ صغيرةٌ وأرقامٌ وشرطةٌ في الوسط، من ٣ إلى ٣٢
+ * محرفًا — يطابق قيدَ `code` في القاعدة حرفًا بحرف. والمولَّدُ يبقى سبعةً بلا ملتبِس.
+ */
+export const QR_CODE_MIN = 3;
+export const QR_CODE_MAX = 32;
+const CODE_SHAPE = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
+
+/** مساراتٌ تحت `‎/q` لها معنًى في الموقع، فلا تُتَّخذ رموزًا (تحجب صفحةً قائمة). */
+export const QR_RESERVED = ["unavailable", "new", "admin", "api", "q"] as const;
+
+export const isQrCode = (code: string): boolean =>
+  CODE_SHAPE.test(code) && !(QR_RESERVED as readonly string[]).includes(code);
+
+/**
+ * **الرمزُ المختارُ كما يُقبَل**، ورسالةُ ردٍّ بلسانٍ يفهمه صاحبُه لا بتعبيرٍ نمطيّ.
+ * ويُقصّ ويُخفَّض قبل الفحص: من كتب `Majles ` أراد `majles`، وردُّه لأجل مسافةٍ عبثٌ.
+ */
+export function checkCode(raw: string): { ok: true; code: string } | { ok: false; message: string } {
+  const code = raw.trim().toLowerCase().replace(/\s+/g, "-");
+  if (code.length < QR_CODE_MIN) return { ok: false, message: `الرمزُ ${QR_CODE_MIN} محارفَ فأكثر.` };
+  if (code.length > QR_CODE_MAX) return { ok: false, message: `الرمزُ ${QR_CODE_MAX} محرفًا على الأكثر.` };
+  if ((QR_RESERVED as readonly string[]).includes(code)) return { ok: false, message: "هذا الرمزُ محجوزٌ في الموقع، اختر غيرَه." };
+  if (!CODE_SHAPE.test(code)) {
+    return { ok: false, message: "الرمزُ حروفٌ إنجليزيّةٌ صغيرةٌ وأرقامٌ وشرطةٌ في وسطه، بلا مسافاتٍ ولا حروفٍ عربيّة." };
+  }
+  return { ok: true, code };
+}
 
 /**
  * رمزٌ جديد من عشوائيّةِ التعمية لا من `Math.random`: الأخيرةُ تُتوقَّع من مخرجاتها،

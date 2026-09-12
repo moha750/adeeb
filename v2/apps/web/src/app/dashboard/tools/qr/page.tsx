@@ -1,4 +1,5 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { getSessionAdmin } from "@/lib/auth";
 import { getMyQrLinks } from "./data";
 import { SavedLinksView } from "./SavedLinksView";
 
@@ -18,7 +19,7 @@ export default async function QrToolPage() {
   const denied = await denyUnless("/dashboard/tools/qr");
   if (denied) return denied;
 
-  const { rows, error } = await getMyQrLinks();
+  const [{ rows, error }, me] = await Promise.all([getMyQrLinks(), getSessionAdmin()]);
 
-  return <SavedLinksView rows={rows} error={error} />;
+  return <SavedLinksView rows={rows} error={error} meId={me?.id ?? null} />;
 }
