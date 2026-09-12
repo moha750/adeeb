@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { shareOg } from "@/lib/share";
 // خطوط ورموز علامة أديب (المصدر الوحيد) ثم أنماط التطبيق ثمّ مكتبة المكوّنات المشتركة.
 // components.css يُحمَّل أخيرًا ليكون هو المصدر الفائز لأصناف المكوّنات (يظلّل نسخ globals القديمة).
 import "@adeeb/design-system/fonts.css";
@@ -19,6 +20,10 @@ export const metadata: Metadata = {
   // بلا `template`: الصفحات تكتب لاحقتها بنفسها («… — أديب») فلا تتكرّر اللاحقة مرّتين.
   title: "نادي أَدِيب",
   description: "نادٍ ثقافيّ إبداعيّ بجامعة الملك فيصل: أنشطةٌ وورشٌ وإصداراتٌ ومجتمعٌ من المبدعين.",
+  // صورةُ الرابط من مصدرها الواحد `lib/share` — انظر تعليلَها هناك.
+  openGraph: shareOg({ type: "website" }),
+  // بلا `images` هنا: تويتر يرث صورةَ OG حين لا يُعلن صورتَه، فيبقى المصدر واحدًا.
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

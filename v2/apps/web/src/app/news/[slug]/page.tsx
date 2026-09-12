@@ -4,6 +4,7 @@ import { getMoreNews, getPublicNewsItem } from "../data";
 import { PublicNewsCard } from "../PublicNewsCard";
 import { ArticleView } from "./ArticleView";
 import { SiteHeader } from "../../_components/SiteHeader";
+import { shareOg } from "@/lib/share";
 
 export const revalidate = 60;
 
@@ -14,13 +15,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${n.title}، أديب`,
     description: n.summary ?? "مستجدّات نادي أديب أوّلًا بأوّل.",
-    openGraph: {
+    openGraph: shareOg({
       title: n.title,
       description: n.summary ?? undefined,
-      images: n.cover ? [n.cover] : undefined,
       type: "article",
       publishedTime: n.publishedAt ?? undefined,
-    },
+    }),
   };
 }
 

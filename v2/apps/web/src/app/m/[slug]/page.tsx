@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Container, Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { positionLine } from "@/lib/positionLabel";
+import { shareOg } from "@/lib/share";
 import { getPublicProfile, type PublicPosition } from "./data";
 import { ProfileView } from "./ProfileView";
 
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${me.name}، أديب`,
     description: me.bio ?? `${line} في نادي أديب.`,
-    openGraph: { title: me.name, description: line, type: "profile" },
+    openGraph: shareOg({ title: me.name, description: line, type: "profile" }),
   };
 }
 

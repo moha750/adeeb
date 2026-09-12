@@ -6,6 +6,7 @@ import { createAdeebServerClient } from "@adeeb/core";
 import { KIND_META, yearLabel, type BookKind } from "../../dashboard/library/vocab";
 import { Reader } from "./Reader";
 import { SiteHeader } from "../../_components/SiteHeader";
+import { shareOg } from "@/lib/share";
 
 export const revalidate = 60;
 
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${book.title}، مكتبة أديب`,
     description: book.summary ?? "منشورٌ من مكتبة «إرثٌ يُروى» في نادي أديب.",
-    openGraph: { title: book.title, description: book.summary ?? undefined, images: pages[0] ? [pages[0].src] : undefined },
+    openGraph: shareOg({ title: book.title, description: book.summary ?? undefined }),
   };
 }
 
