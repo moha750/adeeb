@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { HEARTBEAT_MS, SESSION_KEY, TRACK_FN, TRACK_MAX_SECONDS, VISITOR_KEY, randomUuid } from "@adeeb/core/tracking";
+import { FIRST_HEARTBEAT_MS, HEARTBEAT_MS, SESSION_AT_KEY, SESSION_IDLE_MS, SESSION_KEY, TRACK_FN, TRACK_MAX_SECONDS, VISITOR_KEY, randomUuid } from "@adeeb/core/tracking";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -27,6 +27,36 @@ import { createClient } from "@/lib/supabase/client";
  */
 
 // الوجهةُ والمفاتيحُ والنبضةُ في `@adeeb/core/tracking` — يقرؤها الويبُ والتطبيقُ معًا.
+
+/**
+ * هويّةُ الجلسة: تبقى ما دام النشاطُ متّصلًا، وتُستأنف جديدةً بعد **ثلاثين دقيقةَ خمول**
+ * (٢٠٢٦-٠٨-٣١). ومحلُّها `localStorage` لا `sessionStorage`: الجلسةُ زيارةٌ في الزمن لا
+ * نافذةٌ في المتصفّح، فتبويبان مفتوحان معًا جلسةٌ واحدةٌ لا جلستان.
+ */
+const sessionId = () => {
+  try {
+    const now = Date.now();
+    const last = Number(window.localStorage.getItem(SESSION_AT_KEY) || 0);
+    let id = window.localStorage.getItem(SESSION_KEY);
+    if (!id || !last || now - last > SESSION_IDLE_MS) {
+      id = randomUuid();
+      window.localStorage.setItem(SESSION_KEY, id);
+    }
+    window.localStorage.setItem(SESSION_AT_KEY, String(now));
+    return id;
+  } catch {
+    return randomUuid(); // متصفّحٌ يمنع التخزين: جلسةٌ لكلّ صفحة، ولا نتعطّل
+  }
+};
+
+/** كلُّ نبضةٍ تُجدّد ختمَ النشاط، فالقارئُ الطويلُ لا تنقسم عليه جلستُه. */
+const touchSession = () => {
+  try {
+    window.localStorage.setItem(SESSION_AT_KEY, String(Date.now()));
+  } catch {
+    /* لا شيء: الختمُ زينةُ دقّةٍ لا شرطُ عمل */
+  }
+};
 
 const stored = (store: Storage | undefined, key: string) => {
   try {
@@ -74,6 +104,7 @@ export function VisitTracker() {
 
     const seconds = () => Math.min(TRACK_MAX_SECONDS, Math.floor((Date.now() - view.started) / 1000));
     let timer: ReturnType<typeof setInterval> | undefined;
+    let early: ReturnType<typeof setTimeout> | undefined;
 
     const begin = async () => {
       let userId: string | null = null;
@@ -94,7 +125,7 @@ export function VisitTracker() {
           keepalive: true,
           body: JSON.stringify({
             visitor_id: stored(window.localStorage, VISITOR_KEY),
-            session_id: stored(window.sessionStorage, SESSION_KEY),
+            session_id: sessionId(),
             page_path: path,
             page_url: window.location.href,
             page_title: document.title || null,
@@ -111,8 +142,11 @@ export function VisitTracker() {
         if (!data?.pageview_id || view.stopped) return;
         view.id = data.pageview_id;
 
-        timer = setInterval(() => {
+        // نبضةٌ مبكّرةٌ بعد خمس ثوانٍ ثمّ كلّ خمس عشرة: الكتابةُ والصفحةُ حيّةٌ أصدقُ من
+        // رسالةِ وداعٍ عند الهدم، فأكثرُ الزيارات كانت تنتهي قبل النبضة الأولى فتُسجَّل صفرًا.
+        const beat = () => {
           if (!view.id || view.stopped || document.visibilityState === "hidden") return;
+          touchSession();
           void fetch(`${url}/heartbeat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -121,7 +155,9 @@ export function VisitTracker() {
             keepalive: true,
             body: JSON.stringify({ pageview_id: view.id, total_seconds: seconds() }),
           }).catch(() => {});
-        }, HEARTBEAT_MS);
+        };
+        early = setTimeout(beat, FIRST_HEARTBEAT_MS);
+        timer = setInterval(beat, HEARTBEAT_MS);
       } catch {
         // التتبّعُ لا يُعطّل صفحةً: كلُّ فشلٍ يُبتلع صامتًا
       }
@@ -136,15 +172,18 @@ export function VisitTracker() {
      * الخاتمة — تُرسَل **منارةً** (`sendBeacon`): هي الوسيلةُ المصمَّمة للنجاة من هدم الصفحة، وتصلح
      * كذلك للتنقّل داخل الموقع (الهدمُ هناك هدمُ مكوّنٍ لا وثيقة). و`fetch` بديلٌ إن غابت.
      *
-     * وإن ضاعت الخاتمةُ رغم ذلك فالمدّةُ **ليست صفرًا**: النبضةُ كتبتها كلّ خمس عشرة ثانية، فأسوأُ
-     * ما يقع نقصٌ دون ذلك. (وهذا مقيسٌ لا مفترَض: زيارةٌ في الاختبار سجّلت ٣١ ثانيةً بنبضتها.)
+     * وإن ضاعت الخاتمةُ رغم ذلك فالمدّةُ **ليست صفرًا**: النبضةُ كتبتها بعد خمس ثوانٍ ثمّ كلَّ
+     * خمسَ عشرة، فأسوأُ ما يقع نقصٌ دون ذلك. ولا يبقى صفرًا إلّا من خرج قبل الخمس الأُوَل.
      */
     const end = () => {
       if (!view.id || view.stopped) return;
       view.stopped = true;
       const body = JSON.stringify({ pageview_id: view.id, total_seconds: seconds() });
       try {
-        if (navigator.sendBeacon && navigator.sendBeacon(`${url}/end`, new Blob([body], { type: "application/json" }))) return;
+        // نوعُ المنارة `text/plain` لا `application/json`: الثاني ليس من أنواع CORS المأمونة
+        // فيستلزم تمهيدًا (preflight) لا تفعله المنارة، فتسقط صامتةً. والدالّةُ تقرأ الجسم
+        // نصًّا وتحلّله بنفسها، فلا يضرّها النوعُ المعلَن.
+        if (navigator.sendBeacon && navigator.sendBeacon(`${url}/end`, new Blob([body], { type: "text/plain;charset=UTF-8" }))) return;
       } catch {
         /* يسقط إلى fetch */
       }
@@ -165,7 +204,7 @@ export function VisitTracker() {
       const body = JSON.stringify({ pageview_id: view.id, total_seconds: seconds() });
       try {
         if (navigator.sendBeacon) {
-          navigator.sendBeacon(`${url}/heartbeat`, new Blob([body], { type: "application/json" }));
+          navigator.sendBeacon(`${url}/heartbeat`, new Blob([body], { type: "text/plain;charset=UTF-8" }));
           return;
         }
       } catch {
@@ -183,6 +222,7 @@ export function VisitTracker() {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", endOnUnload);
       clearTimeout(starter);
+      if (early) clearTimeout(early);
       if (timer) clearInterval(timer);
       end(); // التنقّل داخل الموقع خاتمةٌ كإغلاق التبويب
     };
