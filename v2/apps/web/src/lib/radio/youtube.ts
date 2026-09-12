@@ -22,14 +22,3 @@ export function youtubeId(url: string | null | undefined): string | null {
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|live\/|shorts\/))([A-Za-z0-9_-]{11})/.exec(url);
   return m?.[1] ?? null;
 }
-
-/**
- * عنوانُ المصغّرة **المضمونة** — `hqdefault` موجودةٌ لكلّ فيديو مهما كانت دقّةُ
- * مصدره، بخلاف `maxresdefault`.
- *
- * ومسكنُها هنا لأنّ لها قارئًا ثانيًا لا يقدر على التراجع: **وسمُ المشاركة**
- * (`openGraph.images`). فالمكوّنُ يجرّب العاليةَ ويهبط بـ`onError` لأنّه في
- * متصفّح، أمّا الوسمُ فيُكتَب مرّةً ويُقرأ في واتساب وإكس بلا فرصةِ تصحيح —
- * فبطاقةٌ صغيرةٌ مضمونةٌ خيرٌ من مربّعٍ فارغٍ في نصف الحلقات.
- */
-export const youtubeThumb = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;

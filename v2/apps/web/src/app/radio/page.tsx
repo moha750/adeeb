@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { Alert, Footer, countPhrase } from "@adeeb/design-system";
+import {Alert, countPhrase} from "@adeeb/design-system";
 import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
 import { Play } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
-import { SiteHeader } from "../_components/SiteHeader";
 import { getLatestEpisodes, getPublicShows, getPublicStation, isPlayable, toTrack } from "./data";
 import { EpisodeRow } from "./_player/EpisodeRow";
 import { ContinueRail, type RailItem } from "./_player/ContinueRail";
 import { LaterRail } from "./_player/LaterRail";
 import { EPISODES_UNIT } from "../dashboard/radio/vocab";
 import { pullQuote } from "@/lib/radio/quote";
+import { shareOg } from "@/lib/share";
 import type { Track } from "./_player/PlayerProvider";
 
 export const revalidate = 60;
@@ -33,13 +33,12 @@ export async function generateMetadata() {
     title: station.name,
     description,
     alternates: { canonical: "/radio" },
-    openGraph: {
+    openGraph: shareOg({
       title: station.name,
       description,
-      images: station.logoUrl ? [station.logoUrl] : undefined,
       type: "website",
       siteName: "إذاعة أدِيب",
-    },
+    }),
   };
 }
 
@@ -69,56 +68,68 @@ export default async function RadioPage() {
 
   return (
     <>
-      <SiteHeader activeHref="/radio" />
-      <main className="stn">
-        <div className="stn-page">
-            {/* الترويسة: من نحن، وبابُ البحث ظاهرٌ لا مخفيّ خلف أيقونة */}
-            <div className="stn-mast">
-              <span className="stn-mast-logo" aria-hidden>
-                {station.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={station.logoUrl} alt="" />
-                ) : (
-                  <span className="stn-art-n">{station.name.trim()[0]}</span>
-                )}
-              </span>
-              <span className="stn-mast-txt">
-                <h1 className="stn-mast-name">{station.name}</h1>
-                <span className="stn-mast-sub">{station.tagline ?? DECK}</span>
-              </span>
+      <main>
+        {/* ══ الصدر: الغلافُ بطلُ الشاشة، واللوحُ عنّابيٌّ صلبُ الحافّة ══
+            (اللغةُ المُقَرّة ٢٠٢٦-٠٩-٠٥). وخلَفُ ترويسةِ الاسم القديمة: اسمُ
+            المحطّة في الشريط الجانبيّ على الحاسوب، وفي هذا الصدر على الجوّال. */}
+        {top ? (
+          <div className="stq-c-wrap">
+            <div className="stc-hero">
+              <div className="stc-hero-row">
+                <Link
+                  href={`/radio/${top.showSlug}/${top.episode.slug}`}
+                  className="stc-cover"
+                  aria-label={`أحدثُ حلقة: ${top.episode.title}`}
+                >
+                  {top.showLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={top.showLogoUrl} alt="" />
+                  ) : station.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={station.logoUrl} alt="" />
+                  ) : null}
+                </Link>
+                <div className="stc-hero-in">
+                  <span className="stc-hero-k"><i aria-hidden />أحدثُ حلقة</span>
+                  <h1 className="stc-hero-t">{top.episode.title}</h1>
+                  <p className="stc-hero-s">
+                    {top.showTitle}، {top.episode.dateLabel}
+                  </p>
+                  <div className="stc-hero-acts">
+                    <Link
+                      href={`/radio/${top.showSlug}/${top.episode.slug}`}
+                      className="stc-play"
+                    >
+                      <Play weight="fill" aria-hidden />
+                      استمع الآن
+                    </Link>
+                    <Link href="/radio/search" className="stc-icon" aria-label="بحث">
+                      <MagnifyingGlass aria-hidden />
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+        ) : null}
 
-            <Link href="/radio/search" className="stn-find">
-              <MagnifyingGlass aria-hidden />
-              ابحث في البرامج والحلقات وفي الكلام نفسه
-            </Link>
+        {/* كرتُ الجملة الدالّة: نصفُه في اللوح ونصفُه في الورق (اختارَه المالك).
+            وهو أطروحةُ المحطّة: الحلقةُ تُعرَّف بجملةٍ من كلامها. */}
+        {top && topQuote ? (
+          <Link
+            href={`/radio/${top.showSlug}/${top.episode.slug}`}
+            className="stq-c"
+            aria-label={`أحدثُ حلقة: ${top.episode.title}`}
+          >
+            <p className="stq-c-t">
+              <span className="stq-c-mark" aria-hidden>❝</span>
+              {topQuote}
+            </p>
+            <p className="stq-c-s">{top.episode.title}، من {top.showTitle}</p>
+          </Link>
+        ) : null}
 
-            {/* لوحُ «الآن»: جملةٌ من الحلقة تسبق كلَّ شيء */}
-            {top && topQuote ? (
-              <Link
-                href={`/radio/${top.showSlug}/${top.episode.slug}`}
-                className="stn-now"
-                aria-label={`أحدثُ حلقة: ${top.episode.title}`}
-              >
-                <span className="stn-now-kick">
-                  <i aria-hidden />
-                  أحدثُ حلقة
-                </span>
-                <p className="stn-quote">{topQuote}</p>
-                <span className="stn-now-foot">
-                  <span className="stn-now-play" aria-hidden>
-                    <Play size={24} weight="fill" />
-                  </span>
-                  <span className="stn-now-meta">
-                    <span className="stn-now-title">
-                      {top.episode.title}، {top.showTitle}
-                    </span>
-                    <span className="stn-now-dur">{top.episode.dateLabel}</span>
-                  </span>
-                </span>
-              </Link>
-            ) : null}
-
+        <div className="stn-page">
             <div className="stn-cols">
               <div>
                 <ContinueRail pool={pool} />
@@ -195,7 +206,6 @@ export default async function RadioPage() {
             </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

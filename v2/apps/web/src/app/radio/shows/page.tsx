@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Alert, Footer, countPhrase } from "@adeeb/design-system";
-import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
-import { SiteHeader } from "../../_components/SiteHeader";
+import {Alert, countPhrase} from "@adeeb/design-system";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
 import { EPISODES_UNIT } from "../../dashboard/radio/vocab";
 import { getPublicShows, getPublicStation } from "../data";
 
@@ -30,24 +29,12 @@ export default async function ShowsPage() {
 
   return (
     <>
-      <SiteHeader activeHref="/radio" />
-      <main className="stn">
+      <main>
+        {/* ترويسةُ الباب: اسمُه لا اسمُ المحطّة، فالمحطّةُ تُعرَف في الشريط */}
+        <div className="stx-top">
+          <h1>تصفَّح</h1>
+        </div>
         <div className="stn-page">
-            <nav className="stn-crumb" aria-label="مسار الصفحة">
-              <Link href="/radio">
-                <b>{station.name}</b>
-              </Link>
-              <CaretLeft aria-hidden />
-              <span>البرامج</span>
-            </nav>
-
-            <div className="stn-mast">
-              <span className="stn-mast-txt">
-                <h1 className="stn-mast-name">برامجُ المحطّة</h1>
-                <span className="stn-mast-sub">كلُّ ما يُذاع في مكانٍ واحد</span>
-              </span>
-            </div>
-
             <Link href="/radio/search" className="stn-find">
               <MagnifyingGlass aria-hidden />
               ابحث باسم البرنامج أو في الحلقات
@@ -57,26 +44,19 @@ export default async function ShowsPage() {
               <>
                 <p className="stn-count">{countPhrase(shows.length, { one: "برنامج", two: "برنامجان", few: "برامج" })}</p>
                 <section className="stn-sec">
-                  <div className="stn-grid">
+                  <div className="stc-grid">
                     {shows.map((s) => (
-                      <Link key={s.id} href={`/radio/${s.slug}`}>
-                        <span className="stn-art stn-art-full" aria-hidden>
-                          {s.logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={s.logoUrl} alt="" />
-                          ) : (
-                            <span className="stn-art-n">{s.title.trim()[0]}</span>
-                          )}
-                        </span>
-                        <span className="stn-show-name">{s.title}</span>
-                        <span className="stn-show-meta">
+                      <Link key={s.id} href={`/radio/${s.slug}`} className="stc-cov">
+                        {s.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={s.logoUrl} alt="" loading="lazy" />
+                        ) : (
+                          <span className="stc-cov-n" aria-hidden>{s.title.trim()[0]}</span>
+                        )}
+                        <b>{s.title}</b>
+                        <span>
                           {countPhrase(s.episodeCount, EPISODES_UNIT)}
-                          {s.hostName ? (
-                            <>
-                              <br />
-                              تقديم {s.hostName}
-                            </>
-                          ) : null}
+                          {s.hostName ? <>، تقديم {s.hostName}</> : null}
                         </span>
                       </Link>
                     ))}
@@ -95,7 +75,6 @@ export default async function ShowsPage() {
             )}
         </div>
       </main>
-      <Footer />
     </>
   );
 }

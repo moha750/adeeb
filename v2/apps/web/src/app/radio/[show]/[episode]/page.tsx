@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Accordion, Footer } from "@adeeb/design-system";
-import { YoutubeLogo, Clock, BookOpen } from "@phosphor-icons/react/dist/ssr";
+import {Accordion} from "@adeeb/design-system";
+import { YoutubeLogo, BookOpen } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { CaretLeft } from "@/app/_components/glyphs";
-import { SiteHeader } from "../../../_components/SiteHeader";
 import { episodeLabel, formatDuration } from "../../../dashboard/radio/vocab";
-import { youtubeId, youtubeThumb } from "@/lib/radio/youtube";
+import { youtubeId } from "@/lib/radio/youtube";
+import { shareOg } from "@/lib/share";
 import { breadcrumbLd, ldScript, podcastEpisodeLd } from "@/lib/radio/jsonld";
 import { getPublicEpisode, isPlayable, toTrack } from "../../data";
 import { EpisodeRow } from "../../_player/EpisodeRow";
@@ -25,21 +25,17 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
   const { show, episode } = await params;
   const found = await getPublicEpisode(show, episode);
   if (!found) return { title: "إذاعة أدِيب" };
-  /* صورةُ البطاقة: مصغّرةُ يوتيوب المضمونة، وإلّا شعارُ البرنامج. ولا نرفع ثالثةً. */
-  const id = youtubeId(found.episode.youtubeUrl);
-  const image = id ? youtubeThumb(id) : found.show.logoUrl;
   return {
     title: `${found.episode.title}، ${found.show.title}`,
     description: found.episode.summary ?? undefined,
     alternates: { canonical: `/radio/${show}/${episode}` },
-    openGraph: {
+    openGraph: shareOg({
       title: found.episode.title,
       description: found.episode.summary ?? undefined,
-      images: image ? [image] : undefined,
       type: "article",
       publishedTime: found.episode.publishedAt ?? undefined,
       siteName: "إذاعة أدِيب",
-    },
+    }),
   };
 }
 
@@ -90,41 +86,58 @@ export default async function EpisodePage({
           { name: episode.title, path: `/radio/${show.slug}/${episode.slug}` },
         ]),
       )} />
-      <SiteHeader activeHref="/radio" />
-      <main className="stn">
-        <div className="stn-page">
-            <nav className="stn-crumb" aria-label="مسار الصفحة">
-              <Link href="/radio">الإذاعة</Link>
-              <CaretLeft aria-hidden />
-              <Link href={`/radio/${show.slug}`}><b>{show.title}</b></Link>
-            </nav>
+      <main>
+        {/* ══ صدرُ الحلقة: غلافُ برنامجها بطلًا على لوحٍ عنّابيّ ══
+            وخلَفُ عنوانٍ عارٍ فوق صفٍّ من الحبّات. */}
+        <div className="stq-c-wrap">
+          <div className="stc-hero">
+            <div className="stc-hero-row">
+              <Link href={`/radio/${show.slug}`} className="stc-cover" aria-label={show.title}>
+                {show.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={show.logoUrl} alt="" />
+                ) : null}
+              </Link>
+              <div className="stc-hero-in">
+                <span className="stc-hero-k">
+                  <i aria-hidden />
+                  {show.title}، {episodeLabel(episode.number)}
+                </span>
+                <h1 className="stc-hero-t">{episode.title}</h1>
+                <p className="stc-hero-s">
+                  {episode.musicSeconds ? <>{formatDuration(episode.musicSeconds)}، </> : null}
+                  {episode.dateLabel}
+                  {episode.hostName ? <>، تقديم {episode.hostName}</> : null}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* **الجملةُ قبل المشغّل** — أطروحةُ المحطّة: ما يقرّر أتُسمَع الحلقةُ
+            أم لا هو ما يقوله الصوتُ نفسُه، لا وصفٌ كُتب عنه. وهي هنا كرتٌ
+            يطفو على حدّ اللوح كما في المحطّة، لا فقرةٌ في التدفّق. */}
+        {quote ? (
+          <div className="stq-c">
+            <p className="stq-c-t">
+              <span className="stq-c-mark" aria-hidden>❝</span>
+              {quote}
+            </p>
+            <p className="stq-c-s">من كلام الحلقة</p>
+          </div>
+        ) : null}
+
+        <div className="stn-page">
             <div className="stn-cols">
               <div>
-                <h1 className="stn-ep-t">{episode.title}</h1>
-                <div className="stn-ep-meta">
-                  {episode.musicSeconds ? (
-                    <span className="stn-chip">
-                      <Clock size={12} weight={ICON_WEIGHT} aria-hidden />
-                      <bdi dir="ltr">{formatDuration(episode.musicSeconds)}</bdi>
-                    </span>
-                  ) : null}
-                  <span className="stn-chip">{episode.dateLabel}</span>
-                  {episode.hostName ? <span className="stn-chip">تقديم {episode.hostName}</span> : null}
-                  {episode.transcript ? (
+                {episode.transcript ? (
+                  <p className="stn-ep-meta">
                     <span className="stn-chip">
                       <BookOpen size={12} weight={ICON_WEIGHT} aria-hidden />
                       مكتوبةٌ كاملة
                     </span>
-                  ) : null}
-                  <span className="sr-only">{episodeLabel(episode.number)}</span>
-                </div>
-
-                {/**
-                  * **الجملةُ قبل المشغّل** — أطروحةُ المحطّة: ما يقرّر أتُسمَع
-                  * الحلقةُ أم لا هو ما يقوله الصوتُ نفسُه، لا وصفٌ كُتب عنه.
-                  */}
-                {quote ? <p className="stn-pull">{quote}</p> : null}
+                  </p>
+                ) : null}
 
                 {/* المشغّلُ حيث يقع الفعل، لا في أسفل الشاشة بعيدًا عمّا ضُغط */}
                 <InlinePlayer
@@ -220,7 +233,6 @@ export default async function EpisodePage({
             </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

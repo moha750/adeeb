@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Footer } from "@adeeb/design-system";
+
 import { Play } from "@phosphor-icons/react/dist/ssr";
-import { MagnifyingGlass, CaretLeft } from "@/app/_components/glyphs";
-import { SiteHeader } from "../../_components/SiteHeader";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
 import { getPublicShows, getPublicStation, getLatestEpisodes, isPlayable } from "../data";
 import { findSnippet, matches } from "@/lib/radio/arabicSearch";
 
@@ -81,17 +80,11 @@ export default async function RadioSearchPage({
 
   return (
     <>
-      <SiteHeader activeHref="/radio" />
-      <main className="stn">
+      <main>
+        <div className="stx-top">
+          <h1>بحث</h1>
+        </div>
         <div className="stn-page">
-            <nav className="stn-crumb" aria-label="مسار الصفحة">
-              <Link href="/radio">
-                <b>{station.name}</b>
-              </Link>
-              <CaretLeft aria-hidden />
-              <span>بحث</span>
-            </nav>
-
             <form className="stn-find" action="/radio/search" method="get" role="search">
               <MagnifyingGlass aria-hidden />
               <input
@@ -154,13 +147,17 @@ export default async function RadioSearchPage({
                     </div>
                     <div>
                       {epHits.map((l) => (
-                        <Link key={l.episode.id} href={`/radio/${l.showSlug}/${l.episode.slug}`} className="stn-hit">
-                          <span className="stn-hit-head">
-                            <span className="stn-hit-show">{l.showTitle}</span>
-                            <span>{l.episode.dateLabel}</span>
+                        <Link key={l.episode.id} href={`/radio/${l.showSlug}/${l.episode.slug}`} className="stc-hit">
+                          {l.showLogoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img className="stc-ep-th" src={l.showLogoUrl} alt="" loading="lazy" />
+                          ) : null}
+                          <span className="stc-hit-b">
+                            <span className="stc-ep-k">{l.showTitle}</span>
+                            <span className="stc-hit-t">{l.episode.title}</span>
+                            {l.episode.summary ? <p className="stc-hit-q">{l.episode.summary}</p> : null}
+                            <span className="stc-ep-min">{l.episode.dateLabel}</span>
                           </span>
-                          <span className="stn-hit-t">{l.episode.title}</span>
-                          {l.episode.summary ? <p className="stn-hit-q">{l.episode.summary}</p> : null}
                         </Link>
                       ))}
                     </div>
@@ -177,21 +174,25 @@ export default async function RadioSearchPage({
                         <Link
                           key={h.l.episode.id}
                           href={`/radio/${h.l.showSlug}/${h.l.episode.slug}#transcript`}
-                          className="stn-hit"
+                          className="stc-hit"
                         >
-                          <span className="stn-hit-head">
-                            <span className="stn-hit-show">{h.l.showTitle}</span>
-                            <span>{h.l.episode.title}</span>
-                          </span>
-                          {/* الكلمةُ تُعلَّم في موضعها: بلا ذلك لا يُعرَف لِمَ ظهرت النتيجة */}
-                          <p className="stn-hit-q">
-                            {h.before}
-                            <mark>{h.match}</mark>
-                            {h.after}
-                          </p>
-                          <span className="stn-hit-at">
-                            <Play size={13} weight="fill" aria-hidden />
-                            اقرأها في الحلقة
+                          {h.l.showLogoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img className="stc-ep-th" src={h.l.showLogoUrl} alt="" loading="lazy" />
+                          ) : null}
+                          <span className="stc-hit-b">
+                            <span className="stc-ep-k">{h.l.showTitle}</span>
+                            <span className="stc-hit-t">{h.l.episode.title}</span>
+                            {/* الكلمةُ تُعلَّم في موضعها: بلا ذلك لا يُعرَف لِمَ ظهرت النتيجة */}
+                            <p className="stc-hit-q">
+                              {h.before}
+                              <mark>{h.match}</mark>
+                              {h.after}
+                            </p>
+                            <span className="stc-hit-at">
+                              <Play size={13} weight="fill" aria-hidden />
+                              اقرأها في الحلقة
+                            </span>
                           </span>
                         </Link>
                       ))}
@@ -224,7 +225,6 @@ export default async function RadioSearchPage({
             )}
         </div>
       </main>
-      <Footer />
     </>
   );
 }

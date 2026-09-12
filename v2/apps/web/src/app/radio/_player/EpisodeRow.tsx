@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Pause, Clock } from "@phosphor-icons/react";
-import { CaretLeft } from "@/app/_components/glyphs";
+import { Play, Pause } from "@phosphor-icons/react";
 import { episodeLabel, formatDuration } from "../../dashboard/radio/vocab";
 import { useSavedPosition } from "@/lib/radio/progress";
 import { useRadioPlayer, type Track } from "./PlayerProvider";
@@ -57,52 +56,51 @@ export function EpisodeRow({
   const pct = seconds > 0 ? Math.min(100, (at / seconds) * 100) : 0;
 
   return (
-    <div className={"stn-row" + (isCurrent ? " is-playing" : "")}>
-      <span className="stn-row-n" aria-hidden>
-        {number}
-      </span>
+    <div className={"stc-ep" + (isCurrent ? " is-playing" : "")}>
+      {/* الغلافُ في كلّ صفّ (أمرُ المالك ٢٠٢٦-٠٩-٠٦). وكان قد أُخرج في الجيل
+          الثالث بحجّةِ أنّ غلافًا مكرَّرًا في عشرة صفوفٍ لبرنامجٍ واحدٍ لا يميّز،
+          فنُقض الحكم: الغلافُ في اللغة الجديدة بطلُ الشاشة، والصفُّ بلا غلافٍ
+          يقرأ نفسَه سطرًا في جدولٍ لا حلقةً تُسمَع. */}
+      {track.coverUrl ? (
+        <img className="stc-ep-th" src={track.coverUrl} alt="" loading="lazy" />
+      ) : (
+        <span className="stc-ep-th stc-ep-th-n" aria-hidden>{number}</span>
+      )}
 
-      <span className="stn-row-b">
-        {showName ? <span className="stn-row-show">{showName}</span> : null}
-        <Link href={`/radio/${track.showSlug}/${track.episodeSlug}`} className="stn-row-t">
+      <div className="stc-ep-b">
+        {showName ? <span className="stc-ep-k">{showName}</span> : null}
+        <Link href={`/radio/${track.showSlug}/${track.episodeSlug}`} className="stc-ep-t">
           {track.title}
         </Link>
-        {quote || summary ? <p className="stn-row-q">{quote ?? summary}</p> : null}
-        <span className="stn-row-meta">
-          {seconds ? (
-            <span className="stn-chip">
-              <Clock aria-hidden />
-              <bdi dir="ltr">{formatDuration(seconds)}</bdi>
-            </span>
-          ) : null}
-          <span>{dateLabel}</span>
-          {at > 0 ? (
-            <span className={"stn-chip" + (at >= seconds ? "" : " stn-chip-red")}>
-              {at >= seconds ? "سُمعت" : `بقي ${formatDuration(seconds - at)}`}
-            </span>
-          ) : null}
+        {quote || summary ? <p className="stc-ep-s">{quote ?? summary}</p> : null}
+
+        <div className="stc-ep-acts">
+          {/* الاسمُ يحمل عنوانَ الحلقة: عشرةُ أزرارٍ تُنطَق «تشغيل» ليست عشرةَ أزرار */}
+          <button
+            type="button"
+            className={"stc-ep-btn" + (playing ? " is-on" : "")}
+            aria-label={`${playing ? "إيقاف" : "تشغيل"} ${track.title}`}
+            onClick={() => (isCurrent ? player.toggle() : player.play(track, queue))}
+          >
+            <i>
+              {playing ? <Pause weight="fill" aria-hidden /> : <Play weight="fill" aria-hidden />}
+              {/* المدّةُ تصير «ما بقي» لمن بدأ: الرقمُ الذي يقرّر أيُضغَط الآن */}
+              {at > 0 && at < seconds ? `بقي ${formatDuration(seconds - at)}`
+                : seconds ? formatDuration(seconds) : "استمع"}
+            </i>
+          </button>
+
+          {at >= seconds && seconds > 0 ? <span className="stc-ep-min">سُمعت</span> : null}
+          <span className="stc-ep-min">{dateLabel}</span>
           <span className="sr-only">{episodeLabel(number)}</span>
-        </span>
+        </div>
+
         {at > 0 && at < seconds ? (
-          <span className="stn-prog" aria-hidden>
+          <span className="stx-item-prog" aria-hidden>
             <i style={{ width: `${pct}%` }} />
           </span>
         ) : null}
-      </span>
-
-      {/* الاسمُ يحمل عنوانَ الحلقة: عشرةُ أزرارٍ تُنطَق «تشغيل» ليست عشرةَ أزرار */}
-      <button
-        type="button"
-        className={"stn-row-play" + (playing ? " is-on" : "")}
-        aria-label={`${playing ? "إيقاف" : "تشغيل"} ${track.title}`}
-        onClick={() => (isCurrent ? player.toggle() : player.play(track, queue))}
-      >
-        {playing ? <Pause weight="fill" aria-hidden /> : <Play weight="fill" aria-hidden />}
-      </button>
-
-      <span className="stn-row-chev" aria-hidden>
-        <CaretLeft />
-      </span>
+      </div>
     </div>
   );
 }

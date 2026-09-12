@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Footer, countPhrase } from "@adeeb/design-system";
+import {countPhrase} from "@adeeb/design-system";
 import {
   Play, YoutubeLogo, XLogo, InstagramLogo, TiktokLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
-import { CaretLeft } from "@/app/_components/glyphs";
-import { SiteHeader } from "../../_components/SiteHeader";
 import { EPISODES_UNIT, PLATFORM_META } from "../../dashboard/radio/vocab";
 import { getPublicShowPage, isPlayable, toTrack } from "../data";
 import { pullQuote } from "@/lib/radio/quote";
+import { shareOg } from "@/lib/share";
 import { EpisodeRow } from "../_player/EpisodeRow";
 import { FoldedText } from "../_player/FoldedText";
 import { breadcrumbLd, ldScript, podcastSeriesLd } from "@/lib/radio/jsonld";
@@ -36,13 +35,12 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
     title: `${page.show.title}، إذاعة أدِيب`,
     description,
     alternates: { canonical: `/radio/${show}` },
-    openGraph: {
+    openGraph: shareOg({
       title: page.show.title,
       description,
-      images: page.show.logoUrl ? [page.show.logoUrl] : undefined,
       type: "website",
       siteName: "إذاعة أدِيب",
-    },
+    }),
   };
 }
 
@@ -83,44 +81,55 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
           { name: show.title, path: `/radio/${show.slug}` },
         ]),
       )} />
-      <SiteHeader activeHref="/radio" />
-      <main className="stn">
-        <div className="stn-page">
-            <nav className="stn-crumb" aria-label="مسار الصفحة">
-              <Link href="/radio"><b>الإذاعة</b></Link>
-              <CaretLeft aria-hidden />
-              <span>{show.title}</span>
-            </nav>
-
-            <div className="stn-hero">
-              <span className="stn-art stn-art-72" aria-hidden>
+      <main>
+        {/* ══ صدرُ البرنامج: الغلافُ بطلُه، واللوحُ عنّابيٌّ صلبُ الحافّة ══
+            وخلَفُ `stn-hero` الذي كان مربّعًا ٧٢ بكسلًا إلى جانب سطرين. */}
+        <div className="stq-c-wrap">
+          <div className="stc-hero">
+            <div className="stc-hero-row">
+              <span className="stc-cover">
                 {show.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={show.logoUrl} alt="" />
-                ) : (
-                  <span className="stn-art-n">{show.title.trim()[0]}</span>
-                )}
+                ) : null}
               </span>
-              <div className="stn-hero-b">
-                <h1 className="stn-hero-name">{show.title}</h1>
-                <p className="stn-hero-sub">
-                  {show.tagline ? <>{show.tagline}<br /></> : null}
+              <div className="stc-hero-in">
+                <span className="stc-hero-k"><i aria-hidden />برنامج</span>
+                <h1 className="stc-hero-t">{show.title}</h1>
+                <p className="stc-hero-s">
+                  {show.tagline ? <>{show.tagline}، </> : null}
                   {show.hostName ? <>يقدّمه {show.hostName}، </> : null}
                   {countPhrase(episodes.length, EPISODES_UNIT)}
                 </p>
+                {/* الفعلُ الأوّلُ يتصدّر: من فتح صفحةَ برنامجٍ يريد أن يسمع. */}
+                {tracks[0] ? (
+                  <div className="stc-hero-acts">
+                    <Link
+                      href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`}
+                      className="stc-play"
+                    >
+                      <Play weight="fill" aria-hidden />
+                      استمع لآخر حلقة
+                    </Link>
+                  </div>
+                ) : null}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* الفعلُ الأوّلُ يتصدّر: من فتح صفحةَ برنامجٍ يريد أن يسمع. */}
-            {tracks[0] ? (
-              <div className="stn-acts">
-                <Link href={`/radio/${tracks[0].showSlug}/${tracks[0].episodeSlug}`} className="stn-btn">
-                  <Play size={17} weight="fill" aria-hidden />
-                  استمع لآخر حلقة
-                </Link>
-              </div>
-            ) : null}
+        {/* الجملةُ الدالّةُ من أوّل حلقة: كرتٌ يطفو على حدّ اللوح */}
+        {first && firstQuote ? (
+          <Link href={`/radio/${show.slug}/${first.slug}`} className="stq-c">
+            <p className="stq-c-t">
+              <span className="stq-c-mark" aria-hidden>❝</span>
+              {firstQuote}
+            </p>
+            <p className="stq-c-s">{first.title}، أوّلُ الحكاية</p>
+          </Link>
+        ) : null}
 
+        <div className="stn-page">
             {/**
               * منصّاتُ البرنامج **أيقوناتٌ في صدره** لا شاراتٌ نصّيّة: الروابطُ
               * هويّةُ البرنامج لا محتواه، فموضعُها حيث اسمُه وشعارُه.
@@ -128,21 +137,6 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
             {platforms.length ? <div className="stn-subs">{platforms.map(platformLink)}</div> : null}
 
             {show.description ? <FoldedText text={show.description} className="stn-desc" /> : null}
-
-            {first && firstTrack && firstQuote ? (
-              <section className="stn-sec">
-                <div className="stn-shead">
-                  <h2>ابدأ من هنا</h2>
-                </div>
-                <div className="stn-start">
-                  <span className="stn-start-kick">أوّلُ الحكاية</span>
-                  <Link href={`/radio/${show.slug}/${first.slug}`} className="stn-start-t">
-                    {first.title}
-                  </Link>
-                  <p className="stn-start-q">{firstQuote}</p>
-                </div>
-              </section>
-            ) : null}
 
             <section className="stn-sec">
               <div className="stn-shead">
@@ -171,7 +165,6 @@ export default async function ShowPage({ params }: { params: Promise<{ show: str
             </section>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

@@ -44,6 +44,39 @@ export const getPublicStation = cache(async function getPublicStation(): Promise
   };
 });
 
+/**
+ * **موجةُ آخر حلقة** — توقيعُ المحطّة في تذييلها (قرارُ المالك ٢٠٢٦-٠٩-٠٦).
+ *
+ * وليست زينةً مولَّدة: هي `audio_music_peaks` المقيسةُ عند الرفع، أي شكلُ
+ * الصوت الذي يُذاع فعلًا. وتتبدّل وحدَها مع كلّ حلقةٍ جديدة، فلا تُصان.
+ *
+ * **وتُنزَّل هنا لا في الشاشة**: المخزَّنُ أربعُ مئةِ قيمة، والتذييلُ يرسم
+ * ستّين. فلو أُرسلت كاملةً لعبرت الشبكةَ في كلّ صفحةٍ بلا أن تُرى. والتنزيلُ
+ * **بالأعلى لا بالمتوسّط**: المتوسّطُ يسوّي الموجةَ فتصير جدارًا مستويًا،
+ * والأعلى يبقي نبضَها.
+ *
+ * ومغلَّفةٌ بـ`cache` لأنّ التخطيطَ يقرؤها في كلّ صفحةٍ من صفحات القسم.
+ */
+export const getStationWave = cache(async function getStationWave(bars = 40): Promise<number[]> {
+  const { data } = await anon()
+    .from("radio_episodes")
+    .select("audio_music_peaks")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ audio_music_peaks: number[] | null }>();
+
+  const peaks = data?.audio_music_peaks;
+  if (!peaks?.length) return [];
+
+  const step = Math.max(1, Math.floor(peaks.length / bars));
+  const out: number[] = [];
+  for (let i = 0; i < peaks.length; i += step) {
+    out.push(Math.max(...peaks.slice(i, i + step)));
+  }
+  return out.slice(0, bars);
+});
+
 /* ══ البرامج ═════════════════════════════════════════════════════════ */
 
 export type PublicShow = {
