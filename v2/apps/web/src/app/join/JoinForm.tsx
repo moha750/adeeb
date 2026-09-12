@@ -36,7 +36,10 @@ const RANK_LABEL = ["الرغبة الأولى", "الرغبة الثانية", 
  * من كلٍّ منها ما اختير في أختها.
  *
  * **والتعريفاتُ فوق القوائم لا خلف علامةِ استفهام**: هي أساسُ الترتيب، فمن رتّب بلا تعريفٍ
- * رتّب أسماءً. ولذلك اشترطت القاعدةُ التعريفَ لعرض اللجنة أصلًا.
+ * رتّب أسماءً. ولذلك اشترطت القاعدةُ التعريفَ لعرض اللجنة أصلًا. **وقد خرجت من هنا إلى
+ * الصفحة** (`JoinCommittees`، ٢٠٢٦-٠٩-١٢) حين صارت الصفحةُ عامّةً: هي إعلانُ النادي عن
+ * نفسه فيقرؤها من لا حساب له، ولو بقيت في النموذج لَما رآها إلّا من قطع الطريقَ كلَّه.
+ * فالتعريفاتُ فوق القوائم كما كانت، وإنّما صعدت درجةً.
  */
 export function JoinForm({
   options, initialPrefs, isVolunteer, hasProfile,
@@ -93,21 +96,6 @@ export function JoinForm({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* تعريفاتُ اللجان — أساسُ الترتيب */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {options.map((o) => (
-          <Card key={o.id}>
-            <CardBody className="flex flex-col gap-2 p-5">
-              <span className="flex items-center gap-2 font-bold">
-                <UsersThree size={20} aria-hidden />
-                {o.name}
-              </span>
-              <p className="text-content-muted text-sm leading-relaxed">{o.description}</p>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
-
       <Card>
         <CardBody className="flex flex-col gap-4 p-6">
           {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}

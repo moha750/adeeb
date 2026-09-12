@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main>
       <AuthShell
         title="تسجيل الدخول"
-        subtitle="ادخل ببيانات حسابك الإداريّ للوصول إلى اللوحة."
+        subtitle="ادخل بحسابك في أدِيب، ويسوقك البابُ إلى منزلتك."
         slogan="بوابة أدِيب، من هُنا يُدار نادي أدِيب"
       >
         <Suspense fallback={<div className="aauth-form" aria-hidden />}>

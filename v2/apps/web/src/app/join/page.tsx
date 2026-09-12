@@ -1,75 +1,78 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Alert, Container, Footer, LandingHeading } from "@adeeb/design-system";
+import { Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { getSessionAdmin } from "@/lib/auth";
 import { isAdeebMember } from "@/lib/memberRecord";
-import { getJoinData } from "./data";
-import { JoinForm } from "./JoinForm";
+import { shareOg } from "@/lib/share";
+import { getCommittees, getViewerJoinState } from "./data";
+import { JoinView, type JoinStep } from "./JoinView";
 
-export const metadata: Metadata = { title: "الانضمام إلى أديب" };
+export const metadata: Metadata = {
+  title: "الانضمام إلى أديب",
+  description: "طريقُك إلى نادي أَدِيب: حسابٌ، ثمّ تطوّعٌ في لجانِنا، ثمّ عضويّةٌ تُهدى لمن رأينا عملَه.",
+  openGraph: shareOg({
+    title: "الانضمام إلى نادي أَدِيب",
+    description: "حسابٌ، ثمّ تطوّعٌ في لجانِنا، ثمّ عضويّةٌ تُهدى لمن رأينا عملَه.",
+  }),
+};
+
 export const dynamic = "force-dynamic";
 
 /**
- * **بابُ الانضمام الواحد.**
+ * **بابُ الانضمام الواحد — والقصّةُ تسبق الحساب.**
  *
- * زرُّ «انضمّ إلينا» في الرأس والهبوط يقصد هذا المسار وحده، والفرقُ يقع ههنا مرّةً واحدة —
- * وكلٌّ يُساق إلى منزلته:
+ * زرُّ «انضمّ إلينا» في الرأس والهبوط يقصد هذا المسار وحده، والفرقُ يقع ههنا مرّةً واحدة.
  *
- * (والرأسُ صار يعرف صاحبَه منذ ٢٠٢٦-٠٨-٢٥ فيُسقط الدعوةَ عمّن لا تعنيه، لكنّه يعرفه **في
- * المتصفّح بعد الترطيب** لا في الخادم — الصفحاتُ العامّةُ ساكنةٌ كما كانت. فالسَّوقُ يبقى
- * ههنا: هو الحارسُ الذي لا يعتمد على شيءٍ في يد المتصفّح.)
+ * **وكانت الصفحةُ مغلقةً على من له جلسة** (`if (!me) redirect("/signup?next=/join")`)، فصار
+ * وجهُ النادي للقادم الجديد **نموذجَ مصادقةٍ** لا يقول شيئًا: بريدٌ وكلمةُ مرورٍ تحت شعارِ
+ * «من هُنا يُدار نادي أدِيب». يُطلب الثمنُ قبل أن تُعرَض البضاعة. فقُلب الترتيبُ بقرار
+ * المالك (٢٠٢٦-٠٩-١٢): **تُفتح الصفحةُ للعموم**، ويقرأ الزائرُ الطريقَ واللجانَ أوّلًا، ثمّ
+ * يأتي الحسابُ **خطوةً في آخرها**. وثلاثةُ مكاسبَ تبعت: رابطٌ يُنشَر فيفتح على دعوةٍ لا على
+ * نموذج، ولجانٌ تُقرأ فتكون هي الإعلان، ومترّددٌ ينصرف بلا حسابٍ فارغٍ يتركه خلفه.
  *
- * | القاصد | يُساق إلى |
- * |---|---|
- * | بلا جلسة | `/signup` ثمّ يعود |
- * | عضوٌ في النادي | `/dashboard` — هو فوق هذه المحطّة لا دونها |
- * | صاحبُ حسابٍ بلا بيانات | هذه الشاشة، وأوّلُ خطوةٍ فيها بياناتُه |
- * | صاحبُ حسابٍ أو متطوّع | هذه الشاشة: يقدّم أو يعيد ترتيب رغباته |
+ * **والصفحةُ واحدةٌ لا أربع**: متنُها ثابتٌ للجميع (الطريقُ واللجان)، وآخرُها وحدَه يتبدّل
+ * بمنزلة قارئه — وكلٌّ يُساق إلى خطوته:
  *
- * **والبياناتُ تُسأل ههنا لا عند إنشاء الحساب** (قرار المالك ١٥ أغسطس ٢٠٢٦): الحسابُ يُفتح
- * بنقرةٍ من قوقل، فلا يُثقَل بابُه بستّة حقولٍ يهرب منها إلى المزوّد. وأوّلُ حاجةٍ حقيقيّة
- * إليها ههنا: لا متطوّعَ بلا جوّالٍ يُتواصل به ولا جنسٍ تُقاس به فرصُه.
+ * | القاصد | خطوتُه | آخرُ الصفحة |
+ * |---|---|---|
+ * | بلا جلسة | `account` | نموذجُ إنشاء الحساب (والمزوّدان فوقه) |
+ * | صاحبُ حسابٍ بلا بيانات | `data` | بياناتُه — لا متطوّعَ بلا جوّالٍ يُتواصل به ولا جنسٍ تُقاس به فرصُه |
+ * | صاحبُ حسابٍ لم يقدّم | `apply` | ترتيبُ الرغبات، وبه يصير متطوّعًا |
+ * | متطوّع | `edit` | الرغباتُ نفسُها يعيد ترتيبها |
+ * | عضوٌ في النادي | — | `/dashboard`: هو فوق هذه المحطّة لا دونها |
+ *
+ * **والبياناتُ تُسأل في `data` لا عند إنشاء الحساب** (قرار المالك ١٥ أغسطس ٢٠٢٦): الحسابُ
+ * يُفتح بنقرةٍ من قوقل، فلا يُثقَل بابُه بستّة حقولٍ يهرب منها إلى المزوّد.
  */
 export default async function JoinPage() {
   const me = await getSessionAdmin();
-  if (!me) redirect("/signup?next=/join");
-  if (await isAdeebMember(me.id)) redirect("/dashboard");
+  // العضوُ فوق هذه المحطّة لا دونها — ويُسأل قبل أيّ قراءةٍ أخرى فلا تُقرأ لمن لا يراها
+  if (me && (await isAdeebMember(me.id))) redirect("/dashboard");
 
-  const data = await getJoinData(me.id);
+  const [committees, viewer] = await Promise.all([
+    getCommittees(),
+    me ? getViewerJoinState(me.id) : Promise.resolve(null),
+  ]);
+
+  const step: JoinStep = !me
+    ? "account"
+    : !viewer?.hasProfile
+      ? "data"
+      : viewer.isVolunteer
+        ? "edit"
+        : "apply";
 
   return (
     <>
       <SiteHeader />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container>
-            <LandingHeading
-              eyebrow="العضويّة"
-              title="طريقُك إلينا"
-              deck="رتّب رغباتك في اللجان، فتصير من متطوّعي أدِيب. ومن رأينا عملَه في الفرص أهديناه العضويّة."
-              align="center"
-            />
-
-            <div style={{ marginTop: 32 }}>
-              {!data ? (
-                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص. أبلغ الإدارة.</Alert>
-              ) : data.options.length === 0 ? (
-                <Alert tone="warning" title="لا لجانَ متاحةً الآن">
-                  لم تُفتح لجانٌ لترتيب الرغبات بعد. تابِعنا.
-                </Alert>
-              ) : (
-                <JoinForm
-                  options={data.options}
-                  initialPrefs={data.prefs}
-                  isVolunteer={data.isVolunteer}
-                  hasProfile={data.hasProfile}
-                />
-              )}
-            </div>
-          </Container>
-        </section>
-      </main>
+      <JoinView
+        committees={committees}
+        step={step}
+        prefs={viewer?.prefs ?? []}
+        isVolunteer={!!viewer?.isVolunteer}
+        hasProfile={!!viewer?.hasProfile}
+      />
       <Footer />
     </>
   );

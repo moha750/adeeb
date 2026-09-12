@@ -99,9 +99,11 @@ export function SignupForm({ next }: { next: string }) {
 
       <Button type="submit" variant="primary" size="lg" loading={busy}>إنشاء الحساب</Button>
 
+      {/* **والوجهةُ تُحمَل إلى الدخول**: من قصد `/join` ثمّ تبيّن أنّ له حسابًا كان يُرمى بعد
+          دخوله إلى `/dashboard` وقد نسي البابُ ما جاء لأجله. فالرابطُ يحمل `next` معه. */}
       <p className="text-content-muted text-center text-sm">
         لك حسابٌ سلفًا؟{" "}
-        <Link className="font-bold underline" href="/login">سجّل الدخول</Link>
+        <Link className="font-bold underline" href={`/login?next=${encodeURIComponent(next)}`}>سجّل الدخول</Link>
       </p>
     </form>
   );

@@ -33,7 +33,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       <AuthShell
         title="إنشاء حساب"
         subtitle="حسابُك أوّلُ الطريق: منه تحجز برامجنا، ومنه تتقدّم للتطوّع ثمّ العضويّة."
-        slogan="بوابة أدِيب، من هُنا يُدار نادي أدِيب"
+        slogan="نادي أدِيب، حسابُك أوّلُ الطريق إلينا"
       >
         <Suspense fallback={<div className="aauth-form" aria-hidden />}>
           <SignupForm next={next} />
