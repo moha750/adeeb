@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@adeeb/design-system";
 import { AppleLogo, GoogleLogo } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
@@ -44,6 +44,34 @@ export function OAuthButtons({ next, onError }: { next: string; onError: (msg: s
   // اسمُ المزوّد لا `true`: الزرُّ المضغوط وحده يدور، وأخوه يبقى متاحًا حتى تُغادر الصفحة.
   const [busy, setBusy] = useState<string | null>(null);
 
+  /**
+   * **الدورانُ يعني «نحن مغادرون»، فإن بقينا فلا دوران** (٢٠٢٦-٠٩-١٤).
+   *
+   * كان الإطفاءُ معلّقًا على الفشل وحدَه، ظنًّا أنّ النجاح مغادرةٌ لا رجعةَ منها. ومن ضغط
+   * «المتابعة بحساب قوقل» ثمّ رجع من شاشة المزوّد (تراجعًا أو خروجًا بالخطأ) عادت الصفحةُ
+   * من ذاكرة الرجوع (bfcache) بحالتها كما تركها: الزرُّ يدور، و`disabled` معقودٌ على
+   * `loading` في `Button` — فيصير البابُ مغلقًا لا يُضغط إلّا بتحديثٍ يدويّ. وليست العلّةُ
+   * في متصفّحٍ بعينه: سفاري يحفظ الصفحة كذلك ولو حملت `no-store`.
+   *
+   * فالحدُّ ليس «هل فشل النداء؟» بل «هل ما زلنا هنا؟». وعودةُ الصفحة إلى الظهور جوابٌ
+   * قاطع: `pageshow` تُنادى عند الاستعادة من ذاكرة الرجوع، و`visibilitychange` تمسك ما
+   * فاتها (تبويبٌ رُجع إليه ولم يقع تنقّلٌ أصلًا). وضغطةٌ ثانيةٌ بعد إطفاءٍ في غير محلّه
+   * لا تضرّ: تحويلةٌ تغلب أختَها، والوجهةُ واحدة.
+   */
+  useEffect(() => {
+    const stop = () => setBusy(null);
+    const onShow = () => stop();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") stop();
+    };
+    window.addEventListener("pageshow", onShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("pageshow", onShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
   const start = ({ key: provider, params }: (typeof PROVIDERS)[number]) => {
     setBusy(provider);
     onError(null);
@@ -56,7 +84,8 @@ export function OAuthButtons({ next, onError }: { next: string; onError: (msg: s
           queryParams: params,
         },
       });
-      // النجاحُ مغادرةٌ إلى قوقل، فلا يُطفأ الدوران إلّا عند فشلٍ يبقينا في الصفحة.
+      // الفشلُ يُبقينا في الصفحة فيُطفأ فورًا. والنجاحُ مغادرةٌ يبقى الدورانُ معها،
+      // ويتكفّل حارسُ العودة أعلاه بإطفائه إن رجع صاحبُه من شاشة المزوّد.
       if (error) {
         onError(toArabicAuthError(error.message));
         setBusy(null);
