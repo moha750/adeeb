@@ -7,5 +7,4 @@
  *
  * وتغييرُه سطرٌ واحدٌ يُبدَّل ثمّ يُنشر.
  */
-export const VOLUNTEERS_GROUP_URL =
-  "https://chat.whatsapp.com/Bc8SaeivQXVBYzLoJS7Hc3?s=cl&p=i&ilr=4";
+export const VOLUNTEERS_GROUP_URL = "https://chat.whatsapp.com/CTPuxHneO76LQlEU0idM6g";
