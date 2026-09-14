@@ -4,5 +4,5 @@
   "regions": ["fra1"],
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "next build",
-  "crons": [{ "path": "/api/qr-alerts/drain", "schedule": "*/10 * * * *" }]
+  "crons": [{ "path": "/api/qr-alerts/drain", "schedule": "0 5 * * *" }]
 }
