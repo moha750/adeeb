@@ -18,6 +18,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: shareOg({
       title: n.title,
       description: n.summary ?? undefined,
+      // غلافُ الخبر هو وجهُ رابطه، وثَمْبنيلُ أدِيب سقفٌ لمن لا غلافَ له.
+      images: n.cover ? [n.cover] : undefined,
       type: "article",
       publishedTime: n.publishedAt ?? undefined,
     }),

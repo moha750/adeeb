@@ -20,12 +20,20 @@ export const SHARE_IMAGE = {
 
 type OpenGraph = NonNullable<Metadata["openGraph"]>;
 
-/** يلفّ كتلةَ `openGraph` للصفحة فيزيدها صورةَ أدِيب واسمَ الموقع ولغتَه. */
+/**
+ * يلفّ كتلةَ `openGraph` للصفحة فيزيدها اسمَ الموقع ولغتَه وصورتَه.
+ *
+ * **والصورةُ سقفٌ لا قيد:** صفحةٌ لها وجهٌ من عندها تمرّره في `images` فيفوز
+ * (الخبرُ بغلافه: قرارُ المالك ٢٠٢٦-٠٩-١٧، فالغلافُ يقول موضوعَ الخبر قبل
+ * عنوانه، ولولاه صارت ثلاثةُ أخبارٍ تُنشَر بطاقةً واحدةً مكرّرة). ومن لا وجهَ
+ * لها تمرّر `undefined` أو لا تمرّر شيئًا فتنال ثَمْبنيلَ أدِيب.
+ */
 export function shareOg<T extends OpenGraph>(og: T) {
+  const { images, ...rest } = og as OpenGraph;
   return {
     siteName: "نادي أَدِيب",
     locale: "ar_SA",
-    ...og,
-    images: [SHARE_IMAGE],
+    ...rest,
+    images: images ?? [SHARE_IMAGE],
   };
 }
