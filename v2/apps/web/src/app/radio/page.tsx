@@ -36,6 +36,9 @@ export async function generateMetadata() {
     openGraph: shareOg({
       title: station.name,
       description,
+      // رسمُ المالك (٢٠٢٦-٠٩-١٨) بمقاسه المربّع كما أراد: تيليجرام يعرضه كاملًا،
+      // وإكس يقصّه إلى ١٫٩١:١، وواتساب يصغّره إلى مربّعٍ بجانب العنوان.
+      images: ["/share/radio.png"],
       type: "website",
       siteName: "إذاعة أدِيب",
     }),
