@@ -12,7 +12,7 @@ import type { Metadata } from "next";
  * صفحةٍ تلفّ كتلتَها بـ`shareOg` فتنالها بلا أن تُعيد كتابةَ مسارها.
  */
 export const SHARE_IMAGE = {
-  url: "/brand/share.png",
+  url: "/share/adeeb.png",
   width: 1200,
   height: 630,
   alt: "نادي أَدِيب",
