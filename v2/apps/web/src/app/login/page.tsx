@@ -26,7 +26,8 @@ export const metadata: Metadata = {
  */
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const me = await getSessionAdmin();
-  if (me) redirect(safeNext((await searchParams).next));
+  const { next } = await searchParams;
+  if (me) redirect(safeNext(next));
 
   return (
     <main>
@@ -42,7 +43,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {/* بابُ من لا حساب له — فُتح مع طريق العضويّة (١٥ أغسطس ٢٠٢٦) */}
         <p className="text-content-muted text-center text-sm">
           ليس لك حساب؟{" "}
-          <Link className="font-bold underline" href="/signup">أنشئ حسابًا</Link>
+          {/* الوجهةُ تعبر إلى التسجيل: من جاء من «ركضة وطن» ليحفظ تقدّمه يعود إليها بعد إنشاء
+              حسابه، لا إلى `/join` (وجهةِ التسجيل الافتراضيّة). */}
+          <Link className="font-bold underline" href={next ? `/signup?next=${encodeURIComponent(safeNext(next))}` : "/signup"}>
+            أنشئ حسابًا
+          </Link>
         </p>
 
         {/* المخرج: عودةٌ إلى الموقع لمن حطّ هنا بلا حساب — نمطُ زرّ‑الرابط المتّبع في اللوحة */}

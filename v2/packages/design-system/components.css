@@ -11921,3 +11921,292 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   .sbi-thumb { transition: top var(--dur-fast) linear; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ركضة وطن — اللغةُ البصريّة `.wtn-*`
+   ────────────────────────────────────────────────────────────────────
+   **الإذنُ ونطاقُه بكلمة المالك (٢٠٢٦-٠٩-٢٤):** سُئل عن هويّة صفحات اللعبة
+   فاختار «هويّةٌ مستقلّةٌ مثل المحطّة». فهذا البرنامجُ الثاني الذي يدخل
+   استثناءَ القاعدة ١ باسمه، ونطاقُه مسارُ اللعبة وحدَه. **ولا يظهر اسمُ
+   النادي فيه بأيّ صورة** (قرارٌ سابقٌ للمالك في اللعبة نفسِها).
+
+   **واللوحةُ تُشتقّ ولا تُخترَع:** ليس للعبة شعارٌ بعد، فعلامتُها ما يراه
+   اللاعبُ فيها. فالليلُ والحبرُ من واجهتها (`g3.html :root`) حرفًا بحرف،
+   والأخضرُ بدلةُ خضيران، والمصّاصُ لونُ حلواه، والرملُ والسماءُ من نهار
+   طريقها (`sand tint` و`hemiS`)، والنحاسيُّ لونُ غروبها (`fog` عند الغسق).
+   فلا لونَ هنا لم يمرّ على شاشة اللعبة.
+
+   **والمصدرُ الواحد قائمٌ داخل الاستثناء:** كلُّ هكسٍ في كتلة الرموز أدناه،
+   ولا لونَ حرفيٌّ في قاعدةٍ بعدها ولا في صفحة.
+
+   **والصدارةُ اسمٌ مستعارٌ ورقمٌ فقط.** ولا يُجمع رقمُ جوّالٍ أصلًا (قرارُ
+   المالك ٢٠٢٦-٠٩-٢٤ بعد انسحاب الراعي). والثلاثةُ الأوائل يتميّزون بلا ذكرٍ
+   لجائزة، والفائزُ يُعلَن باسمه المستعار في منشور.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.wtn {
+  /* الليل: أرضيّةُ اللعبة وألواحُها وحبرُها كما هي */
+  --wtn-night: #10170F;
+  --wtn-night-2: #1B241A;
+  --wtn-night-3: #243022;
+  --wtn-night-rule: #2B3829;
+  --wtn-moon: #EDF3E9;
+  --wtn-moon-2: #AFC0A8;
+  --wtn-moon-3: #7E9076;
+  /* البدلةُ والمصّاص */
+  --wtn-suit: #4FA547;
+  --wtn-suit-lit: #7ED06A;
+  --wtn-suit-deep: #37742F;
+  --wtn-candy: #2FB35A;
+  --wtn-stick: #F3EFE6;
+  --wtn-white: #FFFFFF;
+  /* النهار: رملُ الطريق مفتوحًا درجتين، وسماؤه */
+  --wtn-sand: #F7F1E4;
+  --wtn-sand-2: #EDE3CE;
+  --wtn-sand-3: #D8C9A6;
+  --wtn-paper: #FFFCF5;
+  --wtn-sky: #A8CBE6;
+  --wtn-ink: #10170F;
+  --wtn-ink-2: #4A5A44;
+  --wtn-ink-3: #75836C;
+  /* الأوسمة: الذهبُ ذهبُ اللعبة، والفضّةُ حبرُها الثاني، والنحاسُ غروبُها.
+     ولكلٍّ حبرٌ أعمقُ للنصّ على الرمل، لأنّ الذهبَ الفاتح على الرمل لا يُقرأ. */
+  --wtn-gold: #D8A850;
+  --wtn-gold-ink: #8C6519;
+  --wtn-silver: #AFC0A8;
+  --wtn-silver-ink: #5F6F5A;
+  --wtn-bronze: #CFA58C;
+  --wtn-bronze-ink: #8E5A3C;
+
+  --wtn-r: 22px;
+  --wtn-r-sm: 14px;
+  --wtn-s1: 6px;
+  --wtn-s2: 10px;
+  --wtn-s3: 16px;
+  --wtn-s4: 24px;
+  --wtn-s5: 36px;
+  --wtn-pad: 20px;
+
+  container-type: inline-size;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+.wtn *, .wtn *::before, .wtn *::after { box-sizing: border-box; }
+.wtn :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.wtn :where(a) { color: inherit; text-decoration: none; }
+.wtn :where(h1, h2, h3, p, ol, ul) { margin: 0; padding: 0; }
+.wtn :where(ol, ul) { list-style: none; }
+.wtn :focus-visible { outline: 2px solid var(--wtn-suit-lit); outline-offset: 3px; border-radius: 8px; }
+.wtn ::selection { background: color-mix(in oklab, var(--wtn-suit) 30%, transparent); color: inherit; }
+
+/* الأرقامُ متساويةُ العرض: عمودُ القيم يصطفّ ولا يتراقص حين يتبدّل ترتيب */
+.wtn-num { font-variant-numeric: tabular-nums; }
+.wtn-unit { font-size: .72em; font-weight: 700; margin-inline-start: 3px; }
+
+/* المصّاصُ رسمُ اللعبة نفسُه (عدّادُ الشاشة)، لا أيقونةٌ من مكتبة: هو علامتُها.
+   `inline-block` صراحةً لأنّ تمهيدَ Tailwind يجعل كلَّ svg كتلةً فينزل الرقمُ تحته.
+   وعودُه وقرصُه رمزان يُقلَبان بالسطح (`--stick` و`--candy`): عودٌ فاتحٌ يختفي
+   على الرمل، وقرصٌ أخضرُ يذوب في أخضر «أنت». */
+.wtn-lolli { display: inline-block; inline-size: 1.05em; block-size: 1.05em; flex: 0 0 auto; stroke-linecap: round; vertical-align: -.16em; margin-inline-end: 1px; }
+.wtn-lolli .st { fill: none; stroke: var(--stick, var(--wtn-stick)); stroke-width: 2.4; }
+.wtn-lolli .cd { fill: var(--candy, var(--wtn-candy)); stroke: var(--wtn-white); stroke-width: 1.2; }
+.wtn-lolli .sw { fill: none; stroke: var(--wtn-white); stroke-width: 1.6; }
+
+/* الاسم: «ركضة» حبرٌ و«وطن» أخضر. كلمةٌ لا شعار، إلى أن يُرسم للعبة شعار */
+.wtn-mark { font-family: var(--font-display); font-weight: 900; font-size: 1.1875rem; letter-spacing: -.01em; white-space: nowrap; }
+
+/* ══ إطارُ المعاينة (لا ينزل الإنتاج) ═════════════════════════ */
+.wtnp-frame {
+  position: relative; margin-inline: auto; overflow: hidden;
+  border-radius: 30px; border: 1px solid var(--card-stroke); box-shadow: var(--shadow-lg);
+}
+.wtnp-scroll { height: 100%; overflow-y: auto; scrollbar-width: none; }
+.wtnp-scroll::-webkit-scrollbar { display: none; }
+
+/* ══ لوحةُ الصدارة `.wtna-*` ══════════════════════════════════════
+   اختارها المالك (٢٠٢٦-٠٩-٢٤: «أريد تصميم أ ولكن يكون منه ليلي ونهاري»).
+   والثلاثةُ على منصّةٍ **تنبت من القائمة** لا تطفو فوقها: لونُ أسفل الأعمدة
+   لونُ لوح القائمة نفسُه.
+
+   **ليلٌ ونهارٌ بتصميمٍ واحد:** القواعدُ لا تسمّي لونًا من اللوحة، وإنّما
+   **أدوارًا** (`--a-*`: أرضيّةٌ ولوحٌ وحبرٌ وأوسمة). والليلُ يملؤها افتراضًا،
+   و`[data-sky="day"]` يملؤها من النهار. فكلُّ ما يُضاف بعدُ يُكتب مرّةً ويصحّ
+   في الضوءين، ولا نسخةَ ثانيةً لقاعدة. */
+.wtna {
+  --a-ground: var(--wtn-night);
+  --a-glow: color-mix(in oklab, var(--wtn-suit) 30%, transparent);
+  --a-sheet: var(--wtn-night-2);
+  --a-raise: var(--wtn-night-3);
+  --a-sunk: var(--wtn-night);
+  --a-well: var(--wtn-night-2);
+  --a-row: color-mix(in oklab, var(--wtn-moon) 4%, transparent);
+  --a-rule: var(--wtn-night-rule);
+  --a-ink: var(--wtn-moon);
+  --a-ink-2: var(--wtn-moon-2);
+  --a-ink-3: var(--wtn-moon-3);
+  --a-mark: var(--wtn-suit-lit);
+  --a-on: var(--wtn-moon);
+  --a-on-ink: var(--wtn-night);
+  --a-on-stick: var(--wtn-ink-3);
+  --a-gold: var(--wtn-gold);         --a-gold-ink: var(--wtn-gold);
+  --a-silver: var(--wtn-silver);     --a-silver-ink: var(--wtn-silver);
+  --a-bronze: var(--wtn-bronze);     --a-bronze-ink: var(--wtn-bronze);
+  --stick: var(--wtn-stick);
+  background: var(--a-ground); color: var(--a-ink);
+}
+/* النهار: الرملُ أرضيّةٌ والورقُ لوح، والسماءُ مكانَ وهج الأخضر. والأوسمةُ
+   تبقى ألوانًا للحلقات والأعمدة، ويُكتب رقمُها بحبرها الأعمق. */
+.wtna[data-sky="day"] {
+  --a-ground: var(--wtn-sand);
+  --a-glow: color-mix(in oklab, var(--wtn-sky) 78%, transparent);
+  --a-sheet: var(--wtn-paper);
+  --a-raise: var(--wtn-paper);
+  --a-sunk: var(--wtn-sand-2);
+  --a-well: var(--wtn-paper);
+  --a-row: color-mix(in oklab, var(--wtn-sand-3) 22%, transparent);
+  --a-rule: var(--wtn-sand-2);
+  --a-ink: var(--wtn-ink);
+  --a-ink-2: var(--wtn-ink-2);
+  --a-ink-3: var(--wtn-ink-3);
+  --a-mark: var(--wtn-suit-deep);
+  --a-on: var(--wtn-night);
+  --a-on-ink: var(--wtn-sand);
+  --a-on-stick: var(--wtn-moon-2);
+  --a-gold-ink: var(--wtn-gold-ink);
+  --a-silver-ink: var(--wtn-silver-ink);
+  --a-bronze-ink: var(--wtn-bronze-ink);
+  --stick: var(--wtn-ink-3);
+}
+
+.wtna-page {
+  min-height: 100%; display: flex; flex-direction: column;
+  background: radial-gradient(130% 46% at 50% -8%, var(--a-glow) 0%, transparent 62%), var(--a-ground);
+}
+.wtna-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px var(--wtn-pad) 0; }
+.wtna .wtn-mark b { color: var(--a-mark); font-weight: 900; }
+.wtna-play {
+  display: inline-flex; align-items: center; gap: 6px; block-size: 38px; padding-inline: 16px 14px;
+  border-radius: 999px; background: var(--wtn-suit); color: var(--wtn-night);
+  font-weight: 800; font-size: .875rem;
+}
+.wtna-play svg { inline-size: 18px; block-size: 18px; }
+
+.wtna-hero { padding: var(--wtn-s4) var(--wtn-pad) 0; }
+.wtna-hero h1 { font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.15; }
+.wtna-hero p { margin-top: var(--wtn-s1); font-size: .8125rem; color: var(--a-ink-3); }
+
+.wtna-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: var(--wtn-s3);
+  padding: 4px; border-radius: 999px; background: var(--a-well); border: 1px solid var(--a-rule);
+}
+.wtna-tab {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; block-size: 40px;
+  border-radius: 999px; color: var(--a-ink-2); font-weight: 700; font-size: .875rem;
+  transition: background .2s, color .2s;
+}
+.wtna-tab svg { inline-size: 18px; block-size: 18px; }
+.wtna-tab[aria-pressed="true"] { background: var(--a-on); color: var(--a-on-ink); font-weight: 800; --stick: var(--a-on-stick); }
+
+/* المنصّة: الترتيبُ في الورقة ٢ ثمّ ١ ثمّ ٣، فيقع الأوّلُ في الوسط والثاني عن يمينه */
+.wtna-pod {
+  display: grid; grid-template-columns: 1fr 1.16fr 1fr; align-items: end; gap: 8px;
+  margin-top: var(--wtn-s5); padding-inline: var(--wtn-pad);
+}
+.wtna-step { --medal: var(--a-silver); --medal-ink: var(--a-silver-ink); --lift: 78px; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.wtna-step[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); --lift: 108px; }
+.wtna-step[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); --lift: 60px; }
+.wtna-crown { color: var(--a-gold); inline-size: 28px; block-size: 28px; margin-bottom: 2px; }
+.wtna-av {
+  display: grid; place-items: center; inline-size: 54px; block-size: 54px; border-radius: 50%;
+  background: var(--a-raise); border: 2.5px solid var(--medal);
+  font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; color: var(--medal-ink);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--medal) 16%, transparent);
+}
+.wtna-step[data-rank="1"] .wtna-av { inline-size: 66px; block-size: 66px; font-size: 1.625rem; }
+.wtna-who {
+  max-width: 100%; margin-top: 9px; font-weight: 800; font-size: .875rem; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wtna-val { margin-top: 2px; font-weight: 800; font-size: .9375rem; color: var(--medal-ink); white-space: nowrap; }
+.wtna-val .wtn-unit { color: var(--a-ink-3); }
+.wtna-block {
+  inline-size: 100%; block-size: var(--lift); margin-top: 10px;
+  display: grid; justify-items: center; align-content: start; padding-top: 8px;
+  border-radius: 16px 16px 0 0; border-top: 2px solid var(--medal);
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--medal) 28%, var(--a-sheet)) 0%, var(--a-sheet) 88%);
+  font-family: var(--font-display); font-weight: 900; font-size: 1.875rem; line-height: 1; color: var(--medal-ink);
+}
+
+/* القائمةُ لوحٌ واحدٌ تخرج منه المنصّة */
+.wtna-sheet { flex: 1; padding: var(--wtn-s3) var(--wtn-pad) var(--wtn-s4); background: var(--a-sheet); }
+.wtna-list { display: flex; flex-direction: column; gap: 6px; }
+.wtna-row {
+  display: grid; grid-template-columns: 26px 36px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  block-size: 56px; padding-inline: 10px 14px; border-radius: var(--wtn-r-sm); background: var(--a-row);
+}
+.wtna-rk { text-align: center; font-weight: 800; font-size: .9375rem; color: var(--a-ink-3); }
+.wtna-mini {
+  display: grid; place-items: center; inline-size: 36px; block-size: 36px; border-radius: 50%;
+  background: var(--a-sunk); color: var(--a-ink-2);
+  font-family: var(--font-display); font-weight: 900; font-size: 1rem;
+}
+.wtna-name { font-weight: 700; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wtna-num { font-weight: 800; font-size: .9375rem; white-space: nowrap; }
+.wtna-num .wtn-unit { color: var(--a-ink-3); }
+.wtna-more {
+  display: flex; align-items: center; justify-content: center; gap: 6px; inline-size: 100%; block-size: 46px;
+  margin-top: var(--wtn-s2); border-radius: var(--wtn-r-sm); color: var(--a-ink-2); font-weight: 700; font-size: .875rem;
+  border: 1px solid var(--a-rule);
+}
+.wtna-more svg { inline-size: 16px; block-size: 16px; }
+.wtna-fine { margin-top: var(--wtn-s4); font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); text-align: center; }
+
+/* ══ في الإنتاج (`app/watan/layout.tsx`): الجذرُ يملأ الشاشة والعمودُ في وسطها ══
+   والمؤشّرُ يلبس أخضرَ البدلة لا حبرَ النادي (`data-cursor-ink` على الجذر). */
+.wtn-root { min-height: 100dvh; --cur-ink: var(--wtn-suit); --cur-on-dark: var(--wtn-moon); }
+.wtn-root .wtna-page { max-width: 36rem; margin-inline: auto; min-height: 100dvh; }
+
+/* مكانٌ شاغرٌ على المنصّة (أقلُّ من ثلاثة لاعبين): العمودُ قائمٌ فلا يختلّ الشكل */
+.wtna-step[data-empty] { opacity: .5; }
+.wtna-step[data-empty] .wtna-av { border-style: dashed; }
+/* اسمُك إن كان في القائمة أو على المنصّة */
+.wtna-step[data-me] .wtna-who { color: var(--a-mark); }
+.wtna-row[data-me] {
+  background: color-mix(in oklab, var(--wtn-suit) 16%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wtn-suit) 55%, transparent);
+}
+
+/* اللوحةُ فارغة (قبل أوّل جولة) أو تعذّرت قراءتُها */
+.wtna-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--wtn-s2);
+  margin: var(--wtn-s5) var(--wtn-pad) 0; padding: var(--wtn-s5) var(--wtn-s4) var(--wtn-s4);
+  border-radius: var(--wtn-r) var(--wtn-r) 0 0; background: var(--a-sheet); text-align: center;
+}
+.wtna-empty > .wtn-lolli { inline-size: 46px; block-size: 46px; }
+.wtna-empty b { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; }
+.wtna-empty p { font-size: .875rem; color: var(--a-ink-3); }
+.wtna-empty .wtna-play { margin-top: var(--wtn-s2); }
+
+/* سطرُ الصانع أسفلَ اللوحة، هادئٌ لا يزاحم. ويأخذ لونَ القائمة إن تلاها فيبدو ذيلًا لها،
+   وفي اللوحة الفارغة يقع على الأرضيّة نفسِها فلا يصير شريطًا */
+.wtna-credit { padding: var(--wtn-s3) var(--wtn-pad) 0; text-align: center; font-size: .75rem; color: var(--a-ink-3); }
+.wtna-sheet + .wtna-credit { background: var(--a-sheet); }
+
+/* «أنت»: ملازمٌ في الأسفل، والأخضرُ لك وحدك في الصفحة كلّها، ليلًا ونهارًا */
+.wtna-me {
+  position: sticky; bottom: 0; z-index: 2; padding: 18px var(--wtn-pad) 14px;
+  background: linear-gradient(to top, var(--a-sheet) 62%, color-mix(in oklab, var(--a-sheet) 0%, transparent));
+}
+.wtna-me-in {
+  --stick: var(--wtn-night); --candy: var(--wtn-night);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 10px 16px; border-radius: 18px; background: var(--wtn-suit); color: var(--wtn-night);
+  box-shadow: 0 10px 28px -10px color-mix(in oklab, var(--wtn-suit) 70%, transparent);
+}
+.wtna-me-rk { font-family: var(--font-display); font-weight: 900; font-size: 1.625rem; line-height: 1; }
+.wtna-me-who b { display: block; font-weight: 800; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wtna-me-who span { display: block; font-size: .75rem; font-weight: 700; opacity: .72; }
+.wtna-me-val { font-weight: 900; font-size: 1rem; white-space: nowrap; }
+/* زائرٌ لم يسجّل: الشريطُ نفسُه بابٌ إلى اللعبة */
+.wtna-me-in[data-out] { grid-template-columns: auto minmax(0, 1fr); color: var(--wtn-night); }
+.wtna-me-in[data-out] .wtna-me-rk svg { display: block; inline-size: 26px; block-size: 26px; }

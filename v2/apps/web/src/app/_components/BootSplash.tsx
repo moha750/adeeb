@@ -92,6 +92,10 @@ export function BootSplash() {
 
   // بعد التلاشي تُنزع من الشجرة — لا طبقةَ ثابتة تبقى تستهلك التركيب بلا داعٍ.
   if (gone) return null;
+  // **ولا شاشةَ لأدِيب في «ركضة وطن»**: هويّتُها منعزلةٌ كالمحطّة، وشاشةُ البدء شعارُ النادي
+  // (واسمُه في اللعبة موضعان قرّرهما المالك لا ثالثَ لهما). والصفحةُ هناك خفيفةٌ مرسومةٌ من
+  // الخادم فلا تستر شيئًا.
+  if (pathname === "/watan" || pathname?.startsWith("/watan/")) return null;
 
   return <LogoLoader fixed dismissed={dismissed} size={150} className="ldr-boot" label="جارٍ فتح الموقع…" />;
 }
