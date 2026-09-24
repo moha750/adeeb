@@ -2,23 +2,67 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, CardBody, Field, Modal, Segmented, Select, Textarea } from "@adeeb/design-system";
+import {
+  BarList, Button, Donut, Modal, Segmented, SectionCard, Select, Stat, Textarea,
+} from "@adeeb/design-system";
 import { EmptyState } from "../../_components/EmptyState";
-import { HandHeart } from "@phosphor-icons/react";
-import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
+import { Certificate, HandHeart, MapPin, SignIn, Users, UsersThree } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 import { PageHeader } from "../../_components/PageHeader";
+import { Toolbar } from "../../_components/Toolbar";
 import { useToast } from "../../_components/ToastProvider";
 import { endVolunteering, grantMembership } from "../actions";
 import type { VolunteerRow } from "../data";
+import { VolunteerCard } from "./VolunteerCard";
+import { VolunteerHero, VolunteerRecord } from "./VolunteerRecord";
 import { copyText } from "@/lib/clipboard";
 
 type Ask = { kind: "grant" | "end"; row: VolunteerRow } | null;
+
+const VOL_UNIT = { one: "متطوّع", two: "متطوّعان", few: "متطوّعين" };
+
+/**
+ * تطبيعُ اسم المدينة للعدّ وحده: الهمزاتُ تُوحَّد والتاءُ المربوطة والتطويل، فـ«الاحساء»
+ * و«الأحساء» و«الإحساء» صفٌّ واحدٌ في المخطّط. والمعروضُ أكثرُ الرسوم ورودًا لا المطبَّع،
+ * فالشاشةُ تعدّ ولا تصحّح ما كتبه صاحبُه (تصحيحُ الصفوف قرارٌ آخر).
+ */
+function cityKey(name: string): string {
+  return name
+    .replace(/ـ/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tally(values: string[]): { label: string; value: number }[] {
+  const groups = new Map<string, Map<string, number>>();
+  for (const v of values) {
+    const k = cityKey(v);
+    const forms = groups.get(k) ?? new Map<string, number>();
+    forms.set(v, (forms.get(v) ?? 0) + 1);
+    groups.set(k, forms);
+  }
+  return [...groups.values()]
+    .map((forms) => {
+      const total = [...forms.values()].reduce((n, x) => n + x, 0);
+      const label = [...forms.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      return { label, value: total };
+    })
+    .sort((a, b) => b.value - a.value);
+}
 
 /**
  * **سجلُّ المتطوّعين** — غيرُ سجلّ الفرصة: ذاك واقعةٌ واحدة، وهذا مسيرةُ المتطوّع كلُّها.
  *
  * ومنه فعلان: **الإهداءُ** (عضويّةٌ ومنصبٌ في فعلٍ واحد، واللجنةُ المقترحةُ رغبتُه الأولى)،
  * و**إنهاءُ التطوّع** بسببٍ مكتوب. والترشيحُ بالرغبة هو ما تسأل عنه الموارد حين ينقصها أعضاء.
+ *
+ * والكرتُ ملخّصٌ لا سجلّ: كلُّ ما سجّلته القاعدةُ عن المتطوّع يُفتَح من زرّ «السجلّ الكامل»
+ * (أمرُ المالك ٢٠٢٦-٠٩-٢٤)، فالكرتُ الضيّقُ لا تُزاد عليه ثلاثون صفًّا.
+ *
+ * وكرتُ الإحصاء **يصف ما تراه لا ما في القاعدة كلِّها**: يُحسَب من الكشف بعد التبويب والنخل،
+ * فإن رشّحتَ لجنةً قال لك إحصاءَها وحدَها.
  */
 export function VolunteersView({ rows, committees }: {
   rows: VolunteerRow[];
@@ -31,18 +75,60 @@ export function VolunteersView({ rows, committees }: {
   const [pref, setPref] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [ask, setAsk] = useState<Ask>(null);
+  const [record, setRecord] = useState<VolunteerRow | null>(null);
   const [committee, setCommittee] = useState("");
   const [reason, setReason] = useState("");
 
-  const shown = useMemo(
-    () =>
-      rows.filter((r) => {
-        if (r.status !== tab) return false;
-        if (pref && r.prefs[0]?.id !== Number(pref)) return false;
-        if (search.trim() && !r.name.includes(search.trim()) && !r.phone.includes(search.trim())) return false;
-        return true;
-      }),
-    [rows, tab, pref, search],
+  /**
+   * النخلُ **بأيّ رغبة** لا بالأولى وحدَها (بكلمة المالك ٢٠٢٦-٠٩-٢٤): من ذكر لجنتَك ثانيةً
+   * أو ثالثةً راغبٌ فيها، وإسقاطُه ظلمٌ له وحرمانٌ للّجنة من يدٍ تريدها.
+   *
+   * والأفضليّةُ لا تضيع بذلك: الناتجُ **يُرتَّب برتبة اللجنة عندك** (أصحابُ الأولى أوّلًا)،
+   * والكرتُ يعرض شاراتِ الرغبات مرقَّمةً كما هي. فالرتبةُ تُقرأ ولا تَحجُب.
+   */
+  const shown = useMemo(() => {
+    const wanted = pref ? Number(pref) : null;
+    const rank = (r: VolunteerRow) => {
+      const i = r.prefs.findIndex((p) => p.id === wanted);
+      return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    const list = rows.filter((r) => {
+      if (r.status !== tab) return false;
+      if (wanted != null && rank(r) === Number.MAX_SAFE_INTEGER) return false;
+      const q = search.trim();
+      // البحثُ يبلغ البريدَ والمدينة أيضًا، فالكشفُ صار يحملهما
+      if (q && !r.name.includes(q) && !r.phone.includes(q)
+        && !r.email.toLowerCase().includes(q.toLowerCase()) && !(r.city ?? "").includes(q)) return false;
+      return true;
+    });
+    return wanted == null ? list : [...list].sort((a, b) => rank(a) - rank(b));
+  }, [rows, tab, pref, search]);
+
+  const stats = useMemo(() => {
+    const sum = (f: (r: VolunteerRow) => number) => shown.reduce((n, r) => n + f(r), 0);
+    const female = shown.filter((r) => r.gender === "female").length;
+    const male = shown.filter((r) => r.gender === "male").length;
+    return {
+      count: shown.length,
+      female,
+      male,
+      certificates: sum((r) => r.certificates),
+      seen: shown.filter((r) => r.seenLast30).length,
+      genders: [
+        { label: "فتيات", value: female },
+        { label: "شباب", value: male },
+        { label: "غير محدَّد", value: shown.length - female - male },
+      ].filter((g) => g.value > 0),
+      prefs: tally(shown.map((r) => r.prefs[0]?.name ?? "").filter(Boolean)),
+      cities: tally(shown.map((r) => r.city ?? "").filter(Boolean)),
+      noCity: shown.filter((r) => !r.city).length,
+    };
+  }, [shown]);
+
+  // مفتاحُ `committee` لا اسمٌ جديد : رمزُ البُعد يُشتقّ من المفتاح في `filterIcons` (مصدرٌ واحد)
+  const prefFilter = useMemo(
+    () => [{ key: "committee", label: "الرغبة", options: committees.map((c) => ({ value: String(c.id), label: c.name })) }],
+    [committees],
   );
 
   const copyPhones = async () => {
@@ -82,8 +168,10 @@ export function VolunteersView({ rows, committees }: {
         action={{ label: "نسخُ الأرقام", onClick: copyPhones }}
       />
 
-      <div className="flex flex-wrap items-end gap-3" style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16 }}>
+        {/* ممتدٌّ على الصفّ : الخيارُ هنا هو الشاشةُ نفسُها (كشفٌ أم كشف)، لا زينةُ ركن */}
         <Segmented
+          wide
           items={[
             { value: "active", label: "متطوّعون" },
             { value: "former", label: "سابقون" },
@@ -91,63 +179,81 @@ export function VolunteersView({ rows, committees }: {
           value={tab}
           onValueChange={(v) => setTab(v as "active" | "former")}
         />
-        <Select
-          label="الرغبة الأولى"
-          options={[{ value: "", label: "كلُّ اللجان" }, ...committees.map((c) => ({ value: String(c.id), label: c.name }))]}
-          value={pref}
-          onValueChange={setPref}
-        />
-        <Field label="بحث" icon={<MagnifyingGlass />} innerIcon={<MagnifyingGlass />} placeholder="اسم أو جوّال"
-          value={search} onChange={(e) => setSearch(e.target.value)} optional />
       </div>
+
+      {/* ثلاثٌ في صفٍّ واحد (قاعدةُ `.stat-grid`)، بلا ملحوظةٍ تحت الرقم : حلقةُ الجنس أسفلُ تقولها */}
+      <div className="stat-grid" style={{ marginBottom: 18 }}>
+        <Stat
+          icon={<HandHeart />}
+          value={stats.count}
+          label={tab === "active" ? "متطوّعٌ نشط" : "متطوّعٌ سابق"}
+        />
+        <Stat icon={<Certificate />} value={stats.certificates} label="شهادةُ مشاركةٍ صادرة" tone="success" />
+        <Stat
+          icon={<SignIn />}
+          value={stats.seen}
+          label="دخل في آخر ثلاثين يومًا"
+          tone={stats.seen > 0 ? "brand" : "danger"}
+        />
+      </div>
+
+      <div className="st-grid2" style={{ marginBottom: 18 }}>
+        <SectionCard title="الرغبةُ الأولى" icon={<UsersThree />}>
+          <BarList items={stats.prefs} total={stats.count} unit={VOL_UNIT} empty="لا رغباتٍ مرتَّبةً في هذا الكشف." />
+        </SectionCard>
+        <SectionCard title="المدن" icon={<MapPin />}>
+          <BarList
+            items={stats.cities}
+            total={stats.count}
+            unit={VOL_UNIT}
+            empty="لا مدينةَ مكتوبةً في هذا الكشف."
+          />
+        </SectionCard>
+      </div>
+
+      <SectionCard title="الجنس" icon={<Users />} style={{ marginBottom: 18 }}>
+        <Donut items={stats.genders} unit={VOL_UNIT} empty="لا متطوّعين في هذا الكشف." />
+      </SectionCard>
+
+      <Toolbar
+        searchPlaceholder="اسم أو جوّال أو بريد"
+        search={search}
+        onSearch={setSearch}
+        filters={prefFilter}
+        filterValues={{ committee: pref }}
+        onFilter={(_k, v) => setPref(v)}
+      />
 
       {shown.length === 0 ? (
         <EmptyState variant="soft" icon={<HandHeart />} title="لا متطوّعين هنا"
           description="من قدّم للعضويّة ورتّب رغباته ظهر في هذا الكشف." />
       ) : (
-        <div className="flex flex-col gap-4">
+        // شبكةٌ بعمودين على الحاسوب وعمودٍ على الجوّال : الكرتُ صفٌّ عريضٌ لا مربّع
+        <div className="card-grid card-grid-2col">
           {shown.map((r) => (
-            <Card key={r.userId}>
-              <CardBody className="flex flex-col gap-3 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-col">
-                    <span className="font-bold">{r.name}</span>
-                    <span className="text-content-muted text-sm" dir="ltr">{r.phone}</span>
-                  </div>
-                  <span className="text-content-muted text-sm">{`تطوّع منذ ${r.appliedAt}`}</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {r.prefs.map((p, i) => (
-                    <Badge key={p.id} tone={i === 0 ? "success" : "neutral"}>{`${i + 1}. ${p.name}`}</Badge>
-                  ))}
-                </div>
-
-                <div className="text-content-muted flex flex-wrap items-center gap-4 text-sm">
-                  <span>{`قدّم ${r.applied}`}</span>
-                  <span>{`قُبل ${r.accepted}`}</span>
-                  <span>{`حضر ${r.attended}`}</span>
-                  <span>{`غاب ${r.absent}`}</span>
-                  <span>{`شهادات ${r.certificates}`}</span>
-                </div>
-
-                {r.status === "former" && r.endReason ? (
-                  <p className="text-content-muted text-sm">انتهى تطوّعه: {r.endReason}</p>
-                ) : null}
-
-                {r.status === "active" ? (
-                  <div className="btn-row">
-                    <Button variant="primary" size="sm" loading={busy === r.userId} onClick={() => openAsk("grant", r)}>
-                      إهداءُ العضويّة
-                    </Button>
-                    <Button variant="ghost-danger" size="sm" onClick={() => openAsk("end", r)}>إنهاءُ التطوّع</Button>
-                  </div>
-                ) : null}
-              </CardBody>
-            </Card>
+            <VolunteerCard
+              key={r.userId}
+              v={r}
+              onOpen={() => setRecord(r)}
+              onGrant={() => openAsk("grant", r)}
+              onEnd={() => openAsk("end", r)}
+            />
           ))}
         </div>
       )}
+
+      {/* السجلُّ الكامل : نافذةٌ بهيئة عرض الملفّ في تبويب الأعضاء، لا شكلٌ ثانٍ للسؤال نفسِه */}
+      <Modal
+        open={record !== null}
+        onClose={() => setRecord(null)}
+        title={record?.name ?? "السجلّ الكامل"}
+        size="md"
+        className="pvb-modal"
+        hero={record ? <VolunteerHero v={record} /> : undefined}
+        footer={<Button variant="ghost" size="md" onClick={() => setRecord(null)}>إغلاق</Button>}
+      >
+        {record ? <VolunteerRecord v={record} /> : null}
+      </Modal>
 
       <Modal
         open={ask !== null}

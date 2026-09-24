@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, CardBody, Field, Modal, Segmented, Select, Textarea } from "@adeeb/design-system";
+import { Badge, Button, Card, CardBody, Field, Modal, Segmented, Select, Stat, Textarea } from "@adeeb/design-system";
 import { EmptyState } from "../_components/EmptyState";
-import { CalendarBlank, Clock, Handshake, Hash, MapPin, UsersThree } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, Handshake, Hash, MapPin, Ticket, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple, Plus } from "@/app/_components/glyphs";
 import { PageHeader } from "../_components/PageHeader";
 import { useToast } from "../_components/ToastProvider";
@@ -50,6 +50,12 @@ export function VolunteeringView({ rows, committees }: {
   const [form, setForm] = useState<OppInput>(EMPTY);
 
   const set = <K extends keyof OppInput>(k: K, v: OppInput[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const stats = useMemo(() => ({
+    open: rows.filter((o) => o.status === "open").length,
+    pending: rows.reduce((n, o) => n + o.pending, 0),
+    accepted: rows.reduce((n, o) => n + o.accepted, 0),
+  }), [rows]);
 
   const openNew = () => { setEditing(null); setForm(EMPTY); setOpen(true); };
   const openEdit = (o: OppRow) => {
@@ -102,6 +108,16 @@ export function VolunteeringView({ rows, committees }: {
           onSelect: () => window.open(VOLUNTEERS_GROUP_URL, "_blank", "noopener"),
         }] }]}
       />
+
+      {/* سؤالُ هذه الغرفة عن الفرص : كم بابًا مفتوحًا، وكم طارقًا ينتظر، وكم قُبل.
+          (بطاقةُ «طلبُ التحاقٍ بفرصة» كانت في سجلّ المتطوّعين فنُقلت إلى سؤالها ٢٠٢٦-٠٩-٢٤.) */}
+      {rows.length > 0 ? (
+        <div className="stat-grid" style={{ marginBottom: 18 }}>
+          <Stat icon={<Handshake />} value={stats.open} label="فرصةٌ مفتوحة" />
+          <Stat icon={<Ticket />} value={stats.pending} label="طلبٌ ينتظر الحسم" tone={stats.pending > 0 ? "warning" : "brand"} />
+          <Stat icon={<UsersThree />} value={stats.accepted} label="متطوّعٌ مقبول" tone="success" />
+        </div>
+      ) : null}
 
       {rows.length === 0 ? (
         <EmptyState

@@ -18,8 +18,10 @@ import { copyText } from "@/lib/clipboard";
  * فإن تصدّر النصّ في فقرة عربيّة أخذ اتّجاهها وانتقل يمينًا، فيُقرأ `mohammad_1@`. والعزل وحده لا
  * المحاذاة: <bdi> يلفّ القيمة inline فتبقى الخليّة RTL محاذيةً يمينًا كما هي.
  */
-export function Cell({ label, value, icon, lat, full, href, noCopy, action }: {
+export function Cell({ label, value, icon, lat, full, wrap, href, noCopy, action }: {
   label: string; value: string | null; icon: React.ReactNode; lat?: boolean; full?: boolean; href?: string; noCopy?: boolean;
+  /** جملةٌ حرّةٌ تلتفّ بدل أن تُبتر بـ«…» — سببٌ مكتوبٌ أو ملاحظةٌ أو كشفُ أسماء. */
+  wrap?: boolean;
   /** فعلٌ يحلّ محلّ النسخ في الرُّكن (زرّ بأيقونته) — للقيمة التي تُغيَّر لا تُنسَخ («اللجنة» ← نقل). */
   action?: { icon: React.ReactNode; label: string; onClick: () => void };
 }) {
@@ -36,7 +38,7 @@ export function Cell({ label, value, icon, lat, full, href, noCopy, action }: {
     } catch { toast.error("تعذّر النسخ"); }
   };
   return (
-    <div className={"pva-cell" + (full ? " full" : "")}>
+    <div className={"pva-cell" + (full ? " full" : "") + (wrap ? " wrap" : "")}>
       <div className="pva-lbl"><span className="pva-lic">{icon}</span>{label}</div>
       {empty ? (
         <div className="pva-val na">غير متوفّر</div>
