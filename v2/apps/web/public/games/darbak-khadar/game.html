@@ -10495,7 +10495,7 @@ newSeed();
    وإرسالُ الضغطاتِ عند النهاية ليعيدَ الخادمُ الجولةَ ويحكم (v2/DARB-SYSTEM.md).
    **وكلُّ عطلٍ في الشبكةِ يُسقِطُ الجولةَ إلى تدريبٍ لا يُحسَب، ولا يوقفُ اللعبَ أبدًا.**
    والتذكرةُ تُطلَبُ مسبقًا وشاشةُ البدءِ أو النهايةِ قائمة، فلا ينتظرُ «ابدأ» الشبكة. */
-var CORE_VERSION="bb585ffc5310", RUN_CAP=54000, capEnd=false;
+var CORE_VERSION="bb585ffc5310";
 var NET={ on:/^https?:$/.test(location.protocol)&&/^\/games\/darbak-khadar(\/|$)/.test(location.pathname),
           name:null, ready:null, ticket:null, asking:null, run:null, stale:false, editing:false,
           mode:"name", fresh:false, account:false, loggedIn:false };
@@ -10608,7 +10608,7 @@ function netSend(body,tries){
     try{ localStorage.removeItem("darb_pending"); }catch(e){}
     if(j.ok){
       netAdopt(j.best,j.candyTotal);
-      if(j.held) netLine("بلغتَ حدَّ الجولة، فتُراجَع قبل أن تدخل اللوحة.");
+      if(j.held) netLine("جولتُك تُراجَع قبل أن تدخل اللوحة.");
       else if(j.window==="before") netLine("جولةُ تجربة: المسابقةُ تبدأ "+(CONTEST?ctWhen(CONTEST.s):"قريبًا")+".");
       else if(j.window==="after") netLine("انتهت المسابقة، فلم تُحسَب هذه الجولة.");
       else netRank();
@@ -10926,7 +10926,7 @@ function hintShow(){
 function hintHide(){ elHint.hidden=true; clearTimeout(hintTo); }
 function startRun(t){
   /* في الموقع تأتي البذرةُ من الخادم في تذكرة؛ وبلا تذكرةٍ (خارجَ الموقع أو بلا اتّصال) من الجهاز */
-  NET.run=t?t.run:null; capEnd=false;
+  NET.run=t?t.run:null;
   if(t){ if(t.seed!==seed||seedUsed){ seed=t.seed; clearLive(); } }
   else if(seedUsed){ newSeed(); clearLive(); }
   seedUsed=true;
@@ -10955,7 +10955,7 @@ function stop(){
   showBest();
   /* «رقمٌ قياسيٌّ جديد» حين يُكسَرُ رقمٌ سابق؛ والجولةُ الأولى لا رقمَ قبلَها تكسرُه */
   var rec=s2>prev&&prev>0;
-  elRec.hidden=!(rec||capEnd); elRec.textContent=capEnd?"بلغتَ آخرَ الطريق!":"أبعدُ مسافةٍ قطعتَها!";
+  elRec.hidden=!rec; elRec.textContent="أبعدُ مسافةٍ قطعتَها!";
   if(rec) SND.record();
   elBestO.firstChild.nodeValue=rec?"الرقمُ السابق: ":"أفضل مسافة: ";
   elBestOv.textContent=(rec?prev:best)+" م";
@@ -11255,10 +11255,8 @@ function loop(ts){
       acc+=dt; if(acc>STEP*2.6) acc=STEP*2.6;
       var before=sim.s.letterIx+sim.s.words*10, nt=0;
       /* بعدَ كلِّ تكّةٍ يُقرأُ نمطُ عبورِ ما عُبِرَ فيها (ctNote) — قراءةٌ لا كتابة */
-      while(acc>=STEP && nt<3 && sim.s.step<RUN_CAP){ var dq=sim.s.dist; sim.tick(); ctNote(sim,dq,ctRec); acc-=STEP; nt++; if(!sim.s.alive) break; }
-      /* الحدُّ التقنيّ: خمسَ عشرةَ دقيقةً من زمن اللعب تُنهي الجولةَ حيّةً، كما يُنهيها الخادمُ
-         عند إعادتها. فلا يضيع على أحدٍ ما لعب، ولا تمضي جولةٌ بلا آخر. */
-      if(sim.s.alive && sim.s.step>=RUN_CAP){ playing=false; overDone=true; capEnd=true; stop(); }
+      while(acc>=STEP && nt<3){ var dq=sim.s.dist; sim.tick(); ctNote(sim,dq,ctRec); acc-=STEP; nt++; if(!sim.s.alive) break; }
+      /* لا حدَّ للجولة: كان ربعُ ساعةٍ يُنهيها حيّةً، فرُفع بكلمة المالك (٢٠٢٦-٠٩-٢٦) بعد أن بلغته لاعبة */
       /* شاشةُ النهايةِ بعدَ 1.7 ثانيةٍ من **زمنِ المشهد** (deathT) لا من ساعةِ الحائط:
          كانت setTimeout تُطلِقُها ولو توقّفت اللعبةُ (إخفاءُ الصفحةِ أو تدويرُ الجوّال)
          أو أبطأ الجهاز — فقِيسَ ظهورُها بعدَ 0.30 ث من الموتِ على جهازٍ بطيء، قبلَ أن
