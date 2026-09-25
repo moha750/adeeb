@@ -27,15 +27,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "**.r2.dev" }],
   },
   /**
-   * **«ركضة وطن» تُلعَب على `/watan/play`** — والملفُّ نفسُه `public/watan/game.html`.
+   * **«دربك خضر» تُلعَب على `/games/darbak-khadar/play`** — والملفُّ نفسُه `public/games/darbak-khadar/game.html`.
    *
    * اللعبةُ صفحةٌ واحدةٌ مكتفيةٌ بنفسها (المشهدُ والصوتُ والخطوطُ في ملفٍّ واحد)، فتُخدَم
    * ملفًّا ثابتًا من الحافّة ولا تمرّ بـReact. وإعادةُ الكتابة تعطيها عنوانًا نظيفًا، وتُبقيها
-   * **في الأصل نفسِه** مع أبوابها (`/watan/api/*`): فكوكيزُ اللاعب تُرسَل بلا CORS ولا
-   * كوكيزِ طرفٍ ثالثٍ يحجبها سفاري. (v2/WATAN-SYSTEM.md)
+   * **في الأصل نفسِه** مع أبوابها (`/games/darbak-khadar/api/*`): فكوكيزُ اللاعب تُرسَل بلا CORS ولا
+   * كوكيزِ طرفٍ ثالثٍ يحجبها سفاري. (v2/DARB-SYSTEM.md)
    */
   async rewrites() {
-    return [{ source: "/watan/play", destination: "/watan/game.html" }];
+    return [{ source: "/games/darbak-khadar/play", destination: "/games/darbak-khadar/game.html" }];
   },
   experimental: {
     // ذاكرة Turbopack الدائمة على القرص (.next/dev/cache) مفتوحةٌ افتراضيًّا في Next 16،

@@ -43,7 +43,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {/* بابُ من لا حساب له — فُتح مع طريق العضويّة (١٥ أغسطس ٢٠٢٦) */}
         <p className="text-content-muted text-center text-sm">
           ليس لك حساب؟{" "}
-          {/* الوجهةُ تعبر إلى التسجيل: من جاء من «ركضة وطن» ليحفظ تقدّمه يعود إليها بعد إنشاء
+          {/* الوجهةُ تعبر إلى التسجيل: من جاء من «دربك خضر» ليحفظ تقدّمه يعود إليها بعد إنشاء
               حسابه، لا إلى `/join` (وجهةِ التسجيل الافتراضيّة). */}
           <Link className="font-bold underline" href={next ? `/signup?next=${encodeURIComponent(safeNext(next))}` : "/signup"}>
             أنشئ حسابًا

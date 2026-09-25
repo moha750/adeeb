@@ -21,8 +21,8 @@ export function SiteCursor() {
      وحدَها تبتلع كلَّ مسارٍ يبدأ بهذين الحرفين — `/uikit` أو `/university` — فتُطفئ
      المؤشّرَ في صفحةٍ لا علاقة لها بالمعرض يوم تُضاف. */
   if (path === "/ui" || path?.startsWith("/ui/")) return null;
-  /* **ولا مؤشّرَ للنادي في «ركضة وطن»**: الريشةُ علامةُ أدِيب، والبرنامجُ هويّتُه منعزلةٌ
+  /* **ولا مؤشّرَ للنادي في «دربك خضر»**: الريشةُ علامةُ أدِيب، والبرنامجُ هويّتُه منعزلةٌ
      كالمحطّة (القاعدة ١). فيبقى مؤشّرُ الجهاز نفسُه. */
-  if (path === "/watan" || path?.startsWith("/watan/")) return null;
+  if (path === "/games/darbak-khadar" || path?.startsWith("/games/darbak-khadar/")) return null;
   return <Cursor />;
 }

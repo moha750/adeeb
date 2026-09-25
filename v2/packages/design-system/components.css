@@ -11990,7 +11990,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   ركضة وطن — اللغةُ البصريّة `.wtn-*`
+   دربك خضر — اللغةُ البصريّة `.drb-*`
    ────────────────────────────────────────────────────────────────────
    **الإذنُ ونطاقُه بكلمة المالك (٢٠٢٦-٠٩-٢٤):** سُئل عن هويّة صفحات اللعبة
    فاختار «هويّةٌ مستقلّةٌ مثل المحطّة». فهذا البرنامجُ الثاني الذي يدخل
@@ -12011,95 +12011,95 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    لجائزة، والفائزُ يُعلَن باسمه المستعار في منشور.
    ══════════════════════════════════════════════════════════════════════ */
 
-.wtn {
+.drb {
   /* الليل: أرضيّةُ اللعبة وألواحُها وحبرُها كما هي */
-  --wtn-night: #10170F;
-  --wtn-night-2: #1B241A;
-  --wtn-night-3: #243022;
-  --wtn-night-rule: #2B3829;
-  --wtn-moon: #EDF3E9;
-  --wtn-moon-2: #AFC0A8;
-  --wtn-moon-3: #7E9076;
+  --drb-night: #10170F;
+  --drb-night-2: #1B241A;
+  --drb-night-3: #243022;
+  --drb-night-rule: #2B3829;
+  --drb-moon: #EDF3E9;
+  --drb-moon-2: #AFC0A8;
+  --drb-moon-3: #7E9076;
   /* البدلةُ والمصّاص */
-  --wtn-suit: #4FA547;
-  --wtn-suit-lit: #7ED06A;
-  --wtn-suit-deep: #37742F;
-  --wtn-candy: #2FB35A;
-  --wtn-stick: #F3EFE6;
-  --wtn-white: #FFFFFF;
+  --drb-suit: #4FA547;
+  --drb-suit-lit: #7ED06A;
+  --drb-suit-deep: #37742F;
+  --drb-candy: #2FB35A;
+  --drb-stick: #F3EFE6;
+  --drb-white: #FFFFFF;
   /* كوبُ oos (الراعي، ٢٠٢٦-٠٩-٢٥): لونا كوبهم، الليلكيُّ جسمًا والبنفسجيُّ الداكنُ حزامًا وخلفيّةَ شعارهم */
-  --wtn-oos: #C98AD6;
-  --wtn-oos-ink: #503A61;
+  --drb-oos: #C98AD6;
+  --drb-oos-ink: #503A61;
   /* النهار: رملُ الطريق مفتوحًا درجتين، وسماؤه */
-  --wtn-sand: #F7F1E4;
-  --wtn-sand-2: #EDE3CE;
-  --wtn-sand-3: #D8C9A6;
-  --wtn-paper: #FFFCF5;
-  --wtn-sky: #A8CBE6;
-  --wtn-ink: #10170F;
-  --wtn-ink-2: #4A5A44;
-  --wtn-ink-3: #75836C;
+  --drb-sand: #F7F1E4;
+  --drb-sand-2: #EDE3CE;
+  --drb-sand-3: #D8C9A6;
+  --drb-paper: #FFFCF5;
+  --drb-sky: #A8CBE6;
+  --drb-ink: #10170F;
+  --drb-ink-2: #4A5A44;
+  --drb-ink-3: #75836C;
   /* الأوسمة: الذهبُ ذهبُ اللعبة، والفضّةُ حبرُها الثاني، والنحاسُ غروبُها.
      ولكلٍّ حبرٌ أعمقُ للنصّ على الرمل، لأنّ الذهبَ الفاتح على الرمل لا يُقرأ. */
-  --wtn-gold: #D8A850;
-  --wtn-gold-ink: #8C6519;
-  --wtn-silver: #AFC0A8;
-  --wtn-silver-ink: #5F6F5A;
-  --wtn-bronze: #CFA58C;
-  --wtn-bronze-ink: #8E5A3C;
+  --drb-gold: #D8A850;
+  --drb-gold-ink: #8C6519;
+  --drb-silver: #AFC0A8;
+  --drb-silver-ink: #5F6F5A;
+  --drb-bronze: #CFA58C;
+  --drb-bronze-ink: #8E5A3C;
 
-  --wtn-r: 22px;
-  --wtn-r-sm: 14px;
-  --wtn-s1: 6px;
-  --wtn-s2: 10px;
-  --wtn-s3: 16px;
-  --wtn-s4: 24px;
-  --wtn-s5: 36px;
-  --wtn-pad: 20px;
+  --drb-r: 22px;
+  --drb-r-sm: 14px;
+  --drb-s1: 6px;
+  --drb-s2: 10px;
+  --drb-s3: 16px;
+  --drb-s4: 24px;
+  --drb-s5: 36px;
+  --drb-pad: 20px;
 
   container-type: inline-size;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
-.wtn *, .wtn *::before, .wtn *::after { box-sizing: border-box; }
-.wtn :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-.wtn :where(a) { color: inherit; text-decoration: none; }
-.wtn :where(h1, h2, h3, p, ol, ul) { margin: 0; padding: 0; }
-.wtn :where(ol, ul) { list-style: none; }
-.wtn :focus-visible { outline: 2px solid var(--wtn-suit-lit); outline-offset: 3px; border-radius: 8px; }
-.wtn ::selection { background: color-mix(in oklab, var(--wtn-suit) 30%, transparent); color: inherit; }
+.drb *, .drb *::before, .drb *::after { box-sizing: border-box; }
+.drb :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.drb :where(a) { color: inherit; text-decoration: none; }
+.drb :where(h1, h2, h3, p, ol, ul) { margin: 0; padding: 0; }
+.drb :where(ol, ul) { list-style: none; }
+.drb :focus-visible { outline: 2px solid var(--drb-suit-lit); outline-offset: 3px; border-radius: 8px; }
+.drb ::selection { background: color-mix(in oklab, var(--drb-suit) 30%, transparent); color: inherit; }
 
 /* الأرقامُ متساويةُ العرض: عمودُ القيم يصطفّ ولا يتراقص حين يتبدّل ترتيب */
-.wtn-num { font-variant-numeric: tabular-nums; }
-.wtn-unit { font-size: .72em; font-weight: 700; margin-inline-start: 3px; }
+.drb-num { font-variant-numeric: tabular-nums; }
+.drb-unit { font-size: .72em; font-weight: 700; margin-inline-start: 3px; }
 
 /* المصّاصُ رسمُ اللعبة نفسُه (عدّادُ الشاشة)، لا أيقونةٌ من مكتبة: هو علامتُها.
    `inline-block` صراحةً لأنّ تمهيدَ Tailwind يجعل كلَّ svg كتلةً فينزل الرقمُ تحته.
    وعودُه وقرصُه رمزان يُقلَبان بالسطح (`--stick` و`--candy`): عودٌ فاتحٌ يختفي
    على الرمل، وقرصٌ أخضرُ يذوب في أخضر «أنت». */
-.wtn-cup { display: inline-block; inline-size: 1.1em; block-size: 1.1em; flex: 0 0 auto; vertical-align: -.18em; }
-.wtn-cup .cb { fill: var(--wtn-oos); }
-.wtn-cup .cn { fill: var(--wtn-oos-ink); }
-.wtn-cup .cr { fill: var(--wtn-white); }
+.drb-cup { display: inline-block; inline-size: 1.1em; block-size: 1.1em; flex: 0 0 auto; vertical-align: -.18em; }
+.drb-cup .cb { fill: var(--drb-oos); }
+.drb-cup .cn { fill: var(--drb-oos-ink); }
+.drb-cup .cr { fill: var(--drb-white); }
 /* شعارُ oos كما يُرى على أكوابهم: حروفٌ بيضاءُ على بنفسجيّهم، في الضوءين */
-.wtn-oos {
+.drb-oos {
   display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 7px;
-  background: var(--wtn-oos-ink); color: var(--wtn-white); line-height: 0; vertical-align: middle;
+  background: var(--drb-oos-ink); color: var(--drb-white); line-height: 0; vertical-align: middle;
 }
-.wtn-oos svg { block-size: 12px; inline-size: auto; fill: currentColor; }
+.drb-oos svg { block-size: 12px; inline-size: auto; fill: currentColor; }
 
-/* الاسم: «ركضة» حبرٌ و«وطن» أخضر. كلمةٌ لا شعار، إلى أن يُرسم للعبة شعار */
-.wtn-mark { font-family: var(--font-display); font-weight: 900; font-size: 1.1875rem; letter-spacing: -.01em; white-space: nowrap; }
+/* الاسم: «دربك» حبرٌ و«خضر» أخضر. كلمةٌ لا شعار، إلى أن يُرسم للعبة شعار */
+.drb-mark { font-family: var(--font-display); font-weight: 900; font-size: 1.1875rem; letter-spacing: -.01em; white-space: nowrap; }
 
 /* ══ إطارُ المعاينة (لا ينزل الإنتاج) ═════════════════════════ */
-.wtnp-frame {
+.drbp-frame {
   position: relative; margin-inline: auto; overflow: hidden;
   border-radius: 30px; border: 1px solid var(--card-stroke); box-shadow: var(--shadow-lg);
 }
-.wtnp-scroll { height: 100%; overflow-y: auto; scrollbar-width: none; }
-.wtnp-scroll::-webkit-scrollbar { display: none; }
+.drbp-scroll { height: 100%; overflow-y: auto; scrollbar-width: none; }
+.drbp-scroll::-webkit-scrollbar { display: none; }
 
-/* ══ لوحةُ الصدارة `.wtna-*` ══════════════════════════════════════
+/* ══ لوحةُ الصدارة `.drba-*` ══════════════════════════════════════
    اختارها المالك (٢٠٢٦-٠٩-٢٤: «أريد تصميم أ ولكن يكون منه ليلي ونهاري»).
    والثلاثةُ على منصّةٍ **تنبت من القائمة** لا تطفو فوقها: لونُ أسفل الأعمدة
    لونُ لوح القائمة نفسُه.
@@ -12108,108 +12108,108 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    **أدوارًا** (`--a-*`: أرضيّةٌ ولوحٌ وحبرٌ وأوسمة). والليلُ يملؤها افتراضًا،
    و`[data-sky="day"]` يملؤها من النهار. فكلُّ ما يُضاف بعدُ يُكتب مرّةً ويصحّ
    في الضوءين، ولا نسخةَ ثانيةً لقاعدة. */
-.wtna {
-  --a-ground: var(--wtn-night);
-  --a-glow: color-mix(in oklab, var(--wtn-suit) 30%, transparent);
-  --a-sheet: var(--wtn-night-2);
-  --a-raise: var(--wtn-night-3);
-  --a-sunk: var(--wtn-night);
-  --a-well: var(--wtn-night-2);
-  --a-row: color-mix(in oklab, var(--wtn-moon) 4%, transparent);
-  --a-rule: var(--wtn-night-rule);
-  --a-ink: var(--wtn-moon);
-  --a-ink-2: var(--wtn-moon-2);
-  --a-ink-3: var(--wtn-moon-3);
-  --a-mark: var(--wtn-suit-lit);
-  --a-on: var(--wtn-moon);
-  --a-on-ink: var(--wtn-night);
-  --a-on-stick: var(--wtn-ink-3);
-  --a-gold: var(--wtn-gold);         --a-gold-ink: var(--wtn-gold);
-  --a-silver: var(--wtn-silver);     --a-silver-ink: var(--wtn-silver);
-  --a-bronze: var(--wtn-bronze);     --a-bronze-ink: var(--wtn-bronze);
-  --stick: var(--wtn-stick);
+.drba {
+  --a-ground: var(--drb-night);
+  --a-glow: color-mix(in oklab, var(--drb-suit) 30%, transparent);
+  --a-sheet: var(--drb-night-2);
+  --a-raise: var(--drb-night-3);
+  --a-sunk: var(--drb-night);
+  --a-well: var(--drb-night-2);
+  --a-row: color-mix(in oklab, var(--drb-moon) 4%, transparent);
+  --a-rule: var(--drb-night-rule);
+  --a-ink: var(--drb-moon);
+  --a-ink-2: var(--drb-moon-2);
+  --a-ink-3: var(--drb-moon-3);
+  --a-mark: var(--drb-suit-lit);
+  --a-on: var(--drb-moon);
+  --a-on-ink: var(--drb-night);
+  --a-on-stick: var(--drb-ink-3);
+  --a-gold: var(--drb-gold);         --a-gold-ink: var(--drb-gold);
+  --a-silver: var(--drb-silver);     --a-silver-ink: var(--drb-silver);
+  --a-bronze: var(--drb-bronze);     --a-bronze-ink: var(--drb-bronze);
+  --stick: var(--drb-stick);
   background: var(--a-ground); color: var(--a-ink);
 }
 /* النهار: الرملُ أرضيّةٌ والورقُ لوح، والسماءُ مكانَ وهج الأخضر. والأوسمةُ
    تبقى ألوانًا للحلقات والأعمدة، ويُكتب رقمُها بحبرها الأعمق. */
-.wtna[data-sky="day"] {
-  --a-ground: var(--wtn-sand);
-  --a-glow: color-mix(in oklab, var(--wtn-sky) 78%, transparent);
-  --a-sheet: var(--wtn-paper);
-  --a-raise: var(--wtn-paper);
-  --a-sunk: var(--wtn-sand-2);
-  --a-well: var(--wtn-paper);
-  --a-row: color-mix(in oklab, var(--wtn-sand-3) 22%, transparent);
-  --a-rule: var(--wtn-sand-2);
-  --a-ink: var(--wtn-ink);
-  --a-ink-2: var(--wtn-ink-2);
-  --a-ink-3: var(--wtn-ink-3);
-  --a-mark: var(--wtn-suit-deep);
-  --a-on: var(--wtn-night);
-  --a-on-ink: var(--wtn-sand);
-  --a-on-stick: var(--wtn-moon-2);
-  --a-gold-ink: var(--wtn-gold-ink);
-  --a-silver-ink: var(--wtn-silver-ink);
-  --a-bronze-ink: var(--wtn-bronze-ink);
-  --stick: var(--wtn-ink-3);
+.drba[data-sky="day"] {
+  --a-ground: var(--drb-sand);
+  --a-glow: color-mix(in oklab, var(--drb-sky) 78%, transparent);
+  --a-sheet: var(--drb-paper);
+  --a-raise: var(--drb-paper);
+  --a-sunk: var(--drb-sand-2);
+  --a-well: var(--drb-paper);
+  --a-row: color-mix(in oklab, var(--drb-sand-3) 22%, transparent);
+  --a-rule: var(--drb-sand-2);
+  --a-ink: var(--drb-ink);
+  --a-ink-2: var(--drb-ink-2);
+  --a-ink-3: var(--drb-ink-3);
+  --a-mark: var(--drb-suit-deep);
+  --a-on: var(--drb-night);
+  --a-on-ink: var(--drb-sand);
+  --a-on-stick: var(--drb-moon-2);
+  --a-gold-ink: var(--drb-gold-ink);
+  --a-silver-ink: var(--drb-silver-ink);
+  --a-bronze-ink: var(--drb-bronze-ink);
+  --stick: var(--drb-ink-3);
 }
 
-.wtna-page {
+.drba-page {
   min-height: 100%; display: flex; flex-direction: column;
   background: radial-gradient(130% 46% at 50% -8%, var(--a-glow) 0%, transparent 62%), var(--a-ground);
 }
-.wtna-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px var(--wtn-pad) 0; }
-.wtna .wtn-mark b { color: var(--a-mark); font-weight: 900; }
-.wtna-play {
+.drba-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px var(--drb-pad) 0; }
+.drba .drb-mark b { color: var(--a-mark); font-weight: 900; }
+.drba-play {
   display: inline-flex; align-items: center; gap: 6px; block-size: 38px; padding-inline: 16px 14px;
-  border-radius: 999px; background: var(--wtn-suit); color: var(--wtn-night);
+  border-radius: 999px; background: var(--drb-suit); color: var(--drb-night);
   font-weight: 800; font-size: .875rem;
 }
-.wtna-play svg { inline-size: 18px; block-size: 18px; }
+.drba-play svg { inline-size: 18px; block-size: 18px; }
 
-.wtna-hero { padding: var(--wtn-s4) var(--wtn-pad) 0; }
-.wtna-hero h1 { font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.15; }
-.wtna-hero p { margin-top: var(--wtn-s1); font-size: .8125rem; color: var(--a-ink-3); }
+.drba-hero { padding: var(--drb-s4) var(--drb-pad) 0; }
+.drba-hero h1 { font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.15; }
+.drba-hero p { margin-top: var(--drb-s1); font-size: .8125rem; color: var(--a-ink-3); }
 /* الراعي، ثمّ نافذةُ المسابقة في لوحٍ هادئٍ يحدّه ليلكيُّ oos وهي جارية */
-.wtna-hero .wtna-spons { display: flex; align-items: center; gap: 8px; margin-top: var(--wtn-s2); color: var(--a-ink-2); }
+.drba-hero .drba-spons { display: flex; align-items: center; gap: 8px; margin-top: var(--drb-s2); color: var(--a-ink-2); }
 
-.wtna-tabs {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: var(--wtn-s3);
+.drba-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: var(--drb-s3);
   padding: 4px; border-radius: 999px; background: var(--a-well); border: 1px solid var(--a-rule);
 }
-.wtna-tab {
+.drba-tab {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px; block-size: 40px;
   border-radius: 999px; color: var(--a-ink-2); font-weight: 700; font-size: .875rem;
   transition: background .2s, color .2s;
 }
-.wtna-tab svg { inline-size: 18px; block-size: 18px; }
-.wtna-tab[aria-pressed="true"] { background: var(--a-on); color: var(--a-on-ink); font-weight: 800; --stick: var(--a-on-stick); }
+.drba-tab svg { inline-size: 18px; block-size: 18px; }
+.drba-tab[aria-pressed="true"] { background: var(--a-on); color: var(--a-on-ink); font-weight: 800; --stick: var(--a-on-stick); }
 
 /* المنصّة: الترتيبُ في الورقة ٢ ثمّ ١ ثمّ ٣، فيقع الأوّلُ في الوسط والثاني عن يمينه */
-.wtna-pod {
+.drba-pod {
   display: grid; grid-template-columns: 1fr 1.16fr 1fr; align-items: end; gap: 8px;
-  margin-top: var(--wtn-s5); padding-inline: var(--wtn-pad);
+  margin-top: var(--drb-s5); padding-inline: var(--drb-pad);
 }
-.wtna-step { --medal: var(--a-silver); --medal-ink: var(--a-silver-ink); --lift: 78px; display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.wtna-step[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); --lift: 108px; }
-.wtna-step[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); --lift: 60px; }
-.wtna-crown { color: var(--a-gold); inline-size: 28px; block-size: 28px; margin-bottom: 2px; }
-.wtna-av {
+.drba-step { --medal: var(--a-silver); --medal-ink: var(--a-silver-ink); --lift: 78px; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.drba-step[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); --lift: 108px; }
+.drba-step[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); --lift: 60px; }
+.drba-crown { color: var(--a-gold); inline-size: 28px; block-size: 28px; margin-bottom: 2px; }
+.drba-av {
   display: grid; place-items: center; inline-size: 54px; block-size: 54px; border-radius: 50%;
   background: var(--a-raise); border: 2.5px solid var(--medal);
   font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; color: var(--medal-ink);
   box-shadow: 0 0 0 5px color-mix(in oklab, var(--medal) 16%, transparent);
 }
-.wtna-step[data-rank="1"] .wtna-av { inline-size: 66px; block-size: 66px; font-size: 1.625rem; }
-.wtna-who {
+.drba-step[data-rank="1"] .drba-av { inline-size: 66px; block-size: 66px; font-size: 1.625rem; }
+.drba-who {
   max-width: 100%; margin-top: 9px; font-weight: 800; font-size: .875rem; text-align: center;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* جائزةُ المركز تحت رقمه على المنصّة (لوحةُ الأكواب وحدَها) */
-.wtna-prize { display: block; margin-top: 6px; font-size: .75rem; font-weight: 800; line-height: 1.2; color: var(--a-ink); }
-.wtna-val { margin-top: 2px; font-weight: 800; font-size: .9375rem; color: var(--medal-ink); white-space: nowrap; }
-.wtna-val .wtn-unit { color: var(--a-ink-3); }
-.wtna-block {
+.drba-prize { display: block; margin-top: 6px; font-size: .75rem; font-weight: 800; line-height: 1.2; color: var(--a-ink); }
+.drba-val { margin-top: 2px; font-weight: 800; font-size: .9375rem; color: var(--medal-ink); white-space: nowrap; }
+.drba-val .drb-unit { color: var(--a-ink-3); }
+.drba-block {
   inline-size: 100%; block-size: var(--lift); margin-top: 10px;
   display: grid; justify-items: center; align-content: start; padding-top: 8px;
   border-radius: 16px 16px 0 0; border-top: 2px solid var(--medal);
@@ -12218,254 +12218,254 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 }
 
 /* القائمةُ لوحٌ واحدٌ تخرج منه المنصّة */
-.wtna-sheet { flex: 1; padding: var(--wtn-s3) var(--wtn-pad) var(--wtn-s4); background: var(--a-sheet); }
-.wtna-list { display: flex; flex-direction: column; gap: 6px; }
-.wtna-row {
+.drba-sheet { flex: 1; padding: var(--drb-s3) var(--drb-pad) var(--drb-s4); background: var(--a-sheet); }
+.drba-list { display: flex; flex-direction: column; gap: 6px; }
+.drba-row {
   display: grid; grid-template-columns: 26px 36px minmax(0, 1fr) auto; align-items: center; gap: 10px;
-  block-size: 56px; padding-inline: 10px 14px; border-radius: var(--wtn-r-sm); background: var(--a-row);
+  block-size: 56px; padding-inline: 10px 14px; border-radius: var(--drb-r-sm); background: var(--a-row);
 }
-.wtna-rk { text-align: center; font-weight: 800; font-size: .9375rem; color: var(--a-ink-3); }
-.wtna-mini {
+.drba-rk { text-align: center; font-weight: 800; font-size: .9375rem; color: var(--a-ink-3); }
+.drba-mini {
   display: grid; place-items: center; inline-size: 36px; block-size: 36px; border-radius: 50%;
   background: var(--a-sunk); color: var(--a-ink-2);
   font-family: var(--font-display); font-weight: 900; font-size: 1rem;
 }
-.wtna-name { font-weight: 700; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wtna-num { font-weight: 800; font-size: .9375rem; white-space: nowrap; }
-.wtna-num .wtn-unit { color: var(--a-ink-3); }
-.wtna-more {
+.drba-name { font-weight: 700; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drba-num { font-weight: 800; font-size: .9375rem; white-space: nowrap; }
+.drba-num .drb-unit { color: var(--a-ink-3); }
+.drba-more {
   display: flex; align-items: center; justify-content: center; gap: 6px; inline-size: 100%; block-size: 46px;
-  margin-top: var(--wtn-s2); border-radius: var(--wtn-r-sm); color: var(--a-ink-2); font-weight: 700; font-size: .875rem;
+  margin-top: var(--drb-s2); border-radius: var(--drb-r-sm); color: var(--a-ink-2); font-weight: 700; font-size: .875rem;
   border: 1px solid var(--a-rule);
 }
-.wtna-more svg { inline-size: 16px; block-size: 16px; }
-.wtna-fine { margin-top: var(--wtn-s4); font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); text-align: center; }
+.drba-more svg { inline-size: 16px; block-size: 16px; }
+.drba-fine { margin-top: var(--drb-s4); font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); text-align: center; }
 
-/* ══ في الإنتاج (`app/watan/layout.tsx`): الجذرُ يملأ الشاشة والعمودُ في وسطها ══
+/* ══ في الإنتاج (`app/games/darbak-khadar/layout.tsx`): الجذرُ يملأ الشاشة والعمودُ في وسطها ══
    والمؤشّرُ يلبس أخضرَ البدلة لا حبرَ النادي (`data-cursor-ink` على الجذر). */
-.wtn-root { min-height: 100dvh; --cur-ink: var(--wtn-suit); --cur-on-dark: var(--wtn-moon); }
-.wtn-root .wtna-page { max-width: 36rem; margin-inline: auto; min-height: 100dvh; }
+.drb-root { min-height: 100dvh; --cur-ink: var(--drb-suit); --cur-on-dark: var(--drb-moon); }
+.drb-root .drba-page { max-width: 36rem; margin-inline: auto; min-height: 100dvh; }
 
 /* مكانٌ شاغرٌ على المنصّة (أقلُّ من ثلاثة لاعبين): العمودُ قائمٌ فلا يختلّ الشكل */
-.wtna-step[data-empty] { opacity: .5; }
-.wtna-step[data-empty] .wtna-av { border-style: dashed; }
+.drba-step[data-empty] { opacity: .5; }
+.drba-step[data-empty] .drba-av { border-style: dashed; }
 /* اسمُك إن كان في القائمة أو على المنصّة */
-.wtna-step[data-me] .wtna-who { color: var(--a-mark); }
-.wtna-row[data-me] {
-  background: color-mix(in oklab, var(--wtn-suit) 16%, transparent);
-  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wtn-suit) 55%, transparent);
+.drba-step[data-me] .drba-who { color: var(--a-mark); }
+.drba-row[data-me] {
+  background: color-mix(in oklab, var(--drb-suit) 16%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--drb-suit) 55%, transparent);
 }
 
 /* اللوحةُ فارغة (قبل أوّل جولة) أو تعذّرت قراءتُها */
-.wtna-empty {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--wtn-s2);
-  margin: var(--wtn-s5) var(--wtn-pad) 0; padding: var(--wtn-s5) var(--wtn-s4) var(--wtn-s4);
-  border-radius: var(--wtn-r) var(--wtn-r) 0 0; background: var(--a-sheet); text-align: center;
+.drba-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--drb-s2);
+  margin: var(--drb-s5) var(--drb-pad) 0; padding: var(--drb-s5) var(--drb-s4) var(--drb-s4);
+  border-radius: var(--drb-r) var(--drb-r) 0 0; background: var(--a-sheet); text-align: center;
 }
-.wtna-empty > .wtn-cup { inline-size: 46px; block-size: 46px; }
-.wtna-empty b { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; }
-.wtna-empty p { font-size: .875rem; color: var(--a-ink-3); }
-.wtna-empty .wtna-play { margin-top: var(--wtn-s2); }
+.drba-empty > .drb-cup { inline-size: 46px; block-size: 46px; }
+.drba-empty b { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; }
+.drba-empty p { font-size: .875rem; color: var(--a-ink-3); }
+.drba-empty .drba-play { margin-top: var(--drb-s2); }
 
 /* سطرُ الصانع أسفلَ اللوحة، هادئٌ لا يزاحم. ويأخذ لونَ القائمة إن تلاها فيبدو ذيلًا لها،
    وفي اللوحة الفارغة يقع على الأرضيّة نفسِها فلا يصير شريطًا */
-.wtna-credit { padding: var(--wtn-s3) var(--wtn-pad) 0; text-align: center; font-size: .75rem; color: var(--a-ink-3); }
-.wtna-sheet + .wtna-credit { background: var(--a-sheet); }
+.drba-credit { padding: var(--drb-s3) var(--drb-pad) 0; text-align: center; font-size: .75rem; color: var(--a-ink-3); }
+.drba-sheet + .drba-credit { background: var(--a-sheet); }
 
 /* «أنت»: ملازمٌ في الأسفل، والأخضرُ لك وحدك في الصفحة كلّها، ليلًا ونهارًا */
-.wtna-me {
-  position: sticky; bottom: 0; z-index: 2; padding: 18px var(--wtn-pad) 14px;
+.drba-me {
+  position: sticky; bottom: 0; z-index: 2; padding: 18px var(--drb-pad) 14px;
   background: linear-gradient(to top, var(--a-sheet) 62%, color-mix(in oklab, var(--a-sheet) 0%, transparent));
 }
-.wtna-me-in {
-  --stick: var(--wtn-night); --candy: var(--wtn-night);
+.drba-me-in {
+  --stick: var(--drb-night); --candy: var(--drb-night);
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
-  padding: 10px 16px; border-radius: 18px; background: var(--wtn-suit); color: var(--wtn-night);
-  box-shadow: 0 10px 28px -10px color-mix(in oklab, var(--wtn-suit) 70%, transparent);
+  padding: 10px 16px; border-radius: 18px; background: var(--drb-suit); color: var(--drb-night);
+  box-shadow: 0 10px 28px -10px color-mix(in oklab, var(--drb-suit) 70%, transparent);
 }
-.wtna-me-rk { font-family: var(--font-display); font-weight: 900; font-size: 1.625rem; line-height: 1; }
-.wtna-me-who b { display: block; font-weight: 800; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wtna-me-who span { display: block; font-size: .75rem; font-weight: 700; opacity: .72; }
-.wtna-me-val { font-weight: 900; font-size: 1rem; white-space: nowrap; }
+.drba-me-rk { font-family: var(--font-display); font-weight: 900; font-size: 1.625rem; line-height: 1; }
+.drba-me-who b { display: block; font-weight: 800; font-size: .9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drba-me-who span { display: block; font-size: .75rem; font-weight: 700; opacity: .72; }
+.drba-me-val { font-weight: 900; font-size: 1rem; white-space: nowrap; }
 /* زائرٌ لم يسجّل: الشريطُ نفسُه بابٌ إلى اللعبة */
-.wtna-me-in[data-out] { grid-template-columns: auto minmax(0, 1fr); color: var(--wtn-night); }
-.wtna-me-in[data-out] .wtna-me-rk svg { display: block; inline-size: 26px; block-size: 26px; }
+.drba-me-in[data-out] { grid-template-columns: auto minmax(0, 1fr); color: var(--drb-night); }
+.drba-me-in[data-out] .drba-me-rk svg { display: block; inline-size: 26px; block-size: 26px; }
 
 /* ══ التبويباتُ الخمسة (قرارُ المالك ٢٠٢٦-٠٩-٢٥) ══════════════════════════
-   حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (`app/watan/_components/tabs.ts`، بترتيب المالك).
+   حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (`app/games/darbak-khadar/_components/tabs.ts`، بترتيب المالك).
    **الشريطُ أعلى الشاشة ملازمٌ** لأنّ أسفلَها لشريط «أنت». أيقونةٌ فوق كلمة، والمختارُ بخطٍّ
    أخضرَ تحته، ليُفرَق بنظرةٍ عن مبدّل اللوحتين داخل الصدارة (كبسولةٌ مقلوبةُ اللون). وخلفيّتُه
    الأرضيّةُ شبهَ شفّافةٍ بتغبيش، كي لا يقطع وهجَ الأعلى قبل أن يلتصق.
-   **والتبويباتُ الأربعةُ الأخرى بطاقات** (`.wtna-card`) على الأرضيّة بلوحِ القائمة نفسِه، فتُقرأ
+   **والتبويباتُ الأربعةُ الأخرى بطاقات** (`.drba-card`) على الأرضيّة بلوحِ القائمة نفسِه، فتُقرأ
    من عائلة الصدارة. ولا لونَ جديد: كلُّ ما هنا أدوارٌ (`--a-*`) فيصحّ في الليل والنهار. */
-.wtna-nav {
+.drba-nav {
   position: sticky; top: 0; z-index: 3;
   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 12px; padding-inline: calc(var(--wtn-pad) - 8px);
+  margin-top: 12px; padding-inline: calc(var(--drb-pad) - 8px);
   border-bottom: 1px solid var(--a-rule);
   background: color-mix(in oklab, var(--a-ground) 84%, transparent);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
 }
-.wtna-navi {
+.drba-navi {
   display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0;
   padding: 10px 2px 9px; margin-bottom: -1px; border-bottom: 2.5px solid transparent;
   color: var(--a-ink-3); font-weight: 700; font-size: .75rem; line-height: 1.2; white-space: nowrap;
   transition: color .2s, border-color .2s;
 }
-.wtna-navi svg { inline-size: 22px; block-size: 22px; }
-.wtna-navi[aria-selected="true"] { color: var(--a-ink); font-weight: 800; border-bottom-color: var(--a-mark); }
-.wtna-navi[aria-selected="true"] svg { color: var(--a-mark); }
+.drba-navi svg { inline-size: 22px; block-size: 22px; }
+.drba-navi[aria-selected="true"] { color: var(--a-ink); font-weight: 800; border-bottom-color: var(--a-mark); }
+.drba-navi[aria-selected="true"] svg { color: var(--a-mark); }
 
 /* لوحُ التبويب يملأ ما بين الشريطين، وقائمةُ الصدارة داخله تمتدّ كما كانت */
-.wtna-panel { flex: 1; display: flex; flex-direction: column; }
-.wtna-credit a { text-decoration: underline; text-underline-offset: 3px; }
+.drba-panel { flex: 1; display: flex; flex-direction: column; }
+.drba-credit a { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── البطاقة: متنُ التبويبات الأربعة ── */
-.wtna-body { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: var(--wtn-s4) var(--wtn-pad); }
-.wtna-card {
+.drba-body { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: var(--drb-s4) var(--drb-pad); }
+.drba-card {
   --st: var(--a-ink-2);
   display: flex; flex-direction: column; gap: 12px; padding: 18px;
-  border-radius: var(--wtn-r); background: var(--a-sheet); border: 1px solid var(--a-rule);
+  border-radius: var(--drb-r); background: var(--a-sheet); border: 1px solid var(--a-rule);
 }
-.wtna-card h2 {
+.drba-card h2 {
   display: flex; align-items: center; gap: 8px;
   font-family: var(--font-display); font-weight: 900; font-size: 1.125rem; line-height: 1.3; color: var(--a-ink);
 }
-.wtna-card h2 svg { inline-size: 22px; block-size: 22px; flex: none; color: var(--a-mark); }
-.wtna-card p, .wtna-card li { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
-.wtna-card .wtna-note { font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); }
-.wtna-card[data-tone="ok"] { --st: var(--a-mark); border-color: color-mix(in oklab, var(--wtn-suit) 55%, var(--a-rule)); }
-.wtna-card[data-tone="warn"] { --st: var(--a-gold-ink); border-color: color-mix(in oklab, var(--a-gold) 60%, var(--a-rule)); }
+.drba-card h2 svg { inline-size: 22px; block-size: 22px; flex: none; color: var(--a-mark); }
+.drba-card p, .drba-card li { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
+.drba-card .drba-note { font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); }
+.drba-card[data-tone="ok"] { --st: var(--a-mark); border-color: color-mix(in oklab, var(--drb-suit) 55%, var(--a-rule)); }
+.drba-card[data-tone="warn"] { --st: var(--a-gold-ink); border-color: color-mix(in oklab, var(--a-gold) 60%, var(--a-rule)); }
 
 /* نقاطٌ خضراءُ لقائمة القواعد */
-.wtna-dots { display: flex; flex-direction: column; gap: 6px; }
-.wtna-dots li { position: relative; padding-inline-start: 16px; }
-.wtna-dots li::before {
+.drba-dots { display: flex; flex-direction: column; gap: 6px; }
+.drba-dots li { position: relative; padding-inline-start: 16px; }
+.drba-dots li::before {
   content: ""; position: absolute; inset-inline-start: 2px; top: .78em;
   inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--a-mark);
 }
 
 /* ── الأزرار: ممتلئٌ بلون «المختار»، وأخضرُ البدلة للّعب، وشفّافٌ بحدٍّ للثانويّ ── */
-.wtna-btn {
+.drba-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-block-size: 48px; padding: 10px 20px; border-radius: 999px;
   background: var(--a-on); color: var(--a-on-ink); font-weight: 800; font-size: .9375rem; line-height: 1.3; text-align: center;
 }
-.wtna-btn svg { inline-size: 20px; block-size: 20px; flex: none; }
-.wtna-btn[data-kind="suit"] { background: var(--wtn-suit); color: var(--wtn-night); }
-.wtna-btn[data-kind="ghost"] { background: transparent; color: var(--a-ink); border: 1px solid var(--a-rule); }
-.wtna-btn[data-wide] { inline-size: 100%; }
-.wtna-btn:disabled { opacity: .55; cursor: default; }
-.wtna-btn[aria-busy="true"] { opacity: .75; cursor: progress; }
+.drba-btn svg { inline-size: 20px; block-size: 20px; flex: none; }
+.drba-btn[data-kind="suit"] { background: var(--drb-suit); color: var(--drb-night); }
+.drba-btn[data-kind="ghost"] { background: transparent; color: var(--a-ink); border: 1px solid var(--a-rule); }
+.drba-btn[data-wide] { inline-size: 100%; }
+.drba-btn:disabled { opacity: .55; cursor: default; }
+.drba-btn[aria-busy="true"] { opacity: .75; cursor: progress; }
 /* رابطٌ إلى تبويبٍ آخر: كلمةٌ خضراءُ وسهمٌ إلى الأمام */
-.wtna-link {
+.drba-link {
   display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;
   color: var(--a-mark); font-weight: 800; font-size: .875rem;
 }
-.wtna-link svg { inline-size: 16px; block-size: 16px; }
-.wtna-body > .wtna-link { align-self: center; margin-top: 4px; }
+.drba-link svg { inline-size: 16px; block-size: 16px; }
+.drba-body > .drba-link { align-self: center; margin-top: 4px; }
 
 /* ── المسابقة: العدّاد والجوائز ── */
-.wtna-clock { align-items: center; text-align: center; }
-.wtna-clock[data-phase="open"] { border-color: color-mix(in oklab, var(--wtn-oos) 60%, var(--a-rule)); }
-.wtna-card .wtna-clock-lbl { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
-.wtna-clock-row { display: flex; justify-content: center; gap: 8px; }
-.wtna-clock-u {
+.drba-clock { align-items: center; text-align: center; }
+.drba-clock[data-phase="open"] { border-color: color-mix(in oklab, var(--drb-oos) 60%, var(--a-rule)); }
+.drba-card .drba-clock-lbl { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.drba-clock-row { display: flex; justify-content: center; gap: 8px; }
+.drba-clock-u {
   display: grid; justify-items: center; gap: 2px; min-inline-size: 60px; padding: 10px 6px 8px;
-  border-radius: var(--wtn-r-sm); background: var(--a-sunk);
+  border-radius: var(--drb-r-sm); background: var(--a-sunk);
 }
-.wtna-clock-u b {
+.drba-clock-u b {
   font-family: var(--font-display); font-weight: 900; font-size: 1.75rem; line-height: 1.1;
   font-variant-numeric: tabular-nums; color: var(--a-ink);
 }
-.wtna-clock-u span { font-size: .6875rem; font-weight: 700; color: var(--a-ink-3); }
-.wtna-card .wtna-clock-when { font-size: .8125rem; color: var(--a-ink-3); }
+.drba-clock-u span { font-size: .6875rem; font-weight: 700; color: var(--a-ink-3); }
+.drba-card .drba-clock-when { font-size: .8125rem; color: var(--a-ink-3); }
 
-.wtna-prizes { display: flex; flex-direction: column; gap: 8px; }
-.wtna-prz {
+.drba-prizes { display: flex; flex-direction: column; gap: 8px; }
+.drba-prz {
   --medal: var(--a-silver); --medal-ink: var(--a-silver-ink);
   display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px;
-  padding: 10px 14px 10px 10px; border-radius: var(--wtn-r-sm); background: var(--a-row);
+  padding: 10px 14px 10px 10px; border-radius: var(--drb-r-sm); background: var(--a-row);
 }
-.wtna-prz[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); }
-.wtna-prz[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); }
-.wtna-prz-rk {
+.drba-prz[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); }
+.drba-prz[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); }
+.drba-prz-rk {
   display: grid; place-items: center; inline-size: 40px; block-size: 40px; border-radius: 50%;
   background: var(--a-raise); border: 2.5px solid var(--medal); color: var(--medal-ink);
   font-family: var(--font-display); font-weight: 900; font-size: 1.125rem;
 }
-.wtna-prz b { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
-.wtna-prz-amt { font-weight: 900; font-size: 1.0625rem; color: var(--a-ink); white-space: nowrap; }
+.drba-prz b { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.drba-prz-amt { font-weight: 900; font-size: 1.0625rem; color: var(--a-ink); white-space: nowrap; }
 
 /* ── كيف تُلعب؟: الحركاتُ الثلاث، وصفوفٌ بأيقونة، والكلماتُ الأربع ── */
-.wtna-moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.wtna-move {
+.drba-moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.drba-move {
   display: grid; justify-items: center; align-content: start; gap: 4px; padding: 14px 6px 12px;
-  border-radius: var(--wtn-r-sm); background: var(--a-row); text-align: center;
+  border-radius: var(--drb-r-sm); background: var(--a-row); text-align: center;
 }
-.wtna-move-ic { display: flex; gap: 2px; margin-bottom: 4px; color: var(--a-mark); }
-.wtna-move-ic svg { inline-size: 26px; block-size: 26px; }
-.wtna-card .wtna-move b { font-weight: 800; font-size: .875rem; line-height: 1.4; color: var(--a-ink); }
-.wtna-move span { font-size: .75rem; color: var(--a-ink-3); }
+.drba-move-ic { display: flex; gap: 2px; margin-bottom: 4px; color: var(--a-mark); }
+.drba-move-ic svg { inline-size: 26px; block-size: 26px; }
+.drba-card .drba-move b { font-weight: 800; font-size: .875rem; line-height: 1.4; color: var(--a-ink); }
+.drba-move span { font-size: .75rem; color: var(--a-ink-3); }
 
-.wtna-items { display: flex; flex-direction: column; gap: 8px; }
-.wtna-card .wtna-item {
+.drba-items { display: flex; flex-direction: column; gap: 8px; }
+.drba-card .drba-item {
   display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); line-height: 1.6;
+  padding: 10px 12px; border-radius: var(--drb-r-sm); background: var(--a-row); line-height: 1.6;
 }
-.wtna-item-ic { display: flex; color: var(--a-mark); }
-.wtna-item-ic svg { inline-size: 26px; block-size: 26px; }
-.wtna-item b { display: block; font-weight: 800; color: var(--a-ink); }
-.wtna-item b + span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
+.drba-item-ic { display: flex; color: var(--a-mark); }
+.drba-item-ic svg { inline-size: 26px; block-size: 26px; }
+.drba-item b { display: block; font-weight: 800; color: var(--a-ink); }
+.drba-item b + span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
 
-.wtna-words { display: flex; flex-direction: column; gap: 8px; }
-.wtna-card .wtna-word {
+.drba-words { display: flex; flex-direction: column; gap: 8px; }
+.drba-card .drba-word {
   display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); line-height: 1.5;
+  padding: 10px 12px; border-radius: var(--drb-r-sm); background: var(--a-row); line-height: 1.5;
 }
-.wtna-word-w { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; text-align: center; color: var(--a-mark); }
-.wtna-word-p b { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
-.wtna-word-p b svg { inline-size: 18px; block-size: 18px; color: var(--a-mark); }
-.wtna-word-p > span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
+.drba-word-w { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; text-align: center; color: var(--a-mark); }
+.drba-word-p b { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.drba-word-p b svg { inline-size: 18px; block-size: 18px; color: var(--a-mark); }
+.drba-word-p > span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
 
 /* ── حسابي: الحالُ والأرقام (أُزيل رمزُ الاسترجاع ٢٠٢٦-٠٩-٢٥) ── */
-.wtna-status { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 12px; }
-.wtna-status > svg { inline-size: 30px; block-size: 30px; color: var(--st); }
-.wtna-status b { display: block; font-weight: 800; font-size: 1rem; line-height: 1.5; color: var(--a-ink); }
-.wtna-card .wtna-status p { margin-top: 4px; }
+.drba-status { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 12px; }
+.drba-status > svg { inline-size: 30px; block-size: 30px; color: var(--st); }
+.drba-status b { display: block; font-weight: 800; font-size: 1rem; line-height: 1.5; color: var(--a-ink); }
+.drba-card .drba-status p { margin-top: 4px; }
 
-.wtna-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.wtna-stat { padding: 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); }
-.wtna-stat span { display: block; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
-.wtna-stat b { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 900; font-size: 1.25rem; color: var(--a-ink); }
-.wtna-stat b .wtn-unit { color: var(--a-ink-3); }
+.drba-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.drba-stat { padding: 12px; border-radius: var(--drb-r-sm); background: var(--a-row); }
+.drba-stat span { display: block; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
+.drba-stat b { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 900; font-size: 1.25rem; color: var(--a-ink); }
+.drba-stat b .drb-unit { color: var(--a-ink-3); }
 
 /* ── الدعم: أسئلةٌ تنطوي ── */
-.wtna-qas { display: flex; flex-direction: column; gap: 8px; }
-.wtna-qa { border-radius: var(--wtn-r-sm); background: var(--a-sheet); border: 1px solid var(--a-rule); }
-.wtna-qa summary {
+.drba-qas { display: flex; flex-direction: column; gap: 8px; }
+.drba-qa { border-radius: var(--drb-r-sm); background: var(--a-sheet); border: 1px solid var(--a-rule); }
+.drba-qa summary {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;
   list-style: none; cursor: pointer; font-weight: 800; font-size: .9375rem; line-height: 1.5; color: var(--a-ink);
 }
-.wtna-qa summary::-webkit-details-marker { display: none; }
-.wtna-qa summary svg { inline-size: 16px; block-size: 16px; flex: none; color: var(--a-ink-3); transition: transform .2s; }
-.wtna-qa[open] summary svg { transform: rotate(180deg); }
-.wtna-qa-a { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px 14px; }
-.wtna-qa-a p { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
+.drba-qa summary::-webkit-details-marker { display: none; }
+.drba-qa summary svg { inline-size: 16px; block-size: 16px; flex: none; color: var(--a-ink-3); transition: transform .2s; }
+.drba-qa[open] summary svg { transform: rotate(180deg); }
+.drba-qa-a { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px 14px; }
+.drba-qa-a p { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
 
 /* ── تذكيرُ الحفظ بالحساب في رأس الصدارة، مكانَ الراعي وسطرِ المسابقة (قرارُ المالك ٢٠٢٦-٠٩-٢٥) ── */
-.wtna-hero > .wtna-card { margin-top: var(--wtn-s3); }
+.drba-hero > .drba-card { margin-top: var(--drb-s3); }
 
 /* ── دعوةُ أصحاب الأعمال إلى رعاية أدِيب: البطاقةُ الوحيدةُ بذهب الأوسمة، فتُرى بين أخواتها ── */
-.wtna-card[data-tone="gold"] {
+.drba-card[data-tone="gold"] {
   --st: var(--a-gold-ink);
   border-color: color-mix(in oklab, var(--a-gold) 70%, var(--a-rule));
   background: linear-gradient(160deg, color-mix(in oklab, var(--a-gold) 18%, var(--a-sheet)) 0%, var(--a-sheet) 58%);
 }
-.wtna-card[data-tone="gold"] h2 svg { color: var(--a-gold-ink); }
-.wtna-card .wtna-eyebrow { font-size: .75rem; font-weight: 800; color: var(--a-gold-ink); }
-.wtna-card h2.wtna-big { font-size: 1.5rem; line-height: 1.35; margin-top: -6px; text-wrap: balance; }
-.wtna-card h2.wtna-big svg { inline-size: 28px; block-size: 28px; }
-.wtna-card .wtna-lead { font-size: .9375rem; color: var(--a-ink); }
-.wtna-card[data-tone="gold"] .wtna-item-ic { color: var(--a-gold-ink); }
-.wtna-btn[data-kind="gold"] { background: var(--a-gold); color: var(--wtn-night); }
+.drba-card[data-tone="gold"] h2 svg { color: var(--a-gold-ink); }
+.drba-card .drba-eyebrow { font-size: .75rem; font-weight: 800; color: var(--a-gold-ink); }
+.drba-card h2.drba-big { font-size: 1.5rem; line-height: 1.35; margin-top: -6px; text-wrap: balance; }
+.drba-card h2.drba-big svg { inline-size: 28px; block-size: 28px; }
+.drba-card .drba-lead { font-size: .9375rem; color: var(--a-ink); }
+.drba-card[data-tone="gold"] .drba-item-ic { color: var(--a-gold-ink); }
+.drba-btn[data-kind="gold"] { background: var(--a-gold); color: var(--drb-night); }
