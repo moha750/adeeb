@@ -148,12 +148,17 @@
   .pw svg,.toast svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* الخصائصُ القائمة: شارةٌ لكلٍّ منها، خلفيّتُها ممتلئةٌ بما بقيَ من مدّتها وتنقصُ من أعلى إلى أسفل */
   /* أكبرُ وأنزلُ ممّا كانت: تحتَ الشريطِ العلويِّ بمسافةٍ، على السماءِ فوقَ الأفق حيث لا يُغطّي اللعب */
+  /* ثمّ صغُرت واكتسبت اسمَها تحتها (ملاحظةُ محمد ٢٠٢٦-٠٩-٢٥: «صغّر حجم المميزات، وتحت كل أيقونة اسمها»):
+     ٤٤ بدل ٦٤، والاسمُ يعلّم اللاعبَ ما نال، فالعلاقةُ بين الكلمةِ والخاصيّة لا تُقرأ من الرسمِ وحدَه */
   .pws{position:absolute;z-index:3;inset-inline:0;top:max(calc(132px + env(safe-area-inset-top,0px)),17%);
-    display:flex;justify-content:center;gap:10px;pointer-events:none}
+    display:flex;justify-content:center;gap:8px;pointer-events:none}
+  .pwb{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .pwb b{font:700 11px/1 var(--body);color:#FFFFFF;background:rgba(8,14,8,.62);padding:3px 7px 4px;border-radius:999px;
+    white-space:nowrap;text-shadow:0 1px 1px rgba(0,0,0,.35)}
   .pws[hidden]{display:none!important}
-  .pw{width:64px;height:64px;border-radius:19px;background:rgba(8,14,8,.66);color:#FFFFFF;
+  .pw{width:44px;height:44px;border-radius:13px;background:rgba(8,14,8,.66);color:#FFFFFF;
     display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.25)}
-  .pw svg{width:36px;height:36px;position:relative;z-index:1;stroke-width:2.2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+  .pw svg{width:24px;height:24px;position:relative;z-index:1;stroke-width:2.3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
   .pw i{position:absolute;inset-inline:0;bottom:0;height:100%;background:#3E9B47;display:block;z-index:0}
   .pw.end{animation:pwb .3s steps(2) infinite}
   @keyframes pwb{50%{opacity:.35}}
@@ -312,7 +317,7 @@
       <p class="net" id="net" hidden></p>
       <button class="btn" id="again" type="button">مرّة ثانية</button>
       <a class="lnk" id="toBoard2" href="/games/darbak-khadar" hidden>لوحةُ الصدارة</a>
-      <a class="lnk" id="toAcct2" href="/login" hidden>احفظ تقدّمك بحسابك في أدِيب</a>
+      <a class="lnk" id="toAcct2" href="/login" hidden>احفظ أكوابك باسمك بحسابٍ مجّانيّ</a>
     </div>
     <div class="cd" id="cd" hidden><span id="cdn">3</span></div>
     <div class="veil" id="pause" hidden>
@@ -5774,6 +5779,11 @@ var SND=(function(){
       else { tone("sine",620,150,0.02,0.7,0.10,{wet:0.5});                                  /* تمهّل: الزمنُ يهبط */
         puff(0.6,0.06,"lowpass",2400,300,0,{a:0.1}); }
     },
+    /* التحليقُ يوشكُ أن ينتهي: صفيرٌ نازلٌ مرّتين، فيستعدُّ للهبوط */
+    flyWarn:function(){
+      if(!ready) return; var t=ctx.currentTime;
+      tone("sine",hz(7,1),hz(4,1),0.01,0.24,0.07,{t:t,wet:0.35}); tone("sine",hz(7,1),hz(4,1),0.01,0.24,0.07,{t:t+0.3,wet:0.35});
+    },
     /* انتهاءُ خاصيّة: نغمتانِ تهبطان */
     powerEnd:function(){
       if(!ready) return; var t=ctx.currentTime;
@@ -9698,7 +9708,12 @@ function flyTrails(fe,dt,spd){
     tr.m.visible=M>1;
   }
 }
-function pwFxReset(){ PWFX.brk=-1; PWFX.burstT=-1; ofBack=0; ofFlyEnd=-1e9; ofAway=false; PWFX.bub.visible=PWFX.burst.visible=PWFX.mag.visible=false; runner.scale.setScalar(1); }
+/* قربُ الهبوط (ملاحظةُ محمد ٢٠٢٦-٠٩-٢٥: «عندما ينزل من التحليق كم ثانية يقدر يمشي بدون ما يصطدم؟
+   وليش ما يكون في صوت أو يكون خضيران شفاف حتى الواحد يعرف؟»): في آخرِ ثانيةٍ ونصفٍ من التحليق يومضُ
+   خضيران ويُسمَعُ صفيرٌ نازلٌ مرّتين، ويبقى يومضُ في نفَسِ الهبوطِ الذي لا يُصدَمُ فيه (PW_LAND ٠٫٤ ث)
+   ولحظةَ كسرِ الدرع. رسمٌ وصوتٌ من عدّادَي اللبّ لا يمسّانِه، فالقواعدُ والبصمةُ كما هي */
+var FLY_WARN=90;
+function pwFxReset(){ PWFX.brk=-1; PWFX.burstT=-1; ofBack=0; ofFlyEnd=-1e9; ofAway=false; PWFX.bub.visible=PWFX.burst.visible=PWFX.mag.visible=false; runner.scale.setScalar(1); runner.visible=true; PWFX.blink=false; }
 /* ارتفاعُ التحليق من عدّادِ اللبّ: يعلو في أوّلِ ٢٢ تكّةً ويهبطُ في آخرِ ٢٦ */
 function pwFlyE(){
   if(!sim || sim.s.pwF<=0) return 0;
@@ -9771,6 +9786,9 @@ function pwFxUpdate(dt){
   var fe=alive?pwFlyE():0, fh=fe*(3.0+0.14*Math.sin(PWFX.tNow*2.6));
   runner.position.y+=fh; runner.scale.setScalar(1+0.10*fe);
   flyTrails(fe,dt,sim?sim.speed():0);
+  var bl=alive && ((s.pwF>0 && s.pwF<=FLY_WARN) || (s.pwF===0 && s.inv>0));
+  if(bl){ runner.visible=((PWFX.tNow*(s.pwF>0?7:12))%1)<0.62; PWFX.blink=true; }
+  else if(PWFX.blink){ runner.visible=true; PWFX.blink=false; }
   /* الدرع */
   var sh=alive && s.pwS>0;
   PWFX.bub.visible=sh && !(s.pwS<120 && Math.floor(PWFX.tNow*7)%2===1);
@@ -10435,9 +10453,10 @@ function hudPw(dt){
   for(i=0;i<4;i++) if(T[i]>0) key+=i;
   if(key!==pwUI.key){
     elPws.innerHTML=""; pwUI.els=[];
-    for(i=0;i<key.length;i++){ var n=+key[i], d=document.createElement("div");
-      d.className="pw"; d.innerHTML=PW_ICO[n]+"<i></i>"; d.setAttribute("aria-label",PW_NAME[n]);
-      elPws.appendChild(d); pwUI.els.push({n:n,d:d,bar:d.lastChild,w:-1,end:false}); }
+    for(i=0;i<key.length;i++){ var n=+key[i], w=document.createElement("div"), d=document.createElement("div"), l=document.createElement("b");
+      w.className="pwb"; d.className="pw"; d.innerHTML=PW_ICO[n]+"<i></i>"; l.textContent=PW_NAME[n];
+      w.appendChild(d); w.appendChild(l);
+      elPws.appendChild(w); pwUI.els.push({n:n,d:d,bar:d.lastChild,w:-1,end:false}); }
     elPws.hidden=!key; pwUI.key=key;
   }
   for(i=0;i<pwUI.els.length;i++){ var u=pwUI.els[i], t=T[u.n], w=Math.round(100*t/PW_T[u.n]);
@@ -11287,6 +11306,7 @@ function loop(ts){
     /* انتهاءُ خاصيّةٍ بمدّتِها (والدرعُ المكسورُ له صوتُه) */
     var PWn=[sim.s.pwS,sim.s.pwF,sim.s.pwM,sim.s.pwW];
     if(S0.pw){ for(var pi=0;pi<4;pi++) if(S0.pw[pi]>0 && PWn[pi]===0 && !(pi===0 && sim.s.brkAt!==S0.brk)) SND.powerEnd(); }
+    if(S0.pw && S0.pw[1]>FLY_WARN && PWn[1]>0 && PWn[1]<=FLY_WARN) SND.flyWarn();
     if(S0.alive && !sim.s.alive)              SND.crash(sim.s.hitReq);
     if(S0.air<=0 && sim.s.air>0)              SND.jump();
     if(S0.air>0 && sim.s.air<=0)              SND.land();

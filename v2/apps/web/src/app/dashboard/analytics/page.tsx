@@ -14,8 +14,9 @@ const SOURCES: Source[] = ["web", "app"];
  */
 const FROM_DAYS: Record<string, string> = { "7": "7", "30": "mtd", "90": "90", "3650": "all" };
 
+// «دربك خضر» لها صفحةُ أرقامها تحت هذا القسم وبقفله (٢٠٢٦-٠٩-٢٥)، والبابُ إليها من هنا
 const Head = () => (
-  <PageHeader title="إحصائيّات الزوّار" />
+  <PageHeader title="إحصائيّات الزوّار" action={{ label: "إحصائيّات دربك خضر", href: "/dashboard/analytics/darb" }} />
 );
 
 type Params = { preset?: string; from?: string; to?: string; days?: string; src?: string; cmp?: string };
