@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkName, decodeInput, encodeInput, nameKey, normalizeCode, replay, type Press } from "../rules";
+import { checkName, decodeInput, encodeInput, nameKey, replay, type Press } from "../rules";
 import { BLOCKED } from "../blocked";
 import { CORE_VERSION } from "../core";
 import runs from "./runs.fixture.json";
@@ -10,6 +10,11 @@ import runs from "./runs.fixture.json";
  * والتكّاتُ والمسافةُ والمصّاص. فإن أعادها الخادمُ بلبّه فخرج بالأرقام نفسِها، فاللبُّ
  * المنسوخُ هنا هو لبُّ اللعبة حرفًا بحرف. وفيها خصائصُ التقطت (تحليقٌ ودرعٌ ومغناطيسٌ
  * وتمهّل) لأنّها تمسّ السرعةَ والتصادم، وأخطرُ ما يفترق فيه لبّان.
+ *
+ * **ولمّا تبدّلت الكلماتُ (٢٠٢٦-٠٩-٢٥: تلاحم← كرم، وثبات← هون)** تغيّر طولُها فتغيّر متى تُمنح
+ * الخاصيّة، فافترقت الجولاتُ عن عالمها القديم. فأُعيد توليدُ أرقامها **بالضغطات نفسِها** على
+ * اللبّ الجديد، وقُطع ما بعد الاصطدام (لاعبٌ آليٌّ لعب عالمًا غيرَ هذا). وتطابقُ لبّ اللعبة ولبّ
+ * الخادم تضمنه البصمةُ الواحدة التي يبنيها `tools/site.py` للاثنين، لا هذه الأرقام.
  */
 describe("إعادةُ الجولة", () => {
   it("تُطابق كلَّ جولةٍ لُعبت في اللعبة", () => {
@@ -88,21 +93,6 @@ describe("الاسمُ المستعار", () => {
   it("يحجب الانتحالَ والبذاءة", () => {
     for (const s of ["نادي أديب", "أديب", "Adeeb7", "مشرف اللعبة", "admin", "كس", "ابن الكلب", "FUCK"]) {
       expect(ok(s)).toBe(false);
-    }
-  });
-});
-
-describe("رمزُ الاسترجاع", () => {
-  it("يقبله بمسافةٍ أو شرطةٍ أو أرقامٍ عربيّة", () => {
-    expect(normalizeCode("48219 93017")).toBe("4821993017");
-    expect(normalizeCode("48219-93017")).toBe("4821993017");
-    expect(normalizeCode("٤٨٢١٩٩٣٠١٧")).toBe("4821993017");
-    expect(normalizeCode("۴۸۲۱۹۹۳۰۱۷")).toBe("4821993017");
-  });
-
-  it("ويردّ ما ليس عشرةَ أرقام", () => {
-    for (const bad of ["", "12345", "48219930170", "4821993O17", null, 4821993017]) {
-      expect(normalizeCode(bad)).toBeNull();
     }
   });
 });

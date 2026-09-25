@@ -1,6 +1,6 @@
 import { checkName } from "@/lib/watan/rules";
 import { BLOCKED } from "@/lib/watan/blocked";
-import { hashCode, hashToken, newCode, newToken, readToken, service, who, writeToken } from "@/lib/watan/player";
+import { hashToken, newToken, readToken, service, who, writeToken } from "@/lib/watan/player";
 import { fail, json, readJson, sameOrigin } from "@/lib/watan/http";
 
 /**
@@ -29,15 +29,12 @@ export async function POST(req: Request) {
   const existing = await readToken();
   const token = existing ?? newToken();
   const { user } = await who();
-  // الرمزُ يُولَّد في كلّ نداءٍ ولا يُحفَظ إلّا لمن يولد: القاعدةُ وحدَها تعرف أهو جديد،
-  // وتسجيلٌ يسبقه سؤالٌ «أموجود؟» يتسابقان.
-  const code = newCode();
-  const { data, error } = await sb.rpc("watan_register", {
+  // بلا رمز استرجاع (أُزيل ٢٠٢٦-٠٩-٢٥): ما يحفظ الاسمَ خارج هذا المتصفّح حسابُ أدِيب وحدَه.
+  const { error } = await sb.rpc("watan_register", {
     p_token_hash: hashToken(token),
     p_user: user,
     p_nickname: check.name,
     p_key: check.key,
-    p_recovery_hash: hashCode(code),
   });
   if (error) {
     if (error.message.includes("watan_name_taken")) return fail(409, "هذا الاسمُ مأخوذ. جرّب غيره.");
@@ -45,7 +42,5 @@ export async function POST(req: Request) {
   }
 
   if (!existing) await writeToken(token);
-  const created = (data as { created?: boolean } | null)?.created === true;
-  // الرمزُ يُعرض مرّةً لمن وُلد الآن، ولا يُعاد في تبديل الاسم (صاحبُه يعرفه أو يجدّده).
-  return json({ ok: true, name: check.name, ...(created ? { code } : {}) });
+  return json({ ok: true, name: check.name });
 }

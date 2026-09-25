@@ -12172,11 +12172,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .wtna-hero p { margin-top: var(--wtn-s1); font-size: .8125rem; color: var(--a-ink-3); }
 /* الراعي، ثمّ نافذةُ المسابقة في لوحٍ هادئٍ يحدّه ليلكيُّ oos وهي جارية */
 .wtna-hero .wtna-spons { display: flex; align-items: center; gap: 8px; margin-top: var(--wtn-s2); color: var(--a-ink-2); }
-.wtna-hero .wtna-contest {
-  margin-top: var(--wtn-s2); padding: 10px 14px; border-radius: var(--wtn-r-sm);
-  border: 1px solid var(--a-rule); background: var(--a-well); color: var(--a-ink); font-weight: 700;
-}
-.wtna-hero .wtna-contest[data-phase="open"] { border-color: color-mix(in oklab, var(--wtn-oos) 60%, var(--a-rule)); }
 
 .wtna-tabs {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: var(--wtn-s3);
@@ -12433,35 +12428,11 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .wtna-word-p b svg { inline-size: 18px; block-size: 18px; color: var(--a-mark); }
 .wtna-word-p > span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
 
-/* ── حسابي: الحالُ، والرمزُ، والأرقام ── */
+/* ── حسابي: الحالُ والأرقام (أُزيل رمزُ الاسترجاع ٢٠٢٦-٠٩-٢٥) ── */
 .wtna-status { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 12px; }
 .wtna-status > svg { inline-size: 30px; block-size: 30px; color: var(--st); }
 .wtna-status b { display: block; font-weight: 800; font-size: 1rem; line-height: 1.5; color: var(--a-ink); }
 .wtna-card .wtna-status p { margin-top: 4px; }
-
-.wtna-code {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 10px 10px 10px 16px; border-radius: var(--wtn-r-sm); background: var(--a-sunk);
-}
-.wtna-code-v {
-  font-family: var(--font-latin); font-weight: 700; font-size: 1.5rem; letter-spacing: .06em;
-  font-variant-numeric: tabular-nums; color: var(--a-ink); white-space: nowrap;
-}
-.wtna-icon-btn {
-  display: grid; place-items: center; flex: none; inline-size: 44px; block-size: 44px; border-radius: 50%;
-  border: 1px solid var(--a-rule); color: var(--a-ink);
-}
-.wtna-icon-btn svg { inline-size: 20px; block-size: 20px; }
-.wtna-icon-btn:disabled { opacity: .45; cursor: default; }
-.wtna-card .wtna-err { font-size: .8125rem; font-weight: 700; color: var(--a-gold-ink); }
-
-.wtna-in {
-  inline-size: 100%; block-size: 52px; padding-inline: 14px; border-radius: var(--wtn-r-sm);
-  border: 1px solid var(--a-rule); background: var(--a-sunk); color: var(--a-ink);
-  font-family: var(--font-latin); font-size: 1.25rem; letter-spacing: .06em; text-align: center;
-}
-.wtna-in::placeholder { font-family: var(--font-body); font-size: .9375rem; letter-spacing: normal; color: var(--a-ink-3); }
-.wtna-in:focus { outline: none; border-color: var(--a-mark); }
 
 .wtna-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .wtna-stat { padding: 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); }
@@ -12481,3 +12452,20 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .wtna-qa[open] summary svg { transform: rotate(180deg); }
 .wtna-qa-a { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px 14px; }
 .wtna-qa-a p { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
+
+/* ── تذكيرُ الحفظ بالحساب في رأس الصدارة، مكانَ الراعي وسطرِ المسابقة (قرارُ المالك ٢٠٢٦-٠٩-٢٥) ── */
+.wtna-hero > .wtna-card { margin-top: var(--wtn-s3); }
+
+/* ── دعوةُ أصحاب الأعمال إلى رعاية أدِيب: البطاقةُ الوحيدةُ بذهب الأوسمة، فتُرى بين أخواتها ── */
+.wtna-card[data-tone="gold"] {
+  --st: var(--a-gold-ink);
+  border-color: color-mix(in oklab, var(--a-gold) 70%, var(--a-rule));
+  background: linear-gradient(160deg, color-mix(in oklab, var(--a-gold) 18%, var(--a-sheet)) 0%, var(--a-sheet) 58%);
+}
+.wtna-card[data-tone="gold"] h2 svg { color: var(--a-gold-ink); }
+.wtna-card .wtna-eyebrow { font-size: .75rem; font-weight: 800; color: var(--a-gold-ink); }
+.wtna-card h2.wtna-big { font-size: 1.5rem; line-height: 1.35; margin-top: -6px; text-wrap: balance; }
+.wtna-card h2.wtna-big svg { inline-size: 28px; block-size: 28px; }
+.wtna-card .wtna-lead { font-size: .9375rem; color: var(--a-ink); }
+.wtna-card[data-tone="gold"] .wtna-item-ic { color: var(--a-gold-ink); }
+.wtna-btn[data-kind="gold"] { background: var(--a-gold); color: var(--wtn-night); }

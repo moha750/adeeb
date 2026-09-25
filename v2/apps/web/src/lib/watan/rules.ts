@@ -165,19 +165,3 @@ export function checkName(raw: unknown, blocked: { whole: readonly string[]; par
 
   return { ok: true, name, key };
 }
-
-/* ══ رمزُ الاسترجاع ════════════════════════════════════════════════
-   عشرةُ أرقامٍ لا حروف: لوحةُ الأرقام تُفتَح في كلّ جوّالٍ بلا تبديل لغة، ولا يلتبس
-   صفرٌ بحرف. ويُكتب كيفما اتّفق: بمسافةٍ أو شرطةٍ أو بأرقامٍ عربيّة، فيُطبَّع هنا. */
-
-export const CODE_DIGITS = 10;
-
-/** يُطبّع ما كتبه اللاعبُ إلى عشرة أرقامٍ غربيّة، أو `null` إن لم تكن عشرة. */
-export function normalizeCode(raw: unknown): string | null {
-  if (typeof raw !== "string" || raw.length > 40) return null;
-  const d = raw
-    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
-    .replace(/[\s\-_.]/g, "");
-  return new RegExp(`^[0-9]{${CODE_DIGITS}}$`).test(d) ? d : null;
-}

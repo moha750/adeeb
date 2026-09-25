@@ -52,7 +52,7 @@ const CANDY = [
  */
 const T0 = Date.now();
 const H = 3_600_000;
-const TXT = { starts: "الجمعة 3:00 م", ends: "الأحد 6:00 م" };
+const TXT = { starts: "الجمعة 6:00 م", ends: "الأحد 6:00 م" };
 const WIN = {
   before: { ...TXT, startsAt: T0 + 2 * H + 15 * 60_000, endsAt: T0 + 53 * H },
   open: { ...TXT, startsAt: T0 - H, endsAt: T0 + 50 * H },

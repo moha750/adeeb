@@ -7,9 +7,11 @@
  * انسحب الراعي فلا جوائز، والفائزُ يُعلَن باسمه المستعار في منشور. فلا غرضَ لرقمٍ
  * يُجمع، وما لا غرضَ له لا يُجمع (نظامُ حماية البيانات).
  *
- * **والضيفُ يُعرَف برمز متصفّحه**، ومن بدّل متصفّحه نقل اسمَه برمز الاسترجاع (`hashCode`).
- * **ومن دخل بحساب أدِيب عُرِف بحسابه** في كلّ جهازٍ بلا رمز، وضُمّ إليه ضيفُ متصفّحه أوّلَ مرّة
- * («حسابه بيحفظ له تقدّمه وين ما راح… ومن لا يريد حساب الرمز يكفيه»). والطريقان في `who()`.
+ * **والضيفُ يُعرَف برمز متصفّحه** وحدَه، فاسمُه في ذلك المتصفّح لا يعبر إلى غيره.
+ * **ومن دخل بحساب أدِيب عُرِف بحسابه** في كلّ جهازٍ، وضُمّ إليه ضيفُ متصفّحه أوّلَ مرّة. والطريقان
+ * في `who()`. **وكان للضيف رمزُ استرجاعٍ من عشرة أرقام ينقل به اسمَه، فأُزيل نهائيًّا** (قرارُ المالك
+ * ٢٠٢٦-٠٩-٢٥: «نكتفي بإنشاء حسابٍ من أدِيب لحفظ تقدّمك والتواصل معك عند الفوز»)، ومعه بابا
+ * `code` و`restore` ودوالُّهما وعمودُه في القاعدة (`watan_05a` و`watan_05b`).
  *
  * ## والنمطُ نمطُ «خمّن الكلمة» (`lib/games/player.ts`) بقراراته نفسِها
  * الرمزُ الخامّ في كوكيز `httpOnly` لا في `localStorage` (سكربتٌ في الصفحة لا يبلغه)،
@@ -18,7 +20,7 @@
  * يعيش الموسمَ كلَّه.
  */
 import "server-only";
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { createAdeebServiceClient } from "@adeeb/core";
@@ -46,17 +48,6 @@ function saltedHash(domain: string, value: string): string {
 }
 
 export const hashToken = (token: string) => saltedHash("wt", token);
-
-/**
- * **رمزُ الاسترجاع: عشرةُ أرقامٍ من عشوائيّة التعمية.** يُعطى مرّةً عند التسجيل (ويُجدَّد
- * بطلب صاحبه)، ومن أدخله في متصفّحٍ آخر انتقل إليه اسمُه ونتائجُه. والقاعدةُ لا ترى إلّا
- * بصمتَه، فلا يُقرأ من نسخةٍ مسرَّبةٍ منها.
- */
-export function newCode(): string {
-  return String(randomInt(0, 10 ** 10)).padStart(10, "0");
-}
-
-export const hashCode = (code: string) => saltedHash("wr", code);
 
 export async function readToken(): Promise<string | null> {
   const raw = (await cookies()).get(COOKIE)?.value;

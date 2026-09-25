@@ -11,6 +11,16 @@ import { useSyncExternalStore } from "react";
 /** رابطُ اللعبة: ملفٌّ ثابتٌ بإعادة كتابة (`next.config.ts`)، فيُفتَح تنقّلًا كاملًا لا انتقالَ React. */
 export const PLAY = "/watan/play";
 
+/**
+ * الدخولُ بحساب أدِيب يعود إلى «حسابي» نفسِه، فيُضمّ ضيفُ المتصفّح إلى الحساب عند أوّل قراءة.
+ * وهو وحدَه ما يحفظ الاسمَ ويُثبته للجائزة منذ أُزيل رمزُ الاسترجاع (٢٠٢٦-٠٩-٢٥).
+ */
+export const LOGIN = `/login?next=${encodeURIComponent("/watan?tab=me")}`;
+
+/** واتساب النادي للتواصل والرعاية (قرارُ المالك ٢٠٢٦-٠٩-٢٥)، ورقمُه مكتوبًا كما يُقرأ. */
+export const WA_NUMBER = "0543837775";
+export const waLink = (text: string) => `https://wa.me/966543837775?text=${encodeURIComponent(text)}`;
+
 const fmt = new Intl.NumberFormat("en-US");
 export const n = (x: number) => fmt.format(x);
 

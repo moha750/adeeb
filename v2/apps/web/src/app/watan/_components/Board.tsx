@@ -2,9 +2,9 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Crown, Gift, HandSwipeRight, Lifebuoy, Play, PersonSimpleRun, Trophy, UserCircle } from "@phosphor-icons/react";
-import { CaretDown } from "@/app/_components/glyphs";
-import { Cup, OosMark, PLAY, PRIZE, cups, n } from "./bits";
+import { Crown, Gift, HandSwipeRight, Lifebuoy, Play, PersonSimpleRun, SignIn, Trophy, UserCircle } from "@phosphor-icons/react";
+import { CaretDown, Warning } from "@/app/_components/glyphs";
+import { Cup, LOGIN, PLAY, PRIZE, cups, n } from "./bits";
 import { Contest } from "./Contest";
 import { Help } from "./Help";
 import { HowTo } from "./HowTo";
@@ -95,17 +95,10 @@ const NOTE: Record<BoardKind, string> = {
   candy: "مجموعُ أكوابِ جولاتك كلّها في المسابقة",
 };
 
-/** سطرُ النافذة: متى تبدأ، أو حتّى متى، أو أنّها انتهت. */
-function contestLine(c: NonNullable<BoardContest>) {
-  if (c.phase === "before") return `تبدأ المسابقة ${c.starts}، وما قبلها تجربةٌ لا تُحسَب`;
-  if (c.phase === "open") return `المسابقةُ جاريةٌ حتّى ${c.ends}`;
-  return "انتهت المسابقة، ويُعلَن الفائزون بعد مراجعة النتائج";
-}
-
 const FINE =
   "يظهر هنا اسمُك المستعار وحده. والنتائجُ تُراجَع قبل اعتمادها، ويتحدّث الترتيبُ كلّ دقيقة.";
 const FINE_PRIZE =
-  "الجوائزُ رصيدٌ في محفظة oos للثلاثة الأوائل، ويُثبت الفائزُ اسمَه بحساب أدِيب أو برمز الاسترجاع حين نعلن النتائج.";
+  "الجوائزُ رصيدٌ في محفظة oos للثلاثة الأوائل، ويُثبت الفائزُ اسمَه بحسابه في أدِيب حين نعلن النتائج.";
 
 /** أيقونةُ كلّ تبويب: الكأسُ للصدارة، والهديّةُ للجوائز، والسحبُ للّعب، والشخصُ للحساب، وطوقُ النجاة للدعم. */
 const ICON: Record<TabKey, ReactNode> = {
@@ -123,6 +116,10 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
   const me = data.me;
   const contest = data.contest ?? null;
   const prizes = contest !== null && b === "candy";
+  /* **التذكيرُ مكانَ الراعي وسطرِ المسابقة** (قرارُ المالك ٢٠٢٦-٠٩-٢٥): «تُزال برعاية oos وتبدأ المسابقة،
+     وتُستبدل لمن لم يؤمّن حسابه برسالة تذكيرٍ لتأمين الحساب». فالراعي والموعدُ في تبويب المسابقة وحدَه،
+     ومن ليس داخلًا بحسابه يُذكَّر أوّلَ ما يرى اللوحة أنّ الجائزةَ لا تُستلَم إلّا بحساب. */
+  const secured = Boolean(data.loggedIn || me?.account);
 
   const at = (r: number) => rows.find((x) => x.rank === r);
   const pod = [2, 1, 3].map((r) => ({ r, e: at(r) }));
@@ -133,13 +130,24 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
     <>
       <section className="wtna-hero">
         <h1>المتصدّرون</h1>
-        <p className="wtna-spons">
-          برعاية <OosMark />
-        </p>
-        {contest ? (
-          <p className="wtna-contest" data-phase={contest.phase}>
-            {contestLine(contest)}
-          </p>
+        {!secured ? (
+          <div className="wtna-card" data-tone="warn">
+            <div className="wtna-status">
+              <Warning />
+              <div>
+                <b>{me ? `«${me.name}»، اسمُك غير محفوظ بحساب` : "العب بحسابك لتُحسب لك الجائزة"}</b>
+                <p>
+                  {me
+                    ? "لا تُستلَم الجائزةُ إلّا بحساب أدِيب، ومن خلاله نتواصل مع الفائز. احفظ اسمَك قبل أن تفوز."
+                    : "لا تُستلَم الجائزةُ إلّا بحساب أدِيب، ومن خلاله نتواصل مع الفائز. ادخل به قبل أن تلعب."}
+                </p>
+              </div>
+            </div>
+            <a className="wtna-btn" data-kind="suit" data-wide="" href={LOGIN}>
+              <SignIn />
+              {me ? "احفظ تقدّمك بحسابك في أدِيب" : "ادخل بحسابك في أدِيب"}
+            </a>
+          </div>
         ) : null}
         <p>{NOTE[b]}</p>
         <div className="wtna-tabs" role="group" aria-label="اللوحة">

@@ -194,12 +194,6 @@
   .lnk:hover{text-decoration:underline}
   .veil .net{color:var(--ink);font-size:.9rem}
   .btn:disabled{opacity:.6;cursor:default}
-  /* رمزُ الاسترجاع: أرقامٌ تُقرأ من اليسار ولو كان السطرُ عربيًّا (وإلّا انقلبت المجموعتان) */
-  .veil .code{color:var(--ink);font-size:.9rem;cursor:pointer}
-  .veil .code b{display:inline-block;direction:ltr;unicode-bidi:isolate;color:var(--gold);font-size:1.2rem;
-    letter-spacing:.06em;font-variant-numeric:tabular-nums;margin-inline-start:6px}
-  .veil .code small{display:block;color:var(--ink-2);font-size:.8rem}
-  #cdI{direction:ltr;text-align:center;letter-spacing:.1em;font-variant-numeric:tabular-nums}
   .veil .acct{color:var(--accent-lit);font-size:.85rem}
   /* الراعي وحالُ المسابقة (في الموقع وحدَه): شعارُ oos كما هو، حروفُه البيضاءُ على بنفسجيّهم */
   .veil .spons{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-2);font-size:.82rem}
@@ -214,7 +208,7 @@
     background:linear-gradient(to top,rgba(8,14,8,.84) 0,rgba(8,14,8,.52) 22%,rgba(8,14,8,0) 48%);
     padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   /* خانةُ الاسم أوّلَ مرّة أطولُ من الزرّ وحدَه، فالتدرّجُ يعلو معها */
-  #start:has(#nmBox:not([hidden])),#start:has(#cdBox:not([hidden])){
+  #start:has(#nmBox:not([hidden])){
     background:linear-gradient(to top,rgba(8,14,8,.88) 0,rgba(8,14,8,.62) 42%,rgba(8,14,8,0) 76%)}
   #start .btn{min-width:210px;min-height:54px;font-size:1.2rem;padding:14px 44px;box-shadow:0 8px 22px rgba(0,0,0,.38)}
   #start .contest{background:rgba(8,14,8,.66);border-radius:12px;padding:7px 14px}
@@ -296,12 +290,7 @@
         <label class="nm" id="nmBox"><span>اسمُك في لوحة الصدارة</span>
           <input id="nmI" type="text" maxlength="20" autocomplete="nickname" autocapitalize="off"
                  spellcheck="false" enterkeyhint="go" placeholder="مثلًا: صقر الأحساء"></label>
-        <label class="nm" id="cdBox" hidden><span>رمزُ الاسترجاع</span>
-          <input id="cdI" type="text" inputmode="numeric" maxlength="16" autocomplete="off"
-                 enterkeyhint="go" placeholder="48219 93017"></label>
         <p class="as" id="nmAs" hidden>تلعبُ باسم <b id="nmV"></b> <span class="dot">·</span><button class="lnk" id="nmEdit" type="button">تغيير</button></p>
-        <p class="code" id="cdLine" hidden>رمزُ استرجاعك <b id="cdV"></b><small id="cdHint">صوّره أو انسخه، وبه تلعبُ باسمك من أيّ متصفّحٍ آخر.</small></p>
-        <button class="lnk" id="cdHave" type="button" hidden>عندي رمزُ استرجاع</button>
         <p class="acct" id="acct" hidden>محفوظٌ في حسابك</p>
         <a class="lnk" id="toAcct" href="/login" hidden>احفظ تقدّمك بحسابك في أدِيب</a>
         <p class="nmErr" id="nmErr" hidden></p>
@@ -321,7 +310,6 @@
       <p id="dbg" style="display:none;font:12px/1.7 ui-monospace,monospace;color:#9FE08C;direction:ltr;
         background:rgba(0,0,0,.42);padding:7px 11px;border-radius:9px;margin:2px 0 14px">—</p>
       <p class="net" id="net" hidden></p>
-      <p class="code" id="cdNote" hidden>احفظ رمزَ اسمك <b id="cdNoteV"></b><small>به تلعبُ باسمك من أيّ متصفّحٍ آخر.</small></p>
       <button class="btn" id="again" type="button">مرّة ثانية</button>
       <a class="lnk" id="toBoard2" href="/watan" hidden>لوحةُ الصدارة</a>
       <a class="lnk" id="toAcct2" href="/login" hidden>احفظ تقدّمك بحسابك في أدِيب</a>
@@ -4743,14 +4731,14 @@ var STEP=1/60, SLOT=16, GRACE=7, LANE_STEPS=8;
    فتتّسعُ نافذةُ التوقيتِ قرابةَ النصف. والمولِّدُ يقرأُ المدّتين نفسَيهما (spanOf)،
    فلا يُطلَبُ من اللاعبِ ما لا يُستطاع. */
 var JUMP_D=0.70, SLIDE_D=0.60, BUF_W=0.20;
-var WORDS=[["و","ط","ن"],["ر","ؤ","ي","ة"],["ت","ل","ا","ح","م"],["ث","ب","ا","ت"]];
+var WORDS=[["و","ط","ن"],["ر","ؤ","ي","ة"],["ك","ر","م"],["ه","و","ن"]];
 /* ── الخصائصُ والمصّاص ─────────────────────────────────────────────────────
    النتيجةُ صارت المسافةَ بالمتر، والمصّاصُ عدٌّ مستقلّ — لكلٍّ منهما متصدّرون.
    والحروفُ لم تعد نقاطًا: كلُّ كلمةٍ تكتملُ تمنحُ خاصيّةً ١٥ ثانية، والكلمةُ من معنى خاصيّتِها:
      وطن   ← درع      يصدُّ عنك صدمةً واحدة (أو تنقضي مدّتُه): العائقُ يطيرُ وأنت تمضي
      رؤية  ← تحليق    تحلّقُ فوقَ كلِّ شيءٍ وتُسرعُ ٢٥٪، ثمّ نفَسُ هبوطٍ ٠٫٤ ث لا يُصدَمُ فيه
-     تلاحم ← مغناطيس  تتلاحمُ إليك الحروفُ والمصّاصُ من المساراتِ الثلاثة
-     ثبات  ← تمهّل    يبطؤ الجريُ ٢٨٪ فتثبتُ خطاك
+     كرم   ← مغناطيس  يجودُ عليك بالحروفِ والأكوابِ من المساراتِ الثلاثة
+     هون   ← تمهّل    يبطؤ الجريُ ٢٨٪ فتمشي على هونك
    المُدَدُ بالتكّات (٦٠ في الثانية)، وتغيّرُ السرعةِ يدخلُ ويخرجُ في نصفِ ثانية (PW_RAMP).
    وكانت الحروفُ ٠٫٢٩ في كلِّ خانة — أي كلمةٌ كلَّ ٥ ثوانٍ، فتبقى الخاصيّةُ قائمةً أبدًا.
    فصارت ٠٫١٥. ومع الكلماتِ الأطول (٣–٥ أحرف) والمدّةِ ١٥ ث قِيسَت بلاعبٍ آليٍّ يسهو في ١٠٪
@@ -10488,7 +10476,7 @@ newSeed();
    وإرسالُ الضغطاتِ عند النهاية ليعيدَ الخادمُ الجولةَ ويحكم (v2/WATAN-SYSTEM.md).
    **وكلُّ عطلٍ في الشبكةِ يُسقِطُ الجولةَ إلى تدريبٍ لا يُحسَب، ولا يوقفُ اللعبَ أبدًا.**
    والتذكرةُ تُطلَبُ مسبقًا وشاشةُ البدءِ أو النهايةِ قائمة، فلا ينتظرُ «ابدأ» الشبكة. */
-var CORE_VERSION="a406a18800b8", RUN_CAP=54000, capEnd=false;
+var CORE_VERSION="bb585ffc5310", RUN_CAP=54000, capEnd=false;
 var NET={ on:/^https?:$/.test(location.protocol)&&/^\/watan(\/|$)/.test(location.pathname),
           name:null, ready:null, ticket:null, asking:null, run:null, stale:false, editing:false,
           mode:"name", fresh:false, account:false, loggedIn:false };
@@ -10496,9 +10484,6 @@ var elWho=document.getElementById("who"), elNmBox=document.getElementById("nmBox
     elNmI=document.getElementById("nmI"), elNmAs=document.getElementById("nmAs"),
     elNmV=document.getElementById("nmV"), elNmErr=document.getElementById("nmErr"),
     elNet=document.getElementById("net"), elGo=document.getElementById("go"),
-    elCdBox=document.getElementById("cdBox"), elCdI=document.getElementById("cdI"),
-    elCdLine=document.getElementById("cdLine"), elCdV=document.getElementById("cdV"),
-    elCdHave=document.getElementById("cdHave"), elCdNote=document.getElementById("cdNote"),
     elAcct=document.getElementById("acct"), elToAcct=document.getElementById("toAcct"),
     elToAcct2=document.getElementById("toAcct2");
 
@@ -10517,54 +10502,21 @@ function encLog(log){
 function netLine(t){ elNet.textContent=t||""; elNet.hidden=!t; }
 function whoPaint(){
   if(!NET.on) return;
-  var ask=!NET.name||NET.editing, byCode=ask&&!NET.name&&NET.mode==="code";
-  elWho.hidden=false; elNmBox.hidden=!ask||byCode; elCdBox.hidden=!byCode; elNmAs.hidden=ask;
-  /* «عندي رمز» لمن لا اسمَ له هنا وحدَه؛ ومن يبدّل اسمَه لا يسترجع */
-  elCdHave.hidden=!!NET.name; elCdHave.textContent=byCode?"اسمٌ جديد":"عندي رمزُ استرجاع";
-  if(ask) elCdLine.hidden=true;
-  /* الحساب: من حُفظ بحسابه يُقال له ذلك ولا يُعرَض عليه رمز؛ ومن لم يدخل يُدعى إلى الحفظ.
+  var ask=!NET.name||NET.editing;
+  elWho.hidden=false; elNmBox.hidden=!ask; elNmAs.hidden=ask;
+  /* الحساب: **حسابُ أدِيب وحدَه يحفظ الاسمَ ويُثبته** (قرارُ محمد ٢٠٢٦-٠٩-٢٥: أُزيل رمزُ الاسترجاع
+     نهائيًّا). من حُفظ بحسابه يُقال له ذلك؛ ومن لم يدخل يُدعى إلى الحفظ.
      ومن دخل ولا اسمَ له بعد يكتب اسمَه فيُحفَظ في حسابه من أوّل جولة. */
   /* شاشةُ البدء بعد أوّلِ مرّة زرٌّ واحد (قرارُ محمد ٢٠٢٦-٠٩-٢٥)، فما يُقال هنا لمن لا اسمَ له وحدَه:
      الدخولُ بالحساب قبلَ أن يختار اسمًا، أو أنّ اسمَه يُحفَظ في حسابه. والحفظُ بالحساب لمن له اسمٌ
-     صار في شاشةِ النهاية بعد نتيجته (وفي تبويب «حسابي»)، والرمزُ في «حسابي». */
+     صار في شاشةِ النهاية بعد نتيجته (وفي تبويب «حسابي»). */
   elAcct.hidden=!(NET.loggedIn&&!NET.name);
   elAcct.textContent="اسمُك يُحفَظ في حسابك";
-  elToAcct.hidden=!!NET.name||NET.loggedIn||NET.account||NET.mode==="code";
+  elToAcct.hidden=!!NET.name||NET.loggedIn||NET.account;
   elToAcct.textContent="لك حسابٌ في أدِيب؟ ادخل به";
   elToAcct2.hidden=!(NET.name&&!NET.loggedIn&&!NET.account);
   if(NET.name) elNmV.textContent=NET.name;
   if(ask&&NET.editing&&!elNmI.value) elNmI.value=NET.name||"";
-}
-/* ── رمزُ الاسترجاع: يحفظه الجهازُ ليُريه لصاحبه، والخادمُ لا يعرف إلّا بصمتَه ── */
-function codeFmt(c){ return c.slice(0,5)+" "+c.slice(5); }
-function codeGet(){ try{ return localStorage.getItem("rw_code")||""; }catch(e){ return ""; } }
-function codeSet(c){ try{ localStorage.setItem("rw_code",c); }catch(e){} }
-function codeNorm(v){
-  var d=String(v||"").replace(/[\u0660-\u0669]/g,function(c){ return String(c.charCodeAt(0)-0x660); })
-                     .replace(/[\u06F0-\u06F9]/g,function(c){ return String(c.charCodeAt(0)-0x6F0); })
-                     .replace(/[\s\-_.]/g,"");
-  return /^[0-9]{10}$/.test(d)?d:"";
-}
-function codeShow(){
-  var c=codeGet();
-  if(c){ elCdV.textContent=codeFmt(c); elCdLine.hidden=false; return; }
-  /* لا رمزَ في هذا الجهاز (سجّل قبل الرمز، أو مُسحت ذاكرتُه): رمزٌ جديد، والقديمُ يسقط */
-  netApi("code",{}).then(function(j){
-    if(j.ok&&j.code){ codeSet(j.code); elCdV.textContent=codeFmt(j.code); elCdLine.hidden=false; }
-    else { elNmErr.textContent=j.message||"تعذّر إنشاءُ الرمز."; elNmErr.hidden=false; }
-  },function(){ elNmErr.textContent="لا اتّصال."; elNmErr.hidden=false; });
-}
-function netRestore(v){
-  elNmErr.hidden=true;
-  var c=codeNorm(v);
-  if(!c){ elNmErr.textContent="الرمزُ عشرةُ أرقام."; elNmErr.hidden=false; return Promise.resolve(false); }
-  return netApi("restore",{code:c}).then(function(j){
-    if(!j.ok){ elNmErr.textContent=j.message||"تعذّر الاسترجاع."; elNmErr.hidden=false; return false; }
-    NET.name=j.name; NET.mode="name"; NET.ticket=null; codeSet(c); whoPaint();
-    /* أرقامُه من الخادم: الاسمُ جاء ومعه أفضلُ مسافته ومجموعُ مصّاصه */
-    return netApi("me").then(function(m){ if(m.ok&&m.name) netAdopt(m.dist&&m.dist.value,m.candy&&m.candy.value); return true; },
-                             function(){ return true; });
-  },function(){ return "offline"; });
 }
 /* أرقامُ اللوحةِ من الخادم: هي ما يراه الناس، لا ما حفظه هذا الجهازُ من جولاتِ التدريب */
 function netAdopt(d,c){
@@ -10600,7 +10552,7 @@ function netGo(){
   NET.ready.then(function(){
     var want=(!NET.name||NET.editing)&&!vStart.hidden;
     if(!want&&!NET.name){ vOver.hidden=true; vStart.hidden=false; whoPaint(); goBusy(false); elNmI.focus(); return; }
-    var step=!want?Promise.resolve(true):(!NET.name&&NET.mode==="code"?netRestore(elCdI.value):netRegister(elNmI.value));
+    var step=!want?Promise.resolve(true):netRegister(elNmI.value);
     return step.then(function(ok){
       if(ok==="offline"){ goBusy(false); start(null); return; }
       if(!ok){ goBusy(false); return; }
@@ -10618,8 +10570,7 @@ function netGo(){
 function netRegister(v){
   elNmErr.hidden=true;
   return netApi("register",{name:v}).then(function(j){
-    if(j.ok){ NET.name=j.name; NET.editing=false; if(NET.loggedIn) NET.account=true;
-              if(j.code&&!NET.account){ codeSet(j.code); NET.fresh=true; } whoPaint(); return true; }
+    if(j.ok){ NET.name=j.name; NET.editing=false; if(NET.loggedIn) NET.account=true; whoPaint(); return true; }
     elNmErr.textContent=j.message||"تعذّر حفظُ الاسم."; elNmErr.hidden=false; return false;
   },function(){ return "offline"; });
 }
@@ -10627,7 +10578,6 @@ function netRegister(v){
 /* النهاية: الضغطاتُ إلى الخادم، والخادمُ يعيد الجولةَ ويردُّ بما حسب */
 function netFinish(){
   if(!NET.on) return;
-  elCdNote.hidden=true;
   document.getElementById("toBoard2").hidden=false;
   var run=NET.run; NET.run=null;
   if(!run){ netLine(NET.name?"جولةُ تدريب: لم تُحسَب لأنّ الاتّصال انقطع.":""); netTicket(); return; }
@@ -10643,9 +10593,6 @@ function netSend(body,tries){
       else if(j.window==="before") netLine("جولةُ تجربة: المسابقةُ تبدأ "+(CONTEST?ctWhen(CONTEST.s):"قريبًا")+".");
       else if(j.window==="after") netLine("انتهت المسابقة، فلم تُحسَب هذه الجولة.");
       else netRank();
-      /* أوّلُ جولةٍ بعد التسجيل: الرمزُ يُعرض مرّةً في لحظةٍ هادئة، لا وسطَ «ابدأ» */
-      var fc=codeGet();
-      if(NET.fresh&&fc){ NET.fresh=false; document.getElementById("cdNoteV").textContent=codeFmt(fc); elCdNote.hidden=false; }
     } else netLine(j.message?"لم تُحفَظ الجولة: "+j.message:"لم تُحفَظ الجولة.");
     netTicket();
   },function(){
@@ -10693,13 +10640,8 @@ if(NET.on){
   },function(){ whoPaint(); });
   document.getElementById("nmEdit").addEventListener("click",function(){ NET.editing=true; elNmI.value=NET.name||""; whoPaint(); elNmI.focus(); });
   elNmI.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); elGo.click(); } });
-  elCdI.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); elGo.click(); } });
-  elCdHave.addEventListener("click",function(){ NET.mode=NET.mode==="code"?"name":"code"; elNmErr.hidden=true; whoPaint();
-    (NET.mode==="code"?elCdI:elNmI).focus(); });
-  /* لمسةٌ على الرمز تنسخه */
-  elCdLine.addEventListener("click",function(){ var c=codeGet(); if(!c||!navigator.clipboard) return;
-    navigator.clipboard.writeText(c).then(function(){ var h=document.getElementById("cdHint"), t=h.textContent;
-      h.textContent="نُسخ الرمز."; setTimeout(function(){ h.textContent=t; },1600); },function(){}); });
+  /* رمزُ الاسترجاع أُزيل (٢٠٢٦-٠٩-٢٥)، فما حفظته نسخٌ قديمةٌ منه في الجهاز يُمحى */
+  try{ localStorage.removeItem("rw_code"); }catch(e){}
 } else NET.ready=Promise.resolve();
 
 /* المضمارُ المرسومُ مفاتيحُه k|li لا البذرة، فمتى تبدّلت البذرةُ يُعادُ كلُّ ما في المشهدِ إلى مخزنِه */
