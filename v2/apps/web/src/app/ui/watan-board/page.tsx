@@ -10,7 +10,7 @@ import { Board, type BoardData } from "@/app/watan/_components/Board";
  *
  * ══ ما حُسم ══
  * **الهويّةُ مستقلّةٌ مثل المحطّة**، فلا رأسَ للموقع ولا تذييل. واسمُ النادي سطرٌ واحدٌ هادئ
- * «من تصميم نادي أدِيب» أسفلَ اللوحة (وفي اللعبة زرُّ الحفظ بالحساب)، ولا ثالثَ لهما.
+ * «من إنتاج وتشغيل نادي أدِيب» أسفلَ اللوحة (وفي اللعبة زرُّ الحفظ بالحساب)، ولا ثالثَ لهما.
  * **والاسمُ مستعارٌ يختاره اللاعب**، ولا يُجمع رقمُ جوّالٍ أصلًا (سقط بقرار المالك
  * ٢٠٢٦-٠٩-٢٤: انسحب الراعي فلا جوائز، والفائزُ يُعلَن باسمه في منشور). والمسافةُ
  * **أفضلُ جولة**، والمصّاصُ **مجموعُ الجولات كلّها**. والثلاثةُ الأوائل يتميّزون
@@ -20,6 +20,15 @@ import { Board, type BoardData } from "@/app/watan/_components/Board";
  * عُرض اتّجاهان: «ليلُ الملعب» (منصّةٌ على أرضيّة اللعبة الداكنة) و«ملصقُ النهار»
  * (رملٌ وسماء وجدول). فاختار المالكُ الأوّل **وطلب منه نسختين، ليليّةً ونهاريّة**،
  * والضوءُ في الإنتاج من إعداد الجهاز (`app/watan/layout.tsx`).
+ *
+ * ══ ومسابقةُ أكواب oos (٢٠٢٦-٠٩-٢٥) ══
+ * جاء الراعي، فصار الكوبُ مكانَ المصّاص، ولوحةُ الأكواب الأولى وعلى منصّتها الجوائز.
+ * والحالاتُ هنا: ممتلئةٌ والمسابقةُ جارية، وزائرٌ قبل الافتتاح، وفارغةٌ بعد الإقفال.
+ *
+ * ══ والتبويباتُ الخمسة (٢٠٢٦-٠٩-٢٥) ══
+ * حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (قرارُ المالك وترتيبُه). والإطاران يُبدَّل فيهما التبويبُ
+ * باللمس كما في الإنتاج، بلا أن يتبدّل رابطُ المعرض (`syncUrl={false}`). وحالٌ رابعةٌ هنا لـ«حسابي»:
+ * لاعبٌ محفوظٌ بحساب أدِيب، بجانب الضيف الذي له اسمٌ في «ممتلئة» والزائرِ في «قبل الافتتاح».
  *
  * ══ وما هو توضيحيّ ══
  * الأسماءُ والأرقامُ كلُّها مصنوعة، ومعايَرةٌ على اللعبة: الجولةُ الوسطى ٩٦٠ مترًا،
@@ -36,23 +45,56 @@ const CANDY = [
   "سهم نجد", "قلب جدّة", "ظلّ النخيل", "فارس العارض",
 ].map((name, i) => ({ rank: i + 1, name, value: [212, 187, 164, 151, 139, 122, 118, 104, 97, 91, 86, 80][i] }));
 
-const STATES: Record<"full" | "guest" | "empty", BoardData> = {
+/**
+ * نوافذُ مصنوعةٌ حول لحظة فتح المعرض، فيطابق عدّادُ تبويب المسابقة حالتَه أيًّا كان يومُ فتحه:
+ * قبل الافتتاح بساعتين، وجاريةٌ منذ ساعة، ومنتهيةٌ منذ خمس. (العدّادُ لا يُرسَم في الخادم أصلًا،
+ * فاختلافُ «الآن» بين الخادم والجهاز لا يمسّ الترطيب.)
+ */
+const T0 = Date.now();
+const H = 3_600_000;
+const TXT = { starts: "الجمعة 3:00 م", ends: "الأحد 6:00 م" };
+const WIN = {
+  before: { ...TXT, startsAt: T0 + 2 * H + 15 * 60_000, endsAt: T0 + 53 * H },
+  open: { ...TXT, startsAt: T0 - H, endsAt: T0 + 50 * H },
+  after: { ...TXT, startsAt: T0 - 56 * H, endsAt: T0 - 5 * H },
+};
+
+type State = "full" | "account" | "guest" | "empty";
+const STATES: Record<State, BoardData> = {
   full: {
     dist: DIST,
     candy: CANDY,
+    contest: { phase: "open", ...WIN.open },
     me: {
       name: "ابن الهفوف",
       dist: { rank: 23, value: 2410, above: 2720 },
       candy: { rank: 31, value: 38, above: 41 },
     },
   },
-  guest: { dist: DIST.slice(0, 2), candy: CANDY.slice(0, 2), me: null },
-  empty: { dist: [], candy: [], me: null },
+  account: {
+    dist: DIST,
+    candy: CANDY,
+    contest: { phase: "open", ...WIN.open },
+    loggedIn: true,
+    me: {
+      name: "برق",
+      account: true,
+      dist: { rank: 3, value: 5930, above: 6215 },
+      candy: { rank: 1, value: 212, above: null },
+    },
+  },
+  guest: {
+    dist: DIST.slice(0, 2),
+    candy: CANDY.slice(0, 2),
+    me: null,
+    contest: { phase: "before", ...WIN.before },
+  },
+  empty: { dist: [], candy: [], me: null, contest: { phase: "after", ...WIN.after } },
 };
 
 export default function WatanBoardPage() {
   const [only, setOnly] = useState<"both" | "night" | "day">("both");
-  const [state, setState] = useState<"full" | "guest" | "empty">("full");
+  const [state, setState] = useState<State>("full");
   const data = STATES[state];
 
   return (
@@ -81,11 +123,12 @@ export default function WatanBoardPage() {
         <Segmented
           aria-label="الحالة"
           value={state}
-          onValueChange={(v) => setState(v as "full" | "guest" | "empty")}
+          onValueChange={(v) => setState(v as State)}
           items={[
             { value: "full", label: "ممتلئة" },
-            { value: "guest", label: "زائر" },
-            { value: "empty", label: "فارغة" },
+            { value: "account", label: "بحساب" },
+            { value: "guest", label: "قبل الافتتاح" },
+            { value: "empty", label: "بعد الإقفال" },
           ]}
         />
       </div>
@@ -98,7 +141,7 @@ export default function WatanBoardPage() {
               <p>امتدادُ شاشةِ نهاية الجولة، ووهجٌ أخضرُ في الأعلى كأنّه كشّافُ ملعب.</p>
             </div>
             <div className="wtnp-frame wtn wtna" data-sky="night" style={{ height: 760 }}>
-              <div className="wtnp-scroll"><Board key={state} data={data} /></div>
+              <div className="wtnp-scroll"><Board key={state} data={data} syncUrl={false} /></div>
             </div>
           </div>
         ) : null}
@@ -110,7 +153,7 @@ export default function WatanBoardPage() {
               <p>رملُ الطريق أرضيّةٌ وورقٌ أفتحُ منه للقائمة، والسماءُ مكانَ الوهج.</p>
             </div>
             <div className="wtnp-frame wtn wtna" data-sky="day" style={{ height: 760 }}>
-              <div className="wtnp-scroll"><Board key={state} data={data} /></div>
+              <div className="wtnp-scroll"><Board key={state} data={data} syncUrl={false} /></div>
             </div>
           </div>
         ) : null}

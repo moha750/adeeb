@@ -136,9 +136,10 @@
     background:rgba(8,14,8,.60);color:#FFF;font-family:var(--display);font-size:1.1rem;font-weight:700;
     font-variant-numeric:tabular-nums;transition:transform .15s}
   .candy svg,.candyO svg{width:22px;height:22px;stroke-linecap:round}
-  .lolli .st{stroke:#F3EFE6;stroke-width:2.4;fill:none}
-  .lolli .cd{fill:#2FB35A;stroke:#FFFFFF;stroke-width:1.2}
-  .lolli .sw{fill:none;stroke:#FFFFFF;stroke-width:1.6}
+  /* كوبُ oos (الراعي): لونا كوبهم نفسِه، الليلكيُّ جسمًا والبنفسجيُّ الداكنُ حزامًا */
+  .cup .cb{fill:#CC95D3}
+  .cup .cn{fill:#503A61}
+  .cup .cr{fill:#F6F2F8}
   .candy.pop{transform:scale(1.25)}
   .wordbox{display:flex;align-items:center;gap:6px}
   /* «تلاحم» خمسةُ أحرف: الخاناتُ أضيقُ قليلًا فلا تبلغُ زرَّ الصوتِ في أضيقِ الجوّالات */
@@ -156,15 +157,17 @@
   .pw i{position:absolute;inset-inline:0;bottom:0;height:100%;background:#3E9B47;display:block;z-index:0}
   .pw.end{animation:pwb .3s steps(2) infinite}
   @keyframes pwb{50%{opacity:.35}}
-  .toast{position:absolute;z-index:3;left:50%;top:32%;margin-left:-100px;width:200px;display:flex;flex-direction:column;
-    align-items:center;gap:2px;padding:12px 10px 10px;border-radius:20px;background:rgba(8,14,8,.66);
-    pointer-events:none;color:#FFF;font-family:var(--display);font-weight:700;font-size:1.6rem;line-height:1.3;
-    animation:toast 1.3s ease-out both}
+  /* إعلانُ الخاصيّة: شريطٌ صغيرٌ أسفلَ الشاشة تحت اللاعب، لا على الطريقِ أمامه (ملاحظةُ اللاعبين ومحمد ٢٠٢٦-٠٩-٢٥) */
+  .toast{position:absolute;z-index:3;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+    display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:8px;align-items:center;
+    padding:6px 14px 6px 12px;border-radius:14px;background:rgba(8,14,8,.60);white-space:nowrap;
+    pointer-events:none;color:#FFF;font-family:var(--display);font-weight:700;font-size:1.05rem;line-height:1.25;
+    animation:toast 1.2s ease-out both}
   .toast[hidden]{display:none!important}
-  .toast svg{width:46px;height:46px;color:#9FF0A8}
-  .toast small{font-size:.9rem;font-weight:600;opacity:.9}
-  @keyframes toast{0%{transform:scale(.5);opacity:0}14%{transform:scale(1.12);opacity:1}24%{transform:none}
-    78%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+  .toast svg{width:26px;height:26px;color:#9FF0A8;grid-row:1/3}
+  .toast small{font-size:.74rem;font-weight:600;opacity:.9}
+  @keyframes toast{0%{transform:translateX(-50%) scale(.6);opacity:0}14%{transform:translateX(-50%) scale(1.06);opacity:1}
+    24%{transform:translateX(-50%)}78%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}
   .slowfx{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;
     background:radial-gradient(ellipse at 50% 55%,rgba(40,90,170,0) 55%,rgba(40,90,170,.42) 100%)}
   .veil .tip{color:var(--gold);font-size:.88rem}
@@ -198,10 +201,51 @@
   .veil .code small{display:block;color:var(--ink-2);font-size:.8rem}
   #cdI{direction:ltr;text-align:center;letter-spacing:.1em;font-variant-numeric:tabular-nums}
   .veil .acct{color:var(--accent-lit);font-size:.85rem}
+  /* الراعي وحالُ المسابقة (في الموقع وحدَه): شعارُ oos كما هو، حروفُه البيضاءُ على بنفسجيّهم */
+  .veil .spons{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-2);font-size:.82rem}
+  .veil .spons[hidden]{display:none}
+  .oosM{display:inline-flex;align-items:center;background:#503A61;border-radius:7px;padding:4px 8px;line-height:0}
+  .oosM svg{height:12px;width:auto;fill:#FFFFFF}
+  .veil .contest{color:#E4BDEC;font-size:.86rem;max-width:21rem}
   /* سطرُ الصانع: أدِيب في موضعين لا ثالثَ لهما (هذا، وزرُّ الحفظ بالحساب) بقرار المالك */
+  /* ══ شاشةُ البدء (قرارُ محمد ٢٠٢٦-٠٩-٢٥): المشهدُ يدورُ خلفَ الزرّ، فلا ستارةَ داكنةً ولا تغبيش،
+     بل تدرّجٌ من الأسفلِ يحملُ الزرَّ وما حوله. وما كان شرحًا صار في تبويبَي الصفحة («كيف تلعب» و«حسابي»). */
+  #start{justify-content:flex-end;gap:12px;-webkit-backdrop-filter:none;backdrop-filter:none;
+    background:linear-gradient(to top,rgba(8,14,8,.84) 0,rgba(8,14,8,.52) 22%,rgba(8,14,8,0) 48%);
+    padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  /* خانةُ الاسم أوّلَ مرّة أطولُ من الزرّ وحدَه، فالتدرّجُ يعلو معها */
+  #start:has(#nmBox:not([hidden])),#start:has(#cdBox:not([hidden])){
+    background:linear-gradient(to top,rgba(8,14,8,.88) 0,rgba(8,14,8,.62) 42%,rgba(8,14,8,0) 76%)}
+  #start .btn{min-width:210px;min-height:54px;font-size:1.2rem;padding:14px 44px;box-shadow:0 8px 22px rgba(0,0,0,.38)}
+  #start .contest{background:rgba(8,14,8,.66);border-radius:12px;padding:7px 14px}
+  #start .as .dot{color:var(--muted);margin-inline:2px}
+  .toBoard{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));
+    text-decoration:none}
+  .snd[hidden]{display:none}
+  /* تلميحُ السحبِ في أوّلِ جولةٍ في هذا المتصفّح وحدَها: إصبعٌ يرسمُ الحركاتِ الأربع */
+  .hint{position:absolute;z-index:3;left:50%;top:calc(25% + env(safe-area-inset-top,0px));transform:translateX(-50%);
+    display:flex;align-items:center;gap:12px;padding:10px 16px 10px 18px;border-radius:999px;pointer-events:none;
+    background:rgba(8,14,8,.66);color:#F4F7F0;font-size:.9rem;white-space:nowrap;animation:hintIn .35s ease-out both}
+  .hint[hidden]{display:none}
+  .hint i{position:relative;width:34px;height:34px;flex:0 0 auto}
+  .hint i::after{content:"";position:absolute;left:10px;top:10px;width:14px;height:14px;border-radius:50%;
+    background:#FFF;box-shadow:0 0 0 4px rgba(255,255,255,.28);animation:hintSw 2.4s ease-in-out infinite}
+  @keyframes hintSw{0%,100%{transform:translate(0,0)}18%{transform:translate(-11px,0)}36%{transform:translate(11px,0)}
+    52%{transform:translate(0,0)}68%{transform:translate(0,-11px)}84%{transform:translate(0,11px)}}
+  @keyframes hintIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.hint,.hint i::after{animation:none}}
   .veil .credit{position:absolute;inset-inline:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));
     margin:0 auto;font-size:.75rem;color:var(--muted)}
   @media (prefers-reduced-motion:reduce){.toast{animation:none}.pw.end{animation:none}}
+  /* ثلجُ البخّاخ على زجاجِ الشاشة (مشهدُ البدء): بقعٌ تنبثقُ ثمّ تنزلقُ وتذوب */
+  .snow{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;transition:opacity .45s ease-out}
+  .snow.off{opacity:0}
+  .snow i{position:absolute;display:block;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);
+    background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='42%' cy='36%' r='68%'><stop offset='0' stop-color='%23fff'/><stop offset='.72' stop-color='%23f3f5f7'/><stop offset='1' stop-color='%23d6dce3'/></radialGradient></defs><g fill='url(%23g)'><circle cx='50' cy='50' r='25'/><circle cx='31' cy='42' r='14'/><circle cx='68' cy='38' r='13'/><circle cx='62' cy='66' r='15'/><circle cx='36' cy='66' r='12'/><circle cx='50' cy='29' r='11'/><circle cx='79' cy='56' r='7.5'/><circle cx='21' cy='58' r='6.5'/><circle cx='48' cy='80' r='7'/></g><g fill='%23fff'><circle cx='12' cy='30' r='3.4'/><circle cx='88' cy='24' r='3'/><circle cx='87' cy='78' r='3.8'/><circle cx='14' cy='83' r='2.8'/><circle cx='66' cy='12' r='2.4'/></g></svg>") center/contain no-repeat;filter:drop-shadow(0 2px 3px rgba(0,0,0,.28));
+    opacity:0;animation:splat var(--d,2.6s) ease-out forwards}
+  @keyframes splat{0%{transform:rotate(var(--r)) scale(.2);opacity:0}6%{transform:rotate(var(--r)) scale(1.1);opacity:1}
+    12%{transform:rotate(var(--r)) scale(1)}55%{transform:rotate(var(--r)) translateY(0) scale(1);opacity:1}
+    100%{transform:rotate(var(--r)) translateY(26px) scale(.94);opacity:0}}
   .word{display:flex;gap:5px;padding:5px 6px;border-radius:14px;background:rgba(8,14,8,.60)}
   .slot{width:28px;height:34px;border-radius:7px;display:grid;place-items:center;
     font-family:var(--display);font-size:1.15rem;font-weight:700;line-height:1;
@@ -233,10 +277,12 @@
 <div class="wrap">
   <div class="frame">
     <canvas id="cv"></canvas>
+    <div class="snow" id="snow"></div>
+    <div class="hint" id="hint" hidden><i></i><span id="hintT">اسحب للتحكّم</span></div>
     <div class="hud" id="hud" hidden>
       <div class="stats">
         <div class="score"><span id="score">0</span><small>م</small></div>
-        <div class="candy" id="candyC"><svg class="lolli" viewBox="0 0 24 24" aria-hidden="true"><path class="st" d="M12 15.5V23"/><circle class="cd" cx="12" cy="9" r="6.8"/><path class="sw" d="M12 9a1.6 1.6 0 1 1 1.6-1.6a3.2 3.2 0 1 1-3.2 3.2a4.8 4.8 0 0 1 4.8-4.8"/></svg><b id="candyN">0</b></div>
+        <div class="candy" id="candyC"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path class="cb" d="M6.1 6.2h11.8l-1.35 15.6H7.45z"/><path class="cn" d="M6.45 10.2h11.1l-.42 4.9H6.87z"/><rect class="cr" x="5.1" y="4.4" width="13.8" height="2.3" rx="1.15"/></svg><b id="candyN">0</b></div>
       </div>
       <div class="wordbox"><div class="word" id="word"></div></div>
     </div>
@@ -244,9 +290,8 @@
     <div class="toast" id="toast" hidden></div>
     <div class="slowfx" id="slowfx"></div>
     <div class="veil" id="start">
-      <h2>ركضة وطن</h2>
-      <p>اسحب يمينًا ويسارًا لتبديل المسار، وللأعلى للقفز، وللأسفل للانزلاق.</p>
-      <p class="tip">اجمع حروفَ الكلمة تنلْ خاصيّةً تعينُك، والتقطِ المصّاصَ النادر.</p>
+      <a class="snd toBoard" id="toBoard" href="/watan" hidden aria-label="لوحةُ الصدارة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.2a2.6 2.6 0 0 0 3.1 4.2M16 6h2.8a2.6 2.6 0 0 1-3.1 4.2"/><path d="M12 13v3.6M8.5 20h7M10 16.6h4v3.4h-4z"/></svg></a>
+      <p class="contest" id="contest" hidden></p>
       <div class="who" id="who" hidden>
         <label class="nm" id="nmBox"><span>اسمُك في لوحة الصدارة</span>
           <input id="nmI" type="text" maxlength="20" autocomplete="nickname" autocapitalize="off"
@@ -254,7 +299,7 @@
         <label class="nm" id="cdBox" hidden><span>رمزُ الاسترجاع</span>
           <input id="cdI" type="text" inputmode="numeric" maxlength="16" autocomplete="off"
                  enterkeyhint="go" placeholder="48219 93017"></label>
-        <p class="as" id="nmAs" hidden>تلعبُ باسم <b id="nmV"></b> <button class="lnk" id="nmEdit" type="button">تغيير</button><button class="lnk" id="cdShow" type="button">رمزي</button></p>
+        <p class="as" id="nmAs" hidden>تلعبُ باسم <b id="nmV"></b> <span class="dot">·</span><button class="lnk" id="nmEdit" type="button">تغيير</button></p>
         <p class="code" id="cdLine" hidden>رمزُ استرجاعك <b id="cdV"></b><small id="cdHint">صوّره أو انسخه، وبه تلعبُ باسمك من أيّ متصفّحٍ آخر.</small></p>
         <button class="lnk" id="cdHave" type="button" hidden>عندي رمزُ استرجاع</button>
         <p class="acct" id="acct" hidden>محفوظٌ في حسابك</p>
@@ -262,19 +307,16 @@
         <p class="nmErr" id="nmErr" hidden></p>
       </div>
       <button class="btn" id="go" type="button">ابدأ</button>
-      <a class="lnk" id="toBoard" href="/watan" hidden>لوحةُ الصدارة</a>
-      <p class="credit">من تصميم نادي أدِيب</p>
-      <p class="best" id="bestS" hidden>أفضل مسافة: <b id="bestSv">0</b></p>
-      <p class="best" id="bestCS" hidden>مجموعُ مصّاصِك: <b id="bestCSv">0</b></p>
-      <p class="keys" id="keys">أو الأسهم على لوحة المفاتيح</p>
+      <p class="spons" id="spons" hidden>برعاية <span class="oosM"><svg viewBox="161 393 760 295" aria-label="oos" role="img"><path d="M613.3,415.2c-20.9-13.8-44.3-18.7-68.9-17.3c-41,2.5-71.7,21.4-90.5,58.4c-10.5,20.8-15,43.3-16.5,66.4 c-1.8,26.4-0.2,52.6,7.5,78.1c14.8,49.4,50.6,79.6,100.3,82.6c47.6,2.8,87.3-20.4,107.3-63.8c11.5-25,15-51.6,15.1-69.7 c0-29.8-2.1-50.3-8.3-70.2C650.9,453.3,636.9,430.8,613.3,415.2z M612,640.3c-2.7,8-6.4,15.4-12,21.7c-12.7,14.2-29.9,14.9-47.4,2 c-15.5-11.4-26.3-26.8-35.1-43.5c-19.8-37.4-30-77.4-31.7-119.5c-0.1-2.8-0.3-5.7-0.4-8.5c0.5-21.1,2.3-41.9,11.6-61.3 c2.5-5.3,5.6-10.3,9.9-14.3c11.4-10.8,25.7-12,39.9-3.6c17,10.2,28.4,25.4,37.9,42.2c20.8,36.5,31.3,76.1,34.3,117.8 C620.7,596.1,619.4,618.5,612,640.3z"/><path d="M335.3,411c-18.9-10.4-39.3-14.2-60.7-13.1c-39.9,2.1-70.6,19.6-90,55.2c-11.5,21.1-16.4,44.1-18.1,67.9 c-2.1,29.5-0.3,58.6,9.6,86.7c9,25.6,23.9,46.7,47.5,60.9c19.8,11.9,41.5,16,64.2,14.7c40.3-2.2,70.5-20.8,89.9-56.3 c14.7-26.9,18.7-56.2,18.8-86.3c0-24-2.9-47.5-11.5-70C375.3,445.1,359.6,424.4,335.3,411z M336.8,650.3c-1.3,2.5-2.7,5-4.3,7.3 c-12,16.9-28.3,20.3-46.2,9.6c-14.7-8.8-24.9-21.9-33.7-36.2c-19.6-31.8-30.4-66.7-35.5-103.5c-3.1-22.6-3.7-45.1,0.1-67.6 c2.3-13.5,6.1-26.6,14.4-37.9c11.1-15.2,27.8-18.5,44-8.8c16.5,9.9,27.8,24.7,37.3,40.9c19.4,33.1,29.7,69.2,34.2,107.1 c1.1,9.3,1.6,18.6,1.8,28.3C348.1,610.1,346.4,631,336.8,650.3z"/><path d="M882.5,545.3c-18.1-13.4-38.7-22-59.4-30.3c-20.4-8.2-41.2-15.2-60.6-25.8c-9.7-5.3-18.8-11.4-25.7-20.2 c-6.5-8.2-9.5-17.5-8.6-27.9c1.2-15.3,14.6-24.9,32.5-23.6c21.4,1.5,41,8.3,59.1,19.6c20.8,13,38.5,29.5,54.8,47.7 c2.7,3,4,3.5,6-0.7c8.8-17.9,17.8-35.7,26.9-53.5c1.6-3.2,1.4-4.7-1.9-6.6c-33-19.8-68.6-28.5-107-25.8 c-20.4,1.5-40.1,5.8-58.3,15.7c-40.4,22-44.3,66.7-28.2,96.8c8.1,15.1,20.9,25.8,35,34.8c17.2,11,35.9,18.8,54.7,26.5 c21.3,8.7,43,16.3,62.6,28.7c12.2,7.7,22.6,17,25.8,32.1c3.4,15.9-6.4,29.7-22.6,31.1c-6,0.5-12,0.3-18-0.5 c-38.1-5.2-68.4-24.5-93.4-53c-11.5-13.1-21-27.5-29.1-43.5c-0.9,1-1.3,1.3-1.5,1.7c-9.7,22.6-19.3,45.3-29,67.9 c-1.2,2.7-0.2,4.3,1.6,6.1c12.9,12.6,27.5,22.6,44.3,29.2c27.9,11.1,56.9,13.3,86.4,10.7c19.8-1.7,38.8-6.3,55.8-17.1 c20-12.7,30.5-30.9,31.3-54.8C917.1,582.7,904.5,561.6,882.5,545.3z"/></svg></span></p>
+      <p class="credit">من إنتاج وتشغيل نادي أدِيب</p>
     </div>
     <div class="veil" id="over" hidden>
       <p class="cap">المسافة</p>
       <p class="big"><span id="final">0</span><small> م</small></p>
-      <p class="candyO"><svg class="lolli" viewBox="0 0 24 24" aria-hidden="true"><path class="st" d="M12 15.5V23"/><circle class="cd" cx="12" cy="9" r="6.8"/><path class="sw" d="M12 9a1.6 1.6 0 1 1 1.6-1.6a3.2 3.2 0 1 1-3.2 3.2a4.8 4.8 0 0 1 4.8-4.8"/></svg><b id="finalC">0</b><span id="finalCt">مصّاص</span></p>
+      <p class="candyO"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path class="cb" d="M6.1 6.2h11.8l-1.35 15.6H7.45z"/><path class="cn" d="M6.45 10.2h11.1l-.42 4.9H6.87z"/><rect class="cr" x="5.1" y="4.4" width="13.8" height="2.3" rx="1.15"/></svg><b id="finalC">0</b><span id="finalCt">أكواب</span></p>
       <p class="rec" id="rec" hidden>رقم قياسي جديد!</p>
       <p class="best" id="bestO">أفضل مسافة: <b id="bestOv">0</b></p>
-      <p class="best" id="bestCO">مجموعُ مصّاصِك: <b id="bestCOv">0</b></p>
+      <p class="best" id="bestCO">مجموعُ أكوابِك: <b id="bestCOv">0</b></p>
       <p id="line">—</p>
       <p id="dbg" style="display:none;font:12px/1.7 ui-monospace,monospace;color:#9FE08C;direction:ltr;
         background:rgba(0,0,0,.42);padding:7px 11px;border-radius:9px;margin:2px 0 14px">—</p>
@@ -282,6 +324,7 @@
       <p class="code" id="cdNote" hidden>احفظ رمزَ اسمك <b id="cdNoteV"></b><small>به تلعبُ باسمك من أيّ متصفّحٍ آخر.</small></p>
       <button class="btn" id="again" type="button">مرّة ثانية</button>
       <a class="lnk" id="toBoard2" href="/watan" hidden>لوحةُ الصدارة</a>
+      <a class="lnk" id="toAcct2" href="/login" hidden>احفظ تقدّمك بحسابك في أدِيب</a>
     </div>
     <div class="cd" id="cd" hidden><span id="cdn">3</span></div>
     <div class="veil" id="pause" hidden>
@@ -4694,8 +4737,12 @@ var STEP=1/60, SLOT=16, GRACE=7, LANE_STEPS=8;
    تُنفَّذُ في أوّلِ تكّةٍ تصيرُ فيها مشروعة. والخزنُ في اللبِّ لا في الرسمِ
    حتّى يُعيدَ الخادمُ الحسابَ نفسَه حرفًا بحرف؛ والسجلُّ يقيّدُ الضغطةَ
    بلحظةِ وقوعِها لا بلحظةِ تنفيذِها، فالإعادةُ تمرُّ بالمنطقِ نفسِه.
-   ولا شيءَ هنا غيرُ + − × ÷. */
-var JUMP_D=0.52, SLIDE_D=0.42, BUF_W=0.20;
+   ولا شيءَ هنا غيرُ + − × ÷.
+   ومدّتاهما أطولُ منذ ٢٠٢٦-٠٩-٢٥ (ملاحظةُ اللاعبين قبل المسابقة: «القفزُ والانزلاقُ
+   قصيران ولا أقدرُ أوزنُهما»): القفزةُ ٠٫٧٠ث (كانت ٠٫٥٢) والانزلاقُ ٠٫٦٠ث (كان ٠٫٤٢)،
+   فتتّسعُ نافذةُ التوقيتِ قرابةَ النصف. والمولِّدُ يقرأُ المدّتين نفسَيهما (spanOf)،
+   فلا يُطلَبُ من اللاعبِ ما لا يُستطاع. */
+var JUMP_D=0.70, SLIDE_D=0.60, BUF_W=0.20;
 var WORDS=[["و","ط","ن"],["ر","ؤ","ي","ة"],["ت","ل","ا","ح","م"],["ث","ب","ا","ت"]];
 /* ── الخصائصُ والمصّاص ─────────────────────────────────────────────────────
    النتيجةُ صارت المسافةَ بالمتر، والمصّاصُ عدٌّ مستقلّ — لكلٍّ منهما متصدّرون.
@@ -4931,8 +4978,16 @@ Sim.prototype.input=function(a){
   }
   else if(a===3||a===4){
     if(s.pwF>0){ this.log.push([s.step,a]); return; }     /* طائرٌ: لا قفزَ ولا انزلاق */
-    if(s.air<=0&&s.slide<=0){ if(a===3) s.air=JUMP_D; else s.slide=SLIDE_D; }
-    else { s.bufA=a; s.bufT=BUF_W; }       /* الأحدثُ يغلبُ الأقدم */
+    /* الحركةُ الجديدةُ مشروعةٌ لحظةَ يلمسُ الأرضَ في الرسم (air≤0.12)، لا بعدَ نهايةِ القفزةِ كاملة.
+       فآخرُ ٠٫١٢ث من القفزةِ يُعَدُّ على الأرضِ في الاصطدام (low يحتاجُ air>0.12)، وكانت القفزةُ
+       الجديدةُ لا تُسمَحُ فيه: لحظةٌ يرى فيها اللاعبُ نفسَه هابطًا، مكشوفًا للصبّةِ ولا يملكُ القفز.
+       فالصبّتان المتتاليتان كانتا اصطدامًا مهما أحسن (ملاحظةُ محمد ٢٠٢٦-٠٩-٢٥). وكذلك آخرُ ٠٫٠٨ث
+       من الانزلاق. والحركةُ الجديدةُ تُصفِّرُ الأخرى فلا يجتمعان. */
+    if(s.air<=0.12&&s.slide<=0.08){ if(a===3){ s.air=JUMP_D; s.slide=0; } else { s.slide=SLIDE_D; s.air=0; } }
+    /* الأحدثُ يغلبُ الأقدم، ويبقى محفوظًا حتّى تنتهيَ الحركةُ القائمة (قرارُ محمد ٢٠٢٦-٠٩-٢٥: «قفزةٌ
+       تاليةٌ عند الهبوط»): اضغط القفزَ في الهواء تقفزْ ثانيةً لحظةَ تلمسُ الأرض، وكذلك الانزلاق.
+       وكانت تُحفَظُ BUF_W وحدَها فتضيعُ ضغطةُ منتصفِ الهواء. */
+    else { s.bufA=a; s.bufT=Math.max(s.air,s.slide)+BUF_W; }
     this.log.push([s.step,a]);             /* يُقيَّدُ كلُّ ضغطٍ بلحظةِ وقوعِه */
   }
 };
@@ -4946,8 +5001,8 @@ Sim.prototype.tick=function(){
   /* المخزونُ يُصرَفُ هنا — بعدَ إنقاصِ العدّادين وقبلَ فحصِ الاصطدام —
      فتبدأُ الحركةُ في التكّةِ نفسِها التي صارت فيها مشروعة، لا في التي بعدَها. */
   if(s.bufA>0){
-    if(s.air<=0&&s.slide<=0){
-      if(s.bufA===3) s.air=JUMP_D; else s.slide=SLIDE_D;
+    if(s.air<=0.12&&s.slide<=0.08){
+      if(s.bufA===3){ s.air=JUMP_D; s.slide=0; } else { s.slide=SLIDE_D; s.air=0; }
       s.bufA=0; s.bufT=0;
     } else {
       s.bufT=s.bufT-STEP;
@@ -5709,6 +5764,8 @@ var SND=(function(){
     },
     /* الانزلاق: البطنُ على الأسفلت — احتكاكٌ يهبطُ وهواءٌ يخرجُ من البذلة */
     slide:function(){ puff(0.42,0.17,"bandpass",1500,320,1.6); puff(0.30,0.05,"highpass",3000,1800,0.7); },
+    /* رشّةُ بخّاخِ الثلج (مشهدُ البدء): «بسسس» حادٌّ ينطفئ */
+    spray:function(pan){ puff(0.38,0.13,"bandpass",5600,2600,0.8,{pan:pan}); puff(0.26,0.05,"highpass",7200,4200,0.6,{pan:pan}); },
     /* التقاطُ حرف: درجاتُ الحجازِ صاعدةً بموضعِ الحرفِ في الكلمة، ويُسمَعُ من جهتِه */
     letter:function(i,pan){
       var f=hz([0,2,4,7,9][Math.min(4,i||0)],1);
@@ -7155,6 +7212,17 @@ function makeDallahTable(){
   return g;
 }
 var bannerTex={};
+/* اللافتاتُ بأسماء مدن المملكة (ملاحظةُ اللاعبين ٢٠٢٦-٠٩-٢٥)، وكانت كلماتِ الخصائص فتلتبسُ بها.
+   والاسمُ يُختارُ في الرسمِ لا في اللبّ، فلا أثرَ له في النتيجة. */
+/* كانت المدينةُ تُختارُ بالصفِّ وحدَه فتتكرّرُ في لافتاتِ الصفِّ الواحد (ملاحظةُ محمد). فصارت تُوزَّعُ
+   بالترتيبِ على اللافتاتِ كلّما ظهرت، من مدينةٍ أولى تختلفُ بالجولة، فلا يتكرّرُ اسمٌ قبل ٢٢ لافتة. */
+var cityMap={}, cityN=0, citySeed=-1;
+function cityFor(seed,key){
+  if(seed!==citySeed){ cityMap={}; cityN=hash(seed,0,21)%CITIES.length; citySeed=seed; }
+  return cityMap[key]||(cityMap[key]=CITIES[(cityN++)%CITIES.length]);
+}
+var CITIES=["الرياض","جدّة","مكّة المكرّمة","المدينة المنوّرة","الدمّام","الأحساء","الطائف","تبوك","أبها",
+  "حائل","بريدة","جازان","نجران","الخبر","ينبع","الجبيل","القطيف","عرعر","سكاكا","الباحة","عنيزة","الظهران"];
 /* الكلمةُ في WORDS مصفوفةُ وحداتِ عرضٍ (["ع","زّ"]) لا نصّ، فتُجمَعُ هنا قبلَ الرسم */
 function makeBanner(word){
   if(typeof word!=="string") word=word.join("");
@@ -7166,7 +7234,9 @@ function makeBanner(word){
     c.fillStyle="#2C7A3B"; c.fillRect(0,0,w,h);
     c.fillStyle="#F4EFDD"; c.fillRect(0,0,w,11); c.fillRect(0,h-11,w,11);
     c.fillStyle="#F8F4E6"; c.textAlign="center"; c.textBaseline="middle";
-    c.font='700 82px "Lyon Arabic", serif'; c.fillText(word,w/2,h/2+4);
+    var fs=82; c.font='700 '+fs+'px "Lyon Arabic", serif';
+    while(c.measureText(word).width>w-56 && fs>44){ fs-=4; c.font='700 '+fs+'px "Lyon Arabic", serif'; }
+    c.fillText(word,w/2,h/2+4);
   });
   var cloth=new T.Mesh(new T.PlaneGeometry(2.2,1.02),
     dnTag(new T.MeshStandardMaterial({map:bannerTex[word],roughness:0.86,side:T.DoubleSide,
@@ -7242,34 +7312,48 @@ function makeLetter(){
   var s=new T.Sprite(new T.SpriteMaterial({map:letterTexOf(ch),transparent:true,fog:true}));
   s.scale.set(1.05,1.05,1); s.userData.ch=ch; return s;
 }
-/* ── المصّاص ────────────────────────────────────────────────────────────────
-   حلوى خُضَيران المشهورة: قرصٌ بدوّامةٍ خضراءَ وبيضاءَ على عودٍ أبيض، بلا غلافٍ ولا اسم.
-   يطفو في المسارِ ويدورُ ويتمايلُ، وخلفَه وهجٌ خفيفٌ يدلُّ عليه من بعيد — فهو نادر.
-   القرصُ أسطوانةٌ رقيقةٌ وجهاها بصورةِ الدوّامة (المجموعتان ١ و٢) وحافّتُها خضراء. */
+/* ── كوبُ oos (مكانَ المصّاص) ─────────────────────────────────────────────
+   الراعي مقهى oos، والكوبُ كوبُهم كما في صورته: جسمٌ ليلكيٌّ وحزامٌ بنفسجيٌّ داكنٌ عليه
+   حروفُ شعارهم الرسميّ (مقتطَعةً من ملفّه لا مرسومةً باليد)، وحزامٌ أسفل، وحافّةٌ بيضاء،
+   وقهوةٌ مثلّجةٌ في أعلاه. يطفو في المسارِ ويدورُ مائلًا نحوَ الكاميرا فيُرى شعارُه وقهوتُه.
+   وهو في اللبِّ «مصّاصٌ» كما كان (candyAt وcandies): التبديلُ رسمٌ لا يمسُّ النتيجة. */
+var OOS_D=["M613.3,415.2c-20.9-13.8-44.3-18.7-68.9-17.3c-41,2.5-71.7,21.4-90.5,58.4c-10.5,20.8-15,43.3-16.5,66.4 c-1.8,26.4-0.2,52.6,7.5,78.1c14.8,49.4,50.6,79.6,100.3,82.6c47.6,2.8,87.3-20.4,107.3-63.8c11.5-25,15-51.6,15.1-69.7 c0-29.8-2.1-50.3-8.3-70.2C650.9,453.3,636.9,430.8,613.3,415.2z M612,640.3c-2.7,8-6.4,15.4-12,21.7c-12.7,14.2-29.9,14.9-47.4,2 c-15.5-11.4-26.3-26.8-35.1-43.5c-19.8-37.4-30-77.4-31.7-119.5c-0.1-2.8-0.3-5.7-0.4-8.5c0.5-21.1,2.3-41.9,11.6-61.3 c2.5-5.3,5.6-10.3,9.9-14.3c11.4-10.8,25.7-12,39.9-3.6c17,10.2,28.4,25.4,37.9,42.2c20.8,36.5,31.3,76.1,34.3,117.8 C620.7,596.1,619.4,618.5,612,640.3z", "M335.3,411c-18.9-10.4-39.3-14.2-60.7-13.1c-39.9,2.1-70.6,19.6-90,55.2c-11.5,21.1-16.4,44.1-18.1,67.9 c-2.1,29.5-0.3,58.6,9.6,86.7c9,25.6,23.9,46.7,47.5,60.9c19.8,11.9,41.5,16,64.2,14.7c40.3-2.2,70.5-20.8,89.9-56.3 c14.7-26.9,18.7-56.2,18.8-86.3c0-24-2.9-47.5-11.5-70C375.3,445.1,359.6,424.4,335.3,411z M336.8,650.3c-1.3,2.5-2.7,5-4.3,7.3 c-12,16.9-28.3,20.3-46.2,9.6c-14.7-8.8-24.9-21.9-33.7-36.2c-19.6-31.8-30.4-66.7-35.5-103.5c-3.1-22.6-3.7-45.1,0.1-67.6 c2.3-13.5,6.1-26.6,14.4-37.9c11.1-15.2,27.8-18.5,44-8.8c16.5,9.9,27.8,24.7,37.3,40.9c19.4,33.1,29.7,69.2,34.2,107.1 c1.1,9.3,1.6,18.6,1.8,28.3C348.1,610.1,346.4,631,336.8,650.3z", "M882.5,545.3c-18.1-13.4-38.7-22-59.4-30.3c-20.4-8.2-41.2-15.2-60.6-25.8c-9.7-5.3-18.8-11.4-25.7-20.2 c-6.5-8.2-9.5-17.5-8.6-27.9c1.2-15.3,14.6-24.9,32.5-23.6c21.4,1.5,41,8.3,59.1,19.6c20.8,13,38.5,29.5,54.8,47.7 c2.7,3,4,3.5,6-0.7c8.8-17.9,17.8-35.7,26.9-53.5c1.6-3.2,1.4-4.7-1.9-6.6c-33-19.8-68.6-28.5-107-25.8 c-20.4,1.5-40.1,5.8-58.3,15.7c-40.4,22-44.3,66.7-28.2,96.8c8.1,15.1,20.9,25.8,35,34.8c17.2,11,35.9,18.8,54.7,26.5 c21.3,8.7,43,16.3,62.6,28.7c12.2,7.7,22.6,17,25.8,32.1c3.4,15.9-6.4,29.7-22.6,31.1c-6,0.5-12,0.3-18-0.5 c-38.1-5.2-68.4-24.5-93.4-53c-11.5-13.1-21-27.5-29.1-43.5c-0.9,1-1.3,1.3-1.5,1.7c-9.7,22.6-19.3,45.3-29,67.9 c-1.2,2.7-0.2,4.3,1.6,6.1c12.9,12.6,27.5,22.6,44.3,29.2c27.9,11.1,56.9,13.3,86.4,10.7c19.8-1.7,38.8-6.3,55.8-17.1 c20-12.7,30.5-30.9,31.3-54.8C917.1,582.7,904.5,561.6,882.5,545.3z"];
 var CANDY_M=null;
 function makeCandy(){
   if(!CANDY_M){
-    var sw=tex(256,256,function(c,w,h){ c.fillStyle="#FFFFFF"; c.fillRect(0,0,w,h);
-      var cx=w/2, cy=h/2, r, a, A=10, cols=["#1C9A48","#FFFFFF","#7ED06A","#FFFFFF"];
-      for(r=w/2;r>2;r-=1.5) for(a=0;a<A;a++){ var a0=a*2*Math.PI/A+r*0.055;
-        c.fillStyle=cols[a%4]; c.beginPath(); c.moveTo(cx,cy); c.arc(cx,cy,r,a0,a0+2*Math.PI/A+0.02); c.closePath(); c.fill(); }
-      var g=c.createRadialGradient(cx*0.7,cy*0.6,4,cx,cy,w/2);        /* لمعةُ السكّر */
-      g.addColorStop(0,"rgba(255,255,255,0.55)"); g.addColorStop(0.35,"rgba(255,255,255,0.08)"); g.addColorStop(1,"rgba(255,255,255,0)");
-      c.fillStyle=g; c.fillRect(0,0,w,h); });
+    var wrap=tex(1024,512,function(c,w,h){
+      c.fillStyle="#C98AD6"; c.fillRect(0,0,w,h);
+      c.fillStyle="#F6F2F8"; c.fillRect(0,0,w,14); c.fillRect(0,h-22,w,22);
+      c.fillStyle="#503A61"; c.fillRect(0,70,w,170);                 /* الحزامُ وعليه الشعار */
+      c.fillStyle="#664A7C"; c.fillRect(0,410,w,68);                 /* الحزامُ الأسفل */
+      c.strokeStyle="rgba(80,58,97,0.55)"; c.lineWidth=3;             /* خطوطُ الرسمِ الرفيعة */
+      for(var q=0;q<2;q++){ var ox=q*w/2+w/4;
+        c.beginPath(); c.moveTo(ox-70,400); c.lineTo(ox-70,320); c.arc(ox,320,70,Math.PI,0); c.lineTo(ox+70,400); c.stroke();
+        c.beginPath(); c.moveTo(ox-150,385); c.lineTo(ox-90,385); c.moveTo(ox+90,385); c.lineTo(ox+150,385); c.stroke(); }
+      var sc=118/287, lw=752*sc;
+      c.fillStyle="#E2B4EA";
+      for(q=0;q<2;q++){ c.save(); c.translate(q*w/2+w/4-lw/2, 155-118/2); c.scale(sc,sc); c.translate(-165,-397);
+        for(var j=0;j<OOS_D.length;j++) c.fill(new Path2D(OOS_D[j])); c.restore(); }
+    });
     CANDY_M={
-      face:dnTag(new T.MeshStandardMaterial({map:sw,roughness:0.22,metalness:0,envMapIntensity:0.9,emissiveMap:sw,emissive:0x000000}),[0.40,0.40,0.40]),
-      edge:new T.MeshStandardMaterial({color:0x2E9E55,roughness:0.25,metalness:0,envMapIntensity:0.9}),
-      stick:new T.MeshStandardMaterial({color:0xF3EFE6,roughness:0.55,metalness:0}),
-      glow:new T.SpriteMaterial({map:glowTex(255,232,160,0.28),blending:T.AdditiveBlending,transparent:true,
+      body:dnTag(new T.MeshStandardMaterial({map:wrap,roughness:0.55,metalness:0,envMapIntensity:0.8,emissiveMap:wrap,emissive:0x000000}),[0.42,0.42,0.42]),
+      rim:new T.MeshStandardMaterial({color:0xF6F2F8,roughness:0.45,metalness:0}),
+      coffee:new T.MeshStandardMaterial({color:0x2A0E0A,roughness:0.18,metalness:0}),
+      ice:new T.MeshStandardMaterial({color:0x6A3526,roughness:0.12,metalness:0,transparent:true,opacity:0.85}),
+      glow:new T.SpriteMaterial({map:glowTex(236,196,255,0.28),blending:T.AdditiveBlending,transparent:true,
         depthWrite:false,fog:true,opacity:0.60})
     };
   }
-  var g=new T.Object3D(), sp=new T.Object3D(); g.add(sp); g.userData.spin=sp;
-  var disc=new T.Mesh(new T.CylinderGeometry(0.40,0.40,0.10,40,1),[CANDY_M.edge,CANDY_M.face,CANDY_M.face]);
-  disc.rotation.x=Math.PI/2; disc.castShadow=true; sp.add(disc);
-  var st=new T.Mesh(new T.CylinderGeometry(0.026,0.026,0.62,8),CANDY_M.stick);
-  st.position.y=-0.40-0.29; st.castShadow=true; sp.add(st);
-  var gl=new T.Sprite(CANDY_M.glow); gl.scale.set(1.9,1.9,1); gl.position.z=-0.12; g.add(gl);
+  var g=new T.Object3D(), tl=new T.Object3D(), sp=new T.Object3D(); g.add(tl); tl.add(sp); g.userData.spin=sp;
+  tl.rotation.x=0.26;                                  /* ميلٌ نحوَ الكاميرا يُظهرُ القهوة */
+  var H=0.92, RT=0.37, RB=0.28;
+  var body=new T.Mesh(new T.CylinderGeometry(RT,RB,H,40,1,true),CANDY_M.body); body.castShadow=true; sp.add(body);
+  var bot=new T.Mesh(new T.CircleGeometry(RB,32),CANDY_M.rim); bot.rotation.x=Math.PI/2; bot.position.y=-H/2; sp.add(bot);
+  var rim=new T.Mesh(new T.TorusGeometry(RT,0.024,8,40),CANDY_M.rim); rim.rotation.x=Math.PI/2; rim.position.y=H/2; sp.add(rim);
+  var top=new T.Mesh(new T.CircleGeometry(RT*0.95,32),CANDY_M.coffee); top.rotation.x=-Math.PI/2; top.position.y=H/2-0.05; sp.add(top);
+  for(var k=0;k<3;k++){ var ic=new T.Mesh(new T.BoxGeometry(0.13,0.1,0.13),CANDY_M.ice);
+    ic.position.set(Math.cos(k*2.1)*0.15,H/2-0.03,Math.sin(k*2.1)*0.15); ic.rotation.set(0.3*k,0.7*k,0.2); sp.add(ic); }
+  var gl=new T.Sprite(CANDY_M.glow); gl.scale.set(1.9,1.9,1); gl.position.z=-0.14; g.add(gl);
   return g;
 }
 /* يُبدَّلُ الحرفُ المرسومُ بتبديلِ صورتِه وحدَها — لا مادّةَ جديدةَ ولا برنامج */
@@ -9765,7 +9849,7 @@ Rig.prototype.mount=function(gl){
     });
     self.driven[c.name]=rot; self.drivenP[c.name]=pos;
   });
-  ["Running","Jump","Death","Idle"].forEach(function(n){
+  ["Running","Jump","Death","Idle","Punch","Wave"].forEach(function(n){
     var c=T.AnimationClip.findByName(gl.animations,n);
     if(c) self.act[n]=self.mix.clipAction(c);
   });
@@ -9810,7 +9894,7 @@ var rigOf=new Rig(officer,OF,ofMats(),2.17);
 /* ══════════════════════════════════════════════════════════════
    ٣ · الحلقة
    ══════════════════════════════════════════════════════════════ */
-var sim=null, acc=0, last=0, phase=0, laneVis=0, playing=false;
+var sim=null, acc=0, last=0, phase=0, laneVis=0, playing=false, lastDist=0;
 var overDone=true;
 var seed=0, best=0, deathT=0, camX=0, camRoll=0, shake=0, khT=0, dbgDone=false, dbgBox=null;
 /* الارتطام: ثابتُ زمنِ الارتداد، وسرعةُ النطّةِ الرأسيّة، وجاذبيّتُها، ومدى الارتدادِ
@@ -10329,13 +10413,11 @@ var elScore=document.getElementById("score"), elWord=document.getElementById("wo
     elBest=document.getElementById("best"), elFps=document.getElementById("fps"),
     elDbg=document.getElementById("dbg"), vPause=document.getElementById("pause"),
     vRot=document.getElementById("rot"), elRec=document.getElementById("rec"),
-    elBestS=document.getElementById("bestS"), elBestSv=document.getElementById("bestSv"),
     elBestO=document.getElementById("bestO"), elBestOv=document.getElementById("bestOv"),
     elCandyN=document.getElementById("candyN"), elCandyC=document.getElementById("candyC"),
     elPws=document.getElementById("pws"),
     elToast=document.getElementById("toast"), elSlow=document.getElementById("slowfx"),
     elFinalC=document.getElementById("finalC"),
-    elBestCS=document.getElementById("bestCS"), elBestCSv=document.getElementById("bestCSv"),
     elBestCO=document.getElementById("bestCO"), elBestCOv=document.getElementById("bestCOv");
 /* ── الخصائصُ في الواجهة: أيقونةُ ما تمنحُه الكلمةُ الجارية، وشاراتُ القائمِ منها، وإعلانُ ما نِلت ── */
 var PW_ICO=[
@@ -10344,7 +10426,7 @@ var PW_ICO=[
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v8.5a6 6 0 0 0 12 0V3.5"/><path d="M6 7.5h4M14 7.5h4"/></svg>',
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3c0 5 8 5.5 8 9s-8 4-8 9M16 3c0 5-8 5.5-8 9s8 4 8 9"/></svg>'];
 var PW_NAME=["درع","تحليق","مغناطيس","تمهّل"],
-    PW_DESC=["يصدُّ عنك صدمةً واحدة","تحلّقُ فوقَ كلِّ شيء","يجذبُ الحروفَ والمصّاص","يبطئُ الجري"];
+    PW_DESC=["يصدُّ عنك صدمةً واحدة","تحلّقُ فوقَ كلِّ شيء","يجذبُ الحروفَ والأكواب","يبطئُ الجري"];
 /* المصّاصُ يُجمَعُ عبرَ الجولاتِ كلِّها (قرارُ محمد): لوحتُه بالمجموعِ لا بأكثرِ جولة.
    وهنا مجموعُ هذا الجهاز؛ ومجموعُ اللوحةِ يحسبُه الخادمُ من الجولاتِ التي أعادَها وصدّقها. */
 var totC=0, pwUI={key:"",els:[],toastAt:-1,toastT:0,candy:-1};
@@ -10387,10 +10469,11 @@ function hudPw(dt){
 /* النتيجةُ صارت مترًا لا نقاطًا، فأفضلُ القديمِ (rw3_best) لا يُقارَنُ بها: يبدأُ السجلُّ من جديد */
 try{ best=parseInt(localStorage.getItem("rw4_bestD")||"0",10)||0; }catch(e){}
 /* أفضلُ نتيجةٍ على شاشتَي البدءِ والنهاية (كانت في عنصرِ الفحصِ المخفيِّ وحدَه) */
+/* عددُ الأكواب بتمييزه: كوبٌ واحد، وكوبان، وأكوابٌ للعشرة وما دونها، و«كوبًا» لما فوقها */
+function cupWord(n){ var t=n%100; return n===1?"كوب":n===2?"كوبان":(t>=3&&t<=10)?"أكواب":n===0?"أكواب":"كوبًا"; }
 function showBest(){
-  elBest.textContent=best; elBestSv.textContent=best+" م"; elBestOv.textContent=best+" م";
-  elBestS.hidden=!(best>0);
-  elBestCSv.textContent=totC; elBestCOv.textContent=totC; elBestCS.hidden=!(totC>0);
+  elBest.textContent=best; elBestOv.textContent=best+" م";
+  elBestCOv.textContent=totC;
 }
 showBest();
 /* بذرةٌ جديدةٌ لكلِّ جولة: كانت «مرّة ثانية» تُعيدُ المضمارَ نفسَه حرفًا بحرف.
@@ -10405,7 +10488,7 @@ newSeed();
    وإرسالُ الضغطاتِ عند النهاية ليعيدَ الخادمُ الجولةَ ويحكم (v2/WATAN-SYSTEM.md).
    **وكلُّ عطلٍ في الشبكةِ يُسقِطُ الجولةَ إلى تدريبٍ لا يُحسَب، ولا يوقفُ اللعبَ أبدًا.**
    والتذكرةُ تُطلَبُ مسبقًا وشاشةُ البدءِ أو النهايةِ قائمة، فلا ينتظرُ «ابدأ» الشبكة. */
-var CORE_VERSION="7ed1d976ee02", RUN_CAP=54000, capEnd=false;
+var CORE_VERSION="a406a18800b8", RUN_CAP=54000, capEnd=false;
 var NET={ on:/^https?:$/.test(location.protocol)&&/^\/watan(\/|$)/.test(location.pathname),
           name:null, ready:null, ticket:null, asking:null, run:null, stale:false, editing:false,
           mode:"name", fresh:false, account:false, loggedIn:false };
@@ -10416,7 +10499,8 @@ var elWho=document.getElementById("who"), elNmBox=document.getElementById("nmBox
     elCdBox=document.getElementById("cdBox"), elCdI=document.getElementById("cdI"),
     elCdLine=document.getElementById("cdLine"), elCdV=document.getElementById("cdV"),
     elCdHave=document.getElementById("cdHave"), elCdNote=document.getElementById("cdNote"),
-    elAcct=document.getElementById("acct"), elToAcct=document.getElementById("toAcct");
+    elAcct=document.getElementById("acct"), elToAcct=document.getElementById("toAcct"),
+    elToAcct2=document.getElementById("toAcct2");
 
 function netApi(path,body){
   var o={credentials:"same-origin",headers:{}};
@@ -10440,12 +10524,14 @@ function whoPaint(){
   if(ask) elCdLine.hidden=true;
   /* الحساب: من حُفظ بحسابه يُقال له ذلك ولا يُعرَض عليه رمز؛ ومن لم يدخل يُدعى إلى الحفظ.
      ومن دخل ولا اسمَ له بعد يكتب اسمَه فيُحفَظ في حسابه من أوّل جولة. */
-  document.getElementById("cdShow").hidden=NET.account;
-  elAcct.hidden=!(NET.account&&!ask) && !(NET.loggedIn&&!NET.name);
-  elAcct.textContent=NET.name?"محفوظٌ في حسابك":"اسمُك يُحفَظ في حسابك";
-  elToAcct.hidden=NET.loggedIn||NET.account||NET.editing;
-  elToAcct.textContent=NET.name?"احفظ تقدّمك بحسابك في أدِيب":"لك حسابٌ في أدِيب؟ ادخل به";
-  if(ask&&!NET.name&&NET.mode==="code") elToAcct.hidden=true;
+  /* شاشةُ البدء بعد أوّلِ مرّة زرٌّ واحد (قرارُ محمد ٢٠٢٦-٠٩-٢٥)، فما يُقال هنا لمن لا اسمَ له وحدَه:
+     الدخولُ بالحساب قبلَ أن يختار اسمًا، أو أنّ اسمَه يُحفَظ في حسابه. والحفظُ بالحساب لمن له اسمٌ
+     صار في شاشةِ النهاية بعد نتيجته (وفي تبويب «حسابي»)، والرمزُ في «حسابي». */
+  elAcct.hidden=!(NET.loggedIn&&!NET.name);
+  elAcct.textContent="اسمُك يُحفَظ في حسابك";
+  elToAcct.hidden=!!NET.name||NET.loggedIn||NET.account||NET.mode==="code";
+  elToAcct.textContent="لك حسابٌ في أدِيب؟ ادخل به";
+  elToAcct2.hidden=!(NET.name&&!NET.loggedIn&&!NET.account);
   if(NET.name) elNmV.textContent=NET.name;
   if(ask&&NET.editing&&!elNmI.value) elNmI.value=NET.name||"";
 }
@@ -10554,6 +10640,8 @@ function netSend(body,tries){
     if(j.ok){
       netAdopt(j.best,j.candyTotal);
       if(j.held) netLine("بلغتَ حدَّ الجولة، فتُراجَع قبل أن تدخل اللوحة.");
+      else if(j.window==="before") netLine("جولةُ تجربة: المسابقةُ تبدأ "+(CONTEST?ctWhen(CONTEST.s):"قريبًا")+".");
+      else if(j.window==="after") netLine("انتهت المسابقة، فلم تُحسَب هذه الجولة.");
       else netRank();
       /* أوّلُ جولةٍ بعد التسجيل: الرمزُ يُعرض مرّةً في لحظةٍ هادئة، لا وسطَ «ابدأ» */
       var fc=codeGet();
@@ -10567,19 +10655,36 @@ function netSend(body,tries){
     netLine("لم تُحفَظ الجولةُ بعد: لا اتّصال. سنحاول ثانيةً.");
   });
 }
+/* ── المسابقة: نافذتُها من الخادم، والخادمُ وحدَه يحكم بما يُحسَب (ساعةُ الجهاز للعرض فقط) ── */
+var CONTEST=null;
+function ctWhen(ms){
+  try{ return new Intl.DateTimeFormat("ar-SA-u-nu-latn-ca-gregory",{weekday:"long",hour:"numeric",minute:"2-digit",timeZone:"Asia/Riyadh"}).format(new Date(ms)); }
+  catch(e){ return ""; }
+}
+function contestPaint(){
+  var el=document.getElementById("contest"), now=Date.now();
+  if(!CONTEST||isNaN(CONTEST.s)||isNaN(CONTEST.e)){ el.hidden=true; return; }
+  /* وهي جاريةٌ لا سطر: الجوائزُ وموعدُ الإقفال في تبويب «المسابقة». وقبلها وبعدها يُقال قبل اللعب لا بعده */
+  if(now>=CONTEST.s&&now<CONTEST.e){ el.hidden=true; return; }
+  el.textContent= now<CONTEST.s ? "تدريب: المسابقةُ تبدأ "+ctWhen(CONTEST.s)+"."
+    : "انتهت المسابقة، ويُعلَن الفائزون بعد مراجعة النتائج.";
+  el.hidden=false;
+}
 function netRank(){
   netApi("me").then(function(j){
     if(!j.ok||!j.name){ netLine("حُفِظت جولتُك."); return; }
     var d=j.dist&&j.dist.rank, c=j.candy&&j.candy.rank;
-    netLine(d?("ترتيبُك "+d+" في المسافة"+(c?"، و"+c+" في المصّاص":"")):"حُفِظت جولتُك.");
+    netLine(c?("ترتيبُك "+c+" في الأكواب"+(d?"، و"+d+" في المسافة":"")):d?("ترتيبُك "+d+" في المسافة"):"حُفِظت جولتُك.");
   },function(){ netLine("حُفِظت جولتُك."); });
 }
 
 if(NET.on){
   document.getElementById("toBoard").hidden=false;
   /* الدخولُ بحساب أدِيب يعود إلى اللعبة نفسِها (والتسجيلُ الجديدُ كذلك عبر الصفحة نفسِها) */
-  elToAcct.href="/login?next="+encodeURIComponent(location.pathname);
+  elToAcct.href=elToAcct2.href="/login?next="+encodeURIComponent(location.pathname);
+  document.getElementById("spons").hidden=false;
   NET.ready=netApi("me").then(function(j){
+    if(j.ok&&j.contest){ CONTEST={s:Date.parse(j.contest.startsAt),e:Date.parse(j.contest.endsAt)}; contestPaint(); setInterval(contestPaint,30000); }
     if(j.ok){ NET.name=j.name||null; NET.account=!!j.account; NET.loggedIn=!!j.loggedIn;
               if(j.name) netAdopt(j.dist&&j.dist.value,j.candy&&j.candy.value); }
     whoPaint(); netTicket();
@@ -10591,7 +10696,6 @@ if(NET.on){
   elCdI.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); elGo.click(); } });
   elCdHave.addEventListener("click",function(){ NET.mode=NET.mode==="code"?"name":"code"; elNmErr.hidden=true; whoPaint();
     (NET.mode==="code"?elCdI:elNmI).focus(); });
-  document.getElementById("cdShow").addEventListener("click",function(){ elNmErr.hidden=true; if(elCdLine.hidden) codeShow(); else elCdLine.hidden=true; });
   /* لمسةٌ على الرمز تنسخه */
   elCdLine.addEventListener("click",function(){ var c=codeGet(); if(!c||!navigator.clipboard) return;
     navigator.clipboard.writeText(c).then(function(){ var h=document.getElementById("cdHint"), t=h.textContent;
@@ -10737,7 +10841,131 @@ function paintWord(){
   }
   elWord.classList.toggle("long",w.length>4);       /* «تلاحم» خمسةُ أحرف: الخاناتُ أضيقُ فلا تبلغُ زرَّ الصوت */
 }
+/* ══ مشهدُ البدء، وهو شاشةُ البدء نفسُها (طلبا محمد ٢٠٢٦-٠٩-٢٥) ═══════════════════════════════
+   الأوّل: «ببداية اللعبة خُضَيران يرشُّ رشّاشَ بخّاخٍ ثلجيٍّ على جوّالِ اللاعب، وبيده كوبُ oos، وعند البدء
+   تظهر الشرطة ويبدأ الركض». والثاني: «أن تكون هذه الصفحة هي البداية التي بنيناها بشكل loop مع زر البدء فقط».
+   فالحلقةُ خلفَ «ابدأ» ما دامت شاشةُ البدء ظاهرة: تقتربُ الكاميرا ويستديرُ إلينا، في يسراه كوبٌ وفي يمناه
+   بخّاخ، وكلَّ ٥٫٦ ث يلوّحُ فيرشُّ ثلاثَ رشّاتٍ نحوَ الشاشة فتلتصقُ بقعُ ثلجٍ في نصفِها الأعلى بعيدًا عن
+   الزرّ وتذوب، وبينها يقفُ بكوبه. و«ابدأ» يقطعُها إلى الخروج (١٫١ ث): يستديرُ إلى الطريق، ويدخلُ الشرطيُّ
+   من خلفِ الكاميرا، وتعودُ الكاميرا إلى مكانها، ثمّ الجولة. ولمسةٌ أثناءَ الخروجِ تتخطّاه.
+   رسمٌ خالصٌ لا يمسُّ اللبّ، ولا حلقةَ لمن طلبَ في جهازه تقليلَ الحركة (يبدأ الركضُ عنده فورًا). */
+var INTRO={on:false,mode:"",t:0,e:0,d:0,go:null,props:null,parts:[],emit:0,yaw:Math.PI,cam:0,ofz:30.9,clip:"Idle",sfx:0};
+var IN_P=5.6, IN_X=1.1;
+function introReduced(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+function introProps(){
+  if(INTRO.props) return INTRO.props;
+  makeCandy();                                   /* يهيّئ خاماتِ الكوب */
+  var cup=new T.Object3D(), H=0.92, RT=0.37, RB=0.28;
+  var body=new T.Mesh(new T.CylinderGeometry(RT,RB,H,32,1,true),CANDY_M.body); cup.add(body);
+  var bot=new T.Mesh(new T.CircleGeometry(RB,24),CANDY_M.rim); bot.rotation.x=Math.PI/2; bot.position.y=-H/2; cup.add(bot);
+  var rim=new T.Mesh(new T.TorusGeometry(RT,0.024,8,32),CANDY_M.rim); rim.rotation.x=Math.PI/2; rim.position.y=H/2; cup.add(rim);
+  var top=new T.Mesh(new T.CircleGeometry(RT*0.95,24),CANDY_M.coffee); top.rotation.x=-Math.PI/2; top.position.y=H/2-0.05; cup.add(top);
+  cup.scale.setScalar(0.36);
+  var can=new T.Object3D(), mC=new T.MeshStandardMaterial({color:0x1F8E4D,roughness:0.32,metalness:0.35}),
+      mW=new T.MeshStandardMaterial({color:0xF4F2EC,roughness:0.4,metalness:0.1});
+  var cb=new T.Mesh(new T.CylinderGeometry(0.075,0.075,0.30,20),mC); can.add(cb);
+  var bd=new T.Mesh(new T.CylinderGeometry(0.077,0.077,0.07,20),mW); bd.position.y=0.02; can.add(bd);
+  var sh=new T.Mesh(new T.CylinderGeometry(0.045,0.075,0.05,20),mC); sh.position.y=0.175; can.add(sh);
+  var cap=new T.Mesh(new T.CylinderGeometry(0.035,0.04,0.06,14),mW); cap.position.y=0.23; can.add(cap);
+  var nz=new T.Mesh(new T.BoxGeometry(0.03,0.025,0.06),mW); nz.position.set(0,0.245,0.04); can.add(nz);
+  can.userData.nz=nz;
+  var dot=tex(64,64,function(c,w,h){ var q=c.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);
+    q.addColorStop(0,"rgba(255,255,255,1)"); q.addColorStop(0.55,"rgba(250,252,255,0.9)"); q.addColorStop(1,"rgba(255,255,255,0)");
+    c.fillStyle=q; c.fillRect(0,0,w,h); });
+  var pm=new T.SpriteMaterial({map:dot,transparent:true,depthWrite:false,fog:false,toneMapped:false});
+  var parts=[];
+  for(var i=0;i<46;i++){ var sp=new T.Sprite(pm); sp.visible=false; scene.add(sp); parts.push({s:sp,t:-1,p0:new T.Vector3(),p1:new T.Vector3(),d:0.4,z:0}); }
+  cup.visible=false; can.visible=false; scene.add(cup); scene.add(can);
+  INTRO.parts=parts;
+  return (INTRO.props={cup:cup,can:can});
+}
+function introBone(n){ return rigKh.g ? rigKh.g.getObjectByName(n) : null; }
+/* تبدأُ الحلقةُ من الحلقةِ الرئيسة متى ظهرت شاشةُ البدء وجهزت الشخصيّة */
+function introLoop(){
+  if(INTRO.on || !rigKh.ready || introReduced()) return;
+  introProps();
+  INTRO.on=true; INTRO.mode="loop"; INTRO.t=0; INTRO.e=0; INTRO.d=lastDist; INTRO.go=null;
+  INTRO.emit=0; INTRO.yaw=Math.PI; INTRO.cam=0; INTRO.ofz=30.9; INTRO.clip="Idle"; INTRO.sfx=0;
+}
 function start(t){
+  if(INTRO.on && INTRO.mode==="loop"){
+    vStart.hidden=true; vOver.hidden=true; elHud.hidden=true;
+    INTRO.mode="exit"; INTRO.e=0; INTRO.go=function(){ startRun(t); };
+    return;
+  }
+  if(INTRO.on){ INTRO.go=null; introFinish(); }
+  startRun(t);
+}
+function introFinish(){
+  if(!INTRO.on) return;
+  INTRO.on=false; INTRO.mode=""; INTRO.cam=0;
+  if(INTRO.props){ INTRO.props.cup.visible=false; INTRO.props.can.visible=false; }
+  for(var i=0;i<INTRO.parts.length;i++){ INTRO.parts[i].s.visible=false; INTRO.parts[i].t=-1; }
+  /* ما بقي من الثلجِ يتلاشى مع أوّلِ خطوة، فلا يحجبُ الحاجزَ الأوّل */
+  var sn=document.getElementById("snow"); sn.classList.add("off");
+  setTimeout(function(){ sn.textContent=""; sn.classList.remove("off"); },500);
+  var g=INTRO.go; INTRO.go=null; if(g) g();
+}
+function introSplat(x,y){
+  var el=document.getElementById("snow"), i=document.createElement("i"), s=70+Math.random()*80;
+  i.style.cssText="left:"+x+"px;top:"+y+"px;--s:"+s.toFixed(0)+"px;--r:"+(Math.random()*360).toFixed(0)+"deg;--d:"+(2.2+Math.random()*0.9).toFixed(2)+"s";
+  el.appendChild(i); setTimeout(function(){ if(i.parentNode) i.parentNode.removeChild(i); },3400);
+}
+var inV=new T.Vector3(), inV2=new T.Vector3(), inTz=new T.Vector3();
+/* يُنادى في كلِّ إطارٍ بعدَ الكاميرا: الدورانُ والكاميرا والشرطيّ، واليدان، والرذاذ */
+function introUpdate(dt){
+  if(!INTRO.on) return;
+  var fz=window.__introFreeze?0:dt, sm=function(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); };
+  var t=(INTRO.t+=fz), ex=INTRO.mode==="exit", e=ex?(INTRO.e+=fz):0;
+  /* الدورةُ تبدأُ بعد الاستدارةِ إلينا (٠٫٤ ث): تلويحٌ ورشٌّ ١٫٨ ث، ثمّ وقوفٌ بالكوب حتّى تتمّ ٥٫٦ */
+  var cyc=t<0.4?-1:Math.floor((t-0.4)/IN_P), c=t<0.4?-1:(t-0.4)-cyc*IN_P;
+  INTRO.yaw=Math.PI*(1-sm(0,0.4,t)) + (ex?Math.PI*sm(0,0.45,e):0);
+  INTRO.cam=sm(0,0.45,t)*(ex?1-sm(0.1,0.9,e):1);
+  INTRO.clip= ex ? "Running" : (c>=0 && c<1.8) ? "Wave" : "Idle";
+  INTRO.ofz= ex ? 4.9+26*(1-sm(0,0.8,e)) : 30.9;
+  if(rigKh.act.Wave) rigKh.act.Wave.timeScale=1.1;
+  var P=INTRO.props, hR=introBone("Palm2R")||introBone("LowerArmR"), hL=introBone("Palm2L")||introBone("LowerArmL");
+  var hold=!ex||e<0.45;
+  P.can.visible=hold&&!!hR; P.cup.visible=hold&&!!hL;
+  if(hR){ hR.getWorldPosition(inV); P.can.position.copy(inV); P.can.lookAt(camera.position); }
+  if(hL){ hL.getWorldPosition(inV2); P.cup.position.set(inV2.x,inV2.y+0.06,inV2.z); P.cup.rotation.set(0,runner.rotation.y,0); }
+  /* ثلاثُ رشّاتٍ في أوّلِ كلِّ دورة (٠٫٣٥ و٠٫٩ و١٫٤٥ ث من بدء التلويح، واليدُ مرفوعة)، ومع كلِّ رشّةٍ
+     بقعتان في الدورةِ الأولى وبقعةٌ فيما بعدها: الثلجُ مفاجأةُ أوّلِ مرّةٍ لا غطاءٌ دائمٌ على الزرّ */
+  var bi=-1;
+  if(!ex && c>=0){ var BU=[0.35,0.9,1.45]; for(var b=0;b<3;b++) if(c>=BU[b] && c<BU[b]+0.28) bi=b; }
+  if(bi>=0){
+    INTRO.emit+=dt*85;
+    var key=cyc*3+bi+1;
+    if(INTRO.sfx!==key){ INTRO.sfx=key; SND.spray && SND.spray(-0.2);
+      var w0=cv.clientWidth, h0=cv.clientHeight, nS=cyc===0?2:1;
+      for(var z=0;z<nS;z++) (function(d){ setTimeout(function(){
+        if(INTRO.on&&INTRO.mode==="loop") introSplat(w0*(0.1+Math.random()*0.8), h0*(0.15+Math.random()*0.35));
+      },d); })(300+z*80); }
+    while(INTRO.emit>=1){ INTRO.emit-=1;
+      for(var k=0;k<INTRO.parts.length;k++){ var q=INTRO.parts[k]; if(q.t>=0) continue;
+        q.t=0; q.d=0.26+Math.random()*0.12; q.p0.copy(P.can.userData.nz.getWorldPosition(inTz));
+        /* نحوَ النصفِ الأعلى من الشاشة، حيث تلتصقُ البقع: الأسفلُ تحتَ تدرّجِ الزرّ فيبدو الرذاذُ فيه دخانًا */
+        q.p1.set(camera.position.x+(Math.random()-0.5)*0.6, camera.position.y+0.08+(Math.random()-0.5)*0.36, camera.position.z-0.45);
+        q.s.visible=true; break; } }
+  }
+  for(var j=0;j<INTRO.parts.length;j++){ var r=INTRO.parts[j]; if(r.t<0) continue;
+    r.t+=dt/r.d; var u=r.t>1?1:r.t;
+    r.s.position.lerpVectors(r.p0,r.p1,u); r.s.position.y-=0.25*u*u;
+    r.s.scale.setScalar(0.035+0.13*u);
+    if(r.t>=1){ r.s.visible=false; r.t=-1; } }
+  if(ex && e>=IN_X) introFinish();
+}
+/* ── تلميحُ السحب: أوّلُ جولةٍ في هذا المتصفّح وحدَها (الشرحُ النصّيُّ صار في تبويب «كيف تلعب») ── */
+var elHint=document.getElementById("hint"), hintTo=0;
+function hintShow(){
+  var seen=false; try{ seen=!!localStorage.getItem("rw_hint"); }catch(e){}
+  if(seen) return;
+  try{ localStorage.setItem("rw_hint","1"); }catch(e){}
+  document.getElementById("hintT").textContent=isTouch()?"اسحب يمينًا ويسارًا، وللأعلى وللأسفل":"الأسهمُ للتحكّم";
+  elHint.hidden=false; clearTimeout(hintTo); hintTo=setTimeout(hintHide,5000);
+}
+function hintHide(){ elHint.hidden=true; clearTimeout(hintTo); }
+function startRun(t){
   /* في الموقع تأتي البذرةُ من الخادم في تذكرة؛ وبلا تذكرةٍ (خارجَ الموقع أو بلا اتّصال) من الجهاز */
   NET.run=t?t.run:null; capEnd=false;
   if(t){ if(t.seed!==seed||seedUsed){ seed=t.seed; clearLive(); } }
@@ -10753,12 +10981,13 @@ function start(t){
   camSide=0;
   crInit=0; runner.position.z=0; ctReset();
   if(dbgBox){ scene.remove(dbgBox); dbgBox=null; } dbgDone=false;
-  vStart.hidden=true; vOver.hidden=true; elHud.hidden=false; paintWord();
+  vStart.hidden=true; vOver.hidden=true; elHud.hidden=false; paintWord(); hintShow();
   if(rotLock) pauseGame();       /* بدأت والجوّالُ أفقيّ (بلوحةِ مفاتيح): تنتظرُ الاعتدالَ واللمسة */
 }
 function stop(){
   elHud.hidden=true; elPws.hidden=true; elToast.hidden=true; elSlow.style.opacity=0;
   var s2=sim.score(), c2=sim.candies(), prev=best; elFinal.textContent=s2; elFinalC.textContent=c2;
+  document.getElementById("finalCt").textContent=cupWord(c2);
   elLine.textContent=overLine(Math.floor(sim.s.dist),sim.s.picked,sim.s.words);
   if(s2>best){ best=s2;
     try{ localStorage.setItem("rw4_bestD",String(best)); }catch(e){} }
@@ -10936,7 +11165,7 @@ function syncWorld(dist){
       if(!o[li]) continue;
       var kind=o[li], key=k+"|"+li, type, word;
       if(kind==="low") type="low";
-      else if(kind==="high"){ type="high"; word=WORDS[hash(seed,k,21)%WORDS.length].join(""); }
+      else if(kind==="high"){ type="high"; word=cityFor(seed,key); }
       else type="blk";
       /* السيّارةُ تُرسم حيث تحسبها النواةُ تمامًا — الدالّةُ واحدة، ثمّ
          تُزاحُ بأنفِها: انظرْ blkNose. */
@@ -11086,6 +11315,8 @@ function loop(ts){
   } else {
     dist=(ts/1000)*6; spd=14; laneVis=0;
   }
+  if(INTRO.on){ dist=INTRO.d; spd=0.001; laneVis=0; }
+  lastDist=dist;
   phase=(phase+dt*(spd/14)*1.45)%1;
   /* تمريرُ سطحِ الطريقِ نحوَ الكاميرا بالمسافةِ نفسِها التي يقطعُها العالم،
      فتتحرّكُ الخطوطُ كما تتحرّكُ السيّاراتُ والأعمدةُ لا عكسَها. */
@@ -11162,7 +11393,7 @@ function loop(ts){
   slideK=ctSlideK(dt,slide,slideK);
   var ctT1=performance.now();
   runner.position.x=laneVis*LANE_W;
-  runner.rotation.y=Math.PI;
+  runner.rotation.y=INTRO.on?INTRO.yaw:Math.PI;
   /* ── الارتطام ─────────────────────────────────────────────────
      النواةُ وحدَها تقرّرُ الموتَ ولحظتَه، وهذا كلُّه تقديمٌ بصريٌّ بعدَه.
      كان خُضَيران يقفُ حيث وقفَ — وحيثُ وقفَ هو **داخلُ** العائق. فيُقاسُ
@@ -11187,13 +11418,14 @@ function loop(ts){
   if(rigKh.ready){
     runner.position.y=lift+crY;
     var dead=(sim&&!sim.s.alive);
-    rigKh.play(dead?"Death":(air>AIR_T?"Jump":"Running"), dead?0.06:0.12);
+    if(INTRO.on) rigKh.play(INTRO.clip,0.22);
+    else rigKh.play(dead?"Death":(air>AIR_T?"Jump":"Running"), dead?0.06:0.12);
     if(rigKh.act.Running) rigKh.act.Running.timeScale=0.58+spdNow/40;
     rigKh.mix.update(dt); rigPre(rigKh);
     /* بعد المازج: انفراجُ الذراعين الثابت، والتفاتةٌ إلى الوراءِ كلَّ بضعِ ثوانٍ */
     khT+=dt;
     var look=0;
-    if(!dead && slideK<0.2 && air<=AIR_T){
+    if(!dead && slideK<0.2 && air<=AIR_T && !INTRO.on){
       look=khLook(khT%5.2)*(1-pwFlyE());
     }
     var aRr=rigKh.act.Running;
@@ -11333,6 +11565,7 @@ function loop(ts){
   ctDxA=ctDxN; runner.position.x+=ctDxN;
   ctZprev=runner.position.z;
   var flyH=pwFxUpdate(dt);            /* بعدَ التماسّ: التحليقُ يرفعُه فوقَ ما حُسِب، والشرطيُّ يتبعُ أثرَه بلا تحليق */
+  if(INTRO.on){ PWFX.mag.visible=PWFX.bub.visible=PWFX.burst.visible=false; }
   /* ولا يغوصُ في الأسفلتِ أيضًا: لقطةُ الموتِ تُنزِلُ أدنى نقطةٍ فيه إلى ‎−0.20‎ تحتَ
      السطح. كان يُرفَعُ بأدنى صندوقِه بعدَ كلِّ شيء؛ وصارَ الرفعُ في ctSolve(floor) بأدنى
      رأسٍ فعليٍّ وقبلَ دفعِ العمق — قياسٌ لا يجري إلّا بعدَ الموتِ فلا يكلّفُ اللعبَ شيئًا. */
@@ -11391,13 +11624,14 @@ function loop(ts){
   if(ofBT>ofBack) ofBack=Math.min(ofBT,ofBack+spdNow*dt*0.95);
   else ofBack=Math.max(0,ofBack-spdNow*dt*0.36);
   var ofz=4.9+ofBack-chase*4.6, ofMin=runner.position.z+GRAB_Z+GZA*(1-grab);
+  if(INTRO.on) ofz=INTRO.ofz;                  /* مشهدُ البدء: يدخلُ من خلفِ الكاميرا */
   if(ofz<ofMin) ofz=ofMin;
   /* الأثر: الشرطيُّ عندَ موضعِه على الطريقِ (dist − ofz) حيثُ كان خُضَيران المرسوم.
      وعندَ الإمساكِ يُمزَجُ إلى موضعِ خُضَيران نفسِه وإلى الأرض، فتبلغُ الكفُّ الكتف. */
   var ofS=obAt((sim?sim.s.dist:dist)-ofz), ofLiftY=ofS.y;
   officer.position.set(ofS.x+(runner.position.x-ofS.x)*grab, ofLiftY*(1-grab), ofz);
   officer.rotation.y=Math.PI;
-  officer.visible=true;
+  officer.visible=!(INTRO.on && INTRO.ofz>20);
   if(rigOf.ready){
     rigOf.play("Running",0.01);
     if(rigOf.act.Running) rigOf.act.Running.timeScale=0.62+spdNow/38;
@@ -11637,8 +11871,12 @@ function loop(ts){
     cpz+=((pvz+Math.cos(caz)*cdd)-cpz)*swing;
     ctx+=(pvx-ctx)*swing; cty+=((pvy-0.10)-cty)*swing; ctz+=(pvz-ctz)*swing;
   }
+  if(INTRO.cam>0){ var ik=INTRO.cam;              /* مشهدُ البدء: قريبًا من خُضَيران وهو يواجهُنا */
+    cpx+=(-0.32-cpx)*ik; cpy+=(1.7-cpy)*ik; cpz+=(3.7-cpz)*ik; ctx+=(-0.22-ctx)*ik; cty+=(1.0-cty)*ik; ctz+=(0-ctz)*ik; }
   camera.position.set(cpx,cpy,cpz);
   camera.lookAt(ctx,cty,ctz);
+  if(!INTRO.on && !playing && !vStart.hidden) introLoop();
+  if(INTRO.on){ camera.updateMatrixWorld(); introUpdate(dt); }
   camera.rotation.z=camRoll*(1-swing);
   sun.target.position.set(runner.position.x,1,-22);
   sun.position.set(runner.position.x+SUN[0]*95,SUN[1]*95,SUN[2]*95-22);
@@ -11679,9 +11917,15 @@ ctWarm();
 })();
 
 /* ── المدخلات ── */
-function act(a){ if(sim&&playing&&!paused) sim.input(a); }
+function act(a){ if(sim&&playing&&!paused){ sim.input(a); if(!elHint.hidden) hintHide(); } }
 addEventListener("keydown",function(e){
   if(e.target&&e.target.tagName==="INPUT") return;      /* الكتابةُ في حقل الاسم ليست لعبًا */
+  /* في الحلقة: «إدخال» أو المسافةُ تضغطان «ابدأ»؛ وفي الخروج أيُّ زرٍّ يتخطّاه */
+  if(INTRO.on){
+    if(INTRO.mode==="exit"){ introFinish(); e.preventDefault(); }
+    else if((e.key==="Enter"||e.key===" ")&&!vStart.hidden){ elGo.click(); e.preventDefault(); }
+    return;
+  }
   if(paused){ if(e.key===" "||e.key==="Enter"){ resumeGame(); e.preventDefault(); } return; }
   var m={ArrowLeft:1,ArrowRight:2,ArrowUp:3," ":3,ArrowDown:4};
   if(m[e.key]){ act(m[e.key]); e.preventDefault(); }
@@ -11696,8 +11940,12 @@ addEventListener("keydown",function(e){
 var PT={}, TAP_PX=10, TAP_MS=300;
 function swipePx(){ var m=Math.min(innerWidth,innerHeight)*0.055; return m<22?22:(m>40?40:m); }
 function ptClear(){ PT={}; }
-function ptDir(dx,dy){ return Math.abs(dx)>Math.abs(dy) ? (dx<0?1:2) : (dy<0?3:4); }
+/* المحورُ مائلٌ للعموديّ (ملاحظةُ محمد ٢٠٢٦-٠٩-٢٥: القفزُ والانزلاقُ على الجوّال لا يُقنعان واللابتوب ممتاز):
+   سحبةُ الإبهامِ للأعلى أو الأسفل قوسٌ مائل، وكانت تُقرأ تبديلَ مسارٍ متى غلب الأفقيُّ ولو قليلًا فتضيع
+   القفزة. الآن لا تكون أفقيّةً إلّا إذا زاد الأفقيُّ على العموديّ ربعًا (زاويةٌ دون ٣٩° عن الأفق). */
+function ptDir(dx,dy){ return Math.abs(dx)>Math.abs(dy)*1.25 ? (dx<0?1:2) : (dy<0?3:4); }
 cv.addEventListener("pointerdown",function(e){
+  if(INTRO.on){ if(INTRO.mode==="exit") introFinish(); return; }
   if(e.pointerType==="mouse"&&e.button!==0) return;
   PT[e.pointerId]={x:e.clientX,y:e.clientY,t:e.timeStamp,m:0,done:false};
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
@@ -11722,8 +11970,6 @@ cv.addEventListener("lostpointercapture",ptEnd);
 document.addEventListener("touchmove",function(e){ if(e.cancelable) e.preventDefault(); },{passive:false});
 document.addEventListener("gesturestart",function(e){ e.preventDefault(); });
 document.addEventListener("dblclick",function(e){ e.preventDefault(); });
-/* تلميحُ لوحةِ المفاتيحِ لمن لا لمسَ عنده وحدَه */
-if(isTouch()) document.getElementById("keys").hidden=true;
 
 document.getElementById("go").addEventListener("click",function(){ SND.init(); audioWake(); netGo(); });
 

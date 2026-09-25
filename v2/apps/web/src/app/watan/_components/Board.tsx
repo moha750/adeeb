@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { Crown, Play, PersonSimpleRun } from "@phosphor-icons/react";
+import { useCallback, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { Crown, Gift, HandSwipeRight, Lifebuoy, Play, PersonSimpleRun, Trophy, UserCircle } from "@phosphor-icons/react";
 import { CaretDown } from "@/app/_components/glyphs";
+import { Cup, OosMark, PLAY, PRIZE, cups, n } from "./bits";
+import { Contest } from "./Contest";
+import { Help } from "./Help";
+import { HowTo } from "./HowTo";
+import { Mine } from "./Mine";
+import { TABS, tabHref, type TabKey } from "./tabs";
 
 /**
- * **لوحةُ صدارة «ركضة وطن»** — التصميمُ الذي اختاره المالك (٢٠٢٦-٠٩-٢٤: «أريد تصميم أ
- * ولكن يكون منه ليلي ونهاري»)، ومعرضُه `/ui/watan-board` يرسم هذا المكوّنَ نفسَه.
+ * **صفحةُ «ركضة وطن»: خمسةُ تبويبات** — حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (قرارُ المالك
+ * ٢٠٢٦-٠٩-٢٥، بعد نقاشٍ بدأ بثلاثة ثمّ صار خمسة: «طريقة اللعب مُهم»، و«أرى إضافة تبويب للدعم»).
+ * والشريطُ ملازمٌ أعلى الشاشة لأنّ أسفلها لشريط «أنت». والتبويبُ في الرابط (`?tab=`، انظر `tabs.ts`)
+ * فيُرسَم من الخادم من أوّل طلب، ويتبدّل هنا بلا تنقّل.
+ *
+ * **لوحةُ الصدارة** — التصميمُ الذي اختاره المالك (٢٠٢٦-٠٩-٢٤: «أريد تصميم أ ولكن يكون منه ليلي
+ * ونهاري»)، ومعرضُه `/ui/watan-board` يرسم هذا المكوّنَ نفسَه.
  *
  * يأخذ الصفوفَ جاهزةً (القراءةُ في الخادم، `app/watan/page.tsx`)، ولا يعرف إلّا العرض:
  * اللوحتان والتبديلُ بينهما، والثلاثةُ على منصّة، والبقيّةُ في قائمةٍ تتّسع إلى خمسين،
@@ -15,37 +27,46 @@ import { CaretDown } from "@/app/_components/glyphs";
  *
  * **والأرقامُ غربيّة** كما هي في اللعبة نفسِها (عدّادُها وشاشةُ نهايتها): من خرج من
  * الجولة بـ«6,840 م» يجدها في اللوحة كما رآها، لا «٦٬٨٤٠».
+ *
+ * **ومسابقةُ أكواب oos** (قرارُ المالك ٢٠٢٦-٠٩-٢٥): الراعي مقهى oos، والكوبُ مكانَ المصّاص،
+ * فلوحةُ الأكواب هي الأولى وعلى منصّتها الجوائز، ولوحةُ المسافة لوحةُ شرفٍ بلا جائزة. ونافذةُ
+ * المسابقة تأتي من الخادم محسوبةً (`page.tsx`)، فلا يختلف ما رُسم في الخادم عمّا في الجهاز.
+ * والاسمُ الداخليّ `candy` باقٍ كما هو في اللبّ والقاعدة: التبديلُ عرضٌ لا حساب.
  */
 
 export type BoardKind = "dist" | "candy";
 export type BoardRow = { rank: number; name: string; value: number };
 export type Standing = { value: number; rank: number | null; above: number | null };
-export type BoardMe = { name: string; dist: Standing; candy: Standing } | null;
-export type BoardData = { dist: BoardRow[]; candy: BoardRow[]; me: BoardMe; failed?: boolean };
+/** `account`: لاعبُه محفوظٌ بحساب أدِيب (من `watan_me`)، فلا يُعرَض عليه رمزُ استرجاع. */
+export type BoardMe = { name: string; dist: Standing; candy: Standing; account?: boolean } | null;
+/**
+ * نافذةُ المسابقة كما حسبها الخادم: الطورُ الآن، والموعدان مكتوبَين بتوقيت الرياض، ولحظتاهما
+ * (`startsAt`/`endsAt`) لعدّاد تبويب المسابقة يدقّ في الجهاز.
+ */
+export type BoardContest = {
+  phase: "before" | "open" | "after";
+  starts: string;
+  ends: string;
+  startsAt?: number;
+  endsAt?: number;
+} | null;
+/** `loggedIn`: داخلٌ بحساب أدِيب في الموقع (لـ«حسابي»: من دخل ولم يلعب يُقال له إنّ اسمَه يُحفَظ في حسابه). */
+export type BoardData = {
+  dist: BoardRow[];
+  candy: BoardRow[];
+  me: BoardMe;
+  contest?: BoardContest;
+  failed?: boolean;
+  loggedIn?: boolean;
+};
 
-/** رابطُ اللعبة: ملفٌّ ثابتٌ بإعادة كتابة (`next.config.ts`)، فيُفتَح تنقّلًا كاملًا لا انتقالَ React. */
-const PLAY = "/watan/play";
 /** القائمةُ تُعرض عشرةً أوّلًا (الثلاثةُ على المنصّة وسبعةٌ تحتها)، ثمّ تتّسع إلى ما جاء. */
 const FIRST = 10;
-
-const fmt = new Intl.NumberFormat("en-US");
-const n = (x: number) => fmt.format(x);
 
 /** الحرفُ الأوّلُ من الاسم بعد «ال»: «الرحّال» تُقرأ راءً لا ألفًا. */
 const initial = (name: string) => name.replace(/^ال/, "").charAt(0);
 
-/** المصّاصُ رسمُ اللعبة نفسُه، يُنسخ من عدّاد شاشتها. */
-export function Lolli() {
-  return (
-    <svg className="wtn-lolli" viewBox="0 0 24 24" aria-hidden="true">
-      <path className="st" d="M12 15.5V23" />
-      <circle className="cd" cx="12" cy="9" r="6.8" />
-      <path className="sw" d="M12 9a1.6 1.6 0 1 1 1.6-1.6a3.2 3.2 0 1 1-3.2 3.2a4.8 4.8 0 0 1 4.8-4.8" />
-    </svg>
-  );
-}
-
-/** القيمةُ بوحدتها: المترُ حرفٌ بعد الرقم، والمصّاصُ رسمٌ قبله. */
+/** القيمةُ بوحدتها: المترُ حرفٌ بعد الرقم، والكوبُ رسمٌ قبله. */
 function Val({ b, v }: { b: BoardKind; v: number }) {
   return b === "dist" ? (
     <span className="wtn-num">
@@ -54,17 +75,9 @@ function Val({ b, v }: { b: BoardKind; v: number }) {
     </span>
   ) : (
     <span className="wtn-num">
-      <Lolli /> {n(v)}
+      <Cup /> {n(v)}
     </span>
   );
-}
-
-/** عددُ المصّاص بتمييزه العربيّ: واحدٌ ومثنًّى، وجمعٌ للعشرة وما دونها، ومفردٌ لما فوقها. */
-function candies(k: number) {
-  if (k === 1) return "مصّاصًا واحدًا";
-  if (k === 2) return "مصّاصَين";
-  const t = k % 100;
-  return t >= 3 && t <= 10 ? `${n(k)} مصّاصات` : `${n(k)} مصّاصًا`;
 }
 
 /** سطرُ «أنت» الثاني: كم بينك وبين من فوقك، أو أنّك في الصدارة. */
@@ -74,23 +87,42 @@ function gapLine(b: BoardKind, s: Standing) {
   const d = s.above - s.value;
   const up = n(s.rank - 1);
   if (d <= 0) return `تعادلتَ مع المركز ${up}، وسبقك إليه بالوقت`;
-  return b === "dist" ? `تبعد ${n(d)} م عن المركز ${up}` : `تحتاج ${candies(d)} للمركز ${up}`;
+  return b === "dist" ? `تبعد ${n(d)} م عن المركز ${up}` : `تحتاج ${cups(d)} للمركز ${up}`;
 }
 
 const NOTE: Record<BoardKind, string> = {
-  dist: "أفضلُ جولةٍ لكلّ لاعب",
-  candy: "مجموعُ مصّاصِ جولاتك كلّها",
+  dist: "أفضلُ جولةٍ لكلّ لاعب، لوحةُ شرفٍ بلا جائزة",
+  candy: "مجموعُ أكوابِ جولاتك كلّها في المسابقة",
 };
+
+/** سطرُ النافذة: متى تبدأ، أو حتّى متى، أو أنّها انتهت. */
+function contestLine(c: NonNullable<BoardContest>) {
+  if (c.phase === "before") return `تبدأ المسابقة ${c.starts}، وما قبلها تجربةٌ لا تُحسَب`;
+  if (c.phase === "open") return `المسابقةُ جاريةٌ حتّى ${c.ends}`;
+  return "انتهت المسابقة، ويُعلَن الفائزون بعد مراجعة النتائج";
+}
 
 const FINE =
   "يظهر هنا اسمُك المستعار وحده. والنتائجُ تُراجَع قبل اعتمادها، ويتحدّث الترتيبُ كلّ دقيقة.";
+const FINE_PRIZE =
+  "الجوائزُ رصيدٌ في محفظة oos للثلاثة الأوائل، ويُثبت الفائزُ اسمَه بحساب أدِيب أو برمز الاسترجاع حين نعلن النتائج.";
 
-export function Board({ data }: { data: BoardData }) {
-  const [b, setB] = useState<BoardKind>("dist");
+/** أيقونةُ كلّ تبويب: الكأسُ للصدارة، والهديّةُ للجوائز، والسحبُ للّعب، والشخصُ للحساب، وطوقُ النجاة للدعم. */
+const ICON: Record<TabKey, ReactNode> = {
+  board: <Trophy />,
+  contest: <Gift />,
+  how: <HandSwipeRight />,
+  me: <UserCircle />,
+  help: <Lifebuoy />,
+};
+
+/** تبويبُ الصدارة: اللوحتان والمنصّةُ والقائمة، كما كانت الصفحةُ كلُّها قبل التبويبات. */
+function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: BoardKind) => void }) {
   const [open, setOpen] = useState(false);
   const rows = data[b];
   const me = data.me;
-  const mine = me ? me[b] : null;
+  const contest = data.contest ?? null;
+  const prizes = contest !== null && b === "candy";
 
   const at = (r: number) => rows.find((x) => x.rank === r);
   const pod = [2, 1, 3].map((r) => ({ r, e: at(r) }));
@@ -98,35 +130,33 @@ export function Board({ data }: { data: BoardData }) {
   const shown = open ? rest : rest.slice(0, FIRST - 3);
 
   return (
-    <div className="wtna-page">
-      <header className="wtna-head">
-        <span className="wtn-mark">
-          ركضة <b>وطن</b>
-        </span>
-        <a className="wtna-play" href={PLAY}>
-          <Play />
-          العب
-        </a>
-      </header>
-
+    <>
       <section className="wtna-hero">
         <h1>المتصدّرون</h1>
+        <p className="wtna-spons">
+          برعاية <OosMark />
+        </p>
+        {contest ? (
+          <p className="wtna-contest" data-phase={contest.phase}>
+            {contestLine(contest)}
+          </p>
+        ) : null}
         <p>{NOTE[b]}</p>
         <div className="wtna-tabs" role="group" aria-label="اللوحة">
+          <button className="wtna-tab" type="button" aria-pressed={b === "candy"} onClick={() => setB("candy")}>
+            <Cup />
+            أكثر أكواب
+          </button>
           <button className="wtna-tab" type="button" aria-pressed={b === "dist"} onClick={() => setB("dist")}>
             <PersonSimpleRun />
             أبعد مسافة
-          </button>
-          <button className="wtna-tab" type="button" aria-pressed={b === "candy"} onClick={() => setB("candy")}>
-            <Lolli />
-            أكثر مصّاص
           </button>
         </div>
       </section>
 
       {rows.length === 0 ? (
         <div className="wtna-empty">
-          <Lolli />
+          <Cup />
           <b>{data.failed ? "تعذّرت قراءةُ اللوحة الآن" : "اللوحةُ تنتظر أوّلَ عدّاء"}</b>
           <p>{data.failed ? "أعد فتح الصفحة بعد قليل." : "العب جولةً واحدةً تجد اسمَك في رأسها."}</p>
           <a className="wtna-play" href={PLAY}>
@@ -143,7 +173,10 @@ export function Board({ data }: { data: BoardData }) {
                 <span className="wtna-av" aria-hidden="true">{e ? initial(e.name) : "؟"}</span>
                 <span className="wtna-who">{e ? e.name : "مكانٌ شاغر"}</span>
                 <span className="wtna-val">{e ? <Val b={b} v={e.value} /> : null}</span>
-                <span className="wtna-block">{r}</span>
+                <span className="wtna-block">
+                  {r}
+                  {prizes ? <small className="wtna-prize">{PRIZE[r]}</small> : null}
+                </span>
               </li>
             ))}
           </ol>
@@ -167,13 +200,84 @@ export function Board({ data }: { data: BoardData }) {
                 <CaretDown />
               </button>
             ) : null}
-            <p className="wtna-fine">{FINE}</p>
+            <p className="wtna-fine">
+              {FINE}
+              {prizes ? <> {FINE_PRIZE}</> : null}
+            </p>
           </div>
         </>
       )}
+    </>
+  );
+}
 
-      {/* أدِيب في موضعين لا ثالثَ لهما (قرارُ المالك ٢٠٢٦-٠٩-٢٤): هذا السطر، وزرُّ الحفظ بالحساب في اللعبة */}
-      <p className="wtna-credit">من تصميم نادي أدِيب</p>
+/**
+ * الصفحةُ كلُّها. `tab` ما طلبه الرابطُ أوّلَ مرّة (يقرؤه الخادم)، و`syncUrl` يكتب التبويبَ في
+ * الرابط عند التبديل. والمعرضُ يُطفئه: إطارُه صفحةٌ أخرى لا يصحّ أن يتبدّل رابطُها.
+ */
+export function Board({ data, tab: first = "board", syncUrl = true }: { data: BoardData; tab?: TabKey; syncUrl?: boolean }) {
+  const [tab, setTab] = useState<TabKey>(first);
+  const [b, setB] = useState<BoardKind>("candy");
+  const me = data.me;
+  const mine = me ? me[b] : null;
+
+  const go = useCallback(
+    (t: TabKey) => {
+      setTab(t);
+      if (!syncUrl) return;
+      // استبدالٌ لا دفع: زرُّ الرجوع يعود إلى ما قبل الصفحة، لا يمشي بين تبويباتها
+      window.history.replaceState(null, "", tabHref(t));
+      window.scrollTo({ top: 0 });
+    },
+    [syncUrl],
+  );
+
+  let panel: ReactNode;
+  if (tab === "contest") panel = <Contest contest={data.contest ?? null} go={go} />;
+  else if (tab === "how") panel = <HowTo />;
+  else if (tab === "me") panel = <Mine data={data} go={go} />;
+  else if (tab === "help") panel = <Help go={go} />;
+  else panel = <Leaders data={data} b={b} setB={setB} />;
+
+  return (
+    <div className="wtna-page">
+      <header className="wtna-head">
+        <span className="wtn-mark">
+          ركضة <b>وطن</b>
+        </span>
+        <a className="wtna-play" href={PLAY}>
+          <Play />
+          العب
+        </a>
+      </header>
+
+      <div className="wtna-nav" role="tablist" aria-label="أقسام الصفحة">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            id={`wtn-tab-${t.key}`}
+            className="wtna-navi"
+            aria-selected={tab === t.key}
+            aria-controls="wtn-panel"
+            onClick={() => go(t.key)}
+          >
+            {ICON[t.key]}
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div id="wtn-panel" className="wtna-panel" role="tabpanel" aria-labelledby={`wtn-tab-${tab}`}>
+        {panel}
+        {/* اسمُ أدِيب هنا سطرُ الصانع (قرارُ المالك ٢٠٢٦-٠٩-٢٤)، وصار رابطًا إلى موقع النادي (٢٠٢٦-٠٩-٢٥):
+            تسويقٌ لمن شاء بلا موضعٍ جديدٍ للاسم. ومواضعُه الأخرى بإذنه: زرُّ الحفظ بالحساب (في اللعبة
+            وفي «حسابي»)، وقناةُ الدعم (موقعُ النادي وبريدُه) */}
+        <p className="wtna-credit">
+          من إنتاج وتشغيل <Link href="/">نادي أدِيب</Link>
+        </p>
+      </div>
 
       <div className="wtna-me">
         {me && mine ? (

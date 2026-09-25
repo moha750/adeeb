@@ -12027,6 +12027,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --wtn-candy: #2FB35A;
   --wtn-stick: #F3EFE6;
   --wtn-white: #FFFFFF;
+  /* كوبُ oos (الراعي، ٢٠٢٦-٠٩-٢٥): لونا كوبهم، الليلكيُّ جسمًا والبنفسجيُّ الداكنُ حزامًا وخلفيّةَ شعارهم */
+  --wtn-oos: #C98AD6;
+  --wtn-oos-ink: #503A61;
   /* النهار: رملُ الطريق مفتوحًا درجتين، وسماؤه */
   --wtn-sand: #F7F1E4;
   --wtn-sand-2: #EDE3CE;
@@ -12074,10 +12077,16 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    `inline-block` صراحةً لأنّ تمهيدَ Tailwind يجعل كلَّ svg كتلةً فينزل الرقمُ تحته.
    وعودُه وقرصُه رمزان يُقلَبان بالسطح (`--stick` و`--candy`): عودٌ فاتحٌ يختفي
    على الرمل، وقرصٌ أخضرُ يذوب في أخضر «أنت». */
-.wtn-lolli { display: inline-block; inline-size: 1.05em; block-size: 1.05em; flex: 0 0 auto; stroke-linecap: round; vertical-align: -.16em; margin-inline-end: 1px; }
-.wtn-lolli .st { fill: none; stroke: var(--stick, var(--wtn-stick)); stroke-width: 2.4; }
-.wtn-lolli .cd { fill: var(--candy, var(--wtn-candy)); stroke: var(--wtn-white); stroke-width: 1.2; }
-.wtn-lolli .sw { fill: none; stroke: var(--wtn-white); stroke-width: 1.6; }
+.wtn-cup { display: inline-block; inline-size: 1.1em; block-size: 1.1em; flex: 0 0 auto; vertical-align: -.18em; }
+.wtn-cup .cb { fill: var(--wtn-oos); }
+.wtn-cup .cn { fill: var(--wtn-oos-ink); }
+.wtn-cup .cr { fill: var(--wtn-white); }
+/* شعارُ oos كما يُرى على أكوابهم: حروفٌ بيضاءُ على بنفسجيّهم، في الضوءين */
+.wtn-oos {
+  display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 7px;
+  background: var(--wtn-oos-ink); color: var(--wtn-white); line-height: 0; vertical-align: middle;
+}
+.wtn-oos svg { block-size: 12px; inline-size: auto; fill: currentColor; }
 
 /* الاسم: «ركضة» حبرٌ و«وطن» أخضر. كلمةٌ لا شعار، إلى أن يُرسم للعبة شعار */
 .wtn-mark { font-family: var(--font-display); font-weight: 900; font-size: 1.1875rem; letter-spacing: -.01em; white-space: nowrap; }
@@ -12161,6 +12170,13 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .wtna-hero { padding: var(--wtn-s4) var(--wtn-pad) 0; }
 .wtna-hero h1 { font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.15; }
 .wtna-hero p { margin-top: var(--wtn-s1); font-size: .8125rem; color: var(--a-ink-3); }
+/* الراعي، ثمّ نافذةُ المسابقة في لوحٍ هادئٍ يحدّه ليلكيُّ oos وهي جارية */
+.wtna-hero .wtna-spons { display: flex; align-items: center; gap: 8px; margin-top: var(--wtn-s2); color: var(--a-ink-2); }
+.wtna-hero .wtna-contest {
+  margin-top: var(--wtn-s2); padding: 10px 14px; border-radius: var(--wtn-r-sm);
+  border: 1px solid var(--a-rule); background: var(--a-well); color: var(--a-ink); font-weight: 700;
+}
+.wtna-hero .wtna-contest[data-phase="open"] { border-color: color-mix(in oklab, var(--wtn-oos) 60%, var(--a-rule)); }
 
 .wtna-tabs {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: var(--wtn-s3);
@@ -12194,6 +12210,8 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   max-width: 100%; margin-top: 9px; font-weight: 800; font-size: .875rem; text-align: center;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* جائزةُ المركز تحت رقمه على المنصّة (لوحةُ الأكواب وحدَها) */
+.wtna-prize { display: block; margin-top: 6px; font-size: .75rem; font-weight: 800; line-height: 1.2; color: var(--a-ink); }
 .wtna-val { margin-top: 2px; font-weight: 800; font-size: .9375rem; color: var(--medal-ink); white-space: nowrap; }
 .wtna-val .wtn-unit { color: var(--a-ink-3); }
 .wtna-block {
@@ -12249,7 +12267,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   margin: var(--wtn-s5) var(--wtn-pad) 0; padding: var(--wtn-s5) var(--wtn-s4) var(--wtn-s4);
   border-radius: var(--wtn-r) var(--wtn-r) 0 0; background: var(--a-sheet); text-align: center;
 }
-.wtna-empty > .wtn-lolli { inline-size: 46px; block-size: 46px; }
+.wtna-empty > .wtn-cup { inline-size: 46px; block-size: 46px; }
 .wtna-empty b { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; }
 .wtna-empty p { font-size: .875rem; color: var(--a-ink-3); }
 .wtna-empty .wtna-play { margin-top: var(--wtn-s2); }
@@ -12277,3 +12295,189 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 /* زائرٌ لم يسجّل: الشريطُ نفسُه بابٌ إلى اللعبة */
 .wtna-me-in[data-out] { grid-template-columns: auto minmax(0, 1fr); color: var(--wtn-night); }
 .wtna-me-in[data-out] .wtna-me-rk svg { display: block; inline-size: 26px; block-size: 26px; }
+
+/* ══ التبويباتُ الخمسة (قرارُ المالك ٢٠٢٦-٠٩-٢٥) ══════════════════════════
+   حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (`app/watan/_components/tabs.ts`، بترتيب المالك).
+   **الشريطُ أعلى الشاشة ملازمٌ** لأنّ أسفلَها لشريط «أنت». أيقونةٌ فوق كلمة، والمختارُ بخطٍّ
+   أخضرَ تحته، ليُفرَق بنظرةٍ عن مبدّل اللوحتين داخل الصدارة (كبسولةٌ مقلوبةُ اللون). وخلفيّتُه
+   الأرضيّةُ شبهَ شفّافةٍ بتغبيش، كي لا يقطع وهجَ الأعلى قبل أن يلتصق.
+   **والتبويباتُ الأربعةُ الأخرى بطاقات** (`.wtna-card`) على الأرضيّة بلوحِ القائمة نفسِه، فتُقرأ
+   من عائلة الصدارة. ولا لونَ جديد: كلُّ ما هنا أدوارٌ (`--a-*`) فيصحّ في الليل والنهار. */
+.wtna-nav {
+  position: sticky; top: 0; z-index: 3;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 12px; padding-inline: calc(var(--wtn-pad) - 8px);
+  border-bottom: 1px solid var(--a-rule);
+  background: color-mix(in oklab, var(--a-ground) 84%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.wtna-navi {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0;
+  padding: 10px 2px 9px; margin-bottom: -1px; border-bottom: 2.5px solid transparent;
+  color: var(--a-ink-3); font-weight: 700; font-size: .75rem; line-height: 1.2; white-space: nowrap;
+  transition: color .2s, border-color .2s;
+}
+.wtna-navi svg { inline-size: 22px; block-size: 22px; }
+.wtna-navi[aria-selected="true"] { color: var(--a-ink); font-weight: 800; border-bottom-color: var(--a-mark); }
+.wtna-navi[aria-selected="true"] svg { color: var(--a-mark); }
+
+/* لوحُ التبويب يملأ ما بين الشريطين، وقائمةُ الصدارة داخله تمتدّ كما كانت */
+.wtna-panel { flex: 1; display: flex; flex-direction: column; }
+.wtna-credit a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── البطاقة: متنُ التبويبات الأربعة ── */
+.wtna-body { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: var(--wtn-s4) var(--wtn-pad); }
+.wtna-card {
+  --st: var(--a-ink-2);
+  display: flex; flex-direction: column; gap: 12px; padding: 18px;
+  border-radius: var(--wtn-r); background: var(--a-sheet); border: 1px solid var(--a-rule);
+}
+.wtna-card h2 {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 900; font-size: 1.125rem; line-height: 1.3; color: var(--a-ink);
+}
+.wtna-card h2 svg { inline-size: 22px; block-size: 22px; flex: none; color: var(--a-mark); }
+.wtna-card p, .wtna-card li { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }
+.wtna-card .wtna-note { font-size: .75rem; line-height: 1.8; color: var(--a-ink-3); }
+.wtna-card[data-tone="ok"] { --st: var(--a-mark); border-color: color-mix(in oklab, var(--wtn-suit) 55%, var(--a-rule)); }
+.wtna-card[data-tone="warn"] { --st: var(--a-gold-ink); border-color: color-mix(in oklab, var(--a-gold) 60%, var(--a-rule)); }
+
+/* نقاطٌ خضراءُ لقائمة القواعد */
+.wtna-dots { display: flex; flex-direction: column; gap: 6px; }
+.wtna-dots li { position: relative; padding-inline-start: 16px; }
+.wtna-dots li::before {
+  content: ""; position: absolute; inset-inline-start: 2px; top: .78em;
+  inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--a-mark);
+}
+
+/* ── الأزرار: ممتلئٌ بلون «المختار»، وأخضرُ البدلة للّعب، وشفّافٌ بحدٍّ للثانويّ ── */
+.wtna-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-block-size: 48px; padding: 10px 20px; border-radius: 999px;
+  background: var(--a-on); color: var(--a-on-ink); font-weight: 800; font-size: .9375rem; line-height: 1.3; text-align: center;
+}
+.wtna-btn svg { inline-size: 20px; block-size: 20px; flex: none; }
+.wtna-btn[data-kind="suit"] { background: var(--wtn-suit); color: var(--wtn-night); }
+.wtna-btn[data-kind="ghost"] { background: transparent; color: var(--a-ink); border: 1px solid var(--a-rule); }
+.wtna-btn[data-wide] { inline-size: 100%; }
+.wtna-btn:disabled { opacity: .55; cursor: default; }
+.wtna-btn[aria-busy="true"] { opacity: .75; cursor: progress; }
+/* رابطٌ إلى تبويبٍ آخر: كلمةٌ خضراءُ وسهمٌ إلى الأمام */
+.wtna-link {
+  display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;
+  color: var(--a-mark); font-weight: 800; font-size: .875rem;
+}
+.wtna-link svg { inline-size: 16px; block-size: 16px; }
+.wtna-body > .wtna-link { align-self: center; margin-top: 4px; }
+
+/* ── المسابقة: العدّاد والجوائز ── */
+.wtna-clock { align-items: center; text-align: center; }
+.wtna-clock[data-phase="open"] { border-color: color-mix(in oklab, var(--wtn-oos) 60%, var(--a-rule)); }
+.wtna-card .wtna-clock-lbl { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.wtna-clock-row { display: flex; justify-content: center; gap: 8px; }
+.wtna-clock-u {
+  display: grid; justify-items: center; gap: 2px; min-inline-size: 60px; padding: 10px 6px 8px;
+  border-radius: var(--wtn-r-sm); background: var(--a-sunk);
+}
+.wtna-clock-u b {
+  font-family: var(--font-display); font-weight: 900; font-size: 1.75rem; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--a-ink);
+}
+.wtna-clock-u span { font-size: .6875rem; font-weight: 700; color: var(--a-ink-3); }
+.wtna-card .wtna-clock-when { font-size: .8125rem; color: var(--a-ink-3); }
+
+.wtna-prizes { display: flex; flex-direction: column; gap: 8px; }
+.wtna-prz {
+  --medal: var(--a-silver); --medal-ink: var(--a-silver-ink);
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 10px 14px 10px 10px; border-radius: var(--wtn-r-sm); background: var(--a-row);
+}
+.wtna-prz[data-rank="1"] { --medal: var(--a-gold); --medal-ink: var(--a-gold-ink); }
+.wtna-prz[data-rank="3"] { --medal: var(--a-bronze); --medal-ink: var(--a-bronze-ink); }
+.wtna-prz-rk {
+  display: grid; place-items: center; inline-size: 40px; block-size: 40px; border-radius: 50%;
+  background: var(--a-raise); border: 2.5px solid var(--medal); color: var(--medal-ink);
+  font-family: var(--font-display); font-weight: 900; font-size: 1.125rem;
+}
+.wtna-prz b { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.wtna-prz-amt { font-weight: 900; font-size: 1.0625rem; color: var(--a-ink); white-space: nowrap; }
+
+/* ── كيف تُلعب؟: الحركاتُ الثلاث، وصفوفٌ بأيقونة، والكلماتُ الأربع ── */
+.wtna-moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.wtna-move {
+  display: grid; justify-items: center; align-content: start; gap: 4px; padding: 14px 6px 12px;
+  border-radius: var(--wtn-r-sm); background: var(--a-row); text-align: center;
+}
+.wtna-move-ic { display: flex; gap: 2px; margin-bottom: 4px; color: var(--a-mark); }
+.wtna-move-ic svg { inline-size: 26px; block-size: 26px; }
+.wtna-card .wtna-move b { font-weight: 800; font-size: .875rem; line-height: 1.4; color: var(--a-ink); }
+.wtna-move span { font-size: .75rem; color: var(--a-ink-3); }
+
+.wtna-items { display: flex; flex-direction: column; gap: 8px; }
+.wtna-card .wtna-item {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); line-height: 1.6;
+}
+.wtna-item-ic { display: flex; color: var(--a-mark); }
+.wtna-item-ic svg { inline-size: 26px; block-size: 26px; }
+.wtna-item b { display: block; font-weight: 800; color: var(--a-ink); }
+.wtna-item b + span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
+
+.wtna-words { display: flex; flex-direction: column; gap: 8px; }
+.wtna-card .wtna-word {
+  display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); line-height: 1.5;
+}
+.wtna-word-w { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; text-align: center; color: var(--a-mark); }
+.wtna-word-p b { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
+.wtna-word-p b svg { inline-size: 18px; block-size: 18px; color: var(--a-mark); }
+.wtna-word-p > span { display: block; font-size: .8125rem; color: var(--a-ink-3); }
+
+/* ── حسابي: الحالُ، والرمزُ، والأرقام ── */
+.wtna-status { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 12px; }
+.wtna-status > svg { inline-size: 30px; block-size: 30px; color: var(--st); }
+.wtna-status b { display: block; font-weight: 800; font-size: 1rem; line-height: 1.5; color: var(--a-ink); }
+.wtna-card .wtna-status p { margin-top: 4px; }
+
+.wtna-code {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 10px 10px 16px; border-radius: var(--wtn-r-sm); background: var(--a-sunk);
+}
+.wtna-code-v {
+  font-family: var(--font-latin); font-weight: 700; font-size: 1.5rem; letter-spacing: .06em;
+  font-variant-numeric: tabular-nums; color: var(--a-ink); white-space: nowrap;
+}
+.wtna-icon-btn {
+  display: grid; place-items: center; flex: none; inline-size: 44px; block-size: 44px; border-radius: 50%;
+  border: 1px solid var(--a-rule); color: var(--a-ink);
+}
+.wtna-icon-btn svg { inline-size: 20px; block-size: 20px; }
+.wtna-icon-btn:disabled { opacity: .45; cursor: default; }
+.wtna-card .wtna-err { font-size: .8125rem; font-weight: 700; color: var(--a-gold-ink); }
+
+.wtna-in {
+  inline-size: 100%; block-size: 52px; padding-inline: 14px; border-radius: var(--wtn-r-sm);
+  border: 1px solid var(--a-rule); background: var(--a-sunk); color: var(--a-ink);
+  font-family: var(--font-latin); font-size: 1.25rem; letter-spacing: .06em; text-align: center;
+}
+.wtna-in::placeholder { font-family: var(--font-body); font-size: .9375rem; letter-spacing: normal; color: var(--a-ink-3); }
+.wtna-in:focus { outline: none; border-color: var(--a-mark); }
+
+.wtna-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wtna-stat { padding: 12px; border-radius: var(--wtn-r-sm); background: var(--a-row); }
+.wtna-stat span { display: block; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
+.wtna-stat b { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 900; font-size: 1.25rem; color: var(--a-ink); }
+.wtna-stat b .wtn-unit { color: var(--a-ink-3); }
+
+/* ── الدعم: أسئلةٌ تنطوي ── */
+.wtna-qas { display: flex; flex-direction: column; gap: 8px; }
+.wtna-qa { border-radius: var(--wtn-r-sm); background: var(--a-sheet); border: 1px solid var(--a-rule); }
+.wtna-qa summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;
+  list-style: none; cursor: pointer; font-weight: 800; font-size: .9375rem; line-height: 1.5; color: var(--a-ink);
+}
+.wtna-qa summary::-webkit-details-marker { display: none; }
+.wtna-qa summary svg { inline-size: 16px; block-size: 16px; flex: none; color: var(--a-ink-3); transition: transform .2s; }
+.wtna-qa[open] summary svg { transform: rotate(180deg); }
+.wtna-qa-a { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px 14px; }
+.wtna-qa-a p { font-size: .875rem; line-height: 1.85; color: var(--a-ink-2); }

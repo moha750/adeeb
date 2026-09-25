@@ -15,6 +15,8 @@ import { fail, isCount, isUuid, json, readJson, sameOrigin } from "@/lib/watan/h
  *   لنا: إمّا عبثٌ بالأرقام، وإمّا (وهو الأخطر) محرّكٌ يحسب غيرَ ما يحسبه الخادم.
  * - وفي القاعدة `fast`: جولةٌ زمنُ لعبها أطولُ من الزمن الذي مضى منذ التذكرة ← تُلغى.
  *   الإيقافُ يطيل الزمنَ الحقيقيّ ولا يقصّره، فالأسرعُ من الساعة حسابٌ لا لعب.
+ * - وفيها `out`: جولةٌ خارج نافذة المسابقة ← تُحفَظ ولا تُحسَب، ويعود `window`
+ *   (`before` أو `after`) فتقول اللعبةُ لماذا.
  */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return fail(403, "طلبٌ من خارج الموقع.");
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
   });
   if (error || !data) return fail(500, "تعذّر حفظُ الجولة.");
 
-  const res = data as { status: string; counted?: boolean; best_dist?: number; candy_total?: number };
+  const res = data as { status: string; counted?: boolean; window?: "before" | "after"; best_dist?: number; candy_total?: number };
   if (res.status === "closed") return fail(409, "أُرسلت هذه الجولةُ من قبل.");
   if (res.status === "expired") return fail(410, "انتهت مهلةُ هذه الجولة.");
   if (res.status === "fast") return fail(422, "زمنُ الجولة لا يطابق زمنَها الحقيقيّ.");
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
     candies: r.candies,
     counted: res.counted === true,
     held: r.capped,
+    window: res.window,
     best: res.best_dist ?? 0,
     candyTotal: res.candy_total ?? 0,
   });
