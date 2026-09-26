@@ -261,6 +261,7 @@
   .snd .spk,.snd .nh{fill:currentColor}
   .snd .off,.snd[aria-pressed="false"] .on{display:none}
   .snd[aria-pressed="false"] .off{display:inline}
+  .snd .pz{stroke-width:3.2}
   .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .pill{border:1px solid var(--rule);background:var(--panel);color:var(--ink-2);
     border-radius:999px;padding:6px 14px;font-size:.82rem;cursor:pointer;font-family:var(--body)}
@@ -332,6 +333,8 @@
     <div class="bar">
       <button class="snd" id="snd" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3.5 9.5h3.8L12 5.5v13l-4.7-4H3.5z"/><path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg><span class="vh" id="sndl">الصوت: يعمل</span></button>
       <button class="snd" id="mus" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5V6.2l10-2.2v11.6"/><circle class="nh" cx="6.6" cy="17.6" r="2.4"/><circle class="nh" cx="16.6" cy="15.6" r="2.4"/><path class="off" d="M3.5 3.5l17 17"/></svg><span class="vh" id="musl">الموسيقى: تعمل</span></button>
+      <!-- الإيقافُ بيد اللاعب (طلبُ محمد ٢٠٢٦-٠٩-٢٦): كان التوقّفُ آليًّا وحدَه (الخروجُ من المتصفّح، والاتّصال، وتدويرُ الجوّال) -->
+      <button class="snd" id="pz" type="button" hidden aria-label="إيقافٌ مؤقّت" title="إيقافٌ مؤقّت"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pz" d="M8.5 6v12M15.5 6v12"/></svg></button>
     </div>
   </div>
   <div class="meta dev">
@@ -10744,11 +10747,16 @@ function audioWake(){
 var cdT=null, cdN=0, elCd=document.getElementById("cd"), elCdn=document.getElementById("cdn");
 function cdShow(n){ elCdn.textContent=n; elCdn.style.animation="none"; void elCdn.offsetWidth; elCdn.style.animation=""; SND.count(n); }
 function cdCancel(){ if(cdT){ clearInterval(cdT); cdT=null; } elCd.hidden=true; }
+/* زرُّ الإيقاف: يظهر ما دامت الجولةُ جاريةً وحدَها، ويُخفى في التوقّف والعدِّ والنهاية وشاشةِ البدء */
+var elPz=document.getElementById("pz"), pzOn=false;
+function pzPaint(){ var w=!!(sim&&playing&&sim.s.alive&&!paused&&!INTRO.on); if(w!==pzOn){ pzOn=w; elPz.hidden=!w; } }
+elPz.addEventListener("click",function(){ pauseGame(); });
 function pauseGame(){
   if(cdT){ cdCancel(); vPause.hidden=false; }
   else if(!paused && sim && playing && sim.s.alive){
     paused=true; ptClear(); vPause.hidden=false;
   }
+  pzPaint();
   audioSleep();
 }
 function resumeGame(){
@@ -11843,6 +11851,7 @@ function loop(ts){
 
   dnTick(dt, !!(sim && playing));
   if(sim && playing) hudPw(dt);
+  pzPaint();
   /* الصوتُ في كلِّ إطار: الريحُ بالسرعة، والتحليقُ وخفقُ جناحيه، والتمهّلُ، والمغناطيس، والليل، والإنذار */
   if(sim){ var sw=sim.s, wn=false, pwv=[sw.pwS,sw.pwF,sw.pwM,sw.pwW];
     for(var wi=0;wi<4;wi++) if(pwv[wi]>0 && pwv[wi]<120) wn=true;
@@ -11886,7 +11895,9 @@ addEventListener("keydown",function(e){
     else if((e.key==="Enter"||e.key===" ")&&!vStart.hidden){ elGo.click(); e.preventDefault(); }
     return;
   }
-  if(paused){ if(e.key===" "||e.key==="Enter"){ resumeGame(); e.preventDefault(); } return; }
+  /* في الحاسوب: P أو Esc يوقفان، وP أو المسافةُ أو «إدخال» تتابع */
+  if(paused){ if(e.key===" "||e.key==="Enter"||e.code==="KeyP"){ resumeGame(); e.preventDefault(); } return; }
+  if((e.code==="KeyP"||e.key==="Escape")&&sim&&playing){ pauseGame(); e.preventDefault(); return; }
   var m={ArrowLeft:1,ArrowRight:2,ArrowUp:3," ":3,ArrowDown:4};
   if(m[e.key]){ act(m[e.key]); e.preventDefault(); }
 });
