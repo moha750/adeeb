@@ -59,7 +59,14 @@ const WIN = {
   after: { ...TXT, startsAt: T0 - 56 * H, endsAt: T0 - 5 * H },
 };
 
-type State = "full" | "account" | "guest" | "empty";
+/** الفائزون بعد الإقفال (٢٠٢٦-٠٩-٢٧): الثلاثةُ الأوائل في الأكواب بأرقامهم، كما تعيدهم `darb_winners`. */
+const WINNERS = [
+  { rank: 1, name: "برق", cups: 212, dist: 5930, runs: 64, minutes: 214 },
+  { rank: 2, name: "ريم", cups: 187, dist: 4870, runs: 51, minutes: 190 },
+  { rank: 3, name: "صقر الأحساء", cups: 164, dist: 6840, runs: 47, minutes: 171 },
+];
+
+type State = "full" | "account" | "guest" | "empty" | "winners" | "winner";
 const STATES: Record<State, BoardData> = {
   full: {
     dist: DIST,
@@ -90,6 +97,32 @@ const STATES: Record<State, BoardData> = {
     contest: { phase: "before", ...WIN.before },
   },
   empty: { dist: [], candy: [], me: null, contest: { phase: "after", ...WIN.after } },
+  winners: {
+    dist: DIST,
+    candy: CANDY,
+    contest: { phase: "after", ...WIN.after },
+    winners: WINNERS,
+    me: {
+      name: "ابن الهفوف",
+      dist: { rank: 23, value: 2410, above: 2720 },
+      candy: { rank: 31, value: 38, above: 41 },
+    },
+  },
+  /* الفائزُ نفسُه داخلٌ: القصاصاتُ والتبريك. والمعرضُ يرسم اللوحةَ مرّتين (ليلًا ونهارًا)، فاختر «الليل»
+     وحدَه لترى احتفاءً واحدًا كما في الإنتاج */
+  winner: {
+    dist: DIST,
+    candy: CANDY,
+    contest: { phase: "after", ...WIN.after },
+    winners: WINNERS,
+    loggedIn: true,
+    me: {
+      name: "برق",
+      account: true,
+      dist: { rank: 3, value: 5930, above: 6215 },
+      candy: { rank: 1, value: 212, above: null },
+    },
+  },
 };
 
 export default function DarbBoardPage() {
@@ -129,6 +162,8 @@ export default function DarbBoardPage() {
             { value: "account", label: "بحساب" },
             { value: "guest", label: "قبل الافتتاح" },
             { value: "empty", label: "بعد الإقفال" },
+            { value: "winners", label: "الفائزون" },
+            { value: "winner", label: "فائزٌ داخل" },
           ]}
         />
       </div>

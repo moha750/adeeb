@@ -1,5 +1,5 @@
 import { service, who } from "@/lib/darb/player";
-import { Board, type BoardContest, type BoardData, type BoardRow, type Standing } from "./_components/Board";
+import { Board, type BoardContest, type BoardData, type BoardRow, type Standing, type Winner } from "./_components/Board";
 import { tabOf } from "./_components/tabs";
 
 /**
@@ -41,6 +41,19 @@ function phaseOf(w: unknown): BoardContest {
   };
 }
 
+/** الفائزون كما أعادتهم `darb_winners`: الاسمُ المستعار وأرقامُه، ولا شيءَ يدلّ على صاحبه. */
+function winnersOf(raw: unknown): Winner[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((x: { rank?: number; nickname?: string; cups?: number; best_dist?: number; runs?: number; minutes?: number }) => ({
+    rank: Number(x.rank ?? 0),
+    name: String(x.nickname ?? ""),
+    cups: Number(x.cups ?? 0),
+    dist: Number(x.best_dist ?? 0),
+    runs: Number(x.runs ?? 0),
+    minutes: Number(x.minutes ?? 0),
+  })).filter((x) => x.rank > 0 && x.name);
+}
+
 const standing = (s: unknown): Standing => {
   const o = (s ?? {}) as { value?: number; rank?: number | null; above?: number | null };
   return { value: o.value ?? 0, rank: o.rank ?? null, above: o.above ?? null };
@@ -72,6 +85,11 @@ export default async function DarbPage({ searchParams }: { searchParams: Promise
       failed: Boolean(d.error || c.error),
       loggedIn: user !== null,
     };
+    /* **الفائزون بعد الإقفال وحدَه** (طلبُ المالك ٢٠٢٦-٠٩-٢٧): قبله لا فائز، فلا نداءَ ولا حقل. */
+    if (data.contest?.phase === "after") {
+      const win = await sb.rpc("darb_winners", { p_limit: 3 });
+      data.winners = winnersOf(win.data);
+    }
   }
 
   return <Board data={data} tab={tab} />;

@@ -1,9 +1,9 @@
 "use client";
 
-import { Gift, Key, Scales, ShieldCheck, SealCheck } from "@phosphor-icons/react";
+import { Gift, Key, Scales, ShieldCheck, SealCheck, Trophy } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
-import { OosMark, PRIZE, useNow } from "./bits";
-import type { BoardContest } from "./Board";
+import { Cup, OosMark, PRIZE, n, useNow } from "./bits";
+import type { BoardContest, Winner } from "./Board";
 import type { TabKey } from "./tabs";
 
 /**
@@ -36,7 +36,68 @@ function split(ms: number) {
 }
 const two = (x: number) => String(x).padStart(2, "0");
 
-function Clock({ contest }: { contest: BoardContest }) {
+/** دقائقُ اللعب ساعاتٍ ودقائق: «٨ س ٣٧ د»، والساعةُ لا تُذكر إن كانت صفرًا. */
+function played(min: number) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${n(h)} س ${n(m)} د` : `${n(m)} د`;
+}
+
+/**
+ * **الفائزون بإحصائيّاتهم** (طلبُ المالك ٢٠٢٦-٠٩-٢٧ بعد الإقفال). بأسمائهم المستعارة وحدَها كما وعدت
+ * جملةُ الاستلام، ولكلٍّ جائزتُه وأرقامُه في المسابقة: الأكواب، وأبعدُ مسافة، والجولات، ووقتُ اللعب (من
+ * التكّات، فالتوقّفُ لا يُحسب). ومن كان منهم صاحبَ المتصفّح يُعلَّم «أنت».
+ */
+function Winners({ winners, me }: { winners: Winner[]; me: string | null }) {
+  return (
+    <div className="drba-card" data-tone="gold">
+      <h2>
+        <Trophy />
+        الفائزون
+      </h2>
+      <ol className="drba-wins">
+        {winners.map((w) => (
+          <li key={w.rank} className="drba-win">
+            <div className="drba-prz" data-rank={w.rank}>
+              <span className="drba-prz-rk">{w.rank}</span>
+              <b>
+                {w.name}
+                {w.name === me ? <span className="drba-win-me">أنت</span> : null}
+              </b>
+              <span className="drba-prz-amt">{PRIZE[w.rank]}</span>
+            </div>
+            <div className="drba-stats">
+              <div className="drba-stat">
+                <span>الأكواب</span>
+                <b>
+                  <Cup />
+                  <span className="drb-num">{n(w.cups)}</span>
+                </b>
+              </div>
+              <div className="drba-stat">
+                <span>أبعدُ مسافة</span>
+                <b>
+                  <span className="drb-num">{n(w.dist)}</span>
+                  <span className="drb-unit">م</span>
+                </b>
+              </div>
+              <div className="drba-stat">
+                <span>الجولات</span>
+                <b className="drb-num">{n(w.runs)}</b>
+              </div>
+              <div className="drba-stat">
+                <span>وقتُ اللعب</span>
+                <b className="drb-num">{played(w.minutes)}</b>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p>مبروك للفائزين، ونتواصل مع كلٍّ منهم عبر حسابه لتسليم جائزته. وشكرًا لكلّ من لعب.</p>
+    </div>
+  );
+}
+
+function Clock({ contest, won }: { contest: BoardContest; won: boolean }) {
   const now = useNow();
   if (!contest) {
     return (
@@ -76,7 +137,7 @@ function Clock({ contest }: { contest: BoardContest }) {
           ))}
         </div>
       ) : (
-        <p>يُعلَن الفائزون بعد مراجعة النتائج.</p>
+        <p>{won ? "أُعلن الفائزون، وهم أدناه." : "يُعلَن الفائزون بعد مراجعة النتائج."}</p>
       )}
       <p className="drba-clock-when">
         من {contest.starts} إلى {contest.ends}، بتوقيت السعوديّة
@@ -85,7 +146,18 @@ function Clock({ contest }: { contest: BoardContest }) {
   );
 }
 
-export function Contest({ contest, go }: { contest: BoardContest; go: (t: TabKey) => void }) {
+export function Contest({
+  contest,
+  winners,
+  me,
+  go,
+}: {
+  contest: BoardContest;
+  winners?: Winner[];
+  me: string | null;
+  go: (t: TabKey) => void;
+}) {
+  const won = Boolean(winners && winners.length > 0);
   return (
     <>
       <section className="drba-hero">
@@ -97,7 +169,8 @@ export function Contest({ contest, go }: { contest: BoardContest; go: (t: TabKey
       </section>
 
       <div className="drba-body">
-        <Clock contest={contest} />
+        <Clock contest={contest} won={won} />
+        {won && winners ? <Winners winners={winners} me={me} /> : null}
 
         <div className="drba-card">
           <h2>

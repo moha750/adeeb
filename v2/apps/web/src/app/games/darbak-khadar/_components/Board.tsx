@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Crown, Gift, HandSwipeRight, Lifebuoy, Play, PersonSimpleRun, SignIn, Trophy, UserCircle } from "@phosphor-icons/react";
 import { CaretDown, Warning } from "@/app/_components/glyphs";
 import { Cup, LOGIN, PLAY, PRIZE, cups, n } from "./bits";
+import { Celebrate } from "./Celebrate";
 import { Contest } from "./Contest";
 import { Help } from "./Help";
 import { HowTo } from "./HowTo";
@@ -50,7 +51,10 @@ export type BoardContest = {
   startsAt?: number;
   endsAt?: number;
 } | null;
-/** `loggedIn`: داخلٌ بحساب أدِيب في الموقع (لـ«حسابي»: من دخل ولم يلعب يُقال له إنّ اسمَه يُحفَظ في حسابه). */
+/** فائزٌ بعد الإقفال (`darb_winners`): ترتيبُه واسمُه المستعار وأرقامُه في المسابقة، ودقائقُ لعبه من التكّات. */
+export type Winner = { rank: number; name: string; cups: number; dist: number; runs: number; minutes: number };
+/** `loggedIn`: داخلٌ بحساب أدِيب في الموقع (لـ«حسابي»: من دخل ولم يلعب يُقال له إنّ اسمَه يُحفَظ في حسابه).
+ *  `winners`: الثلاثةُ الأوائل بعد إقفال المسابقة وحدَه. */
 export type BoardData = {
   dist: BoardRow[];
   candy: BoardRow[];
@@ -58,6 +62,7 @@ export type BoardData = {
   contest?: BoardContest;
   failed?: boolean;
   loggedIn?: boolean;
+  winners?: Winner[];
 };
 
 /** القائمةُ تُعرض عشرةً أوّلًا (الثلاثةُ على المنصّة وسبعةٌ تحتها)، ثمّ تتّسع إلى ما جاء. */
@@ -245,8 +250,13 @@ export function Board({ data, tab: first = "board", syncUrl = true }: { data: Bo
     [syncUrl],
   );
 
+  /* **الفائزُ يُحتفى به حين يدخل** (طلبُ المالك ٢٠٢٦-٠٩-٢٧): بعد الإقفال، إن كان اسمُ صاحب المتصفّح
+     أو الحساب بين الثلاثة، فقصاصاتٌ وتبريكٌ في كلّ دخولٍ إلى الصفحة، يُغلَق بلمسة. */
+  const win = data.contest?.phase === "after" && me ? data.winners?.find((w) => w.name === me.name) : undefined;
+  const [cel, setCel] = useState(Boolean(win));
+
   let panel: ReactNode;
-  if (tab === "contest") panel = <Contest contest={data.contest ?? null} go={go} />;
+  if (tab === "contest") panel = <Contest contest={data.contest ?? null} winners={data.winners} me={me?.name ?? null} go={go} />;
   else if (tab === "how") panel = <HowTo />;
   else if (tab === "me") panel = <Mine data={data} go={go} />;
   else if (tab === "help") panel = <Help go={go} />;
@@ -254,6 +264,16 @@ export function Board({ data, tab: first = "board", syncUrl = true }: { data: Bo
 
   return (
     <div className="drba-page">
+      {cel && win ? (
+        <Celebrate
+          win={win}
+          onClose={() => setCel(false)}
+          onWinners={() => {
+            setCel(false);
+            go("contest");
+          }}
+        />
+      ) : null}
       <header className="drba-head">
         <span className="drb-mark">
           دربك <b>خضر</b>
