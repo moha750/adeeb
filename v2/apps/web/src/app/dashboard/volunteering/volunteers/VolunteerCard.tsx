@@ -25,10 +25,8 @@ function menu(v: VolunteerRow, onEnd: () => void): MenuGroup[] {
  * الوهجُ ومربّعُ الأفتار والرقاقاتُ والحبرُ والتذييل، كلُّها تقرأ `--card-t/--card-grad`
  * بالارتداد — فكرتُ السابق رصاصيٌّ بلا زرقةٍ واحدة، والسارِي على هويّته بلا تغيير.
  */
-export function VolunteerCard({ v, onOpen, onGrant, onEnd, avatar = "grad" }: {
+export function VolunteerCard({ v, onOpen, onGrant, onEnd }: {
   v: VolunteerRow; onOpen: () => void; onGrant: () => void; onEnd: () => void;
-  /** سطحُ الأفتار : تدرّجُ النغمة، أو أبيضُ بوجهٍ محبَّر — يُقارَنان في `/ui/volunteer-card`. */
-  avatar?: "grad" | "light";
 }) {
   const groups = menu(v, onEnd);
   const next = v.prefs.slice(1);
@@ -38,7 +36,7 @@ export function VolunteerCard({ v, onOpen, onGrant, onEnd, avatar = "grad" }: {
       <div className="awide-rail">
         {/* صفتُه فوق وجهه (بأمره) : «متطوّع أدِيب»، وللسابق صفتُه الصادقة */}
         <span className="awide-kind">{former ? "متطوّعٌ سابق" : "متطوّع نشط"}</span>
-        <Avatar name={v.name} src={v.avatarUrl ?? undefined} gender={v.gender} size="xl" className={"awide-av" + (avatar === "light" ? " awide-av-light" : "")} />
+        <Avatar name={v.name} src={v.avatarUrl ?? undefined} gender={v.gender} size="xl" className="awide-av" />
         {/* رغبتُه الأولى لافتةً تحت الصورة، وفوقها تسميتُها : الجنبُ يقول الهويّةَ كاملةً */}
         {v.prefs[0] ? (
           <span className="awide-wishwrap">
@@ -83,6 +81,9 @@ export function VolunteerCard({ v, onOpen, onGrant, onEnd, avatar = "grad" }: {
           <div className="acard-info-row">
             <span className="acard-ic">{former ? <CalendarBlank aria-hidden /> : <SignIn aria-hidden />}</span>
             <span className="acard-info-txt">
+              {/* الطابعُ بساعته يُبتر على الجوّال بـ«…» — **ويبقى بأمر المالك ٢٠٢٦-٠٩-٢٦**:
+                  البترُ دلالةُ تكملةٍ وبابُها «السجلُّ الكامل»، لا نقصٌ يُخفى. فلا يُختصر
+                  إلى تاريخٍ بلا ساعةٍ بحجّة الضيق. */}
               <span className="acard-info-label">{former ? "سببُ انتهاء التطوّع" : "آخرُ دخول"}</span>
               {former
                 ? (v.endReason

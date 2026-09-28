@@ -7,6 +7,7 @@ import {
   BookOpen, Books, Megaphone, Hash, LinkSimple, TextAlignLeft, CalendarBlank } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
@@ -41,14 +42,19 @@ export function LibraryView({ books }: { books: BookRow[] }) {
     { key: "status", label: "الحالة", options: [{ value: "published", label: "منشور" }, { value: "draft", label: "مسودّة" }] },
   ], []);
 
+  /**
+   * **النطاقُ** (ق١٧): النوعُ وحدَه. ومرشِّحُ **الحالة** يُستثنى: بطاقةُ «منشور» تفصيلُ
+   * الحالة نفسِها. والبحثُ لا يدخل النطاق.
+   */
+  const scope = useMemo(() => books.filter((b) => !fv.kind || b.kind === fv.kind), [books, fv.kind]);
+
   const rows = useMemo(() => {
-    return books.filter((b) => {
+    return scope.filter((b) => {
       if (!matchesSearch(search, b.title, b.slug, b.summary)) return false;
-      if (fv.kind && b.kind !== fv.kind) return false;
       if (fv.status && b.status !== fv.status) return false;
       return true;
     });
-  }, [books, search, fv]);
+  }, [scope, search, fv]);
 
   // فرز عبر TanStack — نموذج أعمدة مُنمّط
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -169,8 +175,8 @@ export function LibraryView({ books }: { books: BookRow[] }) {
 
   const clearFilters = () => { setSearch(""); setFv({}); };
   const filtering = !!search.trim() || !!fv.kind || !!fv.status;
-  const published = books.filter((b) => b.status === "published").length;
-  const totalPagesCount = books.reduce((s, b) => s + b.pageCount, 0);
+  const published = scope.filter((b) => b.status === "published").length;
+  const totalPagesCount = scope.reduce((s, b) => s + b.pageCount, 0);
 
   const createBtn = <Button variant="primary" size="md" onClick={openCreate}><Plus size={18} />منشور جديد</Button>;
   const emptyState = books.length === 0 ? (
@@ -190,8 +196,10 @@ export function LibraryView({ books }: { books: BookRow[] }) {
     <>
       <PageHeader title="مكتبة «إرثٌ يُروى»" action={{ label: "منشور جديد", icon: <Plus size={18} />, onClick: openCreate }} />
 
+      <StatsScope labels={scopeLabels(filters.filter((d) => d.key === "kind"), fv)} onClear={() => setFv((f) => ({ ...f, kind: "" }))} />
+
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Books />} value={books.length} label="إجمالي المنشورات" />
+        <Stat icon={<Books />} value={scope.length} label="إجمالي المنشورات" />
         <Stat icon={<Megaphone />} value={published} label="منشورة" tone="success" />
         <Stat icon={<BookOpen />} value={totalPagesCount} label="إجمالي الصفحات" />
       </div>

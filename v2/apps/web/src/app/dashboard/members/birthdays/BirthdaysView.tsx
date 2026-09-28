@@ -89,17 +89,19 @@ export function BirthdaysView({
     return { y: y || 2000, m0: (m || 1) - 1, d: d || 1 };
   }, [todayIso]);
 
-  const rows = useMemo(() => {
-    return members
-      .filter((r) => matchesSearch(search, r.name))
-      .map((r) => derive(r, today));
-  }, [members, search, today]);
+  /** **النطاقُ** (ق١٧): الكشفُ كلُّه — لا مرشِّحَ في هذه الشاشة، والبحثُ لا يدخله.
+   *  (والاسمُ `everyone` لا `scope`: `scope` ههنا معناها مدى الشاشة نفسِه — `BirthdayScope`.) */
+  const everyone = useMemo(() => members.map((r) => derive(r, today)), [members, today]);
 
+  /** **المعروضُ** = النطاقُ بعد البحث، والكشفُ وحدَه يقرؤه. */
+  const rows = useMemo(() => everyone.filter((r) => matchesSearch(search, r.name)), [everyone, search]);
+
+  // ق١٧ : كان العدُّ من المعروض، فيقرأ الباحثُ عن اسمٍ «ميلاد اليوم: ٠» وفي الكشف من يُعيَّد له
   const stats = useMemo(() => ({
-    todayCount: rows.filter((r) => r.isToday).length,
-    weekCount: rows.filter((r) => r.daysUntil <= 7).length,
-    monthCount: rows.filter((r) => r.month === today.m0).length,
-  }), [rows, today]);
+    todayCount: everyone.filter((r) => r.isToday).length,
+    weekCount: everyone.filter((r) => r.daysUntil <= 7).length,
+    monthCount: everyone.filter((r) => r.month === today.m0).length,
+  }), [everyone, today]);
 
   // «الأقرب»: مرتّب بأقرب ميلاد قادم (فاليوم فالشهر عند التساوي)
   const soonRows = useMemo(() =>

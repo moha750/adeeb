@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Container, Segmented } from "@adeeb/design-system";
+import { Container } from "@adeeb/design-system";
 import { VolunteerCard } from "../../dashboard/volunteering/volunteers/VolunteerCard";
 import type { VolunteerRow } from "../../dashboard/volunteering/data";
 
@@ -42,11 +41,10 @@ const SAMPLE: VolunteerRow[] = [
 
 /**
  * معرضُ كرت المتطوّع — **معرضُ المُقَرّ لا مضمارُ مفاضلة**: أُقِرّت «الهويّةُ المضطجعة»
- * ٢٠٢٦-٠٩-٢٤ من ستّة توجّهاتٍ عُرضت حيّةً، وأُعدمت الخمسةُ بأصنافها كما أُعدمت أخواتُ
- * كرت الانتخاب وكرت غرفة اللعب. والباقي مبدّلٌ واحدٌ ينتظر كلمتَه: سطحُ الأفتار.
+ * ٢٠٢٦-٠٩-٢٤ من ستّة توجّهاتٍ عُرضت حيّةً، ثمّ أُقِرّ نقشُ الجنب مستديرًا وسطحُ الأفتار
+ * بتدرّج النغمة ٢٠٢٦-٠٩-٢٦؛ وأُعدم المرفوضُ كلُّه بأصنافه كما جرت السنّة.
  */
 export default function VolunteerCardPage() {
-  const [avatar, setAvatar] = useState<"grad" | "light">("grad");
 
   return (
     <main className="py-16">
@@ -60,18 +58,9 @@ export default function VolunteerCardPage() {
           والحبرُ والتذييل، فالمتطوّعُ السابقُ رصاصيٌّ بلا زرقةٍ واحدة.
         </p>
 
-        <div className="mt-8">
-          <p className="mb-3 font-latin text-xs font-bold uppercase tracking-[0.18em] text-content-muted">سطحُ الأفتار</p>
-          <Segmented
-            items={[{ value: "grad", label: "تدرّجُ النغمة" }, { value: "light", label: "أبيض" }]}
-            value={avatar}
-            onValueChange={(a) => setAvatar(a as "grad" | "light")}
-          />
-        </div>
-
         <div className="card-grid card-grid-2col mt-8">
           {SAMPLE.map((v) => (
-            <VolunteerCard key={v.userId} v={v} avatar={avatar} onOpen={noop} onGrant={noop} onEnd={noop} />
+            <VolunteerCard key={v.userId} v={v} onOpen={noop} onGrant={noop} onEnd={noop} />
           ))}
         </div>
       </Container>

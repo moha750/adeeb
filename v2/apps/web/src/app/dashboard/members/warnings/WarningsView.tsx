@@ -7,6 +7,7 @@ import { NotePencil, ShieldWarning, UserMinus, WarningOctagon } from "@phosphor-
 import { DownloadSimple } from "@/app/_components/glyphs";
 import { Eye, MagnifyingGlass, Prohibit, Warning, WhatsappLogo } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
+import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
@@ -52,19 +53,27 @@ export function WarningsView({ data }: { data: WarningsData }) {
   /** الإنذارُ الذي تُرسَل رسالتُه الآن — زرُّه وحده يدور، لا الجدولُ كلُّه. */
   const [sendingId, setSendingId] = useState<string | null>(null);
 
+  /**
+   * **النطاقُ** (ق١٧): التصنيفُ واللجنةُ والتسليم. ومرشِّحُ **الحالة** يُستثنى: البطاقاتُ
+   * تفصيلُ السريان (سارية · بلغوا الحدّ)، والبُعدُ لا يُطبَّق على بطاقةٍ موضوعُها هو.
+   */
+  const scope = useMemo(() => rows.filter((r) => {
+    if (filters.category && r.category !== filters.category) return false;
+    if (filters.committee && (r.committee ?? "") !== filters.committee) return false;
+    if (filters.delivery && (r.delivery?.status ?? "none") !== filters.delivery) return false;
+    return true;
+  }), [rows, filters]);
+
   const filtered = useMemo(() => {
-    return rows.filter((r) => {
+    return scope.filter((r) => {
       if (!matchesSearch(search, `${r.name} ${r.reason}`)) return false;
-      if (filters.category && r.category !== filters.category) return false;
       if (filters.status && r.status !== filters.status) return false;
-      if (filters.committee && (r.committee ?? "") !== filters.committee) return false;
-      if (filters.delivery && (r.delivery?.status ?? "none") !== filters.delivery) return false;
       return true;
     });
-  }, [rows, search, filters]);
+  }, [scope, search, filters]);
 
   const stats = useMemo(() => {
-    const active = rows.filter((r) => r.status === "active");
+    const active = scope.filter((r) => r.status === "active");
     const byMember = new Map<string, number>();
     for (const r of active) byMember.set(r.userId, (byMember.get(r.userId) ?? 0) + 1);
     return {
@@ -72,7 +81,7 @@ export function WarningsView({ data }: { data: WarningsData }) {
       active: active.length,
       atLimit: [...byMember.values()].filter((n) => n >= limit).length,
     };
-  }, [rows, limit]);
+  }, [scope, limit]);
 
   // «حسب العضو» — مجموعاتٌ مرتّبةٌ بالأقرب إلى الحدّ ثمّ بالأحدث
   const groups = useMemo(() => {
@@ -305,6 +314,11 @@ export function WarningsView({ data }: { data: WarningsData }) {
   return (
     <>
       <PageHeader title="الإنذارات" status={mayIssue ? undefined : { label: "اطّلاعٌ لا إصدار", tone: "info", variant: "soft", icon: <Eye /> }} />
+
+      <StatsScope
+        labels={scopeLabels(filterDefs.filter((d) => d.key !== "status"), filters)}
+        onClear={() => setFilters((f) => ({ ...f, category: "", committee: "", delivery: "" }))}
+      />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<Warning />} value={stats.active} label="إنذارات سارية" tone={stats.active > 0 ? "warning" : "brand"} />

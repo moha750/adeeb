@@ -9,6 +9,7 @@ import { EmptyState } from "../../_components/EmptyState";
 import { Certificate, HandHeart, MapPin, SignIn, Users, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple } from "@/app/_components/glyphs";
 import { PageHeader } from "../../_components/PageHeader";
+import { StatsScope } from "../../_components/StatsScope";
 import { Toolbar } from "../../_components/Toolbar";
 import { useToast } from "../../_components/ToastProvider";
 import { endVolunteering, grantMembership } from "../actions";
@@ -86,7 +87,11 @@ export function VolunteersView({ rows, committees }: {
    * والأفضليّةُ لا تضيع بذلك: الناتجُ **يُرتَّب برتبة اللجنة عندك** (أصحابُ الأولى أوّلًا)،
    * والكرتُ يعرض شاراتِ الرغبات مرقَّمةً كما هي. فالرتبةُ تُقرأ ولا تَحجُب.
    */
-  const shown = useMemo(() => {
+  /**
+   * **النطاقُ** (ق١٧): التبويبُ والرغبةُ وحدَهما — ومنه تُحسب الأرقامُ والمخطّطات.
+   * والبحثُ لا يدخله: من يبحث عن اسمٍ يفتّش لا يُحصي، فلا يُهبِط عدَّ الكشف إلى واحد.
+   */
+  const scope = useMemo(() => {
     const wanted = pref ? Number(pref) : null;
     const rank = (r: VolunteerRow) => {
       const i = r.prefs.findIndex((p) => p.id === wanted);
@@ -95,35 +100,41 @@ export function VolunteersView({ rows, committees }: {
     const list = rows.filter((r) => {
       if (r.status !== tab) return false;
       if (wanted != null && rank(r) === Number.MAX_SAFE_INTEGER) return false;
-      const q = search.trim();
-      // البحثُ يبلغ البريدَ والمدينة أيضًا، فالكشفُ صار يحملهما
-      if (q && !r.name.includes(q) && !r.phone.includes(q)
-        && !r.email.toLowerCase().includes(q.toLowerCase()) && !(r.city ?? "").includes(q)) return false;
       return true;
     });
     return wanted == null ? list : [...list].sort((a, b) => rank(a) - rank(b));
-  }, [rows, tab, pref, search]);
+  }, [rows, tab, pref]);
 
+  /** **المعروضُ** = النطاقُ بعد البحث. الكشفُ وحدَه يقرؤه. */
+  const shown = useMemo(() => {
+    const q = search.trim();
+    if (!q) return scope;
+    // البحثُ يبلغ البريدَ والمدينة أيضًا، فالكشفُ صار يحملهما
+    return scope.filter((r) => r.name.includes(q) || r.phone.includes(q)
+      || r.email.toLowerCase().includes(q.toLowerCase()) || (r.city ?? "").includes(q));
+  }, [scope, search]);
+
+  // ق١٧ : الأرقامُ من النطاق (تبويب + رغبة) لا من المعروض (الذي يضيق بالبحث)
   const stats = useMemo(() => {
-    const sum = (f: (r: VolunteerRow) => number) => shown.reduce((n, r) => n + f(r), 0);
-    const female = shown.filter((r) => r.gender === "female").length;
-    const male = shown.filter((r) => r.gender === "male").length;
+    const sum = (f: (r: VolunteerRow) => number) => scope.reduce((n, r) => n + f(r), 0);
+    const female = scope.filter((r) => r.gender === "female").length;
+    const male = scope.filter((r) => r.gender === "male").length;
     return {
-      count: shown.length,
+      count: scope.length,
       female,
       male,
       certificates: sum((r) => r.certificates),
-      seen: shown.filter((r) => r.seenLast30).length,
+      seen: scope.filter((r) => r.seenLast30).length,
       genders: [
         { label: "فتيات", value: female },
         { label: "شباب", value: male },
-        { label: "غير محدَّد", value: shown.length - female - male },
+        { label: "غير محدَّد", value: scope.length - female - male },
       ].filter((g) => g.value > 0),
-      prefs: tally(shown.map((r) => r.prefs[0]?.name ?? "").filter(Boolean)),
-      cities: tally(shown.map((r) => r.city ?? "").filter(Boolean)),
-      noCity: shown.filter((r) => !r.city).length,
+      prefs: tally(scope.map((r) => r.prefs[0]?.name ?? "").filter(Boolean)),
+      cities: tally(scope.map((r) => r.city ?? "").filter(Boolean)),
+      noCity: scope.filter((r) => !r.city).length,
     };
-  }, [shown]);
+  }, [scope]);
 
   // مفتاحُ `committee` لا اسمٌ جديد : رمزُ البُعد يُشتقّ من المفتاح في `filterIcons` (مصدرٌ واحد)
   const prefFilter = useMemo(
@@ -182,6 +193,8 @@ export function VolunteersView({ rows, committees }: {
       </div>
 
       {/* ثلاثٌ في صفٍّ واحد (قاعدةُ `.stat-grid`)، بلا ملحوظةٍ تحت الرقم : حلقةُ الجنس أسفلُ تقولها */}
+      <StatsScope labels={[committees.find((c) => String(c.id) === pref)?.name]} onClear={() => setPref("")} />
+
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat
           icon={<HandHeart />}

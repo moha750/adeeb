@@ -7,6 +7,7 @@ import {
   Certificate, ChatCenteredText, FilePdf, NotePencil, SealCheck, Users } from "@phosphor-icons/react";
 import { DownloadSimple, Eye, MagnifyingGlass, Prohibit } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
+import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { Pagination } from "../../_components/Pagination";
 import { Avatar } from "../../_components/Avatar";
@@ -41,21 +42,30 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const filtered = useMemo(
+  /**
+   * **النطاقُ** (ق١٧): السنةُ وحدَها. ومرشِّحُ **الحالة** يُستثنى عمدًا: البطاقاتُ الثلاثُ
+   * تفصيلُ الحالة (سارية · نالوها · مبطَلة)، والبُعدُ لا يُطبَّق على بطاقةٍ موضوعُها هو.
+   */
+  const scope = useMemo(
     () =>
       rows.filter((r) => {
-        if (!matchesSearch(search, `${r.name} ${r.holderName} ${r.positionTitle} ${r.serial}`)) return false;
-        if (filters.status && r.status !== filters.status) return false;
         if (filters.year && !r.periodTo.startsWith(filters.year)) return false;
         return true;
       }),
-    [rows, search, filters],
+    [rows, filters],
   );
 
+  /** **المعروضُ** = النطاقُ بعد البحث، والكشفُ وحدَه يقرؤه (ق١٧). */
+  const filtered = useMemo(
+    () => scope.filter((r) => matchesSearch(search, `${r.name} ${r.holderName} ${r.positionTitle} ${r.serial}`)),
+    [scope, search],
+  );
+
+  // ق١٧ : الأرقامُ من النطاق لا من الكلّ ولا من المعروض
   const stats = useMemo(() => {
-    const valid = rows.filter((r) => r.status === "valid");
-    return { valid: valid.length, holders: new Set(valid.map((r) => r.userId)).size, revoked: rows.length - valid.length };
-  }, [rows]);
+    const valid = scope.filter((r) => r.status === "valid");
+    return { valid: valid.length, holders: new Set(valid.map((r) => r.userId)).size, revoked: scope.length - valid.length };
+  }, [scope]);
 
   const pageKey = `${search}|${pageSize}|${JSON.stringify(filters)}`;
   const [prevKey, setPrevKey] = useState(pageKey);
@@ -182,6 +192,8 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
   return (
     <>
       <PageHeader title="شهادات الخبرة" status={{ label: `${rows.length} شهادة`, tone: "info", variant: "soft" }} />
+
+      <StatsScope labels={scopeLabels(filterDefs.filter((d) => d.key === "year"), filters)} onClear={() => setFilters((f) => ({ ...f, year: "" }))} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<SealCheck />} value={stats.valid} label="شهادات سارية" />

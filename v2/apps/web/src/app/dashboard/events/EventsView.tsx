@@ -7,6 +7,7 @@ import { CalendarBlank, CalendarCheck, Megaphone, UsersThree } from "@phosphor-i
 import { ArrowCounterClockwise } from "@/app/_components/glyphs";
 import { Eye, EyeSlash, MagnifyingGlass, PencilSimple, Plus, Prohibit, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { Tabs } from "../_components/Tabs";
@@ -99,15 +100,22 @@ export function EventsView({ events }: { events: EventRow[] }) {
     [events],
   );
 
+  /**
+   * **النطاقُ** (ق١٧): النوعُ والجهةُ المنظِّمة. ويُستثنى **تبويبُ الحالة**: بطاقةُ «قادمة»
+   * تفصيلُ الحالة، فلو تبعت التبويبَ قرأت صفرًا في تبويب «مسودّة». والبحثُ لا يدخل النطاق.
+   */
+  const scope = useMemo(
+    () => events.filter((e) => (!fv.type || e.type === fv.type) && (!fv.organizer || e.organizer === fv.organizer)),
+    [events, fv.type, fv.organizer],
+  );
+
   const rows = useMemo(() => {
-    return events.filter((e) => {
+    return scope.filter((e) => {
       if (e.status !== tab) return false;
       if (!matchesSearch(search, e.name, e.description, e.location)) return false;
-      if (fv.type && e.type !== fv.type) return false;
-      if (fv.organizer && e.organizer !== fv.organizer) return false;
       return true;
     });
-  }, [events, search, fv, tab]);
+  }, [scope, search, tab]);
 
   // فرز عبر TanStack Table — نموذج أعمدة مُنمّط
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -182,8 +190,8 @@ export function EventsView({ events }: { events: EventRow[] }) {
       .filter((g) => g.items.length > 0);
 
   const clearFilters = () => { setSearch(""); setFv({}); };
-  const upcoming = events.filter((e) => e.status === "published").length;
-  const totalReserved = events.reduce((sum, e) => sum + e.reserved, 0);
+  const upcoming = scope.filter((e) => e.status === "published").length;
+  const totalReserved = scope.reduce((sum, e) => sum + e.reserved, 0);
   const filtering = !!search.trim() || !!fv.type || !!fv.organizer;
 
   const createBtn = <Button variant="primary" size="md" onClick={() => router.push("/dashboard/events/new")}><Plus size={18} />فعاليّة جديدة</Button>;
@@ -223,8 +231,10 @@ export function EventsView({ events }: { events: EventRow[] }) {
     <>
       <PageHeader title="الفعاليّات" action={{ label: "فعاليّة جديدة", icon: <Plus size={18} />, href: "/dashboard/events/new" }} />
 
+      <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
+
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<CalendarBlank />} value={events.length} label="إجمالي الفعاليّات" />
+        <Stat icon={<CalendarBlank />} value={scope.length} label="إجمالي الفعاليّات" />
         <Stat icon={<CalendarCheck />} value={upcoming} label="قادمة الآن" tone="success" />
         <Stat icon={<UsersThree />} value={totalReserved} label="إجمالي الحجوزات" />
       </div>

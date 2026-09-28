@@ -6,6 +6,7 @@ import { Scales, Megaphone, Trophy, Hourglass, Timer } from "@phosphor-icons/rea
 import { MagnifyingGlass } from "@/app/_components/glyphs";
 import { Plus } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { Tabs } from "../_components/Tabs";
@@ -164,8 +165,13 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
   }));
 
   const clearFilters = () => { setSearch(""); setFv({}); };
-  const liveCount = elections.filter((e) => !e.archived && e.status !== "completed" && e.status !== "cancelled").length;
-  const completedCount = elections.filter((e) => e.status === "completed").length;
+  /**
+   * **النطاقُ** (ق١٧): مرشِّحُ الدور وحدَه. وتُستثنى **تبويباتُ الدورة**: بطاقتا «جارية»
+   * و«مكتملة» تفصيلُ الدورة نفسِها. والبحثُ لا يدخل النطاق.
+   */
+  const scope = useMemo(() => elections.filter((e) => !fv.role || e.targetRoleName === fv.role), [elections, fv.role]);
+  const liveCount = scope.filter((e) => !e.archived && e.status !== "completed" && e.status !== "cancelled").length;
+  const completedCount = scope.filter((e) => e.status === "completed").length;
   const filtering = !!search.trim() || !!fv.role;
 
   const createCta = readOnly ? null : (
@@ -220,8 +226,10 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
     <>
       <PageHeader title="الانتخابات" action={readOnly ? undefined : { label: "انتخاب جديد", icon: <Plus size={18} />, onClick: () => setNewOpen(true) }} />
 
+      <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
+
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Scales />} value={elections.length} label="إجمالي الانتخابات" />
+        <Stat icon={<Scales />} value={scope.length} label="إجمالي الانتخابات" />
         <Stat icon={<Megaphone />} value={liveCount} label="جارية الآن" tone="success" />
         <Stat icon={<Trophy />} value={completedCount} label="مكتملة" />
       </div>

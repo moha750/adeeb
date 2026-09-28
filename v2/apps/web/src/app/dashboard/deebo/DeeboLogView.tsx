@@ -6,6 +6,7 @@ import { Badge, Stat, countPhrase, matchesSearch } from "@adeeb/design-system";
 import { ChatsCircle, Clock, Robot, ShieldWarning, UserCircle } from "@phosphor-icons/react";
 import { DataCards, type CardSpec } from "../_components/DataCards";
 import { type Column, type Group } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { EmptyState } from "../_components/EmptyState";
 import { PageHeader } from "../_components/PageHeader";
@@ -80,20 +81,29 @@ export function DeeboLogView({ rows, todayKey }: { rows: DeeboConversation[]; to
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
 
-  const filtered = useMemo(
+  /**
+   * **النطاقُ** (ق١٧): السائلُ والنموذج. ومرشِّحُ **حارس الأرقام** يُستثنى عمدًا: البطاقةُ
+   * الثانيةُ تفصيلُ الحجب نفسِه، فلو طبّقناه عليها ساوت الأولى وصار الكرتان خبرًا واحدًا.
+   */
+  const scope = useMemo(
     () =>
       rows.filter((c) => {
-        // البحثُ في نصّ المحادثة كلِّها لا في صفّها: ما يُبحَث عنه كلمةٌ قيلت في سؤالٍ أو
-        // جواب، أو **اسمُ من سألها** (فالسؤال «ما الذي سأل عنه فلان» يُطرَح ههنا).
-        if (!matchesSearch(search, `${c.model} ${c.ownerName ?? ""} ${c.messages.map((m) => m.content).join(" ")}`))
-          return false;
-        if (filters.blocked === "yes" && !hasGuardBlock(c)) return false;
         if (filters.who === "member" && !c.ownerName) return false;
         if (filters.who === "guest" && c.ownerName) return false;
         if (filters.model && c.model !== filters.model) return false;
         return true;
       }),
-    [rows, search, filters],
+    [rows, filters],
+  );
+
+  /** **المعروضُ** = النطاقُ بعد البحث، والكشفُ وحدَه يقرؤه.
+   *  والبحثُ في نصّ المحادثة كلِّها لا في صفّها: ما يُبحَث عنه كلمةٌ قيلت في سؤالٍ أو
+   *  جواب، أو **اسمُ من سألها** (فالسؤال «ما الذي سأل عنه فلان» يُطرَح ههنا). */
+  const filtered = useMemo(
+    () =>
+      scope.filter((c) =>
+        matchesSearch(search, `${c.model} ${c.ownerName ?? ""} ${c.messages.map((m) => m.content).join(" ")}`)),
+    [scope, search],
   );
 
   /**
@@ -103,10 +113,11 @@ export function DeeboLogView({ rows, todayKey }: { rows: DeeboConversation[]; to
    * وذهب عدُّ الرسائل (يُقرأ في كلّ كرت) ورمزُ الإخراج (تكلفةُ تشغيلٍ، بيتُها التحليلات
    * لا رأسُ شاشةِ قراءة). ولا شيءَ منهما فُقد من القاعدة، إنّما من هذا الرأس.
    */
+  // ق١٧ : من النطاق لا من الكلّ ولا من المعروض
   const stats = useMemo(() => {
-    const blocked = rows.reduce((n, c) => n + c.messages.filter((m) => m.guardBlocked).length, 0);
-    return { convs: rows.length, blocked };
-  }, [rows]);
+    const blocked = scope.reduce((n, c) => n + c.messages.filter((m) => m.guardBlocked).length, 0);
+    return { convs: scope.length, blocked };
+  }, [scope]);
 
   /** النماذجُ الحاضرةُ في السجلّ نفسِه لا قائمةٌ مكتوبةٌ بجانبه: تبديلُ المزوّد سطرٌ في الكود. */
   const models = useMemo(() => [...new Set(rows.map((c) => c.model))], [rows]);
@@ -233,6 +244,8 @@ export function DeeboLogView({ rows, todayKey }: { rows: DeeboConversation[]; to
   return (
     <>
       <PageHeader title="سجلّ محادثات ديبو" />
+
+      <StatsScope labels={scopeLabels(filterDefs.filter((d) => d.key !== "blocked"), filters)} onClear={() => setFilters((f) => ({ ...f, who: "", model: "" }))} />
 
       <div className="mb-4 grid grid-cols-2 gap-3">
         <Stat icon={<ChatsCircle />} value={stats.convs} label="محادثة" />

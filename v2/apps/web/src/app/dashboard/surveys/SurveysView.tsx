@@ -10,6 +10,7 @@ import {
   Trash,
 } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { useLiveNow } from "../_components/useLiveNow";
@@ -291,18 +292,27 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
       : ROW_TONE[s.status] ?? undefined;
 
   const clearFilters = () => { setSearch(""); setFv({}); };
+  /**
+   * **النطاقُ** (ق١٧): مرشِّحُ الوصول وحدَه (عامّ/خاصّ). وتُستثنى **تبويباتُ الدورة**:
+   * البطاقاتُ تفصيلُ الدورة (نشطٌ الآن · إجماليّ القائم)، والبحثُ لا يدخل النطاق.
+   */
+  const scope = useMemo(
+    () => surveys.filter((s) => !fv.access || s.access === fv.access),
+    [surveys, fv.access],
+  );
+
   const active = useMemo(
-    () => surveys.filter((s) => {
+    () => scope.filter((s) => {
       if (s.status !== "active" || s.deleted || s.archived) return false;
       if (!now) return !s.expired; // قبل التركيب: قيمة الخادم (دقيقة لحظة التحميل)
       const end = s.endDate ? new Date(s.endDate).getTime() : null;
       return !(end != null && end < now); // انقضاء حيّ
     }).length,
-    [surveys, now],
+    [scope, now],
   );
   // الإجماليّات تستثني ما في **سلّة المحذوفات** (ليست استبياناتٍ قائمة)، ويبقى **المؤرشف** محسوبًا
   // (محفوظٌ لا ممحوّ). بهذا تتّسق البطاقات الثلاث بدل أن يناقض «الإجمالي» المنتفخُ «نشطَ الآن».
-  const kept = useMemo(() => surveys.filter((s) => !s.deleted), [surveys]);
+  const kept = useMemo(() => scope.filter((s) => !s.deleted), [scope]);
   const totalResponses = kept.reduce((sum, s) => sum + s.responses, 0);
 
   // تبويباتٌ أخرى طابقها البحث — تُرشد الحالةَ الفارغة إلى «أين وُجد» بدل صمتٍ كاذب
@@ -363,6 +373,8 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
   return (
     <>
       <PageHeader title="الاستبيانات" action={{ label: "استبيان جديد", icon: <Plus size={18} />, href: "/dashboard/surveys/new" }} />
+
+      <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<ClipboardText />} value={kept.length} label="إجمالي الاستبيانات" />

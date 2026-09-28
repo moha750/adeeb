@@ -4067,7 +4067,11 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
    أزرقُ في رأس الجنب الرصاصيّ للمتطوّع السابق (عينُ المالك ٢٠٢٦-٠٩-٢٤). والارتدادُ يُبقي
    الكرتَ السارِي كما كان : البراندُ لا يعلن `--card-t` فيسقط إلى الفولاذيّ نفسِه. */
 .acard-wide .awide-rail::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120px 140px at 30% -10%, color-mix(in oklab, var(--card-t, var(--steel-400)) 62%, transparent), transparent 70%); }
-.acard-wide .awide-rail::after { content: ""; position: absolute; inset: 0; background: url("/brand/pattern-white.svg") no-repeat center / cover; opacity: .18; }
+/* النقشُ **مستديرٌ ربعَ دورة** (أقرّه المالك ٢٠٢٦-٠٩-٢٦ من ثلاث): نقشُ الهوية شريطٌ عريض
+   (1920×287)، و`cover` على عمودٍ ضيّقٍ طويلٍ يكبّره نحوَ عشرين ضعفًا فيُقرأ بقعًا لا نقشًا.
+   وبإدارته تجري الموجةُ في طول العمود كما تجري في عرض الشريط الأفقيّ، ويبقى مقاسُها مقاسَها.
+   والامتدادُ خارجَ الحدود يقصّه `overflow: hidden` في الجنب. */
+.acard-wide .awide-rail::after { content: ""; position: absolute; inset: -50% -200%; background: url("/brand/pattern-white.svg") repeat center / auto 128px; transform: rotate(90deg); opacity: .16; }
 /* الطوقُ نفسُه الذي يحتضن صورةَ البطاقة القائمة (ظلٌّ + أربعُ نقاطٍ من سطح الكرت + شعرةٌ داخليّة) */
 /* والطوقُ أنحفُ من طوق البطاقة القائمة (٤px ← ٢٫٥): هناك يفصل الصورةَ عن شريطٍ وسطحٍ معًا
    فيحتاج غِلَظًا، وهنا يجلس داخل عمودٍ لونُه واحد، فالغليظُ يصير حلقةً تنافس الوجه. */
@@ -4102,15 +4106,6 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 .acard-wide .acard-ic { color: var(--card-t, var(--steel-600)); background: linear-gradient(135deg, color-mix(in oklab, var(--card-t, var(--steel-500)) 20%, var(--color-surface)), color-mix(in oklab, var(--card-t, var(--steel-500)) 8%, var(--color-surface))); }
 .acard-wide .awide-name, .acard-wide .acard-info-val { color: var(--card-tx, var(--color-primary)); }
 .acard-wide .acard-info-row { border-bottom-color: color-mix(in oklab, var(--card-t, var(--steel-500)) 12%, transparent); }
-
-/* ── سطحُ الأفتار أبيضَ (`.awide-av-light`) — بديلٌ يُقارَن بتدرّج النغمة ──
-   المربّعُ يصير سطحَ الكرت نفسَه بحدٍّ رفيع، **والوجهُ يُحبَّر**: رسمُه أبيضُ في أصله
-   (`fill: #fff` داخل الملفّ)، فيُقلَب بـ`brightness(0)` إلى حبرٍ ثمّ يُخفَّف، إذ لا يُصبَغ
-   `<img>` بلونٍ من الرموز. ولو أُقِرّ هذا الاتّجاه قُطع للوجه ملفٌّ ثانٍ بحبر الهوية
-   فيلبس النغمةَ كسائر الأجزاء بدل الرماد. */
-.acard-wide .awide-av-light { background: var(--color-surface); box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--card-stroke); }
-.acard-wide .awide-av-light .av-fig { filter: brightness(0) opacity(.72); }
-.acard-wide .awide-av-light .av-ini { color: var(--card-tx, var(--color-primary)); }
 
 @media (max-width: 420px) { .acard-wide { grid-template-columns: 108px minmax(0, 1fr); } }
 

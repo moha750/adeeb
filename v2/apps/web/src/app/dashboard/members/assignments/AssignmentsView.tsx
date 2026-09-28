@@ -6,6 +6,7 @@ import { Alert, Button, Stat, matchesSearch } from "@adeeb/design-system";
 import { Briefcase, UserCheck, UserMinus } from "@phosphor-icons/react";
 import { ArrowsClockwise } from "@/app/_components/glyphs";
 import { MagnifyingGlass, Trash } from "@/app/_components/glyphs";
+import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
@@ -25,15 +26,23 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
   const [showAnoms, setShowAnoms] = useState(false);
   const [busy, start] = useTransition();
 
+  /**
+   * **النطاقُ** (ق١٧): المجلسُ وحدَه. ومرشِّحُ **الحالة** يُستثنى: بطاقتا «شاغرة» و«مشغولة»
+   * تفصيلُ الشغور نفسِه، والبُعدُ لا يُطبَّق على بطاقةٍ موضوعُها هو. والبحثُ لا يدخل النطاق.
+   */
+  const scope = useMemo(
+    () => positions.filter((p) => !fv.council || p.council === fv.council),
+    [positions, fv.council],
+  );
+
   const rows = useMemo(() => {
-    return positions.filter((p) => {
+    return scope.filter((p) => {
       if (!matchesSearch(search, p.roleAr, p.scope, ...p.holders.map((h) => h.name))) return false;
-      if (fv.council && p.council !== fv.council) return false;
       if (fv.status === "vacant" && p.holders.length > 0) return false;
       if (fv.status === "filled" && p.holders.length === 0) return false;
       return true;
     });
-  }, [positions, search, fv]);
+  }, [scope, search, fv]);
 
   const filters: FilterDef[] = [
     { key: "council", label: "المجلس", options: [{ value: "administrative", label: "المجلس الإداري" }, { value: "executive", label: "المجلس التنفيذي" }] },
@@ -41,10 +50,10 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
   ];
 
   const stats = useMemo(() => ({
-    total: positions.length,
-    vacant: positions.filter((p) => p.holders.length === 0).length,
-    filled: positions.filter((p) => p.holders.length > 0).length,
-  }), [positions]);
+    total: scope.length,
+    vacant: scope.filter((p) => p.holders.length === 0).length,
+    filled: scope.filter((p) => p.holders.length > 0).length,
+  }), [scope]);
 
   // تُهيَّأ الحالة عند الفتح لا في أثرٍ بعده — فلا رسمَ متتالٍ (cascading render).
   const openAssign = (pos: Position, replace: boolean) => {
@@ -92,6 +101,11 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
 
   return (
     <div className="asg">
+      <StatsScope
+        labels={scopeLabels(filters.filter((d) => d.key === "council"), fv)}
+        onClear={() => setFv((f) => ({ ...f, council: "" }))}
+      />
+
       <div className="stat-grid">
         <Stat icon={<Briefcase />} value={stats.total} label="منصبًا قياديًّا" tone="brand" />
         <Stat icon={<UserCheck />} value={stats.filled} label="مشغولة" tone="success" />

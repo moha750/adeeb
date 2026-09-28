@@ -13,6 +13,7 @@ import {
   WarningCircle,
 } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
@@ -401,19 +402,24 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
     { key: "gender", label: "الجنس", options: genderOpts },
   ], [roleOpts, deptOpts, committeeOpts, genderOpts]);
 
+  /**
+   * **نطاقُ الإحصاء** (ق١٧): التبويبُ والمرشِّحاتُ الأربعةُ كلُّها سكّانيّة (دورٌ وقسمٌ
+   * ولجنةٌ وجنس)، فالعدّادُ يتبعها — ترشّح لجنةً فيقول كم عضوًا فيها. والبحثُ لا يدخله.
+   */
+  const counted = useMemo(() => scope.filter((m) => {
+    if (fv.role && m.role !== fv.role) return false;
+    if (fv.dept && m.dept !== fv.dept) return false;
+    if (fv.committee && m.committee !== fv.committee) return false;
+    // «غير محدّد» قيمةٌ يُنخَل بها كسائر القيم — القيمةُ الخالية محجوزةٌ لـ«الكل» في الشريط
+    if (fv.gender && (fv.gender === GENDER_NONE ? m.gender != null : m.gender !== fv.gender)) return false;
+    return true;
+  }), [scope, fv]);
+
   const rows = useMemo(() => {
-    return scope.filter((m) => {
-      // ما يعرضه الجدول والكرت يُبحَث فيه — الجوّال والدور واللجنة والقسم كالاسم والبريد،
-      // فلا يقف الباحث أمام عمودٍ يراه ولا يبلغه.
-      if (!matchesSearch(search, m.name, m.email, m.phone, m.role, m.committee, m.dept)) return false;
-      if (fv.role && m.role !== fv.role) return false;
-      if (fv.dept && m.dept !== fv.dept) return false;
-      if (fv.committee && m.committee !== fv.committee) return false;
-      // «غير محدّد» قيمةٌ يُنخَل بها كسائر القيم — القيمةُ الخالية محجوزةٌ لـ«الكل» في الشريط
-      if (fv.gender && (fv.gender === GENDER_NONE ? m.gender != null : m.gender !== fv.gender)) return false;
-      return true;
-    });
-  }, [scope, search, fv]);
+    // ما يعرضه الجدول والكرت يُبحَث فيه — الجوّال والدور واللجنة والقسم كالاسم والبريد،
+    // فلا يقف الباحث أمام عمودٍ يراه ولا يبلغه.
+    return counted.filter((m) => matchesSearch(search, m.name, m.email, m.phone, m.role, m.committee, m.dept));
+  }, [counted, search]);
 
   // فرز عبر TanStack Table — نموذج أعمدة مُنمّط ومنطق فرز مصان (يُشارَك بين الجدول والكروت)
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -560,9 +566,12 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
       )}
 
       {lockedStatus === "active" ? (
-        <div className="stat-grid" style={{ marginBottom: 18 }}>
-          <Stat icon={<UsersThree />} value={scope.length} label="عدد أعضاء أديب" />
-        </div>
+        <>
+          <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
+          <div className="stat-grid" style={{ marginBottom: 18 }}>
+            <Stat icon={<UsersThree />} value={counted.length} label="عدد أعضاء أديب" />
+          </div>
+        </>
       ) : null}
 
       <Toolbar
