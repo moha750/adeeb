@@ -7,7 +7,7 @@ import {
 } from "@adeeb/design-system";
 import { EmptyState } from "../../_components/EmptyState";
 import { Certificate, HandHeart, MapPin, SignIn, Users, UsersThree } from "@phosphor-icons/react";
-import { PencilSimple } from "@/app/_components/glyphs";
+import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { PageHeader } from "../../_components/PageHeader";
 import { StatsScope } from "../../_components/StatsScope";
 import { Toolbar } from "../../_components/Toolbar";
@@ -136,6 +136,22 @@ export function VolunteersView({ rows, committees }: {
     };
   }, [scope]);
 
+  const filtering = Boolean(search.trim() || pref);
+
+  /** مطابقو التبويب الآخر — تُرشد الحالةَ الفارغة إلى «أين وُجد» بدل صمتٍ كاذب. */
+  const otherTabCount = useMemo(() => {
+    if (!filtering) return 0;
+    const wanted = pref ? Number(pref) : null;
+    const q = search.trim();
+    return rows.filter((r) => {
+      if (r.status === tab) return false;
+      if (wanted != null && !r.prefs.some((p) => p.id === wanted)) return false;
+      if (!q) return true;
+      return r.name.includes(q) || r.phone.includes(q)
+        || r.email.toLowerCase().includes(q.toLowerCase()) || (r.city ?? "").includes(q);
+    }).length;
+  }, [rows, tab, pref, search, filtering]);
+
   // مفتاحُ `committee` لا اسمٌ جديد : رمزُ البُعد يُشتقّ من المفتاح في `filterIcons` (مصدرٌ واحد)
   const prefFilter = useMemo(
     () => [{ key: "committee", label: "الرغبة", options: committees.map((c) => ({ value: String(c.id), label: c.name })) }],
@@ -238,8 +254,34 @@ export function VolunteersView({ rows, committees }: {
       />
 
       {shown.length === 0 ? (
-        <EmptyState variant="soft" icon={<HandHeart />} title="لا متطوّعين هنا"
-          description="من قدّم للعضويّة ورتّب رغباته ظهر في هذا الكشف." />
+        filtering ? (
+          /* **فراغُ البحث غيرُ فراغِ الكشف**: أن تقول «لا متطوّعين هنا» وفي التبويب ستّون
+             كذبٌ يُقلق قارئَه. فتقول ما جرى: لم يطابق طلبُك أحدًا، وهذا بابُ رفعه — وإن
+             كان في التبويب الآخر مطابقٌ دلّت عليه (سنّةُ الحالة الفارغة في الاستبيانات). */
+          <EmptyState
+            variant="soft"
+            icon={<MagnifyingGlass />}
+            title={otherTabCount ? "لا نتيجةَ في هذا التبويب" : "لا نتيجةَ تطابق طلبك"}
+            description={
+              otherTabCount
+                ? `لكنّ طلبَك طابق ${otherTabCount} في تبويب ${tab === "active" ? "السابقين" : "المتطوّعين"}.`
+                : "لم يطابق بحثُك ولا تصفيتُك أحدًا في هذا الكشف."
+            }
+            action={
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {otherTabCount ? (
+                  <Button variant="ghost" size="sm" onClick={() => setTab(tab === "active" ? "former" : "active")}>
+                    {tab === "active" ? "السابقون" : "المتطوّعون"} <b className="num">{otherTabCount}</b>
+                  </Button>
+                ) : null}
+                <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setPref(""); }}>مسحُ البحث والتصفية</Button>
+              </div>
+            }
+          />
+        ) : (
+          <EmptyState variant="soft" icon={<HandHeart />} title="لا متطوّعين هنا"
+            description="من قدّم للعضويّة ورتّب رغباته ظهر في هذا الكشف." />
+        )
       ) : (
         // شبكةٌ بعمودين على الحاسوب وعمودٍ على الجوّال : الكرتُ صفٌّ عريضٌ لا مربّع
         <div className="card-grid card-grid-2col">
