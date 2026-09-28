@@ -1,8 +1,8 @@
 "use client";
 
-import { ChatCircleText, EnvelopeSimple, Handshake, Lifebuoy, Megaphone, Storefront, Trophy } from "@phosphor-icons/react";
+import { ChatCircleText, EnvelopeSimple, Lifebuoy } from "@phosphor-icons/react";
 import { ArrowLeft, CaretDown, WhatsappLogo } from "@/app/_components/glyphs";
-import { WA_NUMBER, waLink } from "./bits";
+import { SUPPORT_EMAIL, WA_NUMBER, waLink } from "./bits";
 import type { TabKey } from "./tabs";
 
 /**
@@ -20,22 +20,12 @@ import type { TabKey } from "./tabs";
  * قصّتَه وموضعَ القفز في سكربتٍ قبل الرسم لا يجري إلّا في تحميلٍ كامل (`_story/StoryOpening.tsx`).
  * والتحميلُ الكامل ينزل عند النموذج نفسِه.
  *
- * **وفي آخره دعوةُ أصحاب الأعمال إلى رعاية أدِيب** (طلبُ المالك في اليوم نفسِه). وما يُعِد به من
- * واقع رعاية oos لهذه النسخة (شعارٌ في اللوحة وشاشة البدء، وعلامةٌ في اللعبة، وجوائز باسم الراعي)،
- * بلا أرقامٍ عن الجمهور لا نملك قياسَها.
+ * **ودعوةُ أصحاب الأعمال إلى الرعاية** كانت في آخره، فانتقلت إلى تبويب المسابقة بقرار المالك (٢٠٢٦-٠٩-٢٨):
+ * هناك أرقامُ المسابقة التي تقنع الراعي. فالدعمُ للدعم وحدَه.
  */
 
-/** بريدُ النادي للدعم، أكّده المالك (٢٠٢٦-٠٩-٢٥). */
-export const SUPPORT_EMAIL = "adeab.kfu@gmail.com";
 const MAIL = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("دعم دربك خضر")}`;
 const WA_HELP = waLink("السلام عليكم، عندي استفسار عن لعبة «دربك خضر».");
-const WA_SPONSOR = waLink("السلام عليكم، أرغب في رعاية نادي أدِيب وأودّ معرفة التفاصيل.");
-
-const PERKS = [
-  { ic: <Storefront />, b: "علامتُك داخل التجربة", s: "كوبُ oos في هذه النسخة يجمعه كلُّ لاعب. ولعلامتك مكانٌ مثله يراه اللاعبُ ويلعب به." },
-  { ic: <Trophy />, b: "اسمُك على الصدارة والجوائز", s: "شعارُك في لوحة المتصدّرين وشاشة البدء، وجوائزُ الفائزين باسمك." },
-  { ic: <Megaphone />, b: "حضورٌ في منشورات أدِيب", s: "نذكرك في إعلان المسابقة ونتائجها، وفي ما ننشره عنها." },
-];
 
 export function Help({ go }: { go: (t: TabKey) => void }) {
   const toMe = (
@@ -50,9 +40,21 @@ export function Help({ go }: { go: (t: TabKey) => void }) {
       q: "لعبتُ ولم تظهر نتيجتي في اللوحة؟",
       a: (
         <p>
-          ما لُعب قبل افتتاح المسابقة تجربةٌ لا تُحسب. وإن كانت الشبكةُ مقطوعةً عند بدء الجولة صارت تدريبًا لا
-          يُحسب، وإن انقطعت عند نهايتها حُفظت في جهازك وأُرسلت حين تفتح اللعبةَ ثانيةً خلال ثلاث ساعات.
+          إن كانت الشبكةُ مقطوعةً عند بدء الجولة صارت تدريبًا لا يُحسب، وإن انقطعت عند نهايتها حُفظت في جهازك
+          وأُرسلت حين تفتح اللعبةَ ثانيةً خلال ثلاث ساعات. والترتيبُ يتحدّث كلّ دقيقة.
         </p>
+      ),
+    },
+    {
+      q: "أين أكوابي من المسابقة؟",
+      a: (
+        <>
+          <p>
+            محفوظةٌ لك في «حسابي» وفي ذكرى المسابقة، ولا تضيع. وما يُجمَع في الطريق الآن تمر، ولوحةُ «أكثر تمر»
+            بدأت من صفرٍ للجميع بعد المسابقة.
+          </p>
+          {toMe}
+        </>
       ),
     },
     {
@@ -68,23 +70,11 @@ export function Help({ go }: { go: (t: TabKey) => void }) {
       ),
     },
     {
-      q: "كيف أستلم الجائزة إن فزت؟",
-      a: (
-        <>
-          <p>
-            نعلن الفائزين بأسمائهم المستعارة بعد مراجعة النتائج، ويُثبت الفائزُ أنّ الاسمَ له بحسابه في أدِيب،
-            ومن خلاله نتواصل معه، ثمّ يصله رصيدُه في محفظة oos. فلا جائزةَ لاسمٍ غيرِ محفوظٍ بحساب.
-          </p>
-          {toMe}
-        </>
-      ),
-    },
-    {
-      q: "هل أحتاج حسابًا في أدِيب لأشارك؟",
+      q: "هل أحتاج حسابًا في أدِيب لألعب؟",
       a: (
         <p>
-          للّعب لا: تلعب باسمٍ مستعارٍ بلا حساب. أمّا الجائزة فلا تُستلَم إلّا بحساب، فاحفظ اسمَك به. والحسابُ لا
-          يعطيك أفضليّةً في اللعب.
+          لا: تلعب باسمٍ مستعارٍ بلا حساب. والحسابُ يحفظ اسمَك ونتائجَك فتلعب بها من أيّ جهاز، وهو مجّانيٌّ وليس
+          عضويّةً في النادي، ولا يعطيك أفضليّةً في اللعب.
         </p>
       ),
     },
@@ -147,36 +137,6 @@ export function Help({ go }: { go: (t: TabKey) => void }) {
             <EnvelopeSimple />
             <span dir="ltr">{SUPPORT_EMAIL}</span>
           </a>
-        </div>
-
-        <div className="drba-card" data-tone="gold">
-          <p className="drba-eyebrow">لأصحاب الأعمال</p>
-          <h2 className="drba-big">
-            <Handshake />
-            اجعل علامتك في يد اللاعبين
-          </h2>
-          <p className="drba-lead">
-            نادي أدِيب يصنع تجاربَ يعيشها جمهورُه بنفسه، و«دربك خضر» واحدةٌ منها. فالإعلانُ هنا لا يمرّ عليه
-            الناسُ مرورًا: يجمعونه ويتسابقون عليه.
-          </p>
-          <ul className="drba-items">
-            {PERKS.map((x) => (
-              <li key={x.b} className="drba-item">
-                <span className="drba-item-ic" aria-hidden="true">{x.ic}</span>
-                <span>
-                  <b>{x.b}</b>
-                  <span>{x.s}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <a className="drba-btn" data-kind="gold" data-wide="" href={WA_SPONSOR} target="_blank" rel="noopener">
-            <WhatsappLogo />
-            تواصل معنا لرعاية أدِيب
-          </a>
-          <p className="drba-note">
-            أو راسلنا على <span dir="ltr">{WA_NUMBER}</span> أو <span dir="ltr">{SUPPORT_EMAIL}</span>.
-          </p>
         </div>
       </div>
     </>

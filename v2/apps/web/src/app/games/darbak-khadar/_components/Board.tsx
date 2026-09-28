@@ -2,9 +2,9 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Crown, Gift, HandSwipeRight, Lifebuoy, Play, PersonSimpleRun, SignIn, Trophy, UserCircle } from "@phosphor-icons/react";
-import { CaretDown, Warning } from "@/app/_components/glyphs";
-import { Cup, LOGIN, PLAY, PRIZE, cups, n } from "./bits";
+import { Confetti, Crown, HandSwipeRight, Lifebuoy, Medal, Play, PersonSimpleRun, SignIn, Trophy, UserCircle } from "@phosphor-icons/react";
+import { ArrowLeft, CaretDown, Warning } from "@/app/_components/glyphs";
+import { LOGIN, PLAY, Tamr, cups, n, tamr, useOnce } from "./bits";
 import { Celebrate } from "./Celebrate";
 import { Contest } from "./Contest";
 import { Help } from "./Help";
@@ -29,40 +29,38 @@ import { TABS, tabHref, type TabKey } from "./tabs";
  * **والأرقامُ غربيّة** كما هي في اللعبة نفسِها (عدّادُها وشاشةُ نهايتها): من خرج من
  * الجولة بـ«6,840 م» يجدها في اللوحة كما رآها، لا «٦٬٨٤٠».
  *
- * **ومسابقةُ أكواب oos** (قرارُ المالك ٢٠٢٦-٠٩-٢٥): الراعي مقهى oos، والكوبُ مكانَ المصّاص،
- * فلوحةُ الأكواب هي الأولى وعلى منصّتها الجوائز، ولوحةُ المسافة لوحةُ شرفٍ بلا جائزة. ونافذةُ
- * المسابقة تأتي من الخادم محسوبةً (`page.tsx`)، فلا يختلف ما رُسم في الخادم عمّا في الجهاز.
- * والاسمُ الداخليّ `candy` باقٍ كما هو في اللبّ والقاعدة: التبديلُ عرضٌ لا حساب.
+ * **بعد المسابقة لوحتان دائمتان** (قرارُ المالك ٢٠٢٦-٠٩-٢٨): «أبعد مسافة» أوّلًا (أفضلُ جولة، ومعها جولاتُ
+ * ما بعد الإقفال)، و«أكثر تمر» (مجموعُ الجولات كلّها، يبدأ من صفرٍ للجميع). بلا تصفيرٍ ولا جوائز. وكانت
+ * الأولى أيّامَ المسابقة لوحةَ أكواب oos وعليها الجوائز، فصارت الأكوابُ ذكرى: في «حسابي» وفي تبويب المسابقة.
+ * والاسمُ الداخليّ `candy` باقٍ في اللبّ للتمرة: التبديلُ رسمٌ لا حساب.
  */
 
-export type BoardKind = "dist" | "candy";
+export type BoardKind = "dist" | "tamr";
 export type BoardRow = { rank: number; name: string; value: number };
 export type Standing = { value: number; rank: number | null; above: number | null };
-/** `account`: لاعبُه محفوظٌ بحساب أدِيب (من `darb_me`)، فلا يُعرَض عليه رمزُ استرجاع. */
-export type BoardMe = { name: string; dist: Standing; candy: Standing; account?: boolean } | null;
 /**
- * نافذةُ المسابقة كما حسبها الخادم: الطورُ الآن، والموعدان مكتوبَين بتوقيت الرياض، ولحظتاهما
- * (`startsAt`/`endsAt`) لعدّاد تبويب المسابقة يدقّ في الجهاز.
+ * أكوابُ اللاعب ذكرى (`darb_me`): `total` كلُّها (المسابقةُ وما لُعب بعدها قبل التمرة)، و`contest` ما جمعه
+ * في المسابقة، و`rank` ترتيبُه فيها بين `of` ممّن جمعوا أكوابًا.
  */
-export type BoardContest = {
-  phase: "before" | "open" | "after";
-  starts: string;
-  ends: string;
-  startsAt?: number;
-  endsAt?: number;
-} | null;
-/** فائزٌ بعد الإقفال (`darb_winners`): ترتيبُه واسمُه المستعار وأرقامُه في المسابقة، ودقائقُ لعبه من التكّات. */
+export type Cups = { total: number; contest: number; rank: number | null; of: number };
+/** `account`: لاعبُه محفوظٌ بحساب أدِيب (من `darb_me`). */
+export type BoardMe = { name: string; dist: Standing; tamr: Standing; cups: Cups; account?: boolean } | null;
+/** موعدا المسابقة مكتوبَين بتوقيت الرياض، لذكراها. */
+export type BoardContest = { starts: string; ends: string } | null;
+/** فائزٌ (`darb_winners`): ترتيبُه واسمُه المستعار وأرقامُه في المسابقة، ودقائقُ لعبه من التكّات. */
 export type Winner = { rank: number; name: string; cups: number; dist: number; runs: number; minutes: number };
-/** `loggedIn`: داخلٌ بحساب أدِيب في الموقع (لـ«حسابي»: من دخل ولم يلعب يُقال له إنّ اسمَه يُحفَظ في حسابه).
- *  `winners`: الثلاثةُ الأوائل بعد إقفال المسابقة وحدَه. */
+/** أرقامُ المسابقة كلِّها (`darb_contest_recap`). */
+export type Recap = { players: number; runs: number; cups: number; minutes: number };
+/** `loggedIn`: داخلٌ بحساب أدِيب في الموقع (لـ«حسابي»: من دخل ولم يلعب يُقال له إنّ اسمَه يُحفَظ في حسابه). */
 export type BoardData = {
   dist: BoardRow[];
-  candy: BoardRow[];
+  tamr: BoardRow[];
   me: BoardMe;
   contest?: BoardContest;
   failed?: boolean;
   loggedIn?: boolean;
   winners?: Winner[];
+  recap?: Recap | null;
 };
 
 /** القائمةُ تُعرض عشرةً أوّلًا (الثلاثةُ على المنصّة وسبعةٌ تحتها)، ثمّ تتّسع إلى ما جاء. */
@@ -71,7 +69,7 @@ const FIRST = 10;
 /** الحرفُ الأوّلُ من الاسم بعد «ال»: «الرحّال» تُقرأ راءً لا ألفًا. */
 const initial = (name: string) => name.replace(/^ال/, "").charAt(0);
 
-/** القيمةُ بوحدتها: المترُ حرفٌ بعد الرقم، والكوبُ رسمٌ قبله. */
+/** القيمةُ بوحدتها: المترُ حرفٌ بعد الرقم، والتمرةُ رسمٌ قبله. */
 function Val({ b, v }: { b: BoardKind; v: number }) {
   return b === "dist" ? (
     <span className="drb-num">
@@ -80,7 +78,7 @@ function Val({ b, v }: { b: BoardKind; v: number }) {
     </span>
   ) : (
     <span className="drb-num">
-      <Cup /> {n(v)}
+      <Tamr /> {n(v)}
     </span>
   );
 }
@@ -92,45 +90,47 @@ function gapLine(b: BoardKind, s: Standing) {
   const d = s.above - s.value;
   const up = n(s.rank - 1);
   if (d <= 0) return `تعادلتَ مع المركز ${up}، وسبقك إليه بالوقت`;
-  return b === "dist" ? `تبعد ${n(d)} م عن المركز ${up}` : `تحتاج ${cups(d)} للمركز ${up}`;
+  return b === "dist" ? `تبعد ${n(d)} م عن المركز ${up}` : `تحتاج ${tamr(d)} للمركز ${up}`;
 }
 
 const NOTE: Record<BoardKind, string> = {
-  dist: "أفضلُ جولةٍ لكلّ لاعب، لوحةُ شرفٍ بلا جائزة",
-  candy: "مجموعُ أكوابِ جولاتك كلّها في المسابقة",
+  dist: "أفضلُ جولةٍ لكلّ لاعب",
+  tamr: "مجموعُ التمر في جولاتك كلّها",
 };
 
-const FINE =
-  "يظهر هنا اسمُك المستعار وحده. والنتائجُ تُراجَع قبل اعتمادها، ويتحدّث الترتيبُ كلّ دقيقة.";
-const FINE_PRIZE =
-  "الجوائزُ رصيدٌ في محفظة oos للثلاثة الأوائل، ويُثبت الفائزُ اسمَه بحسابه في أدِيب حين نعلن النتائج.";
+const FINE = "يظهر هنا اسمُك المستعار وحده. ويتحدّث الترتيبُ كلّ دقيقة.";
 
-/** أيقونةُ كلّ تبويب: الكأسُ للصدارة، والهديّةُ للجوائز، والسحبُ للّعب، والشخصُ للحساب، وطوقُ النجاة للدعم. */
+/** أيقونةُ كلّ تبويب: الكأسُ للصدارة، والوسامُ لذكرى المسابقة، والسحبُ للّعب، والشخصُ للحساب، وطوقُ النجاة للدعم. */
 const ICON: Record<TabKey, ReactNode> = {
   board: <Trophy />,
-  contest: <Gift />,
+  contest: <Medal />,
   how: <HandSwipeRight />,
   me: <UserCircle />,
   help: <Lifebuoy />,
 };
 
 /** تبويبُ الصدارة: اللوحتان والمنصّةُ والقائمة، كما كانت الصفحةُ كلُّها قبل التبويبات. */
-function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: BoardKind) => void }) {
+function Leaders({
+  data,
+  b,
+  setB,
+  note,
+  go,
+}: {
+  data: BoardData;
+  b: BoardKind;
+  setB: (b: BoardKind) => void;
+  note: boolean;
+  go: (t: TabKey) => void;
+}) {
   const [open, setOpen] = useState(false);
   const rows = data[b];
   const me = data.me;
-  const contest = data.contest ?? null;
-  const prizes = contest !== null && b === "candy";
-  /* **التذكيرُ مكانَ الراعي وسطرِ المسابقة** (قرارُ المالك ٢٠٢٦-٠٩-٢٥): «تُزال برعاية oos وتبدأ المسابقة،
-     وتُستبدل لمن لم يؤمّن حسابه برسالة تذكيرٍ لتأمين الحساب». فالراعي والموعدُ في تبويب المسابقة وحدَه،
-     ومن ليس داخلًا بحسابه يُذكَّر أوّلَ ما يرى اللوحة أنّ الجائزةَ لا تُستلَم إلّا بحساب.
-     **ثمّ صار التذكيرُ لمن عنده ما يخسره وحدَه** (المالك ٢٠٢٦-٠٩-٢٥: «ما تشوف ادخل بحسابك في أدِيب
-     تُضعف الرغبة؟ ممكن يقول يعني لازم أكون في أدِيب؟»). فمن لم يلعب لا يرى بطاقةَ حسابٍ أصلًا، واللعبُ
-     بلا تسجيل. ومن جمع أكوابًا يُدعى إلى حفظها باسمه بحسابٍ مجّانيّ لا عضويّةَ فيه. وقِيس ما قبله: ٤٦
-     زائرًا في أوّل ٣٨ دقيقة، لعب منهم ١٨. */
+  /* **الحفظُ بالحساب عرضٌ لمن عنده ما يخسره** (المالك ٢٠٢٦-٠٩-٢٥: «ما تشوف ادخل بحسابك في أدِيب تُضعف
+     الرغبة؟ ممكن يقول يعني لازم أكون في أدِيب؟»). فمن لم يلعب لا يرى بطاقةَ حسابٍ أصلًا، واللعبُ بلا تسجيل.
+     ومن له نتيجةٌ أو أكوابٌ من المسابقة يُدعى إلى حفظها باسمه بحسابٍ مجّانيٍّ لا عضويّةَ فيه. */
   const secured = Boolean(data.loggedIn || me?.account);
-  const mine = me?.candy.value ?? 0;
-  const remind = !secured && me !== null && mine > 0;
+  const remind = !secured && me !== null && (me.dist.value > 0 || me.tamr.value > 0 || me.cups.total > 0);
 
   const at = (r: number) => rows.find((x) => x.rank === r);
   const pod = [2, 1, 3].map((r) => ({ r, e: at(r) }));
@@ -141,41 +141,58 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
     <>
       <section className="drba-hero">
         <h1>المتصدّرون</h1>
+        {/* **رسالةُ الأكواب مرّةً واحدة** (قرارُ المالك ٢٠٢٦-٠٩-٢٨): من جمع أكوابًا يعرف أنّها محفوظةٌ وأنّ ما يُجمَع
+            الآن تمر، فلا يظنّ اسمَه سقط من اللوحة. والمفتاحُ نفسُه في اللعبة، فأيُّهما رآه أوّلًا كفى. */}
+        {note && me ? (
+          <div className="drba-card" data-tone="gold">
+            <div className="drba-status">
+              <Confetti />
+              <div>
+                <b>انتهت المسابقة، وأكوابُك محفوظة</b>
+                <p>{`عندك ${cups(me.cups.total)} في «حسابي» وفي ذكرى المسابقة. وما تجمعه الآن تمر، ولوحتُه تبدأ من صفرٍ للجميع.`}</p>
+              </div>
+            </div>
+            <button type="button" className="drba-link" onClick={() => go("contest")}>
+              ذكرى المسابقة
+              <ArrowLeft />
+            </button>
+          </div>
+        ) : null}
         {remind && me ? (
           <div className="drba-card" data-tone="warn">
             <div className="drba-status">
               <Warning />
               <div>
-                <b>{`«${me.name}»، عندك ${cups(mine)}، احفظها باسمك`}</b>
+                <b>{`«${me.name}»، احفظ نتائجك باسمك`}</b>
                 <p>
-                  أكوابُك محفوظةٌ في هذا المتصفّح وحدَه. احفظها بحسابٍ مجّانيٍّ في دقيقة لتُحسب لك إن فزت، ومن
-                  خلاله نتواصل معك. والحسابُ ليس عضويّةً في النادي.
+                  نتائجُك محفوظةٌ في هذا المتصفّح وحدَه. احفظها بحسابٍ مجّانيٍّ في دقيقة لتلعب بها من أيّ جهاز.
+                  والحسابُ ليس عضويّةً في النادي.
                 </p>
               </div>
             </div>
             <a className="drba-btn" data-kind="suit" data-wide="" href={LOGIN}>
               <SignIn />
-              احفظ أكوابي باسمي
+              احفظ نتائجي باسمي
             </a>
           </div>
         ) : null}
         <p>{NOTE[b]}</p>
         <div className="drba-tabs" role="group" aria-label="اللوحة">
-          <button className="drba-tab" type="button" aria-pressed={b === "candy"} onClick={() => setB("candy")}>
-            <Cup />
-            أكثر أكواب
-          </button>
           <button className="drba-tab" type="button" aria-pressed={b === "dist"} onClick={() => setB("dist")}>
             <PersonSimpleRun />
             أبعد مسافة
+          </button>
+          <button className="drba-tab" type="button" aria-pressed={b === "tamr"} onClick={() => setB("tamr")}>
+            <Tamr />
+            أكثر تمر
           </button>
         </div>
       </section>
 
       {rows.length === 0 ? (
         <div className="drba-empty">
-          <Cup />
-          <b>{data.failed ? "تعذّرت قراءةُ اللوحة الآن" : "اللوحةُ تنتظر أوّلَ عدّاء"}</b>
+          {b === "tamr" ? <Tamr /> : <PersonSimpleRun />}
+          <b>{data.failed ? "تعذّرت قراءةُ اللوحة الآن" : b === "tamr" ? "أوّلُ تمرةٍ تضعك في رأسها" : "اللوحةُ تنتظر أوّلَ عدّاء"}</b>
           <p>{data.failed ? "أعد فتح الصفحة بعد قليل." : "العب جولةً واحدةً تجد اسمَك في رأسها."}</p>
           <a className="drba-play" href={PLAY}>
             <Play />
@@ -191,10 +208,7 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
                 <span className="drba-av" aria-hidden="true">{e ? initial(e.name) : "؟"}</span>
                 <span className="drba-who">{e ? e.name : "مكانٌ شاغر"}</span>
                 <span className="drba-val">{e ? <Val b={b} v={e.value} /> : null}</span>
-                <span className="drba-block">
-                  {r}
-                  {prizes ? <small className="drba-prize">{PRIZE[r]}</small> : null}
-                </span>
+                <span className="drba-block">{r}</span>
               </li>
             ))}
           </ol>
@@ -218,10 +232,7 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
                 <CaretDown />
               </button>
             ) : null}
-            <p className="drba-fine">
-              {FINE}
-              {prizes ? <> {FINE_PRIZE}</> : null}
-            </p>
+            <p className="drba-fine">{FINE}</p>
           </div>
         </>
       )}
@@ -235,7 +246,7 @@ function Leaders({ data, b, setB }: { data: BoardData; b: BoardKind; setB: (b: B
  */
 export function Board({ data, tab: first = "board", syncUrl = true }: { data: BoardData; tab?: TabKey; syncUrl?: boolean }) {
   const [tab, setTab] = useState<TabKey>(first);
-  const [b, setB] = useState<BoardKind>("candy");
+  const [b, setB] = useState<BoardKind>("dist");
   const me = data.me;
   const mine = me ? me[b] : null;
 
@@ -250,26 +261,29 @@ export function Board({ data, tab: first = "board", syncUrl = true }: { data: Bo
     [syncUrl],
   );
 
-  /* **الفائزُ يُحتفى به حين يدخل** (طلبُ المالك ٢٠٢٦-٠٩-٢٧): بعد الإقفال، إن كان اسمُ صاحب المتصفّح
-     أو الحساب بين الثلاثة، فقصاصاتٌ وتبريكٌ في كلّ دخولٍ إلى الصفحة، يُغلَق بلمسة. */
-  const win = data.contest?.phase === "after" && me ? data.winners?.find((w) => w.name === me.name) : undefined;
-  const [cel, setCel] = useState(Boolean(win));
+  /* **الفائزُ يُحتفى به حين يدخل** (طلبُ المالك ٢٠٢٦-٠٩-٢٧): إن كان اسمُ صاحب المتصفّح أو الحساب بين
+     الثلاثة فقصاصاتٌ وتبريك، يُغلَق بلمسة. **ومرّةً واحدةً في المتصفّح** منذ صارت المسابقةُ ذكرى (٢٠٢٦-٠٩-٢٨):
+     تبريكٌ يتكرّر في كلّ دخولٍ يصير ضجيجًا. */
+  const win = me ? data.winners?.find((w) => w.name === me.name) : undefined;
+  const [cel, endCel] = useOnce("darb_celebrated", Boolean(win));
+  const [note] = useOnce("darb_cupsNote", (me?.cups.total ?? 0) > 0);
 
   let panel: ReactNode;
-  if (tab === "contest") panel = <Contest contest={data.contest ?? null} winners={data.winners} me={me?.name ?? null} go={go} />;
+  if (tab === "contest")
+    panel = <Contest contest={data.contest ?? null} winners={data.winners} recap={data.recap ?? null} me={me} go={go} />;
   else if (tab === "how") panel = <HowTo />;
   else if (tab === "me") panel = <Mine data={data} go={go} />;
   else if (tab === "help") panel = <Help go={go} />;
-  else panel = <Leaders data={data} b={b} setB={setB} />;
+  else panel = <Leaders data={data} b={b} setB={setB} note={note} go={go} />;
 
   return (
     <div className="drba-page">
       {cel && win ? (
         <Celebrate
           win={win}
-          onClose={() => setCel(false)}
+          onClose={endCel}
           onWinners={() => {
-            setCel(false);
+            endCel();
             go("contest");
           }}
         />

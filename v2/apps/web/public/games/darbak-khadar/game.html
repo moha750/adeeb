@@ -136,10 +136,12 @@
     background:rgba(8,14,8,.60);color:#FFF;font-family:var(--display);font-size:1.1rem;font-weight:700;
     font-variant-numeric:tabular-nums;transition:transform .15s}
   .candy svg,.candyO svg{width:22px;height:22px;stroke-linecap:round}
-  /* كوبُ oos (الراعي): لونا كوبهم نفسِه، الليلكيُّ جسمًا والبنفسجيُّ الداكنُ حزامًا */
-  .cup .cb{fill:#CC95D3}
-  .cup .cn{fill:#503A61}
-  .cup .cr{fill:#F6F2F8}
+  /* التمرة: خلاصٌ لامعٌ بظلٍّ وبريقٍ وتجعيدة، وقِمعُها ذهبُ اللعبة */
+  .tamr .tb{fill:#6B3413}
+  .tamr .tl{fill:#B4652A}
+  .tamr .th{fill:none;stroke:#FBE0B2;stroke-width:1.4}
+  .tamr .tw{fill:none;stroke:#4A200B;stroke-width:.9;opacity:.55}
+  .tamr .tc{fill:#D8A850}
   .candy.pop{transform:scale(1.25)}
   .wordbox{display:flex;align-items:center;gap:6px}
   /* «تلاحم» خمسةُ أحرف: الخاناتُ أضيقُ قليلًا فلا تبلغُ زرَّ الصوتِ في أضيقِ الجوّالات */
@@ -200,12 +202,8 @@
   .veil .net{color:var(--ink);font-size:.9rem}
   .btn:disabled{opacity:.6;cursor:default}
   .veil .acct{color:var(--accent-lit);font-size:.85rem}
-  /* الراعي وحالُ المسابقة (في الموقع وحدَه): شعارُ oos كما هو، حروفُه البيضاءُ على بنفسجيّهم */
-  .veil .spons{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-2);font-size:.82rem}
-  .veil .spons[hidden]{display:none}
-  .oosM{display:inline-flex;align-items:center;background:#503A61;border-radius:7px;padding:4px 8px;line-height:0}
-  .oosM svg{height:12px;width:auto;fill:#FFFFFF}
-  .veil .contest{color:#E4BDEC;font-size:.86rem;max-width:21rem}
+  /* رسالةٌ مرّةً واحدة لمن جمع أكوابًا أيّامَ المسابقة (في الموقع وحدَه) */
+  .veil .note{color:var(--gold);font-size:.88rem;max-width:21rem}
   /* سطرُ الصانع: أدِيب في موضعين لا ثالثَ لهما (هذا، وزرُّ الحفظ بالحساب) بقرار المالك */
   /* ══ شاشةُ البدء (قرارُ محمد ٢٠٢٦-٠٩-٢٥): المشهدُ يدورُ خلفَ الزرّ، فلا ستارةَ داكنةً ولا تغبيش،
      بل تدرّجٌ من الأسفلِ يحملُ الزرَّ وما حوله. وما كان شرحًا صار في تبويبَي الصفحة («كيف تلعب» و«حسابي»). */
@@ -282,7 +280,7 @@
     <div class="hud" id="hud" hidden>
       <div class="stats">
         <div class="score"><span id="score">0</span><small>م</small></div>
-        <div class="candy" id="candyC"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path class="cb" d="M6.1 6.2h11.8l-1.35 15.6H7.45z"/><path class="cn" d="M6.45 10.2h11.1l-.42 4.9H6.87z"/><rect class="cr" x="5.1" y="4.4" width="13.8" height="2.3" rx="1.15"/></svg><b id="candyN">0</b></div>
+        <div class="candy" id="candyC"><svg class="tamr" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-22 12 12.6)"><ellipse class="tb" cx="12" cy="13.2" rx="5.5" ry="8.4"/><ellipse class="tl" cx="11.2" cy="12.6" rx="3.9" ry="6.9"/><path class="th" d="M9.4 8.9c-.8 1.7-1 3.9-.6 5.9"/><path class="tw" d="M13.7 9.4c1 2.5 1 5.6-.3 8.3"/><path class="tc" d="M10 5.6c.4-1.1 3.6-1.1 4 0l-.6 1.2h-2.8z"/></g></svg><b id="candyN">0</b></div>
       </div>
       <div class="wordbox"><div class="word" id="word"></div></div>
     </div>
@@ -291,7 +289,7 @@
     <div class="slowfx" id="slowfx"></div>
     <div class="veil" id="start">
       <a class="snd toBoard" id="toBoard" href="/games/darbak-khadar" hidden aria-label="لوحةُ الصدارة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.2a2.6 2.6 0 0 0 3.1 4.2M16 6h2.8a2.6 2.6 0 0 1-3.1 4.2"/><path d="M12 13v3.6M8.5 20h7M10 16.6h4v3.4h-4z"/></svg></a>
-      <p class="contest" id="contest" hidden></p>
+      <p class="note" id="note" hidden></p>
       <div class="who" id="who" hidden>
         <label class="nm" id="nmBox"><span>اسمُك في لوحة الصدارة</span>
           <input id="nmI" type="text" maxlength="20" autocomplete="nickname" autocapitalize="off"
@@ -302,23 +300,22 @@
         <p class="nmErr" id="nmErr" hidden></p>
       </div>
       <button class="btn" id="go" type="button">ابدأ</button>
-      <p class="spons" id="spons" hidden>برعاية <span class="oosM"><svg viewBox="161 393 760 295" aria-label="oos" role="img"><path d="M613.3,415.2c-20.9-13.8-44.3-18.7-68.9-17.3c-41,2.5-71.7,21.4-90.5,58.4c-10.5,20.8-15,43.3-16.5,66.4 c-1.8,26.4-0.2,52.6,7.5,78.1c14.8,49.4,50.6,79.6,100.3,82.6c47.6,2.8,87.3-20.4,107.3-63.8c11.5-25,15-51.6,15.1-69.7 c0-29.8-2.1-50.3-8.3-70.2C650.9,453.3,636.9,430.8,613.3,415.2z M612,640.3c-2.7,8-6.4,15.4-12,21.7c-12.7,14.2-29.9,14.9-47.4,2 c-15.5-11.4-26.3-26.8-35.1-43.5c-19.8-37.4-30-77.4-31.7-119.5c-0.1-2.8-0.3-5.7-0.4-8.5c0.5-21.1,2.3-41.9,11.6-61.3 c2.5-5.3,5.6-10.3,9.9-14.3c11.4-10.8,25.7-12,39.9-3.6c17,10.2,28.4,25.4,37.9,42.2c20.8,36.5,31.3,76.1,34.3,117.8 C620.7,596.1,619.4,618.5,612,640.3z"/><path d="M335.3,411c-18.9-10.4-39.3-14.2-60.7-13.1c-39.9,2.1-70.6,19.6-90,55.2c-11.5,21.1-16.4,44.1-18.1,67.9 c-2.1,29.5-0.3,58.6,9.6,86.7c9,25.6,23.9,46.7,47.5,60.9c19.8,11.9,41.5,16,64.2,14.7c40.3-2.2,70.5-20.8,89.9-56.3 c14.7-26.9,18.7-56.2,18.8-86.3c0-24-2.9-47.5-11.5-70C375.3,445.1,359.6,424.4,335.3,411z M336.8,650.3c-1.3,2.5-2.7,5-4.3,7.3 c-12,16.9-28.3,20.3-46.2,9.6c-14.7-8.8-24.9-21.9-33.7-36.2c-19.6-31.8-30.4-66.7-35.5-103.5c-3.1-22.6-3.7-45.1,0.1-67.6 c2.3-13.5,6.1-26.6,14.4-37.9c11.1-15.2,27.8-18.5,44-8.8c16.5,9.9,27.8,24.7,37.3,40.9c19.4,33.1,29.7,69.2,34.2,107.1 c1.1,9.3,1.6,18.6,1.8,28.3C348.1,610.1,346.4,631,336.8,650.3z"/><path d="M882.5,545.3c-18.1-13.4-38.7-22-59.4-30.3c-20.4-8.2-41.2-15.2-60.6-25.8c-9.7-5.3-18.8-11.4-25.7-20.2 c-6.5-8.2-9.5-17.5-8.6-27.9c1.2-15.3,14.6-24.9,32.5-23.6c21.4,1.5,41,8.3,59.1,19.6c20.8,13,38.5,29.5,54.8,47.7 c2.7,3,4,3.5,6-0.7c8.8-17.9,17.8-35.7,26.9-53.5c1.6-3.2,1.4-4.7-1.9-6.6c-33-19.8-68.6-28.5-107-25.8 c-20.4,1.5-40.1,5.8-58.3,15.7c-40.4,22-44.3,66.7-28.2,96.8c8.1,15.1,20.9,25.8,35,34.8c17.2,11,35.9,18.8,54.7,26.5 c21.3,8.7,43,16.3,62.6,28.7c12.2,7.7,22.6,17,25.8,32.1c3.4,15.9-6.4,29.7-22.6,31.1c-6,0.5-12,0.3-18-0.5 c-38.1-5.2-68.4-24.5-93.4-53c-11.5-13.1-21-27.5-29.1-43.5c-0.9,1-1.3,1.3-1.5,1.7c-9.7,22.6-19.3,45.3-29,67.9 c-1.2,2.7-0.2,4.3,1.6,6.1c12.9,12.6,27.5,22.6,44.3,29.2c27.9,11.1,56.9,13.3,86.4,10.7c19.8-1.7,38.8-6.3,55.8-17.1 c20-12.7,30.5-30.9,31.3-54.8C917.1,582.7,904.5,561.6,882.5,545.3z"/></svg></span></p>
       <p class="credit">من إنتاج وتشغيل نادي أدِيب</p>
     </div>
     <div class="veil" id="over" hidden>
       <p class="cap">المسافة</p>
       <p class="big"><span id="final">0</span><small> م</small></p>
-      <p class="candyO"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path class="cb" d="M6.1 6.2h11.8l-1.35 15.6H7.45z"/><path class="cn" d="M6.45 10.2h11.1l-.42 4.9H6.87z"/><rect class="cr" x="5.1" y="4.4" width="13.8" height="2.3" rx="1.15"/></svg><b id="finalC">0</b><span id="finalCt">أكواب</span></p>
+      <p class="candyO"><svg class="tamr" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-22 12 12.6)"><ellipse class="tb" cx="12" cy="13.2" rx="5.5" ry="8.4"/><ellipse class="tl" cx="11.2" cy="12.6" rx="3.9" ry="6.9"/><path class="th" d="M9.4 8.9c-.8 1.7-1 3.9-.6 5.9"/><path class="tw" d="M13.7 9.4c1 2.5 1 5.6-.3 8.3"/><path class="tc" d="M10 5.6c.4-1.1 3.6-1.1 4 0l-.6 1.2h-2.8z"/></g></svg><b id="finalC">0</b><span id="finalCt">تمرات</span></p>
       <p class="rec" id="rec" hidden>رقم قياسي جديد!</p>
       <p class="best" id="bestO">أفضل مسافة: <b id="bestOv">0</b></p>
-      <p class="best" id="bestCO">مجموعُ أكوابِك: <b id="bestCOv">0</b></p>
+      <p class="best" id="bestCO">مجموعُ تمرِك: <b id="bestCOv">0</b></p>
       <p id="line">—</p>
       <p id="dbg" style="display:none;font:12px/1.7 ui-monospace,monospace;color:#9FE08C;direction:ltr;
         background:rgba(0,0,0,.42);padding:7px 11px;border-radius:9px;margin:2px 0 14px">—</p>
       <p class="net" id="net" hidden></p>
       <button class="btn" id="again" type="button">مرّة ثانية</button>
       <a class="lnk" id="toBoard2" href="/games/darbak-khadar" hidden>لوحةُ الصدارة</a>
-      <a class="lnk" id="toAcct2" href="/login" hidden>احفظ أكوابك باسمك بحسابٍ مجّانيّ</a>
+      <a class="lnk" id="toAcct2" href="/login" hidden>احفظ تقدّمك باسمك بحسابٍ مجّانيّ</a>
     </div>
     <div class="cd" id="cd" hidden><span id="cdn">3</span></div>
     <div class="veil" id="pause" hidden>
@@ -4740,19 +4737,19 @@ var STEP=1/60, SLOT=16, GRACE=7, LANE_STEPS=8;
    فلا يُطلَبُ من اللاعبِ ما لا يُستطاع. */
 var JUMP_D=0.70, SLIDE_D=0.60, BUF_W=0.20;
 var WORDS=[["و","ط","ن"],["ر","ؤ","ي","ة"],["ك","ر","م"],["ه","و","ن"]];
-/* ── الخصائصُ والمصّاص ─────────────────────────────────────────────────────
-   النتيجةُ صارت المسافةَ بالمتر، والمصّاصُ عدٌّ مستقلّ — لكلٍّ منهما متصدّرون.
+/* ── الخصائصُ والتمر ───────────────────────────────────────────────────────
+   النتيجةُ صارت المسافةَ بالمتر، والتمرُ عدٌّ مستقلّ — لكلٍّ منهما متصدّرون.
    والحروفُ لم تعد نقاطًا: كلُّ كلمةٍ تكتملُ تمنحُ خاصيّةً ١٥ ثانية، والكلمةُ من معنى خاصيّتِها:
      وطن   ← درع      يصدُّ عنك صدمةً واحدة (أو تنقضي مدّتُه): العائقُ يطيرُ وأنت تمضي
      رؤية  ← تحليق    تحلّقُ فوقَ كلِّ شيءٍ وتُسرعُ ٢٥٪، ثمّ نفَسُ هبوطٍ ٠٫٤ ث لا يُصدَمُ فيه
-     كرم   ← مغناطيس  يجودُ عليك بالحروفِ والأكوابِ من المساراتِ الثلاثة
+     كرم   ← مغناطيس  يجودُ عليك بالحروفِ والتمرِ من المساراتِ الثلاثة
      هون   ← تمهّل    يبطؤ الجريُ ٢٨٪ فتمشي على هونك
    المُدَدُ بالتكّات (٦٠ في الثانية)، وتغيّرُ السرعةِ يدخلُ ويخرجُ في نصفِ ثانية (PW_RAMP).
    وكانت الحروفُ ٠٫٢٩ في كلِّ خانة — أي كلمةٌ كلَّ ٥ ثوانٍ، فتبقى الخاصيّةُ قائمةً أبدًا.
    فصارت ٠٫١٥. ومع الكلماتِ الأطول (٣–٥ أحرف) والمدّةِ ١٥ ث قِيسَت بلاعبٍ آليٍّ يسهو في ١٠٪
    من الخانات: خاصيّةٌ كلَّ ٦٤٠م تقريبًا، والجولةُ الوسطى أطولُ ١٣٪ (٥٤٤م مقابلَ ٤٨٠م) والرُّبعُ
    الأعلى أطولُ ٦٠٪ (١٣٤٤م مقابلَ ٨٣٢م) — تُعينُ من يجمعُ ولا تُغني عن اللعب.
-   والمصّاصُ نحوَ ١٫٥ في كلِّ ١٠٠٠م.
+   والتمرُ نحوَ ١٫٥ في كلِّ ١٠٠٠م.
    الحالةُ أعدادٌ مسطّحةٌ لا مصفوفات: تُنسَخُ حقلًا حقلًا للتنبّؤ (ctPredict)، والمصفوفةُ
    تُنسَخُ مرجعًا فيعبثُ التنبّؤُ بحالةِ اللعبِ نفسِها. */
 var PW_T=[900,900,900,900], PW_RAMP=30, PW_LAND=24, PW_BRK=15;
@@ -4842,7 +4839,7 @@ function letterAt(seed,k){
   if(o && o[L]) return false;            // لا حرفَ فوق عائقٍ مهما كان نوعُه
   return L-1;
 }
-/* المصّاص: نادرٌ، في مسارٍ خالٍ، ولا يشاركُ حرفًا خانتَه ومسارَه */
+/* التمرة: نادرةٌ، في مسارٍ خالٍ، ولا تشاركُ حرفًا خانتَه ومسارَه */
 function candyAt(seed,k){
   if(k<GRACE) return false;
   if(rnd(seed,k,31)>=CANDY_P) return false;
@@ -5022,7 +5019,7 @@ Sim.prototype.tick=function(){
       if(s.letterIx>=w.length){ s.words++; s.letterIx=0; this.grant(s.wordIx); s.wordIx=(s.wordIx+1)%WORDS.length; }
     }
   }
-  for(var kc=k0;kc<=k1;kc++){                       // المصّاص
+  for(var kc=k0;kc<=k1;kc++){                       // التمر
     var Cn=candyAt(this.seed,kc);
     if(Cn===false) continue;
     var dc=x-Cn; if(dc<0) dc=-dc;
@@ -5046,7 +5043,7 @@ Sim.prototype.tick=function(){
   s.step++;
 };
 Sim.prototype.candies=function(){ return this.s.candy; };
-/* النتيجةُ هي المسافةُ بالمتر — والمصّاصُ عدٌّ مستقلٌّ (candies) */
+/* النتيجةُ هي المسافةُ بالمتر — والتمرُ عدٌّ مستقلٌّ (candies) */
 Sim.prototype.score=function(){ return Math.floor(this.s.dist); };
 
 /* ══════════════════════════════════════════════════════════════
@@ -5792,7 +5789,7 @@ var SND=(function(){
       if(!ready) return; var t=ctx.currentTime;
       tone("triangle",hz(4,1),hz(4,1),0.005,0.14,0.08,{t:t}); tone("triangle",hz(2,1),hz(1,1),0.005,0.22,0.08,{t:t+0.1});
     },
-    /* المصّاص: فرقعةُ «بوب» ثمّ رنينٌ حلوٌ سريعٌ يلمع */
+    /* التمرة: فرقعةُ «بوب» ثمّ رنينٌ حلوٌ سريعٌ يلمع */
     candy:function(pan){
       if(!ready) return; var t=ctx.currentTime;
       tone("sine",700,1400,0.002,0.05,0.12,{pan:pan});
@@ -7315,48 +7312,43 @@ function makeLetter(){
   var s=new T.Sprite(new T.SpriteMaterial({map:letterTexOf(ch),transparent:true,fog:true}));
   s.scale.set(1.05,1.05,1); s.userData.ch=ch; return s;
 }
-/* ── كوبُ oos (مكانَ المصّاص) ─────────────────────────────────────────────
-   الراعي مقهى oos، والكوبُ كوبُهم كما في صورته: جسمٌ ليلكيٌّ وحزامٌ بنفسجيٌّ داكنٌ عليه
-   حروفُ شعارهم الرسميّ (مقتطَعةً من ملفّه لا مرسومةً باليد)، وحزامٌ أسفل، وحافّةٌ بيضاء،
-   وقهوةٌ مثلّجةٌ في أعلاه. يطفو في المسارِ ويدورُ مائلًا نحوَ الكاميرا فيُرى شعارُه وقهوتُه.
-   وهو في اللبِّ «مصّاصٌ» كما كان (candyAt وcandies): التبديلُ رسمٌ لا يمسُّ النتيجة. */
-var OOS_D=["M613.3,415.2c-20.9-13.8-44.3-18.7-68.9-17.3c-41,2.5-71.7,21.4-90.5,58.4c-10.5,20.8-15,43.3-16.5,66.4 c-1.8,26.4-0.2,52.6,7.5,78.1c14.8,49.4,50.6,79.6,100.3,82.6c47.6,2.8,87.3-20.4,107.3-63.8c11.5-25,15-51.6,15.1-69.7 c0-29.8-2.1-50.3-8.3-70.2C650.9,453.3,636.9,430.8,613.3,415.2z M612,640.3c-2.7,8-6.4,15.4-12,21.7c-12.7,14.2-29.9,14.9-47.4,2 c-15.5-11.4-26.3-26.8-35.1-43.5c-19.8-37.4-30-77.4-31.7-119.5c-0.1-2.8-0.3-5.7-0.4-8.5c0.5-21.1,2.3-41.9,11.6-61.3 c2.5-5.3,5.6-10.3,9.9-14.3c11.4-10.8,25.7-12,39.9-3.6c17,10.2,28.4,25.4,37.9,42.2c20.8,36.5,31.3,76.1,34.3,117.8 C620.7,596.1,619.4,618.5,612,640.3z", "M335.3,411c-18.9-10.4-39.3-14.2-60.7-13.1c-39.9,2.1-70.6,19.6-90,55.2c-11.5,21.1-16.4,44.1-18.1,67.9 c-2.1,29.5-0.3,58.6,9.6,86.7c9,25.6,23.9,46.7,47.5,60.9c19.8,11.9,41.5,16,64.2,14.7c40.3-2.2,70.5-20.8,89.9-56.3 c14.7-26.9,18.7-56.2,18.8-86.3c0-24-2.9-47.5-11.5-70C375.3,445.1,359.6,424.4,335.3,411z M336.8,650.3c-1.3,2.5-2.7,5-4.3,7.3 c-12,16.9-28.3,20.3-46.2,9.6c-14.7-8.8-24.9-21.9-33.7-36.2c-19.6-31.8-30.4-66.7-35.5-103.5c-3.1-22.6-3.7-45.1,0.1-67.6 c2.3-13.5,6.1-26.6,14.4-37.9c11.1-15.2,27.8-18.5,44-8.8c16.5,9.9,27.8,24.7,37.3,40.9c19.4,33.1,29.7,69.2,34.2,107.1 c1.1,9.3,1.6,18.6,1.8,28.3C348.1,610.1,346.4,631,336.8,650.3z", "M882.5,545.3c-18.1-13.4-38.7-22-59.4-30.3c-20.4-8.2-41.2-15.2-60.6-25.8c-9.7-5.3-18.8-11.4-25.7-20.2 c-6.5-8.2-9.5-17.5-8.6-27.9c1.2-15.3,14.6-24.9,32.5-23.6c21.4,1.5,41,8.3,59.1,19.6c20.8,13,38.5,29.5,54.8,47.7 c2.7,3,4,3.5,6-0.7c8.8-17.9,17.8-35.7,26.9-53.5c1.6-3.2,1.4-4.7-1.9-6.6c-33-19.8-68.6-28.5-107-25.8 c-20.4,1.5-40.1,5.8-58.3,15.7c-40.4,22-44.3,66.7-28.2,96.8c8.1,15.1,20.9,25.8,35,34.8c17.2,11,35.9,18.8,54.7,26.5 c21.3,8.7,43,16.3,62.6,28.7c12.2,7.7,22.6,17,25.8,32.1c3.4,15.9-6.4,29.7-22.6,31.1c-6,0.5-12,0.3-18-0.5 c-38.1-5.2-68.4-24.5-93.4-53c-11.5-13.1-21-27.5-29.1-43.5c-0.9,1-1.3,1.3-1.5,1.7c-9.7,22.6-19.3,45.3-29,67.9 c-1.2,2.7-0.2,4.3,1.6,6.1c12.9,12.6,27.5,22.6,44.3,29.2c27.9,11.1,56.9,13.3,86.4,10.7c19.8-1.7,38.8-6.3,55.8-17.1 c20-12.7,30.5-30.9,31.3-54.8C917.1,582.7,904.5,561.6,882.5,545.3z"];
-var CANDY_M=null;
+/* ── التمرة (قرارُ محمد ٢٠٢٦-٠٩-٢٨، بعد المسابقة) ───────────────────────────────
+   كانت كوبَ الراعي أيّامَ المسابقة فصارت تمرة: الأحساءُ أرضُ النخل، والنخلُ على جانبَي الطريق،
+   و«كرم» تجذبُها. خلاصٌ ممدودٌ يضيقُ قليلًا نحوَ قِمعِه، لامعٌ بتجاعيدَ طوليّةٍ خفيفة، وقِمعٌ ذهبيّ،
+   ووهجٌ دافئٌ يُبقيها ظاهرةً على الأسفلتِ ليلًا. تطفو في المسارِ مائلةً وتدور.
+   وهي في اللبِّ ما كانته (candyAt وcandies): الرسمُ لا يمسُّ النتيجة. */
+var CANDY_M=null, TAMR_H=0.84;
 function makeCandy(){
   if(!CANDY_M){
-    var wrap=tex(1024,512,function(c,w,h){
-      c.fillStyle="#C98AD6"; c.fillRect(0,0,w,h);
-      c.fillStyle="#F6F2F8"; c.fillRect(0,0,w,14); c.fillRect(0,h-22,w,22);
-      c.fillStyle="#503A61"; c.fillRect(0,70,w,170);                 /* الحزامُ وعليه الشعار */
-      c.fillStyle="#664A7C"; c.fillRect(0,410,w,68);                 /* الحزامُ الأسفل */
-      c.strokeStyle="rgba(80,58,97,0.55)"; c.lineWidth=3;             /* خطوطُ الرسمِ الرفيعة */
-      for(var q=0;q<2;q++){ var ox=q*w/2+w/4;
-        c.beginPath(); c.moveTo(ox-70,400); c.lineTo(ox-70,320); c.arc(ox,320,70,Math.PI,0); c.lineTo(ox+70,400); c.stroke();
-        c.beginPath(); c.moveTo(ox-150,385); c.lineTo(ox-90,385); c.moveTo(ox+90,385); c.lineTo(ox+150,385); c.stroke(); }
-      var sc=118/287, lw=752*sc;
-      c.fillStyle="#E2B4EA";
-      for(q=0;q<2;q++){ c.save(); c.translate(q*w/2+w/4-lw/2, 155-118/2); c.scale(sc,sc); c.translate(-165,-397);
-        for(var j=0;j<OOS_D.length;j++) c.fill(new Path2D(OOS_D[j])); c.restore(); }
+    /* الجلد: بنّيٌّ محمرٌّ داكنٌ يغمقُ نحوَ الطرفين، وتجاعيدُ طوليّةٌ رفيعةٌ متموّجةٌ أغمقُ منه */
+    var skin=tex(256,256,function(c,w,h){
+      var q=c.createLinearGradient(0,0,0,h);
+      q.addColorStop(0,"#3A1508"); q.addColorStop(0.2,"#5E2410"); q.addColorStop(0.5,"#6E2C12"); q.addColorStop(0.8,"#5A220E"); q.addColorStop(1,"#361306");
+      c.fillStyle=q; c.fillRect(0,0,w,h);
+      for(var k=0;k<34;k++){ var x=(k*97)%w+((k*37)%11), a=0.16+0.14*((k*13)%5)/4;
+        c.strokeStyle="rgba(30,10,3,"+a.toFixed(2)+")"; c.lineWidth=1.2+(k%3)*0.8;
+        c.beginPath(); c.moveTo(x,0);
+        for(var y=0;y<=h;y+=16) c.lineTo(x+Math.sin(y*0.05+k)*6,y);
+        c.stroke(); }
     });
     CANDY_M={
-      body:dnTag(new T.MeshStandardMaterial({map:wrap,roughness:0.55,metalness:0,envMapIntensity:0.8,emissiveMap:wrap,emissive:0x000000}),[0.42,0.42,0.42]),
-      rim:new T.MeshStandardMaterial({color:0xF6F2F8,roughness:0.45,metalness:0}),
-      coffee:new T.MeshStandardMaterial({color:0x2A0E0A,roughness:0.18,metalness:0}),
-      ice:new T.MeshStandardMaterial({color:0x6A3526,roughness:0.12,metalness:0,transparent:true,opacity:0.85}),
-      glow:new T.SpriteMaterial({map:glowTex(236,196,255,0.28),blending:T.AdditiveBlending,transparent:true,
-        depthWrite:false,fog:true,opacity:0.60})
+      skin:dnTag(new T.MeshStandardMaterial({map:skin,roughness:0.24,metalness:0,envMapIntensity:1.3,emissiveMap:skin,emissive:0x000000}),[0.46,0.42,0.40]),
+      cap:new T.MeshStandardMaterial({color:0xA87A3E,roughness:0.8,metalness:0}),
+      glow:new T.SpriteMaterial({map:glowTex(255,196,112,0.28),blending:T.AdditiveBlending,transparent:true,
+        depthWrite:false,fog:true,opacity:0.62})
     };
+    /* المقطعُ الطوليّ: جيبٌ مرفوعٌ لأُسٍّ دون النصف، فالطرفان مستديران لا مدبّبان، وأضيقُ قليلًا نحوَ القِمع */
+    var pts=[], N=24;
+    for(var i=0;i<=N;i++){ var t=i/N, r=0.25*Math.pow(Math.sin(t*Math.PI),0.45)*(1.03-0.06*t);
+      pts.push(new T.Vector2(Math.max(r,0.0005),(t-0.5)*TAMR_H)); }
+    CANDY_M.geo=new T.LatheGeometry(pts,32);
+    CANDY_M.capGeo=new T.CylinderGeometry(0.06,0.085,0.05,10);
   }
   var g=new T.Object3D(), tl=new T.Object3D(), sp=new T.Object3D(); g.add(tl); tl.add(sp); g.userData.spin=sp;
-  tl.rotation.x=0.26;                                  /* ميلٌ نحوَ الكاميرا يُظهرُ القهوة */
-  var H=0.92, RT=0.37, RB=0.28;
-  var body=new T.Mesh(new T.CylinderGeometry(RT,RB,H,40,1,true),CANDY_M.body); body.castShadow=true; sp.add(body);
-  var bot=new T.Mesh(new T.CircleGeometry(RB,32),CANDY_M.rim); bot.rotation.x=Math.PI/2; bot.position.y=-H/2; sp.add(bot);
-  var rim=new T.Mesh(new T.TorusGeometry(RT,0.024,8,40),CANDY_M.rim); rim.rotation.x=Math.PI/2; rim.position.y=H/2; sp.add(rim);
-  var top=new T.Mesh(new T.CircleGeometry(RT*0.95,32),CANDY_M.coffee); top.rotation.x=-Math.PI/2; top.position.y=H/2-0.05; sp.add(top);
-  for(var k=0;k<3;k++){ var ic=new T.Mesh(new T.BoxGeometry(0.13,0.1,0.13),CANDY_M.ice);
-    ic.position.set(Math.cos(k*2.1)*0.15,H/2-0.03,Math.sin(k*2.1)*0.15); ic.rotation.set(0.3*k,0.7*k,0.2); sp.add(ic); }
-  var gl=new T.Sprite(CANDY_M.glow); gl.scale.set(1.9,1.9,1); gl.position.z=-0.14; g.add(gl);
+  tl.rotation.set(0.24,0,0.30);                       /* ميلٌ نحوَ الكاميرا وإلى جانب: تمرةٌ لا عمود */
+  var body=new T.Mesh(CANDY_M.geo,CANDY_M.skin); body.castShadow=true; sp.add(body);
+  var cap=new T.Mesh(CANDY_M.capGeo,CANDY_M.cap); cap.position.y=TAMR_H/2-0.015; sp.add(cap);
+  var gl=new T.Sprite(CANDY_M.glow); gl.scale.set(1.7,1.7,1); gl.position.z=-0.14; g.add(gl);
   return g;
 }
 /* يُبدَّلُ الحرفُ المرسومُ بتبديلِ صورتِه وحدَها — لا مادّةَ جديدةَ ولا برنامج */
@@ -10437,11 +10429,12 @@ var PW_ICO=[
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v8.5a6 6 0 0 0 12 0V3.5"/><path d="M6 7.5h4M14 7.5h4"/></svg>',
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3c0 5 8 5.5 8 9s-8 4-8 9M16 3c0 5-8 5.5-8 9s8 4 8 9"/></svg>'];
 var PW_NAME=["درع","تحليق","مغناطيس","تمهّل"],
-    PW_DESC=["يصدُّ عنك صدمةً واحدة","تحلّقُ فوقَ كلِّ شيء","يجذبُ الحروفَ والأكواب","يبطئُ الجري"];
-/* المصّاصُ يُجمَعُ عبرَ الجولاتِ كلِّها (قرارُ محمد): لوحتُه بالمجموعِ لا بأكثرِ جولة.
-   وهنا مجموعُ هذا الجهاز؛ ومجموعُ اللوحةِ يحسبُه الخادمُ من الجولاتِ التي أعادَها وصدّقها. */
+    PW_DESC=["يصدُّ عنك صدمةً واحدة","تحلّقُ فوقَ كلِّ شيء","يجذبُ الحروفَ والتمر","يبطئُ الجري"];
+/* التمرُ يُجمَعُ عبرَ الجولاتِ كلِّها (قرارُ محمد): لوحتُه بالمجموعِ لا بأكثرِ جولة.
+   وهنا مجموعُ هذا الجهاز؛ ومجموعُ اللوحةِ يحسبُه الخادمُ من الجولاتِ التي أعادَها وصدّقها.
+   ومجموعُ الأكوابِ أيّامَ المسابقة كان في «darb_candyTotal»: يُمحى، فالتمرُ يبدأُ من صفر (قرارُه ٢٠٢٦-٠٩-٢٨). */
 var totC=0, pwUI={key:"",els:[],toastAt:-1,toastT:0,candy:-1};
-try{ totC=parseInt(localStorage.getItem("darb_candyTotal")||"0",10)||0; }catch(e){}
+try{ localStorage.removeItem("darb_candyTotal"); totC=parseInt(localStorage.getItem("darb_tamrTotal")||"0",10)||0; }catch(e){}
 function pwReset(){
   pwUI.key=""; pwUI.els=[]; pwUI.toastAt=-1; pwUI.toastT=0; pwUI.candy=-1;
   elPws.innerHTML=""; elPws.hidden=true; elToast.hidden=true; elSlow.style.opacity=0; elCandyN.textContent="0";
@@ -10481,8 +10474,8 @@ function hudPw(dt){
 /* النتيجةُ صارت مترًا لا نقاطًا، فأفضلُ القديمِ لا يُقارَنُ بها: يبدأُ السجلُّ من جديد */
 try{ best=parseInt(localStorage.getItem("darb_bestD")||"0",10)||0; }catch(e){}
 /* أفضلُ نتيجةٍ على شاشتَي البدءِ والنهاية (كانت في عنصرِ الفحصِ المخفيِّ وحدَه) */
-/* عددُ الأكواب بتمييزه: كوبٌ واحد، وكوبان، وأكوابٌ للعشرة وما دونها، و«كوبًا» لما فوقها */
-function cupWord(n){ var t=n%100; return n===1?"كوب":n===2?"كوبان":(t>=3&&t<=10)?"أكواب":n===0?"أكواب":"كوبًا"; }
+/* عددُ التمر بتمييزه: تمرةٌ واحدة، وتمرتان، وتمراتٌ للعشرة وما دونها، و«تمرةً» لما فوقها */
+function tamrWord(n){ var t=n%100; return n===1?"تمرة":n===2?"تمرتان":(t>=3&&t<=10)?"تمرات":n===0?"تمرات":"تمرةً"; }
 function showBest(){
   elBest.textContent=best; elBestOv.textContent=best+" م";
   elBestCOv.textContent=totC;
@@ -10500,7 +10493,7 @@ newSeed();
    وإرسالُ الضغطاتِ عند النهاية ليعيدَ الخادمُ الجولةَ ويحكم (v2/DARB-SYSTEM.md).
    **وكلُّ عطلٍ في الشبكةِ يُسقِطُ الجولةَ إلى تدريبٍ لا يُحسَب، ولا يوقفُ اللعبَ أبدًا.**
    والتذكرةُ تُطلَبُ مسبقًا وشاشةُ البدءِ أو النهايةِ قائمة، فلا ينتظرُ «ابدأ» الشبكة. */
-var CORE_VERSION="bb585ffc5310";
+var CORE_VERSION="84cea8ae0efe";
 var NET={ on:/^https?:$/.test(location.protocol)&&/^\/games\/darbak-khadar(\/|$)/.test(location.pathname),
           name:null, ready:null, ticket:null, asking:null, run:null, stale:false, editing:false,
           mode:"name", fresh:false, account:false, loggedIn:false };
@@ -10545,7 +10538,7 @@ function whoPaint(){
 /* أرقامُ اللوحةِ من الخادم: هي ما يراه الناس، لا ما حفظه هذا الجهازُ من جولاتِ التدريب */
 function netAdopt(d,c){
   if(typeof d==="number"){ best=d; try{ localStorage.setItem("darb_bestD",String(best)); }catch(e){} }
-  if(typeof c==="number"){ totC=c; try{ localStorage.setItem("darb_candyTotal",String(totC)); }catch(e){} }
+  if(typeof c==="number"){ totC=c; try{ localStorage.setItem("darb_tamrTotal",String(totC)); }catch(e){} }
   showBest();
 }
 function netStale(){
@@ -10612,10 +10605,8 @@ function netSend(body,tries){
   netApi("finish",body).then(function(j){
     try{ localStorage.removeItem("darb_pending"); }catch(e){}
     if(j.ok){
-      netAdopt(j.best,j.candyTotal);
+      netAdopt(j.best,j.tamrTotal);
       if(j.held) netLine("جولتُك تُراجَع قبل أن تدخل اللوحة.");
-      else if(j.window==="before") netLine("جولةُ تجربة: المسابقةُ تبدأ "+(CONTEST?ctWhen(CONTEST.s):"قريبًا")+".");
-      else if(j.window==="after") netLine("انتهت المسابقة، فلم تُحسَب هذه الجولة.");
       else netRank();
     } else netLine(j.message?"لم تُحفَظ الجولة: "+j.message:"لم تُحفَظ الجولة.");
     netTicket();
@@ -10626,26 +10617,23 @@ function netSend(body,tries){
     netLine("لم تُحفَظ الجولةُ بعد: لا اتّصال. سنحاول ثانيةً.");
   });
 }
-/* ── المسابقة: نافذتُها من الخادم، والخادمُ وحدَه يحكم بما يُحسَب (ساعةُ الجهاز للعرض فقط) ── */
-var CONTEST=null;
-function ctWhen(ms){
-  try{ return new Intl.DateTimeFormat("ar-SA-u-nu-latn-ca-gregory",{weekday:"long",hour:"numeric",minute:"2-digit",timeZone:"Asia/Riyadh"}).format(new Date(ms)); }
-  catch(e){ return ""; }
-}
-function contestPaint(){
-  var el=document.getElementById("contest"), now=Date.now();
-  if(!CONTEST||isNaN(CONTEST.s)||isNaN(CONTEST.e)){ el.hidden=true; return; }
-  /* وهي جاريةٌ لا سطر: الجوائزُ وموعدُ الإقفال في تبويب «المسابقة». وقبلها وبعدها يُقال قبل اللعب لا بعده */
-  if(now>=CONTEST.s&&now<CONTEST.e){ el.hidden=true; return; }
-  el.textContent= now<CONTEST.s ? "تدريب: المسابقةُ تبدأ "+ctWhen(CONTEST.s)+"."
-    : "انتهت المسابقة، ويُعلَن الفائزون بعد مراجعة النتائج.";
+/* ── أكوابُ المسابقة (قرارُ محمد ٢٠٢٦-٠٩-٢٨) ────────────────────────────────────────
+   من جمع أكوابًا أيّامَ المسابقة يُقال له مرّةً واحدةً في هذا المتصفّح إنّها محفوظةٌ في حسابه وإنّ ما
+   يُجمَع الآن تمر، فلا يظنُّ أكوابَه ضاعت. والمفتاحُ نفسُه في صفحة اللعبة (Board.tsx)، فأيُّهما رآه أوّلًا كفى. */
+var NOTE_KEY="darb_cupsNote";
+function notePaint(cups){
+  var el=document.getElementById("note"), seen=false;
+  try{ seen=localStorage.getItem(NOTE_KEY)==="1"; }catch(e){}
+  if(!(cups>0)||seen){ el.hidden=true; return; }
+  el.textContent="انتهت المسابقة وأكوابُك محفوظةٌ في حسابك، والآن اجمع التمر.";
   el.hidden=false;
+  try{ localStorage.setItem(NOTE_KEY,"1"); }catch(e){}
 }
 function netRank(){
   netApi("me").then(function(j){
     if(!j.ok||!j.name){ netLine("حُفِظت جولتُك."); return; }
-    var d=j.dist&&j.dist.rank, c=j.candy&&j.candy.rank;
-    netLine(c?("ترتيبُك "+c+" في الأكواب"+(d?"، و"+d+" في المسافة":"")):d?("ترتيبُك "+d+" في المسافة"):"حُفِظت جولتُك.");
+    var d=j.dist&&j.dist.rank, c=j.tamr&&j.tamr.rank;
+    netLine(c?("ترتيبُك "+c+" في التمر"+(d?"، و"+d+" في المسافة":"")):d?("ترتيبُك "+d+" في المسافة"):"حُفِظت جولتُك.");
   },function(){ netLine("حُفِظت جولتُك."); });
 }
 
@@ -10653,11 +10641,10 @@ if(NET.on){
   document.getElementById("toBoard").hidden=false;
   /* الدخولُ بحساب أدِيب يعود إلى اللعبة نفسِها (والتسجيلُ الجديدُ كذلك عبر الصفحة نفسِها) */
   elToAcct.href=elToAcct2.href="/login?next="+encodeURIComponent(location.pathname);
-  document.getElementById("spons").hidden=false;
   NET.ready=netApi("me").then(function(j){
-    if(j.ok&&j.contest){ CONTEST={s:Date.parse(j.contest.startsAt),e:Date.parse(j.contest.endsAt)}; contestPaint(); setInterval(contestPaint,30000); }
     if(j.ok){ NET.name=j.name||null; NET.account=!!j.account; NET.loggedIn=!!j.loggedIn;
-              if(j.name) netAdopt(j.dist&&j.dist.value,j.candy&&j.candy.value); }
+              if(j.name) netAdopt(j.dist&&j.dist.value,j.tamr&&j.tamr.value);
+              notePaint(j.cupsTotal); }
     whoPaint(); netTicket();
     var pend=null; try{ pend=JSON.parse(localStorage.getItem("darb_pending")||"null"); }catch(e){}
     if(pend&&pend.run) netApi("finish",pend).then(function(){ try{ localStorage.removeItem("darb_pending"); }catch(e){} },function(){});
@@ -10811,11 +10798,12 @@ function paintWord(){
   elWord.classList.toggle("long",w.length>4);       /* «تلاحم» خمسةُ أحرف: الخاناتُ أضيقُ فلا تبلغُ زرَّ الصوت */
 }
 /* ══ مشهدُ البدء، وهو شاشةُ البدء نفسُها (طلبا محمد ٢٠٢٦-٠٩-٢٥) ═══════════════════════════════
-   الأوّل: «ببداية اللعبة خُضَيران يرشُّ رشّاشَ بخّاخٍ ثلجيٍّ على جوّالِ اللاعب، وبيده كوبُ oos، وعند البدء
-   تظهر الشرطة ويبدأ الركض». والثاني: «أن تكون هذه الصفحة هي البداية التي بنيناها بشكل loop مع زر البدء فقط».
-   فالحلقةُ خلفَ «ابدأ» ما دامت شاشةُ البدء ظاهرة: تقتربُ الكاميرا ويستديرُ إلينا، في يسراه كوبٌ وفي يمناه
-   بخّاخ، وكلَّ ٥٫٦ ث يلوّحُ فيرشُّ ثلاثَ رشّاتٍ نحوَ الشاشة فتلتصقُ بقعُ ثلجٍ في نصفِها الأعلى بعيدًا عن
-   الزرّ وتذوب، وبينها يقفُ بكوبه. و«ابدأ» يقطعُها إلى الخروج (١٫١ ث): يستديرُ إلى الطريق، ويدخلُ الشرطيُّ
+   الأوّل: «ببداية اللعبة خُضَيران يرشُّ رشّاشَ بخّاخٍ ثلجيٍّ على جوّالِ اللاعب، وعند البدء تظهر الشرطة
+   ويبدأ الركض». والثاني: «أن تكون هذه الصفحة هي البداية التي بنيناها بشكل loop مع زر البدء فقط».
+   فالحلقةُ خلفَ «ابدأ» ما دامت شاشةُ البدء ظاهرة: تقتربُ الكاميرا ويستديرُ إلينا والبخّاخُ في يمناه، وكلَّ
+   ٥٫٦ ث يلوّحُ فيرشُّ ثلاثَ رشّاتٍ نحوَ الشاشة فتلتصقُ بقعُ ثلجٍ في نصفِها الأعلى بعيدًا عن الزرّ وتذوب،
+   وبينها يقف.
+   و«ابدأ» يقطعُها إلى الخروج (١٫١ ث): يستديرُ إلى الطريق، ويدخلُ الشرطيُّ
    من خلفِ الكاميرا، وتعودُ الكاميرا إلى مكانها، ثمّ الجولة. ولمسةٌ أثناءَ الخروجِ تتخطّاه.
    رسمٌ خالصٌ لا يمسُّ اللبّ، ولا حلقةَ لمن طلبَ في جهازه تقليلَ الحركة (يبدأ الركضُ عنده فورًا). */
 var INTRO={on:false,mode:"",t:0,e:0,d:0,go:null,props:null,parts:[],emit:0,yaw:Math.PI,cam:0,ofz:30.9,clip:"Idle",sfx:0};
@@ -10823,13 +10811,6 @@ var IN_P=5.6, IN_X=1.1;
 function introReduced(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
 function introProps(){
   if(INTRO.props) return INTRO.props;
-  makeCandy();                                   /* يهيّئ خاماتِ الكوب */
-  var cup=new T.Object3D(), H=0.92, RT=0.37, RB=0.28;
-  var body=new T.Mesh(new T.CylinderGeometry(RT,RB,H,32,1,true),CANDY_M.body); cup.add(body);
-  var bot=new T.Mesh(new T.CircleGeometry(RB,24),CANDY_M.rim); bot.rotation.x=Math.PI/2; bot.position.y=-H/2; cup.add(bot);
-  var rim=new T.Mesh(new T.TorusGeometry(RT,0.024,8,32),CANDY_M.rim); rim.rotation.x=Math.PI/2; rim.position.y=H/2; cup.add(rim);
-  var top=new T.Mesh(new T.CircleGeometry(RT*0.95,24),CANDY_M.coffee); top.rotation.x=-Math.PI/2; top.position.y=H/2-0.05; cup.add(top);
-  cup.scale.setScalar(0.36);
   var can=new T.Object3D(), mC=new T.MeshStandardMaterial({color:0x1F8E4D,roughness:0.32,metalness:0.35}),
       mW=new T.MeshStandardMaterial({color:0xF4F2EC,roughness:0.4,metalness:0.1});
   var cb=new T.Mesh(new T.CylinderGeometry(0.075,0.075,0.30,20),mC); can.add(cb);
@@ -10844,9 +10825,9 @@ function introProps(){
   var pm=new T.SpriteMaterial({map:dot,transparent:true,depthWrite:false,fog:false,toneMapped:false});
   var parts=[];
   for(var i=0;i<46;i++){ var sp=new T.Sprite(pm); sp.visible=false; scene.add(sp); parts.push({s:sp,t:-1,p0:new T.Vector3(),p1:new T.Vector3(),d:0.4,z:0}); }
-  cup.visible=false; can.visible=false; scene.add(cup); scene.add(can);
+  can.visible=false; scene.add(can);
   INTRO.parts=parts;
-  return (INTRO.props={cup:cup,can:can});
+  return (INTRO.props={can:can});
 }
 function introBone(n){ return rigKh.g ? rigKh.g.getObjectByName(n) : null; }
 /* تبدأُ الحلقةُ من الحلقةِ الرئيسة متى ظهرت شاشةُ البدء وجهزت الشخصيّة */
@@ -10868,7 +10849,7 @@ function start(t){
 function introFinish(){
   if(!INTRO.on) return;
   INTRO.on=false; INTRO.mode=""; INTRO.cam=0;
-  if(INTRO.props){ INTRO.props.cup.visible=false; INTRO.props.can.visible=false; }
+  if(INTRO.props){ INTRO.props.can.visible=false; }
   for(var i=0;i<INTRO.parts.length;i++){ INTRO.parts[i].s.visible=false; INTRO.parts[i].t=-1; }
   /* ما بقي من الثلجِ يتلاشى مع أوّلِ خطوة، فلا يحجبُ الحاجزَ الأوّل */
   var sn=document.getElementById("snow"); sn.classList.add("off");
@@ -10886,18 +10867,17 @@ function introUpdate(dt){
   if(!INTRO.on) return;
   var fz=window.__introFreeze?0:dt, sm=function(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); };
   var t=(INTRO.t+=fz), ex=INTRO.mode==="exit", e=ex?(INTRO.e+=fz):0;
-  /* الدورةُ تبدأُ بعد الاستدارةِ إلينا (٠٫٤ ث): تلويحٌ ورشٌّ ١٫٨ ث، ثمّ وقوفٌ بالكوب حتّى تتمّ ٥٫٦ */
+  /* الدورةُ تبدأُ بعد الاستدارةِ إلينا (٠٫٤ ث): تلويحٌ ورشٌّ ١٫٨ ث، ثمّ وقوفٌ حتّى تتمّ ٥٫٦ */
   var cyc=t<0.4?-1:Math.floor((t-0.4)/IN_P), c=t<0.4?-1:(t-0.4)-cyc*IN_P;
   INTRO.yaw=Math.PI*(1-sm(0,0.4,t)) + (ex?Math.PI*sm(0,0.45,e):0);
   INTRO.cam=sm(0,0.45,t)*(ex?1-sm(0.1,0.9,e):1);
   INTRO.clip= ex ? "Running" : (c>=0 && c<1.8) ? "Wave" : "Idle";
   INTRO.ofz= ex ? 4.9+26*(1-sm(0,0.8,e)) : 30.9;
   if(rigKh.act.Wave) rigKh.act.Wave.timeScale=1.1;
-  var P=INTRO.props, hR=introBone("Palm2R")||introBone("LowerArmR"), hL=introBone("Palm2L")||introBone("LowerArmL");
+  var P=INTRO.props, hR=introBone("Palm2R")||introBone("LowerArmR");
   var hold=!ex||e<0.45;
-  P.can.visible=hold&&!!hR; P.cup.visible=hold&&!!hL;
+  P.can.visible=hold&&!!hR;
   if(hR){ hR.getWorldPosition(inV); P.can.position.copy(inV); P.can.lookAt(camera.position); }
-  if(hL){ hL.getWorldPosition(inV2); P.cup.position.set(inV2.x,inV2.y+0.06,inV2.z); P.cup.rotation.set(0,runner.rotation.y,0); }
   /* ثلاثُ رشّاتٍ في أوّلِ كلِّ دورة (٠٫٣٥ و٠٫٩ و١٫٤٥ ث من بدء التلويح، واليدُ مرفوعة)، ومع كلِّ رشّةٍ
      بقعتان في الدورةِ الأولى وبقعةٌ فيما بعدها: الثلجُ مفاجأةُ أوّلِ مرّةٍ لا غطاءٌ دائمٌ على الزرّ */
   var bi=-1;
@@ -10956,12 +10936,12 @@ function startRun(t){
 function stop(){
   elHud.hidden=true; elPws.hidden=true; elToast.hidden=true; elSlow.style.opacity=0;
   var s2=sim.score(), c2=sim.candies(), prev=best; elFinal.textContent=s2; elFinalC.textContent=c2;
-  document.getElementById("finalCt").textContent=cupWord(c2);
+  document.getElementById("finalCt").textContent=tamrWord(c2);
   elLine.textContent=overLine(Math.floor(sim.s.dist),sim.s.picked,sim.s.words);
   if(s2>best){ best=s2;
     try{ localStorage.setItem("darb_bestD",String(best)); }catch(e){} }
   if(c2>0){ totC+=c2;
-    try{ localStorage.setItem("darb_candyTotal",String(totC)); }catch(e){} }
+    try{ localStorage.setItem("darb_tamrTotal",String(totC)); }catch(e){} }
   showBest();
   /* «رقمٌ قياسيٌّ جديد» حين يُكسَرُ رقمٌ سابق؛ والجولةُ الأولى لا رقمَ قبلَها تكسرُه */
   var rec=s2>prev&&prev>0;
@@ -11047,7 +11027,7 @@ function blkRoll(e,n,dist){
       يكتب، فإن زادَ picked في تكّةٍ سُجِّلت الخانةُ التي عبرَتها بالشرطِ نفسِه الذي في
       tick (|x−L| < GRABW، وx موضعُ العدّاءِ في تلك التكّة، وهو laneX() بعدَها). */
 var LW_FX=0.25, lwSim=null, lwGot={}, lwFx=[], cdGot={}, cdFx=[], CD_FX=0.40;
-/* هدفُ المصّاصِ الملتقَط: عدّادُه في الشريطِ العلويّ */
+/* هدفُ التمرةِ الملتقَطة: عدّادُها في الشريطِ العلويّ */
 function cdTarget(out){
   if(!elCandyC || !elHud || elHud.hidden) return null;
   var r=cv.getBoundingClientRect(), w=elCandyC.getBoundingClientRect();
@@ -11097,7 +11077,7 @@ function lwSync(dist){
     f.p1=cdTarget(new T.Vector3()) || f.p0.clone().setY(f.p0.y+1.6);
     cdFx.push(f);
   }
-  /* المصّاصُ يدورُ سريعًا ويطيرُ إلى عدّادِه، ينتفخُ ثمّ يصغرُ حتّى يغيب */
+  /* التمرةُ تدورُ سريعًا وتطيرُ إلى عدّادِها، تنتفخُ ثمّ تصغرُ حتّى تغيب */
   for(i=cdFx.length-1;i>=0;i--){ f=cdFx[i]; t=(now-f.t0)/CD_FX;
     if(t>=1 || t<0){ f.g.scale.setScalar(1); give("candy",f.g); cdFx.splice(i,1); continue; }
     f.g.position.lerpVectors(f.p0,f.p1,t*t);
@@ -11306,7 +11286,7 @@ function loop(ts){
   if(sim&&(playing||(window.__s0&&window.__s0.alive&&!sim.s.alive))){
     var S0=window.__s0||(window.__s0={picked:-1,words:-1,alive:true,air:0,slide:0,lane:0,stepPh:-1,candy:-1,brk:-1,pwAt:-1,lix:0,pw:null});
     var sx=sim.laneX();
-    /* الحرفُ والمصّاصُ يُسمَعانِ من جهتِهما (المغناطيسُ يجذبُهما من المسارِ الآخر) */
+    /* الحرفُ والتمرةُ يُسمَعانِ من جهتِهما (المغناطيسُ يجذبُهما من المسارِ الآخر) */
     if(S0.picked>=0 && sim.s.picked>S0.picked){ var lL=letterAt(seed,sim.s.evL); SND.letter(S0.lix,lL===false?0:(lL-sx)*0.6); }
     if(S0.pwAt>=0   && sim.s.pwAt!==S0.pwAt && sim.s.pwLast>=0) SND.power(sim.s.pwLast);
     if(S0.candy>=0  && sim.s.candy>S0.candy){ var cL=candyAt(seed,sim.s.evC); SND.candy(cL===false?0:(cL-sx)*0.6); }
@@ -11862,7 +11842,7 @@ function loop(ts){
   renderer.render(scene,camera);
 }
 ctWarm();
-/* برامجُ الليلِ (والمصّاصِ وفقاعةِ الدرعِ وحلقتي المغناطيس) تُبنى عندَ التحميل: الهالاتُ والبقعُ والنجومُ والقبّتان مخفيّةٌ نهارًا، فلو تُرِكت
+/* برامجُ الليلِ (والتمرةِ وفقاعةِ الدرعِ وحلقتي المغناطيس) تُبنى عندَ التحميل: الهالاتُ والبقعُ والنجومُ والقبّتان مخفيّةٌ نهارًا، فلو تُرِكت
    لبُنيت برامجُها عندَ أوّلِ غروبٍ في منتصفِ الجولة — والبناءُ في الجوّالِ يوقفُ إطارًا أو اثنين.
    فيُضافُ مصباحٌ وسيّارةُ عائقٍ إلى المشهدِ لحظةً ويُترجَمُ كلُّ شيءٍ ليلًا، ثمّ يعودُ النهار. */
 (function dnWarm(){

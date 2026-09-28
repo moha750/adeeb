@@ -7,6 +7,7 @@ import { DarbStatsView } from "./DarbStatsView";
 /**
  * **إحصائيّاتُ «دربك خضر»** (طلبُ المالك ٢٠٢٦-٠٩-٢٥): كم زار، وكم لعب، وكم مرّة، وكم أنشأ حسابًا
  * من أجل اللعبة. تحت «إحصائيّات الزوّار» وبقفلها نفسِه، وتُقرأ في الخادم كلَّ طلب وتتجدّد كلَّ دقيقة.
+ * واللعبةُ دائمةٌ بعد المسابقة (٢٠٢٦-٠٩-٢٨)، فلا طورَ للمسابقة في الرأس: الأرقامُ حيّةٌ دائمًا.
  */
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,6 @@ export default async function DarbStatsPage() {
   if (denied) return denied;
 
   const { data, error } = await getDarbStats();
-  const now = data ? Date.parse(data.now) : 0;
-  const live = data !== null && now >= Date.parse(data.startsAt) && now < Date.parse(data.endsAt);
 
   return (
     <>
@@ -24,20 +23,12 @@ export default async function DarbStatsPage() {
         title="إحصائيّات دربك خضر"
         crumbLeaf="دربك خضر"
         parent={{ label: "إحصائيّات الزوّار", href: "/dashboard/analytics" }}
-        status={
-          data
-            ? live
-              ? { label: "المسابقةُ جارية", tone: "success", live: true }
-              : now < Date.parse(data.startsAt)
-                ? { label: "لم تبدأ المسابقة", tone: "neutral" }
-                : { label: "انتهت المسابقة", tone: "neutral" }
-            : undefined
-        }
+        status={data ? { label: "مباشر", tone: "success", live: true } : undefined}
       />
       {error || !data ? (
         <Alert tone="warning" title="تعذّر جلب الإحصائيّات">{error ?? "لا بيانات."}</Alert>
       ) : (
-        <DarbStatsView data={data} live={live} />
+        <DarbStatsView data={data} />
       )}
     </>
   );

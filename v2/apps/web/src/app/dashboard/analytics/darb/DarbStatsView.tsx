@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AreaChart, SectionCard, Stat } from "@adeeb/design-system";
-import { Coffee, GameController, PersonSimpleRun, Repeat, UserPlus, Users } from "@phosphor-icons/react";
+import { GameController, PersonSimpleRun, Repeat, Sparkle, UserPlus, Users } from "@phosphor-icons/react";
 import { DataTable, type Column } from "../../_components/DataTable";
 import type { DarbStats } from "./data";
 
@@ -23,16 +23,15 @@ const COLS: Column<Day>[] = [
 ];
 
 /**
- * **عرضُ الأرقام** — ستّةُ كروت، ثمّ الساعاتُ، ثمّ الأيّام. ويتجدّد كلَّ دقيقةٍ ما دامت المسابقةُ
- * جارية (يعيد الخادمُ القراءة، فلا حسابَ في المتصفّح).
+ * **عرضُ الأرقام** — ستّةُ كروت، ثمّ آخرُ يومين بالساعات، ثمّ الأيّام. ويتجدّد كلَّ دقيقة (يعيد الخادمُ
+ * القراءة، فلا حسابَ في المتصفّح)، فاللعبةُ دائمةٌ بعد المسابقة.
  */
-export function DarbStatsView({ data, live }: { data: DarbStats; live: boolean }) {
+export function DarbStatsView({ data }: { data: DarbStats }) {
   const router = useRouter();
   useEffect(() => {
-    if (!live) return;
     const t = setInterval(() => router.refresh(), 60_000);
     return () => clearInterval(t);
-  }, [live, router]);
+  }, [router]);
 
   const perPlayer = data.players ? (data.runs / data.players).toFixed(1) : "0";
 
@@ -44,10 +43,10 @@ export function DarbStatsView({ data, live }: { data: DarbStats; live: boolean }
         <Stat icon={<GameController />} value={nf(data.runs)} label="جولةً بدأت" note={`اكتمل منها ${nf(data.runsDone)}`} />
         <Stat icon={<Repeat />} value={perPlayer} label="جولةً لكلّ لاعبٍ في المتوسّط" />
         <Stat icon={<UserPlus />} value={nf(data.accounts)} label="حسابًا أُنشئ من أجل اللعبة" note={`ومنذ إطلاق اللعبة ${nf(data.accountsAll)}`} />
-        <Stat icon={<Coffee />} value={nf(data.cups)} label="كوبًا في لوحة المسابقة" />
+        <Stat icon={<Sparkle />} value={nf(data.tamr)} label="تمرةً في لوحة «أكثر تمر»" />
       </div>
 
-      <SectionCard title="الجولات واللاعبون كلَّ ساعة">
+      <SectionCard title="الجولات واللاعبون كلَّ ساعة، آخرَ يومين">
         <AreaChart
           labels={data.hourly.map((h) => hourFmt.format(new Date(h.hour)))}
           series={[

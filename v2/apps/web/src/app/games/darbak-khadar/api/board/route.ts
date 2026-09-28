@@ -9,7 +9,7 @@ import { fail } from "@/lib/darb/http";
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const kind = url.searchParams.get("kind") === "candy" ? "candy" : "dist";
+  const kind = url.searchParams.get("kind") === "tamr" ? "tamr" : "dist";
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
 
   const sb = service();

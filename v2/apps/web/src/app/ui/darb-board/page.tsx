@@ -6,33 +6,30 @@ import { Board, type BoardData } from "@/app/games/darbak-khadar/_components/Boa
 
 /**
  * **معرضُ لوحة صدارة «دربك خضر»** — يرسم المكوّنَ الحقيقيّ نفسَه (`app/games/darbak-khadar/_components/Board`)
- * ببياناتٍ مصنوعة، في الضوءين وفي حالاته الثلاث.
+ * ببياناتٍ مصنوعة، في الضوءين وفي حالاته.
  *
  * ══ ما حُسم ══
  * **الهويّةُ مستقلّةٌ مثل المحطّة**، فلا رأسَ للموقع ولا تذييل. واسمُ النادي سطرٌ واحدٌ هادئ
  * «من إنتاج وتشغيل نادي أدِيب» أسفلَ اللوحة (وفي اللعبة زرُّ الحفظ بالحساب)، ولا ثالثَ لهما.
- * **والاسمُ مستعارٌ يختاره اللاعب**، ولا يُجمع رقمُ جوّالٍ أصلًا (سقط بقرار المالك
- * ٢٠٢٦-٠٩-٢٤: انسحب الراعي فلا جوائز، والفائزُ يُعلَن باسمه في منشور). والمسافةُ
- * **أفضلُ جولة**، والمصّاصُ **مجموعُ الجولات كلّها**. والثلاثةُ الأوائل يتميّزون
- * **بلا ذكرٍ لجائزة**.
+ * **والاسمُ مستعارٌ يختاره اللاعب**. والمسافةُ **أفضلُ جولة**، والتمرُ **مجموعُ الجولات كلّها**.
  *
  * ══ والجولةُ الأولى ══
  * عُرض اتّجاهان: «ليلُ الملعب» (منصّةٌ على أرضيّة اللعبة الداكنة) و«ملصقُ النهار»
  * (رملٌ وسماء وجدول). فاختار المالكُ الأوّل **وطلب منه نسختين، ليليّةً ونهاريّة**،
  * والضوءُ في الإنتاج من إعداد الجهاز (`app/games/darbak-khadar/layout.tsx`).
  *
- * ══ ومسابقةُ أكواب oos (٢٠٢٦-٠٩-٢٥) ══
- * جاء الراعي، فصار الكوبُ مكانَ المصّاص، ولوحةُ الأكواب الأولى وعلى منصّتها الجوائز.
- * والحالاتُ هنا: ممتلئةٌ والمسابقةُ جارية، وزائرٌ قبل الافتتاح، وفارغةٌ بعد الإقفال.
- *
  * ══ والتبويباتُ الخمسة (٢٠٢٦-٠٩-٢٥) ══
  * حسابي، والمسابقة، والصدارة، وكيف تُلعب؟، والدعم (قرارُ المالك وترتيبُه). والإطاران يُبدَّل فيهما التبويبُ
- * باللمس كما في الإنتاج، بلا أن يتبدّل رابطُ المعرض (`syncUrl={false}`). وحالٌ رابعةٌ هنا لـ«حسابي»:
- * لاعبٌ محفوظٌ بحساب أدِيب، بجانب الضيف الذي له اسمٌ في «ممتلئة» والزائرِ في «قبل الافتتاح».
+ * باللمس كما في الإنتاج، بلا أن يتبدّل رابطُ المعرض (`syncUrl={false}`).
+ *
+ * ══ وبعد المسابقة (٢٠٢٦-٠٩-٢٨) ══
+ * التمرةُ مكانَ الكوب، ولوحتا المسافة والتمر دائمتان، والمسابقةُ ذكرى بفائزيها وأرقامها ودعوةِ الرعاة.
+ * ورسالةُ الأكواب واحتفاءُ الفائز مرّةً واحدةً في المتصفّح، فالمعرضُ يمحو علامتَيهما عند كلّ اختيارٍ للحالة،
+ * والإطارُ الأوّلُ منهما يأخذهما (كما يأخذهما في الإنتاج أوّلُ ما يُفتح). فاختر «الليل» وحدَه لتراهما.
  *
  * ══ وما هو توضيحيّ ══
  * الأسماءُ والأرقامُ كلُّها مصنوعة، ومعايَرةٌ على اللعبة: الجولةُ الوسطى ٩٦٠ مترًا،
- * و٦٨٤٠ مترًا قرابةُ دقيقتين ونصف، ومصّاصٌ ونصفٌ لكلّ ألف متر.
+ * و٦٨٤٠ مترًا قرابةُ دقيقتين ونصف، وتمرةٌ ونصفٌ لكلّ ألف متر.
  */
 
 const DIST = [
@@ -40,94 +37,95 @@ const DIST = [
   "أبو سلطان", "قلب جدّة", "نسمة الشمال", "الرحّال",
 ].map((name, i) => ({ rank: i + 1, name, value: [6840, 6215, 5930, 5480, 5105, 4870, 4620, 4390, 4155, 3980, 3770, 3540][i] }));
 
-const CANDY = [
-  "برق", "ريم", "صقر الأحساء", "غيمة", "أبو سلطان", "نسمة الشمال", "نجم الشرقية", "الرحّال",
-  "سهم نجد", "قلب جدّة", "ظلّ النخيل", "فارس العارض",
-].map((name, i) => ({ rank: i + 1, name, value: [212, 187, 164, 151, 139, 122, 118, 104, 97, 91, 86, 80][i] }));
+const TAMR = [
+  "غيمة", "الرحّال", "ريم", "سهم نجد", "برق", "قلب جدّة", "صقر الأحساء", "أبو سلطان",
+].map((name, i) => ({ rank: i + 1, name, value: [34, 29, 23, 18, 15, 11, 8, 5][i] }));
 
-/**
- * نوافذُ مصنوعةٌ حول لحظة فتح المعرض، فيطابق عدّادُ تبويب المسابقة حالتَه أيًّا كان يومُ فتحه:
- * قبل الافتتاح بساعتين، وجاريةٌ منذ ساعة، ومنتهيةٌ منذ خمس. (العدّادُ لا يُرسَم في الخادم أصلًا،
- * فاختلافُ «الآن» بين الخادم والجهاز لا يمسّ الترطيب.)
- */
-const T0 = Date.now();
-const H = 3_600_000;
-const TXT = { starts: "الجمعة 6:00 م", ends: "الأحد 6:00 م" };
-const WIN = {
-  before: { ...TXT, startsAt: T0 + 2 * H + 15 * 60_000, endsAt: T0 + 53 * H },
-  open: { ...TXT, startsAt: T0 - H, endsAt: T0 + 50 * H },
-  after: { ...TXT, startsAt: T0 - 56 * H, endsAt: T0 - 5 * H },
-};
-
-/** الفائزون بعد الإقفال (٢٠٢٦-٠٩-٢٧): الثلاثةُ الأوائل في الأكواب بأرقامهم، كما تعيدهم `darb_winners`. */
+const CONTEST = { starts: "الجمعة 6:30 م", ends: "الأحد 6:00 م" };
+/** الفائزون كما تعيدهم `darb_winners`، وأرقامُ المسابقة كما تعيدها `darb_contest_recap`. */
 const WINNERS = [
   { rank: 1, name: "برق", cups: 212, dist: 5930, runs: 64, minutes: 214 },
   { rank: 2, name: "ريم", cups: 187, dist: 4870, runs: 51, minutes: 190 },
   { rank: 3, name: "صقر الأحساء", cups: 164, dist: 6840, runs: 47, minutes: 171 },
 ];
+const RECAP = { players: 148, runs: 1612, cups: 15402, minutes: 3444 };
+const MEMORY = { contest: CONTEST, winners: WINNERS, recap: RECAP };
 
-type State = "full" | "account" | "guest" | "empty" | "winners" | "winner";
+type State = "full" | "account" | "day1" | "guest" | "empty" | "winner";
 const STATES: Record<State, BoardData> = {
+  /* ضيفٌ له نتائجُ وأكوابٌ من المسابقة: رسالةُ الأكواب، وتذكيرُ الحفظ بالحساب */
   full: {
+    ...MEMORY,
     dist: DIST,
-    candy: CANDY,
-    contest: { phase: "open", ...WIN.open },
+    tamr: TAMR,
     me: {
       name: "ابن الهفوف",
       dist: { rank: 23, value: 2410, above: 2720 },
-      candy: { rank: 31, value: 38, above: 41 },
+      tamr: { rank: 9, value: 4, above: 5 },
+      cups: { total: 41, contest: 38, rank: 31, of: 129 },
     },
   },
   account: {
+    ...MEMORY,
     dist: DIST,
-    candy: CANDY,
-    contest: { phase: "open", ...WIN.open },
+    tamr: TAMR,
     loggedIn: true,
     me: {
-      name: "برق",
+      name: "غيمة",
       account: true,
-      dist: { rank: 3, value: 5930, above: 6215 },
-      candy: { rank: 1, value: 212, above: null },
+      dist: { rank: 8, value: 4390, above: 4620 },
+      tamr: { rank: 1, value: 34, above: null },
+      cups: { total: 0, contest: 0, rank: null, of: 129 },
     },
   },
-  guest: {
-    dist: DIST.slice(0, 2),
-    candy: CANDY.slice(0, 2),
-    me: null,
-    contest: { phase: "before", ...WIN.before },
-  },
-  empty: { dist: [], candy: [], me: null, contest: { phase: "after", ...WIN.after } },
-  winners: {
+  /* يومُ النشر: المسافةُ ممتلئة، والتمرُ لم يجمعه أحدٌ بعد */
+  day1: {
+    ...MEMORY,
     dist: DIST,
-    candy: CANDY,
-    contest: { phase: "after", ...WIN.after },
-    winners: WINNERS,
+    tamr: [],
+    loggedIn: true,
     me: {
-      name: "ابن الهفوف",
-      dist: { rank: 23, value: 2410, above: 2720 },
-      candy: { rank: 31, value: 38, above: 41 },
+      name: "نجم الشرقية",
+      account: true,
+      dist: { rank: 2, value: 6215, above: 6840 },
+      tamr: { rank: null, value: 0, above: null },
+      cups: { total: 96, contest: 90, rank: 12, of: 129 },
     },
   },
-  /* الفائزُ نفسُه داخلٌ: القصاصاتُ والتبريك. والمعرضُ يرسم اللوحةَ مرّتين (ليلًا ونهارًا)، فاختر «الليل»
-     وحدَه لترى احتفاءً واحدًا كما في الإنتاج */
+  guest: { ...MEMORY, dist: DIST.slice(0, 2), tamr: TAMR.slice(0, 2), me: null },
+  empty: { ...MEMORY, dist: [], tamr: [], me: null },
+  /* الفائزُ نفسُه داخلٌ: القصاصاتُ والتبريك، ثمّ رسالةُ الأكواب */
   winner: {
+    ...MEMORY,
     dist: DIST,
-    candy: CANDY,
-    contest: { phase: "after", ...WIN.after },
-    winners: WINNERS,
+    tamr: TAMR,
     loggedIn: true,
     me: {
       name: "برق",
       account: true,
       dist: { rank: 3, value: 5930, above: 6215 },
-      candy: { rank: 1, value: 212, above: null },
+      tamr: { rank: 5, value: 15, above: 18 },
+      cups: { total: 212, contest: 212, rank: 1, of: 129 },
     },
   },
 };
 
+/** يمحو علامتَي «مرّةً واحدة» (`useOnce` في `bits.tsx`) فتُرى الرسالةُ والاحتفاءُ عند كلّ اختيار. */
+function fresh() {
+  try {
+    localStorage.removeItem("darb_cupsNote");
+    localStorage.removeItem("darb_celebrated");
+  } catch {
+    /* تخزينٌ مغلق: لا شيء يُمحى */
+  }
+}
+
 export default function DarbBoardPage() {
   const [only, setOnly] = useState<"both" | "night" | "day">("both");
-  const [state, setState] = useState<State>("full");
+  const [state, setState] = useState<State>(() => {
+    if (typeof window !== "undefined") fresh();
+    return "full";
+  });
   const data = STATES[state];
 
   return (
@@ -138,8 +136,7 @@ export default function DarbBoardPage() {
       </h1>
       <p className="mt-3 max-w-2xl text-sm leading-8 text-muted">
         المكوّنُ الحقيقيُّ نفسُه ببياناتٍ مصنوعة. الضوءُ في الإنتاج من إعداد الجهاز: ليلٌ
-        للداكن ونهارٌ للفاتح. والحالاتُ ثلاث: لوحةٌ ممتلئةٌ ولك فيها ترتيب، وزائرٌ لم يسجّل
-        ولاعبان فقط فالمنصّةُ فيها مكانٌ شاغر، ولوحةٌ فارغةٌ قبل أوّل جولة.
+        للداكن ونهارٌ للفاتح. ورسالةُ الأكواب واحتفاءُ الفائز مرّةً واحدة، فتظهران في الإطار الأوّل وحدَه.
       </p>
 
       <div className="mt-7 flex flex-wrap gap-3">
@@ -156,13 +153,16 @@ export default function DarbBoardPage() {
         <Segmented
           aria-label="الحالة"
           value={state}
-          onValueChange={(v) => setState(v as State)}
+          onValueChange={(v) => {
+            fresh();
+            setState(v as State);
+          }}
           items={[
-            { value: "full", label: "ممتلئة" },
+            { value: "full", label: "ضيفٌ بأكواب" },
             { value: "account", label: "بحساب" },
-            { value: "guest", label: "قبل الافتتاح" },
-            { value: "empty", label: "بعد الإقفال" },
-            { value: "winners", label: "الفائزون" },
+            { value: "day1", label: "يومُ التمر" },
+            { value: "guest", label: "زائر" },
+            { value: "empty", label: "فارغة" },
             { value: "winner", label: "فائزٌ داخل" },
           ]}
         />

@@ -1,40 +1,23 @@
 "use client";
 
-import { Gift, Key, Scales, ShieldCheck, SealCheck, Trophy } from "@phosphor-icons/react";
-import { ArrowLeft } from "@/app/_components/glyphs";
-import { Cup, OosMark, PRIZE, n, useNow } from "./bits";
-import type { BoardContest, Winner } from "./Board";
+import { ChartBar, Handshake, Megaphone, Storefront, Trophy, UserCircle } from "@phosphor-icons/react";
+import { ArrowLeft, WhatsappLogo } from "@/app/_components/glyphs";
+import { Cup, OosMark, PRIZE, SUPPORT_EMAIL, WA_NUMBER, n, waLink } from "./bits";
+import type { BoardContest, BoardMe, Recap, Winner } from "./Board";
 import type { TabKey } from "./tabs";
 
 /**
- * **تبويبُ المسابقة** (قرارُ المالك ٢٠٢٦-٠٩-٢٥): كلُّ ما كان سطرين فوق اللوحة وسطرًا تحتها صار
- * صفحةً تُقرأ قبل اللعب. الراعي، والعدّاد، والجوائز، وكيف يُحسب الفائز، واللعبُ النظيف، والاستلام.
+ * **تبويبُ المسابقة ذكرى** (قرارُ المالك ٢٠٢٦-٠٩-٢٨: «تبقى المسابقة كذكرى، وننقل مكان الرعاية من الدعم إلى
+ * المسابقة بحيث نشجّع الرعاة يدعمون»). كان صفحةً تُقرأ قبل اللعب (العدّاد، والجوائز، وكيف يُحسب الفائز،
+ * والاستلام)، فصار ما بقي منها بعد الإقفال:
+ *   - **موعدُها وراعيها**، والفائزون بإحصائيّاتهم (طلبُه ٢٠٢٦-٠٩-٢٧).
+ *   - **سطرُ «أنت»** لمن جمع أكوابًا: كم جمع وترتيبُه بين من جمعوا. وهي ذكرى اللاعب، والأكوابُ لا تتحوّل تمرًا.
+ *   - **المسابقةُ بالأرقام** (`darb_contest_recap`): من لعب، وكم جولة، وكم كوبًا جُمع، وكم ساعة.
+ *   - **دعوةُ الرعاة**، منقولةً من الدعم: الأرقامُ فوقها هي ما يقنع، فمكانُها بعدها.
  *
- * **والاستلامُ جملةٌ هنا وفعلٌ في «حسابي»:** الفائزُ يُثبت اسمَه بحسابه في أدِيب ومن خلاله نتواصل معه
- * (أُزيل رمزُ الاسترجاع ٢٠٢٦-٠٩-٢٥). وقراءةُ ذلك لا تحمي أحدًا، فالزرُّ يأخذه إلى حيث يحفظه.
- *
- * **والموعدُ من القاعدة** (`darb_contest_window`، محسوبًا في `page.tsx`) لا من هنا. فإن غاب
- * الجدولُ قال العدّادُ إنّ الموعدَ يُعلَن، ولا يخترع تاريخًا.
+ * وهذا الموضعُ وحدَه يبقى فيه كوبُ oos واسمُهم بعد أن صارت التمرةُ ما يُجمَع: ذكرى، لا لعب.
+ * والأرقامُ كلُّها من القاعدة، ثابتةٌ منذ الإقفال، فلا يكتب هنا رقمٌ باليد.
  */
-
-const RANKS = [
-  { r: 1, label: "المركز الأوّل" },
-  { r: 2, label: "المركز الثاني" },
-  { r: 3, label: "المركز الثالث" },
-];
-
-/** الطورُ الآن: من ساعة الجهاز إن دقّت وعُرفت النافذة، وإلّا فممّا حسبه الخادم. */
-function phaseAt(c: NonNullable<BoardContest>, now: number | null) {
-  if (now === null || c.startsAt === undefined || c.endsAt === undefined) return c.phase;
-  return now < c.startsAt ? "before" : now < c.endsAt ? "open" : "after";
-}
-
-/** الباقي أيّامًا وساعاتٍ ودقائقَ وثواني. واليومُ لا يُعرض إن كان صفرًا. */
-function split(ms: number) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  return { d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
-}
-const two = (x: number) => String(x).padStart(2, "0");
 
 /** دقائقُ اللعب ساعاتٍ ودقائق: «٨ س ٣٧ د»، والساعةُ لا تُذكر إن كانت صفرًا. */
 function played(min: number) {
@@ -42,10 +25,12 @@ function played(min: number) {
   return h > 0 ? `${n(h)} س ${n(m)} د` : `${n(m)} د`;
 }
 
+const WA_SPONSOR = waLink("السلام عليكم، أرغب في رعاية مسابقةٍ من مسابقات نادي أدِيب وأودّ معرفة التفاصيل.");
+
 /**
- * **الفائزون بإحصائيّاتهم** (طلبُ المالك ٢٠٢٦-٠٩-٢٧ بعد الإقفال). بأسمائهم المستعارة وحدَها كما وعدت
- * جملةُ الاستلام، ولكلٍّ جائزتُه وأرقامُه في المسابقة: الأكواب، وأبعدُ مسافة، والجولات، ووقتُ اللعب (من
- * التكّات، فالتوقّفُ لا يُحسب). ومن كان منهم صاحبَ المتصفّح يُعلَّم «أنت».
+ * **الفائزون بإحصائيّاتهم** (طلبُ المالك ٢٠٢٦-٠٩-٢٧ بعد الإقفال). بأسمائهم المستعارة وحدَها، ولكلٍّ جائزتُه
+ * وأرقامُه في المسابقة: الأكواب، وأبعدُ مسافة، والجولات، ووقتُ اللعب (من التكّات، فالتوقّفُ لا يُحسب). ومن كان
+ * منهم صاحبَ المتصفّح يُعلَّم «أنت».
  */
 function Winners({ winners, me }: { winners: Winner[]; me: string | null }) {
   return (
@@ -92,56 +77,7 @@ function Winners({ winners, me }: { winners: Winner[]; me: string | null }) {
           </li>
         ))}
       </ol>
-      <p>مبروك للفائزين، ونتواصل مع كلٍّ منهم عبر حسابه لتسليم جائزته. وشكرًا لكلّ من لعب.</p>
-    </div>
-  );
-}
-
-function Clock({ contest, won }: { contest: BoardContest; won: boolean }) {
-  const now = useNow();
-  if (!contest) {
-    return (
-      <div className="drba-card drba-clock">
-        <p className="drba-clock-lbl">موعدُ المسابقة يُعلَن هنا قريبًا</p>
-      </div>
-    );
-  }
-  const phase = phaseAt(contest, now);
-  const target = phase === "before" ? contest.startsAt : phase === "open" ? contest.endsAt : undefined;
-  const left = now !== null && target !== undefined ? split(target - now) : null;
-  const units = left
-    ? [
-        ...(left.d > 0 ? [{ v: String(left.d), u: "يوم" }] : []),
-        { v: two(left.h), u: "ساعة" },
-        { v: two(left.m), u: "دقيقة" },
-        { v: two(left.s), u: "ثانية" },
-      ]
-    : [
-        { v: "--", u: "ساعة" },
-        { v: "--", u: "دقيقة" },
-        { v: "--", u: "ثانية" },
-      ];
-
-  return (
-    <div className="drba-card drba-clock" data-phase={phase}>
-      <p className="drba-clock-lbl">
-        {phase === "before" ? "تبدأ المسابقة بعد" : phase === "open" ? "المسابقةُ جارية، وتنتهي بعد" : "انتهت المسابقة"}
-      </p>
-      {phase !== "after" ? (
-        <div className="drba-clock-row" role="timer" aria-live="off">
-          {units.map((x) => (
-            <span key={x.u} className="drba-clock-u">
-              <b>{x.v}</b>
-              <span>{x.u}</span>
-            </span>
-          ))}
-        </div>
-      ) : (
-        <p>{won ? "أُعلن الفائزون، وهم أدناه." : "يُعلَن الفائزون بعد مراجعة النتائج."}</p>
-      )}
-      <p className="drba-clock-when">
-        من {contest.starts} إلى {contest.ends}، بتوقيت السعوديّة
-      </p>
+      <p>الجوائزُ رصيدٌ في محفظة مقهى oos، يشتري به الفائزُ ما شاء من منتجاتهم. مبروك للفائزين، وشكرًا لكلّ من لعب.</p>
     </div>
   );
 }
@@ -149,15 +85,17 @@ function Clock({ contest, won }: { contest: BoardContest; won: boolean }) {
 export function Contest({
   contest,
   winners,
+  recap,
   me,
   go,
 }: {
   contest: BoardContest;
   winners?: Winner[];
-  me: string | null;
+  recap: Recap | null;
+  me: BoardMe;
   go: (t: TabKey) => void;
 }) {
-  const won = Boolean(winners && winners.length > 0);
+  const mine = me && me.cups.contest > 0 ? me.cups : null;
   return (
     <>
       <section className="drba-hero">
@@ -165,72 +103,116 @@ export function Contest({
         <p className="drba-spons">
           برعاية <OosMark />
         </p>
-        <p>اجمع أكوابَ oos في جولاتك، والثلاثةُ الأكثرُ جمعًا يفوزون.</p>
+        <p>
+          {contest
+            ? `مسابقةُ اليوم الوطنيّ، من ${contest.starts} إلى ${contest.ends}. جمع فيها اللاعبون أكوابَ oos، وفاز الثلاثةُ الأكثرُ جمعًا.`
+            : "مسابقةُ اليوم الوطنيّ: جمع فيها اللاعبون أكوابَ oos، وفاز الثلاثةُ الأكثرُ جمعًا."}
+        </p>
       </section>
 
       <div className="drba-body">
-        <Clock contest={contest} won={won} />
-        {won && winners ? <Winners winners={winners} me={me} /> : null}
+        {mine && me ? (
+          <div className="drba-card" data-tone="ok">
+            <div className="drba-status">
+              <UserCircle />
+              <div>
+                <b>{`«${me.name}»، أكوابُك في المسابقة: ${n(mine.contest)}`}</b>
+                <p>
+                  {mine.rank !== null ? `وترتيبُك ${n(mine.rank)} من ${n(mine.of)} جمعوا أكوابًا. ` : ""}
+                  محفوظةٌ لك ذكرى، وما تجمعه الآن تمر.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
-        <div className="drba-card">
-          <h2>
-            <Gift />
-            الجوائز
-          </h2>
-          <ol className="drba-prizes">
-            {RANKS.map(({ r, label }) => (
-              <li key={r} className="drba-prz" data-rank={r}>
-                <span className="drba-prz-rk">{r}</span>
-                <b>{label}</b>
-                <span className="drba-prz-amt">{PRIZE[r]}</span>
+        {winners && winners.length > 0 ? <Winners winners={winners} me={me?.name ?? null} /> : null}
+
+        {recap ? (
+          <div className="drba-card">
+            <h2>
+              <ChartBar />
+              المسابقةُ بالأرقام
+            </h2>
+            <ul className="drba-nums">
+              <li>
+                <b>{n(recap.players)}</b>
+                <span>اللاعبون</span>
               </li>
-            ))}
-          </ol>
-          <p>رصيدٌ في محفظة مقهى oos، يشتري به الفائزُ ما شاء من منتجاتهم.</p>
-        </div>
+              <li>
+                <b>{n(recap.runs)}</b>
+                <span>الجولات</span>
+              </li>
+              <li>
+                <b>
+                  <Cup />
+                  {n(recap.cups)}
+                </b>
+                <span>الأكوابُ المجموعة</span>
+              </li>
+              <li>
+                <b>{n(Math.round(recap.minutes / 60))}</b>
+                <span>ساعاتُ اللعب</span>
+              </li>
+            </ul>
+            {contest ? <p className="drba-when">في يومين، من {contest.starts} إلى {contest.ends}.</p> : null}
+          </div>
+        ) : null}
 
-        <div className="drba-card">
-          <h2>
-            <Scales />
-            كيف يُحسب الفائز
+        {/* **دعوةُ الرعاة** (نُقلت من الدعم بقرار المالك ٢٠٢٦-٠٩-٢٨): وعدُها من واقع هذه المسابقة وأرقامِها أعلاه */}
+        <div className="drba-card" data-tone="gold">
+          <p className="drba-eyebrow">لأصحاب الأعمال</p>
+          <h2 className="drba-big">
+            <Handshake />
+            اجعل علامتك في يد اللاعبين
           </h2>
-          <ul className="drba-dots">
-            <li>مجموعُ الأكواب في جولاتك كلّها، من افتتاح المسابقة حتّى إقفالها.</li>
-            <li>ما لُعب قبل الافتتاح تجربةٌ لا تُحسب.</li>
-            <li>إن تعادل لاعبان تقدّم من بلغ المجموعَ أوّلًا.</li>
-            <li>لوحةُ أبعد مسافة لوحةُ شرفٍ بلا جائزة.</li>
+          <p className="drba-lead">
+            {recap
+              ? `أكوابُ oos التي جمعها اللاعبون في يومين: ${n(recap.cups)}. فالإعلانُ هنا لا يمرّ عليه الناسُ مرورًا: يجمعونه ويتسابقون عليه.`
+              : "الإعلانُ هنا لا يمرّ عليه الناسُ مرورًا: يجمعونه ويتسابقون عليه."}
+          </p>
+          <ul className="drba-items">
+            <li className="drba-item">
+              <span className="drba-item-ic" aria-hidden="true">
+                <Storefront />
+              </span>
+              <span>
+                <b>علامتُك داخل اللعبة</b>
+                <span>منتجُك في الطريق يجمعه كلُّ لاعب، كما كان كوبُ oos في هذه المسابقة.</span>
+              </span>
+            </li>
+            <li className="drba-item">
+              <span className="drba-item-ic" aria-hidden="true">
+                <Trophy />
+              </span>
+              <span>
+                <b>مسابقةٌ باسمك وجوائزُك</b>
+                <span>شعارُك في المسابقة وصفحتها، وجوائزُ الفائزين منك.</span>
+              </span>
+            </li>
+            <li className="drba-item">
+              <span className="drba-item-ic" aria-hidden="true">
+                <Megaphone />
+              </span>
+              <span>
+                <b>حضورٌ في منشورات أدِيب</b>
+                <span>نذكرك في إعلان المسابقة ونتائجها، وفي ما ننشره عنها.</span>
+              </span>
+            </li>
           </ul>
-          <button type="button" className="drba-link" onClick={() => go("how")}>
-            كيف تجمع أكوابًا أكثر؟
-            <ArrowLeft />
-          </button>
-        </div>
-
-        <div className="drba-card">
-          <h2>
-            <ShieldCheck />
-            اللعبُ النظيف
-          </h2>
-          <p>
-            كلُّ جولةٍ يعيد الخادمُ لعبَها من ضغطاتك ويحسب نتيجتها بنفسه، فلا يُقبل رقمٌ معدَّل. ونتائجُ
-            الأوائل تُراجَع قبل الإعلان.
+          <a className="drba-btn" data-kind="gold" data-wide="" href={WA_SPONSOR} target="_blank" rel="noopener">
+            <WhatsappLogo />
+            تواصل معنا لرعاية المسابقة القادمة
+          </a>
+          <p className="drba-note">
+            أو راسلنا على <span dir="ltr">{WA_NUMBER}</span> أو <span dir="ltr">{SUPPORT_EMAIL}</span>.
           </p>
         </div>
 
-        <div className="drba-card">
-          <h2>
-            <SealCheck />
-            استلامُ الجائزة
-          </h2>
-          <p>
-            نعلن الفائزين بأسمائهم المستعارة بعد مراجعة النتائج، ويُثبت الفائزُ أنّ الاسمَ له بحسابه في
-            أدِيب، ومن خلاله نتواصل معه. فاحفظ اسمَك بحسابك قبل أن تفوز.
-          </p>
-          <button type="button" className="drba-btn" data-wide="" onClick={() => go("me")}>
-            <Key />
-            احفظ اسمك من «حسابي»
-          </button>
-        </div>
+        <button type="button" className="drba-link" onClick={() => go("board")}>
+          المتصدّرون الآن
+          <ArrowLeft />
+        </button>
       </div>
     </>
   );

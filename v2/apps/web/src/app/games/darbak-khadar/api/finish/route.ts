@@ -5,7 +5,7 @@ import { fail, isCount, isUuid, json, readJson, sameOrigin } from "@/lib/darb/ht
 /**
  * **نهايةُ جولة: الخادمُ يعيدها ويحكم.**
  *
- * يصل رقمُ التذكرة والضغطاتُ بلحظاتها، ومعها ما رآه الجهاز (المسافةُ والمصّاصُ
+ * يصل رقمُ التذكرة والضغطاتُ بلحظاتها، ومعها ما رآه الجهاز (المسافةُ والتمرُ
  * والتكّات) **للمقارنة لا للحكم**. فتُقرأ البذرةُ من التذكرة، وتُعاد الجولةُ باللبّ،
  * وما يُحفَظ هو ما حسبه الخادم.
  *
@@ -16,8 +16,10 @@ import { fail, isCount, isUuid, json, readJson, sameOrigin } from "@/lib/darb/ht
  *   لنا: إمّا عبثٌ بالأرقام، وإمّا (وهو الأخطر) محرّكٌ يحسب غيرَ ما يحسبه الخادم.
  * - وفي القاعدة `fast`: جولةٌ زمنُ لعبها أطولُ من الزمن الذي مضى منذ التذكرة ← تُلغى.
  *   الإيقافُ يطيل الزمنَ الحقيقيّ ولا يقصّره، فالأسرعُ من الساعة حسابٌ لا لعب.
- * - وفيها `out`: جولةٌ خارج نافذة المسابقة ← تُحفَظ ولا تُحسَب، ويعود `window`
- *   (`before` أو `after`) فتقول اللعبةُ لماذا.
+ *
+ * وكانت للمسابقة نافذةٌ لا يُحسب ما خرج عنها (`out`)، فلمّا صارت ذكرى (٢٠٢٦-٠٩-٢٨) صارت كلُّ جولةٍ صادقةٍ
+ * تُحسب. والقاعدةُ تفرّق بين التمر والأكواب ببصمة اللبّ الذي لُعبت به الجولة (`darb_cup_cores`)، فيعود
+ * `tamrTotal` مجموعَ التمر للّعبة، و`cupsTotal` مجموعَ أكوابه ذكرى.
  */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return fail(403, "طلبٌ من خارج الموقع.");
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
   });
   if (error || !data) return fail(500, "تعذّر حفظُ الجولة.");
 
-  const res = data as { status: string; counted?: boolean; window?: "before" | "after"; best_dist?: number; candy_total?: number };
+  const res = data as { status: string; counted?: boolean; best_dist?: number; tamr_total?: number; cups_total?: number };
   if (res.status === "closed") return fail(409, "أُرسلت هذه الجولةُ من قبل.");
   if (res.status === "expired") return fail(410, "انتهت مهلةُ هذه الجولة.");
   if (res.status === "fast") return fail(422, "زمنُ الجولة لا يطابق زمنَها الحقيقيّ.");
@@ -72,8 +74,8 @@ export async function POST(req: Request) {
     candies: r.candies,
     counted: res.counted === true,
     held: r.capped,
-    window: res.window,
     best: res.best_dist ?? 0,
-    candyTotal: res.candy_total ?? 0,
+    tamrTotal: res.tamr_total ?? 0,
+    cupsTotal: res.cups_total ?? 0,
   });
 }

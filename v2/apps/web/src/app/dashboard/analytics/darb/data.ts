@@ -2,7 +2,7 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 
 /**
- * **أرقامُ «دربك خضر» منذ افتتاح المسابقة** — نداءٌ واحدٌ لـ`darb_stats()` بمفتاح الخدمة
+ * **أرقامُ «دربك خضر» منذ افتتاح المسابقة** (وهو يومُ ظهورها للناس) — نداءٌ واحدٌ لـ`darb_stats()` بمفتاح الخدمة
  * (الجداولُ بلا سياسةٍ تحت RLS، والدالّةُ لمفتاح الخدمة وحده). والصفحةُ لا تُفتح إلّا لمن يملك
  * قدرةَ إحصائيّات الموقع، فالحارسُ قبل النداء لا بعده.
  */
@@ -18,10 +18,12 @@ export type DarbStats = {
   newPlayers: number;
   runs: number;
   runsDone: number;
-  cups: number;
+  /** التمرُ في لوحة «أكثر تمر» (بعد المسابقة، ٢٠٢٦-٠٩-٢٨). */
+  tamr: number;
   /** حساباتُ أدِيب التي أُنشئت من أجل اللعبة منذ الافتتاح، و`accountsAll` منذ أوّل لاعب. */
   accounts: number;
   accountsAll: number;
+  /** آخرُ ثمانٍ وأربعين ساعة. */
   hourly: { hour: string; runs: number; players: number }[];
   daily: { day: string; visitors: number; players: number; runs: number; accounts: number }[];
 };

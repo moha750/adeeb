@@ -1,10 +1,11 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
 /**
- * **لَبِناتُ صفحة «دربك خضر» المشتركة** — ما يحتاجه أكثرُ من تبويب: كوبُ oos وشعارُهم، والأعداد
- * بأرقامٍ غربيّة (كما في اللعبة نفسِها)، وجوائزُ المراكز، ورابطُ اللعبة، وساعةٌ تدقّ بعد الترطيب.
+ * **لَبِناتُ صفحة «دربك خضر» المشتركة** — ما يحتاجه أكثرُ من تبويب: التمرةُ وعددُها، والأعداد بأرقامٍ
+ * غربيّة (كما في اللعبة نفسِها)، ورابطُ اللعبة. ومعها للذكرى وحدَها (تبويبُ المسابقة واحتفاءُ فائزيها):
+ * كوبُ oos وشعارُهم وعددُ الأكواب وجوائزُ المراكز.
  * كانت في `Board.tsx` وحدَه، فلمّا صارت الصفحةُ خمسةَ تبويباتٍ (٢٠٢٦-٠٩-٢٥) نُقلت هنا مصدرًا واحدًا.
  */
 
@@ -20,22 +21,73 @@ export const LOGIN = `/login?next=${encodeURIComponent("/games/darbak-khadar?tab
 /** واتساب النادي للتواصل والرعاية (قرارُ المالك ٢٠٢٦-٠٩-٢٥)، ورقمُه مكتوبًا كما يُقرأ. */
 export const WA_NUMBER = "0543837775";
 export const waLink = (text: string) => `https://wa.me/966543837775?text=${encodeURIComponent(text)}`;
+/** بريدُ النادي للدعم والرعاية، أكّده المالك (٢٠٢٦-٠٩-٢٥). */
+export const SUPPORT_EMAIL = "adeab.kfu@gmail.com";
 
 const fmt = new Intl.NumberFormat("en-US");
 export const n = (x: number) => fmt.format(x);
 
-/** جوائزُ oos: رصيدٌ في محفظة المقهى، يشتري به الفائزُ ما شاء من منتجاته. */
-export const PRIZE: Record<number, string> = { 1: "30 ريالًا", 2: "20 ريالًا", 3: "10 ريالات" };
-
-/** عددُ الأكواب بتمييزه العربيّ: واحدٌ ومثنًّى، وجمعٌ للعشرة وما دونها، ومفردٌ لما فوقها. */
-export function cups(k: number) {
-  if (k === 1) return "كوبًا واحدًا";
-  if (k === 2) return "كوبَين";
+/**
+ * العددُ ومعدودُه منصوبًا كما في اللعبة (فئاتُ الجمع العربيّة): واحدٌ ومثنًّى بالكلمة، وما آخرُه ٣–١٠ جمعٌ،
+ * وما آخرُه ١١–٩٩ مفردٌ منصوب، وما سواه (المئاتُ والألوف) مفردٌ مجرور: «100 تمرة».
+ */
+function counted(k: number, one: string, two: string, few: string, many: string, hundred: string) {
+  if (k === 1) return one;
+  if (k === 2) return two;
   const t = k % 100;
-  return t >= 3 && t <= 10 ? `${n(k)} أكواب` : `${n(k)} كوبًا`;
+  return `${n(k)} ${t >= 3 && t <= 10 ? few : t >= 11 ? many : hundred}`;
 }
 
-/** كوبُ oos كما في عدّاد اللعبة: جسمٌ ليلكيٌّ وحزامٌ داكنٌ وحافّةٌ بيضاء (الألوانُ رموزٌ في `.drb-cup`). */
+/** عددُ التمر: «تمرةً واحدة»، «تمرتين»، «5 تمرات»، «12 تمرةً»، «100 تمرة». */
+export const tamr = (k: number) => counted(k, "تمرةً واحدة", "تمرتين", "تمرات", "تمرةً", "تمرة");
+
+/** التمرةُ كما في عدّاد اللعبة: جلدٌ محمرٌّ بظلٍّ ووجه، وبريقٌ وتجعيدة، وقِمعٌ ذهبيّ (الألوانُ رموزٌ في `.drb-tamr`). */
+export function Tamr() {
+  return (
+    <svg className="drb-tamr" viewBox="0 0 24 24" aria-hidden="true">
+      <g transform="rotate(-22 12 12.6)">
+        <ellipse className="tb" cx="12" cy="13.2" rx="5.5" ry="8.4" />
+        <ellipse className="tl" cx="11.2" cy="12.6" rx="3.9" ry="6.9" />
+        <path className="th" d="M9.4 8.9c-.8 1.7-1 3.9-.6 5.9" />
+        <path className="tw" d="M13.7 9.4c1 2.5 1 5.6-.3 8.3" />
+        <path className="tc" d="M10 5.6c.4-1.1 3.6-1.1 4 0l-.6 1.2h-2.8z" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * **مرّةً واحدةً في هذا المتصفّح** (رسالةُ الأكواب، واحتفاءُ الفائز): `true` بعد التركيب إن لم يُرَ المفتاحُ
+ * قبلُ، ويُعلَّم في اللحظة نفسِها. والقراءةُ بعد التركيب لا في التهيئة: الخادمُ لا `localStorage` عنده، فالبدءُ
+ * منها يخالف أوّلَ رسمٍ عميليٍّ ويكسر الترطيب (النمطُ نفسُه في `usePersistentView`). ومن أُغلق تخزينُه لا تُعرض عليه
+ * في كلّ دخول: لا رسالة.
+ */
+export function useOnce(key: string, when: boolean): [boolean, () => void] {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!when) return;
+    let seen: boolean;
+    try {
+      seen = localStorage.getItem(key) === "1";
+      localStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- قراءة localStorage آمنةُ الترطيب تلزم ما بعد التركيب (انظر أعلاه)
+    if (!seen) setOn(true);
+  }, [key, when]);
+  return [on, () => setOn(false)];
+}
+
+/* ── ذكرى المسابقة (الجمعة ٢٥ سبتمبر ٦:٣٠ م إلى الأحد ٢٧ سبتمبر ٦ م) ── */
+
+/** جوائزُ المسابقة كما أُعلنت: رصيدٌ في محفظة مقهى oos، يشتري به الفائزُ ما شاء من منتجاته. */
+export const PRIZE: Record<number, string> = { 1: "30 ريالًا", 2: "20 ريالًا", 3: "10 ريالات" };
+
+/** عددُ الأكواب: «كوبًا واحدًا»، «كوبَين»، «5 أكواب»، «12 كوبًا»، «100 كوب». */
+export const cups = (k: number) => counted(k, "كوبًا واحدًا", "كوبَين", "أكواب", "كوبًا", "كوب");
+
+/** كوبُ oos كما كان في عدّاد اللعبة أيّامَ المسابقة: جسمٌ ليلكيٌّ وحزامٌ داكنٌ وحافّةٌ بيضاء (`.drb-cup`). */
 export function Cup() {
   return (
     <svg className="drb-cup" viewBox="0 0 24 24" aria-hidden="true">
@@ -58,20 +110,4 @@ export function OosMark() {
       </svg>
     </span>
   );
-}
-
-/**
- * **ساعةٌ تدقّ كلَّ ثانية، ولا وجودَ لها في الخادم.** عدّادُ المسابقة يُحسب من «الآن»، و«الآن»
- * في الخادم غيرُه في الجهاز بثوانٍ، فلو رُسم هناك لاختلف الترطيب. فالخادمُ يرسم `null` (خاناتٍ
- * فارغة)، والجهازُ يملؤها بعد الترطيب. والقيمةُ مقرّبةٌ إلى الثانية كي تبقى واحدةً بين قراءتين
- * متتاليتين (شرطُ `useSyncExternalStore`).
- */
-function tick(cb: () => void) {
-  const t = setInterval(cb, 1000);
-  return () => clearInterval(t);
-}
-const nowSec = () => Math.floor(Date.now() / 1000) * 1000;
-const noClock = () => null;
-export function useNow(): number | null {
-  return useSyncExternalStore(tick, nowSec, noClock);
 }

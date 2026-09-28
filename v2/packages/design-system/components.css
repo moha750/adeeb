@@ -11999,7 +11999,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 
    **واللوحةُ تُشتقّ ولا تُخترَع:** ليس للعبة شعارٌ بعد، فعلامتُها ما يراه
    اللاعبُ فيها. فالليلُ والحبرُ من واجهتها (`g3.html :root`) حرفًا بحرف،
-   والأخضرُ بدلةُ خضيران، والمصّاصُ لونُ حلواه، والرملُ والسماءُ من نهار
+   والأخضرُ بدلةُ خضيران، والتمرةُ لونُ خلاصها، والرملُ والسماءُ من نهار
    طريقها (`sand tint` و`hemiS`)، والنحاسيُّ لونُ غروبها (`fog` عند الغسق).
    فلا لونَ هنا لم يمرّ على شاشة اللعبة.
 
@@ -12020,14 +12020,18 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --drb-moon: #EDF3E9;
   --drb-moon-2: #AFC0A8;
   --drb-moon-3: #7E9076;
-  /* البدلةُ والمصّاص */
+  /* البدلة */
   --drb-suit: #4FA547;
   --drb-suit-lit: #7ED06A;
   --drb-suit-deep: #37742F;
-  --drb-candy: #2FB35A;
-  --drb-stick: #F3EFE6;
   --drb-white: #FFFFFF;
-  /* كوبُ oos (الراعي، ٢٠٢٦-٠٩-٢٥): لونا كوبهم، الليلكيُّ جسمًا والبنفسجيُّ الداكنُ حزامًا وخلفيّةَ شعارهم */
+  /* التمرة (٢٠٢٦-٠٩-٢٨): ما يجمعه اللاعب كما في عدّاد اللعبة، جلدٌ محمرٌّ بظلٍّ ووجه، وبريقٌ وتجعيدة،
+     وقِمعُها ذهبُ الأوسمة (`--drb-gold`) */
+  --drb-tamr: #6B3413;
+  --drb-tamr-lit: #B4652A;
+  --drb-tamr-hi: #FBE0B2;
+  --drb-tamr-deep: #4A200B;
+  /* كوبُ oos وشعارُه: ذكرى مسابقة اليوم الوطنيّ (تبويبُها واحتفاءُ فائزيها) وحدَها */
   --drb-oos: #C98AD6;
   --drb-oos-ink: #503A61;
   /* النهار: رملُ الطريق مفتوحًا درجتين، وسماؤه */
@@ -12073,11 +12077,15 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .drb-num { font-variant-numeric: tabular-nums; }
 .drb-unit { font-size: .72em; font-weight: 700; margin-inline-start: 3px; }
 
-/* المصّاصُ رسمُ اللعبة نفسُه (عدّادُ الشاشة)، لا أيقونةٌ من مكتبة: هو علامتُها.
+/* التمرةُ رسمُ اللعبة نفسُه (عدّادُ الشاشة)، لا أيقونةٌ من مكتبة: هي علامتُها.
    `inline-block` صراحةً لأنّ تمهيدَ Tailwind يجعل كلَّ svg كتلةً فينزل الرقمُ تحته.
-   وعودُه وقرصُه رمزان يُقلَبان بالسطح (`--stick` و`--candy`): عودٌ فاتحٌ يختفي
-   على الرمل، وقرصٌ أخضرُ يذوب في أخضر «أنت». */
-.drb-cup { display: inline-block; inline-size: 1.1em; block-size: 1.1em; flex: 0 0 auto; vertical-align: -.18em; }
+   وكوبُ oos على قالبها للذكرى وحدَها. */
+.drb-tamr, .drb-cup { display: inline-block; inline-size: 1.1em; block-size: 1.1em; flex: 0 0 auto; vertical-align: -.18em; }
+.drb-tamr .tb { fill: var(--drb-tamr); }
+.drb-tamr .tl { fill: var(--drb-tamr-lit); }
+.drb-tamr .th { fill: none; stroke: var(--drb-tamr-hi); stroke-width: 1.4; stroke-linecap: round; }
+.drb-tamr .tw { fill: none; stroke: var(--drb-tamr-deep); stroke-width: .9; stroke-linecap: round; opacity: .55; }
+.drb-tamr .tc { fill: var(--drb-gold); }
 .drb-cup .cb { fill: var(--drb-oos); }
 .drb-cup .cn { fill: var(--drb-oos-ink); }
 .drb-cup .cr { fill: var(--drb-white); }
@@ -12123,11 +12131,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --a-mark: var(--drb-suit-lit);
   --a-on: var(--drb-moon);
   --a-on-ink: var(--drb-night);
-  --a-on-stick: var(--drb-ink-3);
   --a-gold: var(--drb-gold);         --a-gold-ink: var(--drb-gold);
   --a-silver: var(--drb-silver);     --a-silver-ink: var(--drb-silver);
   --a-bronze: var(--drb-bronze);     --a-bronze-ink: var(--drb-bronze);
-  --stick: var(--drb-stick);
   background: var(--a-ground); color: var(--a-ink);
 }
 /* النهار: الرملُ أرضيّةٌ والورقُ لوح، والسماءُ مكانَ وهج الأخضر. والأوسمةُ
@@ -12147,11 +12153,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --a-mark: var(--drb-suit-deep);
   --a-on: var(--drb-night);
   --a-on-ink: var(--drb-sand);
-  --a-on-stick: var(--drb-moon-2);
   --a-gold-ink: var(--drb-gold-ink);
   --a-silver-ink: var(--drb-silver-ink);
   --a-bronze-ink: var(--drb-bronze-ink);
-  --stick: var(--drb-ink-3);
 }
 
 .drba-page {
@@ -12170,7 +12174,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .drba-hero { padding: var(--drb-s4) var(--drb-pad) 0; }
 .drba-hero h1 { font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.15; }
 .drba-hero p { margin-top: var(--drb-s1); font-size: .8125rem; color: var(--a-ink-3); }
-/* الراعي، ثمّ نافذةُ المسابقة في لوحٍ هادئٍ يحدّه ليلكيُّ oos وهي جارية */
+/* راعي المسابقة في ذكراها */
 .drba-hero .drba-spons { display: flex; align-items: center; gap: 8px; margin-top: var(--drb-s2); color: var(--a-ink-2); }
 
 .drba-tabs {
@@ -12183,7 +12187,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   transition: background .2s, color .2s;
 }
 .drba-tab svg { inline-size: 18px; block-size: 18px; }
-.drba-tab[aria-pressed="true"] { background: var(--a-on); color: var(--a-on-ink); font-weight: 800; --stick: var(--a-on-stick); }
+.drba-tab[aria-pressed="true"] { background: var(--a-on); color: var(--a-on-ink); font-weight: 800; }
 
 /* المنصّة: الترتيبُ في الورقة ٢ ثمّ ١ ثمّ ٣، فيقع الأوّلُ في الوسط والثاني عن يمينه */
 .drba-pod {
@@ -12205,8 +12209,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   max-width: 100%; margin-top: 9px; font-weight: 800; font-size: .875rem; text-align: center;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-/* جائزةُ المركز تحت رقمه على المنصّة (لوحةُ الأكواب وحدَها) */
-.drba-prize { display: block; margin-top: 6px; font-size: .75rem; font-weight: 800; line-height: 1.2; color: var(--a-ink); }
 .drba-val { margin-top: 2px; font-weight: 800; font-size: .9375rem; color: var(--medal-ink); white-space: nowrap; }
 .drba-val .drb-unit { color: var(--a-ink-3); }
 .drba-block {
@@ -12262,7 +12264,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   margin: var(--drb-s5) var(--drb-pad) 0; padding: var(--drb-s5) var(--drb-s4) var(--drb-s4);
   border-radius: var(--drb-r) var(--drb-r) 0 0; background: var(--a-sheet); text-align: center;
 }
-.drba-empty > .drb-cup { inline-size: 46px; block-size: 46px; }
+.drba-empty > .drb-tamr { inline-size: 46px; block-size: 46px; }
 .drba-empty b { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; }
 .drba-empty p { font-size: .875rem; color: var(--a-ink-3); }
 .drba-empty .drba-play { margin-top: var(--drb-s2); }
@@ -12278,7 +12280,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   background: linear-gradient(to top, var(--a-sheet) 62%, color-mix(in oklab, var(--a-sheet) 0%, transparent));
 }
 .drba-me-in {
-  --stick: var(--drb-night); --candy: var(--drb-night);
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
   padding: 10px 16px; border-radius: 18px; background: var(--drb-suit); color: var(--drb-night);
   box-shadow: 0 10px 28px -10px color-mix(in oklab, var(--drb-suit) 70%, transparent);
@@ -12337,14 +12338,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .drba-card[data-tone="ok"] { --st: var(--a-mark); border-color: color-mix(in oklab, var(--drb-suit) 55%, var(--a-rule)); }
 .drba-card[data-tone="warn"] { --st: var(--a-gold-ink); border-color: color-mix(in oklab, var(--a-gold) 60%, var(--a-rule)); }
 
-/* نقاطٌ خضراءُ لقائمة القواعد */
-.drba-dots { display: flex; flex-direction: column; gap: 6px; }
-.drba-dots li { position: relative; padding-inline-start: 16px; }
-.drba-dots li::before {
-  content: ""; position: absolute; inset-inline-start: 2px; top: .78em;
-  inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--a-mark);
-}
-
 /* ── الأزرار: ممتلئٌ بلون «المختار»، وأخضرُ البدلة للّعب، وشفّافٌ بحدٍّ للثانويّ ── */
 .drba-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -12365,23 +12358,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .drba-link svg { inline-size: 16px; block-size: 16px; }
 .drba-body > .drba-link { align-self: center; margin-top: 4px; }
 
-/* ── المسابقة: العدّاد والجوائز ── */
-.drba-clock { align-items: center; text-align: center; }
-.drba-clock[data-phase="open"] { border-color: color-mix(in oklab, var(--drb-oos) 60%, var(--a-rule)); }
-.drba-card .drba-clock-lbl { font-weight: 800; font-size: .9375rem; color: var(--a-ink); }
-.drba-clock-row { display: flex; justify-content: center; gap: 8px; }
-.drba-clock-u {
-  display: grid; justify-items: center; gap: 2px; min-inline-size: 60px; padding: 10px 6px 8px;
-  border-radius: var(--drb-r-sm); background: var(--a-sunk);
-}
-.drba-clock-u b {
-  font-family: var(--font-display); font-weight: 900; font-size: 1.75rem; line-height: 1.1;
-  font-variant-numeric: tabular-nums; color: var(--a-ink);
-}
-.drba-clock-u span { font-size: .6875rem; font-weight: 700; color: var(--a-ink-3); }
-.drba-card .drba-clock-when { font-size: .8125rem; color: var(--a-ink-3); }
-
-.drba-prizes { display: flex; flex-direction: column; gap: 8px; }
+/* ── المسابقةُ ذكرى: مراكزُ الفائزين بأوسمتها ── */
 .drba-prz {
   --medal: var(--a-silver); --medal-ink: var(--a-silver-ink);
   display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px;
@@ -12436,7 +12413,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 
 .drba-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .drba-stat { padding: 12px; border-radius: var(--drb-r-sm); background: var(--a-row); }
-.drba-stat span { display: block; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
+.drba-stat > span { display: block; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
 .drba-stat b { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 900; font-size: 1.25rem; color: var(--a-ink); }
 .drba-stat b .drb-unit { color: var(--a-ink-3); }
 
@@ -12490,3 +12467,13 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 }
 .drba-cel-card .drba-cel-ic svg { inline-size: 36px; block-size: 36px; }
 .drba-cel-card h2.drba-big { justify-content: center; margin-top: 0; }
+
+/* ── ذكرى المسابقة بأرقامها (٢٠٢٦-٠٩-٢٨): الرقمُ كبيرٌ ومعدودُه تحته، وسطرُ «أنت» فيها ── */
+.drba-card .drba-when { font-size: .8125rem; color: var(--a-ink-3); }
+.drba-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.drba-nums li { padding: 12px; border-radius: var(--drb-r-sm); background: var(--a-row); }
+.drba-nums b {
+  display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 900;
+  font-size: 1.5rem; line-height: 1.2; color: var(--a-ink); font-variant-numeric: tabular-nums;
+}
+.drba-nums span { display: block; margin-top: 2px; font-size: .75rem; font-weight: 700; color: var(--a-ink-3); }
