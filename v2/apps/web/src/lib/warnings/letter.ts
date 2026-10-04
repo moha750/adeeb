@@ -1,7 +1,7 @@
 /**
  * خطاب الإنذار — يُرسَم ويُنزَّل PNG. عميليّ حصرًا (يمسّ DOM).
  *
- * القالب الذي زوّده المالك (`public/brand/warning-template.png`، 1241×1755) **ورقةٌ رسميّة
+ * القالب الذي زوّده المالك (`public/templates/warning.png`، 1241×1755) **ورقةٌ رسميّة
  * كاملة**: إطارٌ منقوش وشعارا الجامعة والنادي أعلى، والختمُ وتوقيعا رئيس النادي وقائدة
  * الموارد أسفل — ولا نصّ فيه. فما نرسمه هو **المتن وحده** في بياض الورقة، بحبرٍ أبيض
  * لأنّ أرضيّتها كحليّة.
@@ -77,7 +77,7 @@ const headSizes = (body: number) => {
 
 /** يبني خطاب الإنذار ويعيده Blob بصيغة PNG. */
 export async function renderWarningLetter(l: WarningLetter): Promise<Blob> {
-  const ctx = await openPaper("/brand/warning-template.png", PAGE);
+  const ctx = await openPaper("/templates/warning.png", PAGE);
 
   const center = (BOX.left + BOX.right) / 2;
   const paragraphs = [...letterParagraphs(l), signature];

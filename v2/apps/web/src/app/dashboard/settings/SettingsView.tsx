@@ -22,6 +22,7 @@ import {
 } from "./actions";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+import { PwaCard } from "@/app/_pwa/PwaCard";
 import type { LoginMethod, MySession, MySettings } from "./data";
 import { BIO_MAX, PROVIDER_LABEL, type ProviderKey } from "./vocab";
 
@@ -382,6 +383,9 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
         </CardBody>
       </Card>
 
+      {/* ── ٤ب · أَدِيب على جوّالك: التثبيتُ وإشعاراتُ شاشة القفل (v2/PUSH-NOTIFICATIONS.md) ── */}
+      <PwaCard />
+
       {/* ── ٥ · صفحتك العلنيّة ── */}
       <Card>
         <CardHeader
@@ -531,8 +535,8 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           value={bio}
           maxLength={BIO_MAX}
           onChange={(e) => setBio(e.target.value)}
-          error={bioLeft < 0 ? `تجاوزتَ الحدّ بـ${-bioLeft} محرفًا.` : undefined}
-          helper={`بقي ${bioLeft} محرفًا من ${BIO_MAX}.`}
+          error={bioLeft < 0 ? `تجاوزتَ الحدّ بـ${-bioLeft} حرفًا.` : undefined}
+          helper={`بقي ${bioLeft} حرفًا من ${BIO_MAX}.`}
         />
         {bioErr ? <Alert tone="danger">{bioErr}</Alert> : null}
       </Modal>

@@ -7,9 +7,8 @@ import { MobileSheet, MobileTabs } from "../../../dashboard/_shell/MobileNav";
 import { navFor } from "../../../dashboard/_shell/nav";
 import { ToastProvider } from "../../../dashboard/_components/ToastProvider";
 import { SavedLinksView } from "../../../dashboard/tools/qr/SavedLinksView";
-import { defaultQrSpec } from "../../../dashboard/tools/qr/defaults";
 import type { QrLinkRow } from "../../../dashboard/tools/qr/data";
-import { qrShortUrl } from "@/lib/qrLinks";
+import { sampleQrLink } from "../../_qr/sample";
 import type { MyScope } from "@/lib/myScope";
 
 /**
@@ -33,18 +32,17 @@ const row = (
   host: string,
   scans: number,
   active = true,
-): QrLinkRow => ({
-  id: `demo-${i}`,
-  code: `demo${i}xy`,
-  title,
-  targetUrl: `https://${host}/x`,
-  spec: defaultQrSpec(qrShortUrl(`demo${i}xy`)),
-  active,
-  ownerId: "demo-owner",
-  scanCount: scans,
-  createdAt: new Date(Date.UTC(2026, 7, 20 + i)).toISOString(),
-  updatedAt: new Date(Date.UTC(2026, 8, 1)).toISOString(),
-});
+): QrLinkRow =>
+  sampleQrLink({
+    id: `demo-${i}`,
+    code: `demo${i}xy`,
+    title,
+    targetUrl: `https://${host}/x`,
+    active,
+    scanCount: scans,
+    createdAt: new Date(Date.UTC(2026, 7, 20 + i)).toISOString(),
+    updatedAt: new Date(Date.UTC(2026, 8, 1)).toISOString(),
+  });
 
 const ROWS: QrLinkRow[] = [
   row(1, "ملصق بوّابة الكلّيّة", "docs.google.com", 210),

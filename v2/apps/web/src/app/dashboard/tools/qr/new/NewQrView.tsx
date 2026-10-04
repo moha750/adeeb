@@ -24,7 +24,14 @@ import { defaultQrSpec } from "../defaults";
  * **والصفُّ يُنشأ هنا قبل أن يُصمَّم**: من كتب اسمًا ورابطًا ثمّ انصرف خلّف رمزًا بهيئته
  * الأولى في «رموزي»، يُحذف بيده كأيّ رمز.
  */
-export function NewQrView() {
+export function NewQrView({
+  campaignId = null,
+  campaignName = null,
+}: {
+  /** حاويتُه إن وُلد من غرفة حملة (`?campaign=`). */
+  campaignId?: string | null;
+  campaignName?: string | null;
+} = {}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [target, setTarget] = useState("");
@@ -81,6 +88,7 @@ export function NewQrView() {
       target: link.url,
       spec: defaultQrSpec(qrShortUrl("")),
       code: codeCheck?.ok ? codeCheck.code : undefined,
+      campaignId,
     });
     if (res.ok && res.id) {
       router.push(`/dashboard/tools/qr/${res.id}/design`);
@@ -92,7 +100,21 @@ export function NewQrView() {
 
   return (
     <>
-      <PageHeader title="باركود جديد" crumbLeaf="باركود جديد" />
+      {/**
+        * **الحاويةُ تُقال في العنوان لا في شارةٍ بجانبه** (أمرُ المالك ٢٠٢٦-٠٩-٢٤): كانت
+        * شارةً زرقاءَ تحمل «في حملة كذا» فصارت الجملةُ واحدةً يقرؤها السطرُ الأوّل. وشارةُ
+        * الحال تقول **حالًا** (منشورٌ · موقوف)، والحاويةُ ليست حالًا بل تتمّةُ العنوان.
+        *
+        * **والفتاتُ يبقى قصيرًا** («باركود جديد»): المسارُ يُقرأ سريعًا ولا يحمل جملة،
+        * ووجهةُ الرجوع تبقى غرفةَ الحملة فلا يضيع الطريقُ إليها.
+        */}
+      <PageHeader
+        title={campaignName ? `باركود جديد في حملة «${campaignName}»` : "باركود جديد"}
+        crumbLeaf="باركود جديد"
+        {...(campaignId && campaignName
+          ? { parent: { label: campaignName, href: `/dashboard/tools/qr/campaigns/${campaignId}` } }
+          : {})}
+      />
 
       <div className="card-grid mt-4">
         <SectionCard headerVariant="soft" icon={<QrCode />} title="اسمُ الباركود ووجهتُه">

@@ -287,7 +287,7 @@ export function QrSettingsView({
             setKill(false);
             // بعد الحذف لا صفحةَ يُرجَع إليها: الغرفةُ هي الوجهة، و`replace` تمنع العودةَ بالسهم
             // إلى باركودٍ لم يعُد موجودًا.
-            router.replace("/dashboard/tools/qr");
+            router.replace("/dashboard/tools/qr/links");
           })
         }
       />

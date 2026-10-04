@@ -87,6 +87,6 @@ export async function adminDeleteQr(id: string): Promise<OversightResult> {
   if (!data) return { ok: false, message: "لم يُعثر على الباركود." };
 
   revalidatePath("/dashboard/tools/qr/oversight");
-  revalidatePath("/dashboard/tools/qr");
+  revalidatePath("/dashboard/tools/qr/links");
   return { ok: true, message: "حُذف الباركود ومسحاتُه، وبقيت الواقعةُ في السجلّ." };
 }

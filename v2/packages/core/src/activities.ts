@@ -3,6 +3,7 @@
 // إطار، فيستوردها الخادمُ والمتصفّحُ وReact Native بأمان.
 // كلّ قيمة يحرسها قيدٌ في القاعدة (activities_activity_type_check ·
 // activity_reservations_gender_at_booking_check). لا تُضِف قيمة قبل توسيع القيد بترحيل.
+import { parseUnit, unitValue, type UnitCols } from './orgUnit';
 
 export type ActivityType = "activity" | "program" | "workshop" | "course" | "camp" | "exhibition" | "dialogue";
 
@@ -46,20 +47,22 @@ export function deriveSeats(totalSeats: number, malePercentage: number): { male:
 /* ══ الجهة المنظِّمة (قسم أو لجنة أو النادي) ═══════════════════════════ */
 
 // المنظِّم متعدّد الشكل: عمودان في القاعدة (organizing_committee_id / organizing_department_id)،
-// وواحدٌ فقط يُضبَط. القيمة النصّيّة في الواجهة تُرمِّز النوع: "comm:<id>" · "dept:<id>" · "" (النادي).
+// وواحدٌ فقط يُضبَط. والترميزُ صار في `orgUnit` منذ ٢٠٢٦-٠٩-١٧ حين اتّسعت جهةُ الخبر
+// للأقسام والمجالس: بيتٌ واحدٌ يعرف «قسم أم لجنة أم مجلس»، وهاتان بابُه في الفعاليّات
+// (فلا تتغيّر أسماءُ الاستيراد في عشرة ملفّات، ولا يبقى ترميزان لهيكلةٍ واحدة).
+
+export { CLUB_LABEL, UNIT_GROUPS, buildUnitOptions, unitNameIndex, parseUnit, unitValue } from './orgUnit';
+export type { UnitCols, UnitKind, UnitOption } from './orgUnit';
 
 /** القيمة النصّيّة الموحّدة من عمودَي القاعدة (للقائمة والتحرير). */
 export function organizerValue(committeeId: number | null, departmentId: number | null): string {
-  if (committeeId != null) return `comm:${committeeId}`;
-  if (departmentId != null) return `dept:${departmentId}`;
-  return "";
+  return unitValue({ committeeId, departmentId, councilId: null });
 }
 
 /** يفكّ القيمة النصّيّة إلى عمودَي القاعدة (للحفظ) — أحدهما أو كلاهما null. */
 export function parseOrganizer(v: string): { committeeId: number | null; departmentId: number | null } {
-  if (v.startsWith("comm:")) return { committeeId: Number(v.slice(5)) || null, departmentId: null };
-  if (v.startsWith("dept:")) return { committeeId: null, departmentId: Number(v.slice(5)) || null };
-  return { committeeId: null, departmentId: null };
+  const u: UnitCols = parseUnit(v);
+  return { committeeId: u.committeeId, departmentId: u.departmentId };
 }
 
 

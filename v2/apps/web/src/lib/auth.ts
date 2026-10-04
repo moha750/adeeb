@@ -25,6 +25,21 @@ export type CurrentAdmin = {
   viewAs?: { realId: string; realName: string | null } | null;
 };
 
+/**
+ * حالُ الجلسة الثلاثة — و«المُبطَلة» ليست «غائبة» (٢٠٢٦-٠٩-٢٤).
+ *
+ * صار التحقّقُ من الرمز **محلّيًّا** (`getClaims`)، فرمزُ جلسةٍ أُبطِلت يبقى صحيحَ التوقيع
+ * حتّى انتهاء عمره. والقاعدةُ هي من يكشفه (`session_alive` في موجة `loadIdentity`).
+ *
+ * ولهذا فرْقٌ عمليٌّ لا بدّ منه: الغائبُ يُردّ إلى `/login`، أمّا المُبطَلُ فيُردّ إلى
+ * `/logout` **كي يُمحى كوكيُّه أوّلًا**. ولو رُدّ إلى `/login` لَدار في حلقة: الحارسُ
+ * يرى رمزًا صحيحًا فيقذفه إلى اللوحة، واللوحةُ ترى الجلسةَ ميّتةً فتقذفه إلى الدخول.
+ */
+export type SessionState =
+  | { status: "anonymous" }
+  | { status: "revoked" }
+  | { status: "ok"; admin: CurrentAdmin };
+
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
@@ -34,16 +49,31 @@ function service() {
 /**
  * هويّةٌ واحدة بقدراتها — بمفتاح الخدمة (يتجاوز RLS بأمان خادميّ). `null` بلا مفتاح خدمة.
  * لا دورَ هنا ولا رتبة: التفويض قدراتيٌّ بحتٌ، ومن أراد اسم دورٍ للعرض قرأه في موضعه.
+ *
+ * **وفحصُ حياة الجلسة يركب هذه الموجة** ولا يضيف إليها زمنًا: ثلاثةُ نداءاتٍ في
+ * `Promise.all` واحد بدل اثنين. وهو ثمنُ أنّ الرمز صار يُصدَّق محلّيًّا — انظر
+ * `SessionState` والترحيل `20260924170000_session_alive.sql`.
+ *
+ * و`p_session` يُمرَّر `null` للهويّة **المُعارة** (المعاينة كعضو): ليست لها جلسةٌ
+ * ههنا تُفحَص، والدالّة تقبل الغياب فترجع `true` — فلا فرعَ في هذا الملفّ.
  */
-const loadIdentity = cache(async function loadIdentity(userId: string): Promise<CurrentAdmin | null> {
+const loadIdentity = cache(async function loadIdentity(
+  userId: string,
+  sessionId: string | null,
+): Promise<CurrentAdmin | "revoked" | null> {
   const svc = service();
   if (!svc) return null;
 
   const BASE = "full_name, email, avatar_url, gender";
-  const [firstRes, permsRes] = await Promise.all([
+  const [firstRes, permsRes, aliveRes] = await Promise.all([
     svc.from("profiles").select(`${BASE}, deletion_requested_at, deleted_at`).eq("id", userId).maybeSingle(),
     svc.rpc("get_user_permissions", { p_user_id: userId }),
+    svc.rpc("session_alive", { p_user: userId, p_session: sessionId }),
   ]);
+
+  // **الجلسةُ أُبطِلت** — من جهازٍ آخر أو بـ«الخروج من كلّ الأجهزة». والشرطُ صريحٌ
+  // بـ`=== false`: خطأٌ في النداء يترك القيمةَ `null`، ولا يُطرَد أحدٌ لأنّ نداءً تعثّر.
+  if (!aliveRes.error && aliveRes.data === false) return "revoked";
 
   // **ارتدادٌ إن لم تكن أعمدةُ الحذف بعدُ في القاعدة.** ترحيلُها (`20260819_deletion_02`) قد
   // يتأخّر عن نشر الكود، وعمودٌ مفقودٌ يُسقط الاستعلامَ كلَّه في PostgREST — فتعود الهويّةُ
@@ -53,6 +83,21 @@ const loadIdentity = cache(async function loadIdentity(userId: string): Promise<
     ? await svc.from("profiles").select(BASE).eq("id", userId).maybeSingle()
     : firstRes;
   const life = (firstRes.data ?? null) as { deletion_requested_at?: string | null; deleted_at?: string | null } | null;
+
+  // **ومن لا ملفَّ له فطلبُ حذفه في جدولٍ آخر** (٢٠٢٦-١٠-٠٣): الحسابُ يولد بلا صفٍّ في
+  // `profiles`، فطلبُه في `account_deletion_requests`. ويُسأل عنه من لا صفَّ له وحدَه — فلا
+  // نداءَ زائدًا على أصحاب الملفّات — وخطؤه (جدولٌ لم ينزل ترحيلُه بعد) يُترك فارغًا لا يُسقط شيئًا.
+  const pendingWithoutProfile =
+    !firstRes.error && !firstRes.data
+      ? ((
+          await svc
+            .from("account_deletion_requests")
+            .select("requested_at")
+            .eq("user_id", userId)
+            .is("closed_at", null)
+            .maybeSingle()
+        ).data as { requested_at?: string } | null)?.requested_at ?? null
+      : null;
 
   const caps = ((permsRes.data ?? []) as Array<{ permission_key: string }>).map((p) => p.permission_key);
   const gender = profileRes.data?.gender;
@@ -66,32 +111,75 @@ const loadIdentity = cache(async function loadIdentity(userId: string): Promise<
     caps,
     // البوّابة: مفتاحُ غرفةٍ واحدة يكفي للدخول. من لا يملك أيّ مفتاحٍ لا شيء له في الداخل.
     isAdmin: caps.some((c) => DASHBOARD_CAPS.includes(c)),
-    deletionRequestedAt: life?.deletion_requested_at ?? null,
+    deletionRequestedAt: life?.deletion_requested_at ?? pendingWithoutProfile,
     deletedAt: life?.deleted_at ?? null,
   };
 });
 
 /**
- * صاحبُ الجلسة نفسه — **لا يُعار ولا يُستعار**. يقرؤه من يحرس المعاينة نفسها (بدؤها)،
- * وإلّا لَحرَسَ الباب بمفتاح من في الداخل.
+ * مطالباتُ الرمز — **مصدرُ الهويّة الأوّل، ويُقرأ بلا نداءِ شبكة** (٢٠٢٦-٠٩-٢٤).
  *
- * مُغلَّفةٌ بـ`cache` — تُنفَّذ مرّةً واحدة في الطلب مهما تعدّد مستدعوها.
+ * كان هذا الموضعُ ينادي `auth.getUser()`، وهو رحلةٌ كاملةٌ إلى خادم المصادقة في **كلّ**
+ * طلب. و`getClaims()` يتحقّق من توقيع الرمز بالمفتاح العامّ (ES256) في العمليّة نفسِها:
+ * صفرُ نداءات ما دام الرمزُ حيًّا، ونداءٌ واحدٌ للتجديد حين ينتهي عمرُه — كما كان.
+ * (و`GLOBAL_JWKS` في `auth-js` مخزَنٌ على مستوى العمليّة، فالنسخةُ الدافئة لا تجلب المفاتيح.)
+ *
+ * وما فقدناه بالتحقّق المحلّيّ — معرفةُ أنّ الجلسة أُبطِلت — استُرِدّ في `loadIdentity`
+ * بلا كلفة. ولو كان الرمزُ متماثلَ التوقيع (HS256) لَارتدّ `getClaims` إلى `getUser`
+ * من تلقاء نفسه، فالتغييرُ آمنٌ ولو دارت المفاتيح.
+ *
+ * مُغلَّفةٌ بـ`cache` — مرّةً واحدة في الطلب مهما تعدّد مستدعوها.
  */
-export const getSessionAdmin = cache(async function getSessionAdmin(): Promise<CurrentAdmin | null> {
+export const getSessionClaims = cache(async function getSessionClaims() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims?.sub) return null;
+  return data.claims;
+});
 
-  const me = await loadIdentity(user.id);
+/**
+ * حالُ جلسةِ صاحبها — **لا تُعار ولا تُستعار**. يقرؤها من يحرس المعاينة نفسها (بدْأَها)،
+ * وإلّا لَحرَسَ الباب بمفتاح من في الداخل.
+ */
+export const getSessionState = cache(async function getSessionState(): Promise<SessionState> {
+  const claims = await getSessionClaims();
+  if (!claims) return { status: "anonymous" };
+
+  const me = await loadIdentity(claims.sub, claims.session_id ?? null);
+  if (me === "revoked") return { status: "revoked" };
+
   // بلا مفتاح خدمة لا نستطيع قراءة القدرات — نعامله كغير مخوّل (آمن افتراضًا).
   if (!me) {
     return {
-      id: user.id, email: user.email ?? null, fullName: null, avatarUrl: null, gender: null,
-      caps: [], isAdmin: false, deletionRequestedAt: null, deletedAt: null,
+      status: "ok",
+      admin: {
+        id: claims.sub, email: claims.email ?? null, fullName: null, avatarUrl: null, gender: null,
+        caps: [], isAdmin: false, deletionRequestedAt: null, deletedAt: null,
+      },
     };
   }
-  return { ...me, email: me.email ?? user.email ?? null };
+  return { status: "ok", admin: { ...me, email: me.email ?? claims.email ?? null } };
 });
+
+/** صاحبُ الجلسة نفسه، أو `null` إن غاب أو أُبطِلت جلستُه. من احتاج التفريق قرأ `getSessionState`. */
+export const getSessionAdmin = cache(async function getSessionAdmin(): Promise<CurrentAdmin | null> {
+  const state = await getSessionState();
+  return state.status === "ok" ? state.admin : null;
+});
+
+/**
+ * بابُ الردّ لمن لا جلسةَ له — **مصدرٌ واحد** لقرارٍ يتكرّر في ثلاث شاشات.
+ * يعيد `null` إن كانت الجلسةُ قائمة، وإلّا المسارَ الذي يُردّ إليه.
+ *
+ * والتفريقُ هو كلُّ فائدته: الغائبُ إلى `/login`، والمُبطَلُ إلى `/logout` كي يُمحى
+ * كوكيُّه فلا يدور بين الحارس والشاشة. انظر `SessionState`.
+ */
+export async function awayIfNoSession(next?: string): Promise<string | null> {
+  const state = await getSessionState();
+  if (state.status === "ok") return null;
+  const q = next ? `?next=${encodeURIComponent(next)}` : "";
+  return state.status === "revoked" ? `/logout${q}` : `/login${q}`;
+}
 
 /**
  * المستخدم الحاليّ **الفعليّ** — صاحبُ الجلسة، أو المُعايَنُ إن كانت المعاينة قائمة.
@@ -107,7 +195,8 @@ export const getCurrentAdmin = cache(async function getCurrentAdmin(): Promise<C
   const target = await readViewAsTarget();
   if (!target || target === me.id) return me;
 
-  const viewed = await loadIdentity(target);
-  if (!viewed) return me;
+  // `null` للجلسة: المُعايَنُ هويّةٌ تُقرأ لا جلسةٌ تُصدَّق (انظر `loadIdentity`).
+  const viewed = await loadIdentity(target, null);
+  if (!viewed || viewed === "revoked") return me;
   return { ...viewed, viewAs: { realId: me.id, realName: me.fullName } };
 });

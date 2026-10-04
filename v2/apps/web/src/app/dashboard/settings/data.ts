@@ -6,6 +6,7 @@
 // العميلُ المتجاوز. وهذا أضيقُ وأصدق: لا يستطيع هذا الملفّ قراءةَ شأنِ غيره ولو أراد.
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionClaims } from "@/lib/auth";
 import { fmtDate, fmtSince, fmtStamp } from "@/lib/dates";
 import { describeDevice, deviceKind, providerKey, type ProviderKey, type SessionKind } from "./vocab";
 
@@ -60,23 +61,6 @@ export type MySettings = {
   profileError: string | null;
 };
 
-/**
- * معرّفُ الجلسة الحاليّة من رمز الوصول (`session_id` في حمولته).
- *
- * يُفكّ الرمز **قراءةً لا تصديقًا**: لا يُبنى عليه إذنٌ ولا تفويض — كلُّ عمله أن يضع وسمَ
- * «هذه جلستك» على صفٍّ في جدول. وقارئُ الجلسات نفسُه محروسٌ في القاعدة بـ`auth.uid()`.
- */
-function currentSessionId(accessToken: string | undefined): string | null {
-  const payload = accessToken?.split(".")[1];
-  if (!payload) return null;
-  try {
-    const json = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { session_id?: string };
-    return json.session_id ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function getMySettings(): Promise<{ settings: MySettings | null; error: string | null }> {
   const supabase = await createClient();
 
@@ -84,8 +68,10 @@ export async function getMySettings(): Promise<{ settings: MySettings | null; er
   if (uErr) return { settings: null, error: uErr.message };
   if (!user) return { settings: null, error: null }; // التخطيط يحوّل للدخول قبل أن نصل هنا
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const here = currentSessionId(session?.access_token);
+  // معرّفُ جلستك — من المطالبات، **مصدرًا واحدًا** (`lib/auth.ts`). كان ههنا فاكُّ رمزٍ
+  // مكتوبٌ باليد، فصار نسخةً ثانيةً من عملٍ يؤدّيه الملفّ الأصل. ولا كلفةَ لهذا النداء:
+  // مطالباتُ الطلب مقروءةٌ ومحفوظةٌ قبل أن نصل (`cache`).
+  const here = (await getSessionClaims())?.session_id ?? null;
 
   const [sRes, pRes, rRes] = await Promise.all([
     supabase.rpc("my_sessions"),

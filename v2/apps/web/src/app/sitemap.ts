@@ -27,6 +27,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // ديبو: صفحةٌ ثابتةٌ بلا محتوًى يتجدّد (المحادثةُ تُبنى في المتصفّح)، فأولويّتُها أدنى
     // من أقسام المحتوى وتردُّدها شهريّ. وكانت غائبةً كما غابت الإذاعةُ قبلها (٢٠٢٦-٠٨-١٩).
     { url: `${SITE}/deebo`, changeFrequency: "monthly", priority: 0.5 },
+    // رابطُ الإعلان عن التطبيق (٢٠٢٦-١٠-٠٣): يُنشر في القروبات، فيُعلَن للزاحف كذلك.
+    { url: `${SITE}/app`, changeFrequency: "yearly", priority: 0.4 },
   ];
 
   const [news, radio] = await Promise.all([getPublicNews(), getRadioSitemapEntries()]);

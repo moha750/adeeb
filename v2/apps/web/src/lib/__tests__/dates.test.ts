@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CLUB_TZ, fmtDate, fmtDayMonth, fmtMonthYear, fmtStamp, fromClubInput, toClubInput } from "@/lib/dates";
-import { fmtDateOnly, fmtSince } from "@/lib/dates";
+import { fmtDateOnly, fmtSince, fmtTimeRange } from "@/lib/dates";
 
 /**
  * ساعةُ النادي — **الرياض لا ساعةُ الجهاز**. وهذا الملفُّ هو الجواب المكتوب على العطب الذي
@@ -250,5 +250,33 @@ describe("fmtSince", () => {
     expect(at("")).toBe("");
     expect(fmtSince(null)).toBe("");
     expect(fmtSince("لا شيء")).toBe("");
+  });
+});
+
+/**
+ * مدى الساعة اليوميّ للفرصة التطوّعيّة (٢٠٢٦-٠٩-٣٠) — ساعةُ جدارٍ بلا يوم، فلا يمرّ بالمنطقة
+ * أصلًا: «16:00» تُقرأ «4 م» على خادم غرينتش وعلى جهازٍ سعوديٍّ سواء.
+ */
+describe("fmtTimeRange", () => {
+  it("عمودا `time` كما يردّهما PostgREST بثوانيهما", () => {
+    expect(fmtTimeRange("16:00:00", "20:00:00")).toBe("من 4 م إلى 8 م");
+  });
+
+  it("قيمتا حقل الوقت، والدقيقةُ تُكتب حين تفرق وحدَها", () => {
+    expect(fmtTimeRange("16:00", "20:30")).toBe("من 4 م إلى 8:30 م");
+    expect(fmtTimeRange("09:05", "11:00")).toBe("من 9:05 ص إلى 11 ص");
+  });
+
+  it("الظهيرةُ ثنتا عشرةَ مساءً ومنتصفُ الليل ثنتا عشرةَ صباحًا، لا صفر", () => {
+    expect(fmtTimeRange("00:00", "12:00")).toBe("من 12 ص إلى 12 م");
+    expect(fmtTimeRange("12:30", "13:00")).toBe("من 12:30 م إلى 1 م");
+  });
+
+  it("نصفُ المدى فارغٌ كلُّه، والفاسدُ فارغ", () => {
+    expect(fmtTimeRange("16:00", null)).toBe("");
+    expect(fmtTimeRange(null, "20:00")).toBe("");
+    expect(fmtTimeRange(undefined, undefined)).toBe("");
+    expect(fmtTimeRange("25:00", "26:00")).toBe("");
+    expect(fmtTimeRange("لا شيء", "20:00")).toBe("");
   });
 });

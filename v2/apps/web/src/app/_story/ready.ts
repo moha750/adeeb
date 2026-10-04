@@ -68,5 +68,9 @@ export function onStoryReady(cb: () => void): () => void {
 export function degradeStory(): void {
   if (storyIsReady()) return;
   document.getElementById("adeeb-story")?.classList.add("st-static");
+  /* **وتُردّ العجلةُ إلى منعِّم الموقع**: القصّةُ الساكنةُ لا طبقةَ تنعيمٍ لها،
+     ولو بقيت ملكيّتُها معلنةً لبقي الهبوطُ خامًا وحدَه في موقعٍ منعَّم. وهذا
+     هو البابُ الواحدُ لكلّ سقوطٍ مهما اختلف سببُه. */
+  document.documentElement.removeAttribute("data-scroll-owner");
   markStoryReady();
 }

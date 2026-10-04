@@ -2,7 +2,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
-import { organizerValue } from "@/lib/activities";
+import { buildUnitOptions, organizerValue, type UnitOption } from "@/lib/activities";
 import { deriveStatus, reservationErrorMessage, type ActivityType, type AttendanceStatus, type EventStatus } from "./vocab";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
@@ -128,44 +128,28 @@ export async function getEvents(): Promise<{ events: EventRow[]; error: string |
 
 /* ── خيارات الجهة المنظِّمة (للنموذج) ── */
 
-export type OrganizerOption = { value: string; label: string; group?: string };
+export type OrganizerOption = UnitOption;
 
 /**
- * الجهة المنظِّمة خياراتٍ لـ`Select` بالترتيب المعتمَد: النادي (بلا جهة) · الأقسام الأربعة ·
- * اللجان (التابعة لقسم) · الإدارات (اللجان بلا قسم: الموارد البشريّة والضمان). القيمة تُرمِّز
- * النوع (`dept:<id>` · `comm:<id>` · "")، فيصحّ اختيار قسمٍ أو لجنة سواء بسواء.
+ * الجهة المنظِّمة خياراتٍ لـ`Select` بالترتيب المعتمَد: النادي (بلا جهة) · الأقسام ·
+ * اللجان (التابعة لقسم) · الإدارات (اللجان بلا قسم: الموارد البشريّة والضمان).
+ *
+ * والترتيبُ والترميزُ في `buildUnitOptions` منذ ٢٠٢٦-٠٩-١٧ — تشاركهما غرفةُ التحرير حين
+ * اتّسعت جهةُ الخبر. **وبلا مجالس هنا**: الفعاليّةَ يُنظِّمها قسمٌ أو لجنة، ولا يُقال
+ * «نظّمها المجلسُ التنفيذيّ» وهو الهيكلُ لا العامل.
  */
 export async function getOrganizerOptions(): Promise<{ options: OrganizerOption[]; error: string | null }> {
   const sb = service();
   if (!sb) return { options: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
   const [cRes, dRes] = await Promise.all([
-    sb.from("committees").select("id, committee_name_ar, department_id, is_active").eq("is_active", true),
+    sb.from("committees").select("id, committee_name_ar, department_id").eq("is_active", true),
     sb.from("departments").select("id, name_ar, display_order").eq("is_active", true),
   ]);
   if (cRes.error) return { options: [], error: cRes.error.message };
   if (dRes.error) return { options: [], error: dRes.error.message };
 
-  const deptOrder = new Map<number, number>();
-  for (const d of dRes.data ?? []) deptOrder.set(d.id, d.display_order ?? 999);
-  const committees = (cRes.data ?? []).slice();
-
-  const options: OrganizerOption[] = [{ value: "", label: "نادي أدِيب" }];
-
-  // الأقسام الأربعة
-  for (const d of [...(dRes.data ?? [])].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name_ar.localeCompare(b.name_ar, "ar"))) {
-    options.push({ value: `dept:${d.id}`, label: d.name_ar, group: "الأقسام" });
-  }
-  // اللجان (التابعة لقسم) — مرتّبةً بترتيب قسمها ثمّ باسمها
-  for (const c of committees.filter((c) => c.department_id != null).sort((a, b) => (deptOrder.get(a.department_id) ?? 999) - (deptOrder.get(b.department_id) ?? 999) || a.committee_name_ar.localeCompare(b.committee_name_ar, "ar"))) {
-    options.push({ value: `comm:${c.id}`, label: c.committee_name_ar, group: "اللجان" });
-  }
-  // الإدارات (لجانٌ بلا قسم: الموارد البشريّة · الضمان)
-  for (const c of committees.filter((c) => c.department_id == null).sort((a, b) => a.committee_name_ar.localeCompare(b.committee_name_ar, "ar"))) {
-    options.push({ value: `comm:${c.id}`, label: c.committee_name_ar, group: "الإدارات" });
-  }
-
-  return { options, error: null };
+  return { options: buildUnitOptions({ departments: dRes.data, committees: cRes.data }), error: null };
 }
 
 /* ── فعاليّة واحدة لنموذج التحرير (حقول خام، لا مشتقّات) ── */

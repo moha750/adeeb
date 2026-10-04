@@ -31,8 +31,19 @@ import type { MeBrief } from "@/app/api/me/brief/route";
  * الاسمُ حين تصل البطاقة. والكوكي **حدسٌ لا إذن**:
  * لا يفتح شيئًا ولا يُقرأ منه شيء، وكلُّ ما يفعله أنّه يحجز موضعًا. وإن كذب (كوكي منتهٍ)
  * ردّ المسارُ `null` فعاد الرأسُ إلى المجهول.
+ *
+ * ## والجلدُ يُقرَّر ههنا كذلك (٢٠٢٦-٠٩-١٦، وعُمِّم ٢٠٢٦-٠٩-١٧)
+ * لا تُمرَّر الوجهةُ من صفحةٍ ولا يُرفع عَلَم: القرارُ يُكتب مرّةً كما تُكتب وِجهةُ
+ * «انضمّ إلينا» — ولو مُرِّر في الصفحات لَتخلّفت واحدةٌ يومَ يتبدّل.
+ *
+ * وكان المحدِّدُ `".hro"` (صدرَ الهبوط وحدَه)، ثمّ جُرِد الموقعُ قياسًا لا تخمينًا
+ * فإذا **أسطحٌ لا سطح**: صدرُ الهبوط، وقسمُ الدعوة في الهبوط، و**جزيرةُ التذييل
+ * في كلّ صفحة** — فآخرُ تمريرةٍ في أيّ صفحةٍ تضع الرأسَ على كحليٍّ كما يضعه الصدر.
+ * فصار المحدِّدُ **عقدًا لا اسمًا**: أيُّ سطحٍ يرفع `data-head-skin="inverse"` يلبس
+ * الرأسُ فوقه جلدَه المعكوس، فلا تُكتب ههنا أسماءُ الأقسام ولا يُعدَّل هذا السطرُ
+ * يومَ يُضاف قسمٌ ملوّن. وصفحةٌ بلا سطحٍ موسومٍ تبقى على الجلد الفاتح بلا شرطٍ يُكتب.
  */
-export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "ctaHref" | "onCta" | "viewer" | "onSignOut">) {
+export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "ctaHref" | "onCta" | "viewer" | "onSignOut" | "skin" | "skinOver">) {
   const router = useRouter();
   const [viewer, setViewer] = useState<MeBrief | null>(null);
   /** هل وصلت البطاقةُ (أو سقطت)؟ بعدها لا حاجةَ للحدس: الجوابُ نفسُه هو الحقّ. */
@@ -70,6 +81,8 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
     <Header
       {...props}
       ctaHref="/join"
+      skin="inverse"
+      skinOver='[data-head-skin="inverse"]'
       viewer={
         viewer
           ? {

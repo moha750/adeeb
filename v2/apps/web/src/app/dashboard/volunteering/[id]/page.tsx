@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { clubNow } from "@/lib/volunteerPeriods";
 import { getOpportunity } from "../data";
-import { OpportunityView } from "./OpportunityView";
+import { OpportunityRecord } from "./OpportunityRecord";
 
 export const metadata = { title: "سجلّ الفرصة، بوّابة أديب" };
 
@@ -13,5 +14,5 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
   const data = await getOpportunity(id);
   if (!data) notFound();
 
-  return <OpportunityView opp={data.opp} rows={data.rows} />;
+  return <OpportunityRecord opp={data.opp} rows={data.rows} now={clubNow()} />;
 }

@@ -286,6 +286,7 @@ be imported into client code.
 | `GOOGLE_WALLET_ISSUER_ID` / `GOOGLE_WALLET_SA_EMAIL` / `GOOGLE_WALLET_SA_KEY` | Google Wallet loyalty-pass issuance. |
 | `WALLET_PASS_TYPE_ID` / `WALLET_TEAM_ID` | Apple Wallet pass identifiers. |
 | `WALLET_PASS_CERT_PEM` / `WALLET_PASS_KEY_PEM` / `WALLET_PASS_KEY_PASSPHRASE` / `WALLET_WWDR_PEM` | Apple Wallet signing material (PEM, multiline). |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (installed app + lock-screen notifications). Generated once; rotating them drops every device subscription. See `v2/PUSH-NOTIFICATIONS.md`. |
 | `PORT` | Dev server port (`scripts/dev-server.mjs`, default 3000). |
 
 External services: **Supabase** (Postgres + Auth + Storage + Edge Functions), **Cloudflare R2**

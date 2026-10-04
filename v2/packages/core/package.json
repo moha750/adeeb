@@ -11,6 +11,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./activities": "./src/activities.ts",
+    "./org-unit": "./src/orgUnit.ts",
     "./radio": "./src/radio.ts",
     "./auth-errors": "./src/authErrors.ts",
     "./dates": "./src/dates.ts",

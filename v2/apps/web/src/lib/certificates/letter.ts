@@ -1,8 +1,8 @@
 /**
  * شهادة الخبرة — تُرسَم على قالب المالك وتُنزَّل PNG. عميليّ حصرًا (يمسّ DOM).
  *
- * **قالبان لا قالب** (قرار المالك): `certificate-template-male.png` ·
- * `certificate-template-female.png` — ورقتان عرضيّتان 3508×2480 (A4 عرضيّ بـ300dpi) فيهما
+ * **قالبان لا قالب** (قرار المالك): `templates/certificate-male.png` ·
+ * `templates/certificate-female.png` — ورقتان عرضيّتان 3508×2480 (A4 عرضيّ بـ300dpi) فيهما
  * الزخرفةُ والعنوانُ المخطوط والمسطرتان والتواقيع، **ومعها الثابتُ من النصّ مطبوعًا**:
  * البيتان والدعاء. وإنّما طُبعا لأنّ البيتين في ورقة المالك **ممدودان بالكشيدة** — تنسيقُ
  * فوتوشوب لا يرسمه المتصفّح. فبقيت يدُ المصمّم على الفنّ، وبقي للبرنامج ما يحمل البيانات.
@@ -26,7 +26,7 @@ const PAGE: PageSize = { w: 3508, h: 2480 };
 
 /** القالب يتبع صاحبه — وبلا جنسٍ مسجَّل يخرج بالمذكَّر (كما يفعل نصُّ `text.ts`). */
 const templateFor = (c: Certificate): string =>
-  `/brand/certificate-template-${c.gender === "female" ? "female" : "male"}.png`;
+  `/templates/certificate-${c.gender === "female" ? "female" : "male"}.png`;
 
 /** مركزُ الورقة — ومركزُ المسطرتين المقيستين معًا. */
 const CENTER = 1754;

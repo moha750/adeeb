@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Robot, GameController, TextAa,
+  PenNib, ClockCounterClockwise, Robot, GameController, TextAa, Megaphone,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -102,6 +102,10 @@ export const IconGame = (p: P) => <GameController aria-hidden {...p} />;
 /* بنك الكلمات — الحرف: مادّةُ اللعبة كلماتٌ تُكتَب وتُصنَّف. و`BookOpen` مأخوذةٌ
    للمكتبة، ولو حملها البندُ هنا لقالت «كتبٌ» في موضعين لا يعني أحدهما الآخر. */
 export const IconWords = (p: P) => <TextAa aria-hidden {...p} />;
+/* اللوحة الإعلانية — مكبّرُ الصوت: كلماتٌ تُنادى بها الناسُ في شريطٍ يجري على
+   حدّ الصدر. و`Newspaper` مأخوذةٌ للأخبار، و`TextAa` لبنك الكلمات، ولو حملت إحداهما
+   هذا البندَ لقالت معنًى في موضعين لا يعني أحدهما الآخر. */
+export const IconAnnounce = (p: P) => <Megaphone aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -114,6 +118,6 @@ export const ICONS = {
   mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
-  game: IconGame, words: IconWords,
+  game: IconGame, words: IconWords, announce: IconAnnounce,
 } as const;
 export type IconKey = keyof typeof ICONS;

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Footer, Container, Card, CardBody, Alert, Badge, LandingHeading } from "@adeeb/design-system";
-import { VERIFY_HOST, certDate } from "@/lib/certificates/text";
+import { Footer, Container, Card, CardBody, LandingHeading } from "@adeeb/design-system";
+import { VERIFY_HOST } from "@/lib/certificates/text";
 import { verifyCertificate } from "./data";
 import { VerifyForm } from "./VerifyForm";
+import { VerifyResultView } from "./VerifyResult";
 import { SiteHeader } from "../_components/SiteHeader";
 
 export const metadata: Metadata = {
@@ -41,34 +42,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
               <CardBody>
                 <VerifyForm defaultCode={code} />
 
-                {result.state === "empty" ? null : result.state === "error" ? (
-                  <Alert tone="danger" title="تعذّر التحقّق">حدث خطأ في الاتّصال. أعِد المحاولة بعد قليل.</Alert>
-                ) : result.state === "missing" ? (
-                  <Alert tone="danger" title="لا شهادة بهذا الرقم">
-                    راجِع الرقم كما هو مطبوعٌ في الورقة حرفًا برقم. وإن كان صحيحًا ولم يُعرَف، فالورقة ليست منّا.
-                  </Alert>
-                ) : (
-                  <div style={{ marginTop: 18 }}>
-                    <div className="chip-row" style={{ marginBottom: 12 }}>
-                      {result.state === "valid" ? (
-                        <Badge tone="success" variant="soft">شهادة صحيحة</Badge>
-                      ) : (
-                        <Badge tone="danger" variant="soft">شهادة مبطَلة</Badge>
-                      )}
-                      <Badge tone="info" variant="soft">{result.serial}</Badge>
-                    </div>
-
-                    <Alert
-                      tone={result.state === "valid" ? "success" : "danger"}
-                      title={result.holderName}
-                    >
-                      {result.positionTitle}، للفترة من {certDate(result.periodFrom)} إلى {certDate(result.periodTo)}.
-                      {result.state === "valid"
-                        ? ` صدرت عن نادي أديب في ${certDate(result.issuedOn)}.`
-                        : ` أُبطلت هذه الشهادة${result.revokedOn ? ` في ${certDate(result.revokedOn)}` : ""}، فلا يُعتدّ بها.`}
-                    </Alert>
-                  </div>
-                )}
+                <VerifyResultView result={result} />
               </CardBody>
             </Card>
           </Container>

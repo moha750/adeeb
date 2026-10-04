@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   QR_ALPHABET,
+  QR_CAMPAIGN_NAME_MAX,
+  QR_CAMPAIGN_NOTE_MAX,
   QR_CODE_LEN,
+  checkCampaignName,
+  checkCampaignNote,
   checkCode,
   checkTarget,
   deviceFrom,
@@ -150,5 +154,41 @@ describe("المُحيل", () => {
   it("وما ليس رابطًا لا يُخترَع له اسم", () => {
     expect(referrerHost(null)).toBeNull();
     expect(referrerHost("ليس رابطًا")).toBeNull();
+  });
+});
+
+/**
+ * **حَكَمُ اسم الحملة** (م١٨) — يقابل `qr_campaigns_name_shape` في القاعدة حرفًا، فما تردّه
+ * الشاشةُ هو ما يردّه الخادمُ هو ما يردّه القيد. والاختبارُ هنا يحرس **التطابق**: لو رُفع
+ * حدُّ القاعدة يومًا وبقي هذا، قال الحقلُ «أطولُ من الحدّ» لاسمٍ تقبله القاعدة.
+ */
+describe("اسمُ الحملة وتعريفُها", () => {
+  it("يقصّ الطرفين ويقبل ما بينهما", () => {
+    const got = checkCampaignName("  معرض اليوم الوطنيّ  ");
+    expect(got.ok).toBe(true);
+    if (got.ok) expect(got.name).toBe("معرض اليوم الوطنيّ");
+  });
+
+  it("يردّ الفارغَ والمسافاتِ وحدَها", () => {
+    for (const raw of ["", "   ", "\n\t"]) {
+      expect(checkCampaignName(raw).ok).toBe(false);
+    }
+  });
+
+  it("يقبل عند الحدّ ويردّ بعده بحرف", () => {
+    expect(checkCampaignName("م".repeat(QR_CAMPAIGN_NAME_MAX)).ok).toBe(true);
+    expect(checkCampaignName("م".repeat(QR_CAMPAIGN_NAME_MAX + 1)).ok).toBe(false);
+  });
+
+  /** **الفارغُ يُكتَب `null` لا نصًّا فارغًا**: عمودٌ يحمل `''` يكذب على من يسأل «أله تعريف؟». */
+  it("يجعل التعريفَ الفارغَ عدمًا", () => {
+    const got = checkCampaignNote("   ");
+    expect(got.ok).toBe(true);
+    if (got.ok) expect(got.note).toBeNull();
+  });
+
+  it("يقبل التعريفَ عند حدّه ويردّ بعده", () => {
+    expect(checkCampaignNote("و".repeat(QR_CAMPAIGN_NOTE_MAX)).ok).toBe(true);
+    expect(checkCampaignNote("و".repeat(QR_CAMPAIGN_NOTE_MAX + 1)).ok).toBe(false);
   });
 });

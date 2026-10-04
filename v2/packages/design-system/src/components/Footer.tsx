@@ -49,7 +49,11 @@ export function Footer({
   return (
     <footer className={cn("sftr", className)}>
       <Container>
-        <div className="sftr-panel">
+        {/* **وهو سطحٌ يُعلن نفسَه للرأس** (٢٠٢٦-٠٩-١٧): الرأسُ `sticky`، فآخرُ تمريرةٍ
+            في **كلّ صفحة** تضعه على جزيرة التذييل الكحليّة — وهو ملوّنٌ على ملوّن
+            كصدر الهبوط سواءً بسواء. والوسمُ عقدٌ لا صنف: أيُّ سطحٍ ملوّنٍ يرفعه
+            فيلبس الرأسُ جلدَه المعكوس فوقه، بلا أن تعرف المكتبةُ أسماءَ الأقسام. */}
+        <div className="sftr-panel" data-head-skin="inverse">
           <div className="sftr-cols">
             <div className="sftr-brand">
               {/* eslint-disable-next-line @next/next/no-img-element */}

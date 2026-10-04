@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge, Button, Stat, countPhrase, matchesSearch } from "@adeeb/design-system";
-import { CalendarBlank, ChartLineUp, Globe, LinkSimple, Pause, Play, QrCode, TextAa, UsersThree } from "@phosphor-icons/react";
+import { CalendarBlank, ChartLineUp, Megaphone, Pause, Play, QrCode, UsersThree } from "@phosphor-icons/react";
 import { PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { DataCards, type CardSpec } from "../../_components/DataCards";
@@ -21,6 +21,9 @@ import { fmtDate } from "@/lib/dates";
 import { killText, SCAN_UNIT } from "./copy";
 import type { QrLinkRow } from "./data";
 import { deleteQrLink, setQrLinkActive } from "./actions";
+import { QrRoomTabs } from "./QrRoomTabs";
+import { AssignCampaignModal } from "./campaigns/AssignCampaignModal";
+import type { QrCampaignBrief } from "./campaigns/data";
 
 /**
  * أيُّ عمودٍ يصير أيَّ موضعٍ في الكرت. **مُقَرَّةٌ ٢٠٢٦-٠٨-٢٥** بعد أن عُرضت إلى جانب الحاليّة
@@ -61,11 +64,14 @@ export function SavedLinksView({
   rows,
   error,
   meId = null,
+  campaigns = [],
 }: {
   rows: QrLinkRow[];
   error: string | null;
   /** صاحبُ الجلسة: القائمةُ تحمل ما يملكه وما شُورِك فيه، والمشاركةُ للمالك وحدَه. */
   meId?: string | null;
+  /** حملاتُه أسماءً: لمرشِّح «الحملة» ولنافذة الضمّ (م١٨). */
+  campaigns?: QrCampaignBrief[];
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -74,16 +80,29 @@ export function SavedLinksView({
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [confirmKill, setConfirmKill] = useState<QrLinkRow | null>(null);
+  /** المحدَّدُ للضمّ الجماعيّ: يقاسمه شريطُ الأدوات والجدول. */
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [assign, setAssign] = useState<string[] | null>(null);
+
+  /**
+   * **البابُ لا يحمل إلّا ما لا حاويةَ له** (قرارُ المالك ٢٠٢٦-٠٩-٢٤): سأل «أمن المنطق أن
+   * تتواجد باركوداتُ الحملة في كلّ الباركودات؟» فأُخفي ما يتبع حملةً، وتبع الاسمُ المحتوى
+   * («باركودات مفردة»). وموضعُ ما في الحملات غرفتُها، وهي بابٌ بجانب هذا لا وراءه.
+   *
+   * **والنخلُ قبل البحث لا بعده**: البحثُ لا يبلغ ما ليس في الباب أصلًا، فلا يقول الباركودُ
+   * «لا نتيجة» عمّا هو موجودٌ في غرفةٍ أخرى — بل لا يُسأل عنه هنا ابتداءً.
+   */
+  const loose = useMemo(() => rows.filter((r) => !r.campaignId), [rows]);
 
   const filtered = useMemo(
     () =>
-      rows.filter((r) => {
+      loose.filter((r) => {
         if (!matchesSearch(search, `${r.title} ${r.code} ${r.targetUrl}`)) return false;
         if (filters.state === "active" && !r.active) return false;
         if (filters.state === "paused" && r.active) return false;
         return true;
       }),
-    [rows, search, filters],
+    [loose, search, filters],
   );
 
   const totalScans = useMemo(() => rows.reduce((n, r) => n + r.scanCount, 0), [rows]);
@@ -113,6 +132,12 @@ export function SavedLinksView({
             icon: <UsersThree />,
             onSelect: () => router.push(`/dashboard/tools/qr/${r.id}/settings?share=1`),
           }]
+        : []),
+      // **الضمُّ يقع من هنا** (م١٨): والمالكُ وحدَه، فالقاعدةُ تردّ شريكًا يحرّر (محفّزُ
+      // `qr_campaign_guard`)، وبندٌ يَعِد بما تردّه القاعدةُ وعدٌ لا يُوفى. **والضمُّ وحدَه
+      // بلا «نقل»**: البابُ لا يحمل إلّا ما لا حاويةَ له، والنقلُ بين حاويتين موضعُه غرفتُها.
+      ...(!meId || r.ownerId === meId
+        ? [{ label: "ضمٌّ إلى حملة", icon: <Megaphone />, onSelect: () => setAssign([r.id]) }]
         : []),
       r.active
         ? { label: "إيقاف الباركود", icon: <Pause />, disabled: pending, onSelect: () => toggleActive(r) }
@@ -182,10 +207,19 @@ export function SavedLinksView({
     <>
       <PageHeader
         title="مولّد الباركود"
+        crumbLeaf="باركودات مفردة"
         action={{ label: "باركود جديد", icon: <Plus size={18} />, href: "/dashboard/tools/qr/new" }}
       />
 
+      {/* بابا الغرفة: هذا بابُ الباركودات المفردة، والحملاتُ جارُه (الشكل ب). */}
+      <QrRoomTabs on="links" />
+
       <div className="stat-grid" style={{ marginBottom: 18 }}>
+        {/**
+          * **وصفُّ الصدر حسابُ الغرفة كلِّها لا حسابُ هذا الباب** (أمرُ المالك ٢٠٢٦-٠٩-٢٤
+          * بإزالة السطر الفرعيّ): كلا الكرتين يعدّ ما تملكه كلَّه، ما كان في حملةٍ وما لم
+          * يكن، فهما متّسقان معًا ولا يحتاج أحدُهما شرحًا تحته. والقائمةُ دونهما بابُها.
+          */}
         <Stat icon={<QrCode />} value={fmt(rows.length)} label="باركود محفوظ" />
         <Stat icon={<ChartLineUp />} value={fmt(totalScans)} label="مسحةٌ مُحصاة" tone="success" />
       </div>
@@ -200,6 +234,13 @@ export function SavedLinksView({
         onReset={() => { setSearch(""); setFilters({}); }}
         view={view}
         onViewChange={changeView}
+        selectedCount={sel.size}
+        onClearSelection={() => setSel(new Set())}
+        bulkActions={
+          <Button size="sm" variant="ghost" onClick={() => setAssign([...sel])}>
+            <Megaphone size={16} />ضمّ إلى حملة
+          </Button>
+        }
       />
 
       {error ? (
@@ -209,6 +250,9 @@ export function SavedLinksView({
           columns={columns}
           rows={filtered}
           getRowId={(r) => r.id}
+          selectable
+          selected={sel}
+          onSelectedChange={setSel}
           emptyState={emptyState}
           rowActions={actionsFor}
           onRowClick={openStats}
@@ -229,6 +273,14 @@ export function SavedLinksView({
           rowTone={(r) => (r.active ? undefined : "neutral")}
         />
       )}
+
+      <AssignCampaignModal
+        open={assign !== null}
+        linkIds={assign ?? []}
+        campaigns={campaigns}
+        onClose={() => setAssign(null)}
+        onDone={() => setSel(new Set())}
+      />
 
       <ConfirmDialog
         open={confirmKill !== null}

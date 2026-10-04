@@ -32,6 +32,17 @@ export function isSessionGone(msg: string): boolean {
   );
 }
 
+/**
+ * أخطاءُ **الدخول بالرمز** — لسانُها غيرُ لسان الرابط: من كتب رمزًا يُقال له «الرمز» لا «الرابط».
+ * وما عدا الرمزَ الخاطئَ والمنتهي يمرّ إلى المترجم العامّ.
+ */
+export function toArabicCodeError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("token has expired or is invalid") || m.includes("otp_expired") || m.includes("invalid otp"))
+    return "الرمز غير صحيح أو انتهت صلاحيته.";
+  return toArabicAuthError(msg);
+}
+
 export function toArabicAuthError(msg: string): string {
   const m = msg.toLowerCase();
 

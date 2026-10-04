@@ -2,9 +2,16 @@
 
 import { Container } from "@adeeb/design-system";
 import { VolunteerCard } from "../../dashboard/volunteering/volunteers/VolunteerCard";
-import type { VolunteerRow } from "../../dashboard/volunteering/data";
+import type { VolunteerApp, VolunteerRow } from "../../dashboard/volunteering/data";
 
 const noop = () => {};
+
+/** مشاركةٌ مؤكَّدةُ الحضور في فرصة — لوسام «شارك N مرّات» */
+const took = (id: string, opportunityId: string): VolunteerApp => ({
+  id, opportunityId, opportunity: "فرصة", committee: null, status: "accepted", appliedAt: "", decidedBy: null, decidedAt: null,
+  decisionReason: null, excuseReason: null, attendance: "attended", attendanceAt: null, attendanceBy: null,
+  deservesCertificate: null, denialReason: null, distinctionNote: null, adminNote: null, evaluatedBy: null, evaluatedAt: null,
+});
 
 const BASE: VolunteerRow = {
   userId: "1", name: "عبد الرحمن بن عبد العزيز آل الشيخ", phone: "0501234567",
@@ -14,7 +21,7 @@ const BASE: VolunteerRow = {
   deletionReason: null, lastSignInAt: "22 سبتمبر 2026 الساعة 11:59 م", seenLast30: true,
   providers: ["google"], emailConfirmed: true, status: "active",
   appliedAt: "15 أغسطس 2026", appliedStamp: "15 أغسطس 2026 الساعة 4:02 م",
-  endedAt: null, endedBy: null, endReason: null,
+  endedAt: null, endedBy: null, endReason: null, returnedAt: null,
   prefs: [{ id: 1, name: "لجنة الفعاليات" }, { id: 2, name: "لجنة العلاقات العامّة" }, { id: 3, name: "لجنة التصوير" }],
   prefsUpdatedAt: "16 أغسطس 2026 الساعة 1:20 ص",
   apps: [], certs: [],
@@ -24,16 +31,24 @@ const BASE: VolunteerRow = {
 
 // عيّنةٌ تغطّي المحاور : اسمٌ طويلٌ بثلاث رغبات · رغبةٌ واحدةٌ باسمٍ طويلٍ ولم يدخل قطّ ·
 // بلا رغباتٍ أصلًا · متطوّعٌ سابقٌ بسببٍ طويل (نغمةٌ رصاصيّةٌ تعمّ الكرت)
+// والوسامان: الأوّلُ شارك ثلاثًا ونال شهادتين، والثانيةُ لم تشارك قطّ (بلا وسام)، والثالثةُ مرّةً بشهادتها، والسابقةُ مرّتين بلا شهادة
 const SAMPLE: VolunteerRow[] = [
-  BASE,
+  { ...BASE, apps: [took("a1", "o1"), took("a2", "o2"), took("a3", "o3")], certificates: 2 },
   {
     ...BASE, userId: "2", name: "لطيفه عبدالعزيز السليطين", gender: "female", city: null,
     phone: "0548633404", lastSignInAt: null, seenLast30: false, publicSlug: null,
     prefs: [{ id: 4, name: "لجنة الموارد البشريّة" }], prefsUpdatedAt: null, appliedAt: "22 سبتمبر 2026",
   },
-  { ...BASE, userId: "3", name: "فاطمه ال شيخ", gender: "female", city: "الهفوف", prefs: [], prefsUpdatedAt: null },
+  {
+    ...BASE, userId: "3", name: "فاطمه ال شيخ", gender: "female", city: "الهفوف", prefs: [], prefsUpdatedAt: null,
+    apps: [took("c1", "o1")], certificates: 1,
+    // عادت بعد انقطاع : خبرُ الانقطاع باقٍ وهي نشطة
+    endedAt: "2 سبتمبر 2026 الساعة 7:00 م", endReason: "سافرت في إجازة الفصل.", endedBy: "محمّد بن إسماعيل",
+    returnedAt: "20 سبتمبر 2026 الساعة 10:15 ص",
+  },
   {
     ...BASE, userId: "4", name: "سديم بندر القحطاني", gender: "female", status: "former",
+    apps: [took("d1", "o1"), took("d2", "o2")],
     endReason: "اعتذرت عن الاستمرار لارتباطها بالتدريب الميدانيّ هذا الفصل، وطلبت العودة في الفصل القادم.",
     endedAt: "20 سبتمبر 2026 الساعة 8:00 م", endedBy: "محمّد بن إسماعيل",
   },

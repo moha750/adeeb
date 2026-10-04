@@ -6,7 +6,9 @@ import {
   IMAGE_EXT, IMAGE_MAX_BYTES, NEWS_BUCKET, BAD_MIME, TOO_BIG,
   coverKey, galleryKey, newsPrefix, pathFromUrl,
 } from "@/lib/news/media";
+import { parseUnit } from "@adeeb/core/org-unit";
 import { CATEGORY_VALUES, FIELD_VALUES, type Category, type FieldKey } from "./vocab";
+import { cleanSections, sectionsToText, type Section } from "@/lib/news/blocks";
 
 export type Result = { ok: boolean; message: string; id?: string };
 
@@ -32,6 +34,8 @@ function guardMessage(msg: string): string | null {
   if (/news_notes_required/.test(msg)) return "اكتب ما ينبغي تعديله. الإعادة بلا ملاحظة لا تُفيد الكاتب.";
   if (/news_bad_transition/.test(msg)) return "هذا الخبر ليس في مرحلةٍ تقبل هذا الفعل.";
   if (/news_title_required/.test(msg)) return "عنوان الخبر مطلوب.";
+  if (/news_one_unit/.test(msg)) return "الخبر يُنسَب إلى جهةٍ واحدة لا أكثر.";
+  if (/news_(committee|department|council)_id_fkey/.test(msg)) return "جهةٌ غير معروفة.";
   if (/news_empty_comment/.test(msg)) return "التعليق فارغ.";
   return null;
 }
@@ -48,7 +52,7 @@ const touch = () => {
 /* ══ الميلاد ═════════════════════════════════════════════════════════ */
 
 export async function createNews(input: {
-  title: string; committeeId?: number | null; category?: Category;
+  title: string; unit?: string | null; category?: Category;
 }): Promise<Result> {
   const actor = await getNewsroomActor();
   if (!actor) return { ok: false, message: DENIED };
@@ -59,9 +63,13 @@ export async function createNews(input: {
   if (!title) return { ok: false, message: "عنوان الخبر مطلوب." };
   const category = input.category && CATEGORY_VALUES.includes(input.category) ? input.category : "coverage";
 
+  // الجهةُ تُفكَّك هنا لا في المتصفّح: ما يصل من الواجهة نصٌّ، وما يُكتب أعمدةٌ ثلاثةٌ
+  // يحرس حصريّتَها قيدُ `news_one_unit` ومفاتيحُها الأجنبيّة — فالقيمةُ المختلّة تسقط
+  // إلى «النادي» ولا تُكتب معرّفًا لا وجودَ له.
+  const unit = parseUnit(input.unit);
   const { data, error } = await sb.rpc("news_create", {
-    p_actor: actor.userId, p_title: title,
-    p_committee: input.committeeId ?? null, p_category: category,
+    p_actor: actor.userId, p_title: title, p_category: category,
+    p_committee: unit.committeeId, p_department: unit.departmentId, p_council: unit.councilId,
   });
   if (error) return fail(error.message, "تعذّر إنشاء الخبر");
 
@@ -76,10 +84,11 @@ export type NewsInput = Partial<{
   slug: string;
   summary: string | null;
   content: string;
+  sections: Section[];
   category: Category;
   tags: string[];
   authors: string[];
-  committeeId: number | null;
+  unit: string | null;
   coverPhotographer: string | null;
   galleryPhotographers: string[];
 }>;
@@ -136,6 +145,18 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
   put("title", clean(input.title), input.title !== undefined);
   put("summary", clean(input.summary), input.summary !== undefined);
   put("content", input.content?.trim() ?? "", input.content !== undefined);
+
+  // **المتنُ يُكتب أقسامًا** منذ ٢٠٢٦-٠٩-٢٤: `blocks` هو المصدر، و`content` إسقاطُه
+  // النصّيُّ الذي يخدم عدَّ الكلمات ومدّةَ القراءة وأيَّ بحثٍ يأتي. ويُكتبان معًا في
+  // جملةٍ واحدةٍ فلا يفترقان أبدًا، ولا يُحرَّر الإسقاطُ بيدٍ.
+  // وصلاحيّتُهما واحدةٌ هي صلاحيّةُ حقل `content` — فلا مفتاحَ حقلٍ جديدٌ في التكليف.
+  if (input.sections !== undefined) {
+    if (may("content")) {
+      const secs = cleanSections(input.sections);
+      patch.blocks = secs;
+      patch.content = sectionsToText(secs);
+    } else rejected.push("content");
+  }
   put("tags", cleanList(input.tags), input.tags !== undefined);
   put("authors", cleanList(input.authors), input.authors !== undefined);
   put("cover_photographer", clean(input.coverPhotographer), input.coverPhotographer !== undefined);
@@ -144,10 +165,15 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
     put("category", input.category, true);
   }
 
-  // المعرّف واللجنة ليسا حقلَي كتابة — إدارةٌ لرئيس التحرير وحده.
+  // المعرّف والجهة ليسا حقلَي كتابة — إدارةٌ لرئيس التحرير وحده.
   if (actor.isChief) {
     if (input.slug !== undefined) patch.slug = clean(input.slug);
-    if (input.committeeId !== undefined) patch.committee_id = input.committeeId;
+    if (input.unit !== undefined) {
+      const u = parseUnit(input.unit);
+      patch.committee_id = u.committeeId;
+      patch.department_id = u.departmentId;
+      patch.council_id = u.councilId;
+    }
   }
 
   if (patch.title !== undefined && !patch.title) return { ok: false, message: "العنوان لا يكون فارغًا." };

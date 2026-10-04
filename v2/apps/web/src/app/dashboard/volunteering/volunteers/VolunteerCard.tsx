@@ -1,10 +1,16 @@
 "use client";
 
 import { Button, Card } from "@adeeb/design-system";
-import { CalendarBlank, HandHeart, ListNumbers, Phone, SignIn } from "@phosphor-icons/react";
+import { CalendarBlank, Certificate, HandHeart, ListNumbers, Phone, SignIn } from "@phosphor-icons/react";
+import { arCount, type ArForms } from "@/lib/arabicCount";
 import { Avatar } from "../../_components/Avatar";
 import { DropdownMenu, type MenuGroup } from "../../_components/DropdownMenu";
 import type { VolunteerRow } from "../data";
+
+/** «شارك مرّةً واحدة» · «مرّتين» · «3 مرّات» · «11 مرّةً» */
+const AR_TIMES: ArForms = ["مرّةً واحدة", "مرّتين", "مرّات", "مرّةً"];
+/** «نال شهادةً واحدة» · «شهادتين» · «3 شهادات» · «11 شهادةً» (منصوبةٌ بالفعل) */
+const AR_CERTS_ACC: ArForms = ["شهادةً واحدة", "شهادتين", "شهادات", "شهادةً"];
 
 function menu(v: VolunteerRow, onEnd: () => void): MenuGroup[] {
   return v.status === "former"
@@ -31,12 +37,21 @@ export function VolunteerCard({ v, onOpen, onGrant, onEnd }: {
   const groups = menu(v, onEnd);
   const next = v.prefs.slice(1);
   const former = v.status === "former";
+  // **كم مرّةً شارك** (المالك ٢٠٢٦-١٠-٠٣): فرصٌ أُكّد حضورُه فيها، تُعدّ بالفرصة لا بالفترة (فترتان من فرصةٍ مشاركةٌ واحدة)،
+  // كما تُعدّ الشهادة. ومن لم يشارك قطّ لا يحمل شيئًا، فيتميّز المشاركُ في كشفٍ أكثرُه لم يشارك بعد.
+  const times = new Set(v.apps.filter((a) => a.status === "accepted" && a.attendance === "attended").map((a) => a.opportunityId)).size;
   return (
     <Card tone={former ? "neutral" : "brand"} className="acard-wide">
       <div className="awide-rail">
         {/* صفتُه فوق وجهه (بأمره) : «متطوّع أدِيب»، وللسابق صفتُه الصادقة */}
         <span className="awide-kind">{former ? "متطوّعٌ سابق" : "متطوّع نشط"}</span>
-        <Avatar name={v.name} src={v.avatarUrl ?? undefined} gender={v.gender} size="xl" className="awide-av" />
+        {/* وساما الصورة كشارة المستوى في البطاقات، أبيضان على الجنب الداكن: الشهاداتُ النافذةُ على حافّتها العليا
+            (المالك ٢٠٢٦-١٠-٠٣: «كذلك أريد للشهادة»)، والمشاركاتُ على السفلى. ومن لم ينل شيئًا لا يحمل وسامَه */}
+        <span className="awide-avw">
+          {v.certificates ? <span className="awide-part is-cert"><Certificate aria-hidden />{`نال ${arCount(v.certificates, AR_CERTS_ACC)}`}</span> : null}
+          <Avatar name={v.name} src={v.avatarUrl ?? undefined} gender={v.gender} size="xl" className="awide-av" />
+          {times ? <span className="awide-part"><HandHeart aria-hidden />{`شارك ${arCount(times, AR_TIMES)}`}</span> : null}
+        </span>
         {/* رغبتُه الأولى لافتةً تحت الصورة، وفوقها تسميتُها : الجنبُ يقول الهويّةَ كاملةً */}
         {v.prefs[0] ? (
           <span className="awide-wishwrap">

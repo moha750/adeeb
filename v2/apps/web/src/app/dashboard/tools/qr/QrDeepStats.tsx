@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge, Card, CardBody, CardHeader, ColumnBars, HeatGrid, SectionCard } from "@adeeb/design-system";
+import { Card, CardBody, CardHeader, ColumnBars, HeatGrid, SectionCard } from "@adeeb/design-system";
 import { CalendarBlank, Clock } from "@phosphor-icons/react";
 import { formatThousands as fmt } from "@/app/_components/format";
-import { hour12, hour12Long } from "@/lib/dates";
+import { hour12 } from "@/lib/dates";
 import type { QrStats } from "./data";
 
 /**
@@ -25,12 +25,12 @@ const HOURS = Array.from({ length: 24 }, (_, h) => hour12(h, false));
  * **الرسومُ وحدَها هنا** (صُحّح ٢٠٢٦-٠٩-٠٥): كانت معها أربعةُ كروتٍ تحت المخطّطات، فصار
  * في الصفحة صفّا أرقامٍ يفصلهما رسم، ورقمان يتكرّران («مسحة للباركود» و«هذا الأسبوع»).
  * فرُفعت الأرقامُ إلى صفّ الصدر الواحد، وبقيت الساعاتُ والشبكةُ حيث تُقرأ.
+ *
+ * وللسبب نفسِه رُفعت شارةُ «الذروة» من صدر الشبكة (٢٠٢٦-٠٩-٢٤): ساعةُ الذروة
+ * مكتوبةٌ في كرت الإحصاء أعلى الصفحة، فتكرارُها فوق الشبكة خبرٌ يُقال مرّتين.
  */
 export function QrDeepStats({ stats }: { stats: QrStats }) {
   const { hours, heat } = stats;
-  const peak = hours.indexOf(Math.max(...hours));
-  const silent = hours.every((h) => h === 0);
-
 
   return (
     <>
@@ -48,7 +48,6 @@ export function QrDeepStats({ stats }: { stats: QrStats }) {
             variant="soft"
             icon={<CalendarBlank />}
             title="الأسبوعُ في ساعاته"
-            actions={silent ? null : <Badge tone="info" size="sm">{`الذروة ${hour12Long(peak)}`}</Badge>}
           />
           <CardBody>
             <div className="qheat">

@@ -36,6 +36,36 @@ export const QR_TAGS_MAX = 6;
 export const QR_TAG_LEN = 32;
 
 /**
+ * **حدّا الحملة** — يطابقان `qr_campaigns_name_shape` و`qr_campaigns_note_shape` حرفًا
+ * (ترحيل م١٨). والاسمُ يساوي اسمَ الباركود طولًا: كلاهما عنوانٌ يُقرأ في صفّ.
+ */
+export const QR_CAMPAIGN_NAME_MAX = 120;
+export const QR_CAMPAIGN_NOTE_MAX = 200;
+
+/**
+ * **اسمُ الحملة كما يُقبَل** — يُقصّ ويُفحَص بلسانٍ يفهمه صاحبُه. حَكَمٌ واحدٌ تقرؤه الشاشةُ
+ * قبل الإرسال ويعيده الخادمُ قبل الكتابة، فلا رسالتان لعيبٍ واحد.
+ */
+export function checkCampaignName(raw: string): { ok: true; name: string } | { ok: false; message: string } {
+  const name = raw.trim();
+  if (!name) return { ok: false, message: "سمِّ الحملة لتعرفها بين حملاتك." };
+  if (name.length > QR_CAMPAIGN_NAME_MAX) {
+    return { ok: false, message: `اسمُ الحملة أطولُ من ${QR_CAMPAIGN_NAME_MAX} حرفًا.` };
+  }
+  return { ok: true, name };
+}
+
+/** وتعريفُها سطرٌ اختياريّ: الفارغُ يُكتَب `null` لا نصًّا فارغًا. */
+export function checkCampaignNote(raw: string): { ok: true; note: string | null } | { ok: false; message: string } {
+  const note = raw.trim();
+  if (!note) return { ok: true, note: null };
+  if (note.length > QR_CAMPAIGN_NOTE_MAX) {
+    return { ok: false, message: `تعريفُ الحملة أطولُ من ${QR_CAMPAIGN_NOTE_MAX} حرفًا.` };
+  }
+  return { ok: true, note };
+}
+
+/**
  * **هل هذا رمزٌ صالحُ الشكل؟** يُسأل قبل أيّ نداءِ قاعدة، فالخُردةُ تُردّ بلا استعلام.
  *
  * ويتّسع للمختار (٢٠٢٦-٠٩-٠٥): حروفٌ لاتينيّةٌ صغيرةٌ وأرقامٌ وشرطةٌ في الوسط، من ٣ إلى ٣٢
@@ -58,7 +88,7 @@ export const isQrCode = (code: string): boolean =>
 export function checkCode(raw: string): { ok: true; code: string } | { ok: false; message: string } {
   const code = raw.trim().toLowerCase().replace(/\s+/g, "-");
   if (code.length < QR_CODE_MIN) return { ok: false, message: `الرمزُ ${QR_CODE_MIN} محارفَ فأكثر.` };
-  if (code.length > QR_CODE_MAX) return { ok: false, message: `الرمزُ ${QR_CODE_MAX} محرفًا على الأكثر.` };
+  if (code.length > QR_CODE_MAX) return { ok: false, message: `الرمزُ ${QR_CODE_MAX} حرفًا على الأكثر.` };
   if ((QR_RESERVED as readonly string[]).includes(code)) return { ok: false, message: "هذا الرمزُ محجوزٌ في الموقع، اختر غيرَه." };
   if (!CODE_SHAPE.test(code)) {
     return { ok: false, message: "الرمزُ حروفٌ إنجليزيّةٌ صغيرةٌ وأرقامٌ وشرطةٌ في وسطه، بلا مسافاتٍ ولا حروفٍ عربيّة." };

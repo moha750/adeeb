@@ -9,7 +9,8 @@
 // بـSIGINT ويمهل الخادم ليُغلق دفاتره قبل أن يتصاعد.
 //
 // الاستعمال: pnpm dev:start | dev:stop | dev:restart | dev:status | dev:logs
-// وحارسُ الفساد الثالث في next.config.ts: turbopackFileSystemCacheForDev = false
+// وكان للفساد حارسٌ ثالث (إطفاءُ ذاكرة Turbopack في next.config.ts)، ثمّ فُتحت الذاكرةُ
+// (٢٠٢٦-١٠-٠٣) اتّكالًا على هذا الإيقاف الرفيق — فأوقِف دائمًا بـdev:stop لا بقتل العمليّة.
 
 import { spawn } from "node:child_process";
 import { openSync, existsSync, readFileSync, writeFileSync, unlinkSync, statSync } from "node:fs";

@@ -6,15 +6,20 @@ import { getCurrentAdmin } from "@/lib/auth";
 export type CertificateRow = {
   id: string;
   userId: string;
-  /** اسم صاحبها اليوم في الملفّ — قد يخالف `holderName` المرسوم يومَ الإصدار. */
+  /** اسم صاحبها اليوم في الملفّ — قد يخالف `paperName` إن صُحّح اسمُه يومَ الإصدار بيد المُصدِر. */
   name: string;
   avatar: string | null;
   gender: "male" | "female" | null;
   phone: string | null;
   memberEnded: boolean;
   serial: string;
-  /** اللقطة: ما رُسم على الورقة حرفًا بحرف. */
+  /** اسمُ يوم الإصدار كما خُزّن — أوّلُ التاريخ، لا يُرسَم. */
   holderName: string;
+  /**
+   * **الاسمُ الذي تُرسَم به الورقة اليوم** (`paper_name`، ٢٠٢٦-١٠-٠١): اسمُه الحاليّ إن تغيّر بعد الإصدار،
+   * وإلّا اسمُ يوم الإصدار (ولو صحّحه المُصدِر بيده). والتحقّقُ يعرف ما قبله.
+   */
+  paperName: string;
   positionTitle: string;
   periodFrom: string;
   periodTo: string;
@@ -71,6 +76,13 @@ export async function getCertificates(): Promise<CertificatesData> {
   const err = cRes.error || tRes.error;
   if (err) return { ...empty, error: err.message };
 
+  // اسمُ الورقة عمودٌ محسوبٌ في الجدول (`paper_name`) لا في دالّة القارئ: يُقرأ هنا لمن مرّ ترشيحُه
+  const certIds = ((cRes.data ?? []) as { id: string }[]).map((r) => r.id);
+  const { data: papers } = certIds.length
+    ? await sb.from("experience_certificates").select("id, paper_name").in("id", certIds)
+    : { data: [] as { id: string; paper_name: string | null }[] };
+  const paperOf = new Map(((papers ?? []) as { id: string; paper_name: string | null }[]).map((p) => [p.id, p.paper_name]));
+
   type RawRow = {
     id: string; user_id: string; member_name: string; member_avatar: string | null; member_gender: string | null;
     member_status: string; member_phone: string | null; serial: string; holder_name: string; position_title: string;
@@ -93,6 +105,7 @@ export async function getCertificates(): Promise<CertificatesData> {
     memberEnded: r.member_status !== "active",
     serial: r.serial,
     holderName: r.holder_name,
+    paperName: paperOf.get(r.id) ?? r.holder_name,
     positionTitle: r.position_title,
     periodFrom: r.period_from,
     periodTo: r.period_to,

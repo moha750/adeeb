@@ -1,7 +1,7 @@
 "use client";
 
-import { ChartBar, Handshake, Megaphone, Storefront, Trophy, UserCircle } from "@phosphor-icons/react";
-import { ArrowLeft, WhatsappLogo } from "@/app/_components/glyphs";
+import { ChartBar, Handshake, Megaphone, Storefront, Trophy, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
+import { ArrowLeft } from "@/app/_components/glyphs";
 import { Cup, OosMark, PRIZE, SUPPORT_EMAIL, WA_NUMBER, n, waLink } from "./bits";
 import type { BoardContest, BoardMe, Recap, Winner } from "./Board";
 import type { TabKey } from "./tabs";

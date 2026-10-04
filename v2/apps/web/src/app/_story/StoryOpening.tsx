@@ -24,7 +24,7 @@ import {
   VideoCamera,
 } from "@phosphor-icons/react";
 import { fmtDigits, markStorySeen, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, storySeen, TIME_MONTHS, WALL_SHOTS } from "./config";
-import { degradeStory, markStoryReady, onStoryReady } from "./ready";
+import { degradeStory, markStoryReady, onStoryReady, storyIsReady } from "./ready";
 import "./story.css";
 
 /* بوابة ما قبل الرسم: تُقرَّر قبل أي paint (سكربت inline) فلا وميض للقصة عند التخطي.
@@ -47,8 +47,9 @@ else if("scrollRestoration" in history){history.scrollRestoration="manual";windo
    ويُقاس **من لحظة الإقلاع** لا من بدء التنقّل — وهذا فرقٌ قيس لا يُخمَّن: على
    اتّصال 4G عاديّ استغرق الترطيبُ وحدَه ٣٫٦ث، فسقفٌ مطلقٌ قصيرٌ كان يُعدم القصّةَ
    قبل أن تنزل حزمتُها ويعرض النسخةَ الساكنة على من كان يسعه انتظارُ ثانيةٍ أخرى.
-   وهو دون سقف شاشة البدء (`STORY_MAX_MS`) كي يقع السقوطُ أوّلًا فتجد الشاشةُ
-   محتوًى مقروءًا حين تنزاح. */
+   **وفي الهبوط ليس هو الحاكم** (٢٠٢٦-١٠-٠٣): سقفُ شاشة البدء (`STORY_MAX_MS`، ٣ث
+   من بدء التنقّل) يسبقه فيُسقط القصّةَ بنفسه قبل أن تنزاح. وهذا السقفُ باقٍ لمن لا
+   تنتظر الشاشةُ قصّتَه (صفحةُ المعاينة `force`). */
 const READY_CAP_MS = 6000;
 
 /* حروف الفصل الأول المتناثرة — بينها أحرف «أديب» بنغمة ذهبية */
@@ -155,11 +156,31 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
     let settled = false;
     let destroy: (() => void) | undefined;
 
+    /* **سقطت قبل أن يبلغها الترطيب؟** سقفُ شاشة البدء (٣ث من بدء التنقّل) قد يسبق
+       ترطيبًا بطيئًا (قيس ٣٫٦ث على 4G)، فتكون القصّةُ ساكنةً قبل هذا السطر. فلا يُعلَن
+       إقلاعٌ ولا ملكيّةُ عجلةٍ لقصّةٍ لن تُبنى — وإلّا بقي الهبوطُ بلا منعِّم الموقع. */
+    if (storyIsReady()) {
+      if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+      if (!force) markStorySeen();
+      return;
+    }
+
     /* إعلانُ الإقلاع — عَلَمٌ واحدٌ على `<html>` يقرؤه اثنان: `story.css` فيُخفي
        نصوصَ القصّة انتظارًا للحركة، و`components.css` فيمنع مهلةَ شاشة البدء
        الاحتياطيّة من كشف مشهدٍ يُجهَّز. وما لم يصل هذا السطرُ (تعطّل الترطيب) بقي
        المشهدُ نصًّا مقروءًا لا سوادًا، وسرت المهلةُ كما كانت. */
     html.setAttribute("data-story-booting", "");
+
+    /* **وتُعلَن ملكيّةُ العجلة** (٢٠٢٦-٠٩-٢٤): القصّةُ تُنشئ طبقةَ تنعيمٍ خاصّةً
+       بها وتربطها بـ`ScrollTrigger`، وطبقتان في صفحةٍ واحدةٍ تتنازعان العجلة.
+       فمنعِّمُ الموقع (`SmoothScroll`) ينسحب ما دامت هذه السمةُ قائمة.
+
+       **وتُعلَن ههنا لا عند إنشاء الطبقة**: بينهما استيرادٌ غيرُ متزامن، ولو
+       انتُظر لعمل المنعِّمان معًا لحظةً.
+       **وتُنزَع من بابين اثنين لا غير**: تنظيفُ هذا الأثر (خروجٌ من الصفحة)،
+       و`degradeStory` (سقوطٌ إلى الساكنة من أيّ سبب). فإن سقطت القصّةُ ولم
+       تُنشئ طبقتَها رجعت العجلةُ إلى منعِّم الموقع ولم يبقَ الهبوطُ خامًا. */
+    html.setAttribute("data-scroll-owner", "story");
 
     /* سقفُ الانتظار: بعده تُعرَض النسخةُ الساكنةُ المقروءة — فلا تنزاح شاشةُ
        البدء يومًا عن سوادٍ لا نصَّ فيه، مهما تعطّلت الشبكةُ أو الحزمة. */
@@ -206,13 +227,16 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
       offReady();
       clearTimeout(capTimer);
       destroy?.();
+      html.removeAttribute("data-scroll-owner");
     };
   }, [force]);
 
   return (
     <>
       {!force && <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />}
-      <div id="adeeb-story" ref={rootRef} data-cursor-ink>
+      {/* suppressHydrationWarning: `degradeStory` قد يضيف `st-static` قبل الترطيب (سقفُ شاشة
+          البدء يسبق ترطيبًا بطيئًا) — اختلافٌ مقصود في صنف هذا العنصر وحده لا في شجرته. */}
+      <div id="adeeb-story" ref={rootRef} data-cursor-ink suppressHydrationWarning>
         {/* الطبقات الثابتة */}
         <div className="st-bg" aria-hidden="true" />
         <div className="st-grain" aria-hidden="true" />

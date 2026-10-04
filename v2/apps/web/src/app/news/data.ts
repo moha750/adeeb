@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdeebServerClient } from "@adeeb/core";
 import { fmtDate } from "@/lib/dates";
+import { isSections, type Section } from "@/lib/news/blocks";
 import { readingMinutes, type Category } from "../dashboard/news/vocab";
 
 // عميل قراءة عامّ (مفتاح anon) — يحترم RLS: الزائر لا يرى إلّا المنشور.
@@ -14,6 +15,8 @@ export type PublicNews = {
   title: string;
   summary: string | null;
   content: string | null;
+  /** الأقسامُ المصرَّحة، أو `null` لخبرٍ لم يُحوَّل بعدُ فيُستدلّ على متنه. */
+  sections: Section[] | null;
   category: Category;
   cover: string | null;
   coverPhotographer: string | null;
@@ -35,6 +38,7 @@ type Raw = {
   title: string;
   summary: string | null;
   content: string | null;
+  blocks: unknown;
   category: Category;
   image_url: string | null;
   cover_photographer: string | null;
@@ -49,8 +53,13 @@ type Raw = {
 };
 
 // نصٌّ حرفيّ واحد لا مجموعٌ بـ`+`: مُحلّل أنواع Supabase يقرأ الحرفيّ وحده.
+//
+// **ومطبٌّ مقيس:** طلبُ عمودٍ غيرِ موجودٍ من PostgREST **يُسقط الاستعلامَ كلَّه** لا
+// العمودَ وحدَه — فتردّ الدالّةُ `[]` وتُفرَغ صفحةُ الأخبار من أربعة عشر خبرًا. وقع
+// هذا ٢٠٢٦-٠٩-٢٤ حين سبق اسمُ `blocks` ترحيلَه. فمن زاد عمودًا ههنا فليتأكّد أنّ
+// ترحيلَه مطبَّقٌ على القاعدة قبل ذلك.
 const COLS =
-  "id, slug, title, summary, content, category, image_url, cover_photographer, gallery_images, gallery_photographers, authors, tags, published_at, views, likes_count, is_featured";
+  "id, slug, title, summary, content, blocks, category, image_url, cover_photographer, gallery_images, gallery_photographers, authors, tags, published_at, views, likes_count, is_featured";
 
 const map = (n: Raw): PublicNews => ({
   id: n.id,
@@ -58,6 +67,7 @@ const map = (n: Raw): PublicNews => ({
   title: n.title,
   summary: n.summary ?? null,
   content: n.content ?? null,
+  sections: isSections(n.blocks) ? n.blocks : null,
   category: n.category,
   cover: n.image_url ?? null,
   coverPhotographer: n.cover_photographer ?? null,

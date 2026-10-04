@@ -5,7 +5,9 @@
  */
 import "server-only";
 import { newsService, ENV_MISSING, type NewsroomActor } from "@/lib/news/authz";
+import { CLUB_LABEL, buildUnitOptions, unitNameIndex, unitValue, type UnitOption } from "@adeeb/core/org-unit";
 import type { AssignmentStatus, Category, Workflow } from "./vocab";
+import { isSections, type Section } from "@/lib/news/blocks";
 
 /* ══ صفّ القائمة ═════════════════════════════════════════════════════ */
 
@@ -29,8 +31,10 @@ export type NewsRow = {
   galleryCount: number;
   authors: string[];
   tags: string[];
-  committeeId: number | null;
-  committeeName: string | null;
+  /** الجهةُ مرمَّزةً (`council:<id>` · `dept:<id>` · `comm:<id>` · "" للنادي) — قيمةُ المرشِّح والمنسدل. */
+  unit: string;
+  /** اسمُ الجهة كما يُعرَض — «نادي أدِيب» حين لا جهةَ بعينها، فلا يبقى الحقلُ صامتًا. */
+  unitName: string;
   views: number;
   likes: number;
   comments: number;
@@ -44,6 +48,8 @@ export type NewsRow = {
   wordCount: number;
   /** هل ينقصه شيءٌ للنشر؟ يُحسب هنا مرّةً فلا يُعاد في كلّ بطاقة. */
   content: string | null;
+  /** أقسامُ المتن مصرَّحةً، أو `null` لخبرٍ لم يُحوَّل بعدُ فيُشتقّ محرّرُه من نصّه. */
+  sections: Section[] | null;
 };
 
 /**
@@ -72,11 +78,18 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
   // وأيّ تركيبٍ يُسقط الاستدلال إلى `GenericStringError`.
   let q = sb
     .from("news")
-    .select("id, title, slug, summary, content, category, workflow_status, is_featured, image_url, gallery_images, authors, tags, committee_id, views, likes_count, rejection_reason, published_at, updated_at, created_at")
+    .select("id, title, slug, summary, content, blocks, category, workflow_status, is_featured, image_url, gallery_images, authors, tags, committee_id, department_id, council_id, views, likes_count, rejection_reason, published_at, updated_at, created_at")
     .order("updated_at", { ascending: false });
   if (allowed) q = q.in("id", allowed);
 
-  const [nRes, cRes] = await Promise.all([q, sb.from("committees").select("id, committee_name_ar")]);
+  // الهيكلةُ الثلاثةُ تُجلب معًا: الخبرُ يُنسَب إلى مجلسٍ أو قسمٍ أو لجنة، واسمُه يُقرأ
+  // من فهرسِ الخيارات نفسِه — فما يراه في الجدول هو ما اختاره في المنسدل حرفًا بحرف.
+  const [nRes, cRes, dRes, clRes] = await Promise.all([
+    q,
+    sb.from("committees").select("id, committee_name_ar, department_id"),
+    sb.from("departments").select("id, name_ar, display_order"),
+    sb.from("councils").select("id, name_ar"),
+  ]);
   if (nRes.error) return { rows: [], error: nRes.error.message };
 
   const ids = (nRes.data ?? []).map((n) => n.id as string);
@@ -93,7 +106,9 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
     : { data: [] as { id: string; full_name: string; avatar_url: string | null; gender: string | null }[] };
 
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
-  const committeeById = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string]));
+  const nameOf = unitNameIndex(
+    buildUnitOptions({ councils: clRes.data, departments: dRes.data, committees: cRes.data }),
+  );
 
   const writersByNews = new Map<string, WriterChip[]>();
   for (const a of (aRes.data ?? []) as { news_id: string; writer_id: string; status: AssignmentStatus }[]) {
@@ -117,6 +132,9 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
     commentsByNews.set(c.news_id, cur);
   }
 
+  const unitOf = (n: { committee_id: number | null; department_id: number | null; council_id: string | null }) =>
+    unitValue({ committeeId: n.committee_id, departmentId: n.department_id, councilId: n.council_id });
+
   const rows: NewsRow[] = (nRes.data ?? []).map((n) => {
     const counts = commentsByNews.get(n.id) ?? { total: 0, pending: 0 };
     const content = (n.content as string | null) ?? null;
@@ -126,6 +144,7 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
       slug: n.slug ?? "",
       summary: n.summary ?? null,
       content,
+      sections: isSections(n.blocks) ? n.blocks : null,
       category: (n.category ?? "coverage") as Category,
       workflow: (n.workflow_status ?? "draft") as Workflow,
       isFeatured: Boolean(n.is_featured),
@@ -133,8 +152,8 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
       galleryCount: (n.gallery_images as string[] | null)?.length ?? 0,
       authors: (n.authors as string[] | null) ?? [],
       tags: (n.tags as string[] | null) ?? [],
-      committeeId: n.committee_id ?? null,
-      committeeName: n.committee_id ? committeeById.get(n.committee_id) ?? null : null,
+      unit: unitOf(n),
+      unitName: nameOf.get(unitOf(n)) ?? CLUB_LABEL,
       views: n.views ?? 0,
       likes: n.likes_count ?? 0,
       comments: counts.total,
@@ -326,11 +345,17 @@ export async function getMemberOptions(): Promise<Option[]> {
   return (data ?? []).map((p) => ({ value: p.id, label: p.full_name }));
 }
 
-export async function getCommitteeOptions(): Promise<Option[]> {
+/**
+ * جهاتُ النسبة: النادي · المجلسان · الأقسام · اللجان · الإدارات.
+ * (كانت «اللجانَ» وحدها حتى ٢٠٢٦-٠٩-١٧ — وسّعها المالكُ لتضمّ الهيكلةَ كلَّها.)
+ */
+export async function getUnitOptions(): Promise<UnitOption[]> {
   const sb = newsService();
   if (!sb) return [];
-  const { data } = await sb
-    .from("committees").select("id, committee_name_ar")
-    .eq("is_active", true).order("id", { ascending: true });
-  return (data ?? []).map((c) => ({ value: String(c.id), label: c.committee_name_ar }));
+  const [cRes, dRes, clRes] = await Promise.all([
+    sb.from("committees").select("id, committee_name_ar, department_id").eq("is_active", true),
+    sb.from("departments").select("id, name_ar, display_order").eq("is_active", true),
+    sb.from("councils").select("id, name_ar"),
+  ]);
+  return buildUnitOptions({ councils: clRes.data, departments: dRes.data, committees: cRes.data });
 }

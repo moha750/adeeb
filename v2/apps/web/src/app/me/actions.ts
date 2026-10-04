@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionAdmin } from "@/lib/auth";
+import { isLiveMembership } from "@/lib/memberRecord";
 import { normalizeName } from "@/lib/personName";
 import { myDataSchema, type MyDataInput, type SaveResult } from "./schema";
 import { EXIT_REASON_MIN } from "./vocab";
@@ -45,10 +46,11 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
 
   const { data: p, error: pErr } = await sb
-    .from("profiles").select("joined_date").eq("id", me.id).maybeSingle();
+    .from("profiles").select("joined_date, account_status").eq("id", me.id).maybeSingle();
   if (pErr) return { ok: false, message: "تعذّرت قراءة بياناتك. حاول مجدّدًا." };
   if (!p) return { ok: false, message: "لا بيانات لك بعد. أكمِلها أوّلًا." };
-  if (p.joined_date != null) {
+  // والعضوُ السابقُ زائرٌ يحرّر بياناتِه ههنا كغيره (٢٠٢٦-١٠-٠٣)
+  if (isLiveMembership(p)) {
     return { ok: false, message: "بياناتُك عضوًا تُحرَّر من ملفّك في بوّابة أديب." };
   }
 

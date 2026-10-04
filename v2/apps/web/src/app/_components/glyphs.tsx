@@ -41,9 +41,10 @@ import {
   // ٤ · شعاراتُ الدخول والتواصل — شعارُ العلامة صورتُها المسجّلة، لا يُخترع له وجهٌ ثنائيّ.
   // **وشعاراتُ المنصّات الاجتماعيّة خرجت من هنا** بقرار المالك ٢٠٢٦-٠٨-١٣ (`XLogo`
   // `InstagramLogo` `TiktokLogo` `LinkedinLogo`): رآها في `/ui/icons` فاختار لها duotone
-  // كسائر الموقع، ومعها `YoutubeLogo` التي لم تكن في القائمة أصلًا. وبقيت هذه الثلاثةُ
-  // ريثما يفصل فيها (زرّا الدخول بقوقل وأبل، وواتساب في التواصل).
-  WhatsappLogo as PhWhatsappLogo, GoogleLogo as PhGoogleLogo, AppleLogo as PhAppleLogo,
+  // كسائر الموقع، ومعها `YoutubeLogo` التي لم تكن في القائمة أصلًا. **وخرج `WhatsappLogo`**
+  // بقراره ٢٠٢٦-١٠-٠٣ حين رآه في زرّ التواصل بطابور «بانتظار التقييم»: جُرّب bold أمامه بعدها
+  // فردّه إلى duotone. وبقي هذان ريثما يفصل فيهما (زرّا الدخول بقوقل وأبل).
+  GoogleLogo as PhGoogleLogo, AppleLogo as PhAppleLogo,
   // ٥ · نجمةُ «مميّز» — حالةُ تشغيلٍ لا معنى؛ ونصفُ الممتلئة تُقرأ «نصف مفعّلة»
   Star as PhStar,
   // ٦ · الحالاتُ الدائريّة — علامةُ حالةٍ تُقرأ لمحةً، فلا تُثقَل بطبقةٍ خافتة
@@ -140,9 +141,8 @@ export const UploadSimple = bind(PhUploadSimple, "UploadSimple");
 export const FunnelSimple = bind(PhFunnelSimple, "FunnelSimple");
 export const SignOut = bind(PhSignOut, "SignOut");
 
-// ٤ · شعاراتُ الدخول والتواصل
-export const WhatsappLogo = bind(PhWhatsappLogo, "WhatsappLogo");
-// وشعارا مزوّدَي الدخول — من العائلة نفسِها لا من أصولٍ ملوّنةٍ تُستورَد: لونُهما من الرموز
+// ٤ · شعارا مزوّدَي الدخول (وخرج واتساب ٢٠٢٦-١٠-٠٣ إلى duotone)
+// وهما من العائلة نفسِها لا من أصولٍ ملوّنةٍ تُستورَد: لونُهما من الرموز
 // كسائر الأيقونات، فلا يدخل الموقعَ لونٌ خارج `tokens.css` ولو كان لونَ علامةٍ أخرى.
 export const GoogleLogo = bind(PhGoogleLogo, "GoogleLogo");
 export const AppleLogo = bind(PhAppleLogo, "AppleLogo");

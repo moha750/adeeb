@@ -1,6 +1,6 @@
 import { Alert } from "@adeeb/design-system";
 import { getNewsroomActor } from "@/lib/news/authz";
-import { getCommitteeOptions, getNews } from "./data";
+import { getNews, getUnitOptions } from "./data";
 import { NewsView } from "./NewsView";
 import { NewsHead, NewsroomDenied } from "./_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
@@ -13,9 +13,9 @@ export default async function NewsPage() {
   const actor = await getNewsroomActor();
   if (!actor) return <NewsroomDenied />;
 
-  const [{ rows, error }, committees] = await Promise.all([
+  const [{ rows, error }, units] = await Promise.all([
     getNews(actor),
-    actor.isChief ? getCommitteeOptions() : Promise.resolve([]),
+    actor.isChief ? getUnitOptions() : Promise.resolve([]),
   ]);
 
   if (error) {
@@ -27,5 +27,5 @@ export default async function NewsPage() {
     );
   }
 
-  return <NewsView rows={rows} committees={committees} isChief={actor.isChief} />;
+  return <NewsView rows={rows} units={units} isChief={actor.isChief} />;
 }

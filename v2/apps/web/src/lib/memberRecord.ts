@@ -34,8 +34,8 @@ export const hasMemberRecord = cache(async function hasMemberRecord(userId: stri
  * `profiles` اليوم صاحبُ حسابٍ لم ينضمّ، فسؤالُ «أسجلُّه تامّ؟» وحدَه كان يسوقه إلى شاشة
  * إكمال سجلٍّ ليس له.
  *
- * وحدُّه `joined_date` — نظيرُ `is_adeeb_member` في القاعدة حرفًا بحرف. ولو تبدّل الحدُّ يومًا
- * تبدّل في الموضعين معًا: هناك في جسد الدالّة، وههنا في هذا السطر.
+ * وحدُّه `isLiveMembership` أدناه — نظيرُ `is_adeeb_member` في القاعدة حرفًا بحرف. ولو تبدّل
+ * الحدُّ يومًا تبدّل في الموضعين معًا: هناك في جسد الدالّة، وههنا في تلك الدالّة.
  *
  * وبلا مفتاح خدمةٍ أو عند عطلٍ تُرجع `true` — **الشكُّ لا يطرد**: من شُكّ في عضويّته يبقى على
  * طريقه المعتاد، فلا يُقتاد إلى بيتٍ ليس بيتَه بعطلٍ عابر.
@@ -44,7 +44,22 @@ export const isAdeebMember = cache(async function isAdeebMember(userId: string):
   const sb = service();
   if (!sb) return true;
 
-  const { data, error } = await sb.from("profiles").select("joined_date").eq("id", userId).maybeSingle();
+  const { data, error } = await sb
+    .from("profiles").select("joined_date, account_status").eq("id", userId).maybeSingle();
   if (error) return true;
-  return data?.joined_date != null;
+  return isLiveMembership(data);
 });
+
+/**
+ * **حدُّ العضويّة على صفٍّ مقروء — المصدرُ الواحد في الكود.** انضمّ (`joined_date`) ولم تُنهَ
+ * عضويّتُه (`account_status` ليس `suspended`).
+ *
+ * فالعضوُ السابقُ — أيًّا كان سببُ خروجه — **زائرٌ** (قرار المالك ٢٠٢٦-١٠-٠٣): بيتُه `/me`،
+ * ويتطوّع من `/join` كغيره، وتُهدى إليه العضويّةُ من جديد. ويبقى `joined_date` و`terminated_at`
+ * أرشيفًا لعضويّته المنتهية لا حدًّا. ونظيرُه `is_adeeb_member` في القاعدة.
+ */
+export function isLiveMembership(
+  p: { joined_date?: string | null; account_status?: string | null } | null | undefined
+): boolean {
+  return p?.joined_date != null && p.account_status !== "suspended";
+}

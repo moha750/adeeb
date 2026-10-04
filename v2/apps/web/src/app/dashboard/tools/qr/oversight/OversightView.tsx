@@ -44,6 +44,9 @@ const KIND_LABEL: Record<QrEvent["kind"], string> = {
   spec: "عدّل التصميم",
   delete: "حذف الباركود",
   owner: "نقل الملكيّة",
+  schedule: "بدّل المواعيد",
+  tags: "بدّل الوسوم",
+  campaign: "بدّل الحملة",
 };
 
 const KIND_TONE: Record<QrEvent["kind"], "info" | "warning" | "danger" | "neutral"> = {
@@ -53,6 +56,9 @@ const KIND_TONE: Record<QrEvent["kind"], "info" | "warning" | "danger" | "neutra
   spec: "neutral",
   delete: "danger",
   owner: "info",
+  schedule: "neutral",
+  tags: "neutral",
+  campaign: "info",
 };
 
 export function OversightView({ data }: { data: QrOversightData }) {

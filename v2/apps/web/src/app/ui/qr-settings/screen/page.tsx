@@ -8,8 +8,7 @@ import { navFor } from "../../../dashboard/_shell/nav";
 import { ToastProvider } from "../../../dashboard/_components/ToastProvider";
 import { QrSettingsView } from "../../../dashboard/tools/qr/QrSettingsView";
 import type { QrStats } from "../../../dashboard/tools/qr/data";
-import { defaultQrSpec } from "../../../dashboard/tools/qr/defaults";
-import { qrShortUrl } from "@/lib/qrLinks";
+import { sampleQrLink } from "../../_qr/sample";
 import type { MyScope } from "@/lib/myScope";
 
 /**
@@ -38,11 +37,12 @@ const DAILY = Array.from({ length: 30 }, (_, i) => {
   return { day: key, count: shape[i] };
 });
 
-const LINK = {
-  id: "demo", code: "e4trprm", title: "الملتقى التعريفيّ لبرنامج الولاء الوظيفيّ «دوم»",
-  targetUrl: TARGET, spec: defaultQrSpec(qrShortUrl("e4trprm")),
-  active: true, ownerId: "demo-owner", scanCount: 86, createdAt: "2026-07-30T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z",
-};
+const LINK = sampleQrLink({
+  title: "الملتقى التعريفيّ لبرنامج الولاء الوظيفيّ «دوم»",
+  targetUrl: TARGET,
+  scanCount: 86,
+  updatedAt: "2026-08-27T09:00:00Z",
+});
 
 /**
  * القراءةُ الأعمقُ مصنوعةٌ بنمطٍ يشبه الواقع: ذروةٌ عند الحادية عشرة صباحًا (وقتُ المرور

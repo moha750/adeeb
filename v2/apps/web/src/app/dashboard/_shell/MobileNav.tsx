@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ICONS, IconDashboard, IconMenu } from "./icons";
-import type { NavGroup, NavItem } from "./nav";
+import { firstHref, searchNav, type NavGroup, type NavItem } from "./nav";
 import { DuotoneZone, GlyphZone, X } from "@/app/_components/glyphs";
 import { HelpCenter } from "./HelpCenter";
+import { NavSearch } from "./NavSearch";
 
 /**
  * تنقّلُ الجوّال — **جزيرةُ وجهاتٍ في منطقة الإبهام، وورقةٌ ترفع الشريطَ الجانبيّ**.
@@ -156,6 +158,29 @@ export function MobileSheet({
   const sheetRef = useRef<HTMLElement>(null);
   const drag = useRef<{ y0: number; dy: number } | null>(null);
 
+  /* ── البحثُ في الورقة: **ههنا موضعُ حاجته الأشدّ** ──
+     اللوحةُ منتَجُ جوّالٍ (٢٣٠ من ٢٩١ لم يفتحوها من حاسوبٍ قطّ)، والورقةُ سقفُها ٨٢٪
+     من شاشةٍ صغيرة تحمل الخريطةَ كاملةً — فصاحبُ المفاتيح الكثيرة يمرّرها مرّاتٍ ليجد
+     بندًا يعرف اسمَه. وحرفان يُغنيان عن التمرير كلِّه.
+
+     **ولا تركيزَ تلقائيّ:** لوحةُ مفاتيحٍ تقفز مع الورقة تأكل نصفَ ما فُتح لأجله،
+     ومن أراد وجهةً تحت إبهامه لا يريد أن يكتب.
+
+     والمكتوبُ يُمسَح مع إغلاق الورقة — في الرسم لا في أثر (سابقةُ إغلاق الدُرج في
+     `DashboardShell`): الأثرُ يرسم الورقةَ منخولةً رسمةً كاملةً ثمّ يُصلحها، فتُرى
+     تومض على الطريق. */
+  const [q, setQ] = useState("");
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) { setWasOpen(open); if (!open) setQ(""); }
+  const shown = useMemo(() => searchNav(nav, q), [nav, q]);
+  const router = useRouter();
+  const submitSearch = () => {
+    const href = firstHref(shown);
+    if (!href) return;
+    router.push(href);
+    onClose();
+  };
+
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!open) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -203,10 +228,12 @@ export function MobileSheet({
             <GlyphZone><X /></GlyphZone>
           </button>
         </div>
+        <NavSearch value={q} onChange={setQ} onSubmit={submitSearch} />
         <div className="ash-rule" aria-hidden />
 
         <nav className="ash-nav">
-          {nav.map((g, gi) => (
+          {q && shown.length === 0 ? <div className="ash-srch-none" role="status">لا تبويبَ بهذا الاسم</div> : null}
+          {shown.map((g, gi) => (
             <div className="ash-group" key={g.head ?? gi}>
               {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
               {g.items.map((it) => {

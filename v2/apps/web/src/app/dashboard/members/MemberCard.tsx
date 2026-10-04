@@ -1,8 +1,7 @@
 "use client";
 
 import { Button, Card, CardBanner } from "@adeeb/design-system";
-import { Phone, Envelope, CalendarBlank, FileText, User } from "@phosphor-icons/react";
-import { WhatsappLogo } from "@/app/_components/glyphs";
+import { Phone, Envelope, CalendarBlank, FileText, User, WhatsappLogo } from "@phosphor-icons/react";
 import { Avatar } from "../_components/Avatar";
 import { positionLine } from "@/lib/positionLabel";
 import { DropdownMenu, type MenuGroup } from "../_components/DropdownMenu";

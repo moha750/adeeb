@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
+import { isLiveMembership } from "@/lib/memberRecord";
 import { fmtDate, timeLabel } from "@/app/activities/data";
 import type { ActivityType } from "@/lib/activities";
 
@@ -69,7 +70,7 @@ export async function getMyAccount(userId: string): Promise<MyAccount | null> {
   if (!sb) return null;
 
   const [pRes, rRes] = await Promise.all([
-    sb.from("profiles").select("full_name, email, phone, gender, city, joined_date").eq("id", userId).maybeSingle(),
+    sb.from("profiles").select("full_name, email, phone, gender, city, joined_date, account_status").eq("id", userId).maybeSingle(),
     sb.from("activity_reservations")
       .select("id, activity_id, status, attendance_status, whatsapp_confirmed_at")
       .eq("user_id", userId),
@@ -111,7 +112,7 @@ export async function getMyAccount(userId: string): Promise<MyAccount | null> {
 
   return {
     hasProfile: !!p,
-    isMember: p?.joined_date != null,
+    isMember: isLiveMembership(p),
     fullName: p?.full_name ?? "",
     email: p?.email ?? "",
     phone: p?.phone ?? "",

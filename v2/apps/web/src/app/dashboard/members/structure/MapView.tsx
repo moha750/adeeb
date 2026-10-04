@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Accordion, Badge, Button, Card, CardBody, CardHeader, Modal, ModalSectionHeading, matchesSearch } from "@adeeb/design-system";
-import { Bank, Buildings, MapPin, Scales, UsersFour, UsersThree } from "@phosphor-icons/react";
-import { CaretLeft, WhatsappLogo } from "@/app/_components/glyphs";
+import { Bank, Buildings, MapPin, Scales, UsersFour, UsersThree, WhatsappLogo } from "@phosphor-icons/react";
+import { CaretLeft } from "@/app/_components/glyphs";
 import { Toolbar } from "../../_components/Toolbar";
 import { Avatar } from "../../_components/Avatar";
 import { AvatarStack } from "../../_components/AvatarStack";

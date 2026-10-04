@@ -30,3 +30,14 @@
    وبإعلانه أوّلًا يوحّد الشكل على كلّ نظام (أعلامٌ مسطّحة) بدل أن يختلف بين أبل وأندرويد.
    المصدر: Twemoji (Twitter) برخصة CC-BY 4.0 — الإسناد واجبٌ ومكتوبٌ هنا. */
 @font-face{ font-family:"Twemoji Country Flags"; src:url("./fonts/twemoji-country-flags.woff2") format("woff2"); font-display:swap; unicode-range:U+1F1E6-1F1FF; }
+
+/* ===== Rooyin (عربيٌّ ولاتينيٌّ بكسليّ) — خطُّ «ألعاب أدِيبيّة» وحدَها =====
+   اختاره المالك (٢٠٢٦-٠٩-٢٦) مع شعار الصفحة البكسليّ، فهو من هويّتها المنعزلة (القاعدة ١) لا من
+   هويّة الموقع: لا يُسنَد إلّا تحت جذرها `.agm`. والإعلانُ هنا لأنّ هذا الملفَّ مصدرُ الخطوط الواحد،
+   ولا يُنزَّل الملفُّ إلّا في صفحةٍ ترسم به.
+   **بكسلُه عُشرُ حجم الخطّ** (٢٠٠ من ٢٠٠٠ وحدة، وأنصافُ بكسلٍ في مواضع)، فلا تستقيم حوافُّه إلّا
+   بأحجامٍ من مضاعفات ٢٠ (٢٠، ٤٠، ٦٠): أيُّ حجمٍ غيرها يقع بكسلُه بين نقطتين فيُطمَس.
+   المصدر: fontiran.com (محمد درويشي) برخصة SIL OFL 1.1، فتضمينُه في الموقع جائز. حُوِّل إلى woff2
+   كما هو، بلا تجزئةٍ ولا مساسٍ برسمه. */
+@font-face{ font-family:"Rooyin"; src:url("./fonts/rooyin-regular.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Rooyin"; src:url("./fonts/rooyin-bold.woff2") format("woff2");    font-weight:700; font-style:normal; font-display:swap; }

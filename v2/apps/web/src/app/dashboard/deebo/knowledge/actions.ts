@@ -35,10 +35,10 @@ function validate(input: FactInput): string | null {
   const title = clean(input.title);
   const body = clean(input.body);
   if (title.length < 2) return "العنوان مطلوب.";
-  if (title.length > 120) return "العنوان أطول من مئةٍ وعشرين محرفًا.";
+  if (title.length > 120) return "العنوان أطول من مئةٍ وعشرين حرفًا.";
   if (body.length < 2) return "النصّ مطلوب.";
   // الحدُّ نفسُه في القاعدة: المعرفةُ كلُّها تُحشى في كلّ سؤال، فمقطعٌ يتضخّم يُحاسَب في كلّ رسالة.
-  if (body.length > 1200) return "النصّ أطول من ألفٍ ومئتَي محرف. اقسِمه واقعتَين.";
+  if (body.length > 1200) return "النصّ أطول من ألفٍ ومئتَي حرف. اقسِمه واقعتَين.";
   return null;
 }
 

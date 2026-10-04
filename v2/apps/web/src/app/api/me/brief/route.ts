@@ -17,7 +17,8 @@ import { DASHBOARD_CAPS } from "@/lib/capabilities";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { positionLine } from "@/lib/positionLabel";
 import { roleRank } from "@/lib/roleOrder";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionClaims } from "@/lib/auth";
+import { isLiveMembership } from "@/lib/memberRecord";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export type MeBrief = {
   name: string | null;
   avatarUrl: string | null;
   gender: "male" | "female" | null;
-  /** عضوٌ في النادي — حدُّه `joined_date` كما في `isAdeebMember` و`is_adeeb_member` سواءً. */
+  /** عضوٌ في النادي — حدُّه `isLiveMembership` كما في `isAdeebMember` و`is_adeeb_member` سواءً. */
   isMember: boolean;
   /**
    * **له بابٌ في البوّابة** — عضويّةً أو مفتاحًا (٢٠٢٦-٠٩-٠٥).
@@ -106,9 +107,11 @@ export async function GET() {
   // `no-store` على الردّ كلِّه: بطاقةُ شخصٍ بعينه لا تُخزَّن في وسيطٍ مشترك.
   const headers = { "Cache-Control": "no-store, private" };
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ viewer: null }, { headers });
+  // **مطالباتٌ لا نداءُ مصادقة**: هذا المسار يُسأل عند كلّ صفحةٍ عامّة، و`getUser` كان
+  // يضيف إليه رحلةً كاملةً إلى خادم المصادقة لأجل معرّفٍ يحمله الرمزُ نفسُه. والقراءةُ
+  // أدناه لا تبني إذنًا على المعرّف: أربعةُ حقولٍ يراها كلُّ من نظر إلى صاحبها.
+  const claims = await getSessionClaims();
+  if (!claims) return NextResponse.json({ viewer: null }, { headers });
 
   const sb = service();
   // بلا مفتاح خدمةٍ يبقى الرأسُ على حاله (زائرٌ مجهول) — ولا يُكسَر الموقع لأجل زينة.
@@ -116,19 +119,20 @@ export async function GET() {
 
   const { data, error } = await sb
     .from("profiles")
-    .select("full_name, avatar_url, gender, joined_date")
-    .eq("id", user.id)
+    .select("full_name, avatar_url, gender, joined_date, account_status")
+    .eq("id", claims.sub)
     .maybeSingle();
   if (error) return NextResponse.json({ viewer: null }, { headers });
 
+  const member = isLiveMembership(data);
   const viewer: MeBrief = {
     name: data?.full_name ?? null,
     avatarUrl: data?.avatar_url ?? null,
     gender: data?.gender === "male" || data?.gender === "female" ? data.gender : null,
-    isMember: data?.joined_date != null,
-    hasPortal: data?.joined_date != null || (await hasDashboardKeys(sb, user.id)),
+    isMember: member,
+    hasPortal: member || (await hasDashboardKeys(sb, claims.sub)),
     // المنصبُ يُسأل عنه لمن انضمّ وحدَه: لا مناصبَ لصاحب حسابٍ ليس عضوًا، فلا استعلامَ يُهدر.
-    position: data?.joined_date != null ? await currentPosition(sb, user.id) : null,
+    position: member ? await currentPosition(sb, claims.sub) : null,
   };
   return NextResponse.json({ viewer }, { headers });
 }

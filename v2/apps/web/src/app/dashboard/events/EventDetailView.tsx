@@ -3,9 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, BarList, Button, SectionCard, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
-import { CalendarBlank, Certificate, ChatText, Clock, Copy, MapPin } from "@phosphor-icons/react";
+import { CalendarBlank, Certificate, ChatText, Clock, Copy, MapPin, WhatsappLogo } from "@phosphor-icons/react";
 import { ArrowUUpLeft } from "@/app/_components/glyphs";
-import { CheckCircle, PencilSimple, Prohibit, WhatsappLogo } from "@/app/_components/glyphs";
+import { CheckCircle, PencilSimple, Prohibit } from "@/app/_components/glyphs";
 import { waHref } from "@/lib/whatsapp";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar } from "../_components/Toolbar";

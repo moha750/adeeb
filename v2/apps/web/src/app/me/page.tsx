@@ -4,7 +4,7 @@ import { Alert, Card, CardBody, CardHeader, Container, Footer, LandingHeading } 
 import { IdentificationBadge, UserMinus } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { SiteHeader } from "@/app/_components/SiteHeader";
-import { getSessionAdmin } from "@/lib/auth";
+import { awayIfNoSession, getSessionAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { deletionDueLabel } from "@/lib/accountDeletion";
 import { AccountExit } from "@/app/_components/AccountExit";
@@ -14,6 +14,8 @@ import { getMyVolunteering } from "./volunteering";
 import { MyBookings } from "./MyBookings";
 import { MyData } from "./MyData";
 import { MyVolunteering } from "./MyVolunteering";
+import { PwaCard } from "@/app/_pwa/PwaCard";
+import { PwaIntro } from "@/app/_pwa/PwaIntro";
 
 export const metadata: Metadata = { title: "حسابك، نادي أديب" };
 export const dynamic = "force-dynamic";
@@ -30,7 +32,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function MePage() {
   const me = await getSessionAdmin();
-  if (!me) redirect("/login?next=/me");
+  if (!me) redirect((await awayIfNoSession("/me")) ?? "/login?next=/me");
 
   const [account, volunteering] = await Promise.all([getMyAccount(me.id), getMyVolunteering(me.id)]);
 
@@ -79,6 +81,9 @@ export default async function MePage() {
                   </CardBody>
                 </Card>
 
+                {/* أَدِيب على الجوّال: التثبيتُ والإشعارات (v2/PUSH-NOTIFICATIONS.md) */}
+                <PwaCard />
+
                 {/* **بابٌ لا مراسلة** (قرار المالك ٢٠٢٦-٠٨-١٩، ينسخ قرارَ ٥ أغسطس): كانت
                     الحجّةُ أنّ الحجوزات سجلُّ حضورٍ للنادي فلا تُمحى بنقرة — وهي حجّةٌ صحيحةٌ
                     نالت جوابَها في التصميم لا في إغلاق الباب: السجلُّ يبقى كاملًا والحسابُ
@@ -115,6 +120,7 @@ export default async function MePage() {
         </section>
       </main>
       <Footer />
+      <PwaIntro />
     </>
   );
 }

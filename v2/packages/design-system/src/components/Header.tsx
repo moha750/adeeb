@@ -81,6 +81,8 @@ export function Header({
   portalHref = "/dashboard",
   accountHref = "/me",
   onSignOut,
+  skin = "light",
+  skinOver,
 }: {
   logoSrc?: string;
   nav?: NavItem[];
@@ -130,6 +132,24 @@ export function Header({
   accountHref?: string;
   /** الخروجُ فعلٌ لا وِجهة — يمرّره المستهلك لأنّ المكتبة لا تعرف Supabase. */
   onSignOut?: () => void;
+  /**
+   * **جلدُ الرأس** — لأنّه يطفو على سطحين لا سطحٍ واحد (انظر `.shdr[data-skin]`):
+   * `light` صفحةٌ فاتحة (الأصل)، و`inverse` سطحٌ ملوّنٌ كصدر الهبوط. وكلُّ ما يتبدّل
+   * به رمزٌ في الورقة وشعارٌ ووجهُ فعلٍ — لا قاعدةَ تُنسَخ.
+   */
+  skin?: "light" | "inverse";
+  /**
+   * **محدِّدُ الأسطح الملوّنة** التي يلبس الرأسُ {@link skin} ما دام طافيًا على
+   * إحداها، فإذا جاوزها كلَّها عاد فاتحًا. ولمَ محدِّدٌ لا عَلَمٌ يُرفع؟ لأنّ الجلدَ
+   * **موضعٌ لا صفحة**: صدرُ الهبوط ارتفاعُه شاشةٌ واحدة وتحته متنٌ فاتح، فعَلَمٌ
+   * للصفحة كلِّها يترك الحبرَ الأبيضَ على بياضٍ بعد أوّل تمريرة.
+   *
+   * **وهي أسطحٌ لا سطحٌ واحد** (٢٠٢٦-٠٩-١٧): بدأ المحدِّدُ صدرَ الهبوط وحدَه، ثمّ
+   * جُرِد الموقعُ قياسًا فإذا أربعةُ أسطحٍ عريضةٍ يمرّ الرأسُ عليها — وأعمُّها
+   * **التذييل**، فهو في كلّ صفحةٍ ويُبلَغ بآخر تمريرة. فصار المحدِّدُ يُقرأ
+   * بـ`querySelectorAll`، ويكفي أن يعبر **واحدٌ** منها.
+   */
+  skinOver?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -141,6 +161,8 @@ export function Header({
   const burgerRef = useRef<HTMLButtonElement>(null);
 
   const [stuck, setStuck] = useState(false);
+  /** أما زال الرأسُ طافيًا على السطح الملوّن؟ بلا {@link skinOver} فالجلدُ ثابتٌ. */
+  const [over, setOver] = useState(!!skinOver);
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [meOpen, setMeOpen] = useState(false);
@@ -151,11 +173,48 @@ export function Header({
     const el = ref.current;
     if (!el) return;
     const host = scrollParentOf(el);
-    const read = () => setStuck((host === window ? window.scrollY : (host as HTMLElement).scrollTop) > 8);
+    /* النزولُ والطفوُّ يُقرآن في مستمعٍ واحد: قراءتان في إطارٍ واحدٍ لا مستمعان
+       يتسابقان على التمرير نفسِه. والتلامسُ يُقاس من `getBoundingClientRect`
+       فيصحّ مهما كان المُمرَّرُ نافذةً أو إطارَ معاينة. */
+    const read = () => {
+      setStuck((host === window ? window.scrollY : (host as HTMLElement).scrollTop) > 8);
+      if (!skinOver) return;
+      /* **والبحثُ داخل المُمرَّر لا في المستند كلِّه:** معرضُ المعاينة قد يضع أكثرَ
+         من إطارٍ في صفحةٍ واحدة، وبحثٌ مطلقٌ يجعل كلَّها تقرأ سطحَ الأوّل. */
+      const scope = host === window ? el.ownerDocument : (host as HTMLElement);
+      /* الكبسولةُ داخل الرأس (له حشوٌ من فوقها ومن تحتها) فتُقاس هي لا هو.
+         **والحَكَمُ منتصفُها لا حافّتُها**: لو كان أيُّ تلامسٍ يقلب الجلدَ لَتبدّل
+         مرّتين عند كلّ حدّ (يدخل السطحُ تحت الحافّة السفلى ثمّ يخرج من العليا)،
+         فيرتجف الرأسُ. والمنتصفُ خطٌّ واحدٌ يُعبَر مرّةً، فالقلبُ مرّةٌ واحدة. */
+      const b = (barRef.current ?? el).getBoundingClientRect();
+      const mid = b.top + b.height / 2;
+      const on = Array.from(scope.querySelectorAll(skinOver)).some((n) => {
+        const r = n.getBoundingClientRect();
+        /* المخفيُّ مقاسُه صفرٌ فلا يُحتسب (لوحُ جوّالٍ مطويّ، قسمٌ لم يُركَّب بعد) */
+        if (r.width <= 0) return false;
+        /* **ولا يُقلَب الجلدُ لسطحٍ لا يغطّي الكبسولةَ عرضًا** — حارسٌ مقيسٌ لا تحرٍّ
+           باليد (٢٠٢٦-٠٩-١٧): كرتُ الأخبار المميّز عرضُه 655px والكبسولةُ 1104،
+           فلو وُسِم لَوقع نصفُ الكبسولة على لونٍ ونصفُها على بياضٍ والحبرُ أبيضُ
+           في النصفين. والحارسُ **يقيس عند كلّ تمريرة**، فالكرتُ الذي يملأ العرضَ
+           في الجوّال ويضيق في السعة يُحتسب هناك ولا يُحتسب هنا بلا نقطةِ انكسارٍ
+           تُكتب. فالوسمُ نيّةٌ والمقاسُ حَكَم. */
+        /* والسماحةُ بكسلٌ واحد: التذييلُ والكبسولةُ في `Container` واحدٍ فحافّتاهما
+           متطابقتان تمامًا، ومقارنةٌ صارمةٌ على الحافّة تُسلِّم أمرَها لكسرٍ عشريّ. */
+        if (r.left > b.left + 1 || r.right < b.right - 1) return false;
+        return r.top <= mid && r.bottom >= mid;
+      });
+      setOver(on);
+    };
     read();
     host.addEventListener("scroll", read, { passive: true });
-    return () => host.removeEventListener("scroll", read);
-  }, []);
+    /* وتبدُّلُ المقاس يزيح القاعَين معًا (انطواءُ العمود يطيل الصدر) */
+    const ro = new ResizeObserver(read);
+    ro.observe(el.ownerDocument.documentElement);
+    return () => {
+      host.removeEventListener("scroll", read);
+      ro.disconnect();
+    };
+  }, [skinOver]);
 
   /**
    * **مخارجُ اللوح — لأنّه صار يطفو فوق المحتوى.** ما دام يغطّي المتنَ فالمتوقَّعُ
@@ -242,7 +301,16 @@ export function Header({
     return () => ro.disconnect();
   }, [measure]);
 
-  const src = logoSrc ?? "/brand/logo-horizontal.svg";
+  /** الجلدُ الجاري: ثابتٌ بلا {@link skinOver}، ومؤقّتٌ بموضعه معه. */
+  const worn = skinOver && !over ? "light" : skin;
+  const dark = worn !== "light";
+  /* الشعارُ نسختان لا قناعٌ ولا مرشِّح: الملفّان قائمان في الهوية (والتذييلُ يلبس
+     الأبيضَ منهما منذ اعتُمد)، فلا يُخترع لهما ثالث. */
+  const src = logoSrc ?? (dark ? "/brand/logo-horizontal-white.svg" : "/brand/logo-horizontal.svg");
+  /* والفعلان يقلبان وجهَهما لا صنفَهما: `abtn-inverse` و`abtn-inverse-ghost` في
+     المكتبة منذ بُنيت (وصدرُ الهبوط نفسُه يلبسهما تحت الرأس مباشرةً). */
+  const ctaCls = dark ? "abtn abtn-inverse abtn-sm" : "abtn abtn-primary abtn-sm";
+  const loginCls = dark ? "abtn abtn-inverse-ghost abtn-sm" : "abtn abtn-ghost abtn-sm";
   const shown = nav.slice(0, fit);
   const hidden = nav.slice(fit);
 
@@ -354,10 +422,10 @@ export function Header({
    */
   const barActions = !viewer ? (
     <>
-      <a href={loginHref} className="abtn abtn-ghost abtn-sm">
+      <a href={loginHref} className={loginCls}>
         {loginLabel}
       </a>
-      {ctaEl("abtn abtn-primary abtn-sm")}
+      {ctaEl(ctaCls)}
     </>
   ) : (
     meTrigger
@@ -374,10 +442,10 @@ export function Header({
    */
   const sheetActions = !viewer ? (
     <>
-      <a href={loginHref} className="abtn abtn-ghost abtn-sm shdr-sheet-login" onClick={() => setOpen(false)}>
+      <a href={loginHref} className={`${loginCls} shdr-sheet-login`} onClick={() => setOpen(false)}>
         {loginLabel}
       </a>
-      {ctaEl("abtn abtn-primary abtn-sm shdr-sheet-cta", () => setOpen(false))}
+      {ctaEl(`${ctaCls} shdr-sheet-cta`, () => setOpen(false))}
     </>
   ) : null;
 
@@ -387,6 +455,7 @@ export function Header({
     <header
       ref={ref}
       className={cn("shdr", className)}
+      data-skin={worn}
       data-stuck={stuck}
       data-open={open}
     >
@@ -449,9 +518,10 @@ export function Header({
             <Container>
               <nav className="shdr-sheet-in" aria-label="قائمة الجوّال">
                 {nav.map((n) => link(n, () => setOpen(false)))}
-                {/* **الزرُّ نفسُه الذي في الشريط حرفًا بحرف** (`abtn-primary abtn-sm`):
-                    لا مقاسَ خاصّ ولا زاويةَ خاصّة — الزرُّ في المكتبة واحدٌ يُستعمل
-                    كما هو، و`.shdr-sheet-cta` تخصّ **موضعَه في العمود** لا هيئتَه. */}
+                {/* **الزرُّ نفسُه الذي في الشريط حرفًا بحرف** (`ctaCls` الواحد، ويقلب
+                    وجهَه مع الجلد كما يقلبه في الشريط): لا مقاسَ خاصّ ولا زاويةَ
+                    خاصّة — الزرُّ في المكتبة واحدٌ يُستعمل كما هو، و`.shdr-sheet-cta`
+                    تخصّ **موضعَه في العمود** لا هيئتَه. */}
                 {sheetActions}
               </nav>
             </Container>

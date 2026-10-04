@@ -321,7 +321,6 @@ function PersonRow({
         <Avatar src={person.avatar ?? undefined} name={person.name} gender={person.gender} size="sm" />
         <span className="font-bold">{person.name}</span>
         <Badge tone={meta.tone} variant="soft" dot>{meta.label}</Badge>
-        {person.source === "volunteered" ? <Badge tone="info" variant="soft">متطوّع</Badge> : null}
         {person.submittedLabel ? <span className="text-content-muted text-sm">سلّم {person.submittedLabel}</span> : null}
       </div>
 

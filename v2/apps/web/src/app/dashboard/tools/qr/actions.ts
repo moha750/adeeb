@@ -1,30 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSessionAdmin } from "@/lib/auth";
-import { SECTION_CAP } from "@/lib/capabilities";
 import { createClient } from "@/lib/supabase/server";
+import { NOT_FOUND, qrActor } from "./guard";
 import { QR_TITLE_MAX, checkCode, checkTarget, newQrCode, qrShortUrl } from "@/lib/qrLinks";
 import { isHexColor, type QrSpec } from "@/lib/qr";
 
 export type QrLinkResult = { ok: boolean; message: string; id?: string; code?: string };
 
-const CAP = SECTION_CAP["/dashboard/tools/qr"];
-const refresh = () => revalidatePath("/dashboard/tools/qr");
-
 /**
- * حارسُ كلّ فعلٍ هنا — **صاحبُ الجلسة لا المُعايَن**.
- *
- * لأنّ الصفَّ يُنسَب إلى `auth.uid()` في القاعدة على كلّ حال (سياسةُ own-row)، فلو
- * صدّقنا هويّةً مستعارةً لأذِنّا بفعلٍ باسمِ من لا يملكه ثمّ كتبناه باسمِ من يملكه.
- * والحدُّ الموصوف في `lib/view-as`: المعاينةُ رؤيةٌ لا سلطة.
+ * تحديثُ الغرفتين معًا: قائمةُ الباركودات وقائمةُ الحملات تقرآن الصفوفَ نفسَها،
+ * فتبديلٌ في إحداهما يُرى في أختها بلا إعادة تحميل.
  */
-async function authorized() {
-  const me = await getSessionAdmin();
-  if (!me) return { me: null, deny: { ok: false, message: "جلستك غير صالحة." } };
-  if (!me.caps.includes(CAP)) return { me: null, deny: { ok: false, message: "لا تملك صلاحية مولّد الباركود." } };
-  return { me, deny: null };
-}
+const refresh = () => {
+  revalidatePath("/dashboard/tools/qr/links");
+  revalidatePath("/dashboard/tools/qr/campaigns");
+};
+
+// والحارسُ موضعُه `./guard` (مصدرٌ واحدٌ يقرؤه ملفّا الأفعال).
+
 
 /** اسمُ الرمز كما يُقبَل: مقصوصُ الطرفين، غيرُ فارغ، ولا يتجاوز قيدَ القاعدة. */
 function checkTitle(raw: string): { ok: true; title: string } | { ok: false; message: string } {
@@ -41,9 +35,6 @@ function checkTitle(raw: string): { ok: true; title: string } | { ok: false; mes
  * وتصير `jsonb` يُجلَب مع كلّ قراءةِ قائمة. والحدُّ يُقال للمستعمل بلسانٍ يفهمه: خفِّف
  * الشعار، لا «تجاوزتَ الحدّ الأقصى».
  */
-/** جوابُ من طلب صفًّا ليس له أو لم يعد موجودًا. لا يفرّق بين المعدوم وملكِ غيرِه. */
-const NOT_FOUND = "لم يُعثر على الباركود.";
-
 const SPEC_MAX = 1_200_000;
 
 /**
@@ -107,8 +98,13 @@ export async function createQrLink(input: {
   spec: QrSpec;
   /** رمزٌ يختاره صاحبُه (`‎/q/majles`). يُترَك فارغًا فيُقرَع سبعةٌ بلا ملتبِس. */
   code?: string;
+  /**
+   * حاويتُه إن وُلد داخل حملة (زرُّ «باركود جديد» في غرفتها). وتصديقُها في القاعدة:
+   * محفّزُ `qr_campaign_guard` يردّ حاويةً ليست لمالكه، فلا يُفحَص هنا مرّتين.
+   */
+  campaignId?: string | null;
 }): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const title = checkTitle(input.title);
@@ -133,7 +129,14 @@ export async function createQrLink(input: {
 
     const { data, error } = await sb
       .from("qr_links")
-      .insert({ code, title: title.title, target_url: target.url, spec: spec.spec, owner_id: me.id })
+      .insert({
+        code,
+        title: title.title,
+        target_url: target.url,
+        spec: spec.spec,
+        owner_id: me.id,
+        campaign_id: input.campaignId ?? null,
+      })
       .select("id, code")
       .single();
 
@@ -152,7 +155,7 @@ export async function createQrLink(input: {
 
 /** تعديلُ الاسم أو الوجهة. والرمزُ المطبوعُ لا يمسّه هذا بشيء، وتلك علّةُ النظام كلِّه. */
 export async function updateQrLink(id: string, input: { title: string; target: string }): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const title = checkTitle(input.title);
@@ -184,7 +187,7 @@ export async function updateQrLink(id: string, input: { title: string; target: s
  * سنة، فلو حملت نصًّا من العميل لأمكن أن تُرسَم صورةٌ تقود إلى غير ما يقوله الصفّ.
  */
 export async function updateQrSpec(id: string, spec: QrSpec): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -211,7 +214,7 @@ export async function updateQrSpec(id: string, spec: QrSpec): Promise<QrLinkResu
  * ورمزٌ موقوفٌ يردّ قاصدَه بأدبٍ ويُبقي أثرَه. والمحذوفُ يذهب بمسحاته كلِّها.
  */
 export async function setQrLinkActive(id: string, active: boolean): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -231,7 +234,7 @@ export async function setQrLinkActive(id: string, active: boolean): Promise<QrLi
 
 /** حذفُ الرمز ومسحاته معًا (`on delete cascade`). ولا رجعةَ فيه، فالتأكيدُ في الواجهة. */
 export async function deleteQrLink(id: string): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -251,7 +254,7 @@ export async function deleteQrLink(id: string): Promise<QrLinkResult> {
  * وترجع الدالّةُ وجودًا لا بيانات، وهو معلومٌ أصلًا لمن زار `‎/q/<code>`.
  */
 export async function isQrCodeTaken(code: string): Promise<{ ok: boolean; taken?: boolean; message?: string }> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return { ok: false, message: deny!.message };
 
   const checked = checkCode(code);
@@ -274,7 +277,7 @@ export async function addQrSchedule(
   linkId: string,
   input: { target: string; startsAt: string | null; endsAt: string | null; note: string | null },
 ): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const target = checkTarget(input.target);
@@ -304,7 +307,7 @@ export async function addQrSchedule(
 
 /** حذفُ نافذة. والمحفّزُ يقيّد الحذفَ في السجلّ كما يقيّد الإضافة. */
 export async function deleteQrSchedule(id: string, linkId: string): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -317,13 +320,6 @@ export async function deleteQrSchedule(id: string, linkId: string): Promise<QrLi
 }
 
 /**
- * **وسمُ الباركود بحملته.**
- *
- * الوسومُ تُكتَب في الشاشة سطرًا واحدًا تفصله فواصل، فتُشطَر هنا وتُقصّ أطرافُها ويُسقَط
- * المكرَّرُ والفارغ. والفاصلةُ ممنوعةٌ داخل الوسم في القاعدة لهذا بعينه: هي فاصلُ الكتابة.
- */
-
-/**
  * **مشاركةُ الباركود** — إذنان لا واحد: `read` يقرأ الإحصاء، و`edit` يبدّل الوجهةَ
  * والتصميمَ والحالَ والجدول. والحذفُ والنقلُ والمشاركةُ نفسُها تبقى للمالك وحدَه.
  *
@@ -332,7 +328,7 @@ export async function deleteQrSchedule(id: string, linkId: string): Promise<QrLi
  * صفٍّ متأثّر، لا يقفُ عليه سطرٌ في التطبيق.
  */
 export async function shareQrLink(linkId: string, userId: string, access: "read" | "edit"): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -367,7 +363,7 @@ export async function setQrShareAccess(
   userId: string,
   access: "read" | "edit",
 ): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
@@ -391,7 +387,7 @@ export async function setQrShareAccess(
 
 /** إخراجُ شريك. للمالك وحدَه، كالإدخال. */
 export async function unshareQrLink(linkId: string, userId: string): Promise<QrLinkResult> {
-  const { me, deny } = await authorized();
+  const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();

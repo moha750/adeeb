@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge, useInView } from "@adeeb/design-system";
 import { CalendarBlank, User } from "@phosphor-icons/react";
 import { Eye, ArrowLeft } from "@/app/_components/glyphs";
+import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 export type NewsCard = {
   id: string;
@@ -34,6 +35,8 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
   // **وتُحدَّث بعد الرسم لا فيه**: الكتابةُ في مرجعٍ أثناء الرسم تكسر نقاءه (قاعدةُ `refs`)،
   // وما بعد التثبيت يسبق أوّلَ دقّةٍ للمؤقّت (خمسُ ثوانٍ) وأوّلَ نقرةٍ دائمًا.
   const curRef = useRef(0);
+  /** يُسمَع ولا يُقرأ مرّةً: من أعلن تقليلَ الحركة وهو في الصفحة يقف الشريطُ عنده */
+  const still = useMediaFlag(REDUCE_MOTION);
   useEffect(() => { curRef.current = cur; });
 
   const l0 = useRef<HTMLDivElement>(null);
@@ -110,7 +113,7 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
 
   // التبديل التلقائيّ
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = still;
     if (reduce || n <= 1) return;
     const id = setInterval(() => {
       if (hover.current || cool.current || !visible.current) return;
@@ -146,7 +149,7 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [items]);
+  }, [items, still]);
 
   const onRailDown = (e: React.PointerEvent) => {
     const rail = railRef.current;

@@ -4,7 +4,7 @@ import {
   AddressBook, Broadcast, CalendarBlank, CalendarCheck, CalendarX, Certificate, ChatCircleText,
   ClockCounterClockwise, DeviceMobile, Envelope, EnvelopeOpen, HandHeart, Hash, IdentificationCard,
   Link as LinkIcon, ListNumbers, MapPin, Medal, NotePencil, Phone, SealCheck, ShieldCheck, SignIn,
-  Ticket, User, UsersThree,
+  Sparkle, Ticket, User, UsersThree,
 } from "@phosphor-icons/react";
 // أيقوناتٌ يُفسِدها الوزنُ المزدوج، ومصدرُها الواحد قائمةُ الاستثناءات لا Phosphor
 import { CheckCircle, Eye, Prohibit, WarningCircle, XCircle } from "@/app/_components/glyphs";
@@ -19,6 +19,8 @@ const APP_STATUS: Record<VolunteerApp["status"], { label: string; tone: "neutral
   accepted: { label: "مقبول", tone: "success" },
   rejected: { label: "مردود", tone: "danger" },
   withdrawn: { label: "منسحِب", tone: "neutral" },
+  expired: { label: "انتهى الموعد قبل المراجعة", tone: "neutral" },
+  excused: { label: "اعتذر", tone: "neutral" },
 };
 
 const ACCOUNT_STATUS: Record<string, string> = {
@@ -42,9 +44,6 @@ function by(actor: string | null, when: string | null): string | null {
   if (!when) return actor;
   return `${actor}، ${when}`;
 }
-
-const yesNo = (v: boolean | null | undefined): string | null =>
-  v == null ? null : v ? "نعم" : "لا";
 
 /**
  * **السجلُّ الكاملُ لمتطوّعٍ واحد** — كلُّ ما سجّلته القاعدةُ عنه في موضعٍ واحد (أمرُ المالك
@@ -106,6 +105,14 @@ export function VolunteerRecord({ v }: { v: VolunteerRow }) {
 
         <Section icon={<HandHeart />} title="التطوّع">
           <Cell full noCopy label="تطوّع في" icon={<CalendarCheck />} value={v.appliedStamp} />
+          {/* عادَ بعد انقطاع : خبرُ الانقطاع باقٍ ولو صار نشطًا (٢٠٢٦-٠٩-٢٩) */}
+          {v.returnedAt ? (
+            <>
+              <Cell full noCopy label="عاد في" icon={<CalendarCheck />} value={v.returnedAt} />
+              <Cell full noCopy label="انقطع في" icon={<CalendarX />} value={v.endedAt} />
+              <Cell full wrap label="سببُ انقطاعه" icon={<WarningCircle />} value={v.endReason} />
+            </>
+          ) : null}
           <Cell full noCopy label="آخرُ ترتيبٍ للرغبات" icon={<ClockCounterClockwise />} value={v.prefsUpdatedAt} />
           {v.prefs.length === 0 ? (
             <Cell full noCopy label="رغباتُه" icon={<ListNumbers />} value={null} />
@@ -124,14 +131,18 @@ export function VolunteerRecord({ v }: { v: VolunteerRow }) {
             {a.committee ? <Cell label="لجنةُ الفرصة" icon={<UsersThree />} value={a.committee} /> : null}
             <Cell full noCopy label="القرارُ ومن اتّخذه" icon={<User />} value={by(a.decidedBy, a.decidedAt)} />
             {a.decisionReason ? <Cell full wrap label="سببُ القرار" icon={<NotePencil />} value={a.decisionReason} /> : null}
+            {a.excuseReason ? <Cell full wrap label="سببُ الاعتذار" icon={<NotePencil />} value={a.excuseReason} /> : null}
             <Cell noCopy label="الحضور" icon={a.attendance === "absent" ? <XCircle /> : <CheckCircle />}
               value={a.attendance === "attended" ? "حضر" : a.attendance === "absent" ? "غاب" : null} />
             <Cell full noCopy label="أشّر الحضورَ" icon={<User />} value={by(a.attendanceBy, a.attendanceAt)} />
-            <Cell noCopy label="يستحقّ شهادة" icon={<Certificate />} value={yesNo(a.deservesCertificate)} />
-            {a.denialReason ? <Cell full wrap label="سببُ منعِ الشهادة" icon={<Prohibit />} value={a.denialReason} /> : null}
+            {/* كلُّ حاضرٍ يأخذ شهادتَه (سياسةُ ٢٠٢٦-١٠-٠٣): فالخانةُ تقول أحُجبت، لا أيستحقّ */}
+            <Cell noCopy label="الشهادة" icon={<Certificate />}
+              value={a.attendance !== "attended" ? null : a.deservesCertificate === false ? "محجوبة" : "له شهادتُه"} />
+            {a.deservesCertificate === false && a.denialReason ? <Cell full wrap label="سببُ حجب الشهادة" icon={<Prohibit />} value={a.denialReason} /> : null}
+            {a.distinctionNote ? <Cell full wrap label="تميّزُه" icon={<Sparkle />} value={a.distinctionNote} /> : null}
             {/* ملاحظةٌ إداريّة : تُقرأ في هذه الغرفة وحدها ولا تخرج إلى `/me` */}
             {a.adminNote ? <Cell full wrap label="ملاحظةٌ إداريّة" icon={<NotePencil />} value={a.adminNote} /> : null}
-            <Cell full noCopy label="التقييمُ ومن قيّم" icon={<Medal />} value={by(a.evaluatedBy, a.evaluatedAt)} />
+            <Cell full noCopy label="قرارُ الشهادة ومن اتّخذه" icon={<Medal />} value={by(a.evaluatedBy, a.evaluatedAt)} />
           </Section>
         ))}
 

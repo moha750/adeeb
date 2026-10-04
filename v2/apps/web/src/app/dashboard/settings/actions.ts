@@ -176,7 +176,7 @@ export async function updateMyBio(input: { bio: string }): Promise<SettingsResul
 
   // الأسطرُ تُطوى إلى مسافة: النبذةُ سطرٌ يُعرَض في رأس صفحةٍ وفي وصف مشاركة، لا فقرات
   const bio = (input.bio ?? "").replace(/\s+/g, " ").trim();
-  if (bio.length > BIO_MAX) return { ok: false, message: `النبذة ${BIO_MAX} محرفًا على الأكثر.` };
+  if (bio.length > BIO_MAX) return { ok: false, message: `النبذة ${BIO_MAX} حرفًا على الأكثر.` };
 
   const sb = service();
   if (!sb) return { ok: false, message: NO_KEY };

@@ -52,6 +52,21 @@ export const fmtDateOnly = (iso: string | null | undefined): string => {
   return y && m && d ? `${d} ${MONTHS[m - 1]} ${y}` : "";
 };
 
+const WEEKDAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+/**
+ * **أجزاءُ يومٍ من عمود `date`** (بلا وقت): اليومُ رقمًا، والشهرُ والسنةُ، واسمُ يوم الأسبوع —
+ * لورقة التقويم في كرت الفرصة ولعنوان اليوم في خطّها الزمنيّ (٢٠٢٦-٠٩-٣٠).
+ * ولا يمرّ بساعة الجهاز ولا بمنطقةٍ زمنيّة لسبب `fmtDateOnly` نفسِه: يومٌ بلا وقتٍ لا منطقةَ له،
+ * فيُحسَب يومُ الأسبوع من ظهيرته بغرينتش حسابًا تقويميًّا خالصًا.
+ */
+export const dateOnlyParts = (iso: string | null | undefined) => {
+  const [y, m, d] = (iso ?? "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay()];
+  return { day: d, month: MONTHS[m - 1], year: y, weekday };
+};
+
 /** يومٌ وشهرٌ بلا سنة — لخانةٍ ضيّقةٍ في كرت، والسنةُ معلومةٌ من سياقها فلا تُزاحم. */
 export const fmtDayMonth = (iso: string | null | undefined): string => {
   if (!iso) return "";
@@ -232,6 +247,28 @@ export const hour12Long = (h: number): string => {
   const n = ((h % 24) + 24) % 24;
   const twelve = n % 12 === 0 ? 12 : n % 12;
   return `${twelve} ${n < 12 ? "صباحًا" : "مساءً"}`;
+};
+
+/**
+ * **مدى الساعة اليوميّ**: «من 4 م إلى 8 م» من عمودَي `time` («16:00:00») أو من قيمتَي حقل الوقت
+ * («16:00»). وُضع ٢٠٢٦-٠٩-٣٠ حين صارت مدّةُ الفرصة التطوّعيّة ساعةً تُختار من كذا إلى كذا بعد أن
+ * كانت نصًّا حرًّا («أربع ساعاتٍ يوميًّا») يكتبه كلُّ مشرفٍ بصيغته.
+ *
+ * والساعةُ بحكم `hour12` نفسِه (اثنتا عشرةَ بصباحٍ ومساء): الساعةُ وحدها حين تكون الدقيقةُ صفرًا
+ * («4 م» لا «4:00 م»)، والدقيقةُ بخانتين حين تفرق («4:30 م»). ولا يمرّ بـ`Date` لسبب
+ * `fmtDateOnly` نفسِه: ساعةُ الجدار بلا يومٍ لا منطقةَ لها، فتُشطَر نصًّا ولا تُزاح ثلاثَ ساعات.
+ * ونصفُ المدى فارغٌ كلُّه: قيدُ القاعدة يمنع طرفًا بلا طرف، فلا يُرسَم «من 4 م» معلّقًا.
+ */
+export const fmtTimeRange = (from: string | null | undefined, to: string | null | undefined): string => {
+  const clock = (t: string | null | undefined): string => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(t ?? "");
+    if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return "";
+    const h = Number(m[1]);
+    return m[2] === "00" ? hour12(h) : `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? "ص" : "م"}`;
+  };
+  const a = clock(from);
+  const b = clock(to);
+  return a && b ? `من ${a} إلى ${b}` : "";
 };
 
 export const clubWeekday = (iso?: string | null): number => {

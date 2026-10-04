@@ -28,8 +28,17 @@ const FILTERS: FilterDef[] = [
   { key: "role", label: "الدور", options: [
     { value: "member", label: "عضو" }, { value: "lead", label: "قائد" }, { value: "head", label: "رئيس قسم" },
   ] },
-  { key: "committee", label: "اللجنة", options: [
-    { value: "hr", label: "الموارد البشريّة" }, { value: "qa", label: "الضمان والجودة" },
+  // مرشِّحٌ **مجمَّع** — `group` على الخيار يرسم عنوانًا قبله في المنسدل وفي نافذة
+  // الجوّال. أُضيف حين اتّسعت «الجهة» في غرفة التحرير إلى الهيكلة كلِّها: تسعةَ عشرَ
+  // خيارًا بلا عناوينَ تُقرأ كومةً واحدة. ومن لا يحمل `group` يبقى قائمةً مسطّحة.
+  { key: "unit", label: "الجهة", options: [
+    { value: "council:administrative", label: "المجلس الإداري", group: "المجالس" },
+    { value: "council:executive", label: "المجلس التنفيذي", group: "المجالس" },
+    { value: "dept:1", label: "قسم الإنتاج الإعلامي", group: "الأقسام" },
+    { value: "dept:3", label: "قسم صناعة المحتوى", group: "الأقسام" },
+    { value: "comm:5", label: "لجنة التصوير", group: "اللجان" },
+    { value: "comm:6", label: "لجنة التصميم", group: "اللجان" },
+    { value: "comm:22", label: "إدارة الموارد البشرية", group: "الإدارات" },
   ] },
 ];
 

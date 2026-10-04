@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Badge, CarouselNav, useInView } from "@adeeb/design-system";
 import { Clock, MapPin } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
+import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 export type ActCard = {
   id: string;
@@ -27,6 +28,8 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
   // يُعاد بناءُ المستمعين والتوسيط كلّما دخل القسمُ أو خرج.
   const inView = useInView(peekRef);
   const inViewRef = useRef(false);
+  /** يُسمَع ولا يُقرأ مرّةً: من أعلن تقليلَ الحركة وهو في الصفحة يقف الشريطُ عنده */
+  const still = useMediaFlag(REDUCE_MOTION);
   useEffect(() => { inViewRef.current = inView; }, [inView]);
 
   const stepOf = () => {
@@ -42,7 +45,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
   useEffect(() => {
     const peek = peekRef.current;
     if (!peek) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = still;
     const loop = items.length > 1;
     let hover = false;
 
@@ -83,7 +86,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
       if (id) clearInterval(id);
       if (coolT.current) clearTimeout(coolT.current);
     };
-  }, [items]);
+  }, [items, still]);
 
   const nudge = (dir: "prev" | "next") => {
     const peek = peekRef.current;

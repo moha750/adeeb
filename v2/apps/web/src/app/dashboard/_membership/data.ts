@@ -86,7 +86,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     sb.rpc("warning_limit"),
     // شهاداتُ خبرته السارية — «لكلٍّ شهاداتُ نفسه» بندٌ في `can_view_certificate_of`
     sb.from("experience_certificates")
-      .select("id, serial, holder_name, position_title, period_from, period_to, created_at")
+      .select("id, serial, holder_name, paper_name, position_title, period_from, period_to, created_at")
       .eq("user_id", me.id).eq("status", "valid").order("created_at", { ascending: false }),
   ]);
 
@@ -181,12 +181,13 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
         .map((w, i) => ({ id: w.id, ordinal: i + 1, category: w.category, reason: w.reason, date: fmtDate(w.created_at) })),
       warningLimit: typeof wlRes.data === "number" ? wlRes.data : 3,
       certificates: ((certRes.data ?? []) as {
-        id: string; serial: string; holder_name: string; position_title: string;
+        id: string; serial: string; holder_name: string; paper_name: string | null; position_title: string;
         period_from: string; period_to: string; created_at: string;
       }[]).map((c) => ({
         id: c.id,
         serial: c.serial,
-        holderName: c.holder_name,
+        // الورقةُ تُرسَم باسمه اليوم إن تغيّر بعد الإصدار (`paper_name`، ٢٠٢٦-١٠-٠١)، والتحقّقُ يعرف ما قبله
+        holderName: c.paper_name ?? c.holder_name,
         positionTitle: c.position_title,
         periodFrom: c.period_from,
         periodTo: c.period_to,

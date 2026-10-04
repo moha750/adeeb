@@ -5,6 +5,7 @@ import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
 import { positionLine } from "@/lib/positionLabel";
+import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 /**
  * القطعتان كما تُخرجهما `get_board_members` خامًا — والجملةُ تُركَّب هنا بالقاعدة الواحدة
@@ -46,12 +47,6 @@ function socialUrl(v: string | null, kind: "tw" | "in"): string | null {
    في حالتين داخل أثرٍ بعد التركيب، فتُرسَم البطاقاتُ بعرضٍ مفترَضٍ ثمّ يُعاد رسمُها بالعرض
    الحقيقيّ (قفزةُ مقاسٍ تُرى على الجوّال). ولقطةُ الخادم هنا افتراضٌ صريحٌ لا كذب: عرضٌ
    عريضٌ وحركةٌ مسموحة، وهما ما عليه أكثرُ الزوّار. */
-const REDUCE_MOTION = "(prefers-reduced-motion: reduce)";
-const subscribeMotion = (cb: () => void) => {
-  const mq = window.matchMedia(REDUCE_MOTION);
-  mq.addEventListener("change", cb);
-  return () => mq.removeEventListener("change", cb);
-};
 const subscribeWidth = (cb: () => void) => {
   window.addEventListener("resize", cb);
   return () => window.removeEventListener("resize", cb);
@@ -82,7 +77,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   const [hover, setHover] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const motion = useSyncExternalStore(subscribeMotion, () => !window.matchMedia(REDUCE_MOTION).matches, () => true);
+  const motion = !useMediaFlag(REDUCE_MOTION);
   const vw = useSyncExternalStore(subscribeWidth, () => window.innerWidth, () => 1200);
 
   const stageRef = useRef<HTMLDivElement>(null);

@@ -14,20 +14,25 @@ import { StationScroll } from "./_shell/StationScroll";
  * والمحطّةُ تُقرأ هنا لأنّ اسمَها وشعارَها يلزمان **جلسةَ الوسائط** (شاشةُ قفل
  * الجوّال): الشعارُ غلافٌ احتياطيٌّ لبرنامجٍ لم يُرفَع له شعار. وقراءتُها
  * مغلَّفةٌ بـ`cache` فلا تصير استعلامًا ثانيًا في صفحةٍ تقرؤها أيضًا. ويخدم
- * هنا شيئًا ثانيًا: اسمَ المحطّة وشعارَها في رأس الشريط الجانبيّ.
+ * هنا شيئًا ثانيًا: اسمَ المحطّة اسمًا للرابط في رأس الشريط الجانبيّ (وشعارُه
+ * صار ملفًّا متّجهًا في المستودع لا صورةَ R2 — ٢٠٢٦-٠٩-١٩).
  *
  * **وهيكلُ المحطّة هنا لا في الصفحات** (٢٠٢٦-٠٩-٠٦): أبوابٌ لا تُعاد بناءً في
  * كلّ تنقّل، ولا تنسى صفحةٌ جديدةٌ أن تلبسها. وهو خلَفُ `SiteHeader` و`Footer`
  * اللذين نُزعا من صفحات القسم الخمس بقرار المالك: هويّةُ المحطّة منعزلةٌ
  * كليًّا، فرأسُ الموقع يُستبدَل ولا يُلوَّن.
+ *
+ * و`data-cursor-ink` هنا لأجل المؤشّر: داخلَ هذا الجذر تلبس هالتُه عنّابيَّ
+ * المحطّة (`--cur-ink` في كتلة `.stn`)، ويسقط سنُّ الريشة كلَّه — انظر
+ * `SiteCursor`.
  */
 export default async function RadioLayout({ children }: { children: React.ReactNode }) {
   const station = await getPublicStation();
   return (
     <RadioPlayerProvider stationName={station.name} stationLogoUrl={station.logoUrl}>
-      <div className="stn stc">
+      <div className="stn stc" data-cursor-ink>
         <div className="stc-app">
-          <StationSide stationName={station.name} stationLogoUrl={station.logoUrl} />
+          <StationSide stationName={station.name} />
           <div className="stc-main">
             {children}
             <StationFoot tagline={station.tagline} />

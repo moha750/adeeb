@@ -29,8 +29,17 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // مهمّ: لا تُدرج منطقًا بين createServerClient و getUser (يمنع أخطاء تجديد الجلسة العشوائية).
-  const { data: { user } } = await supabase.auth.getUser();
+  // مهمّ: لا تُدرج منطقًا بين createServerClient وقراءة الجلسة (يمنع أخطاء تجديد الجلسة العشوائية).
+  //
+  // و`getClaims` بدل `getUser` (٢٠٢٦-٠٩-٢٤): هذا الحارسُ يعمل في **كلّ** طلبٍ تقريبًا،
+  // و`getUser` رحلةٌ كاملةٌ إلى خادم المصادقة في كلّ مرّة (قِيست ٢١٦–٨٧٣ مللي في السجلّ).
+  // و`getClaims` يتحقّق من توقيع الرمز محلّيًّا، ويجدّده عند انتهائه كما كان — فالكوكيز
+  // تُكتب على الاستجابة كما هي أدناه بلا تغيير.
+  //
+  // وقرارُ هذا الموضع **وجودُ جلسةٍ فقط**، لا صلاحيّتُها ولا حياتُها: من أُبطِلت جلستُه
+  // يمرّ من هنا ثمّ تكشفه القاعدةُ في `lib/auth.ts` فيُردّ إلى `/logout`. انظر `SessionState`.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
   const isDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");

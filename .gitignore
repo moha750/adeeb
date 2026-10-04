@@ -15,3 +15,9 @@ adeeb/
 
 # مخزنُ حزم pnpm المحلّيّ — ٨١٢ ميغا من أرشيفات التبعيّات، لا عملَ فيه
 .pnpm-store/
+
+# مقاطع ونُسخ ضخمة تبقى على الجهاز ولا تدخل المستودع
+/Claude outputs/darb-cinematic/clips/*.mov
+/Claude outputs/_adeeb-v2-src.tgz
+/.v2-src-snapshot.tgz
+/Claude outputs/rakdat-watan/

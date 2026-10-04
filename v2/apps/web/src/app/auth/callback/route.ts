@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safeNext";
+import { logSignin } from "@/lib/signinEvents";
 
 /**
  * **بابُ العودة من قوقل/أبل** — يبدّل الرمزَ المؤقّت بجلسةٍ ثمّ يسوق العضوَ إلى وجهته.
@@ -29,7 +30,15 @@ export async function GET(request: NextRequest) {
   // فـ`origin` مضيفُه هو لا `adeeb.club` — فيقع العضو على نطاقٍ غريبٍ بلا كوكيز جلسته.
   const forwardedHost = request.headers.get("x-forwarded-host");
   const base = process.env.NODE_ENV === "development" || !forwardedHost ? origin : `https://${forwardedHost}`;
-  const back = (code: string) => NextResponse.redirect(`${base}/login?e=${code}`);
+  const supabase = await createClient();
+  // قياسُ طُرق الدخول (`lib/signinEvents.ts`): المزوّدُ يعبر في الرابط من `OAuthButtons`،
+  // ولا يُقبل منه إلّا الاثنان. ومن جاء بلا `via` (رابطٌ قديم) لا يُقاس، ولا يُعطَّل دخولُه.
+  const viaRaw = searchParams.get("via");
+  const via = viaRaw === "google" || viaRaw === "apple" ? viaRaw : null;
+  const back = (code: string) => {
+    if (via) logSignin(supabase, via, "fail", "oauth", code);
+    return NextResponse.redirect(`${base}/login?e=${code}`);
+  };
 
   const refused = rejection(searchParams);
   if (refused) return back(refused);
@@ -37,9 +46,9 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   if (!code) return back("oauth_failed"); // بلا رمزٍ ولا خطأ: رابطٌ بُتر أو زيارةٌ مباشرة
 
-  const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return back("oauth_failed");
+  if (via) logSignin(supabase, via, "success", "oauth");
 
   return NextResponse.redirect(`${base}${safeNext(searchParams.get("next"))}`);
 }

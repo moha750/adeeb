@@ -2,9 +2,8 @@
 
 import { Container } from "@adeeb/design-system";
 import { QrDeepStats } from "../../dashboard/tools/qr/QrDeepStats";
-import { defaultQrSpec } from "../../dashboard/tools/qr/defaults";
 import type { QrStats } from "../../dashboard/tools/qr/data";
-import { qrShortUrl } from "@/lib/qrLinks";
+import { sampleQrLink } from "../_qr/sample";
 
 /**
  * **معاينةُ القراءة الأعمق** — قبل أن تُركَّب في صفحة الباركود (أمرُ المالك ٢٠٢٦-٠٩-٠٥:
@@ -19,11 +18,7 @@ const SHAPE = [0, 0, 0, 0, 0, 1, 2, 5, 9, 12, 16, 21, 14, 8, 6, 7, 9, 11, 13, 17
 const WEEK = [0.9, 1.2, 1.1, 1, 0.8, 0.3, 0.5];
 
 const base: QrStats = {
-  link: {
-    id: "demo", code: "e4trprm", title: "ملصق الملتقى",
-    targetUrl: "https://adeeb.club/register", spec: defaultQrSpec(qrShortUrl("e4trprm")),
-    active: true, ownerId: "demo-owner", scanCount: 646, createdAt: "2026-07-30T09:00:00Z", updatedAt: "2026-09-04T09:00:00Z",
-  },
+  link: sampleQrLink({ scanCount: 646 }),
   daily: [],
   devices: [],
   bots: 0,

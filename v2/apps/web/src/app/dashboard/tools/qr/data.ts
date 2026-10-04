@@ -17,19 +17,35 @@ export type QrLinkRow = {
   scanCount: number;
   /** صاحبُه — تُقرأ لتُعرَف المِلكيّةُ في الشاشة (المشاركةُ للمالك وحدَه). */
   ownerId: string;
+  /** حاويتُه إن كان في حملة (م١٨). */
+  campaignId: string | null;
+  /** واسمُها كما يُعرَض في خانة «الحملة». يبقى `null` لمن لا حاويةَ له. */
+  campaignName: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
 export type QrLinksData = { rows: QrLinkRow[]; error: string | null };
 
-type Raw = {
+/**
+ * **صفُّ `qr_links` خامًا، وصائغُه، وأعمدتُه: مصدرٌ واحدٌ لثلاث قراءات.**
+ *
+ * كان الصفُّ يُبنى بيدِه في ثلاثة مواضع (هذه الغرفة، والإشراف، والحملة) بأعمدةٍ
+ * منسوخةٍ ثلاثَ مرّات. فلمّا وُلدت «الحملة» ونالت خانتين سقط البناءُ في ثلاثة
+ * مواضعَ دفعةً واحدة (٢٠٢٦-٠٩-٢٤). فصار الخامُ والصائغُ والأعمدةُ مُصدَّرةً من
+ * ههنا: تُضاف الخانةُ مرّةً فتصل القرّاءَ كلَّهم.
+ */
+export type QrLinkRaw = {
   id: string; code: string; title: string; target_url: string;
   spec: QrSpec | null; active: boolean; scan_count: number; owner_id: string;
-  created_at: string; updated_at: string;
+  campaign_id: string | null; created_at: string; updated_at: string;
 };
 
-const shape = (r: Raw): QrLinkRow => ({
+export const QR_LINK_COLS =
+  "id, code, title, target_url, spec, active, scan_count, owner_id, campaign_id, created_at, updated_at";
+
+/** **والاسمُ يُترك فارغًا هنا** ويُلصَق بعد القراءة: انظر `withCampaignNames`. */
+export const shapeQrLink = (r: QrLinkRaw): QrLinkRow => ({
   id: r.id,
   code: r.code,
   title: r.title,
@@ -38,11 +54,25 @@ const shape = (r: Raw): QrLinkRow => ({
   active: r.active,
   scanCount: r.scan_count ?? 0,
   ownerId: r.owner_id,
+  campaignId: r.campaign_id,
+  campaignName: null,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
 
-const COLS = "id, code, title, target_url, spec, active, scan_count, owner_id, created_at, updated_at";
+/**
+ * **أسماءُ الحاويات تُلصَق بالصفوف بعد قراءتها** — لا `join` في الاستعلام.
+ *
+ * وعلّتُه أنّ الصفوفَ تأتي من مسارين (ملكٌ وشِركة)، فلو حمل كلُّ مسارٍ ضمَّه لتكرّرت
+ * الصياغةُ مرّتين وافترقتا يومًا. والحاوياتُ عشراتٌ لا آلاف، فنداءٌ واحدٌ بمفاتيحها أرخص.
+ */
+async function withCampaignNames(sb: Awaited<ReturnType<typeof createClient>>, rows: QrLinkRow[]): Promise<QrLinkRow[]> {
+  const ids = [...new Set(rows.map((r) => r.campaignId).filter((v): v is string => !!v))];
+  if (!ids.length) return rows;
+  const { data } = await sb.from("qr_campaigns").select("id, name").in("id", ids);
+  const byId = new Map(((data ?? []) as { id: string; name: string }[]).map((c) => [c.id, c.name]));
+  return rows.map((r) => (r.campaignId ? { ...r, campaignName: byId.get(r.campaignId) ?? null } : r));
+}
 
 /**
  * رموزي وحدها.
@@ -66,19 +96,34 @@ export async function getMyQrLinks(): Promise<QrLinksData> {
   // **الغرفةُ تُصفّي بالمِلكيّة لا بما تسمح به السياسة** (صُحّح ٢٠٢٦-٠٩-٠٦): من يملك
   // `oversee_qr` تفتح له سياسةُ الإشراف كلَّ الصفوف، فكان يفتح «مولّد الباركود» فيجد
   // باركوداتِ الناس في قائمة «باركوداتي». والإشرافُ غرفتُه غرفةٌ، وهذه غرفةُ الملك.
-  const [own, shared] = await Promise.all([
-    sb.from("qr_links").select(COLS).eq("owner_id", me),
+  const [own, shared, campShared] = await Promise.all([
+    sb.from("qr_links").select(QR_LINK_COLS).eq("owner_id", me),
     sb.from("qr_link_shares").select("link_id").eq("user_id", me),
+    // **والشِّركةُ صارت بابين** (م٢٠): شِركةٌ على الباركود، وشِركةٌ على حاويته تسري على ما
+    // فيها. فمن شُورك في حملةٍ وجد باركوداتِها في قائمته كما يجد ما شُورك فيه مفردًا.
+    sb.from("qr_campaign_shares").select("campaign_id").eq("user_id", me),
   ]);
   if (own.error) return { rows: [], error: own.error.message };
 
   const ids = ((shared.data ?? []) as { link_id: string }[]).map((r) => r.link_id);
-  const withMe = ids.length ? await sb.from("qr_links").select(COLS).in("id", ids) : { data: [], error: null };
+  const campIds = ((campShared.data ?? []) as { campaign_id: string }[]).map((r) => r.campaign_id);
 
-  const rows = [...((own.data ?? []) as Raw[]), ...((withMe.data ?? []) as Raw[])]
-    .map(shape)
+  const [withMe, inCamps] = await Promise.all([
+    ids.length ? sb.from("qr_links").select(QR_LINK_COLS).in("id", ids) : { data: [], error: null },
+    campIds.length ? sb.from("qr_links").select(QR_LINK_COLS).in("campaign_id", campIds) : { data: [], error: null },
+  ]);
+
+  // **ولا يتكرّر صفٌّ جاء من بابين**: من شُورك في باركودٍ وفي حاويته معًا يجده مرّةً.
+  const seen = new Set<string>();
+  const rows = [
+    ...((own.data ?? []) as QrLinkRaw[]),
+    ...((withMe.data ?? []) as QrLinkRaw[]),
+    ...((inCamps.data ?? []) as QrLinkRaw[]),
+  ]
+    .filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)))
+    .map(shapeQrLink)
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  return { rows, error: null };
+  return { rows: await withCampaignNames(sb, rows), error: null };
 }
 
 /**
@@ -87,9 +132,9 @@ export async function getMyQrLinks(): Promise<QrLinksData> {
  */
 export async function getQrLink(id: string): Promise<{ link: QrLinkRow | null; error: string | null }> {
   const sb = await createClient();
-  const { data, error } = await sb.from("qr_links").select(COLS).eq("id", id).maybeSingle();
+  const { data, error } = await sb.from("qr_links").select(QR_LINK_COLS).eq("id", id).maybeSingle();
   if (error) return { link: null, error: error.message };
-  return { link: data ? shape(data as Raw) : null, error: null };
+  return { link: data ? shapeQrLink(data as QrLinkRaw) : null, error: null };
 }
 
 /** إحصاءُ باركودٍ واحد منذ إنشائه: يومٌ يومًا، وبالأجهزة، وبمن أحال. */
@@ -154,7 +199,7 @@ export async function getQrStats(id: string, range: DayRange | null = null): Pro
   };
   const sb = await createClient();
 
-  const { data: linkRow, error: linkErr } = await sb.from("qr_links").select(COLS).eq("id", id).maybeSingle();
+  const { data: linkRow, error: linkErr } = await sb.from("qr_links").select(QR_LINK_COLS).eq("id", id).maybeSingle();
   if (linkErr) return { link: null, ...empty, error: linkErr.message };
   if (!linkRow) return { link: null, ...empty, error: null };
 
@@ -165,7 +210,7 @@ export async function getQrStats(id: string, range: DayRange | null = null): Pro
     q = q.gte("scanned_at", `${range.from}T00:00:00+03:00`).lt("scanned_at", `${nextDay(range.to)}T00:00:00+03:00`);
   }
   const { data: scans, error: scanErr } = await q.order("scanned_at", { ascending: false }).limit(MAX_ROWS);
-  if (scanErr) return { link: shape(linkRow as Raw), ...empty, error: scanErr.message };
+  if (scanErr) return { link: shapeQrLink(linkRow as QrLinkRaw), ...empty, error: scanErr.message };
 
   type Scan = { scanned_at: string; device: string | null; is_bot: boolean };
   const all = (scans ?? []) as Scan[];
@@ -182,7 +227,7 @@ export async function getQrStats(id: string, range: DayRange | null = null): Pro
    * فيقول الرقمُ «مسحة» ويقول المخطّطُ «لا مسحات».
    */
   // أيّامُ المخطّط: مدّةُ المصفّي إن كانت، وإلّا عمرُ الباركود من يوم مولده إلى اليوم.
-  const fromKey = range ? range.from : clubDayKey((linkRow as Raw).created_at);
+  const fromKey = range ? range.from : clubDayKey((linkRow as QrLinkRaw).created_at);
   const toKey = range ? range.to : clubDayKey(new Date().toISOString());
   const days = Math.min(MAX_DAYS, Math.max(1, daysBetweenKeys(fromKey, toKey) + 1));
   const byDay = new Map<string, number>();
@@ -216,7 +261,7 @@ export async function getQrStats(id: string, range: DayRange | null = null): Pro
   }
 
   return {
-    link: shape(linkRow as Raw),
+    link: shapeQrLink(linkRow as QrLinkRaw),
     daily: [...byDay].map(([day, count]) => ({ day, count })),
     devices: [...devices].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count),
     bots: all.length - human.length,

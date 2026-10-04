@@ -50,7 +50,7 @@ const WHISPER_OUT_MS = 260;
  */
 export function whisperFor(rejected: string, charset: FieldCharset): string {
   if (ARABIC.test(rejected)) return "لوحة المفاتيح بالعربيّة بدّلها لتكتب هنا";
-  return charset === "digits" ? "هذا الحقل أرقامٌ فقط" : "هذا الحقل لا يقبل هذا المحرف";
+  return charset === "digits" ? "هذا الحقل أرقامٌ فقط" : "هذا الحقل لا يقبل هذا الحرف";
 }
 
 type Guarded<T> = { onBeforeInput: FormEventHandler<T>; onChange: ChangeEventHandler<T> };

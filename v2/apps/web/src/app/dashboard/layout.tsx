@@ -4,7 +4,8 @@ import { DashboardShell } from "./_shell/DashboardShell";
 import { AccessDenied } from "./_shell/AccessDenied";
 import { ViewAsBar } from "./_shell/ViewAsBar";
 import { ToastProvider } from "./_components/ToastProvider";
-import { getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
+import { PwaIntro } from "@/app/_pwa/PwaIntro";
+import { awayIfNoSession, getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { getMyScope } from "@/lib/myScope";
 
@@ -13,8 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // احتياطٌ خلفَ الحارس — ويفرّق بين الغائب والمُبطَل: من أُبطِلت جلستُه يُردّ إلى
+  // `/logout` كي يُمحى كوكيُّه، وإلّا دار بين الحارس وهذا السطر. انظر `SessionState`.
   const admin = await getCurrentAdmin();
-  if (!admin) redirect("/login"); // احتياط — الـmiddleware يحرس أصلًا
+  if (!admin) redirect((await awayIfNoSession()) ?? "/login");
 
   // بوّابة السجلّ — **قبل بابِ القدرات**: من لا سجلَّ تفاصيلَ له يُساق إلى إكماله أوّلًا، وأكثرُ
   // من ينقصه سجلٌّ عضوٌ عاديّ لا يبلغ ما بعد `isAdmin` أصلًا، فلو تأخّرت البوّابةُ سطرًا واحدًا
@@ -63,6 +66,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {bar}
         {guardrail ? <div data-guardrail style={{ display: "contents" }}>{children}</div> : children}
       </DashboardShell>
+      {/* نافذةُ «أَدِيب على جوّالك»: تستقبل مرّةً من يدخل من جوّال، ثمّ لا تعود. */}
+      <PwaIntro />
     </ToastProvider>
   );
 }

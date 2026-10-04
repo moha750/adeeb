@@ -57,7 +57,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
 
   /** **المعروضُ** = النطاقُ بعد البحث، والكشفُ وحدَه يقرؤه (ق١٧). */
   const filtered = useMemo(
-    () => scope.filter((r) => matchesSearch(search, `${r.name} ${r.holderName} ${r.positionTitle} ${r.serial}`)),
+    () => scope.filter((r) => matchesSearch(search, `${r.name} ${r.paperName} ${r.holderName} ${r.positionTitle} ${r.serial}`)),
     [scope, search],
   );
 
@@ -80,7 +80,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
     setBusy(true);
     try {
       const paper = {
-        name: r.holderName,
+        name: r.paperName,
         position: r.positionTitle,
         gender: r.gender,
         from: r.periodFrom,
@@ -112,13 +112,15 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
     {
       key: "member", header: "العضو", width: "minmax(200px, 1.6fr)",
       render: (r) => (
-        <div className="dt-user">
+        // `dt-mem`/`dt-mm` صنفا خليّة الشخص في المكتبة؛ وكان هنا `dt-user` بلا تعريفٍ فتُرسم الخليّةُ عاريةً
+        <div className="dt-mem">
           <Avatar name={r.name} src={r.avatar ?? undefined} gender={r.gender} size="sm" />
-          <div className="dt-user-txt">
-            <b>{r.holderName}</b>
-            {/* الاسم في الملفّ اليوم إن خالف المرسوم — فالورقة لا تُصحَّح بعد خروجها */}
-            <span className="txt">{r.holderName === r.name ? r.positionTitle : `${r.name}، ${r.positionTitle}`}</span>
-          </div>
+          <span className="dt-mm">
+            <b>{r.paperName}</b>
+            {/* اسمُ الورقة يتبع صاحبَه إن تغيّر بعد الإصدار (٢٠٢٦-١٠-٠١)؛ فلا يخالف اسمَ الملفّ إلّا ما صحّحه
+                المُصدِرُ بيده يومَ الإصدار، فيُذكر اسمُ الملفّ معه */}
+            <span>{r.paperName === r.name ? r.positionTitle : `${r.name}، ${r.positionTitle}`}</span>
+          </span>
         </div>
       ),
     },
@@ -259,7 +261,7 @@ export function CertificatesView({ data }: { data: CertificatesData }) {
         }
       >
         {revoking ? (
-          <Alert tone="danger" title={`${revoking.holderName}، ${revoking.serial}`}>
+          <Alert tone="danger" title={`${revoking.paperName}، ${revoking.serial}`}>
             الورقةُ التي بيده لا تُسترجع؛ الإبطالُ يُعلن في السجلّ أنّها لم تعد معتمدة.
           </Alert>
         ) : null}

@@ -1,7 +1,7 @@
 // تفويض محتوى الموقع — **قدرة لا رتبة**. لا `role_level` هنا ولا في أيّ ملفّ محتوى:
 // من يُدير مجلّدًا من محتوى الصفحة الرئيسية = من مُنحت له قدرة ذلك المجلّد عبر أدواره، مهما
 // كانت رتبته. ولكلّ مجلّدٍ قدرته وحده (`manage_works` · `manage_achievements` · `manage_sponsors`
-// · `manage_faq`) — تُقرأ من `SECTION_CAP` فلا تُسمّى هنا مرّةً ثانية، وهي حارس RLS نفسه
+// · `manage_faq` · `manage_announcements`) — تُقرأ من `SECTION_CAP` فلا تُسمّى هنا مرّةً ثانية، وهي حارس RLS نفسه
 // لجدول ذلك المجلّد. القراءة عبر `check_user_permission` (SECURITY DEFINER، بالاسم — صفر role_level).
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
@@ -11,7 +11,7 @@ import { SECTION_CAP } from "@/lib/capabilities";
 export type WebsiteManager = { userId: string };
 
 /** مجلّدات محتوى الصفحة الرئيسية — كلٌّ منها قسمٌ مقفولٌ في `SECTION_CAP`. */
-export type WebsiteSection = "works" | "achievements" | "sponsors" | "faq";
+export type WebsiteSection = "works" | "achievements" | "sponsors" | "faq" | "announcements";
 
 /**
  * المستخدم الحاليّ إن كان يملك قدرة هذا المجلّد، وإلّا `null`.

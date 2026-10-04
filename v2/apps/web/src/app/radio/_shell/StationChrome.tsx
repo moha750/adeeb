@@ -42,13 +42,19 @@ function isOn(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function StationSide({ stationName, stationLogoUrl }: { stationName: string; stationLogoUrl: string | null }) {
+export function StationSide({ stationName }: { stationName: string }) {
   const pathname = usePathname();
   return (
     <aside className="stc-side">
-      <Link href="/radio" className="stc-mark">
-        {stationLogoUrl ? <img src={stationLogoUrl} alt="" /> : null}
-        {stationName}
+      {/* **الشعارُ يحمل اسمَه فلا يُكتَب تحته** (أمرُ المالك ٢٠٢٦-٠٩-١٩): كان
+          مربّعَ الشعار ثمّ «إذاعة أَدِيب» مكتوبةً بجانبه، والكلمةُ مرسومةٌ في
+          الشعار الأفقيّ أصلًا — فكان الاسمُ مرّتين. والاسمُ باقٍ للقارئ الصوتيّ
+          في `aria-label`: الصورةُ زخرفٌ (`alt=""`) والرابطُ هو الذي يُسمّى.
+          وهذا الملفُّ المتّجه لا مربّعُ R2: يكبر بلا تكسّرٍ وخلفيّتُه شفّافة.
+          ونسخةُ R2 باقيةٌ لجلسة الوسائط (شاشةُ قفل الجوّال) — تلك تحتاج مربّعًا
+          مصمتًا لا شعارًا مفرَّغًا. */}
+      <Link href="/radio" className="stc-mark" aria-label={stationName}>
+        <img src="/radio/logo-horizontal.svg" alt="" />
       </Link>
       {DOORS.map(({ href, label, Icon }) => (
         <Link

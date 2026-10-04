@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { QrLinkRow } from "../data";
+import { QR_LINK_COLS, shapeQrLink } from "../data";
+import type { QrLinkRaw, QrLinkRow } from "../data";
 
 /**
  * **عينُ النادي على ملصقاته.**
@@ -23,7 +24,12 @@ export type QrEvent = {
   linkId: string;
   linkTitle: string | null;
   actor: string | null;
-  kind: "target" | "title" | "active" | "spec" | "delete" | "owner";
+  /**
+   * **أنواعُ الواقعة كما يقبلها قيدُ القاعدة حرفًا** (`qr_link_events_kind_check`).
+   * كان الاتّحادُ ستّةً والقيدُ ثمانيةً منذ م٧ وم٨، فواقعةُ «موعد» كانت تُرسَم بشارةٍ
+   * بلا تسميةٍ ولا نغمة (خانةٌ فارغة). صُحّح مع م١٨ يوم وُلدت «الحملة».
+   */
+  kind: "target" | "title" | "active" | "spec" | "delete" | "owner" | "schedule" | "tags" | "campaign";
   oldValue: string | null;
   newValue: string | null;
   at: string;
@@ -42,14 +48,6 @@ export type QrOversightData = {
   error: string | null;
 };
 
-const COLS = "id, code, title, target_url, spec, active, scan_count, created_at, updated_at, owner_id";
-
-type Raw = {
-  id: string; code: string; title: string; target_url: string;
-  spec: QrLinkRow["spec"]; active: boolean; scan_count: number;
-  created_at: string; updated_at: string; owner_id: string;
-};
-
 /** آخرُ مئةِ واقعة: السجلُّ يُقرأ ليُسأل «ما الذي تغيّر هذا الأسبوع؟» لا ليُؤرَّخ به عامٌ كامل. */
 const EVENT_LIMIT = 100;
 
@@ -60,13 +58,13 @@ export async function getQrOversight(): Promise<QrOversightData> {
 
   const { data: links, error: linkErr } = await sb
     .from("qr_links")
-    .select(COLS)
+    .select(QR_LINK_COLS)
     .order("created_at", { ascending: false });
   /** من يصلح مالكًا — يُقرأ قبل الجدول فيبقى متاحًا حتّى لو تعذّرت قراءتُه. */
   const heirs = ((candidates ?? []) as { id: string; full_name: string }[]).map((c) => ({ id: c.id, name: c.full_name }));
   if (linkErr) return { rows: [], events: [], candidates: heirs, alerts: {}, error: linkErr.message };
 
-  const raw = (links ?? []) as Raw[];
+  const raw = (links ?? []) as QrLinkRaw[];
   const ownerIds = [...new Set(raw.map((r) => r.owner_id))];
 
   // الأسماءُ في نداءٍ واحد: صفٌّ لكلّ مالكٍ لا نداءٌ لكلّ باركود.
@@ -75,19 +73,15 @@ export async function getQrOversight(): Promise<QrOversightData> {
     : { data: [] as { id: string; full_name: string }[] };
   const byId = new Map((people ?? []).map((p) => [p.id, p.full_name as string]));
 
+  // **الصائغُ واحدٌ ويُزاد عليه المالك**: الصفُّ يُشكَّل في `../data` لا ههنا، فخانةٌ
+  // تُضاف إليه تصل هذه الغرفةَ بلا لمسة.
+  // **والحاويةُ معرّفًا بلا اسم**: الصائغُ يترك الاسمَ فارغًا ويُلصَق بنداءٍ ثانٍ، وغرفةُ
+  // الإشراف لا تُلصقه: حملاتُ الناس لا تُقرأ لها أسماءٌ إلّا بسياسةِ إشرافٍ ثانيةٍ لا
+  // داعيَ لها اليوم (لا عمودَ يعرضها).
+  // **ولا يُقال «محذوف» لما لم يُقرأ**: قد يغيب اسمُ المالك لأنّ الصفَّ ذهب، وقد يغيب لأنّ
+  // سياسةَ القراءة لم تسمح (وقع ذلك أوّلَ يومٍ لحساب النادي). والذي نعرفه يقينًا أنّنا لا نعرفه.
   const rows: QrOversightRow[] = raw.map((r) => ({
-    id: r.id,
-    code: r.code,
-    title: r.title,
-    targetUrl: r.target_url,
-    spec: r.spec,
-    active: r.active,
-    scanCount: r.scan_count ?? 0,
-    ownerId: r.owner_id,
-      createdAt: r.created_at,
-    updatedAt: r.updated_at,
-    // **لا يُقال «محذوف» لما لم يُقرأ**: قد يغيب الاسمُ لأنّ الصفَّ ذهب، وقد يغيب لأنّ سياسةَ
-    // القراءة لم تسمح (وقع ذلك أوّلَ يومٍ لحساب النادي). والذي نعرفه يقينًا أنّنا لا نعرفه.
+    ...shapeQrLink(r),
     owner: { id: r.owner_id, name: byId.get(r.owner_id) ?? "غيرُ معروف" },
   }));
 

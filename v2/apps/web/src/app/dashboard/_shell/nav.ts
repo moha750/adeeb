@@ -1,3 +1,7 @@
+// من مدخلٍ فرعيٍّ لا من جذر المكتبة: `nav.ts` ملفُّ بياناتٍ بلا JSX تقرؤه وحداتٌ خادميّة
+// والمِعيارُ في بيئة node، وجذرُ المكتبة يجرّ شجرةَ المكوّنات كلَّها معه (وقد أسقط المِعيارَ
+// فعلًا بـ«React is not defined»). والمصدرُ واحدٌ كما هو — المسارُ إليه وحده تغيّر.
+import { matchesSearch } from "@adeeb/design-system/search";
 import type { IconKey } from "./icons";
 import { canOpen, type NavHref } from "@/lib/capabilities";
 import type { ElectionSignal, MyScope, SeatKind } from "@/lib/myScope";
@@ -83,6 +87,10 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "الفرص التطوّعيّة", icon: "handshake", href: "/dashboard/volunteering" },
       { label: "سجلّ المتطوّعين", icon: "supervise", href: "/dashboard/volunteering/volunteers" },
+      // **شهاداتُ المتطوّعين** (٢٠٢٦-١٠-٠١، والاسمُ بكلمة المالك) — دفترُ ما تأخّر وما صدر عبر
+      // الفرص كلِّها: كان كلُّ متأخّرٍ محبوسًا في صفحة فرصته فلا يراه أحد. والحسمُ (الحضورُ
+      // والاستحقاق) باقٍ في سجلّ الفرصة. والورقةُ نفسُها تبقى «شهادة مشاركة» كما تُرسَم.
+      { label: "شهادات المتطوّعين", icon: "certificate", href: "/dashboard/volunteering/certificates" },
     ],
   },
   {
@@ -119,6 +127,9 @@ export const NAV: NavGroup[] = [
       { label: "الإحصاءات", icon: "stats", href: "/dashboard/website/achievements" },
       { label: "الرعاة", icon: "handshake", href: "/dashboard/website/sponsors" },
       { label: "الأسئلة الشائعة", icon: "faq", href: "/dashboard/website/faq" },
+      // **اللوحة الإعلانية** — كلماتُ الشريط الجاري في صدر الهبوط. وموضعُها هنا مع
+      // إخوتها: هي محتوى الصفحة الرئيسية كالأعمال والإحصاءات، لا أداةٌ ولا نظام.
+      { label: "اللوحة الإعلانية", icon: "announce", href: "/dashboard/website/announcements" },
       { label: "الأخبار", icon: "news", href: "/dashboard/news" },
       { label: "المكتبة", icon: "book", href: "/dashboard/library" },
       // «إذاعة أدِيب» باسمها كاملًا بأمر المالك (٢٠٢٦-٠٨-١٨) — كما يقول عنوانُ غرفتها.
@@ -170,6 +181,48 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
       return it.href && canOpen(caps, it.href) && has(it) ? [named(it)] : [];
     }),
   })).filter((g) => g.items.length > 0);
+}
+
+/**
+ * **الخريطة مُرشَّحةً بما كُتب في خانة البحث** (٢٠٢٦-٠٩-١٩) — ترشيحُ عرضٍ لا خريطةٌ ثانية:
+ * يُنادى **بعد** `navFor`، فلا يُظهر بندًا لا مفتاحَ له بحال.
+ *
+ * والمطابقةُ بـ`matchesSearch` وحدها (المصدرُ الواحد لكلّ بحثٍ في اللوحة): فمن كتب «الاخبار»
+ * بلا همزة يجد «الأخبار»، ومن كتب «فعاليات» يجد «الفعاليّات» — وبحثٌ عربيٌّ بلا تطبيعٍ يُخفي
+ * البندَ عمّن يعرف اسمَه ولا يقول له لماذا.
+ *
+ * **ورأسُ المجموعة حقلٌ يُطابَق كالبند:** من كتب «الانتخابات» أراد بابَها كلَّه لا بندًا واحدًا
+ * يحمل الكلمة، ومن كتب «عضوية اعضاء» جمع الحقلين في استعلامٍ واحد (كلماتُ الاستعلام تُطلَب
+ * كلُّها، في أيّ حقل). والمجموعةُ التي خلت يسقط رأسُها معها كما في `navFor`.
+ */
+export function searchNav(nav: NavGroup[], query: string): NavGroup[] {
+  if (!query.trim()) return nav;
+  return nav.flatMap((g) => {
+    const items = g.items.flatMap((it) => {
+      if (it.children) {
+        // الابنُ يُطابَق باسمه واسمِ أبيه ورأسِ مجموعته؛ وأبٌ طابق اسمُه يأتي بأبنائه كلِّهم
+        const parent = matchesSearch(query, it.label, g.head);
+        const children = parent
+          ? it.children
+          : it.children.filter((c) => matchesSearch(query, c.label, it.label, g.head));
+        return children.length ? [{ ...it, children }] : [];
+      }
+      return matchesSearch(query, it.label, g.head) ? [it] : [];
+    });
+    return items.length ? [{ ...g, items }] : [];
+  });
+}
+
+/** أوّلُ وجهةٍ في خريطةٍ مُرشَّحة — وجهةُ الإقرار (Enter) في خانة البحث. */
+export function firstHref(nav: NavGroup[]): NavHref | null {
+  for (const g of nav) {
+    for (const it of g.items) {
+      if (it.href) return it.href;
+      const first = it.children?.[0];
+      if (first) return first.href;
+    }
+  }
+  return null;
 }
 
 /**

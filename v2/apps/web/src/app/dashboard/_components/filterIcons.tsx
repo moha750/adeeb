@@ -23,6 +23,7 @@ const ICONS: Record<string, React.ReactNode> = {
   gender: <GenderIntersex />,    // الجنس
   council: <Bank />,             // المجلس
   organizer: <Buildings />,      // الجهة المنظِّمة
+  unit: <Buildings />,           // الجهة (مجلس · قسم · لجنة)
   type: <Tag />,                 // النوع
   kind: <Tag />,                 // النوع
   category: <Tag />,             // التصنيف · القسم

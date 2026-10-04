@@ -1,25 +1,12 @@
-import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { getSessionAdmin } from "@/lib/auth";
-import { getMyQrLinks } from "./data";
-import { SavedLinksView } from "./SavedLinksView";
+import { redirect } from "next/navigation";
 
 /**
- * **رموزي** — جذرُ غرفة الباركود.
+ * **جذرُ غرفة الباركود يحوّل إلى بابها الأوّل** «باركودات مفردة» (`links/`).
  *
- * كان المحرّرُ هو ما يستقبلك هنا وقائمتُك تحته، فقُلب الترتيب ٢٠٢٦-٠٨-٢١ بأمر المالك:
- * الغالبُ أنّك تدخل لترى رمزًا أو تبدّل وجهته، والإنشاءُ حدثٌ نادر. فصارت الغرفةُ ثلاثةَ
- * أبواب على عُرف بقيّة اللوحة: قائمةٌ في الجذر، و`new` للإنشاء، و`[id]` للرمز وإحصائه.
- *
- * والقراءةُ بعميل الجلسة (`data.ts`) لا بمفتاح الخدمة: المدى «كلٌّ يرى رموزَه هو»
- * تحكمه سياسةُ own-row في القاعدة، لا سطرُ `where` في التطبيق.
+ * كان الجذرُ هو القائمةَ نفسَها، ثمّ نزلت إلى مسارٍ فرعيٍّ (٢٠٢٦-١٠-٠٣) كي تتماثل فتاتُ
+ * البابين — العلّةُ في رأس `links/page.tsx`. والجذرُ باقٍ لأنّه بندُ الخريطة وقفلُها
+ * (`SECTION_CAP`)، وفتاتُ صفحاتِ الرمز تعود إليه، وما حفظه الناس من روابط.
  */
-export const metadata = { title: "باركوداتي، بوّابة أديب" };
-
-export default async function QrToolPage() {
-  const denied = await denyUnless("/dashboard/tools/qr");
-  if (denied) return denied;
-
-  const [{ rows, error }, me] = await Promise.all([getMyQrLinks(), getSessionAdmin()]);
-
-  return <SavedLinksView rows={rows} error={error} meId={me?.id ?? null} />;
+export default function QrRoot() {
+  redirect("/dashboard/tools/qr/links");
 }

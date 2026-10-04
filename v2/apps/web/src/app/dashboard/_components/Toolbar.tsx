@@ -1,12 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Table, SquaresFour } from "@phosphor-icons/react";
 import { CaretDown, Check, FunnelSimple, MagnifyingGlass, X } from "@/app/_components/glyphs";
 import { AnchoredPopover, Button, Modal } from "@adeeb/design-system";
 import { filterIcon } from "./filterIcons";
 
-export type FilterOption = { value: string; label: string };
+/**
+ * `group` — عنوانٌ يسبق الخيارَ في المنسدل. لا يظهر إلّا لمن يحمله، فالمرشِّحاتُ
+ * القديمةُ تبقى قائمةً مسطّحةً كما هي. أُضيف ٢٠٢٦-٠٩-١٧ حين اتّسعت «الجهة» في غرفة
+ * التحرير إلى الهيكلة كلِّها: تسعةَ عشرَ خيارًا بلا عناوينَ تُقرأ كومةً واحدة.
+ */
+export type FilterOption = { value: string; label: string; group?: string };
 export type FilterDef = { key: string; label: string; options: FilterOption[] };
 
 export type ViewMode = "table" | "cards";
@@ -116,11 +121,14 @@ export function FilterSelect({ def, value, onChange, icon }: { def: FilterDef; v
           <span className="tb-fs-txt">الكل</span>
           <Check className="tb-fs-ck" aria-hidden />
         </button>
-        {realOpts(def).map((o) => (
-          <button key={o.value} type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
-            <span className="tb-fs-txt">{o.label}</span>
-            <Check className="tb-fs-ck" aria-hidden />
-          </button>
+        {realOpts(def).map((o, i, all) => (
+          <Fragment key={o.value}>
+            {o.group && o.group !== all[i - 1]?.group ? <div className="tb-fs-grp">{o.group}</div> : null}
+            <button type="button" className={"tb-fs-opt" + (o.value === value ? " sel" : "")} onClick={() => { onChange(o.value); setOpen(false); }}>
+              <span className="tb-fs-txt">{o.label}</span>
+              <Check className="tb-fs-ck" aria-hidden />
+            </button>
+          </Fragment>
         ))}
       </AnchoredPopover>
     </div>
@@ -134,10 +142,13 @@ function SheetRow({ def, value, onChange }: { def: FilterDef; value: string; onC
       <div className="tbs-label">{def.label}</div>
       <div className="tbs-opts">
         <button type="button" className={"tbs-opt" + (!value ? " on" : "")} onClick={() => onChange("")}>الكل</button>
-        {realOpts(def).map((o) => (
-          <button key={o.value} type="button" className={"tbs-opt" + (o.value === value ? " on" : "")} onClick={() => onChange(o.value)}>
-            {o.label}
-          </button>
+        {realOpts(def).map((o, i, all) => (
+          <Fragment key={o.value}>
+            {o.group && o.group !== all[i - 1]?.group ? <div className="tbs-grp">{o.group}</div> : null}
+            <button type="button" className={"tbs-opt" + (o.value === value ? " on" : "")} onClick={() => onChange(o.value)}>
+              {o.label}
+            </button>
+          </Fragment>
         ))}
       </div>
     </div>

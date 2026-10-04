@@ -1,13 +1,15 @@
 import { Card, CardBody } from "@adeeb/design-system";
 import {
-  Certificate, ClipboardText, HandHeart, IdentificationBadge, Megaphone, UserCirclePlus, UsersThree,
+  Certificate, ClipboardText, Fingerprint, HandHeart, IdentificationBadge, Medal, Megaphone,
+  NotePencil, SealCheck, SquaresFour, UserCirclePlus, UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import type { CommitteeOption } from "./data";
 
-/* glyph-weight: UserCirclePlus HandHeart IdentificationBadge Certificate Megaphone ClipboardText —
-   تُرسَم عبر `STATIONS` و`PERKS` باسمٍ واحدٍ `Icon`، والوزنُ مُمرَّرٌ في الوسم هناك؛ فلا يراه
-   الفحصُ النصّيّ باسمها. */
+/* glyph-weight: UserCirclePlus HandHeart IdentificationBadge Certificate Megaphone ClipboardText SquaresFour Fingerprint SealCheck Medal NotePencil
+   تُرسَم عبر `STATIONS` و`PERKS` و`MEMBER_PERKS` باسمٍ واحدٍ `Icon`، والوزنُ مُمرَّرٌ في الوسم
+   هناك؛ فلا يراه الفحصُ النصّيّ باسمها. والأسماءُ كلُّها في سطرِ الإذن نفسِه: الفحصُ يقرأ
+   حتى آخر السطر لا أكثر، فما نزل سطرًا ثانيًا لم يُقرأ. */
 
 /**
  * **متنُ صفحة الانضمام — يُقرأ بلا حساب.**
@@ -69,6 +71,94 @@ const PERKS = [
     body: "حضورُك في كلّ فرصةٍ وتقييمُ عملك محفوظان في سجلّك. ومن هذا السجلّ تُهدى العضويّةُ على بيّنة، فلا يضيع جهدٌ بذلتَه.",
   },
 ] as const;
+
+/**
+ * **ما تنالُه العضويّة** — مسوّدةٌ تنتظر اختيار المالك، تُعرَض في `/ui/membership-perks`
+ * ولم تُركَّب في الصفحة الحيّة بعد.
+ *
+ * وكلُّها مشدودةٌ إلى شيءٍ قائمٍ في النظام كسابقتها (`PERKS`): البوّابةُ قدرةُ
+ * `view_own_membership`، والانتخابُ والترشّحُ غرفتان حيّتان، والشهادةُ ورقةٌ لها رقمٌ في
+ * `/verify`، والأوسمةُ صفوفٌ يحسبها `badge_awards`، والمهامُّ جدولٌ، واستبياناتُ الأعضاء
+ * عَلَمٌ في `surveys`. فمن زاد سطرًا ههنا فليزد له نظيرًا في النظام.
+ *
+ * **وحدٌّ يجب أن يُقال:** البوّابةَ يفتحها **المقعدُ** لا العضويّةُ وحدَها (القدرةُ معقودةٌ
+ * على الأدوار)، فأربعةٌ من كلّ عشرة أعضاءٍ اليوم بلا منصبٍ نشِط لا يبلغون اللوحةَ أصلًا.
+ * فإمّا أن تُصاغ هذه السطورُ على هذا الواقع، وإمّا أن يُفتح البابُ للعضويّة نفسِها.
+ */
+const MEMBER_PERKS = [
+  {
+    key: "portal",
+    Icon: SquaresFour,
+    title: "بوّابتُك الخاصّة",
+    body: "لوحةٌ لك وحدَك في أدِيب: بطاقةُ عضويّتك ومدّتُها، ومسيرتُك في النادي، وملفُّك وإعداداتُك.",
+  },
+  {
+    key: "vote",
+    Icon: Fingerprint,
+    title: "صوتُك في الانتخابات",
+    body: "تنتخب من يقود وحدتَك، وصوتُك سرّيٌّ لا يُنسَب إليك.",
+  },
+  {
+    key: "run",
+    Icon: SealCheck,
+    title: "ولك أن تترشّح",
+    body: "ترشّح نفسَك لمقاعد القيادة، وتابِع ترشُّحك في سجلٍّ خاصٍّ بك حتى يوم الإعلان.",
+  },
+  {
+    key: "certificate",
+    Icon: Certificate,
+    title: "شهادةُ خبرةٍ موثّقة",
+    body: "شهادةٌ باسمك تحمل مدّتَك ومنصبَك، تُنزّلها من حسابك، ولها رقمٌ تتحقّق منه أيُّ جهةٍ تسألك.",
+  },
+  {
+    key: "profile",
+    Icon: Medal,
+    title: "صفحتُك وأوسمتُك",
+    body: "عنوانٌ علنيٌّ باسمك يُعرَض فيه منصبُك وأوسمةٌ تُحتسَب لك من عملك: حاضرٌ أوّل، ملازِم، مواظِب، قائدُ وحدة، وسنةٌ في أديب.",
+  },
+  {
+    key: "seat",
+    Icon: UsersThree,
+    title: "مقعدٌ في الهيكل",
+    body: "تُسنَد إليك لجنةٌ أو قسم، وقد تقودُ وحدةً بأمرها ومن فيها.",
+  },
+  {
+    key: "tasks",
+    Icon: ClipboardText,
+    title: "مهامُّك مرصودة",
+    body: "ما تُكلَّف به يصلك في حسابك وتسلّمه منه، فلا تضيع مهمّةٌ بين الرسائل.",
+  },
+  {
+    key: "surveys",
+    Icon: NotePencil,
+    title: "رأيُك يُسأل أوّلًا",
+    body: "أبوابُ رأيٍ تُفتح للأعضاء وحدهم قبل أن تُفتح للعموم، ومنها يُبنى قرارُ النادي.",
+  },
+] as const;
+
+export type MemberPerk = (typeof MEMBER_PERKS)[number];
+export const ALL_MEMBER_PERKS: readonly MemberPerk[] = MEMBER_PERKS;
+
+/**
+ * و`perks` وسيطٌ لمعرضها وحدَه: الصفحةُ الحيّةُ تناديها بلا وسيطٍ فتأخذ القائمةَ كاملةً،
+ * والمعرضُ يمرّر شريحةً ليُري المالكَ ثلاثةً وأربعةً وستّةً في الصفحة نفسِها. فالكرتُ
+ * مرسومٌ في موضعٍ واحد، والعددُ وحدَه هو الذي يتبدّل.
+ */
+export function JoinMemberPerks({ perks = MEMBER_PERKS }: { perks?: readonly MemberPerk[] }) {
+  return (
+    <div className="card-grid">
+      {perks.map(({ key, Icon, title, body }) => (
+        <Card key={key}>
+          <CardBody className="flex flex-col gap-3 p-6">
+            <Icon size={30} weight={ICON_WEIGHT} aria-hidden />
+            <span className="text-lg font-bold">{title}</span>
+            <p className="text-content-muted text-sm leading-relaxed">{body}</p>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 export function JoinPerks() {
   return (

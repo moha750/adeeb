@@ -3,9 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
-import { NotePencil, ShieldWarning, UserMinus, WarningOctagon } from "@phosphor-icons/react";
+import { NotePencil, ShieldWarning, UserMinus, WarningOctagon, WhatsappLogo } from "@phosphor-icons/react";
 import { DownloadSimple } from "@/app/_components/glyphs";
-import { Eye, MagnifyingGlass, Prohibit, Warning, WhatsappLogo } from "@/app/_components/glyphs";
+import { Eye, MagnifyingGlass, Prohibit, Warning } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../../_components/DataTable";
 import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";

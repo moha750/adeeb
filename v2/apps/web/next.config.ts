@@ -43,12 +43,30 @@ const nextConfig: NextConfig = {
       { source: "/bank", destination: "/games/bank-adeeb/game.html" },
     ];
   },
+  /**
+   * **عاملُ الخدمة لا يُخبَّأ** (٢٠٢٦-١٠-٠٣). المتصفّحُ يسأل عن `sw.js` ليعرف هل تبدّل،
+   * فلو أجابته ذاكرةُ الحافّة بنسخةٍ قديمة بقي الجوّالُ على منطق إشعاراتٍ قديم أيّامًا.
+   */
+  async headers() {
+    return [
+      {
+        // ومُطفئُ عامل النسخة الأولى مثلُه: لا يُخبَّأ كي يبلغ كلَّ متصفّحٍ يحمل الإرث.
+        source: "/:file(sw|service-worker).js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+    ];
+  },
   experimental: {
-    // ذاكرة Turbopack الدائمة على القرص (.next/dev/cache) مفتوحةٌ افتراضيًّا في Next 16،
-    // وأيُّ قتلٍ عنيفٍ للخادم أثناء كتابتها يترك ملفّات .meta تشير إلى .sst مفقودة،
-    // فيسقط كلُّ تشغيلٍ تالٍ بـ«Failed to restore task data (corrupted database)» خلال دقيقة.
-    // إطفاؤها يُلغي صنفَ العطل كلَّه: لا قاعدةَ على القرص تفسد. والكلفة إعادةُ ترجمةٍ باردة.
-    turbopackFileSystemCacheForDev: false,
+    // ذاكرة Turbopack الدائمة على القرص (.next/dev/cache) — **مفتوحةٌ** (٢٠٢٦-١٠-٠٣، قرارُ المالك).
+    // كانت مطفأةً لأنّ قتلًا عنيفًا للخادم أثناء كتابتها يترك ملفّات .meta تشير إلى .sst مفقودة،
+    // فيسقط كلُّ تشغيلٍ تالٍ بـ«Failed to restore task data (corrupted database)». وثمنُ إطفائها
+    // كان ترجمةً باردةً لكلّ صفحةٍ في أوّل زيارةٍ بعد كلّ إقلاع. والحارسُ اليوم `pnpm dev:stop`
+    // (إيقافٌ رفيقٌ يمهل الذاكرةَ لتُغلق دفاترها — scripts/dev-server.mjs). فإن عاد العطلُ
+    // (إغلاقُ الطرفيّة أو انطفاءُ الجهاز): احذف `.next/dev/cache` وأعِد التشغيل، أو أعِد هذا إلى false.
+    turbopackFileSystemCacheForDev: true,
   },
 };
 

@@ -3,6 +3,8 @@ import { Footer, Container, LandingHeading } from "@adeeb/design-system";
 import { getMoreNews, getPublicNewsItem } from "../data";
 import { PublicNewsCard } from "../PublicNewsCard";
 import { ArticleView } from "./ArticleView";
+import { ReadingProgress } from "./_parts/ReadingProgress";
+import { getApprovedComments } from "./data";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { shareOg } from "@/lib/share";
 
@@ -31,15 +33,22 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
   const n = await getPublicNewsItem(decodeURIComponent(slug));
   if (!n) notFound();
 
-  const more = await getMoreNews(n.id);
+  const [more, comments] = await Promise.all([getMoreNews(n.id), getApprovedComments(n.id)]);
 
   return (
     <>
+      {/* خيطُ القراءة **خارج** `.art`: تلك حاويةُ استعلامٍ، وكلُّ `fixed` داخلها يُنسَب
+          إليها لا إلى الشاشة. */}
+      <ReadingProgress targetId="art" />
       <SiteHeader activeHref="/news" />
       <main>
         <section className="py-16 md:py-24">
           <Container>
-            <ArticleView n={n} />
+            <ArticleView
+              n={n}
+              comments={comments}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            />
           </Container>
         </section>
         {more.length ? (

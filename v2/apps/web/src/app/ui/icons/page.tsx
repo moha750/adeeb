@@ -4,7 +4,7 @@
 
 import { Card, CardBody, CardHeader, Container } from "@adeeb/design-system";
 import {
-  XLogo, InstagramLogo, TiktokLogo, LinkedinLogo,
+  XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, WhatsappLogo,
   AddressBook, Aperture, Archive, Armchair, Article, Asterisk, At, Bank, Bell, BookOpen,
   BookOpenText, BookmarkSimple, Books, Briefcase, Broadcast, Buildings, Cake, CalendarBlank, CalendarCheck, CalendarDots,
   CalendarX, Camera, Certificate, Chalkboard, ChalkboardTeacher, ChartBar, ChartLineUp, ChatCenteredDots, ChatCenteredText, ChatCircle,
@@ -29,7 +29,7 @@ import {
   Plus, X, Check, Checks, Minus, DotsSixVertical, CaretDown, CaretUp, CaretLeft, CaretRight,
   CaretUpDown, CaretDoubleRight, ArrowUp, ArrowDown, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUUpLeft, ArrowBendUpLeft, ArrowSquareOut,
   ArrowCounterClockwise, ArrowsClockwise, ArrowClockwise, Trash, PencilSimple, Eye, EyeSlash, MagnifyingGlass, DownloadSimple, UploadSimple,
-  FunnelSimple, SignOut, WhatsappLogo, GoogleLogo, AppleLogo, Star,
+  FunnelSimple, SignOut, GoogleLogo, AppleLogo, Star,
   CheckCircle, XCircle, WarningCircle, Warning, Prohibit, Info, Question,
 } from "@/app/_components/glyphs";
 import { DuotoneZone } from "@/app/_components/glyphs";
@@ -51,7 +51,7 @@ const EXC_GROUPS: { n: string; title: string; why: string; names: string[] }[] =
   { n: "٢", title: "الأسهم والشيفرونات", why: "الطبقةُ مثلّثٌ مصمتٌ خلف سهمٍ خطّيّ: إشارةُ اتّجاهٍ لا أيقونةَ معنى", names: ["CaretDown", "CaretUp", "CaretLeft", "CaretRight", "CaretUpDown", "CaretDoubleRight", "ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft", "ArrowUpRight", "ArrowUUpLeft", "ArrowBendUpLeft", "ArrowSquareOut"] },
   { n: "٣", title: "أسهمُ الدوران", why: "الطبقةُ قرصٌ كامل، فتبدو عملةً مصمتةً خلف السهم", names: ["ArrowCounterClockwise", "ArrowsClockwise", "ArrowClockwise"] },
   { n: "٧", title: "أدواتُ الفعل", why: "تسكن الأزرارَ وأشرطةَ الأدوات، فتتبع وزنَ الفعل لا وزنَ المعنى", names: ["Trash", "PencilSimple", "Eye", "EyeSlash", "MagnifyingGlass", "DownloadSimple", "UploadSimple", "FunnelSimple", "SignOut"] },
-  { n: "٤", title: "شعاراتُ الدخول والتواصل", why: "شعارُ العلامة صورتُها المسجّلة، لا يُخترع له وجهٌ ثنائيّ. وشعاراتُ المنصّات الاجتماعيّة خرجت من هنا بقرارك ٢٠٢٦-٠٨-١٣، وهذه الثلاثةُ تنتظر كلمتك", names: ["WhatsappLogo", "GoogleLogo", "AppleLogo"] },
+  { n: "٤", title: "شعارا الدخول", why: "شعارُ العلامة صورتُها المسجّلة، لا يُخترع له وجهٌ ثنائيّ. وشعاراتُ المنصّات الاجتماعيّة خرجت من هنا بقرارك ٢٠٢٦-٠٨-١٣، وواتساب بقرارك ٢٠٢٦-١٠-٠٣، وهذان ينتظران كلمتك", names: ["GoogleLogo", "AppleLogo"] },
   { n: "٥", title: "نجمةُ «مميّز»", why: "حالةُ تشغيلٍ لا معنى، ونصفُ الممتلئة تُقرأ «نصف مفعّلة»", names: ["Star"] },
   { n: "٦", title: "الحالاتُ الدائريّة", why: "علامةُ حالةٍ تُقرأ لمحةً، فلا تُثقَل بطبقةٍ خافتة", names: ["CheckCircle", "XCircle", "WarningCircle", "Warning", "Prohibit", "Info", "Question"] },
 ];
@@ -60,12 +60,12 @@ const EXC: Record<string, React.ComponentType<{ size?: number }>> = {
   Plus, X, Check, Checks, Minus, DotsSixVertical, CaretDown, CaretUp, CaretLeft, CaretRight,
   CaretUpDown, CaretDoubleRight, ArrowUp, ArrowDown, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUUpLeft, ArrowBendUpLeft, ArrowSquareOut,
   ArrowCounterClockwise, ArrowsClockwise, ArrowClockwise, Trash, PencilSimple, Eye, EyeSlash, MagnifyingGlass, DownloadSimple, UploadSimple,
-  FunnelSimple, SignOut, WhatsappLogo, GoogleLogo, AppleLogo, Star,
+  FunnelSimple, SignOut, GoogleLogo, AppleLogo, Star,
   CheckCircle, XCircle, WarningCircle, Warning, Prohibit, Info, Question,
 };
 
 const DUO: Record<string, React.ComponentType<{ size?: number }>> = {
-  XLogo, InstagramLogo, TiktokLogo, LinkedinLogo,
+  XLogo, InstagramLogo, TiktokLogo, LinkedinLogo, WhatsappLogo,
   AddressBook, Aperture, Archive, Armchair, Article, Asterisk, At, Bank, Bell, BookOpen,
   BookOpenText, BookmarkSimple, Books, Briefcase, Broadcast, Buildings, Cake, CalendarBlank, CalendarCheck, CalendarDots,
   CalendarX, Camera, Certificate, Chalkboard, ChalkboardTeacher, ChartBar, ChartLineUp, ChatCenteredDots, ChatCenteredText, ChatCircle,

@@ -70,12 +70,14 @@ export const SECTION_CAP = {
   "/dashboard/committee": "manage_committee_members",
   "/dashboard/members/credentials": "manage_member_data",
   "/dashboard/events": "manage_activities",
-  // **التطوّع** — غرفتان بقفلٍ واحد `manage_volunteering`: الفرصُ وسجلُّ المتطوّعين. وهما
-  // موضوعٌ واحد (من يتطوّع، وفيمَ تطوّع) لا غرفتان مختلفتان، فمفتاحٌ واحدٌ لهما.
+  // **التطوّع** — ثلاثُ غرفٍ بقفلٍ واحد `manage_volunteering`: الفرصُ وسجلُّ المتطوّعين وشهاداتُ
+  // المتطوّعين. وهي موضوعٌ واحد (من يتطوّع، وفيمَ تطوّع، وبمَ شُهد له) لا غرفٌ مختلفة، فمفتاحٌ واحدٌ
+  // لها. والشهاداتُ يراها أهلُ القفل أنفسُهم بكلمة المالك (٢٠٢٦-١٠-٠١): «الموارد والرئيسان».
   // وأمّا **إهداءُ العضويّة** فقدرةٌ ثانية (`manage_membership_applications`) تُسأل في القاعدة
   // عند الفعل لا عند الباب: من دخل السجلَّ بلا سلطةِ منحٍ رأى المسيرةَ ولم يُهدِ.
   "/dashboard/volunteering": "manage_volunteering",
   "/dashboard/volunteering/volunteers": "manage_volunteering",
+  "/dashboard/volunteering/certificates": "manage_volunteering",
   // رسائل التواصل — صندوقُ ما يكتبه الزائر في «تواصل معنا». قدرةٌ **واحدة** لا بابٌ وفعل:
   // من يرى بريد الزائر يردّ عليه، فلا معنى لقارئٍ لا يُجيب في غرفةٍ كلُّ عملها الجواب.
   "/dashboard/contact": "manage_contact",
@@ -92,6 +94,10 @@ export const SECTION_CAP = {
   "/dashboard/website/achievements": "manage_achievements",
   "/dashboard/website/sponsors": "manage_sponsors",
   "/dashboard/website/faq": "manage_faq",
+  // **اللوحة الإعلانية** — كلماتُ الشريط الجاري في صدر الهبوط (٢٠٢٦-٠٩-١٨). قفلٌ
+  // مستقلٌّ كأخواتها: عُرفُ «لكلّ تبويبٍ قفلُه» منذ ٢٠٢٦-٠٧-٢٦، ونزل مع ترحيلها
+  // إلى من يملك `manage_faq` يومَها، فلا أحدَ نال وصولًا لم يكن له.
+  "/dashboard/website/announcements": "manage_announcements",
   "/dashboard/library": "manage_library",
   "/dashboard/radio": "manage_radio",
   // باب غرفة التحرير: `write_news`. ورئيس التحرير (`manage_news`) يملكها معه —

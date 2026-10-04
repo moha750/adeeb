@@ -1,7 +1,7 @@
 "use client";
 
-import { ChatCircleText, EnvelopeSimple, Lifebuoy } from "@phosphor-icons/react";
-import { ArrowLeft, CaretDown, WhatsappLogo } from "@/app/_components/glyphs";
+import { ChatCircleText, EnvelopeSimple, Lifebuoy, WhatsappLogo } from "@phosphor-icons/react";
+import { ArrowLeft, CaretDown } from "@/app/_components/glyphs";
 import { SUPPORT_EMAIL, WA_NUMBER, waLink } from "./bits";
 import type { TabKey } from "./tabs";
 

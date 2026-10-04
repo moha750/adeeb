@@ -3,6 +3,7 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { firstAndLastOf } from "@/lib/personName";
 import { positionLine } from "@/lib/positionLabel";
+import { isLiveMembership } from "@/lib/memberRecord";
 
 /**
  * **مَن يكلّم ديبو** — صفةُ صاحب الجلسة كما تُقال له لا كما تُخزَّن.
@@ -54,9 +55,12 @@ export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | nul
        تعريف العرض). أُمسك في أوّل تجربةٍ حيّة: كان الاستعلامُ بـ`user_id` فيتعثّر صامتًا،
        فيقول ديبو لعضوٍ في لجنةٍ «أنت صاحبُ حسابٍ ولستَ عضوًا» ثمّ يذكر منصبَه في السطر
        نفسِه — جملتان تتناقضان في نَفَسٍ واحد. */
-    sb.from("members").select("id").eq("id", userId).maybeSingle(),
-    // والمتطوّعُ صفةٌ تُقرأ لا حالةٌ تُكتب: صفٌّ قائمٌ لم يُنهَ (`ended_at`).
-    sb.from("volunteers").select("user_id, ended_at").eq("user_id", userId).maybeSingle(),
+    /* والعرضُ يضمّ العضوَ السابقَ أيضًا (أرشيفُ الكشوف)، فالحدُّ `isLiveMembership` لا مجرّدُ
+       وجود الصفّ: العضوُ السابقُ زائر (٢٠٢٦-١٠-٠٣). */
+    sb.from("members").select("id, joined_date, account_status").eq("id", userId).maybeSingle(),
+    /* والمتطوّعُ صفٌّ حالُه `active`. لا `ended_at`: العائدُ إلى التطوّع يبقى عليه خبرُ انقطاعه
+       (`volunteers_return_keeps_history`)، فكان يُقرأ «صاحبَ حساب» وهو متطوّع. */
+    sb.from("volunteers").select("user_id, status").eq("user_id", userId).maybeSingle(),
   ]);
 
   if (profileRes.error) return null;
@@ -83,9 +87,9 @@ export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | nul
     position = positionLine(roleRes.data?.role_name_ar ?? null, unit);
   }
 
-  const standing: DeeboViewer["standing"] = memberRes.data
+  const standing: DeeboViewer["standing"] = isLiveMembership(memberRes.data)
     ? "member"
-    : volunteerRes.data && !(volunteerRes.data as { ended_at?: string | null }).ended_at
+    : (volunteerRes.data as { status?: string } | null)?.status === "active"
       ? "volunteer"
       : "account";
 

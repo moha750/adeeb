@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const V2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = path.join(V2, "apps/web/public/brand/deebo");
+const OUT = path.join(V2, "apps/web/public/deebo");
 
 /** مجلّدُ المالك كما سلّمه. يُنقَض بـ`--src`. */
 const DEFAULT_SRC = path.join(os.homedir(), "Downloads", "تفاعلات ديبو الي بنحب دبديبو");

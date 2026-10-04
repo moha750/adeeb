@@ -4,11 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Field, Select, Stat, Modal } from "@adeeb/design-system";
 import {
-  Newspaper, Megaphone, UsersThree, Archive, ChatCircleDots, Heart, Images, ClipboardText, PaperPlaneTilt } from "@phosphor-icons/react";
+  Newspaper, Megaphone, Buildings, Archive, ChatCircleDots, Heart, Images, ClipboardText, PaperPlaneTilt } from "@phosphor-icons/react";
 import {
   Plus, PencilSimple, Trash, EyeSlash, Star, MagnifyingGlass, ArrowUUpLeft, Eye, WarningCircle,
 } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
+import { StatsScope, scopeLabels } from "../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
@@ -17,7 +18,8 @@ import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { Avatar } from "../_components/Avatar";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
-import type { NewsRow, Option } from "./data";
+import type { UnitOption } from "@adeeb/core/org-unit";
+import type { NewsRow } from "./data";
 import {
   CATEGORY_META, CATEGORY_OPTIONS, IN_FLIGHT, WORKFLOW_META,
   missingForPublish, type Category, type Workflow,
@@ -35,8 +37,8 @@ const STAGES: { value: string; label: string; match: (n: NewsRow) => boolean }[]
 ];
 
 export function NewsView({
-  rows, committees, isChief,
-}: { rows: NewsRow[]; committees: Option[]; isChief: boolean }) {
+  rows, units, isChief,
+}: { rows: NewsRow[]; units: UnitOption[]; isChief: boolean }) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
@@ -47,22 +49,35 @@ export function NewsView({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
 
-  const [form, setForm] = useState<{ title: string; category: Category; committeeId: string } | null>(null);
+  const [form, setForm] = useState<{ title: string; category: Category; unit: string } | null>(null);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [confirmKill, setConfirmKill] = useState<NewsRow | null>(null);
 
   const filters: FilterDef[] = useMemo(() => {
     const base: FilterDef[] = [{ key: "category", label: "القسم", options: CATEGORY_OPTIONS }];
-    if (isChief && committees.length) {
-      base.push({ key: "committee", label: "اللجنة", options: committees });
+    // الجهةُ مرشِّحٌ لرئيس التحرير وحده: الكاتبُ لا يرى إلّا ما كُلِّف به، فلا معنى لأن
+    // ينخل خبرَين بجهتهما. والخيارُ الخالي («نادي أدِيب») يُنخَل هنا لأنّ الشريطَ يرسم
+    // «الكلّ» بنفسه بالقيمة الخالية نفسِها، فلو مرّ لظهر صفّان مؤشَّران معًا.
+    if (isChief && units.length) {
+      base.push({ key: "unit", label: "الجهة", options: units.filter((u) => u.value !== "") });
     }
     return base;
-  }, [isChief, committees]);
+  }, [isChief, units]);
 
   const staged = useMemo(() => {
     const s = STAGES.find((x) => x.value === stage) ?? STAGES[0];
     return rows.filter(s.match);
   }, [rows, stage]);
+
+  /**
+   * **النطاقُ** (ق١٧): التصنيفُ والجهة. ويُستثنى **تبويبُ المرحلة**: البطاقاتُ تفصيلُ
+   * المرحلة (قيد العمل · تنتظر المراجعة · منشور)، فلو تبعت التبويبَ قرأت أصفارًا. والبحثُ
+   * لا يدخل النطاق.
+   */
+  const scope = useMemo(
+    () => rows.filter((n) => (!fv.category || n.category === fv.category) && (!fv.unit || n.unit === fv.unit)),
+    [rows, fv.category, fv.unit],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -72,7 +87,7 @@ export function NewsView({
         if (!hay.includes(q)) return false;
       }
       if (fv.category && n.category !== fv.category) return false;
-      if (fv.committee && String(n.committeeId ?? "") !== fv.committee) return false;
+      if (fv.unit && n.unit !== fv.unit) return false;
       return true;
     });
   }, [staged, search, fv]);
@@ -102,7 +117,7 @@ export function NewsView({
       const r = await createNews({
         title: form.title,
         category: form.category,
-        committeeId: form.committeeId ? Number(form.committeeId) : null,
+        unit: form.unit,
       });
       if (r.ok) {
         toast.success(r.message);
@@ -158,7 +173,7 @@ export function NewsView({
           ) : null}
           <span className="text-content-muted" style={{ marginInlineStart: 8 }}>
             {CATEGORY_META[n.category].label}
-            {n.committeeName ? `، ${n.committeeName}` : ""}
+            {n.unitName ? `، ${n.unitName}` : ""}
           </span>
           {n.rejectionReason && n.workflow === "in_progress" ? (
             <span className="text-danger" style={{ display: "block", fontSize: ".82em", marginTop: 2 }}>
@@ -224,7 +239,7 @@ export function NewsView({
   const filtering = !!search.trim() || Object.values(fv).some(Boolean);
 
   const createBtn = isChief ? (
-    <Button variant="primary" size="md" onClick={() => { setForm({ title: "", category: "coverage", committeeId: "" }); setFormErr(null); }}>
+    <Button variant="primary" size="md" onClick={() => { setForm({ title: "", category: "coverage", unit: "" }); setFormErr(null); }}>
       <Plus size={18} />خبر جديد
     </Button>
   ) : null;
@@ -254,10 +269,10 @@ export function NewsView({
       onPageChange={setPage} onPageSizeChange={setPageSize} noun="خبر" />
   ) : null;
 
-  const inFlight = rows.filter((n) => (IN_FLIGHT as string[]).includes(n.workflow)).length;
-  const awaiting = rows.filter((n) => n.workflow === "ready_for_review").length;
-  const published = rows.filter((n) => n.workflow === "published").length;
-  const pendingComments = rows.reduce((s, n) => s + n.pendingComments, 0);
+  const inFlight = scope.filter((n) => (IN_FLIGHT as string[]).includes(n.workflow)).length;
+  const awaiting = scope.filter((n) => n.workflow === "ready_for_review").length;
+  const published = scope.filter((n) => n.workflow === "published").length;
+  const pendingComments = scope.reduce((s, n) => s + n.pendingComments, 0);
 
   const tabs = useMemo(
     () => STAGES.map((s) => {
@@ -267,17 +282,14 @@ export function NewsView({
     [rows],
   );
 
-  const committeeOptions = useMemo(
-    () => [{ value: "", label: "بلا لجنة" }, ...committees],
-    [committees],
-  );
-
   return (
     <>
-      <PageHeader title="غرفة تحرير أدِيب" action={isChief ? { label: "خبر جديد", icon: <Plus size={18} />, onClick: () => { setForm({ title: "", category: "coverage", committeeId: "" }); setFormErr(null); } } : undefined} />
+      <PageHeader title="غرفة تحرير أدِيب" action={isChief ? { label: "خبر جديد", icon: <Plus size={18} />, onClick: () => { setForm({ title: "", category: "coverage", unit: "" }); setFormErr(null); } } : undefined} />
+
+      <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
-        <Stat icon={<Newspaper />} value={rows.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />
+        <Stat icon={<Newspaper />} value={scope.length} label={isChief ? "إجمالي الأخبار" : "تكاليفي"} />
         <Stat icon={<ClipboardText />} value={inFlight} label="قيد العمل" tone="brand" />
         <Stat icon={<PaperPlaneTilt />} value={awaiting} label={isChief ? "تنتظر مراجعتك" : "رفعتها للمراجعة"} tone="warning" />
         <Stat icon={<Megaphone />} value={published} label="منشور" tone="success" />
@@ -334,8 +346,9 @@ export function NewsView({
               helper={CATEGORY_META[form.category].hint} required
             />
             <Select
-              label="اللجنة" icon={<UsersThree />} options={committeeOptions} value={form.committeeId}
-              onValueChange={(v) => setForm({ ...form, committeeId: v })} optional
+              label="الجهة" icon={<Buildings />} options={units} value={form.unit}
+              onValueChange={(v) => setForm({ ...form, unit: v })} searchable
+              helper="صاحبُ الخبر: مجلسٌ أو قسمٌ أو لجنة. ودونها فهو خبرُ النادي كلِّه."
             />
           </div>
         ) : null}

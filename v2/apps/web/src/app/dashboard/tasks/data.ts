@@ -43,7 +43,6 @@ export type MyTaskRow = {
 /** صفُّ شخصٍ داخل مهمّةٍ كما يراها قائدُها. */
 export type TaskAssignee = TaskPerson & {
   assignmentId: string;
-  source: "assigned" | "volunteered";
   state: TaskState;
   submission: string | null;
   submittedLabel: string;
@@ -86,7 +85,7 @@ type RawTask = {
   status: TaskStatus; due_on: string | null; created_at: string;
 };
 type RawAssignment = {
-  id: string; task_id: string; user_id: string; source: "assigned" | "volunteered";
+  id: string; task_id: string; user_id: string;
   state: TaskState; submission: string | null; submitted_at: string | null; note: string | null;
 };
 
@@ -105,7 +104,7 @@ export async function getTasks(): Promise<TasksData> {
   // مهامُّه هو: نبدأ من إسناداته ثمّ نجلب مهامَّها (لا وصلةَ مضمَّنة — الاستعلامُ صريح)
   const { data: mineRaw, error: mErr } = await sb
     .from("task_assignments")
-    .select("id, task_id, user_id, source, state, submission, submitted_at, note")
+    .select("id, task_id, user_id, state, submission, submitted_at, note")
     .eq("user_id", me.id);
   if (mErr) return { ...EMPTY, error: mErr.message };
   const myAssignments = (mineRaw ?? []) as RawAssignment[];
@@ -135,7 +134,7 @@ export async function getTasks(): Promise<TasksData> {
   const { data: peopleRaw } = managedIds.length
     ? await sb
         .from("task_assignments")
-        .select("id, task_id, user_id, source, state, submission, submitted_at, note")
+        .select("id, task_id, user_id, state, submission, submitted_at, note")
         .in("task_id", managedIds)
     : { data: [] as RawAssignment[] };
   const managedAssignments = (peopleRaw ?? []) as RawAssignment[];
@@ -232,7 +231,6 @@ export async function getTasks(): Promise<TasksData> {
           name: p?.name ?? "بلا اسم",
           avatar: p?.avatar ?? null,
           gender: p?.gender ?? null,
-          source: a.source,
           state: a.state,
           submission: a.submission,
           submittedLabel: a.submitted_at ? fmtDateOnly(a.submitted_at.slice(0, 10)) : "",

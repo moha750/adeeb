@@ -10,6 +10,8 @@ import { BootSplash } from "./_components/BootSplash";
 import { IconDefaults } from "./_components/IconDefaults";
 import { VisitTracker } from "./_components/VisitTracker";
 import { SiteCursor } from "./_components/SiteCursor";
+import { SmoothScroll } from "./_components/SmoothScroll";
+import { PwaRegister } from "./_pwa/PwaRegister";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
 // روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
@@ -24,6 +26,10 @@ export const metadata: Metadata = {
   openGraph: shareOg({ type: "website" }),
   // بلا `images` هنا: تويتر يرث صورةَ OG حين لا يُعلن صورتَه، فيبقى المصدر واحدًا.
   twitter: { card: "summary_large_image" },
+  // **أَدِيب تطبيقًا على الشاشة الرئيسيّة** (٢٠٢٦-١٠-٠٣): البيانُ في `app/manifest.ts`، وهذه
+  // وسومُ سفاري التي لا يقرؤها من البيان (اسمُ الأيقونة تحتها، وشريطُ الحالة فاتحٌ كالموقع).
+  applicationName: "أَدِيب",
+  appleWebApp: { capable: true, title: "أَدِيب", statusBarStyle: "default" },
 };
 
 export default function RootLayout({
@@ -47,7 +53,11 @@ export default function RootLayout({
               "p.textContent='\uD83C\uDDF8\uD83C\uDDE6';document.body.appendChild(p);" +
               "var w2=p.getBoundingClientRect().width;p.textContent='\uD83C\uDDF8';" +
               "var w1=p.getBoundingClientRect().width;p.remove();" +
-              "if(w1>0&&w2>=w1*1.8)document.documentElement.setAttribute('data-flags','off');}catch(e){}",
+              "if(w1>0&&w2>=w1*1.8)document.documentElement.setAttribute('data-flags','off');}catch(e){}" +
+              // عرضُ التثبيت (كروم · إيدج) يُطلَق مرّةً عند التحميل وقد يسبق ترطيبَ React، فيُلتقط
+              // ههنا أوّلًا ويقرؤه `app/_pwa/installPrompt.ts` بعدُ.
+              "window.addEventListener('beforeinstallprompt',function(e){window.__adeebInstall=e});" +
+              "window.addEventListener('appinstalled',function(){window.__adeebInstall=null});",
           }}
         />
         {/* شاشةُ البدء **قبل** المحتوى: تُرسَم خادميًّا فتظهر مع أوّل بايت، وتنزاح حين
@@ -60,7 +70,10 @@ export default function RootLayout({
             يُنازَع عليه. وهي `pointer-events: none` فلا تحجب نقرةً ولا تمنع تحديدًا. */}
         {/* تتبّعُ الزيارات — بعد المحتوى، ولا يرسم شيئًا. يتخطّى غرفَ اللوحة والتطوير. */}
         <VisitTracker />
+        {/* عاملُ الخدمة للإشعارات، وربطُ اشتراك الجهاز بصاحب الجلسة. لا يرسم شيئًا. */}
+        <PwaRegister />
         <SiteCursor />
+        <SmoothScroll />
       </body>
     </html>
   );

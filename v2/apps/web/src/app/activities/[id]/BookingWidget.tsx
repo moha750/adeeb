@@ -6,6 +6,7 @@ import {
   At, Envelope, Hash, IdentificationBadge, Key, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
+import { logSignin } from "@/lib/signinEvents";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
 import {
@@ -141,7 +142,8 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     });
     setBusy(false);
     setTsReset((n) => n + 1);
-    if (error) { setErr(authError(error.message)); return; }
+    if (error) { logSignin(sb, "code", "fail", "booking", error.message); setErr(authError(error.message)); return; }
+    logSignin(sb, "code", "code_sent", "booking");
     setNotice("أرسلنا رمزًا إلى بريدك. أدخِله أدناه.");
     setStep("otp");
   };
@@ -151,7 +153,8 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     if (otp.trim().length < 6) { setErr("أدخل الرمز المكوّن من ٦ أرقام."); return; }
     setBusy(true);
     const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: "email" });
-    if (error) { setBusy(false); setErr(authError(error.message)); return; }
+    if (error) { logSignin(sb, "code", "fail", "booking", error.message); setBusy(false); setErr(authError(error.message)); return; }
+    logSignin(sb, "code", "success", "booking");
     setNotice(null);
     setStep("loading");
     await route();

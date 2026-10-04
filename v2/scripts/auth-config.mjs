@@ -58,6 +58,7 @@ const REDIRECTS = [
 
 const template = readFileSync(join(HERE, "..", "emails", "recovery.html"), "utf8");
 const emailChangeTemplate = readFileSync(join(HERE, "..", "emails", "email-change.html"), "utf8");
+const codeTemplate = readFileSync(join(HERE, "..", "emails", "magic-link.html"), "utf8");
 
 /** القيم المقصودة — كلُّ سطرٍ منها له نظيرٌ في الكود يعتمد عليه. */
 const desired = {
@@ -80,6 +81,12 @@ const desired = {
 
   // **تغيير بريد الدخول** — يطلبه العضو من «الإعدادات»، ولا يسري حتى يفتح الرابط. وبلا هذين
   // السطرين يخرج نصُّ Supabase الإنجليزيّ الافتراضيّ إلى صندوق عضوٍ عربيّ.
+  // **رمزُ الدخول** (٢٠٢٦-١٠-٠٤) — رسالةُ كلّ رمز: «الدخول بالرمز» في شاشة الدخول وودجةُ الحجز.
+  // كان عنوانُها «Your Magic Link» ونصُّها محرَّرًا في اللوحة يَعِد بـ«إتمام حجزك» وحده، بلا أثرٍ هنا.
+  // وطولُ الرمز ستّة (`mailer_otp_length` الافتراضيّ) يطابق `maxLength` في حقل الرمز بالشاشتين.
+  mailer_subjects_magic_link: "رمز الدخول — نادي أديب",
+  mailer_templates_magic_link_content: codeTemplate,
+
   mailer_subjects_email_change: "تأكيد بريد الدخول الجديد — نادي أديب",
   mailer_templates_email_change_content: emailChangeTemplate,
 

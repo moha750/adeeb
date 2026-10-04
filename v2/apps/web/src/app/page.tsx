@@ -10,12 +10,14 @@ import { ContactForm } from "./_components/ContactForm";
 import { SiteHeader } from "./_components/SiteHeader";
 import { Hero } from "./_components/Hero";
 import { getHeroSlides } from "./_components/heroSlides";
+import { getHeroTicker } from "./_components/heroTicker";
 
 // يُعاد توليد الصفحة كل 60 ثانية بأحدث البيانات من Supabase (ISR)
 export const revalidate = 60;
 
 export default async function Home() {
-  const slides = await getHeroSlides();
+  // نداءان لا يعتمد أحدهما على الآخر، فيجريان معًا ولا يصطفّان.
+  const [slides, ticker] = await Promise.all([getHeroSlides(), getHeroTicker()]);
 
   return (
     <>
@@ -29,8 +31,9 @@ export default async function Home() {
         <Ambient />
         {/* (1) الصدر — تخطيطُ المالك: صورةٌ يسارًا وحكايةٌ يمينًا وريشةٌ تعبر
             الحروف. شرائحُه أخبارٌ حقيقيّةٌ تُجلَب في الخادم، وخطابُه يتبدّل
-            بمنزلة الزائر في المتصفّح (الصفحةُ ساكنةٌ للجميع). */}
-        <Hero slides={slides} />
+            بمنزلة الزائر في المتصفّح (الصفحةُ ساكنةٌ للجميع). وكلماتُ شريطه من
+            «اللوحة الإعلانية» في اللوحة (٢٠٢٦-٠٩-١٨). */}
+        <Hero slides={slides} ticker={ticker} />
 
         {/* (2) معرض الأعمال — حيّ (carousel) */}
         <section id="works" className="py-20 md:py-28">
@@ -93,7 +96,7 @@ export default async function Home() {
         </section>
 
         {/* دعوة الانضمام + الباترن */}
-        <section id="join" className="relative overflow-hidden bg-brand text-white">
+        <section id="join" className="relative overflow-hidden bg-brand text-white" data-head-skin="inverse">
           <Container className="py-20 md:py-28 text-center">
             <Reveal>
               <h2 className="font-display text-3xl font-bold">كُن جزءًا من مجتمع أَدِيب</h2>

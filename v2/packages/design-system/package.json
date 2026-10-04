@@ -5,6 +5,7 @@
   "description": "نظام تصميم نادي أديب: رموز + خطوط + أصول العلامة + مكوّنات React",
   "exports": {
     ".": "./src/index.ts",
+    "./search": "./src/lib/search.ts",
     "./tokens.css": "./tokens.css",
     "./fonts.css": "./fonts.css",
     "./components.css": "./components.css",

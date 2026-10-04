@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Alert, Button, Field } from "@adeeb/design-system";
 import { At, Envelope } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
+import { logSignin } from "@/lib/signinEvents";
 import { toArabicAuthError, waitSeconds } from "@/lib/authErrors";
 import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 import { markResetSent } from "@/lib/resetWindow";
@@ -62,6 +63,7 @@ export function ForgotForm() {
         setErr(toArabicAuthError(error.message));
         return;
       }
+      logSignin(supabase, "password", "reset_requested", "forgot");
       markResetSent(); // ختمُ لحظة الإرسال — منه تُحسب مهلةُ شاشة التعيين
       setSent(true);
       setWaiting(false);

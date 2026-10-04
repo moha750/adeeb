@@ -10,7 +10,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
 import { AUDIO, AUDIO_KEY, fmtDigits, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
-import { markStoryReady } from "./ready";
+import { markStoryReady, storyIsReady } from "./ready";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -276,6 +276,12 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     mountOldLogo($(".st-oldlogo")!),
     Promise.allSettled([document.fonts.ready, fly.decode(), shield.decode()]),
   ]);
+
+  /* **سقطت القصّةُ أثناء الانتظار؟** فلا تُبنى الحيّةُ فوق الساكنة. سقفُ شاشة البدء
+     (`STORY_MAX_MS`) قد يُعلن السقوطَ والتهيئةُ هنا في منتصف انتظار الخطوط والصور،
+     وبلا هذا الحارس كان الجذرُ يحمل `st-static` و`st-live` معًا (قيس في الإنتاج
+     ٢٠٢٦-١٠-٠٣). والجاهزيّةُ لا تُعلَن قبل هذا السطر إلّا بالسقوط. */
+  if (storyIsReady()) return () => {};
 
   root.classList.add("st-live");
 
@@ -1587,7 +1593,16 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     /* --- كتّاب سريعون: transform/opacity حصرًا، وwill-change على العنصر وحده --- */
     gsap.set(timeEl, { xPercent: -50, yPercent: -50, force3D: true });
     const setTy = gsap.quickSetter(timeEl, "y", "px");
-    const setTs = gsap.quickSetter(timeEl, "scale");
+    /* scaleX/scaleY لا «scale» — العطبُ نفسُه المشروحُ عند `sS` في الجدار، وهنا أشدّ:
+       المختصرُ يُكتب سمةً اسمُها `scaleX,scaleY` فيرمي `InvalidCharacterError`، فتسقط
+       التهيئةُ كلُّها إلى الساكنة. قيس في الإنتاج (٢٠٢٦-١٠-٠٣): لم تعمل القصّةُ الحيّةُ
+       في أيّ تحميل، وكان الزائرُ ينتظر خلف شاشة البدء ثمّ يرى الساكنة. */
+    const setTsX = gsap.quickSetter(timeEl, "scaleX");
+    const setTsY = gsap.quickSetter(timeEl, "scaleY");
+    const setTs = (v: number) => {
+      setTsX(v);
+      setTsY(v);
+    };
     const setTa = gsap.quickSetter(timeEl, "opacity");
     const setDayY = gsap.quickSetter(reelStrip.day, "y", "px");
     const setMonY = gsap.quickSetter(reelStrip.month, "y", "px");

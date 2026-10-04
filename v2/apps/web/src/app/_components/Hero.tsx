@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { MeBrief } from "@/app/api/me/brief/route";
+import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 /**
  * **صدرُ الهبوط** — تخطيطُ المالك مُنفَّذًا بلغة أدِيب (٢٠٢٦-٠٩-٠٧).
@@ -81,8 +82,14 @@ export const HERO_LINES: { text: string; grad?: boolean }[] = HERO_PARTS.map((pa
   grad: i === HERO_PARTS.length - 1,
 }));
 
-/** جملُ الشريط الجاري: **من حكاية الموقع نفسِها** لا كلامٌ يُخترع للزينة.
-    ومُصدَّرةٌ كي يقرأها معرضُ `/ui/hero` من هنا، فلا تُكتب الجملُ مرّتين. */
+/** جملُ الشريط الجاري **حين تتعذّر قراءةُ اللوحة الإعلانية**.
+ *
+ * مصدرُها اليومَ جدولُ `announcements` يُحرَّر من `/dashboard/website/announcements`
+ * (٢٠٢٦-٠٩-١٨)، وهؤلاء الخمسُ بذرتُه: هنّ ما كان الشريطُ يقوله قبله حرفًا بحرف.
+ * وتبقين هنا شبكةَ أمانٍ لا مصدرًا: عطبٌ في القراءة لا يُظهر الشريطَ أبترَ لزائر.
+ * ومعرضُ `/ui/hero` يرسم بهنّ كذلك، فهو مختبرُ شكلٍ لا نافذةَ بيانات.
+ *
+ * وكلماتُهنّ **من حكاية الموقع نفسِها** لا كلامٌ يُخترع للزينة. */
 export const TICKER = [
   "كلُّ حكايةٍ عظيمة تبدأ بحرف",
   "اجتمع شغفٌ بالحرف وإيمانٌ بالكلمة، فكان أدِيب",
@@ -136,10 +143,16 @@ export type HeroSlide = {
 
 export function Hero({
   slides,
+  ticker,
   standing: forced,
   lab,
 }: {
   slides: HeroSlide[];
+  /**
+   * إعلاناتُ الشريط من اللوحة الإعلانية (`getHeroTicker`).
+   * قائمةٌ فارغةٌ قرارُ صاحبها فيختفي الشريط، و`null`/غيابٌ عطبٌ أو مختبرٌ فترجع البذرة.
+   */
+  ticker?: string[] | null;
   /** يفرضه المعرضُ لعرض المنازل؛ وفي الإنتاج تُقرأ الجلسةُ نفسُها. */
   standing?: Standing;
   /** مقابضُ المعرض؛ لا تُمرَّر في الإنتاج فيبقى الصدرُ كما هو. */
@@ -190,11 +203,13 @@ export function Hero({
      ومَن كره الحركةَ لم يرَها. */
   const motion: HeroMotion = lab?.tw.motion ?? "tilt";
   const power = lab?.tw.power ?? 1;
+  /** يُسمَع ولا يُقرأ مرّةً: من أعلن تقليلَ الحركة وهو في الصفحة تسكن الريشةُ عنده */
+  const still = useMediaFlag(REDUCE_MOTION);
   useEffect(() => {
     const sec = secRef.current;
     const q = quillRef.current;
     if (!sec || !q || motion === "off") return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    if (still) return;
 
     const target = { x: 0, y: 0, r: 0 };
     const now = { x: 0, y: 0, r: 0 };
@@ -242,7 +257,7 @@ export function Hero({
       q.style.removeProperty("--qi-y");
       q.style.removeProperty("--qi-r");
     };
-  }, [motion, power]);
+  }, [motion, power, still]);
 
   /* زاويةُ الشريط تتبع الحدَّ المائل: ميلُه بالبكسل وارتفاعُ الصدر متغيّر،
      فالزاويةُ تُحسَب عند كلّ تبدّلِ مقاس. ورقمٌ ثابتٌ مكانَها يفارق الحدَّ. */
@@ -289,6 +304,8 @@ export function Hero({
 
   const slide = slides[i];
   const editing = !!lab?.onDrag;
+  /** ما يمرّ في الشريط الآن: إعلاناتُ اللوحة، أو البذرةُ حين لا لوحةَ تُقرأ. */
+  const marquee = ticker ?? TICKER;
   /** أسطرُ الحرف: من ضبط المعرض إن كان، وإلّا من المُقَرّ في هذه الورقة. */
   const drawn = lab
     ? lab.lines.map((l, n) => ({
@@ -302,6 +319,9 @@ export function Hero({
     <section
       ref={secRef}
       className="hro"
+      /* سطحٌ ملوّنٌ يعلن نفسَه للرأس — وهو أوّلُ من رُفع له الوسمُ (٢٠٢٦-٠٩-١٦)،
+         ثمّ صار عقدًا يقرؤه `SiteHeader` من التذييل وقسم الدعوة وشريط الأخبار. */
+      data-head-skin="inverse"
       /* رموزُ الريشة والكتلة تُكتب سطريًّا في المعرض وحدَه؛ وفي الإنتاج
          تُقرأ من الورقة فلا سطرَ هنا. */
       style={
@@ -320,24 +340,27 @@ export function Hero({
 
       {/* الشريطُ الجاري على الحدّ: نسختان من الجمل تجريان معًا فلا فجوةَ عند
           الإعادة. وهو `aria-hidden` لأنّه زينةٌ تتكرّر، وكلامُه مقروءٌ في
-          القصّة الافتتاحيّة نفسِها. */}
-      <div className="hro-ribbon" aria-hidden>
-        <div className="hro-ribbon-track">
-          {[0, 1].map((copy) => (
-            <div key={copy} style={{ display: "flex" }}>
-              {/* الجملُ مرّتين في النسخة الواحدة: النسخةُ يجب أن تفوق الشريطَ
-                  طولًا وإلّا انكشف طرفُها قبل أن تلحقها أختُها. */}
-              {[0, 1].map((rep) =>
-                TICKER.map((m) => (
-                  <span key={`${rep}-${m}`} className="hro-ticker-i">
-                    {m}
-                  </span>
-                )),
-              )}
-            </div>
-          ))}
+          القصّة الافتتاحيّة نفسِها.
+          ولوحةٌ خاليةٌ تُسقط الشريطَ كلَّه: شريطٌ يجري فارغًا خيطٌ بلا معنى. */}
+      {marquee.length > 0 ? (
+        <div className="hro-ribbon" aria-hidden>
+          <div className="hro-ribbon-track">
+            {[0, 1].map((copy) => (
+              <div key={copy} style={{ display: "flex" }}>
+                {/* الجملُ مرّتين في النسخة الواحدة: النسخةُ يجب أن تفوق الشريطَ
+                    طولًا وإلّا انكشف طرفُها قبل أن تلحقها أختُها. */}
+                {[0, 1].map((rep) =>
+                  marquee.map((m, n) => (
+                    <span key={`${rep}-${n}`} className="hro-ticker-i">
+                      {m}
+                    </span>
+                  )),
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="hro-media">
         <div className="hro-slides">

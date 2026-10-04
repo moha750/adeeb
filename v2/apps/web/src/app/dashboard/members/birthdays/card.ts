@@ -5,12 +5,12 @@
 // لونيٍّ من حبرٍ غامق (L=0) بدرجة العضو إلى ورقٍ فاتح (L=1، l0.92) — فيتلوّن التصميم كلّه محفوظًا تباينه.
 // null (٦٣ عضوًا) ⇒ درجة العلامة الكحليّة من الرموز. الأسود/الأبيض (s<0.08) ⇒ رماديّ محايد.
 //
-// القالب في: apps/web/public/brand/birthday-template.png (مضبوط الآن). لتبديله لاحقًا استبدل الملفّ نفسه.
+// القالب في: apps/web/public/templates/birthday.png (مضبوط الآن). لتبديله لاحقًا استبدل الملفّ نفسه.
 // اسم العضو يُرسَم (DRAW_NAME=true) بحبر التصميم الغامق (يقرأ على البطاقة الفاتحة)، موضعه/حجمه في ثابت NAME.
 
 import { shareOrDownloadBlob, type SaveResult } from "@/lib/download";
 
-const TEMPLATE_SRC = "/brand/birthday-template.png";
+const TEMPLATE_SRC = "/templates/birthday.png";
 const LOGO_SRC = "/brand/logo-horizontal-white.svg";
 const PATTERN_SRC = "/brand/pattern-white.svg";
 

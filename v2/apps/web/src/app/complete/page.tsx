@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Footer, Container, Card, CardBody, Alert, LandingHeading } from "@adeeb/design-system";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { getSessionAdmin } from "@/lib/auth";
+import { awayIfNoSession, getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { CompleteForm } from "./CompleteForm";
 
@@ -30,7 +30,7 @@ function service() {
  */
 export default async function CompletePage() {
   const me = await getSessionAdmin();
-  if (!me) redirect("/login");
+  if (!me) redirect((await awayIfNoSession("/complete")) ?? "/login");
 
   const sb = service();
   if (!sb) {

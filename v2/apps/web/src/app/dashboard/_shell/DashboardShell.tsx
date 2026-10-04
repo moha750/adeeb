@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
-import { navFor, type NavItem } from "./nav";
+import { firstHref, navFor, searchNav, type NavItem } from "./nav";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
 import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe } from "./icons";
@@ -14,6 +14,7 @@ import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
 import { stopViewAs } from "./view-as-actions";
 import { MobileSheet, MobileTabs } from "./MobileNav";
+import { NavSearch } from "./NavSearch";
 
 // المستخدم الحاليّ — يُمرَّر من تخطيط اللوحة الخادميّ (getCurrentAdmin)
 export type ShellUser = { fullName: string | null; avatar: string | null; gender: "male" | "female" | null };
@@ -75,6 +76,17 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
   const rail = useSyncExternalStore(subscribeRail, railSnapshot, () => false);
   const toggleRail = () => writeRail(!rail);
 
+  /* ── خانةُ البحث: ترشيحٌ للعرض وحده ──
+     `nav` هي الخريطةُ الكاملة وتبقى هي ما يقرؤه `NavProvider` (فتاتُ المسار تحتاج
+     الخريطةَ لا ما بقي منها بعد الترشيح)، و`shown` ما يُرسَم في الشريط. */
+  const [q, setQ] = useState("");
+  const shown = useMemo(() => searchNav(nav, q), [nav, q]);
+  /** الإقرار: يفتح أوّلَ ما بقي — ولا يفعل شيئًا إن لم يبقَ شيء. */
+  const submitSearch = () => {
+    const href = firstHref(shown);
+    if (href) router.push(href);
+  };
+
   // المجموعات المفتوحة — تُفتح تلقائيًا المجموعة الحاوية للمسار النشط
   const initialOpen = useMemo(() => {
     const s = new Set<string>();
@@ -98,7 +110,9 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
   // إغلاق الدُرج عند تغيّر المسار — **في الرسم لا في أثر**: الأثرُ يرسم الصفحةَ الجديدة
   // والدُرجُ مفتوحٌ عليها رسمةً كاملة ثمّ يُغلقه، فيُرى الدرجُ يومض على الصفحة الجديدة.
   const [lastPath, setLastPath] = useState(pathname);
-  if (lastPath !== pathname) { setLastPath(pathname); setSheetOpen(false); }
+  // ويُمسَح معه ما كُتب في البحث: من بلغ وجهتَه انتهت حاجتُه إلى الترشيح، وشريطٌ
+  // يبقى منخولًا بعد النقر يُخفي عن صاحبه بقيّةَ أبوابه بلا أن يطلب ذلك.
+  if (lastPath !== pathname) { setLastPath(pathname); setSheetOpen(false); setQ(""); }
 
   // تلاشي طرفَي التنقّل — بديلُ شريط التمرير المخفيّ (الوصفُ في `.ash-nav` بالمكتبة).
   // باتّجاهٍ: يتلاشى الطرفُ الذي **خلفه مزيد** وحده، فلا يبهت رأسُ القائمة بلا سبب.
@@ -119,7 +133,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
     ro.observe(el);
     for (const child of Array.from(el.children)) ro.observe(child);
     return () => { el.removeEventListener("scroll", sync); ro.disconnect(); };
-  }, [nav, rail]);
+  }, [shown, rail]);
 
   const cls = ["ash", rail && "rail"].filter(Boolean).join(" ");
 
@@ -146,6 +160,14 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
           <span className="ash-mark" aria-hidden><IconDashboard /></span>
           <b className="ash-name">بوّابة أديب</b>
         </div>
+        {/* البحثُ فوق القائمة لا داخلها: `.ash-nav` هو ما يُمرَّر، فحقلٌ بداخله ينزلق
+            مع البنود ويغيب عن صاحبه أوّلَ ما يمرّر. والمطويُّ يبسط نفسَه عند التركيز
+            (`writeRail(false)`) — حقلٌ عرضُه 38px لا يُكتَب فيه.
+
+            **وموضعُه فوق الخيط لا تحته** (أمر المالك ٢٠٢٦-٠٩-١٩): الخيطُ يفصل رأسَ اللوح
+            عن قائمته، والبحثُ من الرأس لا من القائمة — هو أداةُ اللوح نفسِه كاسمِه ورمزِه،
+            لا بندًا أوّلَ في خريطة الوجهات. فصار الخيطُ يفصل **ما تبحث به** عمّا تبحث فيه. */}
+        <NavSearch value={q} onChange={setQ} onSubmit={submitSearch} onFocus={() => rail && writeRail(false)} />
         <div className="ash-rule" aria-hidden />
 
         {/* زرُّ «إجراء سريع» مخفيٌّ حاليًّا حتى يُقرَّر ما يفعله؛ أنماطُه (`.ash-cta`) باقيةٌ
@@ -158,7 +180,8 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
             أو من قائمة الاستثناء (`_components/glyphs.tsx`)، و`DuotoneZone` أعلاه تردّ
             المستثنى إلى duotone ما دام في الشريط. */}
         <nav className="ash-nav" ref={navRef}>
-          {nav.map((g, gi) => (
+          {q && shown.length === 0 ? <div className="ash-srch-none" role="status">لا تبويبَ بهذا الاسم</div> : null}
+          {shown.map((g, gi) => (
             <div className="ash-group" key={g.head ?? gi}>
               {g.head ? <div className="ash-nav-head">{g.head}</div> : null}
               {g.items.map((it) => {

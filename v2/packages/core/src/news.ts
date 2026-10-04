@@ -6,15 +6,18 @@
 // وحقولُ الكاتب) لا يعرفه زائرٌ ولا تطبيق، فلا موضعَ له هنا.
 //
 // وكلُّ قيمةٍ هنا يحرسها قيدُ `news_category_check`. لا تُضِف قيمةً قبل توسيع القيد بترحيل.
+//
+// و«تحقيق» (`feature`) أُزيلت بأمر المالك ٢٠٢٦-٠٩-١٨، ولم يكن يستعملها خبرٌ واحد.
+// والأربعةُ الباقيةُ **وقائعُ** كلُّها: فعاليّةٌ أُقيمت · اتفاقيّةٌ وُقّعت · جائزةٌ نِيلت ·
+// بيانٌ صدر. وكانت هي وحدَها مادّةً تحريريّةً لا يلزمها حدث.
 
-export type Category = "coverage" | "partnership" | "achievement" | "announcement" | "feature";
+export type Category = "coverage" | "partnership" | "achievement" | "announcement";
 
 export const CATEGORY_META: Record<Category, { label: string; hint: string }> = {
   coverage: { label: "تغطية", hint: "فعاليّةٌ أقامها أدِيب أو شارك فيها" },
   partnership: { label: "شراكة", hint: "اتفاقيّة أو مذكّرة تفاهم" },
   achievement: { label: "إنجاز", hint: "تكريمٌ أو جائزة" },
   announcement: { label: "إعلان", hint: "بيانٌ من النادي" },
-  feature: { label: "تحقيق", hint: "مادّة تحريريّة موسّعة" },
 };
 
 export const CATEGORY_VALUES = Object.keys(CATEGORY_META) as Category[];

@@ -80,7 +80,7 @@ export function OAuthButtons({ next, onError }: { next: string; onError: (msg: s
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}&via=${provider}`,
           queryParams: params,
         },
       });

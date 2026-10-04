@@ -6,7 +6,7 @@ import {
   BarList, Button, Donut, Modal, Segmented, SectionCard, Select, Stat, Textarea,
 } from "@adeeb/design-system";
 import { EmptyState } from "../../_components/EmptyState";
-import { Certificate, HandHeart, MapPin, SignIn, Users, UsersThree } from "@phosphor-icons/react";
+import { HandHeart, MapPin, SignIn, UserCircleDashed, Users, UsersThree } from "@phosphor-icons/react";
 import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { PageHeader } from "../../_components/PageHeader";
 import { StatsScope } from "../../_components/StatsScope";
@@ -16,7 +16,6 @@ import { endVolunteering, grantMembership } from "../actions";
 import type { VolunteerRow } from "../data";
 import { VolunteerCard } from "./VolunteerCard";
 import { VolunteerHero, VolunteerRecord } from "./VolunteerRecord";
-import { copyText } from "@/lib/clipboard";
 
 type Ask = { kind: "grant" | "end"; row: VolunteerRow } | null;
 
@@ -116,15 +115,15 @@ export function VolunteersView({ rows, committees }: {
 
   // ق١٧ : الأرقامُ من النطاق (تبويب + رغبة) لا من المعروض (الذي يضيق بالبحث)
   const stats = useMemo(() => {
-    const sum = (f: (r: VolunteerRow) => number) => scope.reduce((n, r) => n + f(r), 0);
     const female = scope.filter((r) => r.gender === "female").length;
     const male = scope.filter((r) => r.gender === "male").length;
     return {
       count: scope.length,
       female,
       male,
-      certificates: sum((r) => r.certificates),
       seen: scope.filter((r) => r.seenLast30).length,
+      // لم يحضر فرصةً قطّ: مسجَّلٌ في التطوّع ولم يتطوّع بعد، فهو من يُدعى إلى الفرص القادمة
+      idle: scope.filter((r) => !r.apps.some((a) => a.status === "accepted" && a.attendance === "attended")).length,
       genders: [
         { label: "فتيات", value: female },
         { label: "شباب", value: male },
@@ -158,17 +157,6 @@ export function VolunteersView({ rows, committees }: {
     [committees],
   );
 
-  const copyPhones = async () => {
-    const list = shown.map((r) => r.phone).filter(Boolean).join("\n");
-    if (!list) { toast.error("لا أرقامَ في هذا الكشف."); return; }
-    try {
-      await copyText(list);
-      toast.success(`نُسخ ${shown.length} رقمًا، قابِلها بأعضاء القروب.`);
-    } catch {
-      toast.error("تعذّر النسخ.");
-    }
-  };
-
   const openAsk = (kind: "grant" | "end", row: VolunteerRow) => {
     setCommittee(row.prefs[0] ? String(row.prefs[0].id) : "");
     setReason("");
@@ -190,10 +178,8 @@ export function VolunteersView({ rows, committees }: {
 
   return (
     <>
-      <PageHeader
-        title="سجلّ المتطوّعين"
-        action={{ label: "نسخُ الأرقام", onClick: copyPhones }}
-      />
+      {/* لا فعلَ في الرأس : زرُّ «نسخُ الأرقام» أُزيل نهائيًّا بأمر المالك ٢٠٢٦-٠٩-٢٩ */}
+      <PageHeader title="سجلّ المتطوّعين" />
 
       <div style={{ marginBottom: 16 }}>
         {/* ممتدٌّ على الصفّ : الخيارُ هنا هو الشاشةُ نفسُها (كشفٌ أم كشف)، لا زينةُ ركن */}
@@ -208,7 +194,9 @@ export function VolunteersView({ rows, committees }: {
         />
       </div>
 
-      {/* ثلاثٌ في صفٍّ واحد (قاعدةُ `.stat-grid`)، بلا ملحوظةٍ تحت الرقم : حلقةُ الجنس أسفلُ تقولها */}
+      {/* ثلاثٌ في صفٍّ واحد (قاعدةُ `.stat-grid`)، بلا ملحوظةٍ تحت الرقم : حلقةُ الجنس أسفلُ تقولها.
+          وأوسطُها «لم يشارك ولا مرّة» (٢٠٢٦-١٠-٠٣، كان «لم يشارك بعد» فغيّره المالك) حلّ محلّ «شهادةُ مشاركةٍ صادرة» بطلب المالك: الرقمُ الذي يقود إلى فعل،
+          وبنغمة التحذير ما دام فيه أحد، لغةُ «تحتاج إجراءً منك» */}
       <StatsScope labels={[committees.find((c) => String(c.id) === pref)?.name]} onClear={() => setPref("")} />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>
@@ -217,7 +205,7 @@ export function VolunteersView({ rows, committees }: {
           value={stats.count}
           label={tab === "active" ? "متطوّعٌ نشط" : "متطوّعٌ سابق"}
         />
-        <Stat icon={<Certificate />} value={stats.certificates} label="شهادةُ مشاركةٍ صادرة" tone="success" />
+        <Stat icon={<UserCircleDashed />} value={stats.idle} label="لم يشارك ولا مرّة" tone={stats.idle > 0 ? "warning" : "brand"} />
         <Stat
           icon={<SignIn />}
           value={stats.seen}
