@@ -16,7 +16,7 @@ import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { useToast } from "../../_components/ToastProvider";
 import type { MenuGroup } from "../../_components/DropdownMenu";
 import { formatThousands as fmt } from "@/app/_components/format";
-import { targetHost } from "@/lib/qrLinks";
+import { QrTarget } from "./QrTarget";
 import { fmtDate } from "@/lib/dates";
 import { killText, SCAN_UNIT } from "./copy";
 import type { QrLinkRow } from "./data";
@@ -181,7 +181,7 @@ export function SavedLinksView({
   const cardColumns: Column<QrLinkRow>[] = [
     { key: "qr", header: "", render: () => <span className="tico tico-lead" aria-hidden><QrCode /></span> },
     // الوجهةُ عمودُ كرتٍ لا عمودَ جدول: مضيفُها يسع سطرًا تحت الاسم، وكاملُها لا يسع صفًّا.
-    { key: "target", header: "الوجهة", render: (r) => <span className="txt font-latin" dir="ltr">{targetHost(r.targetUrl)}</span> },
+    { key: "target", header: "الوجهة", render: (r) => <QrTarget kind={r.kind} targetUrl={r.targetUrl} filePath={r.filePath} /> },
     ...columns.map((c) =>
       c.key === "scans"
           ? { ...c, icon: <ChartLineUp />, render: (r: QrLinkRow) => <span className="txt num">{countPhrase(r.scanCount, SCAN_UNIT)}</span> }

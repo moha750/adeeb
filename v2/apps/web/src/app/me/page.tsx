@@ -17,7 +17,7 @@ import { MyVolunteering } from "./MyVolunteering";
 import { PwaCard } from "@/app/_pwa/PwaCard";
 import { PwaIntro } from "@/app/_pwa/PwaIntro";
 
-export const metadata: Metadata = { title: "حسابك، نادي أديب" };
+export const metadata: Metadata = { title: "حسابك، نادي أدِيب" };
 export const dynamic = "force-dynamic";
 
 /**
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
  * ويحضرون ولا بابَ لهم. واللوحةُ ليست بابَهم: تلك غرفُ عملٍ تُفتح بالقدرات، وهؤلاء ضيوفٌ لا
  * موظّفون. فههنا ما يخصّهم وحدَه: مقاعدُهم وبياناتُهم.
  *
- * **وهي لكلّ صاحب حساب لا للزائر وحده** — العضوُ يحجز كما يحجزون، فيرى حجوزاته ههنا وتبقى
+ * **وهي لكلّ صاحب حساب لا لصديق أدِيب وحده** — العضوُ يحجز كما يحجزون، فيرى حجوزاته ههنا وتبقى
  * عضويّتُه في اللوحة. باباهما لا يتنازعان: هذا للمقعد، وذاك للمنصب.
  */
 export default async function MePage() {
@@ -53,7 +53,7 @@ export default async function MePage() {
             <LandingHeading
               eyebrow="حسابك"
               title="مقاعدُك وبياناتُك"
-              deck="ما حجزتَه من برامج أديب، وما نعرفه عنك، في موضعٍ واحد."
+              deck="ما حجزتَه من برامج أدِيب، وما نعرفه عنك، في موضعٍ واحد."
               align="center"
             />
 
@@ -92,7 +92,7 @@ export default async function MePage() {
                   <CardHeader
                     variant="soft"
                     icon={<UserMinus weight={ICON_WEIGHT} aria-hidden />}
-                    title={exit.door === "delete" ? "حذف الحساب" : "الخروج من أديب"}
+                    title={exit.door === "delete" ? "حذف الحساب" : "الخروج من أدِيب"}
                     subtitle={
                       exit.door === "delete"
                         ? "بابُك إلى الخروج، ومهلتُه ثلاثون يومًا"

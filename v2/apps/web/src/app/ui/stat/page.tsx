@@ -73,7 +73,7 @@ export default function StatPage() {
           <section>
             <Lab>كرت وحيد: يملأ الصفّ</Lab>
             <div className="stat-grid">
-              <Stat icon={<UsersThree />} value="180" label="عدد أعضاء أديب" />
+              <Stat icon={<UsersThree />} value="180" label="عدد أعضاء أدِيب" />
             </div>
           </section>
         </div>

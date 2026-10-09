@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { QUESTION_TYPE_LABEL } from "@/app/dashboard/surveys/vocab";
 
-export const metadata: Metadata = { title: "نتائج الاستبيان، نادي أديب" };
+export const metadata: Metadata = { title: "نتائج الاستبيان، نادي أدِيب" };
 
 const pct = (n: number, total: number): number => (total ? Math.round((n / total) * 100) : 0);
 
@@ -47,7 +47,7 @@ export default async function PublicSurveyResultsPage({ params }: { params: Prom
     const { data: { user } } = await supa.auth.getUser();
     if (!user) {
       return (
-        <StateScreen title="نتائج هذا الاستبيان لأعضاء أديب">
+        <StateScreen title="نتائج هذا الاستبيان لأعضاء أدِيب">
           سجّل دخولك بعضويّة نشطة.{" "}
           <Link className="font-bold underline" href={`/login?next=/surveys/${surveyId}/results`}>تسجيل الدخول</Link>
         </StateScreen>
@@ -55,14 +55,14 @@ export default async function PublicSurveyResultsPage({ params }: { params: Prom
     }
     const { data: isMember } = await supa.rpc("survey_is_active_member", { p_user: user.id });
     if (!isMember) {
-      return <StateScreen title="لأعضاء أديب النشطين">هذه النتائج متاحة للأعضاء النشطين فقط.</StateScreen>;
+      return <StateScreen title="لأعضاء أدِيب النشطين">هذه النتائج متاحة للأعضاء النشطين فقط.</StateScreen>;
     }
   }
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
       <header className="mb-6 text-center">
-        <p className="font-display text-sm font-bold text-steel-600">نادي أديب</p>
+        <p className="font-display text-sm font-bold text-steel-600">نادي أدِيب</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-content">نتائج: {agg.title}</h1>
         <p className="mt-2 text-content-muted"><b className="num">{agg.totals.responses}</b> مشاركة مكتملة</p>
       </header>

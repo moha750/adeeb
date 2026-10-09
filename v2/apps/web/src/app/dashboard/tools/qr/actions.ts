@@ -2,9 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { NOT_FOUND, qrActor } from "./guard";
-import { QR_TITLE_MAX, checkCode, checkTarget, newQrCode, qrShortUrl } from "@/lib/qrLinks";
+import { NOT_FOUND, dropQrFile, qrActor, qrStorage } from "./guard";
+import {
+  QR_FILE_EXT, QR_TITLE_MAX, checkCode, checkTarget, isQrFilePath, newQrCode, qrShortUrl, qrViewUrl,
+  type QrKind,
+} from "@/lib/qrLinks";
 import { isHexColor, type QrSpec } from "@/lib/qr";
+import { UPLOAD_RULES } from "@/lib/upload";
 
 export type QrLinkResult = { ok: boolean; message: string; id?: string; code?: string };
 
@@ -86,6 +90,58 @@ function packSpec(spec: QrSpec, code: string): { ok: true; spec: QrSpec } | { ok
 }
 
 /**
+ * **حدّا الملفّ المحفوظ** — الـPDF بحدّ الدلو نفسِه (م٢٤)، والصورةُ بحدٍّ أضيق: تصل مصغَّرةً
+ * (نحو نصف ميغابايت)، فصورةٌ فوق أربعةٍ لم تمرّ بالتصغير ولا تُقبل.
+ */
+const FILE_RULE = UPLOAD_RULES.qrFileStored;
+const IMAGE_MAX = 4 * 1024 * 1024;
+
+/** ملفٌّ لم يصل أو لم يُختر: جملةٌ واحدةٌ لعيبٍ واحد. */
+const NO_FILE = "لم يُرفع الملف. اختره مرّةً أخرى.";
+
+/**
+ * **رسائلُ حارس الملفّ في القاعدة تُترجَم هنا** (`qr_file_guard`): رموزٌ لا يقرؤها صاحبُ
+ * الشاشة، والتفرّدُ على المسار (ملفٌّ واحدٌ لصفٍّ واحد) يُقال بلسانه.
+ */
+function fileError(message: string): string {
+  if (message.includes("QR_FILE_NOT_YOURS")) return "هذا الملفُّ ليس ممّا رفعتَه.";
+  if (message.includes("QR_FILE_MISSING")) return "لم يصل الملفُّ إلى المخزن. اختره مرّةً أخرى.";
+  if (message.includes("file_path")) return "هذا الملفُّ مربوطٌ بباركودٍ آخر.";
+  return message;
+}
+
+export type QrUploadTicket = { ok: boolean; message: string; path?: string; token?: string };
+
+/**
+ * **رابطُ رفعٍ موقَّعٌ لملفّ الباركود** — الرفعُ نفسُه يجري من المتصفّح إلى الدلو مباشرةً
+ * (`uploadToSignedUrl`)، فيتجاوز حدَّ جسم فعل الخادم (نحو ميغابايت) ولا يمرّ الملفُّ بنا مرّتين.
+ * سابقةُ صفحات المكتبة بحرفها.
+ *
+ * **والمسارُ يصكّه الخادمُ لا المتصفّح**: يبدأ بمعرّف صاحب الجلسة، وبقيّتُه عشوائيّة. فلا يكتب
+ * أحدٌ في مجلّد غيره، ولا يُخمَّن مسارُ ملفٍّ لم يُنشَر بعد. والحجمُ والصيغةُ يُسألان هنا قبل
+ * الصكّ، والدلوُ يردّ ما يفلت (حدُّه وصيغُه في الترحيل).
+ */
+export async function prepareQrFileUpload(mime: string, bytes: number): Promise<QrUploadTicket> {
+  const { me, deny } = await qrActor();
+  if (!me) return deny!;
+
+  const ext = QR_FILE_EXT[mime];
+  if (!ext) return { ok: false, message: `الصيغةُ غير مدعومة، المدعوم ${FILE_RULE.formats}` };
+  const max = ext === "pdf" ? FILE_RULE.maxBytes : IMAGE_MAX;
+  if (!(bytes > 0) || bytes > max) {
+    return { ok: false, message: ext === "pdf" ? "ملفُّ PDF أثقلُ ممّا يُحفَظ. اختر أصغرَ منه." : "الصورةُ أثقلُ ممّا يُحفَظ ولو بعد تصغيرها. اختر غيرَها." };
+  }
+
+  const store = qrStorage();
+  if (!store) return { ok: false, message: "إعدادُ الخادم ناقص (مفتاح الخدمة)." };
+
+  const path = `${me.id}/${crypto.randomUUID()}.${ext}`;
+  const { data, error } = await store.createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, message: `تعذّر تجهيز الرفع: ${error?.message ?? "سببٌ غير معروف"}` };
+  return { ok: true, message: "", path: data.path, token: data.token };
+}
+
+/**
  * حفظُ رمزٍ جديد.
  *
  * **والرمزُ القصير يُولَّد هنا لا في القاعدة**: التصادمُ يُعالَج بإعادة المحاولة، وقيدُ
@@ -94,7 +150,14 @@ function packSpec(spec: QrSpec, code: string): { ok: true; spec: QrSpec } | { ok
  */
 export async function createQrLink(input: {
   title: string;
-  target: string;
+  /** الوجهةُ إن كانت رابطًا. وتُهمَل للملفّ: وجهتُه صفحتُه، يكتبها الخادمُ من الرمز. */
+  target?: string;
+  /**
+   * **نوعُ الوجهة** (م٢١ وم٢٤). والملفُّ يأتي بمساره في الدلو بعد أن رُفع برابطٍ صكّه
+   * `prepareQrFileUpload`، ويُفحَص أنّ المسارَ مسارُ صاحب الجلسة.
+   */
+  kind?: QrKind;
+  filePath?: string;
   spec: QrSpec;
   /** رمزٌ يختاره صاحبُه (`‎/q/majles`). يُترَك فارغًا فيُقرَع سبعةٌ بلا ملتبِس. */
   code?: string;
@@ -107,10 +170,27 @@ export async function createQrLink(input: {
   const { me, deny } = await qrActor();
   if (!me) return deny!;
 
+  const kind: QrKind = input.kind === "file" ? "file" : "link";
+  const filePath = kind === "file" ? input.filePath ?? null : null;
+  if (kind === "file" && !(filePath && isQrFilePath(filePath, me.id))) return { ok: false, message: NO_FILE };
+
+  /**
+   * **وما لم يُنشَأ لا يبقى ملفُّه**: كلُّ ردٍّ بعد هذا السطر يمحو الملفَّ المرفوع، فلا يتراكم في
+   * الدلو ما لا يشير إليه صفّ (و`dropQrFile` لا يمحو ملفًّا يشير إليه صفٌّ آخر).
+   */
+  const fail = async (message: string): Promise<QrLinkResult> => {
+    if (filePath) await dropQrFile(filePath);
+    return { ok: false, message };
+  };
+
   const title = checkTitle(input.title);
-  if (!title.ok) return { ok: false, message: title.message };
-  const target = checkTarget(input.target);
-  if (!target.ok) return { ok: false, message: target.message };
+  if (!title.ok) return fail(title.message);
+  let targetUrl: string | null = null;
+  if (kind === "link") {
+    const target = checkTarget(input.target ?? "");
+    if (!target.ok) return fail(target.message);
+    targetUrl = target.url;
+  }
 
   /**
    * **المختارُ محاولةٌ واحدة، والمقروعُ سبع** (٢٠٢٦-٠٩-٠٥): تصادمُ المقروع حظٌّ يُعاد الرمي
@@ -118,21 +198,24 @@ export async function createQrLink(input: {
    * لم يطلبه.
    */
   const wanted = input.code ? checkCode(input.code) : null;
-  if (wanted && !wanted.ok) return { ok: false, message: wanted.message };
+  if (wanted && !wanted.ok) return fail(wanted.message);
 
   const sb = await createClient();
   const tries = wanted ? 1 : 7;
   for (let attempt = 0; attempt < tries; attempt++) {
     const code = wanted?.ok ? wanted.code : newQrCode();
     const spec = packSpec(input.spec, code);
-    if (!spec.ok) return { ok: false, message: spec.message };
+    if (!spec.ok) return fail(spec.message);
 
     const { data, error } = await sb
       .from("qr_links")
       .insert({
         code,
         title: title.title,
-        target_url: target.url,
+        // الملفُّ وجهتُه صفحتُه، والرمزُ جزءٌ منها: تُكتب مع كلّ رميةٍ لا مرّةً قبلها
+        target_url: kind === "file" ? qrViewUrl(code) : targetUrl,
+        kind,
+        file_path: filePath,
         spec: spec.spec,
         owner_id: me.id,
         campaign_id: input.campaignId ?? null,
@@ -144,39 +227,96 @@ export async function createQrLink(input: {
       refresh();
       return { ok: true, message: "حُفظ الباركود، ووجهتُه تُعدَّل بعد الطباعة.", id: data.id, code: data.code };
     }
+    // تصادمُ المسار لا الرمز: إعادةُ الرمي لا تنفع.
+    if (error?.code === "23505" && error.message.includes("file_path")) return fail(fileError(error.message));
     // 23505 = تصادمُ تفرّد: رمزٌ آخرُ سبقنا إليه، فيُعاد الرمي لا الطلب.
     if (error?.code === "23505" && wanted) {
-      return { ok: false, message: `الرمزُ «${wanted.ok ? wanted.code : ""}» مأخوذٌ لباركودٍ آخر. اختر غيرَه.` };
+      return fail(`الرمزُ «${wanted.ok ? wanted.code : ""}» مأخوذٌ لباركودٍ آخر. اختر غيرَه.`);
     }
-    if (error?.code !== "23505") return { ok: false, message: `تعذّر حفظ الباركود: ${error?.message ?? "سببٌ غير معروف"}` };
+    if (error?.code !== "23505") return fail(`تعذّر حفظ الباركود: ${fileError(error?.message ?? "سببٌ غير معروف")}`);
   }
-  return { ok: false, message: "تعذّر توليد باركودٍ غير مستعمَل. أعِد المحاولة." };
+  return fail("تعذّر توليد باركودٍ غير مستعمَل. أعِد المحاولة.");
 }
 
-/** تعديلُ الاسم أو الوجهة. والرمزُ المطبوعُ لا يمسّه هذا بشيء، وتلك علّةُ النظام كلِّه. */
-export async function updateQrLink(id: string, input: { title: string; target: string }): Promise<QrLinkResult> {
+/**
+ * **تعديلُ الاسم والوجهة — والنوعُ معهما** (م٢٣ وم٢٤). والرمزُ المطبوعُ لا يمسّه هذا بشيء، وتلك
+ * علّةُ النظام كلِّه: الملصقُ يحمل ‎/q/<code>‎ رابطًا كان أو ملفًّا، فتحويلُه وجهةٌ كسائر الوجهات.
+ *
+ * فعلٌ واحدٌ لأربعة: اسمٌ وحدَه، ووجهةُ رابطٍ تتبدّل، وملفٌّ يُستبدَل، ونوعٌ يتحوّل. والصفُّ يُقرأ
+ * أوّلًا لأنّ ما يُكتب يتبع ما كان: رابطٌ صار ملفًّا تُكتب وجهتُه صفحتَه من رمزه، وملفٌّ صار رابطًا
+ * يُمحى مسارُه. وقيودُ القاعدة (`qr_links_file_shape` و`qr_links_file_target`) تردّ صفًّا نصفُه
+ * رابطٌ ونصفُه ملف لو أفلت شيءٌ من هنا.
+ *
+ * **والترتيبُ ترتيبُ الأفتار**: يُكتب الجديدُ أوّلًا، ثمّ يُمحى القديمُ بعد أن تقبل القاعدة. فلو
+ * تعثّرت الكتابةُ بقي الباركودُ على حاله ومُحي المرفوعُ الجديدُ وحدَه، ولو تعثّر المحوُ بقي يتيمٌ
+ * لا يؤذي. والعكسُ يترك باركودًا يعرض ملفًّا محذوفًا.
+ *
+ * والصفُّ يُقرأ ويُكتب بعميل الجلسة: المالكُ والشريكُ المحرِّرُ وحدهما يبلغانه (سياساتُ القاعدة).
+ */
+export async function updateQrLink(
+  id: string,
+  input: { title: string; kind?: QrKind; target?: string; filePath?: string },
+): Promise<QrLinkResult> {
   const { me, deny } = await qrActor();
   if (!me) return deny!;
 
+  const newFile = input.filePath ?? null;
+  if (newFile && !isQrFilePath(newFile, me.id)) return { ok: false, message: NO_FILE };
+  const fail = async (message: string): Promise<QrLinkResult> => {
+    if (newFile) await dropQrFile(newFile);
+    return { ok: false, message };
+  };
+
   const title = checkTitle(input.title);
-  if (!title.ok) return { ok: false, message: title.message };
-  const target = checkTarget(input.target);
-  if (!target.ok) return { ok: false, message: target.message };
+  if (!title.ok) return fail(title.message);
 
   const sb = await createClient();
-  const { data, error } = await sb
-    .from("qr_links")
-    .update({ title: title.title, target_url: target.url, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("id")
-    .maybeSingle();
+  const { data: row, error: readErr } = await sb.from("qr_links").select("kind, code, file_path").eq("id", id).maybeSingle();
+  if (readErr) return fail(readErr.message);
+  if (!row) return fail(NOT_FOUND);
+  const was = row as { kind: QrKind; code: string; file_path: string | null };
+  const kind: QrKind = input.kind ?? was.kind;
 
-  if (error) return { ok: false, message: `تعذّر التعديل: ${error.message}` };
+  const patch: { title: string; updated_at: string; kind?: QrKind; target_url?: string; file_path?: string | null } = {
+    title: title.title,
+    updated_at: new Date().toISOString(),
+  };
+  if (kind === "link") {
+    if (input.target !== undefined || was.kind !== "link") {
+      const target = checkTarget(input.target ?? "");
+      if (!target.ok) return fail(target.message);
+      patch.target_url = target.url;
+    }
+    if (was.kind !== "link") { patch.kind = "link"; patch.file_path = null; }
+    // ملفٌّ رُفع لباركودٍ يبقى رابطًا لا موضعَ له: يُمحى
+    if (newFile) await dropQrFile(newFile);
+  } else {
+    if (newFile) patch.file_path = newFile;
+    else if (was.kind !== "file") return fail(NO_FILE);
+    if (was.kind !== "file") { patch.kind = "file"; patch.target_url = qrViewUrl(was.code); }
+  }
+
+  const { data, error } = await sb.from("qr_links").update(patch).eq("id", id).select("id").maybeSingle();
+  if (error) return fail(`تعذّر التعديل: ${fileError(error.message)}`);
   // لا صفَّ أصابه التعديل: إمّا لا وجود له، وإمّا ليس لك. والسياسةُ لا تفرّق فلا نفرّق.
-  if (!data) return { ok: false, message: NOT_FOUND };
+  if (!data) return fail(NOT_FOUND);
+
+  const kept = kind === "file" ? newFile ?? was.file_path : null;
+  if (was.file_path && was.file_path !== kept) await dropQrFile(was.file_path);
 
   refresh();
-  return { ok: true, message: "حُدّثت الوجهة، ومن يمسح الباركود الآن يصل إليها." };
+  revalidatePath(`/dashboard/tools/qr/${id}`);
+  const message =
+    was.kind !== kind
+      ? kind === "file"
+        ? "صار الباركود يعرض ملفًّا، والملصقُ المطبوعُ كما هو."
+        : "صار الباركود رابطًا، والملصقُ المطبوعُ كما هو."
+      : newFile
+        ? "استُبدل الملف، ومن يمسح الباركود الآن يراه."
+        : patch.target_url
+          ? "حُدّثت الوجهة، ومن يمسح الباركود الآن يصل إليها."
+          : "حُفظ اسمُ الباركود.";
+  return { ok: true, message };
 }
 
 /**
@@ -232,15 +372,21 @@ export async function setQrLinkActive(id: string, active: boolean): Promise<QrLi
   return { ok: true, message: active ? "عاد الباركود يعمل." : "أُوقف الباركود، ومن يمسحه يجد صفحةَ «غير موجود»." };
 }
 
-/** حذفُ الرمز ومسحاته معًا (`on delete cascade`). ولا رجعةَ فيه، فالتأكيدُ في الواجهة. */
+/**
+ * حذفُ الرمز ومسحاته معًا (`on delete cascade`). ولا رجعةَ فيه، فالتأكيدُ في الواجهة.
+ *
+ * **وملفُّه يُمحى بعده** (م٢١): الحذفُ المتسلسلُ لا يبلغ الدلو. والمسارُ يُقرأ من الصفّ
+ * المحذوف نفسِه (`returning`) فلا يُمحى إلّا ما كان له.
+ */
 export async function deleteQrLink(id: string): Promise<QrLinkResult> {
   const { me, deny } = await qrActor();
   if (!me) return deny!;
 
   const sb = await createClient();
-  const { data, error } = await sb.from("qr_links").delete().eq("id", id).select("id").maybeSingle();
+  const { data, error } = await sb.from("qr_links").delete().eq("id", id).select("id, file_path").maybeSingle();
   if (error) return { ok: false, message: `تعذّر الحذف: ${error.message}` };
   if (!data) return { ok: false, message: NOT_FOUND };
+  await dropQrFile((data as { file_path: string | null }).file_path);
 
   refresh();
   return { ok: true, message: "حُذف الباركود ومسحاتُه." };

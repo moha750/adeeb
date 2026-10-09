@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Robot, GameController, TextAa, Megaphone,
+  PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -52,7 +52,7 @@ export const IconImages = (p: P) => <ImagesSquare aria-hidden {...p} />;
 export const IconStats = (p: P) => <ChartBar aria-hidden {...p} />;
 export const IconHandshake = (p: P) => <Handshake aria-hidden {...p} />;
 export const IconFaq = (p: P) => <Question aria-hidden {...p} />;
-// أعضاء أديب — حالات العضويّة وأدواتها (بنودٌ مسطّحة تحت رأس «العضوية»)
+// أعضاء أدِيب — حالات العضويّة وأدواتها (بنودٌ مسطّحة تحت رأس «العضوية»)
 export const IconActive = (p: P) => <UserCheck aria-hidden {...p} />;
 export const IconPending = (p: P) => <HourglassMedium aria-hidden {...p} />;
 export const IconSuspended = (p: P) => <Prohibit aria-hidden {...p} />;
@@ -96,16 +96,13 @@ export const IconBallot = (p: P) => <Checks aria-hidden {...p} />;
    أيقونةٍ له ما يقوله هو. و`ChatCircleDots` ممنوعةٌ عمدًا: مأخوذةٌ لحقل السؤال في صفحته
    العلنيّة، ولو حملها البندُ هنا لقالت «محادثةٌ» في موضعين لا يعني أحدهما الآخر. */
 export const IconDeebo = (p: P) => <Robot aria-hidden {...p} />;
-/* خمّن الكلمة — المِقوَد: البندُ غرفةُ **قيادةٍ** لا شاشةُ لعب. والمضيفُ يفتحها ليبدأ
-   ويوقف ويحكم، فأصدقُ رسمٍ لها ما يُمسَك باليد. */
-export const IconGame = (p: P) => <GameController aria-hidden {...p} />;
-/* بنك الكلمات — الحرف: مادّةُ اللعبة كلماتٌ تُكتَب وتُصنَّف. و`BookOpen` مأخوذةٌ
-   للمكتبة، ولو حملها البندُ هنا لقالت «كتبٌ» في موضعين لا يعني أحدهما الآخر. */
-export const IconWords = (p: P) => <TextAa aria-hidden {...p} />;
 /* اللوحة الإعلانية — مكبّرُ الصوت: كلماتٌ تُنادى بها الناسُ في شريطٍ يجري على
-   حدّ الصدر. و`Newspaper` مأخوذةٌ للأخبار، و`TextAa` لبنك الكلمات، ولو حملت إحداهما
+   حدّ الصدر. و`Newspaper` مأخوذةٌ للأخبار، ولو حملها
    هذا البندَ لقالت معنًى في موضعين لا يعني أحدهما الآخر. */
 export const IconAnnounce = (p: P) => <Megaphone aria-hidden {...p} />;
+/* أصدقاء أدِيب — اليدُ الملوِّحة: تحيّةُ من يعرفنا ولم يدخل بيتنا بعد. و`UsersThree` مأخوذةٌ
+   للّجان و`Handshake` للتطوّع، ولو حملت إحداهما البندَ لقالت معنًى في موضعين. */
+export const IconFriends = (p: P) => <HandWaving aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -118,6 +115,6 @@ export const ICONS = {
   mic: IconMic, news: IconNews, warn: IconWarn, certificate: IconCertificate, qr: IconQr,
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
-  game: IconGame, words: IconWords, announce: IconAnnounce,
+  announce: IconAnnounce, friends: IconFriends,
 } as const;
 export type IconKey = keyof typeof ICONS;

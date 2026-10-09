@@ -15,7 +15,7 @@ import { SiteHeader } from "../../_components/SiteHeader";
  */
 
 export const metadata = {
-  title: "الباركود غير متاح، أديب",
+  title: "الباركود غير متاح، أدِيب",
   description: "هذا الباركود لا يقود إلى وجهةٍ الآن.",
   robots: { index: false, follow: false },
 };
@@ -34,7 +34,7 @@ export default function QrUnavailable() {
             align="center"
           />
           <div className="mt-8 flex justify-center">
-            <Link href="/" className="abtn abtn-primary abtn-lg">تصفّح موقع أديب</Link>
+            <Link href="/" className="abtn abtn-primary abtn-lg">تصفّح موقع أدِيب</Link>
           </div>
         </Container>
       </main>

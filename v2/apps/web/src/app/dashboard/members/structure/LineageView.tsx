@@ -16,7 +16,7 @@ function buildTree(model: StructureModel): TNode {
   const com = (c: CommitteeNode): TNode => ({ id: `c${c.id}`, kind: "com", name: c.name, who: c.leader ? c.leader.name : "قائدٌ شاغر", av: c.leader?.name ?? null, gender: c.leader?.gender ?? null, vac: !c.leader, count: ar(c.total), children: [] });
   const dep = (d: DepartmentNode): TNode => ({ id: `d${d.id}`, kind: "dept", name: d.name, who: d.head ? d.head.name : "منسّقٌ شاغر", av: d.head?.name ?? null, gender: d.head?.gender ?? null, vac: !d.head, children: d.committees.map(com) });
   return {
-    id: "root", kind: "root", name: "نادي أديب", who: "الهيكل التنظيميّ", av: "أديب", gender: null, vac: false,
+    id: "root", kind: "root", name: "نادي أدِيب", who: "الهيكل التنظيميّ", av: "أدِيب", gender: null, vac: false,
     children: [
       { id: "administrative", kind: "council", name: model.administrative.name, who: model.administrative.head?.name ?? "الرئاسة شاغرة", av: model.administrative.head?.name ?? null, gender: model.administrative.head?.gender ?? null, vac: !model.administrative.head, children: model.administrative.committees.map(com) },
       { id: "executive", kind: "council", name: model.executive.name, who: model.executive.head?.name ?? "الرئاسة شاغرة", av: model.executive.head?.name ?? null, gender: model.executive.head?.gender ?? null, vac: !model.executive.head, children: model.executive.departments.map(dep) },

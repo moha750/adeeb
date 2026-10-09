@@ -3,7 +3,7 @@ import { Container, LandingHeading, Ambient } from "@adeeb/design-system";
 import { SiteHeader } from "./_components/SiteHeader";
 
 /**
- * صفحة «غير موجود» بهوية أديب — تحلّ محلّ صفحة Next/Vercel الافتراضيّة.
+ * صفحة «غير موجود» بهوية أدِيب — تحلّ محلّ صفحة Next/Vercel الافتراضيّة.
  * حدُّها **الجذر**: تلتقط كلّ رابطٍ لا يطابق مسارًا، وكلّ `notFound()` تُرمى من صفحةٍ
  * لا حدَّ أقرب لها.
  *
@@ -17,8 +17,8 @@ import { SiteHeader } from "./_components/SiteHeader";
  */
 
 export const metadata = {
-  title: "الصفحة غير موجودة، أديب",
-  description: "الرابط الذي طلبته لا يقود إلى صفحةٍ في موقع نادي أديب.",
+  title: "الصفحة غير موجودة، أدِيب",
+  description: "الرابط الذي طلبته لا يقود إلى صفحةٍ في موقع نادي أدِيب.",
 };
 
 export default function NotFound() {

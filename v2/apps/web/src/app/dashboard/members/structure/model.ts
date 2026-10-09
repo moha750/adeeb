@@ -1,4 +1,4 @@
-// نموذج هيكلة أديب — بناء الشجرة من صفوف القاعدة (نقيّ، بلا استيراد خادميّ، قابل للاختبار).
+// نموذج هيكلة أدِيب — بناء الشجرة من صفوف القاعدة (نقيّ، بلا استيراد خادميّ، قابل للاختبار).
 //
 // كلّ رابطٍ هنا مقروءٌ من عمودٍ مُصرَّح، لا مستنتَج ولا محفور:
 //   councils.head_role_name     -> من يرأس المجلس
@@ -425,7 +425,8 @@ export function buildPositions(
     const council = r.council_type as Position["council"];
     out.push({
       key: r.role_name, roleName: r.role_name, roleAr: ar(r.role_name),
-      scope: councilName(council), council, committeeId: null, departmentId: null,
+      // مقعدٌ له إدارةٌ أمّ (قائد الموارد البشريّة/الجودة) يُسنَد فيها — والقاعدة ترفضه بلا لجنة
+      scope: councilName(council), council, committeeId: r.home_committee_id ?? null, departmentId: null,
       holders: holdersOf(r.role_name), singleton: isSingle(r.role_name), elected: el(r.role_name), ...traits(r.role_name),
     });
   }

@@ -8,7 +8,7 @@ import { qrAlertMail } from "@/lib/qrAlertMail";
  * والحالُ المعروضةُ أسوأُ ما يقع: وجهةٌ بُدّلت إلى نطاقٍ يتشبّه باسم النادي.
  */
 
-export const metadata = { title: "بريد تنبيه الوجهة، معرض أديب" };
+export const metadata = { title: "بريد تنبيه الوجهة، معرض أدِيب" };
 
 const SAMPLE = qrAlertMail({
   link: { id: "sample", title: "ملصق الملتقى التعريفيّ", code: "majles" },

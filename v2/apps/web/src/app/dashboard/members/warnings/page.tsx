@@ -11,7 +11,7 @@ import { PageHeader } from "../../_components/PageHeader";
  * (`manage_warnings`) — بابٌ واحد، والفرقُ بين مُصدِرٍ ومطّلعٍ **داخل** الغرفة لا عندها.
  * وترشيحُ الصفوف في القاعدة (`warnings_for_reader`) لا هنا: مفتاح الخدمة يتجاوز RLS.
  */
-export const metadata = { title: "الإنذارات، بوّابة أديب" };
+export const metadata = { title: "الإنذارات، بوّابة أدِيب" };
 
 export default async function WarningsPage() {
   const denied = await denyUnless("/dashboard/members/warnings");

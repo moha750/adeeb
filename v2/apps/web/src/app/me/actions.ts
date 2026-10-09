@@ -49,9 +49,9 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
     .from("profiles").select("joined_date, account_status").eq("id", me.id).maybeSingle();
   if (pErr) return { ok: false, message: "تعذّرت قراءة بياناتك. حاول مجدّدًا." };
   if (!p) return { ok: false, message: "لا بيانات لك بعد. أكمِلها أوّلًا." };
-  // والعضوُ السابقُ زائرٌ يحرّر بياناتِه ههنا كغيره (٢٠٢٦-١٠-٠٣)
+  // والعضوُ السابقُ صديقُ أدِيب يحرّر بياناتِه ههنا كغيره (٢٠٢٦-١٠-٠٣)
   if (isLiveMembership(p)) {
-    return { ok: false, message: "بياناتُك عضوًا تُحرَّر من ملفّك في بوّابة أديب." };
+    return { ok: false, message: "بياناتُك عضوًا تُحرَّر من ملفّك في بوّابة أدِيب." };
   }
 
   const { error } = await sb

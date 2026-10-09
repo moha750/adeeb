@@ -44,11 +44,11 @@ function tenureLabel(joinedDate: string | null): string | null {
   let months = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m);
   if (now.getDate() < d) months -= 1;
   if (months < 1) return "انضمّ هذا الشهر";
-  if (months < 12) return `في أديب منذ ${months} أشهر`;
+  if (months < 12) return `في أدِيب منذ ${months} أشهر`;
   const years = Math.floor(months / 12);
   const rest = months % 12;
   const yearWord = years === 1 ? "سنة" : years === 2 ? "سنتين" : `${years} سنوات`;
-  return rest ? `في أديب منذ ${yearWord} و${rest} أشهر` : `في أديب منذ ${yearWord}`;
+  return rest ? `في أدِيب منذ ${yearWord} و${rest} أشهر` : `في أدِيب منذ ${yearWord}`;
 }
 
 export function ProfileView({ me }: { me: PublicProfile }) {
@@ -146,7 +146,7 @@ export function ProfileView({ me }: { me: PublicProfile }) {
 
       {me.joinedDate ? (
         <p className="text-center text-xs text-content-muted">
-          {`عضوٌ في نادي أديب منذ ${fmtDateOnly(me.joinedDate)}`}
+          {`عضوٌ في نادي أدِيب منذ ${fmtDateOnly(me.joinedDate)}`}
         </p>
       ) : null}
     </div>

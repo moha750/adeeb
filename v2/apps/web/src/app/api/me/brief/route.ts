@@ -19,6 +19,7 @@ import { positionLine } from "@/lib/positionLabel";
 import { roleRank } from "@/lib/roleOrder";
 import { getSessionClaims } from "@/lib/auth";
 import { isLiveMembership } from "@/lib/memberRecord";
+import type { AdeebStanding } from "@/lib/standing";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export type MeBrief = {
   /**
    * **له بابٌ في البوّابة** — عضويّةً أو مفتاحًا (٢٠٢٦-٠٩-٠٥).
    *
-   * كان الرأسُ يقسم الناسَ بالعضويّة وحدَها: عضوٌ يرى «بوّابة أديب»، وغيرُه يرى «حسابك».
+   * كان الرأسُ يقسم الناسَ بالعضويّة وحدَها: عضوٌ يرى «بوّابة أدِيب»، وغيرُه يرى «حسابك».
    * فحسابُ النادي «أَدِيب» — يملك مفاتيحَ النظام كلَّها ولا عضويّةَ له — كان يُدَلّ على بيت
    * الحساب ويُحجَب عنه بابُ غرفه. والقانونُ أنّ **التفويضَ قدرةٌ والعضويّةَ واقعة**، فبابُ
    * البوّابة يتبع المفاتيح، وبقيَ `isMember` لما هو عضويّةٌ حقًّا (وسمُ الهويّة ومنصبُها).
@@ -53,6 +54,11 @@ export type MeBrief = {
    * (المصدرُ الواحد)، والقاعدةُ تُخرج القطعتين خامًا. و`null` لمن لا منصبَ له.
    */
   position: string | null;
+  /**
+   * منزلتُه بين الثلاث (٢٠٢٦-١٠-٠٨) — سطرُ الهويّة لمن لا منصبَ له. وكان الرأسُ يقسم بالعضويّة
+   * وحدَها فيقول للمتطوّع «صديق أدِيب».
+   */
+  standing: AdeebStanding;
 };
 
 /**
@@ -125,6 +131,13 @@ export async function GET() {
   if (error) return NextResponse.json({ viewer: null }, { headers });
 
   const member = isLiveMembership(data);
+  // والمتطوّعُ صفٌّ حالُه `active` (سابقةُ `lib/deebo/viewer.ts`). لا يُسأل عنه للعضو ولا لمن لا ملفَّ له:
+  // التطوّعُ يشترط الملفّ.
+  const volunteer =
+    !member && data
+      ? (await sb.from("volunteers").select("status").eq("user_id", claims.sub).maybeSingle()).data
+          ?.status === "active"
+      : false;
   const viewer: MeBrief = {
     name: data?.full_name ?? null,
     avatarUrl: data?.avatar_url ?? null,
@@ -133,6 +146,7 @@ export async function GET() {
     hasPortal: member || (await hasDashboardKeys(sb, claims.sub)),
     // المنصبُ يُسأل عنه لمن انضمّ وحدَه: لا مناصبَ لصاحب حسابٍ ليس عضوًا، فلا استعلامَ يُهدر.
     position: member ? await currentPosition(sb, claims.sub) : null,
+    standing: member ? "member" : volunteer ? "volunteer" : "account",
   };
   return NextResponse.json({ viewer }, { headers });
 }

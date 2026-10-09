@@ -51,7 +51,7 @@ const ROWS: QrLinkRow[] = [
   row(4, "منشور إنستغرام", "docs.google.com", 96),
   row(5, "شاشة القاعة", "docs.google.com", 29),
   row(6, "ظهر كرت العضوية", "adeeb.club", 12),
-  row(7, "ملصق إذاعة أديب", "youtube.com", 143),
+  row(7, "ملصق إذاعة أدِيب", "youtube.com", 143),
   row(8, "ملصق معرض الكتاب", "adeeb.club", 61, false),
 ];
 

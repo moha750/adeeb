@@ -161,7 +161,7 @@ export async function setMyMarketing(on: boolean): Promise<SettingsResult> {
   if (error) return { ok: false, message: `تعذّر حفظ التفضيل: ${error.message}` };
 
   revalidatePath("/dashboard/settings");
-  return { ok: true, message: on ? "ستصلك رسائل أديب." : "لن تصلك رسائل أديب." };
+  return { ok: true, message: on ? "ستصلك رسائل أدِيب." : "لن تصلك رسائل أدِيب." };
 }
 
 /* ── النبذة العلنيّة ─────────────────────────────────────────────────────────

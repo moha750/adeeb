@@ -21,7 +21,7 @@ import { basename } from "node:path";
 import { createPrivateKey, sign } from "node:crypto";
 
 /** معرّفاتٌ لا أسرار — تُكتب هنا لتُرى في diff، كمعرّف عميل قوقل. */
-const TEAM_ID = "72T373ZM34";                 // فريق أديب في حساب المطوّر (نفسه الذي يوقّع بطاقة الولاء)
+const TEAM_ID = "72T373ZM34";                 // فريق أدِيب في حساب المطوّر (نفسه الذي يوقّع بطاقة الولاء)
 const SERVICES_ID = "club.adeeb.signin";      // «Services ID» في لوحة أبل — وهو `client_id` عند Supabase
 
 /** ١٨٠ يومًا. سقفُ أبل ١٥٧٧٧٠٠٠ ثانية (~٦ أشهر)؛ نقف دونه فلا يُردّ الرمزُ على الحدّ. */

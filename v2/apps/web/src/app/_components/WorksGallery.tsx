@@ -3,7 +3,7 @@ import { createAdeebServerClient } from "@adeeb/core";
 import { WorksWall } from "./WorksWall";
 import type { Work } from "./WorkLightbox";
 
-/** قسم حيّ: مختارات من أعمال أديب (works) كجدار حيّ بأعمدة متعاكسة — تعريفٌ لا أرشيف. */
+/** قسم حيّ: مختارات من أعمال أدِيب (works) كجدار حيّ بأعمدة متعاكسة — تعريفٌ لا أرشيف. */
 export async function WorksGallery() {
   const sb = createAdeebServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

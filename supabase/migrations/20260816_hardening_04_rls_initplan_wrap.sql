@@ -233,25 +233,6 @@ alter policy faq_write_website on public.faq
   using (check_user_permission((select auth.uid()), 'manage_faq'::text))
   with check (check_user_permission((select auth.uid()), 'manage_faq'::text));
 
--- guess_word_answers · SELECT · permissive · to anon, authenticated
-alter policy gw_answers_select on public.guess_word_answers
-  using ((check_user_permission((select auth.uid()), 'manage_games'::text) OR (EXISTS ( SELECT 1
-   FROM (guess_word_words w
-     JOIN guess_word_sessions s ON ((s.id = w.session_id)))
-  WHERE ((w.id = guess_word_answers.word_id) AND (s.status = 'finished'::text))))));
-
--- guess_word_players · SELECT · permissive · to anon, authenticated
-alter policy gw_players_select on public.guess_word_players
-  using (((is_kicked = false) OR check_user_permission((select auth.uid()), 'manage_games'::text)));
-
--- guess_word_words · SELECT · permissive · to anon, authenticated
-alter policy gw_words_select on public.guess_word_words
-  using ((check_user_permission((select auth.uid()), 'manage_games'::text) OR (EXISTS ( SELECT 1
-   FROM guess_word_sessions s
-  WHERE ((s.id = guess_word_words.session_id) AND (s.current_word_id = guess_word_words.id)))) OR (EXISTS ( SELECT 1
-   FROM guess_word_sessions s
-  WHERE ((s.id = guess_word_words.session_id) AND (s.status = 'finished'::text))))));
-
 -- member_details · INSERT · permissive · to public
 alter policy "المسؤولون يمكنهم إدراج بيانات الأ" on public.member_details
   with check (check_user_permission((select auth.uid()), 'manage_member_data'::text));

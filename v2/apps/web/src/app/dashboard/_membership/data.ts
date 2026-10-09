@@ -147,7 +147,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
 
   const journey: JourneyStop[] = [
     ...(p.joined_date
-      ? [{ key: "join", kind: "join" as const, title: "انضمامك إلى أديب", scope: null, date: fmtDateOnly(p.joined_date), at: Date.parse(`${p.joined_date}T00:00:00Z`), current: false }]
+      ? [{ key: "join", kind: "join" as const, title: "انضمامك إلى أدِيب", scope: null, date: fmtDateOnly(p.joined_date), at: Date.parse(`${p.joined_date}T00:00:00Z`), current: false }]
       : []),
     ...groupList.map((g, i) => {
       const units = [...new Set(g.items.map(unitOf).filter(Boolean) as string[])];

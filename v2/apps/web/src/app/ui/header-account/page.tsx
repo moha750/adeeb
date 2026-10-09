@@ -18,8 +18,8 @@ type Who = "guest" | "account" | "member";
 
 const WHO: { value: Who; label: string }[] = [
   { value: "guest", label: "زائر" },
-  { value: "account", label: "صاحبُ حساب" },
-  { value: "member", label: "عضو" },
+  { value: "account", label: "صديق أدِيب" },
+  { value: "member", label: "عضو أدِيب" },
 ];
 
 /** الاسمُ والصورةُ من حسابٍ حقيقيّ الشكل — الأفتارُ بلا صورةٍ ليُرى رسمُ الجنس. */

@@ -14,7 +14,7 @@ import type { CommitteeOption } from "./data";
 const RPC_ERRORS: Record<string, string> = {
   NOT_AUTHENTICATED: "انتهت جلستك. سجّل دخولك من جديد.",
   NO_PROFILE: "أكمِل بياناتك أوّلًا من صفحة حسابك.",
-  ALREADY_MEMBER: "أنت عضوٌ في أديب سلفًا.",
+  ALREADY_MEMBER: "أنت عضوٌ في أدِيب سلفًا.",
   ALREADY_VOLUNTEER: "أنت من المتطوّعين سلفًا.",
   NOT_VOLUNTEER: "لستَ من المتطوّعين. قدّم أوّلًا.",
   PREFS_COUNT: "رتّب رغباتك الثلاث.",

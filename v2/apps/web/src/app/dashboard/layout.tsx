@@ -10,7 +10,7 @@ import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { getMyScope } from "@/lib/myScope";
 
 export const metadata: Metadata = {
-  title: "بوّابة أديب",
+  title: "بوّابة أدِيب",
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

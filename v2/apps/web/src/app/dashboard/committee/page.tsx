@@ -57,7 +57,7 @@ export default async function MyCommitteePage() {
       <>
         <Head name={scope.committee.name} />
         <Alert tone="warning" title="لجنةٌ غير مفعّلة">
-          {scope.committee.name} لا تظهر في الهيكلة الحيّة. راجِع حالتها في «هيكلة أديب».
+          {scope.committee.name} لا تظهر في الهيكلة الحيّة. راجِع حالتها في «هيكلة أدِيب».
         </Alert>
       </>
     );

@@ -71,7 +71,7 @@ export function ArticleView({
           const waiting: PublicComment[] = d.pending
             .filter((p) => !known.has(p.id))
             .map((p) => ({
-              id: p.id, name: "أنت", member: true, gender: null, avatar: null,
+              id: p.id, name: "أنت", standing: null, gender: null, avatar: null,
               text: p.text, when: fmtDate(p.when), likes: 0, liked: false, pending: true,
             }));
           return [...waiting, ...s.map((c) => ({ ...c, liked: mine.has(c.id) }))];
@@ -117,7 +117,7 @@ export function ArticleView({
     if (!res.ok) { setNotice(res.message); return false; }
     // يظهر عند صاحبه موسومًا «ينتظر الإقرار»، فلا يظنّ أنّ كلامَه ضاع.
     setRows((s) => [
-      { id: res.id!, name: signedIn ? "أنت" : guestName, member: signedIn, gender: null,
+      { id: res.id!, name: signedIn ? "أنت" : guestName, standing: null, gender: null,
         avatar: null, text, when: fmtDate(new Date().toISOString()), likes: 0, liked: false, pending: true },
       ...s,
     ]);

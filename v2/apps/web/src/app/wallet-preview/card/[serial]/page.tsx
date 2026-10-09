@@ -40,7 +40,7 @@ export default async function ScanPage({ params }: { params: Promise<{ serial: s
       <main className="py-10">
         <Container>
           <div className="mx-auto max-w-md">
-            <Alert tone="danger" title="هذه ليست بطاقةَ أديب">
+            <Alert tone="danger" title="هذه ليست بطاقةَ أدِيب">
               الرقم <b className="font-latin">{decodeURIComponent(serial)}</b> غير مسجَّل عندنا. تأكّد أنّك
               مسحتَ الرمز الموجود على بطاقة العضو في المحفظة.
             </Alert>

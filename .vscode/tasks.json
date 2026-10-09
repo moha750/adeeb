@@ -1,0 +1,17 @@
+{
+  // خادمُ التطوير يقوم وحدَه كلّما فُتح المجلّد في VS Code — فلا يلزم أمرٌ بعد إطفاء الجهاز.
+  // `dev:start` يقلع منفصلًا (scripts/dev-server.mjs) فيبقى ولو أُغلقت النافذة، ولا يُقلع
+  // ثانيًا إن وجد خادمًا يعمل. وVS Code يستأذن مرّةً في تشغيل المهامّ التلقائيّة.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "خادم التطوير",
+      "type": "shell",
+      "command": "pnpm dev:start",
+      "options": { "cwd": "${workspaceFolder}/v2" },
+      "runOptions": { "runOn": "folderOpen" },
+      "presentation": { "reveal": "silent", "panel": "dedicated", "showReuseMessage": false },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -171,7 +171,8 @@ function exportCsv(agg: SurveyAggregates, responses: ResponseRow[]) {
   downloadBlob(blob, `${agg.title}_${new Date().toISOString().slice(0, 10)}.csv`, "نتائج-استبيان.csv");
 }
 
-export function ResultsView({ agg, responses }: { agg: SurveyAggregates; responses: ResponseRow[] }) {
+/** `canEdit`: من شُورك للرؤية يرى النتائج ولا يُعرض له «تحرير» (والخادم يرفضه على كلّ حال). */
+export function ResultsView({ agg, responses, canEdit }: { agg: SurveyAggregates; responses: ResponseRow[]; canEdit: boolean }) {
   const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<"summary" | "analytics" | "responses">("summary");
@@ -244,11 +245,11 @@ export function ResultsView({ agg, responses }: { agg: SurveyAggregates; respons
             toast.success("جُهّز ملفّ CSV.");
           },
         }}
-        menu={[{ items: [{
+        menu={canEdit ? [{ items: [{
           label: "تحرير",
           icon: <PencilSimple size={18} />,
           onSelect: () => router.push(`/dashboard/surveys/${agg.id}/edit`),
-        }] }]}
+        }] }] : undefined}
       />
 
       <div className="stat-grid" style={{ marginBottom: 18 }}>

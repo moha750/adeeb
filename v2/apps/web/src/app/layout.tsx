@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { shareOg } from "@/lib/share";
-// خطوط ورموز علامة أديب (المصدر الوحيد) ثم أنماط التطبيق ثمّ مكتبة المكوّنات المشتركة.
+// خطوط ورموز علامة أدِيب (المصدر الوحيد) ثم أنماط التطبيق ثمّ مكتبة المكوّنات المشتركة.
 // components.css يُحمَّل أخيرًا ليكون هو المصدر الفائز لأصناف المكوّنات (يظلّل نسخ globals القديمة).
 import "@adeeb/design-system/fonts.css";
 import "@adeeb/design-system/tokens.css";
@@ -19,7 +19,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  // بلا `template`: الصفحات تكتب لاحقتها بنفسها («… — أديب») فلا تتكرّر اللاحقة مرّتين.
+  // بلا `template`: الصفحات تكتب لاحقتها بنفسها («… — أدِيب») فلا تتكرّر اللاحقة مرّتين.
   title: "نادي أَدِيب",
   description: "نادٍ ثقافيّ إبداعيّ بجامعة الملك فيصل: أنشطةٌ وورشٌ وإصداراتٌ ومجتمعٌ من المبدعين.",
   // صورةُ الرابط من مصدرها الواحد `lib/share` — انظر تعليلَها هناك.
@@ -66,7 +66,7 @@ export default function RootLayout({
         <BootSplash />
         {/* وزنُ الأيقونات يُعلَن مرّةً للموقع كلّه — انظر `IconDefaults` */}
         <IconDefaults>{children}</IconDefaults>
-        {/* مؤشّرُ أديب — طبقةٌ واحدةٌ للموقع كلِّه، **بعد** المحتوى فتعلوه بلا `z-index`
+        {/* مؤشّرُ أدِيب — طبقةٌ واحدةٌ للموقع كلِّه، **بعد** المحتوى فتعلوه بلا `z-index`
             يُنازَع عليه. وهي `pointer-events: none` فلا تحجب نقرةً ولا تمنع تحديدًا. */}
         {/* تتبّعُ الزيارات — بعد المحتوى، ولا يرسم شيئًا. يتخطّى غرفَ اللوحة والتطوير. */}
         <VisitTracker />

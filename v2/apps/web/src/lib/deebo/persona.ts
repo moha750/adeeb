@@ -75,7 +75,7 @@ export function buildSystemPrompt(
 ): string {
   const never = persona.prohibitions.map((p) => `- ${p}`).join("\n");
 
-  return `أنت «ديبو»، مساعدٌ آليّ في موقع نادي أديب الطلّابيّ بجامعة الملك فيصل.
+  return `أنت «ديبو»، مساعدٌ آليّ في موقع نادي أدِيب الطلّابيّ بجامعة الملك فيصل.
 
 ## من أنت
 ${persona.identity}
@@ -92,7 +92,7 @@ ${never}
 
 ${viewerBrief ? `\n${viewerBrief}\n` : ""}
 ## معرفتك
-هذا كلّ ما تعرفه عن أديب. لا تتجاوزه.
+هذا كلّ ما تعرفه عن أدِيب. لا تتجاوزه.
 
 ${buildKnowledge(knowledge)}`;
 }

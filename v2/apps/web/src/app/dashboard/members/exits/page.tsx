@@ -13,7 +13,7 @@ import { ExitsView } from "./ExitsView";
  * الغرفة ولم يكن منهم رأى غرفةً فارغةً لا زرًّا معطَّلًا: هذا هو نمطُ المستودع، القفلُ
  * للغرفة والقاعدةُ تحسم من يفعل ماذا فيها.
  */
-export const metadata = { title: "طلبات الخروج، بوّابة أديب" };
+export const metadata = { title: "طلبات الخروج، بوّابة أدِيب" };
 
 export default async function ExitsPage() {
   const denied = await denyUnless("/dashboard/members/exits");

@@ -1,6 +1,6 @@
 "use client";
 
-// الأجزاء العرضيّة لشجرة هيكلة أديب — مصدرٌ واحد يستهلكه العارض (StructureView)
+// الأجزاء العرضيّة لشجرة هيكلة أدِيب — مصدرٌ واحد يستهلكه العارض (StructureView)
 // ومعرض /ui/structure معًا (فلسفة المعرض: المكوّن الحقيقيّ نفسه، لا محاكاة).
 // التنسيق كلّه من عائلة `.org-*` في المكتبة (components.css) — لا تنسيق شارد هنا.
 import { Badge, matchesSearch } from "@adeeb/design-system";

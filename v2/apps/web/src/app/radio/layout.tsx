@@ -3,6 +3,8 @@ import { RadioPlayerProvider } from "./_player/PlayerProvider";
 import { StationDoors, StationSide } from "./_shell/StationChrome";
 import { StationFoot } from "./_shell/StationFoot";
 import { StationScroll } from "./_shell/StationScroll";
+import { THEME_BOOT } from "./_shell/theme";
+import { ThemeSync } from "./_shell/ThemePicker";
 
 /**
  * تخطيطُ القسم — مسكنُ المشغّل وهيكلُ المحطّة.
@@ -25,12 +27,18 @@ import { StationScroll } from "./_shell/StationScroll";
  * و`data-cursor-ink` هنا لأجل المؤشّر: داخلَ هذا الجذر تلبس هالتُه عنّابيَّ
  * المحطّة (`--cur-ink` في كتلة `.stn`)، ويسقط سنُّ الريشة كلَّه — انظر
  * `SiteCursor`.
+ *
+ * و**سكربتُ الوضع أوّلُ أبناء الجذر** (٢٠٢٦-١٠-٠٩): يكتب وسمَ الفاتح أو الداكن
+ * على `html` قبل أن يُرسَم من المحطّة شيء، فلا يومض الكريميُّ في وجه من اختار
+ * الداكن. ولا يجري في التنقّل الداخليّ، فيكمله `ThemeSync` — انظر `_shell/theme.ts`.
  */
 export default async function RadioLayout({ children }: { children: React.ReactNode }) {
   const station = await getPublicStation();
   return (
     <RadioPlayerProvider stationName={station.name} stationLogoUrl={station.logoUrl}>
       <div className="stn stc" data-cursor-ink>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <ThemeSync />
         <div className="stc-app">
           <StationSide stationName={station.name} />
           <div className="stc-main">

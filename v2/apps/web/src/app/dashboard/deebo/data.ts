@@ -1,6 +1,7 @@
 // يُستورَد من مكوّنات خادميّة وحدها (page.tsx) — المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
+import { NAMELESS_OWNER } from "./talk";
 
 /** رسالةٌ واحدةٌ في محادثة — صفٌّ من `deebo_messages` بأسماء الواجهة. */
 export type DeeboMessage = {
@@ -28,7 +29,7 @@ export type DeeboConversation = {
   /** اسمُ صاحبها إن كان له حساب — `null` للزائر المجهول (وله بصمتُه وحدَها). */
   ownerName: string | null;
   /**
-   * صفتُه في أديب — تُقرأ من القاعدة لا تُخمَّن من وجود الحساب: **صاحبُ الحساب ليس عضوًا
+   * صفتُه في أدِيب — تُقرأ من القاعدة لا تُخمَّن من وجود الحساب: **صاحبُ الحساب ليس عضوًا
    * بالضرورة** (م١ وحّدت `profiles` فسكنه من لم ينضمّ بعد). والثلاثُ هي صفاتُ
    * `lib/deebo/viewer.ts` نفسُها، فلا صفتان لشخصٍ واحدٍ في المنتج.
    */
@@ -88,7 +89,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
 
   /* أسماءُ أصحاب المحادثات — نداءٌ واحدٌ لهم جميعًا لا نداءٌ لكلّ صفّ.
      **والاسمُ يُقرأ من `profiles` لا يُخزَّن في المحادثة**: من غيّر اسمَه غيّره في سجلّه
-     معه، ومن خرج من أديب صار `user_id` فيها `null` (م١) فعادت مجهولةً بلا أثرٍ لاسمه. */
+     معه، ومن خرج من أدِيب صار `user_id` فيها `null` (م١) فعادت مجهولةً بلا أثرٍ لاسمه. */
   const ownerIds = [...new Set(raw.map((c) => c.user_id).filter((v): v is string => !!v))];
   const names = new Map<string, string>();
   const genders = new Map<string, "male" | "female">();
@@ -97,7 +98,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
   if (ownerIds.length) {
     /* ثلاثةُ نداءاتٍ لأصحاب المحادثات جميعًا لا ثلاثةٌ لكلّ واحد، وتجري معًا.
        و`members` **عرضٌ مفتاحُه `id`** لا `user_id` (سابقةُ `viewer.ts`: الاستعلامُ
-       بـ`user_id` يتعثّر صامتًا فيصير العضوُ «صاحبَ حساب»). والمتطوّعُ صفٌّ لم يُنهَ. */
+       بـ`user_id` يتعثّر صامتًا فيصير العضوُ «صديقَ أدِيب»). والمتطوّعُ صفٌّ لم يُنهَ. */
     const [people, mem, vol] = await Promise.all([
       sb.from("profiles").select("id, full_name, gender").in("id", ownerIds),
       sb.from("members").select("id").in("id", ownerIds),
@@ -156,7 +157,7 @@ export async function getDeeboLog(): Promise<DeeboLogData> {
       lastAt: c.last_at,
       visitorHash: c.visitor_hash,
       hiddenAt: c.hidden_at,
-      ownerName: c.user_id ? names.get(c.user_id) ?? "صاحبُ حسابٍ لا اسمَ له" : null,
+      ownerName: c.user_id ? names.get(c.user_id) ?? NAMELESS_OWNER : null,
       ownerStanding: standingOf(c.user_id),
       ownerGender: c.user_id ? genders.get(c.user_id) ?? null : null,
       entryPath: c.entry_path,
@@ -207,7 +208,7 @@ export async function getDeeboTalk(
   };
 
   // الاسمُ من `profiles` لا من صفّ المحادثة (العلّةُ في `getDeeboLog`: من غيّر اسمَه غيّره
-  // في سجلّه معه، ومن خرج من أديب صار `user_id` فيها `null` فعادت مجهولةً بلا أثرٍ لاسمه).
+  // في سجلّه معه، ومن خرج من أدِيب صار `user_id` فيها `null` فعادت مجهولةً بلا أثرٍ لاسمه).
   let ownerName: string | null = null;
   let ownerStanding: DeeboConversation["ownerStanding"] = null;
   let ownerGender: DeeboConversation["ownerGender"] = null;
@@ -218,7 +219,7 @@ export async function getDeeboTalk(
       sb.from("volunteers").select("ended_at").eq("user_id", c.user_id).maybeSingle(),
     ]);
     const row = person.data as { full_name: string | null; gender: string | null } | null;
-    ownerName = row?.full_name ?? "صاحبُ حسابٍ لا اسمَ له";
+    ownerName = row?.full_name ?? NAMELESS_OWNER;
     ownerGender = row?.gender === "male" || row?.gender === "female" ? row.gender : null;
     const volRow = vol.data as { ended_at: string | null } | null;
     ownerStanding = mem.data ? "member" : volRow && !volRow.ended_at ? "volunteer" : "account";

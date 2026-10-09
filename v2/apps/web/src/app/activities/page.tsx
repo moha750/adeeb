@@ -6,8 +6,8 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "برامجنا وأنشطتنا، أديب",
-  description: "احجز مقعدك في ورش نادي أديب وبرامجه وحواراته القادمة.",
+  title: "برامجنا وأنشطتنا، أدِيب",
+  description: "احجز مقعدك في ورش نادي أدِيب وبرامجه وحواراته القادمة.",
 };
 
 export default async function ActivitiesPage() {
@@ -22,7 +22,7 @@ export default async function ActivitiesPage() {
             <LandingHeading
               eyebrow="برامجنا"
               title="أنشطةٌ قادمة"
-              deck="احجز مقعدك في ورش أديب وبرامجه وحواراته."
+              deck="احجز مقعدك في ورش أدِيب وبرامجه وحواراته."
               align="center"
             />
             {items.length === 0 ? (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { positionLine, positionParts, seatName } from "@/lib/positionLabel";
+import { positionLine, positionParts, rankFor, seatName } from "@/lib/positionLabel";
 
 /**
  * تسميةُ المنصب — القاعدةُ في سطرين: مسمّى **شخصٍ** رتبتُه ووحدةُ إسناده، ومسمّى
@@ -125,5 +125,22 @@ describe("لا فاصلَ في المخرجات", () => {
       expect(positionLine(rank, unit) ?? "").not.toContain("  ");
       expect(seatName(rank ?? "", unit)).not.toContain("  ");
     }
+  });
+});
+
+describe("rankFor", () => {
+  it("يؤنّث الرتبة وحدَها أوّلَ المسمّى", () => {
+    expect(rankFor("قائد", "female")).toBe("قائدة");
+    expect(rankFor("قائد إدارة الموارد البشرية", "female")).toBe("قائدة إدارة الموارد البشرية");
+    expect(rankFor("رئيس نادي أدِيب", "female")).toBe("رئيسة نادي أدِيب");
+  });
+
+  it("يُبقي «عضو» للجنسين", () => {
+    expect(rankFor("عضو لجنة التأليف", "female")).toBe("عضو لجنة التأليف");
+  });
+
+  it("لا يمسّ المذكّر ولا المجهول", () => {
+    expect(rankFor("منسّق", "male")).toBe("منسّق");
+    expect(rankFor("منسّق", null)).toBe("منسّق");
   });
 });

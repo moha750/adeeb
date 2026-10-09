@@ -369,12 +369,12 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           variant="soft"
           icon={<Megaphone />}
           title="رسائل النادي"
-          subtitle="ما يصل بريدَك من أديب، عدا رسائل حسابك"
+          subtitle="ما يصل بريدَك من أدِيب، عدا رسائل حسابك"
         />
         <CardBody>
           <Switch
             row
-            label="أخبارُ أديب ودعواتُه"
+            label="أخبارُ أدِيب ودعواتُه"
             description="ما يُعلَن من فعّاليّاتٍ وأبوابٍ تُفتح. ورسائلُ الحساب (تأكيدُ بريدٍ واستعادةُ كلمة مرور) تصل في كلّ حال."
             checked={marketing}
             disabled={busy}
@@ -441,7 +441,7 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
         <CardHeader
           variant="soft"
           icon={<UserMinus />}
-          title={exit.door === "delete" ? "حذف الحساب" : "الخروج من أديب"}
+          title={exit.door === "delete" ? "حذف الحساب" : "الخروج من أدِيب"}
           subtitle={exit.door === "delete" ? "بابُك إلى الخروج، ومهلتُه ثلاثون يومًا" : "عضويّتُك أوّلًا، ثمّ حسابُك إن شئت"}
         />
         <CardBody>
@@ -529,7 +529,7 @@ export function SettingsView({ settings, deletion, exit, fullName }: { settings:
           label="النبذة"
           icon={<UserCircle />}
           innerIcon={<Quotes />}
-          placeholder="كاتبٌ ومحرّرٌ في نادي أديب."
+          placeholder="كاتبٌ ومحرّرٌ في نادي أدِيب."
           rows={3}
           optional
           value={bio}

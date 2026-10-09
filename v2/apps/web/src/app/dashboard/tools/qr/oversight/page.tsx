@@ -2,7 +2,7 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getQrOversight } from "./data";
 import { OversightView } from "./OversightView";
 
-export const metadata = { title: "إشراف الباركود، بوّابة أديب" };
+export const metadata = { title: "إشراف الباركود، بوّابة أدِيب" };
 
 /**
  * غرفةُ الإشراف. قفلُها `oversee_qr` — قدرةٌ يحملها دورُ «أَدِيب» وحدَه اليوم، ولا تُغني

@@ -1,4 +1,4 @@
-// نقطة تصدير مكوّنات نظام تصميم أديب
+// نقطة تصدير مكوّنات نظام تصميم أدِيب
 export { cn } from "./lib/cn";
 export { type FieldCharset } from "./lib/charset";
 export { CharsetWhisper, KeyboardGlyph, type CharsetWhisperProps } from "./components/CharsetWhisper";
@@ -52,11 +52,10 @@ export { AuthShell, type AuthShellProps } from "./components/AuthShell";
 export { LogoLoader, type LogoLoaderProps } from "./components/LogoLoader";
 export { Reveal } from "./components/Reveal";
 export { Ambient } from "./components/Ambient";
+/* مسرحُ اللحن — الأسطوانة في قسم «الهويّة الموسيقيّة» (معرضُه `/ui/sound-stage`). */
+export { SoundStage, type SoundStageProps } from "./components/SoundStage";
 export { BurgerIcon } from "./components/BurgerIcon";
 export { Header } from "./components/Header";
 export { Footer } from "./components/Footer";
 export { siteNav, footerGroups, type NavItem } from "./lib/nav";
 export { Cursor, type CursorProps } from "./components/Cursor";
-
-/* لوحُ الكلمة — «خمّن الكلمة». هيئةٌ واحدةٌ مُقَرّة، وأيقوناتُها تُمرَّر (معرضُها `/ui/game-screens`). */
-export { WordBoard, type WordBoardProps, type WordBoardState, type WordBoardIcons } from "./components/WordBoard";

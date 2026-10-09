@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, ModalSectionHeading, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Alert, Badge, Button, Donut, Field, ModalSectionHeading, Segmented, SectionCard, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   AddressBook, At, BookOpen, Books, Buildings, CalendarBlank, CalendarX, Certificate, Envelope,
-  GraduationCap, Hash, IdentificationBadge, IdentificationCard, NotePencil, Phone, ShareNetwork,
-  ShieldWarning, User, UsersThree,
+  GraduationCap, Handshake, Hash, IdentificationBadge, IdentificationCard, NotePencil, Phone, ShareNetwork,
+  ChartDonut, ShieldWarning, Tag, User, UserMinus, UsersThree,
 } from "@phosphor-icons/react";
 import {
   ArrowCounterClockwise, ArrowsClockwise, Eye, MagnifyingGlass, PencilSimple, Plus, Prohibit, Star, Trash,
@@ -38,8 +38,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberRow, MemberStatus, MoveTarget } from "./data";
-import { DEGREES, DEGREE_VALUES, GENDERS, PHONE_RE, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX, SOCIAL_KEYS, TERMINATION_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl } from "./vocab";
-import { endMembership, restoreMembership, updateMember } from "./actions";
+import { DEGREES, DEGREE_VALUES, GENDERS, PHONE_RE, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, RECORD_NO_MAX, SOCIAL_KEYS, REASON_KIND, TERMINATION_KINDS, TERMINATION_REASONS, VOLUNTEER_MOVE_KINDS, VOLUNTEER_MOVE_REASONS, hasAcademicFields, isPresetReason, socialHandle, socialLabel, socialLabelOf, socialUrl, terminationKindLabel } from "./vocab";
+import { endMembership, moveToVolunteers, restoreMembership, updateMember } from "./actions";
 // النقل إسنادٌ لا فعلٌ ثانٍ: البابُ نفسه الذي يفتحه تبويب التعيينات (`assign_position`)، وهي
 // تُخلي الموضع القديم وتكتب الجديد في معاملةٍ واحدة. فلا فعلَ خادميّ ثالثٌ يفترق عنهما يومًا.
 import { assignPosition } from "./structure/actions";
@@ -99,7 +99,7 @@ const SURFACE_TONE: Record<MemberStatus, "success" | "warning" | "danger" | unde
 // عنوان كل قسم حسب الحالة المثبّتة
 const SECTION: Record<"all" | MemberStatus, { title: string; noun: string }> = {
   all: { title: "كل الأعضاء", noun: "عضو" },
-  active: { title: "أعضاء أديب", noun: "عضو" },
+  active: { title: "أعضاء أدِيب", noun: "عضو" },
   suspended: { title: "أعضاء سابقون", noun: "عضو سابق" },
   inactive: { title: "غير النشطين", noun: "عضو" },
 };
@@ -117,6 +117,7 @@ const Ico = {
   warn: <ShieldWarning />,
   cert: <Certificate />,
   move: <ArrowsClockwise />,
+  volunteer: <Handshake />,
 };
 
 /** أدنى طول لسبب الإنهاء — نفس عتبة `terminate_membership` في القاعدة (خمسة أحرف). */
@@ -124,6 +125,24 @@ const REASON_MIN = 5;
 
 /** خيارات سبب الإنهاء: نصُّ السبب هو قيمتُه — يُملأ به الصندوق ثمّ يُحرَّر (`lib/membershipFields`). */
 const REASON_OPTIONS = TERMINATION_REASONS.map((r) => ({ value: r, label: r }));
+const VOLUNTEER_REASON_OPTIONS = VOLUNTEER_MOVE_REASONS.map((r) => ({ value: r, label: r }));
+
+/**
+ * فئاتُ السبب (٢٠٢٦-١٠-٠٩) — خمسٌ للإنهاء، وثلاثٌ للنقل إلى المتطوّعين (مرآةُ شرط القاعدة).
+ * والفئةُ والسببُ المتكرّر متلازمان في النافذة: اختيارُ السبب يختار فئتَه، واختيارُ الفئة ينخل الأسباب.
+ */
+const KIND_OPTIONS = TERMINATION_KINDS.map((k) => ({ value: k.value as string, label: k.label as string }));
+const VOLUNTEER_KIND_OPTIONS = KIND_OPTIONS.filter((k) => (VOLUNTEER_MOVE_KINDS as readonly string[]).includes(k.value));
+
+/** وحدةُ العدّ في حلقة أسباب الخروج */
+const MEMBER_UNIT = { one: "عضو", two: "عضوان", few: "أعضاء" };
+
+/** سطرُ النقل إلى المتطوّعين بجنس صاحبه — ومن لا جنسَ في سجلّه يُقال عنه بلا ضمير. */
+const VOLUNTEER_MOVE_LINE: Record<"male" | "female" | "none", string> = {
+  male: "تنتهي عضويّته ويخلو مقعده، ويصير متطوّعًا نشطًا.",
+  female: "تنتهي عضويّتها ويخلو مقعدها، وتصير متطوّعةً نشطة.",
+  none: "تنتهي العضويّة ويخلو المقعد، ويصير صاحبها متطوّعًا نشطًا.",
+};
 
 const columns: Column<MemberRow>[] = [
   {
@@ -246,6 +265,7 @@ function ProfileBody({ member, onMove }: { member: MemberRow; onMove?: () => voi
         ) : null}
         {terminated ? (
           <Section end icon={<Prohibit />} title="إنهاء العضويّة">
+            <Cell full label="فئة السبب" icon={<Tag />} value={member.endKind ? terminationKindLabel(member.endKind) : null} />
             <Cell full label="سبب الإنهاء" icon={<WarningCircle />} value={member.endReason} />
             <Cell full label="تاريخ الإنهاء" icon={<CalendarX />} value={member.endDate} />
             {/* اسمٌ لا يُنسخ — ورُكنُه خالٍ (القاعدة ٨). ومن أُنهي قبل سجلّ النشاط لا فاعلَ له فتقول «غير متوفّر». */}
@@ -288,9 +308,18 @@ type ViewProps = {
    * يسقط البند: نافذةٌ بلا وجهةٍ وعدٌ فارغ. والسلطةُ على الصفّ (`canMove`) شرطٌ آخر معها.
    */
   moveTargets?: MoveTarget[];
+  /**
+   * **السابقون قسمٌ داخل «أعضاء أدِيب»** (قرار المالك ٢٠٢٦-١٠-٠٩) لا تبويبٌ مستقلّ: يُعرف سببُ
+   * خروجهم وأنّهم كانوا أعضاءً من حيث يُدار الأعضاء. فمع `lockedStatus="active"` يظهر مبدّلٌ ممتدّ
+   * «أعضاء / سابقون» على سنّة سجلّ المتطوّعين. ويُمرَّر لمن يملك `view_suspended_members` وحده،
+   * فبلاه لا مبدّل ويبقى الكشفُ كشفَ الأعضاء.
+   */
+  formerTab?: boolean;
+  /** القسمُ الذي تفتح عليه الشاشة (المسارُ القديم «أعضاء سابقون» يحوّل إلى هنا بالسابقين). */
+  initialTab?: "active" | "suspended";
 };
 
-export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3, moveTargets = [] }: ViewProps) {
+export function MembersView({ members: input, lockedStatus, mode, mayManageData: mayManage = false, headless = false, readOnly = false, emptyNote, contact = false, warningLimit = 3, moveTargets = [], formerTab = false, initialTab = "active" }: ViewProps) {
   // منبعٌ واحد للسلطة: في العرض المحض تُقرأ صفرًا فتغيب الأفعال كلُّها من الجدول والكرت والنافذة
   const members = useMemo(
     () => (readOnly ? input.map((m) => ({ ...m, canEnd: false, canEdit: false, canWarn: false, canCertify: false, canMove: false })) : input),
@@ -311,9 +340,14 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   // إنهاء العضوية وإعادتها — نافذتان مستقلّتان: الأولى تطلب سببًا (نصٌّ يُحفظ ويُعرَض بعدها)،
   // والثانية تأكيدٌ مجرّد. والقاعدة هي الحَكَم في الحالين؛ هذه أوراقُها لا حكمُها.
   const [ending, setEnding] = useState<MemberRow | null>(null);
+  // والنافذةُ نفسها لبابين: إنهاءٌ مجرّد، أو إنهاءٌ ينقله إلى المتطوّعين — السببُ والسلطةُ واحدان.
+  const [endMode, setEndMode] = useState<"end" | "volunteer">("end");
   // حالةٌ واحدة: نصُّ السبب. والقائمة تكتب فيه، والخيارُ المختار يُشتقّ منه — فلا رقمان لسؤال.
   const [endReason, setEndReason] = useState("");
+  // وفئتُه حالةٌ ثانية لا تُشتقّ من النصّ: النصُّ يُحرَّر بعد الاختيار، والفئةُ تبقى ما اختير
+  const [endKind, setEndKind] = useState("");
   const [endErr, setEndErr] = useState<string | null>(null);
+  const [kindErr, setKindErr] = useState<string | null>(null);
   const [restoring, setRestoring] = useState<MemberRow | null>(null);
   // إصدار إنذار — نافذة الغرفة نفسها (مصدرٌ واحد)، مثبّتةً على صاحب الصفّ فلا يُختار غيره
   const [warning, setWarning] = useState<MemberRow | null>(null);
@@ -331,12 +365,17 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const [pageSize, setPageSize] = useState(50);
   const [view, changeView] = usePersistentView("members-view");
 
+  // القسمُ الجاري: المثبّتُ كما هو، وفي «أعضاء أدِيب» ذي المبدّل ما اختير منه
+  const [tab, setTab] = useState<"active" | "suspended">(initialTab);
+  const withFormer = formerTab && lockedStatus === "active";
+  const status: MemberStatus | undefined = withFormer ? tab : lockedStatus;
+
   // الحالةُ المثبّتة تسبق اسمَ الشاشة في المفردات: كشفُ «من غادر» داخل «من أشرف عليهم» ناسُه
   // «عضو سابق» لا «عضو» — والعنوانُ نفسه لا يُرسَم هناك أصلًا (`headless`).
-  const section = lockedStatus ? SECTION[lockedStatus] : mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION.all;
+  const section = status ? SECTION[status] : mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION.all;
   // نغمة الطبقة البصريّة: شاشة أحاديّة الحالة → الطاولة كلّها بنغمة الحالة؛ العرض المختلط → نغمة كلّ صفّ حسب حالته
-  const tableTone = lockedStatus ? SURFACE_TONE[lockedStatus] : undefined;
-  const rowToneFn = lockedStatus
+  const tableTone = status ? SURFACE_TONE[status] : undefined;
+  const rowToneFn = status
     ? undefined
     : (m: MemberRow) => {
         return SURFACE_TONE[m.status]; // نغمة الصفّ من حالة العضو (نجاح/تحذير/خطر)
@@ -346,7 +385,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const openView = (m: MemberRow) => setModal({ mode: "view", member: m });
   const openAdd = () => setModal({ mode: "add" });
   const close = () => setModal(null);
-  const clearFilters = () => { setSearch(""); setFv({}); };
+  const clearFilters = () => { setSearch(""); setFv({}); setHiddenKinds([]); };
 
   // تعبئة النموذج عند فتح الإضافة/التعديل (قيم العضو أو فارغة)
   useEffect(() => {
@@ -381,7 +420,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   });
 
   // خيارات المرشّحات مشتقّة من أعضاء هذا القسم
-  const scope = useMemo(() => (lockedStatus ? members.filter((m) => m.status === lockedStatus) : members), [members, lockedStatus]);
+  const scope = useMemo(() => (status ? members.filter((m) => m.status === status) : members), [members, status]);
   const deptOpts = useMemo(() => uniq(scope.map((m) => m.dept).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
   const roleOpts = useMemo(() => uniq(scope.map((m) => m.role).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
   const committeeOpts = useMemo(() => uniq(scope.map((m) => m.committee).filter(Boolean) as string[]).map((v) => ({ value: v, label: v })), [scope]);
@@ -396,17 +435,25 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
     [scope],
   );
   const filters: FilterDef[] = useMemo(() => [
-    { key: "role", label: "الدور", options: roleOpts },
-    { key: "dept", label: "القسم", options: deptOpts },
-    { key: "committee", label: "اللجنة", options: committeeOpts },
+    // **ولا دورَ ولا قسمَ ولا لجنةَ للسابقين** (قرار المالك ٢٠٢٦-١٠-٠٩): مقاعدُهم تُخلى بالإنهاء
+    // (`_apply_termination`)، فكانت المرشِّحاتُ الثلاثةُ هناك شبهَ فارغةٍ تَعِد بما لا تردّ.
+    ...(status === "suspended" ? [] : [
+      { key: "role", label: "الدور", options: roleOpts },
+      { key: "dept", label: "القسم", options: deptOpts },
+      { key: "committee", label: "اللجنة", options: committeeOpts },
+    ]),
     { key: "gender", label: "الجنس", options: genderOpts },
-  ], [roleOpts, deptOpts, committeeOpts, genderOpts]);
+    // ومرشِّحُ السبب لا يُعرَّف هنا: حالتُه حالةُ الحلقة (`hiddenKinds`) لا `fv`، فيُلحَق بالشريط أدناه
+  ], [roleOpts, deptOpts, committeeOpts, genderOpts, status]);
 
   /**
    * **نطاقُ الإحصاء** (ق١٧): التبويبُ والمرشِّحاتُ الأربعةُ كلُّها سكّانيّة (دورٌ وقسمٌ
    * ولجنةٌ وجنس)، فالعدّادُ يتبعها — ترشّح لجنةً فيقول كم عضوًا فيها. والبحثُ لا يدخله.
    */
-  const counted = useMemo(() => scope.filter((m) => {
+  // ما سوى السبب من المرشِّحات — عليه تُرسم حلقةُ الأسباب: موضوعُها السببُ نفسُه، فلا تنكمش
+  // بإخفاء فئاتها (ق١٧، حدُّ البُعد)، بل تبقى صورةَ الكلّ والمخفيُّ فيها مشطوبٌ بنسبته، بينما
+  // ينكمش الكشفُ والعدّاد.
+  const inScopeBut = useMemo(() => scope.filter((m) => {
     if (fv.role && m.role !== fv.role) return false;
     if (fv.dept && m.dept !== fv.dept) return false;
     if (fv.committee && m.committee !== fv.committee) return false;
@@ -414,6 +461,45 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
     if (fv.gender && (fv.gender === GENDER_NONE ? m.gender != null : m.gender !== fv.gender)) return false;
     return true;
   }), [scope, fv]);
+  /**
+   * **الحلقةُ مرشِّحُ السبب** (سؤال المالك ٢٠٢٦-١٠-٠٩): الضغطُ على فئةٍ في حلقة «أسباب الخروج»
+   * يُخفيها، وهو سلوكُ الحلقة في الموقع كلّه منذ ٢٠٢٦-٠٨-٠٨. فصار الإخفاءُ يصعد إلى هنا ويُخرج
+   * أصحابَ الفئة من الكشف والعدّاد. والحالةُ تسمياتُ الفئات لا رموزُها، لأنّ الحلقة تعرف التسمية.
+   */
+  const [hiddenKinds, setHiddenKinds] = useState<string[]>([]);
+  const counted = useMemo(
+    () => (hiddenKinds.length ? inScopeBut.filter((m) => !hiddenKinds.includes(terminationKindLabel(m.endKind))) : inScopeBut),
+    [inScopeBut, hiddenKinds],
+  );
+  const kinds = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const m of inScopeBut) n.set(m.endKind ?? "other", (n.get(m.endKind ?? "other") ?? 0) + 1);
+    // ترتيبُ الفئات الثابت لا ترتيبُ الأعداد: اللونُ يلازم الفئةَ في الحلقة من زيارةٍ إلى زيارة
+    return TERMINATION_KINDS.map((k) => ({ label: k.label as string, value: n.get(k.value) ?? 0 })).filter((k) => k.value > 0);
+  }, [inScopeBut]);
+
+  /**
+   * **مرشِّحُ «السبب» في الشريط** (طلب المالك ٢٠٢٦-١٠-٠٩) — بابٌ ثانٍ **لحالةٍ واحدة**: لا يملك
+   * قيمةً خاصّة، بل يقرأ الحلقةَ ويكتب فيها. فاختيارُ سببٍ يُخفي في الحلقة ما سواه، والقيمةُ
+   * المعروضة سببٌ متى بقي في الحلقة ظاهرًا وحده، وإلّا «الكل». فلا يفترق البابان يومًا.
+   * والخياراتُ ما في الحلقة من فئات، فلا يُختار سببٌ لا أحدَ فيه فتفرغ الحلقة.
+   */
+  const shownKinds = kinds.filter((k) => !hiddenKinds.includes(k.label));
+  const kindValue = hiddenKinds.length > 0 && shownKinds.length === 1 ? shownKinds[0].label : "";
+  const toolbarFilters: FilterDef[] = status === "suspended"
+    ? [...filters, { key: "kind", label: "السبب", options: kinds.map((k) => ({ value: k.label, label: k.label })) }]
+    : filters;
+  const onToolbarFilter = (k: string, v: string) => {
+    if (k === "kind") setHiddenKinds(v ? kinds.map((x) => x.label).filter((l) => l !== v) : []);
+    else setFv((p) => ({ ...p, [k]: v }));
+  };
+  // سطرُ النطاق يقول السببَ باسمه متى بقي وحده، وإلّا ما أُخفي
+  const kindScope = !hiddenKinds.length ? null : kindValue || `بلا ${hiddenKinds.join("، ")}`;
+
+  // تبديلُ القسم يبدأ من جديد: مرشِّحاتُ قسمٍ لا تصحّ في أخيه (السبب لا يقع على عضوٍ قائم)
+  const switchTab = (t: "active" | "suspended") => {
+    setTab(t); setFv({}); setHiddenKinds([]); setSearch(""); setSelected(new Set()); setPage(1);
+  };
 
   const rows = useMemo(() => {
     // ما يعرضه الجدول والكرت يُبحَث فيه — الجوّال والدور واللجنة والقسم كالاسم والبريد،
@@ -442,7 +528,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   const sort = sorting[0] ? { id: sorting[0].id, desc: sorting[0].desc } : null;
   const toggleSort = (id: string) => table.getColumn(id)?.toggleSorting();
 
-  useEffect(() => { setPage(1); }, [search, fv, pageSize, sorting]);
+  useEffect(() => { setPage(1); }, [search, fv, hiddenKinds, pageSize, sorting]);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -466,16 +552,33 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
     />
   );
 
-  const openEnd = (m: MemberRow) => { setEndReason(""); setEndErr(null); setEnding(m); };
+  const openEnd = (m: MemberRow, mode: "end" | "volunteer" = "end") => {
+    setEndReason(""); setEndKind(""); setEndErr(null); setKindErr(null); setEndMode(mode); setEnding(m);
+  };
+  // الأسبابُ المتكرّرة منخولةً بالفئة المختارة (وبلا فئةٍ كلُّها)
+  const presetOptions = (endMode === "volunteer" ? VOLUNTEER_REASON_OPTIONS : REASON_OPTIONS)
+    .filter((o) => !endKind || REASON_KIND[o.value] === endKind);
   const submitEnd = () => {
     const target = ending;
     if (!target) return;
     // المحفوظُ ما في الصندوق دائمًا — اختِير من القائمة أو كُتب باليد أو زِيد عليه
     const reason = endReason.trim();
+    const kindMissing = !endKind;
+    if (kindMissing) setKindErr("اختر فئة السبب.");
     if (reason.length < REASON_MIN) { setEndErr(`اذكر سبب إنهاء العضوية (${REASON_MIN} أحرف فأكثر).`); return; }
+    if (kindMissing) return;
     startAct(async () => {
-      const r = await endMembership({ userId: target.id, reason });
-      if (r.ok) { toast.success(`أُنهيت عضوية «${target.name}».`); setEnding(null); router.refresh(); } else toast.error(r.message);
+      const toVolunteer = endMode === "volunteer";
+      const r = toVolunteer
+        ? await moveToVolunteers({ userId: target.id, reason, kind: endKind })
+        : await endMembership({ userId: target.id, reason, kind: endKind });
+      if (r.ok) {
+        toast.success(toVolunteer
+          ? `${target.gender === "female" ? "نُقلت" : "نُقل"} «${target.name}» إلى المتطوّعين.`
+          : `أُنهيت عضوية «${target.name}».`);
+        setEnding(null);
+        router.refresh();
+      } else toast.error(r.message);
     });
   };
   const submitRestore = () => {
@@ -511,7 +614,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   // وأكثرُه يردّه القيد أصلًا (٣٤ رابطًا يمنعان حذف من صوّت أو قُوبل أو كتب).
   const actionsFor = (m: MemberRow): MenuGroup[] => {
     const danger = m.canEnd && m.status !== "suspended"
-      ? [{ label: "إنهاء العضوية", icon: Ico.end, danger: true, onSelect: () => openEnd(m) }]
+      ? [
+          // إنهاءٌ يُبقيه في أدِيب متطوّعًا — يسبق الإنهاءَ المجرّد لأنّه الأخفّ
+          { label: "نقل إلى المتطوّعين", icon: Ico.volunteer, danger: true, onSelect: () => openEnd(m, "volunteer") },
+          { label: "إنهاء العضوية", icon: Ico.end, danger: true, onSelect: () => openEnd(m) },
+        ]
       : [];
     const groups: MenuGroup[] = [
       {
@@ -531,7 +638,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
             ? [{ label: "إصدار إنذار", icon: Ico.warn, onSelect: () => setWarning(m) }]
             : []),
           // شهادةُ الخبرة **لا تشترط عضويّةً سارية** (بخلاف الإنذار): أكثرُ من يطلبها من غادر،
-          // فالبند يظهر في «أعضاء أديب» و«أعضاء سابقون» سواء.
+          // فالبند يظهر في «أعضاء أدِيب» و«أعضاء سابقون» سواء.
           ...(m.canCertify
             ? [{ label: "إصدار شهادة خبرة", icon: Ico.cert, onSelect: () => setCertifying(m) }]
             : []),
@@ -560,17 +667,48 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
   return (
     <>
       {headless ? null : (
-        // الأقسام الثلاثة **أخواتٌ** لا أبناءَ لـ«أعضاء أديب»: بندُ كلٍّ في الخريطة قائمٌ
+        // الأقسام الثلاثة **أخواتٌ** لا أبناءَ لـ«أعضاء أدِيب»: بندُ كلٍّ في الخريطة قائمٌ
         // بنفسه، فورقةُ الفتات تُشتقّ منه ولا تُمرَّر — والعنوانُ تحتها يقولها.
-        <PageHeader title={section.title} />
+        <PageHeader title={withFormer ? SECTION.active.title : section.title} />
       )}
 
-      {lockedStatus === "active" ? (
+      {withFormer ? (
+        <div style={{ marginBottom: 16 }}>
+          {/* ممتدٌّ على الصفّ كمبدّل سجلّ المتطوّعين: الخيارُ هنا هو الكشفُ نفسُه لا زينةُ ركن */}
+          <Segmented
+            wide
+            items={[
+              { value: "active", label: "أعضاء" },
+              { value: "suspended", label: "سابقون" },
+            ]}
+            value={tab}
+            onValueChange={(v) => switchTab(v as "active" | "suspended")}
+          />
+        </div>
+      ) : null}
+
+      {status === "active" && lockedStatus === "active" ? (
         <>
           <StatsScope labels={scopeLabels(filters, fv)} onClear={() => setFv({})} />
           <div className="stat-grid" style={{ marginBottom: 18 }}>
-            <Stat icon={<UsersThree />} value={counted.length} label="عدد أعضاء أديب" />
+            <Stat icon={<UsersThree />} value={counted.length} label="عدد أعضاء أدِيب" />
           </div>
+        </>
+      ) : null}
+
+      {status === "suspended" && withFormer ? (
+        <>
+          <StatsScope
+            labels={[...scopeLabels(filters, fv), kindScope]}
+            onClear={() => { setFv({}); setHiddenKinds([]); }}
+          />
+          <div className="stat-grid" style={{ marginBottom: 18 }}>
+            <Stat icon={<UserMinus />} value={counted.length} label="عضوٌ سابق" tone="danger" />
+          </div>
+          {/* أسبابُ الخروج حلقةً (اختيارُ المالك من خيارين في المعاينة، ٢٠٢٦-١٠-٠٩) */}
+          <SectionCard title="أسباب الخروج" icon={<ChartDonut />} style={{ marginBottom: 18 }}>
+            <Donut items={kinds} unit={MEMBER_UNIT} empty="لا أعضاء سابقين في هذا الكشف." hidden={hiddenKinds} onHiddenChange={setHiddenKinds} />
+          </SectionCard>
         </>
       ) : null}
 
@@ -578,10 +716,10 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
         searchPlaceholder="ابحث بالاسم أو رقم الجوّال…"
         search={search}
         onSearch={setSearch}
-        filters={filters}
-        filterValues={fv}
-        onFilter={(k, v) => setFv((p) => ({ ...p, [k]: v }))}
-        onReset={() => setFv({})}
+        filters={toolbarFilters}
+        filterValues={{ ...fv, kind: kindValue }}
+        onFilter={onToolbarFilter}
+        onReset={() => { setFv({}); setHiddenKinds([]); }}
         view={view}
         onViewChange={changeView}
         selectedCount={selected.size}
@@ -599,7 +737,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
 
       {view === "table" ? (
         <DataTable
-          columns={lockedStatus === "suspended" ? suspendedColumns : columns}
+          columns={status === "suspended" ? suspendedColumns : columns}
           rows={pageRows}
           getRowId={(m) => m.id}
           selectable={!readOnly}
@@ -664,16 +802,11 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
                 : null}
             </>
           ) : modal?.mode === "edit" ? (
-            // تذييل هدّام: الإجراء الهدّام يسارًا (وهو الإنهاء بعد إزالة الحذف)، والحفظ/الإلغاء يمينًا
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: 10 }}>
-              {member?.canEnd && member.status !== "suspended"
-                ? <Button variant="ghost-danger" size="md" onClick={() => { close(); openEnd(member); }}>إنهاء العضوية</Button>
-                : <span />}
-              <div style={{ display: "flex", gap: 10 }}>
-                <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
-                <Button type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
-              </div>
-            </div>
+            // نافذةُ البيانات للبيانات وحدها: الإنهاءُ والنقلُ إلى المتطوّعين في قائمة النقاط لا هنا (قرار المالك ٢٠٢٦-١٠-٠٨)
+            <>
+              <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
+              <Button type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
+            </>
           ) : (
             <>
               <Button variant="ghost" size="md" onClick={close}>إلغاء</Button>
@@ -779,6 +912,7 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
             </div>
             <div className="pva-sections">
               <Section end icon={<Prohibit />} title="سبب إنهاء العضوية">
+                <Cell full noCopy label="فئة السبب" icon={<Tag />} value={reason.endKind ? terminationKindLabel(reason.endKind) : null} />
                 <Cell full noCopy label="سبب الإنهاء" icon={<WarningCircle />} value={reason.endReason} />
                 <Cell full noCopy label="تاريخ الإنهاء" icon={<CalendarX />} value={reason.endDate} />
                 <Cell full noCopy label="من أنهى العضوية" icon={<User />} value={reason.endBy} />
@@ -794,32 +928,60 @@ export function MembersView({ members: input, lockedStatus, mode, mayManageData:
         open={ending !== null}
         onClose={() => setEnding(null)}
         busy={acting}
-        title={ending ? `إنهاء عضوية «${ending.name}»؟` : "إنهاء العضوية"}
-        description="تُنقَل العضويّة إلى «الأعضاء السابقين»، ولا تُحرَّر بياناتها بعدها حتّى تُعاد."
+        title={endMode === "volunteer"
+          ? (ending ? `نقل «${ending.name}» إلى المتطوّعين؟` : "نقل إلى المتطوّعين")
+          : (ending ? `إنهاء عضوية «${ending.name}»؟` : "إنهاء العضوية")}
+        description={endMode === "volunteer"
+          ? VOLUNTEER_MOVE_LINE[ending?.gender ?? "none"]
+          : "تُنقَل العضويّة إلى «الأعضاء السابقين»، ولا تُحرَّر بياناتها بعدها حتّى تُعاد."}
         // متوسّطة لا صغيرة: الأسباب جملٌ تامّة، وفي الضيّقة يُقصّ نصفُ الجملة في الحقل المغلق —
         // ولا يُقدَم على فعلٍ هدّامٍ بسببٍ لا يُقرأ كاملًا لحظةَ الإرسال.
         size="md"
-        className="mdl-tone-danger"
-        footer={
+        className={endMode === "volunteer" ? "mdl-tone-warning" : "mdl-tone-danger"}
+        footer={endMode === "volunteer" ? (
+          <>
+            <Button variant="ghost-warning" size="md" onClick={() => setEnding(null)} disabled={acting}>إلغاء</Button>
+            <Button variant="warning" size="md" loading={acting} onClick={submitEnd}>نقل إلى المتطوّعين</Button>
+          </>
+        ) : (
           <>
             <Button variant="ghost-danger" size="md" onClick={() => setEnding(null)} disabled={acting}>إلغاء</Button>
             <Button variant="danger" size="md" loading={acting} onClick={submitEnd}>إنهاء العضوية</Button>
           </>
-        }
+        )}
       >
         {/* الأسبابُ المتكرّرة **معينةً على الكتابة لا بديلًا عنها**: الاختيار يملأ الصندوق
             أسفله وحسب، والصندوقُ هو المحفوظ — يُزاد عليه تفصيلُ الواقعة أو يُمحى ويُكتب غيره.
             والخيارُ المختار يُشتقّ من النصّ: فإن حُرِّر لم يعد يطابق سببًا، فتفرغ القائمة صادقةً. */}
+        {/* الفئةُ أوّلًا وإلزامًا: عليها تُجمَع أسبابُ الخروج، والنصُّ تحتها تفصيلُها */}
         <Select
-          label="أسباب متكرّرة"
-          icon={<Prohibit />}
-          tone="danger"
-          optional
-          helper="اختر سببًا فيُكتب أدناه، ولك أن تزيد عليه أو تكتب غيره."
-          options={REASON_OPTIONS}
-          value={isPresetReason(endReason) ? endReason.trim() : ""}
-          onValueChange={(v) => { setEndReason(v); setEndErr(null); }}
+          label="فئة السبب"
+          icon={<Tag />}
+          tone={endMode === "volunteer" ? "warning" : "danger"}
+          required
+          placeholder="اختر فئة"
+          options={endMode === "volunteer" ? VOLUNTEER_KIND_OPTIONS : KIND_OPTIONS}
+          value={endKind}
+          error={kindErr ?? undefined}
+          onValueChange={(v) => {
+            setEndKind(v); setKindErr(null);
+            // سببٌ مختارٌ من فئةٍ أخرى لم يعد يصدق عليها، فيُفرَّغ الصندوق ليُكتب لها
+            if (isPresetReason(endReason) && REASON_KIND[endReason.trim()] !== v) setEndReason("");
+          }}
         />
+        {/* وفئةٌ لا سببَ متكرّرًا فيها («أسباب أخرى») يسقط عنها الحقل: قائمةٌ فارغةٌ وعدٌ بلا شيء */}
+        {presetOptions.length > 0 ? (
+          <Select
+            label="أسباب متكرّرة"
+            icon={<Prohibit />}
+            tone={endMode === "volunteer" ? "warning" : "danger"}
+            optional
+            placeholder="اختر سببًا"
+            options={presetOptions}
+            value={isPresetReason(endReason) ? endReason.trim() : ""}
+            onValueChange={(v) => { setEndReason(v); setEndErr(null); if (REASON_KIND[v]) { setEndKind(REASON_KIND[v]); setKindErr(null); } }}
+          />
+        ) : null}
         <Textarea
           label="سبب إنهاء العضوية"
           icon={<Prohibit />}

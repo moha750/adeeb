@@ -1,5 +1,5 @@
 /**
- * Tailwind preset — نظام رموز أديب
+ * Tailwind preset — نظام رموز أدِيب
  * يربط أدوات Tailwind بمتغيّرات CSS في tokens.css (مصدرٌ واحد للحقيقة).
  * الاستخدام في apps/web:
  *   // tailwind.config.js

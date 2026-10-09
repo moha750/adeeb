@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Broadcast, SquaresFour, Books } from "@phosphor-icons/react";
 import { MagnifyingGlass } from "@/app/_components/glyphs";
+import { ThemePicker } from "./ThemePicker";
 
 /**
  * **هيكلُ المحطّة** — أبوابُها ورأسُها، بديلًا عن رأس الموقع وتذييله.
@@ -54,7 +55,10 @@ export function StationSide({ stationName }: { stationName: string }) {
           ونسخةُ R2 باقيةٌ لجلسة الوسائط (شاشةُ قفل الجوّال) — تلك تحتاج مربّعًا
           مصمتًا لا شعارًا مفرَّغًا. */}
       <Link href="/radio" className="stc-mark" aria-label={stationName}>
-        <img src="/radio/logo-horizontal.svg" alt="" />
+        {/* وللداكن نسختُه: العنّابيُّ الغامق يغيب في الورق الليليّ، فيُضاء التدرّجُ
+            درجتين. والورقةُ تُظهر واحدةً حسب الوسم، فلا ينتظر الشعارُ الترطيب. */}
+        <img src="/radio/logo-horizontal.svg" alt="" className="stc-mark-day" />
+        <img src="/radio/logo-horizontal-dark.svg" alt="" className="stc-mark-night" loading="lazy" />
       </Link>
       {DOORS.map(({ href, label, Icon }) => (
         <Link
@@ -67,6 +71,7 @@ export function StationSide({ stationName }: { stationName: string }) {
           {label}
         </Link>
       ))}
+      <ThemePicker />
     </aside>
   );
 }

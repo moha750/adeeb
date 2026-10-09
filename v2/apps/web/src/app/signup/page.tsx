@@ -10,7 +10,7 @@ import { safeNext } from "@/lib/safeNext";
 import { SignupForm } from "./SignupForm";
 
 export const metadata: Metadata = {
-  title: "إنشاء حساب، نادي أديب",
+  title: "إنشاء حساب، نادي أدِيب",
 };
 
 /**

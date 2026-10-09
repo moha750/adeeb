@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { clubDayKey, clubHour, clubWeekday, daysBetweenKeys } from "@/lib/dates";
 import type { DayRange } from "@/lib/analyticsRange";
 import type { QrSpec } from "@/lib/qr";
+import { qrFileUrl, type QrKind } from "@/lib/qrLinks";
 
 /** رمزٌ محفوظٌ كما يُقرأ في اللوحة. */
 export type QrLinkRow = {
@@ -11,6 +12,14 @@ export type QrLinkRow = {
   code: string;
   title: string;
   targetUrl: string;
+  /**
+   * **نوعُ الوجهة** (م٢١ وم٢٤): رابطٌ، أو ملفٌّ (صورةٌ أو PDF) يُعرَض في صفحتنا. ووجهةُ الملفّ في
+   * `targetUrl` صفحتُه (`‎/q/<code>/view`)، فلا تُعرَض للناس رابطًا: الشاشاتُ تسأل `kind` أوّلًا.
+   */
+  kind: QrKind;
+  /** مسارُ الملفّ في الدلو، ورابطُه العلنيّ. `null` للرابط. ونوعُه من امتداده (`qrFileType`). */
+  filePath: string | null;
+  fileUrl: string | null;
   /** وصفةُ الرسم كما حُفظت — تُعيد المحرّرَ إلى حالِه يومَ صُنع الرمز. */
   spec: QrSpec | null;
   active: boolean;
@@ -37,12 +46,13 @@ export type QrLinksData = { rows: QrLinkRow[]; error: string | null };
  */
 export type QrLinkRaw = {
   id: string; code: string; title: string; target_url: string;
+  kind: QrKind | null; file_path: string | null;
   spec: QrSpec | null; active: boolean; scan_count: number; owner_id: string;
   campaign_id: string | null; created_at: string; updated_at: string;
 };
 
 export const QR_LINK_COLS =
-  "id, code, title, target_url, spec, active, scan_count, owner_id, campaign_id, created_at, updated_at";
+  "id, code, title, target_url, kind, file_path, spec, active, scan_count, owner_id, campaign_id, created_at, updated_at";
 
 /** **والاسمُ يُترك فارغًا هنا** ويُلصَق بعد القراءة: انظر `withCampaignNames`. */
 export const shapeQrLink = (r: QrLinkRaw): QrLinkRow => ({
@@ -50,6 +60,9 @@ export const shapeQrLink = (r: QrLinkRaw): QrLinkRow => ({
   code: r.code,
   title: r.title,
   targetUrl: r.target_url,
+  kind: r.kind === "file" ? "file" : "link",
+  filePath: r.file_path ?? null,
+  fileUrl: r.file_path ? qrFileUrl(r.file_path) : null,
   spec: r.spec,
   active: r.active,
   scanCount: r.scan_count ?? 0,

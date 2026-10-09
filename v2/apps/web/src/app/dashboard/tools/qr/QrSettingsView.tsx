@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, CardBody, SectionCard } from "@adeeb/design-system";
-import { Globe, Palette, Pause, Play, QrCode } from "@phosphor-icons/react";
+import { FilePdf, Globe, ImageSquare, Palette, Pause, Play, QrCode } from "@phosphor-icons/react";
 import { DownloadSimple, PencilSimple, Trash, Warning } from "@/app/_components/glyphs";
 import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import { EditTargetModal } from "./EditTargetModal";
@@ -15,6 +15,9 @@ import { qrPng, qrSvg } from "@/lib/qr";
 import { QrPreview } from "./QrToolView";
 import { downloadBlob } from "@/lib/download";
 import { deleteQrLink, setQrLinkActive, updateQrLink } from "./actions";
+import { uploadQrFile } from "./uploadFile";
+import { qrFileLabel } from "./QrTarget";
+import { qrFileType, type QrKind } from "@/lib/qrLinks";
 import { killText } from "./copy";
 import { QrSchedules } from "./QrSchedules";
 import { QrTabs } from "./QrTabs";
@@ -62,6 +65,10 @@ export function QrSettingsView({
   const [kill, setKill] = useState(false);
   const [title, setTitle] = useState("");
   const [target, setTarget] = useState("");
+  /** ملفٌّ اختير في نافذة التعديل، ولم يُرفع بعد (يُرفع عند «حفظ»). */
+  const [picked, setPicked] = useState<File | null>(null);
+  /** النوعُ المختارُ في النافذة: يبدأ بنوع الباركود، ويتحوّل منها (م٢٣). */
+  const [editKind, setEditKind] = useState<QrKind>("link");
 
   const svg = useMemo(() => {
     if (!link?.spec) return null;
@@ -144,6 +151,33 @@ export function QrSettingsView({
               <div className="lrow w-full">
                 {/* الوجهةُ **مضيفُها لا رابطُها**: روابطُ النماذج تبلغ مئةَ محرفٍ فتبتلع الصفَّ،
                     والكاملُ يُقرأ ويُحرَّر في نافذة التعديل. */}
+                {link.kind === "file" ? (
+                  /* **الملفُّ صفٌّ كالوجهة** (م٢١): قيمتُه نوعُه («صورة» أو «ملف PDF») يُفتح لمن أراد
+                     أن يرى ما يراه الماسح، والتعديلُ يفتح النافذةَ نفسَها ومنها يتحوّل إلى رابط. */
+                  <div className="lrow-i">
+                    <span className="lrow-ic">
+                      {link.filePath && qrFileType(link.filePath) === "pdf" ? <FilePdf /> : <ImageSquare />}
+                    </span>
+                    <span className="lrow-tx">
+                      <b>الوجهة</b>
+                      {link.fileUrl ? (
+                        <a href={link.fileUrl} target="_blank" rel="noreferrer">{qrFileLabel(link.filePath)}</a>
+                      ) : (
+                        <span>{qrFileLabel(link.filePath)}</span>
+                      )}
+                    </span>
+                    <span className="lrow-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="lrow-sel"
+                        onClick={() => { setTitle(link.title); setTarget(""); setEditKind("file"); setPicked(null); setEditing(true); }}
+                      >
+                        <PencilSimple /> تعديل
+                      </Button>
+                    </span>
+                  </div>
+                ) : (
                 <div className="lrow-i">
                   <span className="lrow-ic"><Globe /></span>
                   <span className="lrow-tx">
@@ -169,12 +203,13 @@ export function QrSettingsView({
                       variant="ghost"
                       size="sm"
                       className="lrow-sel"
-                      onClick={() => { setTitle(link.title); setTarget(link.targetUrl); setEditing(true); }}
+                      onClick={() => { setTitle(link.title); setTarget(link.targetUrl); setEditKind("link"); setPicked(null); setEditing(true); }}
                     >
                       <PencilSimple /> تعديل
                     </Button>
                   </span>
                 </div>
+                )}
 
                 <div className="lrow-i">
                   <span className="lrow-ic"><Palette /></span>
@@ -214,7 +249,7 @@ export function QrSettingsView({
         <QrShares linkId={link.id} rows={shares} candidates={candidates} canManage autoOpen={openShare} />
       ) : null}
 
-      <QrSchedules linkId={link.id} fallback={link.targetUrl} rows={schedules} />
+      <QrSchedules linkId={link.id} fallback={link.targetUrl} fallbackKind={link.kind} rows={schedules} />
 
       {/**
         * **كرتُ آخرِ ما يُفعَل بالباركود** (اختارها المالك من `\/ui\/qr-end` ٢٠٢٦-٠٨-٣١ من بين
@@ -260,11 +295,36 @@ export function QrSettingsView({
         pending={pending}
         onTitle={setTitle}
         onTarget={setTarget}
+        kind={editKind}
+        onKind={setEditKind}
+        current={link.kind === "file" && link.filePath && link.fileUrl ? { path: link.filePath, url: link.fileUrl } : null}
+        picked={picked}
+        onPick={setPicked}
         onClose={() => setEditing(false)}
         onSave={() =>
           startPending(async () => {
-            const res = await updateQrLink(link.id, { title, target });
-            if (res.ok) { toast.success(res.message); setEditing(false); router.refresh(); } else toast.error(res.message);
+            /**
+             * **الملفُّ يُرفع أوّلًا ثمّ يُكتب الصفّ بنداءٍ واحد** (اسمٌ ونوعٌ ووجهةٌ معًا): لو تعثّر
+             * الرفعُ لم يُكتب شيءٌ وبقي ما اختاره في النافذة ليعيد المحاولة، ولو رُدّت الكتابةُ مَحا
+             * الخادمُ المرفوع.
+             */
+            let filePath: string | undefined;
+            if (editKind === "file" && picked) {
+              const up = await uploadQrFile(picked);
+              if (!up.ok) return toast.error(up.message);
+              filePath = up.path;
+            }
+            const res = await updateQrLink(link.id, {
+              title,
+              kind: editKind,
+              target: editKind === "link" ? target : undefined,
+              filePath,
+            });
+            if (!res.ok) return toast.error(res.message);
+            toast.success(res.message);
+            setPicked(null);
+            setEditing(false);
+            router.refresh();
           })
         }
       />

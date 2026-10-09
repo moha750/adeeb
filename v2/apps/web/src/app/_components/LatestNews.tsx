@@ -15,7 +15,7 @@ type NewsItem = {
   slug: string | null;
 };
 
-/** قسم حيّ: آخر أخبار أديب — عرض تحريريّ متحرّك من منصّة أديب الإخبارية. */
+/** قسم حيّ: آخر أخبار أدِيب — عرض تحريريّ متحرّك من منصّة أدِيب الإخبارية. */
 export async function LatestNews() {
   const sb = createAdeebServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

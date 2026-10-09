@@ -9,10 +9,6 @@ create or replace function public.current_user_is_admin()
 returns boolean language sql stable security definer set search_path to 'public','pg_temp'
 as $$ select check_user_permission(auth.uid(), 'view_members'); $$;
 
-create or replace function public.gw_is_admin(p_user_id uuid)
-returns boolean language sql stable security definer set search_path to 'public','pg_temp'
-as $$ select check_user_permission(p_user_id, 'manage_games'); $$;
-
 create or replace function public.get_user_primary_role(p_user uuid)
 returns text language sql stable security definer set search_path to 'public'
 as $$

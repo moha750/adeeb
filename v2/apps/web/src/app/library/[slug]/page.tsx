@@ -49,11 +49,11 @@ async function loadBook(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const res = await loadBook(slug);
-  if (!res) return { title: "المكتبة، أديب" };
+  if (!res) return { title: "المكتبة، أدِيب" };
   const { book, pages } = res;
   return {
-    title: `${book.title}، مكتبة أديب`,
-    description: book.summary ?? "منشورٌ من مكتبة «إرثٌ يُروى» في نادي أديب.",
+    title: `${book.title}، مكتبة أدِيب`,
+    description: book.summary ?? "منشورٌ من مكتبة «إرثٌ يُروى» في نادي أدِيب.",
     openGraph: shareOg({ title: book.title, description: book.summary ?? undefined }),
   };
 }

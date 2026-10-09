@@ -11,7 +11,11 @@ import {
   deviceFrom,
   isBotAgent,
   isQrCode,
+  isQrFilePath,
   newQrCode,
+  qrFileSaveUrl,
+  qrFileType,
+  qrViewUrl,
   qrPath,
   qrShortUrl,
   referrerHost,
@@ -190,5 +194,50 @@ describe("اسمُ الحملة وتعريفُها", () => {
   it("يقبل التعريفَ عند حدّه ويردّ بعده", () => {
     expect(checkCampaignNote("و".repeat(QR_CAMPAIGN_NOTE_MAX)).ok).toBe(true);
     expect(checkCampaignNote("و".repeat(QR_CAMPAIGN_NOTE_MAX + 1)).ok).toBe(false);
+  });
+});
+
+describe("الباركودُ الذي وجهتُه ملف (م٢١ وم٢٤)", () => {
+  const ME = "3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+  const FILE = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+
+  it("يقبل المسارَ بشكله الواحد ويردّ ما سواه", () => {
+    expect(isQrFilePath(`${ME}/${FILE}.webp`)).toBe(true);
+    expect(isQrFilePath(`${ME}/${FILE}.jpg`)).toBe(true);
+    expect(isQrFilePath(`${ME}/${FILE}.png`)).toBe(true);
+    expect(isQrFilePath(`${ME}/${FILE}.pdf`)).toBe(true);
+    expect(isQrFilePath(`${ME}/${FILE}.gif`)).toBe(false);
+    expect(isQrFilePath(`${FILE}.webp`)).toBe(false);
+    expect(isQrFilePath(`${ME}/../${FILE}.webp`)).toBe(false);
+    expect(isQrFilePath(`${ME}/${FILE}.webp?x=1`)).toBe(false);
+  });
+
+  it("يعرف الصورةَ من الـPDF بامتداده", () => {
+    expect(qrFileType(`${ME}/${FILE}.pdf`)).toBe("pdf");
+    expect(qrFileType(`${ME}/${FILE}.webp`)).toBe("image");
+  });
+
+  /** **ولا ملفُّ غيرِك**: المسارُ يبدأ بمعرّف رافعه، فلا يُربَط بباركودٍ ملفٌّ في مجلّد غيره. */
+  it("يردّ مسارًا في مجلّد غير رافعه", () => {
+    expect(isQrFilePath(`${ME}/${FILE}.webp`, ME)).toBe(true);
+    expect(isQrFilePath(`${FILE}/${ME}.webp`, ME)).toBe(false);
+  });
+
+  /** يطابق قيدَ `qr_links_file_target`: آخرُ الوجهة `‎/q/<code>/view` وطولُه طولُ الرمز وثمانية. */
+  it("يكتب وجهةَ الملفّ صفحتَه كما يقيسها قيدُ القاعدة", () => {
+    const code = "majles";
+    const url = qrViewUrl(code, ORIGIN);
+    expect(url).toBe("https://adeeb.club/q/majles/view");
+    expect(url.slice(-(code.length + 8))).toBe(`/q/${code}/view`);
+  });
+
+  /** وصفحةُ ملفٍّ ليست وجهةً لرابط: رمزٌ يشير إلى رمزٍ دورةٌ لا تنتهي. */
+  it("لا يقبل صفحةَ ملفٍّ وجهةً لباركودٍ آخر", () => {
+    expect(checkTarget(qrViewUrl("majles", ORIGIN), ORIGIN).ok).toBe(false);
+  });
+
+  it("يجعل رابطَ الحفظ تنزيلًا باسمٍ يُعرَف", () => {
+    expect(qrFileSaveUrl(`${ME}/${FILE}.webp`)).toMatch(/\?download=adeeb\.webp$/);
+    expect(qrFileSaveUrl(`${ME}/${FILE}.pdf`)).toMatch(/\?download=adeeb\.pdf$/);
   });
 });

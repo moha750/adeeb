@@ -37,12 +37,12 @@ const Ic = {
 };
 
 /* ── بيانات عيّنة للجدول والكرت ── */
-const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true, canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null, roleName: "committee_member", canMove: true };
+const noDetails = { joinedRaw: "", college: null, major: null, degree: null, degreeRaw: null, recordNo: null, twitter: null, instagram: null, tiktok: null, linkedin: null, endReason: null, endKind: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true, canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null, roleName: "committee_member", canMove: true };
 const sampleMembers: MemberRow[] = [
   { id: "s1", name: "سارة الفيصل", email: "sara.f@adeeb.club", phone: "0551234567", avatar: null, gender: "female", dept: "الإعلام", committee: "لجنة التصميم", role: "عضو", status: "active", joined: "12 يناير 2026", ...noDetails },
   { id: "s2", name: "عبدالله القحطاني", email: "a.qahtani@adeeb.club", phone: "0509876543", avatar: null, gender: "male", dept: "التقنية", committee: "لجنة التطوير", role: "قائد فريق", status: "active", joined: "3 مارس 2026", ...noDetails },
   { id: "s3", name: "ليان العمري", email: "layan@adeeb.club", phone: null, avatar: null, gender: "female", dept: "الموارد", committee: null, role: "عضو", status: "inactive", joined: "27 يونيو 2026", ...noDetails },
-  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر", endBy: "بشائر فاروق الحداد" },
+  { id: "s4", name: "محمد الزهراني", email: "m.zahrani@adeeb.club", phone: "0533334444", avatar: null, gender: "male", dept: "الجودة", committee: "لجنة القياس", role: "منسّق", status: "suspended", joined: "9 فبراير 2026", ...noDetails, endReason: "خروج العضو من مجتمع أدِيب دون إبلاغ إدارة الموارد البشرية", endKind: "silent", endDate: "2 مايو 2026", endAgo: "منذ 3 أشهر", endBy: "بشائر فاروق الحداد" },
 ];
 
 const TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {

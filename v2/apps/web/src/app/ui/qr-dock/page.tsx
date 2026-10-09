@@ -10,7 +10,7 @@ import { Container } from "@adeeb/design-system";
  * وأُعدمت الأخريان (وميضٌ عند التغيير، وجزيرةٌ تُنقر) فلم يبقَ منهما سطر.
  */
 
-export const metadata = { title: "المعاينة الحيّة، معرض أديب" };
+export const metadata = { title: "المعاينة الحيّة، معرض أدِيب" };
 
 export default function QrDockLab() {
   return (

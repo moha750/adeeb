@@ -5,6 +5,7 @@ import { WorksGallery } from "./_components/WorksGallery";
 import { BoardMembers } from "./_components/BoardMembers";
 import { LatestActivities } from "./_components/LatestActivities";
 import { LatestNews } from "./_components/LatestNews";
+import { SonicIdentity } from "./_components/SonicIdentity";
 import { FaqSection } from "./_components/FaqSection";
 import { ContactForm } from "./_components/ContactForm";
 import { SiteHeader } from "./_components/SiteHeader";
@@ -21,7 +22,7 @@ export default async function Home() {
 
   return (
     <>
-      {/* قصة أديب الافتتاحية — طبقة تسبق الموقع وتسلّم إليه، مرّةً واحدة لكل دخولٍ
+      {/* قصة أدِيب الافتتاحية — طبقة تسبق الموقع وتسلّم إليه، مرّةً واحدة لكل دخولٍ
           للموقع (تخطٍّ: ?story=skip · فرض إعادتها: ?story=force) */}
       <StoryOpening />
       <SiteHeader />
@@ -44,6 +45,10 @@ export default async function Home() {
             </Reveal>
           </Container>
         </section>
+
+        {/* (2ب) الهويّة الموسيقيّة — لحنُ أدِيب يُسمَع ويُرى (٢٠٢٦-١٠-٠٨): أسطوانةٌ تدور
+            وأخدودُها اللحنُ نفسُه. بعد معرض الأعمال لأنّه منها: صنعةٌ أخرى من صنائع النادي. */}
+        <SonicIdentity />
 
         {/* (3) أهل الدفّة — المجلس (بيانات حيّة عبر RPC آمن) */}
         <section id="board" className="py-20 md:py-28">

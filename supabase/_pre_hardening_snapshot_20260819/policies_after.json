@@ -433,42 +433,6 @@
  },
  {
   "schemaname": "public",
-  "tablename": "guess_word_answers",
-  "policyname": "gw_answers_select",
-  "cmd": "SELECT",
-  "roles": "{anon,authenticated}",
-  "qual": "(check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text) OR (EXISTS ( SELECT 1\n   FROM (guess_word_words w\n     JOIN guess_word_sessions s ON ((s.id = w.session_id)))\n  WHERE ((w.id = guess_word_answers.word_id) AND (s.status = 'finished'::text)))))",
-  "with_check": ""
- },
- {
-  "schemaname": "public",
-  "tablename": "guess_word_players",
-  "policyname": "gw_players_select",
-  "cmd": "SELECT",
-  "roles": "{anon,authenticated}",
-  "qual": "((is_kicked = false) OR check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text))",
-  "with_check": ""
- },
- {
-  "schemaname": "public",
-  "tablename": "guess_word_sessions",
-  "policyname": "gw_sessions_select",
-  "cmd": "SELECT",
-  "roles": "{anon,authenticated}",
-  "qual": "true",
-  "with_check": ""
- },
- {
-  "schemaname": "public",
-  "tablename": "guess_word_words",
-  "policyname": "gw_words_select",
-  "cmd": "SELECT",
-  "roles": "{anon,authenticated}",
-  "qual": "(check_user_permission(( SELECT auth.uid() AS uid), 'manage_games'::text) OR (EXISTS ( SELECT 1\n   FROM guess_word_sessions s\n  WHERE ((s.id = guess_word_words.session_id) AND (s.current_word_id = guess_word_words.id)))) OR (EXISTS ( SELECT 1\n   FROM guess_word_sessions s\n  WHERE ((s.id = guess_word_words.session_id) AND (s.status = 'finished'::text)))))",
-  "with_check": ""
- },
- {
-  "schemaname": "public",
   "tablename": "iso_countries",
   "policyname": "iso_countries_select_all",
   "cmd": "SELECT",

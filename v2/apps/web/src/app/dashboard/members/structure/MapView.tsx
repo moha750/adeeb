@@ -18,14 +18,14 @@ import type { CommitteeNode, CouncilBody, DepartmentNode, Holder, StructureModel
  * الجيل الأوّل كان **جدارًا**: سطحٌ واحدٌ طويل تتساوى فيه مئةُ صفٍّ بارتفاعٍ ولونٍ وخطٍّ واحد،
  * فلا تجد العينُ فيه مبتدأً ولا منتهى. وعلاجُه ليس تجميلَ الصفوف بل **تفكيك الجدار**:
  *
- *   ١) **بطلٌ واحدٌ في الصدر** — «موقعك في أديب». العضوُ يفتح الشاشة وسؤالُه الأوّل عن نفسه،
+ *   ١) **بطلٌ واحدٌ في الصدر** — «موقعك في أدِيب». العضوُ يفتح الشاشة وسؤالُه الأوّل عن نفسه،
  *      فيُجاب قبل أن يسأل، ويبقى ما تحته هادئًا لا ينازعه.
  *   ٢) **شبكةُ كروتٍ لا قائمة** — كلّ وحدةٍ كرتٌ له رأسٌ واسم ووصف، فالفجواتُ بين الكروت هي
  *      التنفّس الذي لم يكن في الجدار، وكلُّ كرتٍ قطعةٌ تُلتقَط وحدها.
  *   ٣) **الوجوهُ بدل السطور** — كومةُ أفتارٍ تقول «من فيها وكم هم» في مساحةِ سطر، فيسقط
  *      اثنا عشر صفًّا مكتوبًا كانت تتكرّر فيها عبارةُ «قائد اللجنة:» اثنتي عشرة مرّة.
  *   ٤) **التفصيلُ في طبقةٍ لا في العمود** — من أراد لجنةً بعينها فتحها في نافذة. الصفحةُ
- *      تُجيب «ما هيكل أديب؟»، والنافذةُ تُجيب «من في هذه اللجنة؟» — سؤالان لا يُخلطان في سطح.
+ *      تُجيب «ما هيكل أدِيب؟»، والنافذةُ تُجيب «من في هذه اللجنة؟» — سؤالان لا يُخلطان في سطح.
  *
  * ولغةُ الشاغر تلين: «لم يُنتخب بعد» للمنتخَب و«لم يُعيَّن بعد» للمعيَّن (`roles.is_elected`) —
  * الشاغرُ في شاشة الرئيس عملٌ ينتظره، وفي شاشة العضو حالٌ يُخبَر بها.
@@ -110,7 +110,7 @@ function Hero({ committee, dept, council, onOpen }: {
   const lead = committee?.leader ?? null;
   return (
     <Card variant="elevated" className="omap-hero">
-      <CardHeader variant="solid" icon={<MapPin />} title="موقعك في أديب" subtitle={council} />
+      <CardHeader variant="solid" icon={<MapPin />} title="موقعك في أدِيب" subtitle={council} />
       <CardBody>
         {committee ? (
           <div className="omap-hero-grid">
@@ -136,7 +136,7 @@ function Hero({ committee, dept, council, onOpen }: {
             </div>
           </div>
         ) : (
-          <p className="omap-hero-desc">أنت في {council}. تصفّح وحدات أديب أدناه لتعرف من فيها وماذا تعمل.</p>
+          <p className="omap-hero-desc">أنت في {council}. تصفّح وحدات أدِيب أدناه لتعرف من فيها وماذا تعمل.</p>
         )}
       </CardBody>
     </Card>
@@ -172,7 +172,7 @@ export function MapView({ model, you = NO_YOU }: { model: StructureModel; you?: 
   const myCommittee = all.find((c) => c.id === you.home) ?? null;
   const myDept = model.executive.departments.find((d) => d.committees.some((c) => c.id === you.home)) ?? null;
   const myCouncil = you.councils.includes("executive") ? model.executive.name
-    : you.councils.includes("administrative") ? model.administrative.name : "أديب";
+    : you.councils.includes("administrative") ? model.administrative.name : "أدِيب";
   const open = all.find((c) => c.id === openId) ?? null;
 
   const shown = (c: CommitteeNode) => matchCommittee(q, c);
@@ -248,10 +248,10 @@ export function MapView({ model, you = NO_YOU }: { model: StructureModel; you?: 
         q: "ما معنى مجلس وإدارة وقسم ولجنة؟",
         a: (
           <dl className="omap-key">
-            <div><dt><Bank /> المجلس</dt><dd>هيئةٌ تقرّر ولا تُنفّذ. في أديب مجلسان: الإداريّ (الرئاسة والإدارتان) والتنفيذيّ (الأقسام واللجان).</dd></div>
+            <div><dt><Bank /> المجلس</dt><dd>هيئةٌ تقرّر ولا تُنفّذ. في أدِيب مجلسان: الإداريّ (الرئاسة والإدارتان) والتنفيذيّ (الأقسام واللجان).</dd></div>
             <div><dt><UsersFour /> الإدارة</dt><dd>وحدةٌ تحت المجلس الإداريّ تخدم النادي كلَّه: الموارد البشريّة والضمان والجودة.</dd></div>
             <div><dt><Buildings /> القسم</dt><dd>مظلّةٌ تجمع لجانًا متقاربة العمل، ينسّقها منسّق قسمٍ منتخَب.</dd></div>
-            <div><dt><UsersThree /> اللجنة</dt><dd>بيتُ العمل: لها قائد ونائب وأعضاء، وهي مقعدُك الأوّل في أديب.</dd></div>
+            <div><dt><UsersThree /> اللجنة</dt><dd>بيتُ العمل: لها قائد ونائب وأعضاء، وهي مقعدُك الأوّل في أدِيب.</dd></div>
             <div><dt><MapPin /> المشرف</dt><dd>عضوٌ من إدارة الموارد أو الضمان يتابع اللجنة من خارجها، ليس عضوًا فيها ولا يُعدّ في أهلها.</dd></div>
             <div><dt><Scales /> المنتخَب والمعيَّن</dt><dd>منسّق القسم وقائد اللجنة ونائبه يبلغون مقاعدهم بانتخاب، وسواهم بتعيين. ولذا يقول المقعد الخالي «لم يُنتخب بعد» أو «لم يُعيَّن بعد».</dd></div>
           </dl>

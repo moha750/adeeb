@@ -11,22 +11,9 @@
 --   • member_details: قراءة ≥7(٨) → view_members(٥)؛ كتابة → manage_member_data(٤).
 --   • user_roles/roles/councils: → manage_positions (رئيس النادي).
 --   • membership_accepted_members SELECT: ≥5(١١) → view_pending_members(٨).
--- قدرة جديدة: manage_games (لعبة خمّن الكلمة) — تُمنح للخمسة (صفّ ≥8) فلا يتغيّر واقعها.
 --
 -- مستثنى هنا (يُعالَج منفصلًا): notifications SELECT (تعبير جمهور ضخم — تبديلٌ دقيقٌ لاحقًا).
 -- ═══════════════════════════════════════════════════════════════════════════
-
--- ── قدرة جديدة: إدارة الألعاب ─────────────────────────────────────────────
-insert into permissions (permission_key, permission_name_ar, category)
-select 'manage_games', 'إدارة الألعاب', 'admin'
-where not exists (select 1 from permissions where permission_key = 'manage_games');
-
-insert into role_permissions (role_id, permission_id)
-select r.id, p.id
-from roles r cross join permissions p
-where p.permission_key = 'manage_games'
-  and r.role_name in ('club_president','president_advisor','executive_council_president','hr_committee_leader','qa_committee_leader')
-  and not exists (select 1 from role_permissions rp where rp.role_id = r.id and rp.permission_id = p.id);
 
 -- ── activities → manage_activities ────────────────────────────────────────
 drop policy "activities_admin_delete" on public.activities;
@@ -141,23 +128,6 @@ create policy "sponsors_modify_authorized" on public.sponsors as permissive for 
 drop policy "works_modify_authorized" on public.works;
 create policy "works_modify_authorized" on public.works as permissive for all to authenticated
   using ((auth.uid() = created_by) or check_user_permission(auth.uid(), 'manage_website'));
-
--- ── guess_word_* → manage_games (مع إبقاء رؤية حالة اللعبة) ───────────────
-drop policy "gw_answers_select" on public.guess_word_answers;
-create policy "gw_answers_select" on public.guess_word_answers as permissive for select to anon, authenticated
-  using (check_user_permission(auth.uid(), 'manage_games') or (exists ( select 1
-    from (guess_word_words w join guess_word_sessions s on ((s.id = w.session_id)))
-    where ((w.id = guess_word_answers.word_id) and (s.status = 'finished'::text)))));
-drop policy "gw_players_select" on public.guess_word_players;
-create policy "gw_players_select" on public.guess_word_players as permissive for select to anon, authenticated
-  using ((is_kicked = false) or check_user_permission(auth.uid(), 'manage_games'));
-drop policy "gw_words_select" on public.guess_word_words;
-create policy "gw_words_select" on public.guess_word_words as permissive for select to anon, authenticated
-  using (check_user_permission(auth.uid(), 'manage_games')
-    or (exists ( select 1 from guess_word_sessions s
-      where ((s.id = guess_word_words.session_id) and (s.current_word_id = guess_word_words.id))))
-    or (exists ( select 1 from guess_word_sessions s
-      where ((s.id = guess_word_words.session_id) and (s.status = 'finished'::text)))));
 
 -- ── impersonation_sessions → impersonate_users ────────────────────────────
 drop policy "Presidents can create impersonation sessions" on public.impersonation_sessions;

@@ -63,7 +63,7 @@ export const ATTENDANCE_META: Record<AttendanceStatus, { label: string; tone: "n
   no_show: { label: "لم يحضر", tone: "warning" },
 };
 
-export const ACCOUNT_TYPE_LABEL: Record<"visitor" | "member", string> = { visitor: "زائر", member: "عضو" };
+// صفةُ الحاجز (عضو أدِيب، متطوّع أدِيب، صديق أدِيب) اسمُها من `lib/standing` وحدَه، ويُصرَّف بجنسه.
 
 /* ══ مرحلة الحجز في خطّ الفعاليّة (مسجّل→واتساب→حاضر→شهادة) ═══════════════ */
 

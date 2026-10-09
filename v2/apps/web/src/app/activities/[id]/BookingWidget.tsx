@@ -35,7 +35,7 @@ const BOOK_ERRORS: Record<string, string> = {
   REASON_REQUIRED: "سبب الإلغاء مطلوب.",
   RESERVATION_NOT_FOUND: "لم نعثر على الحجز.",
   NOT_OWNER: "هذا الحجز ليس لك.",
-  // أخطاء `create_my_account_profile` — بابُ الزائر إلى صفّه
+  // أخطاء `create_my_account_profile` — بابُ صديق أدِيب إلى صفّه
   NAME_REQUIRED: "الاسم مطلوب.",
   NAME_NOT_ARABIC: "اكتب الاسم بالحروف العربيّة وحدها.",
   PHONE_INVALID: `${PHONE_HINT}.`,
@@ -85,7 +85,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const bothFull = unlimited ? false : splitByGender ? (maleRemaining ?? 0) <= 0 && (femaleRemaining ?? 0) <= 0 : totalRemaining <= 0;
   const genderOptions = GENDER_OPTIONS.filter((o) => genderAvailable(o.value));
 
-  /** يوجّه المستخدم بحسب حالته: مصادَق؟ له حجز مؤكّد؟ له فئة (عضو/زائر)؟ */
+  /** يوجّه المستخدم بحسب حالته: مصادَق؟ له حجز مؤكّد؟ له فئة (عضو/صديق أدِيب)؟ */
   const route = async () => {
     try {
       const { data: { user } } = await sb.auth.getUser();
@@ -106,14 +106,14 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
       }
 
       // بيتٌ واحدٌ يُسأل بعد توحيد الهويّة (م١): `profiles` صار صفَّ كلِّ صاحبِ حساب —
-      // عضوًا كان أو زائرًا — و`visitors` حُنّط. ومن لا صفَّ له فحسابٌ بلا بيانات.
+      // عضوًا كان أو صديقًا لأدِيب — و`visitors` حُنّط. ومن لا صفَّ له فحسابٌ بلا بيانات.
       const { data: prof } = await sb.from("profiles").select("gender").eq("id", user.id).maybeSingle();
       const g = (prof?.gender ?? null) as "male" | "female" | null;
       if (g) {
         setGender(g);
         setStep(genderAvailable(g) ? "ready" : "unavailable");
       } else {
-        // مصادَق بلا ملفّ — زائر جديد: إن كان صنفٌ واحد متاحًا فاختره سلفًا
+        // مصادَق بلا ملفّ — صديقٌ جديد: إن كان صنفٌ واحد متاحًا فاختره سلفًا
         if (genderOptions.length === 1) setGender(genderOptions[0].value);
         setStep(bothFull ? "unavailable" : "profile");
       }
@@ -181,7 +181,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     setBusy(true);
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { setBusy(false); setStep("email"); return; }
-    // بابُ الزائر إلى صفِّه: دالّةٌ مفوَّضة تكتب `joined_date` فارغًا — فيملك حسابًا ولا
+    // بابُ صديق أدِيب إلى صفِّه: دالّةٌ مفوَّضة تكتب `joined_date` فارغًا — فيملك حسابًا ولا
     // يملك أن يجعل نفسه عضوًا (الإدراجُ المباشر في `profiles` صار على قدرةٍ إداريّة).
     const { error } = await sb.rpc("create_my_account_profile", {
       p_full_name: name.trim(),

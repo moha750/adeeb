@@ -3,7 +3,7 @@ import { isDayKey, presetRange } from "@/lib/analyticsRange";
 import { getQrAccess, getQrStats } from "../data";
 import { QrStatsView } from "../QrStatsView";
 
-export const metadata = { title: "إحصاء الباركود، بوّابة أديب" };
+export const metadata = { title: "إحصاء الباركود، بوّابة أدِيب" };
 
 /**
  * إحصاءُ رمزٍ واحد. القفلُ قفلُ الغرفة نفسِه، والمِلكيّةُ تحكمها سياسةُ own-row: من طلب

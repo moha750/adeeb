@@ -27,7 +27,7 @@ import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 /* ══ المنازل وخطابُها ═══════════════════════════════════════════════ */
 
-export type Standing = "guest" | "account" | "member";
+export type Standing = "guest" | "account" | "volunteer" | "member";
 
 const SPEECH: Record<Standing, { deck: string; cta: string; href: string }> = {
   guest: {
@@ -41,6 +41,13 @@ const SPEECH: Record<Standing, { deck: string; cta: string; href: string }> = {
        أدِيب لمن يمتلك حسابًا أيًّا يكن». والوجهةُ تتبع مفاتيحَه كما يفعل الرأس:
        من له غرفةٌ في اللوحة يقصدها، ومن لا فبيتُ حسابه — وبابُ الانضمام يبقى
        في الرأس وفي قسم الدعوة، فلا يُحجَب عنه. */
+    cta: "بوّابة أَدِيب",
+    href: "/me",
+  },
+  /* **وللمتطوّع خطابُه** (المالك ٢٠٢٦-١٠-٠٨): كان يُخاطَب خطابَ صديق أدِيب فيُدعى إلى أن يصير
+     متطوّعًا وهو متطوّع. وفرصُه في خانة «تطوّعي» من `/me`، فالزرُّ إليها. */
+  volunteer: {
+    deck: "أنت من متطوّعي أدِيب، وفرصُك القادمة تجدها في حسابك.",
     cta: "بوّابة أَدِيب",
     href: "/me",
   },
@@ -186,7 +193,14 @@ export function Hero({
   }, [forced]);
 
   const standing: Standing =
-    forced ?? (!viewer ? "guest" : viewer.isMember || viewer.hasPortal ? "member" : "account");
+    forced ??
+    (!viewer
+      ? "guest"
+      : viewer.isMember || viewer.hasPortal
+        ? "member"
+        : viewer.standing === "volunteer"
+          ? "volunteer"
+          : "account");
   const sp = SPEECH[standing];
 
   /* العارضُ يمشي وحدَه، ونقرةُ نقطةٍ تُعيد المهلةَ من أوّلها (المفتاحُ `i`). */

@@ -13,10 +13,10 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const n = await getPublicNewsItem(decodeURIComponent(slug));
-  if (!n) return { title: "خبر، أديب" };
+  if (!n) return { title: "خبر، أدِيب" };
   return {
-    title: `${n.title}، أديب`,
-    description: n.summary ?? "مستجدّات نادي أديب أوّلًا بأوّل.",
+    title: `${n.title}، أدِيب`,
+    description: n.summary ?? "مستجدّات نادي أدِيب أوّلًا بأوّل.",
     openGraph: shareOg({
       title: n.title,
       description: n.summary ?? undefined,
@@ -54,7 +54,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
         {more.length ? (
           <section className="pb-20 md:pb-28">
             <Container>
-              <LandingHeading eyebrow="أخبار" title="اقرأ أيضًا" deck="مستجدّاتٌ أخرى من منصّة أديب." align="center" />
+              <LandingHeading eyebrow="أخبار" title="اقرأ أيضًا" deck="مستجدّاتٌ أخرى من منصّة أدِيب." align="center" />
               <div className="card-grid" style={{ marginTop: 32 }}>
                 {more.map((m) => (
                   <PublicNewsCard key={m.id} n={m} />

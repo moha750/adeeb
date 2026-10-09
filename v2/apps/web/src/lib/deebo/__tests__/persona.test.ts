@@ -12,7 +12,7 @@ const persona: DeeboPersona = {
   ],
   prohibitions: ["لا تعِد أحدًا بقبول عضويّة.", "لا تتحدّث باسم المجلس."],
   unknownAnswer: "هذا ما لا أعرفه.",
-  suggestedQuestions: ["ما نادي أديب؟", "كيف أنضمّ إليكم؟", "هل أحضر بلا عضويّة؟"],
+  suggestedQuestions: ["ما نادي أدِيب؟", "كيف أنضمّ إليكم؟", "هل أحضر بلا عضويّة؟"],
   shownQuestions: 2,
 };
 
@@ -51,9 +51,9 @@ describe("نصُّ التوجيه يُركَّب من الصفّ", () => {
   test("المعرفةُ تُحشى كلُّها: أجوبةُ faq ثمّ الوقائع", () => {
     const p = buildSystemPrompt(persona, {
       faq: [{ question: "كيف أنضمّ؟", answer: "بابُ الانضمام مغلقٌ الآن." }],
-      facts: [{ slug: "where-we-are", title: "أين أديب", body: "في جامعة الملك فيصل." }],
+      facts: [{ slug: "where-we-are", title: "أين أدِيب", body: "في جامعة الملك فيصل." }],
     });
-    expect(p.indexOf("كيف أنضمّ؟")).toBeLessThan(p.indexOf("أين أديب"));
+    expect(p.indexOf("كيف أنضمّ؟")).toBeLessThan(p.indexOf("أين أدِيب"));
     expect(p).toContain("(where-we-are)");
   });
 
@@ -72,7 +72,7 @@ describe("نصُّ التوجيه يُركَّب من الصفّ", () => {
 
 describe("المعروضُ من الأسئلة", () => {
   test("يُقصّ على العدد الذي اختاره المالك", () => {
-    expect(shownQuestionsOf(persona)).toEqual(["ما نادي أديب؟", "كيف أنضمّ إليكم؟"]);
+    expect(shownQuestionsOf(persona)).toEqual(["ما نادي أدِيب؟", "كيف أنضمّ إليكم؟"]);
   });
 
   test("صفرٌ يعني شاشةً بلا أسئلة، والزائدُ لا يخترع سؤالًا", () => {

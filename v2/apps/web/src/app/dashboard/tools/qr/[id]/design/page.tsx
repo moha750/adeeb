@@ -3,7 +3,7 @@ import { Alert } from "@adeeb/design-system";
 import { getQrLink } from "../../data";
 import { QrDesignView } from "./QrDesignView";
 
-export const metadata = { title: "تصميم الباركود، بوّابة أديب" };
+export const metadata = { title: "تصميم الباركود، بوّابة أدِيب" };
 
 /**
  * بابُ التصميم. القفلُ قفلُ الغرفة نفسِه، والمِلكيّةُ تحكمها سياسةُ own-row: من طلب رمزَ

@@ -13,7 +13,7 @@ import { PageHeader } from "../_components/PageHeader";
  * يقرؤها** — كسابقة رسائل التواصل حرفًا بحرف: قاعدةٌ جاهزةٌ وبابٌ مفقود، فتبقى الأسئلةُ
  * في القاعدة بلا قارئ. هذا هو الباب.
  */
-export const metadata = { title: "ديبو، بوّابة أديب" };
+export const metadata = { title: "ديبو، بوّابة أدِيب" };
 
 export default async function DeeboDashboardPage() {
   const denied = await denyUnless("/dashboard/deebo");

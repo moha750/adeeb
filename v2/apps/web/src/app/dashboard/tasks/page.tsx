@@ -10,7 +10,7 @@ import { TasksView } from "./TasksView";
  * `can_manage_tasks_of` (القدرة `manage_tasks` + موقعُه من الوحدة)، فالشاشةُ تُخفي ما لا
  * يُستطاع، والقاعدةُ تردّه إن حاوله.
  */
-export const metadata = { title: "المهامّ، بوّابة أديب" };
+export const metadata = { title: "المهامّ، بوّابة أدِيب" };
 
 export default async function TasksPage() {
   const denied = await denyUnless("/dashboard/tasks");

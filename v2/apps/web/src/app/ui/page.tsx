@@ -8,11 +8,11 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
   },
   {
     title: "هيكل الصفحة",
-    pages: [["header", "رأس الموقع"], ["header-over-hero", "الرأس فوق الصدر"], ["hero", "صدر الهبوط، تحريكٌ حيّ"], ["footer", "تذييل الموقع"], ["nav-mobile", "تنقّل اللوحة على الجوّال"], ["qr-dock", "المعاينة الحيّة في محرّر"], ["qr-cards", "أوعية ضوابط الباركود"], ["page-header", "رأس الصفحة"]],
+    pages: [["header", "رأس الموقع"], ["header-over-hero", "الرأس فوق الصدر"], ["hero", "صدر الهبوط، تحريكٌ حيّ"], ["sound-stage", "الهويّة الموسيقيّة"], ["footer", "تذييل الموقع"], ["nav-mobile", "تنقّل اللوحة على الجوّال"], ["qr-dock", "المعاينة الحيّة في محرّر"], ["qr-cards", "أوعية ضوابط الباركود"], ["page-header", "رأس الصفحة"]],
   },
   {
     title: "الإدخال",
-    pages: [["buttons", "الأزرار"], ["button-row", "صفّ الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"], ["gradient", "أدوات التدرّج"], ["qr-frames", "هيئات إطار الباركود"], ["qr-stats", "صفحة الباركود وإحصاؤه"], ["qr-deep", "القراءة الأعمق للباركود"], ["qr-alert-mail", "بريد تنبيه الوجهة"], ["qr-list/screen", "قائمة الباركودات والحملات"], ["qr-campaigns", "الحملة حاوية باركودات"], ["qr-card", "كرت الباركود ووجهته"], ["qr-end", "ذيل صفحة الإحصاء"]],
+    pages: [["buttons", "الأزرار"], ["button-row", "صفّ الأزرار"], ["inputs", "الحقول"], ["selects", "القوائم المنسدلة"], ["choice", "الاختيار"], ["gradient", "أدوات التدرّج"], ["qr-frames", "هيئات إطار الباركود"], ["qr-stats", "صفحة الباركود وإحصاؤه"], ["qr-deep", "القراءة الأعمق للباركود"], ["qr-alert-mail", "بريد تنبيه الوجهة"], ["qr-list/screen", "قائمة الباركودات والحملات"], ["qr-campaigns", "الحملة حاوية باركودات"], ["qr-card", "كرت الباركود ووجهته"], ["qr-end", "ذيل صفحة الإحصاء"], ["qr-image", "باركود وجهته ملف"]],
   },
   {
     title: "العرض",
@@ -20,12 +20,12 @@ const GROUPS: { title: string; pages: [string, string][] }[] = [
       ["badges", "الشارات"], ["cards", "البطاقات"], ["avatar", "الصورة الرمزيّة"], ["accordion", "الأكورديون"],
       ["carousel", "الكاروسيل"], ["carousel-nav", "أسهم التنقّل"], ["skeleton", "هياكل التحميل"], ["loading", "شاشة التحميل"], ["empty", "الحالة الفارغة"],
       ["section-heading", "عنوان القسم"], ["divider", "الفاصل بكلمة"], ["stat", "كرت الإحصاء"], ["medal", "الوسام"], ["positions", "كرت المنصب"], ["supervisors", "كرت المشرف"],
-      ["volunteer-card", "كرت المتطوّع"], ["opportunity-card", "كرت الفرصة التطوّعيّة"], ["opportunity-card/states", "كرت الفرصة: كلّ الحالات"], ["certificate-card", "كرت شهادة المتطوّع"], ["awaiting-card", "كرت بانتظار الحضور"], ["owed-card", "كرت جاهزة لم تصدر"], ["cert-paper", "ورقة شهادة المشاركة"], ["verify-states", "التحقّق بعد تغيّر الاسم"], ["stats-scope", "نطاق الإحصاء"], ["membership", "بطاقة العضويّة"], ["result-card", "بطاقة نتيجة الانتخاب"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"], ["login-code", "الدخول بالرمز"], ["join", "صفحة الانضمام"], ["membership-perks", "مميّزاتُ العضويّة"], ["account-deletion", "الخروج من أديب لكلّ دور"],
+      ["volunteer-card", "كرت المتطوّع"], ["opportunity-card", "كرت الفرصة التطوّعيّة"], ["opportunity-card/states", "كرت الفرصة: كلّ الحالات"], ["certificate-card", "كرت شهادة المتطوّع"], ["awaiting-card", "كرت بانتظار الحضور"], ["owed-card", "كرت جاهزة لم تصدر"], ["cert-paper", "ورقة شهادة المشاركة"], ["verify-states", "التحقّق بعد تغيّر الاسم"], ["stats-scope", "نطاق الإحصاء"], ["members-former", "أعضاء أدِيب بقسمَيه"], ["friends", "أصدقاء أدِيب"], ["membership", "بطاقة العضويّة"], ["result-card", "بطاقة نتيجة الانتخاب"], ["candidacy/states", "سِجلّ ترشُّحي: كل الحالات"], ["candidacy/apply", "معاينة صفحة الترشّح"], ["candidacy/run", "محاكي الترشُّح"], ["candidacy/vote", "محاكي التصويت"], ["auth", "شاشة المصادقة"], ["login-code", "الدخول بالرمز"], ["join", "صفحة الانضمام"], ["membership-perks", "مميّزاتُ العضويّة"], ["account-deletion", "الخروج من أدِيب لكلّ دور"],
     ],
   },
   {
     title: "التفاعل والتنبيه",
-    pages: [["modal", "النوافذ الحواريّة"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["app-install", "أديب على جوّالك"], ["cursor", "مؤشّر الفأرة"], ["deebo-bubble", "فقاعة محادثة ديبو"], ["deebo-screen", "شاشة محادثة ديبو"], ["game-screens", "لوح الكلمة"], ["game-cards", "كرت غرفة اللعب"]],
+    pages: [["modal", "النوافذ الحواريّة"], ["survey-share", "مشاركة الاستبيان"], ["dropdown", "قوائم الإجراءات"], ["breadcrumb", "فتات المسار"], ["tabs", "التبويبات"], ["segmented", "الشريط المقطعيّ"], ["toast", "الإشعارات"], ["alerts", "التنبيهات"], ["app-install", "أدِيب على جوّالك"], ["cursor", "مؤشّر الفأرة"], ["deebo-bubble", "فقاعة محادثة ديبو"], ["deebo-screen", "شاشة محادثة ديبو"]],
   },
   {
     title: "البيانات",
@@ -38,7 +38,7 @@ export default function UIKitPage() {
     <main className="py-16">
       <Container className="max-w-4xl">
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System</p>
-        <h1 className="mt-1 font-display text-4xl font-black text-content">نظام تصميم أديب: المكوّنات</h1>
+        <h1 className="mt-1 font-display text-4xl font-black text-content">نظام تصميم أدِيب: المكوّنات</h1>
         <p className="mt-2 max-w-xl text-content-muted">
           منزل التصميم الواحد: كل مكوّن في صفحته الحيّة: المكوّن الحقيقيّ نفسه، تفاعليّ، وما تراه هو ما يُشحَن. اختر مكوّنًا:
         </p>

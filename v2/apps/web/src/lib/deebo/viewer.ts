@@ -4,6 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { firstAndLastOf } from "@/lib/personName";
 import { positionLine } from "@/lib/positionLabel";
 import { isLiveMembership } from "@/lib/memberRecord";
+import { standingName, type AdeebStanding } from "@/lib/standing";
 
 /**
  * **مَن يكلّم ديبو** — صفةُ صاحب الجلسة كما تُقال له لا كما تُخزَّن.
@@ -25,14 +26,15 @@ export type DeeboViewer = {
   firstName: string | null;
   /** جملةُ المنصب من مصدرها الواحد: «عضو لجنة الإعلام». `null` لمن لا مقعدَ له. */
   position: string | null;
-  /** صفتُه في أديب — ثلاثٌ لا رابعَ لها. */
-  standing: "member" | "volunteer" | "account";
+  /** صفتُه في أدِيب — ثلاثٌ لا رابعَ لها. */
+  standing: AdeebStanding;
 };
 
+/** اسمُ المنزلة من مصدرها (`lib/standing`) فيناديه ديبو بما يناديه به الموقع، ثمّ ما يحتاجه ليختار جوابه. */
 const STANDING_AR: Record<DeeboViewer["standing"], string> = {
-  member: "عضوٌ في النادي",
-  volunteer: "متطوّعٌ مع النادي",
-  account: "صاحبُ حسابٍ في الموقع، وليس عضوًا بعد",
+  member: standingName("member"),
+  volunteer: `${standingName("volunteer")}: يتطوّع مع النادي، وليس عضوًا بعد`,
+  account: `${standingName("account")}: له حسابٌ في الموقع، وليس عضوًا ولا متطوّعًا`,
 };
 
 export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | null> {
@@ -56,10 +58,10 @@ export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | nul
        فيقول ديبو لعضوٍ في لجنةٍ «أنت صاحبُ حسابٍ ولستَ عضوًا» ثمّ يذكر منصبَه في السطر
        نفسِه — جملتان تتناقضان في نَفَسٍ واحد. */
     /* والعرضُ يضمّ العضوَ السابقَ أيضًا (أرشيفُ الكشوف)، فالحدُّ `isLiveMembership` لا مجرّدُ
-       وجود الصفّ: العضوُ السابقُ زائر (٢٠٢٦-١٠-٠٣). */
+       وجود الصفّ: العضوُ السابقُ صديقُ أدِيب (٢٠٢٦-١٠-٠٣). */
     sb.from("members").select("id, joined_date, account_status").eq("id", userId).maybeSingle(),
     /* والمتطوّعُ صفٌّ حالُه `active`. لا `ended_at`: العائدُ إلى التطوّع يبقى عليه خبرُ انقطاعه
-       (`volunteers_return_keeps_history`)، فكان يُقرأ «صاحبَ حساب» وهو متطوّع. */
+       (`volunteers_return_keeps_history`)، فكان يُقرأ «صديقَ أدِيب» وهو متطوّع. */
     sb.from("volunteers").select("user_id, status").eq("user_id", userId).maybeSingle(),
   ]);
 
@@ -125,7 +127,7 @@ ${who}.
  * الاسمُ الأوّل وحدَه، **لتحيّة الصفحة الفارغة** (٢٠٢٦-٠٨-٢٠).
  *
  * ولمَ لا يُنادى `loadDeeboViewer` وفيه الاسمُ أصلًا؟ لأنّ ذاك يقرأ خمسَ قراءاتٍ ليعرف
- * صفةَ صاحبه (عضوٌ أم متطوّعٌ أم صاحبُ حساب) وهي لا تُذكر في التحيّة، وثمنُها يُدفع في
+ * صفةَ صاحبه (عضوٌ أم متطوّعٌ أم صديقُ أدِيب) وهي لا تُذكر في التحيّة، وثمنُها يُدفع في
  * **كلّ فتحةِ صفحة** لا عند السؤال. فالتحيّةُ تحتاج صفًّا واحدًا، وهذا يقرؤه.
  *
  * واستخراجُ الاسم من `firstAndLastOf` كما في أخيه: القاعدةُ واحدةٌ فلا يُنادى العضوُ

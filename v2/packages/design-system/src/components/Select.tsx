@@ -27,6 +27,8 @@ export interface SelectProps {
   tone?: "warning" | "danger" | "success";
   error?: string;
   helper?: string;
+  /** نصٌّ خافتٌ داخل الحقل المغلق ما دام لا اختيار. */
+  placeholder?: string;
   disabled?: boolean;
   /** اسم حقل مخفيّ لإرساله ضمن النماذج. */
   name?: string;
@@ -68,6 +70,7 @@ export function Select({
   tone,
   error,
   helper,
+  placeholder,
   disabled = false,
   name,
   optional,
@@ -184,7 +187,7 @@ export function Select({
       >
         {/* التلميح يبقى بعد الاختيار: الحقلُ المغلق هو ما يراه المستخدم لحظةَ الإرسال. */}
         <span className="asel-value">
-          {selected?.label ?? ""}
+          {selected ? selected.label : placeholder ? <span className="asel-ph">{placeholder}</span> : ""}
           {selected?.hint ? <span className="asel-vhint">{selected.hint}</span> : null}
         </span>
         <span className="asel-chev"><Chev /></span>

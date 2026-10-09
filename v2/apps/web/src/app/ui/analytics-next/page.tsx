@@ -56,7 +56,7 @@ const DWELL = [
   { label: "الرئيسيّة", path: "/", value: 157 },
   { label: "صفحةٌ قديمةٌ لا وجود لها", path: "/membership.html", value: 121 },
   { label: "استعادة كلمة المرور", path: "/forgot-password", value: 90 },
-  { label: "الانضمام إلى أديب", path: "/join", value: 80 },
+  { label: "الانضمام إلى أدِيب", path: "/join", value: 80 },
   { label: "منعطف: أسطورة الشغف", path: "/radio/munataf/ep-3", value: 61 },
 ];
 

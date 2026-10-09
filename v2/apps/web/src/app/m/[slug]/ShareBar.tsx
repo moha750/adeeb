@@ -22,7 +22,7 @@ export function ShareBar({ name, slug }: { name: string; slug: string }) {
 
   const share = async () => {
     const url = `${window.location.origin}/m/${encodeURIComponent(slug)}`;
-    const text = `${name}، في نادي أديب`;
+    const text = `${name}، في نادي أدِيب`;
 
     if (navigator.share) {
       try {

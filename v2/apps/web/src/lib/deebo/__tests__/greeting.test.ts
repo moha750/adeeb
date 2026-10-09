@@ -67,11 +67,11 @@ describe("pickGreeting", () => {
     }
   });
 
-  it("تسمّي أديب مرّةً واحدةً في كلّ تحيّةٍ ممكنة", () => {
+  it("تسمّي أدِيب مرّةً واحدةً في كلّ تحيّةٍ ممكنة", () => {
     // حارسُ قاعدة التركيب: الصدرُ لا يسمّيه والعجُزُ يسمّيه. سقطت أوّلُ قرعةٍ حيّةٍ فيها.
     for (const hour of [9, 19, 1]) {
       for (let seed = 0; seed < GREETING_PERIOD; seed++) {
-        const said = say({ seed, hour, name: "محمّد" }).split("أديب").length - 1;
+        const said = say({ seed, hour, name: "محمّد" }).split("أدِيب").length - 1;
         expect(said).toBeLessThanOrEqual(1);
       }
     }

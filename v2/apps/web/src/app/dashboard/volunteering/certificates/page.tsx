@@ -3,7 +3,7 @@ import { clubDayKey } from "@/lib/dates";
 import { listCertificateRoom, manualIssueOptions } from "../data";
 import { ParticipationView } from "./ParticipationView";
 
-export const metadata = { title: "شهادات المتطوّعين، بوّابة أديب" };
+export const metadata = { title: "شهادات المتطوّعين، بوّابة أدِيب" };
 
 /**
  * **غرفةُ شهادات المتطوّعين** — قفلُها `manage_volunteering` كأختيها، فيراها الموارد والرئيسان.

@@ -23,17 +23,17 @@ const S = (o: Partial<JourneyStop> & { key: string; title: string }): JourneySto
 });
 
 const LONG: JourneyStop[] = [
-  S({ key: "j", kind: "join", title: "انضمامك إلى أديب", date: "3 سبتمبر 2024" }),
+  S({ key: "j", kind: "join", title: "انضمامك إلى أدِيب", date: "3 سبتمبر 2024" }),
   S({ key: "r1", title: "عضو", scope: "لجنة الإعلام", date: "3 سبتمبر 2024" }),
   S({ key: "r2", title: "نائب", scope: "لجنة الإعلام", date: "12 فبراير 2025" }),
   S({ key: "r3", title: "قائد", scope: "لجنة الإعلام", date: "20 يناير 2026", current: true }),
 ];
 
-const SHORT: JourneyStop[] = [S({ key: "j", kind: "join", title: "انضمامك إلى أديب", date: "16 يناير 2026" })];
+const SHORT: JourneyStop[] = [S({ key: "j", kind: "join", title: "انضمامك إلى أدِيب", date: "16 يناير 2026" })];
 
 // المشرف الإداريّ: تسعةُ صفوفٍ في القاعدة تُجمَع محطّةً واحدة نطاقُها وحداتُها كلّها
 const WIDE: JourneyStop[] = [
-  S({ key: "j", kind: "join", title: "انضمامك إلى أديب", date: "29 يونيو 2026" }),
+  S({ key: "j", kind: "join", title: "انضمامك إلى أدِيب", date: "29 يونيو 2026" }),
   S({ key: "r1", title: "عضو", scope: "إدارة الضمان والجودة", date: "29 يونيو 2026" }),
   S({ key: "r2", title: "عضو ضمان وجودة", scope: "لجنة الفعاليات، لجنة الرواة، لجنة التأليف، لجنة السُفراء، لجنة التصوير، لجنة التصميم، لجنة التسويق، لجنة التقارير والأرشفة، لجنة البرمجة", date: "15 يوليو 2026", current: true }),
 ];
@@ -128,7 +128,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة: محطّاتٌ متعدّدة، والقائمةُ الآن بنغمة النجاح وشارة «حاليّ»</Label>
             <Card>
-              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب، الأقدم أوّلًا" />
+              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أدِيب" subtitle="انضمامك وما تلاه من مناصب، الأقدم أوّلًا" />
               <CardBody><Journey stops={LONG} /></CardBody>
             </Card>
           </section>
@@ -136,7 +136,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة، منصبٌ ممتدّ: تسعةُ صفوفٍ تُجمَع محطّةً واحدة، ونطاقُها يلتفّ ولا يُبتَر</Label>
             <Card>
-              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" />
+              <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أدِيب" />
               <CardBody><Journey stops={WIDE} /></CardBody>
             </Card>
           </section>
@@ -144,7 +144,7 @@ export default function MembershipGalleryPage() {
           <section>
             <Label>المسيرة: محطّةٌ واحدة (لا خيطَ تحتها: المسيرة تنتهي ولا تُعلَّق)</Label>
             <Card>
-              <CardHeader variant="soft" icon={<IdentificationCard />} title="مسيرتي في أديب" />
+              <CardHeader variant="soft" icon={<IdentificationCard />} title="مسيرتي في أدِيب" />
               <CardBody><Journey stops={SHORT} /></CardBody>
             </Card>
           </section>

@@ -31,7 +31,7 @@ export function AuthShell({ title, subtitle, slogan, children, className }: Auth
       <div className="aauth-stack">
         <Card className="aauth-panel">
           <aside className="aauth-side">
-            <img src="/brand/logo-vertical-white.svg" alt="نادي أديب" />
+            <img src="/brand/logo-vertical-white.svg" alt="نادي أدِيب" />
             {slogan ? <p className="aauth-slogan">{slogan}</p> : null}
           </aside>
 

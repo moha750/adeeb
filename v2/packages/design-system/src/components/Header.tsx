@@ -123,8 +123,9 @@ export function Header({
      */
     standing?: string | null;
     /**
-     * جنسُه — ولا يُستعمل إلّا في منزلةِ **صاحب الحساب**: «صاحبُ حساب» تُقال للمرأة
-     * «صاحبةُ حساب»، ولا ثالثَ في الرأس يتبدّل به. وحين يُجهَل فالمذكَّرُ أصلٌ.
+     * جنسُه — يُصرِّف اسمَ المنزلة حين لا يُمرَّر `standing`: «صديقة أدِيب» (والعضوُ «عضو أدِيب» للجنسين). والموقعُ
+     * يمرّره دائمًا من `lib/standing` (ومنه «متطوّع أدِيب» الذي لا يعرفه الرأس)، فهذا احتياطٌ
+     * لمستهلكٍ آخر. وحين يُجهَل فالمذكَّرُ أصلٌ.
      */
     gender?: "male" | "female" | null;
   };
@@ -346,7 +347,7 @@ export function Header({
   /* ── هويّةُ صاحب الجلسة ───────────────────────────────────────────────────
      الاسمُ الأوّل وحدَه في الشريط: الرأسُ صفٌّ ضيّقٌ يتنازع عليه الشعارُ والتوجّهات،
      والاسمُ الكاملُ يُقصّ بنقاطٍ فيبدو عطبًا — وهو كاملٌ في رأس المنسدلة.
-     والمنسدلةُ تقول **المنزلة** تحت الاسم، فيعرف صاحبُ الحساب لمَ لا يرى البوّابة. */
+     والمنسدلةُ تقول **المنزلة** تحت الاسم، فيعرف صديقُ أدِيب لمَ لا يرى البوّابة. */
   const first = viewer ? (viewer.name.trim().split(/\s+/)[0] ?? viewer.name) : "";
 
   const meTrigger = (
@@ -387,17 +388,17 @@ export function Header({
         <span>
           {viewer.standing ||
             (viewer.isMember
-              ? "عضوٌ في أَدِيب"
+              ? "عضو أدِيب"
               : viewer.gender === "female"
-                ? "صاحبةُ حساب"
-                : "صاحبُ حساب")}
+                ? "صديقة أدِيب"
+                : "صديق أدِيب")}
         </span>
       </div>
       <div className="dm-sep" />
       {/* **بابٌ واحدٌ لكلّ منزلة** (قرار المالك ٢٠٢٦-٠٨-٢٥): كانا بابين فسأل «قائدُ لجنةٍ
           يرى حسابك والبوّابة معًا؟» — وهو محقّ: ما في `/me` صار في اللوحة (الملفُّ الشخصيّ
           والإعداداتُ وبابُ الخروج نفسُه)، فالبابُ الثاني تكرارٌ يُثقل. فللعضو بوّابتُه،
-          ولصاحب الحساب حسابُه — وهو بيتُه كلُّه لا نصفُه. */}
+          ولصديق أدِيب حسابُه — وهو بيتُه كلُّه لا نصفُه. */}
       {(viewer.hasPortal ?? viewer.isMember) ? meItem(portalHref, loginLabel, IconPortal) : meItem(accountHref, "حسابك", IconAccount)}
       <div className="dm-sep" />
       <button
@@ -462,9 +463,9 @@ export function Header({
       <div className="shdr-main">
         <Container>
           <div ref={barRef} className="shdr-bar">
-            <a ref={markRef} href="/" className="shdr-mark" aria-label="نادي أديب، الصفحة الرئيسة">
+            <a ref={markRef} href="/" className="shdr-mark" aria-label="نادي أدِيب، الصفحة الرئيسة">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="نادي أديب" />
+              <img src={src} alt="نادي أدِيب" />
             </a>
 
             <nav className="shdr-nav" aria-label="التنقّل الرئيس">

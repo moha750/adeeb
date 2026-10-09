@@ -187,7 +187,7 @@ export default function QrCardsLab() {
           <UploadSimple size={18} /> {logo ? "تغيير الشعار" : "رفع شعار"}
         </Button>
         <Button variant="ghost" size="md" onClick={() => void pickBrandLogo()}>
-          <Sparkle size={18} /> شعار أديب
+          <Sparkle size={18} /> شعار أدِيب
         </Button>
         {logo ? (
           <Button variant="ghost-danger" size="md" onClick={() => setLogo(null)}>

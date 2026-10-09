@@ -29,7 +29,7 @@ export type QrEvent = {
    * كان الاتّحادُ ستّةً والقيدُ ثمانيةً منذ م٧ وم٨، فواقعةُ «موعد» كانت تُرسَم بشارةٍ
    * بلا تسميةٍ ولا نغمة (خانةٌ فارغة). صُحّح مع م١٨ يوم وُلدت «الحملة».
    */
-  kind: "target" | "title" | "active" | "spec" | "delete" | "owner" | "schedule" | "tags" | "campaign";
+  kind: "target" | "title" | "active" | "spec" | "delete" | "owner" | "schedule" | "tags" | "campaign" | "file";
   oldValue: string | null;
   newValue: string | null;
   at: string;

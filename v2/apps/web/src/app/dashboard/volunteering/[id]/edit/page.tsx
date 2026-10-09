@@ -4,7 +4,7 @@ import { clubNow } from "@/lib/volunteerPeriods";
 import { activeCommittees, getOpportunity } from "../../data";
 import { OpportunityForm } from "../../OpportunityForm";
 
-export const metadata = { title: "تحرير الفرصة، بوّابة أديب" };
+export const metadata = { title: "تحرير الفرصة، بوّابة أدِيب" };
 
 /** تحريرُ فرصة — الصفحةُ نفسُها مملوءةً بما هو قائم، وفتراتُها بطلباتها (`getOpportunity`). */
 export default async function EditOpportunityPage({ params }: { params: Promise<{ id: string }> }) {

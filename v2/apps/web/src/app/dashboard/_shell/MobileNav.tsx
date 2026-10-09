@@ -223,7 +223,7 @@ export function MobileSheet({
         </div>
         <div className="ash-brand">
           <span className="ash-mark" aria-hidden><IconDashboard /></span>
-          <b className="ash-name">بوّابة أديب</b>
+          <b className="ash-name">بوّابة أدِيب</b>
           <button type="button" className="mnsh-x" aria-label="إغلاق القائمة" onClick={onClose}>
             <GlyphZone><X /></GlyphZone>
           </button>

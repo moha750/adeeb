@@ -14,7 +14,7 @@ import { PageHeader } from "../_components/PageHeader";
  * يشرف على لجانٍ فكشفُ من غادرها **أثناء ولايته** يسكن غرفتَه هو («من أشرف عليهم») حالةً
  * ثالثة — لا هذه الغرفةَ بمدًى ضيّق: اسمٌ واحدٌ لمعنيين أوّلُ الكذب.
  */
-export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberStatus }) {
+export async function MembersScreen({ lockedStatus, initialTab = "active" }: { lockedStatus?: MemberStatus; initialTab?: "active" | "suspended" }) {
   const [{ members, warningLimit, moveTargets, error }, me] = await Promise.all([getMembers(), getCurrentAdmin()]);
 
   if (error) {
@@ -27,6 +27,8 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
   }
 
   const caps = me?.caps ?? [];
+  // قسمُ السابقين لمن يملك مفتاحَه وحده — وبلاه لا مبدّل ولا يُفتح عليه ولو طُلب بالرابط
+  const formerTab = caps.includes("view_suspended_members");
 
   return (
     <MembersView
@@ -38,6 +40,8 @@ export async function MembersScreen({ lockedStatus }: { lockedStatus?: MemberSta
       warningLimit={warningLimit}
       // وجهاتُ النقل — والبندُ نفسه يتبع سلطةَ الصفّ (`canMove`) لا هذه القائمة
       moveTargets={moveTargets}
+      formerTab={formerTab}
+      initialTab={formerTab ? initialTab : "active"}
     />
   );
 }

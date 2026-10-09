@@ -24,6 +24,9 @@ export function sampleQrLink(over: Partial<QrLinkRow> = {}): QrLinkRow {
     code,
     title: "ملصق الملتقى",
     targetUrl: "https://adeeb.club/register",
+    kind: "link",
+    filePath: null,
+    fileUrl: null,
     /* الوصفةُ تتبع الرمزَ لا العكس: الرمزُ هو ما يُرسَم في المربّع */
     spec: defaultQrSpec(qrShortUrl(code)),
     active: true,

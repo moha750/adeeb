@@ -14,7 +14,8 @@ import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
 import type { EventDetail, ReservationRow } from "./data";
-import { ACCOUNT_TYPE_LABEL, AUDIENCE_LABEL, STAGE_META, STATUS_META, TYPE_META, reservationStage } from "./vocab";
+import { AUDIENCE_LABEL, STAGE_META, STATUS_META, TYPE_META, reservationStage } from "./vocab";
+import { standingName, standingOfAccountType } from "@/lib/standing";
 import {
   batchConfirmWhatsapp, batchMarkCertificatesSent, cancelReservation,
   confirmWhatsapp, markAttendance, markCertificateSent, type EventResult,
@@ -148,7 +149,7 @@ export function EventDetailView({ detail }: { detail: EventDetail }) {
 
   const nameCol: Column<ReservationRow> = {
     key: "name", header: "المشارك", width: "minmax(160px, 1.8fr)",
-    render: (r) => <span className="txt"><b>{r.fullName ?? "—"}</b><span className="text-content-muted">، {ACCOUNT_TYPE_LABEL[r.accountType]}</span></span>,
+    render: (r) => <span className="txt"><b>{r.fullName ?? "—"}</b><span className="text-content-muted">، {standingName(standingOfAccountType(r.accountType), r.gender)}</span></span>,
   };
   const contactCol: Column<ReservationRow> = {
     key: "contact", header: "التواصل", width: "minmax(150px, 1.3fr)",

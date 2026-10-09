@@ -15,8 +15,7 @@ import { LINK_ALPHABET, codeShapeGuard, randomCode } from "@/lib/shortCode";
  * والرمزُ يُقرأ بالعين ويُملى بالصوت أحيانًا، فالالتباسُ فيه عطبٌ لا ذوق.
  * إحدى وثلاثون محرفًا في سبعة مواضع: سبعةٌ وعشرون مليارَ احتمال، فلا يُخمَّن بالتجريب.
  *
- * **والآليّةُ انتقلت إلى `lib/shortCode`** يومَ طلبتها رموزُ غرف اللعب؛ والاسمُ يبقى
- * هنا لأنّ مستوردَه لا شأنَ له بالانتقال. (سابقةُ `visitorHash` حين خرجت من ديبو.)
+ * **والآليّةُ في `lib/shortCode`**؛ والاسمُ يبقى هنا لأنّ مستوردَه لا شأنَ له بموضعها.
  */
 export const QR_ALPHABET = LINK_ALPHABET;
 
@@ -114,12 +113,69 @@ export const SITE_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://
 export const qrShortUrl = (code: string, origin: string = SITE_ORIGIN): string =>
   `${origin.replace(/\/+$/, "")}${qrPath(code)}`;
 
+/* ── الباركودُ الذي وجهتُه ملف (م٢١ وم٢٤) ─────────────────────────────── */
+
+/**
+ * **نوعُ الوجهة** — يطابق `qr_links_kind_check` حرفًا: رابطٌ يُحوَّل إليه، أو **ملفٌّ** يُعرَض في
+ * صفحتنا. والملفُّ صورةٌ أو PDF، ونوعُه من امتداده لا من عمودٍ ثانٍ (`qrFileType`): نوعان لا ثلاثة،
+ * فبطاقتا الاختيار اثنتان، ومن رفع صورةً ثمّ استبدلها بـPDF لم يغيّر «نوع» الباركود.
+ * ويتبدّل النوعُ بعد الإنشاء (م٢٣): الملصقُ يحمل ‎/q/<code>‎ في الحالين.
+ */
+export type QrKind = "link" | "file";
+
+/** دلوُ ملفّات الباركود. علنيٌّ لأنّ الملفَّ يُعرَض لكلّ ماسح، ولا كتابةَ فيه إلّا برابطٍ موقَّع. */
+export const QR_FILE_BUCKET = "qr-files";
+
+/**
+ * **وجهةُ الملفّ صفحتُنا لا رابطُ المخزن.** يكتبها الخادمُ في `target_url`، فبابُ المسح يعدّ
+ * ويحوّل كما يفعل مع كلّ رابط ولا يعرف أنّه ملف. والماسحُ يصل إلى أدِيب لا إلى مخزنٍ غريب.
+ */
+export const qrViewPath = (code: string): string => `${qrPath(code)}/view`;
+export const qrViewUrl = (code: string, origin: string = SITE_ORIGIN): string =>
+  `${origin.replace(/\/+$/, "")}${qrViewPath(code)}`;
+
+/** امتدادُ الملفّ من نوعه — الأربعةُ التي يقبلها الدلو، ولا خامس. */
+export const QR_FILE_EXT: Readonly<Record<string, "webp" | "jpg" | "png" | "pdf">> = {
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "application/pdf": "pdf",
+};
+
+/** **صورةٌ أم PDF؟** يُقرأ من امتداد المسار — مصدرٌ واحدٌ تسأله الصفحةُ العلنيّةُ واللوحة. */
+export type QrFileType = "image" | "pdf";
+export const qrFileType = (path: string): QrFileType => (/\.pdf$/i.test(path) ? "pdf" : "image");
+
+/**
+ * **شكلُ مسار الملفّ**: `<معرّفُ الرافع>/<معرّفٌ عشوائيّ>.<امتداد>` — يطابق `qr_links_file_shape`.
+ * ومن مُرِّر إليه الرافعُ فُحص أنّ المسارَ مسارُه: ملفٌّ في مجلّد غيرك ليس لك أن تربطه بباركود
+ * (والمحفّزُ في القاعدة يردّه على كلّ حال).
+ */
+const FILE_PATH = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|jpg|png|pdf)$/;
+export const isQrFilePath = (path: string, uploader?: string): boolean =>
+  FILE_PATH.test(path) && (!uploader || path.startsWith(`${uploader}/`));
+
+/** رابطُ الملفّ العلنيّ في المخزن. */
+export function qrFileUrl(path: string): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
+  return `${base}/storage/v1/object/public/${QR_FILE_BUCKET}/${path}`;
+}
+
+/**
+ * **ورابطُ حفظه**: `?download=` يجعل المخزنَ يردّه ملفًّا يُحفَظ باسمٍ يُعرَف لا صفحةً تُفتَح.
+ * وسمةُ `download` على الرابط لا تكفي وحدها: المتصفّحُ يتجاهلها لأصلٍ غيرِ أصل الصفحة.
+ */
+export function qrFileSaveUrl(path: string): string {
+  const ext = path.split(".").pop() ?? "webp";
+  return `${qrFileUrl(path)}?download=${encodeURIComponent(`adeeb.${ext}`)}`;
+}
+
 export type TargetCheck = { ok: true; url: string } | { ok: false; message: string };
 
 /**
  * **تصديقُ الوجهة — لا تحويلَ مفتوح.**
  *
- * رمزٌ يحمل اسمَ أديب ويسوق ماسحَه إلى حيثُ شاء كاتبُه أداةُ تصيّدٍ نوقّعها بختمنا.
+ * رمزٌ يحمل اسمَ أدِيب ويسوق ماسحَه إلى حيثُ شاء كاتبُه أداةُ تصيّدٍ نوقّعها بختمنا.
  * فالبروتوكولان وحدهما، ولا `javascript:` ولا `data:`. والقيدُ في القاعدة شبكةُ
  * أمانٍ أخيرة تحت هذا، لا بديلًا عنه.
  *

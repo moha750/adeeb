@@ -55,6 +55,8 @@ export function StationScroll() {
   const [on, setOn] = useState(false);
   /** يُسمَع ولا يُقرأ مرّةً: من أعلن تقليلَ الحركة وهو في الصفحة تقفز عنده الإبرة */
   const still = useMediaFlag(REDUCE_MOTION);
+  /** لا إبرةَ حيث لا فأرة — الشرطُ نفسُه الذي يُخفيها في الورقة (انظر `.sbi` هناك) */
+  const fine = useMediaFlag("(any-pointer: fine)");
   const box = useRef<HTMLSpanElement>(null);
   const rail = useRef<HTMLSpanElement>(null);
   const thumb = useRef<HTMLSpanElement>(null);
@@ -63,6 +65,7 @@ export function StationScroll() {
   const sync = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    if (!fine) return;
     let target = 0;
     let shown = 0;
     let frame = 0;
@@ -187,7 +190,7 @@ export function StationScroll() {
       b?.removeEventListener("pointerup", onUp);
       b?.removeEventListener("pointercancel", onUp);
     };
-  }, [still]);
+  }, [still, fine]);
 
   /* **والقياسُ يُعاد عند الظهور**: عنصرٌ مخفيٌّ ارتفاعُه صفر، فمداه صفر. */
   useEffect(() => {

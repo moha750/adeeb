@@ -8,7 +8,7 @@ import { listMyConversations, openMyConversation } from "./actions";
 
 export const metadata = {
   title: "ديبو",
-  description: "مساعدُ نادي أديب. اسأله عن النادي وفعاليّاته وعضويّته.",
+  description: "مساعدُ نادي أدِيب. اسأله عن النادي وفعاليّاته وعضويّته.",
 };
 
 /**

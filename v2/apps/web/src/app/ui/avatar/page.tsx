@@ -70,7 +70,7 @@ export default function AvatarPage() {
             <Lab>src موجود ← الصورة، بلا src ← الأحرف الأولى من الاسم</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
-                <Avatar key={s} name="نادي أديب" src={IMG} size={s} />
+                <Avatar key={s} name="نادي أدِيب" src={IMG} size={s} />
               ))}
             </div>
             <div className="mt-6 flex flex-wrap items-end gap-6">
@@ -116,7 +116,7 @@ export default function AvatarPage() {
           <Sec title="الرجوع الافتراضيّ">
             <Lab>اسم من كلمة واحدة ← حرف واحد، بلا اسم ← «؟»</Lab>
             <div className="flex flex-wrap items-center gap-6">
-              <Avatar name="أديب" size="lg" />
+              <Avatar name="أدِيب" size="lg" />
               <Avatar size="lg" />
               <Avatar name="عبدالله بن سعد الشمري" size="lg" />
             </div>

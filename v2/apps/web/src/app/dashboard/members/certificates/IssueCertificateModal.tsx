@@ -123,7 +123,7 @@ export function IssueCertificateModal({
     value: t.id,
     label: t.name,
     hint: t.positionTitle ?? undefined,
-    group: t.ended ? "أعضاء سابقون" : "أعضاء أديب",
+    group: t.ended ? "أعضاء سابقون" : "أعضاء أدِيب",
     icon: <Avatar name={t.name} src={t.avatar ?? undefined} gender={t.gender} size="xs" />,
   }));
 
@@ -219,7 +219,7 @@ export function IssueCertificateModal({
         value={position}
         onChange={(e) => setPosition(e.target.value)}
         required
-        helper="يُكتب في: «تشهد عائلة أديب بخبرة وكفاءة …»، بلا تأنيثٍ للرتبة، كما في ورقة النادي."
+        helper="يُكتب في: «تشهد عائلة أدِيب بخبرة وكفاءة …»، بلا تأنيثٍ للرتبة، كما في ورقة النادي."
       />
 
       {target?.joinedDate ? (

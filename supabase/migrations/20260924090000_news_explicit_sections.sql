@@ -25,7 +25,7 @@ COMMENT ON COLUMN public.news.blocks IS
 
 -- حارسُ الشكل. و**دالّةٌ لا تعبيرٌ مباشر** لأنّ قيدَ CHECK في Postgres لا يقبل
 -- استعلامًا فرعيًّا، وفحصُ عناصر المصفوفة يحتاج `jsonb_array_elements`.
--- و`search_path` مُفرَّغٌ عمدًا (درسُ ترحيلات «خمّن الكلمة»): الدالّةُ لا تنادي إلّا
+-- و`search_path` مُفرَّغٌ عمدًا: الدالّةُ لا تنادي إلّا
 -- ما في `pg_catalog`، وهو في المسار ضمنًا فلا يُنتحَل.
 CREATE OR REPLACE FUNCTION public.news_blocks_valid(b jsonb)
 RETURNS boolean

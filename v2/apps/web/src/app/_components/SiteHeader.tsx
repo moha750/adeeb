@@ -6,6 +6,7 @@ import { Header } from "@adeeb/design-system";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import type { MeBrief } from "@/app/api/me/brief/route";
+import { standingName } from "@/lib/standing";
 
 /**
  * رأسُ الموقع كما يلبسه أدِيب — `Header` المكتبة، وقد صار **يعرف صاحبَه**.
@@ -89,7 +90,8 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
               name: viewer.name ?? "",
               isMember: viewer.isMember,
               hasPortal: viewer.hasPortal,
-              standing: viewer.position,
+              // المنصبُ لمن له منصب، وإلّا اسمُ منزلته من مصدره مصرَّفًا بجنسه.
+              standing: viewer.position ?? standingName(viewer.standing, viewer.gender),
               gender: viewer.gender,
               avatar: (
                 <Avatar name={viewer.name ?? undefined} src={viewer.avatarUrl ?? undefined} gender={viewer.gender} />

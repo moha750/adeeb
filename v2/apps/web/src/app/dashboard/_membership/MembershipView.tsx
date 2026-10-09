@@ -116,7 +116,7 @@ export function MembershipView({ membership: m }: { membership: Membership }) {
       ) : null}
 
       <Card>
-        <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أديب" subtitle="انضمامك وما تلاه من مناصب" />
+        <CardHeader variant="soft" icon={<Path />} title="مسيرتي في أدِيب" subtitle="انضمامك وما تلاه من مناصب" />
         <CardBody>
           {m.journey.length ? (
             <Journey stops={m.journey} />

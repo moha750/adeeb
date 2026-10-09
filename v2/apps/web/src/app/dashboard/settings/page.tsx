@@ -19,7 +19,7 @@ import { PageHeader } from "../_components/PageHeader";
  * تحصر المدى (`my_sessions` و`revoke_my_session` بـ`auth.uid()`، وسياساتُ `profiles`
  * و`user_roles` بصفّ صاحبها).
  */
-export const metadata = { title: "الإعدادات، بوّابة أديب" };
+export const metadata = { title: "الإعدادات، بوّابة أدِيب" };
 
 export default async function SettingsPage() {
   const denied = await denyUnless("/dashboard/settings");

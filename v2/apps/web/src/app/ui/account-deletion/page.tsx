@@ -1,5 +1,5 @@
 /**
- * **معاينةُ الخروج من أديب لكلّ دورٍ ومنصب** — بطلب المالك ١٩ أغسطس ٢٠٢٦.
+ * **معاينةُ الخروج من أدِيب لكلّ دورٍ ومنصب** — بطلب المالك ١٩ أغسطس ٢٠٢٦.
  *
  * السؤالُ الذي تجيب عنه بالعين: «من يضغط زرَّ الخروج، ماذا يقع له؟» وهو سؤالٌ لا يُشرَح
  * بالكلام لأنّ الشجرةَ فيها أحدَ عشرَ دورًا و١٦٠ حاملًا، ولكلٍّ بابُه.
@@ -18,7 +18,7 @@ import { UserMinus, Users } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { AFTER, PLAIN, ROLES, decidersFor, judge, tally, type Door } from "./cases";
 
-export const metadata = { title: "الخروج من أديب لكلّ دور" };
+export const metadata = { title: "الخروج من أدِيب لكلّ دور" };
 
 /** شارةُ الباب — لونُها معناها: خضراءُ لمن يمضي بيده، وصفراءُ لمن ينتظر قرارًا. */
 const DOOR_TONE: Record<Door, "danger" | "warning" | "success" | "neutral"> = {
@@ -35,7 +35,7 @@ export default function AccountExitPreview() {
     <main className="py-16">
       <Container>
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Membership Exit, Roles</p>
-        <h1 className="mt-2 text-3xl font-bold">الخروجُ من أديب لكلّ دورٍ ومنصب</h1>
+        <h1 className="mt-2 text-3xl font-bold">الخروجُ من أدِيب لكلّ دورٍ ومنصب</h1>
         <p className="mt-3 max-w-2xl text-content-muted">
           العضويّةُ تُنهى أوّلًا ثمّ يُحذف الحساب، والسببُ إجباريٌّ في البابين. أحدَ عشرَ دورًا
           في الشجرة و160 حاملًا، وأربعُ حالاتٍ بلا مقعد. والأعدادُ لقطةُ 20 أغسطس 2026.

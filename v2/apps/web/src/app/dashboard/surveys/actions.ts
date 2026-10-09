@@ -2,14 +2,15 @@
 
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
-import { getSurveyManager } from "@/lib/surveys/authz";
+import { authorizeSurvey, getSurveyManager } from "@/lib/surveys/authz";
 import {
-  ACCESS_TYPES, QUESTION_TYPE_VALUES, SCALE_MAX, SCALE_MIN, STATUS_OPS,
-  hasChoices, hasScale,
-  type AccessType, type Choice, type QuestionType, type StatusOp, type SurveyStatus,
+  ACCESS_TYPES, OP_NEEDS, QUESTION_TYPE_VALUES, SCALE_MAX, SCALE_MIN, STATUS_OPS,
+  canEditSurvey, canSurvey, hasChoices, hasScale, isShareLevel, shareErrorMessage,
+  type AccessType, type Choice, type QuestionType, type ShareLevel, type StatusOp, type SurveyStatus,
 } from "./vocab";
 import { toPublicSurvey, toPublicQuestions } from "@/app/surveys/[id]/public";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import { getSurveySharing, type SurveyShareCandidate, type SurveyShareRow } from "./data";
 
 export type SurveyResult = { ok: boolean; message: string; id?: number };
 
@@ -193,13 +194,21 @@ export async function createSurvey(input: SurveyInput, publish = false): Promise
  * بعمود نوعه، وتغييره يجعل القديم غير مقروء.
  */
 export async function updateSurvey(surveyId: number, input: SurveyInput): Promise<SurveyResult> {
-  const mgr = await getSurveyManager();
-  if (!mgr) return { ok: false, message: "لا تملك صلاحية إدارة الاستبيانات." };
+  const grant = await authorizeSurvey(surveyId, "edit");
+  if (!grant.ok) return { ok: false, message: grant.message };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const invalid = validateSurvey(input);
   if (invalid) return { ok: false, message: invalid };
+
+  // الركنُ يحكم مع الدور: المؤرشفُ والمحذوفُ لا يحرّرهما إلّا من يملك إعادتَهما
+  const { data: cur, error: cErr } = await sb.from("surveys").select("archived_at, deleted_at").eq("id", surveyId).maybeSingle();
+  if (cErr) return { ok: false, message: `تعذّر قراءة الاستبيان: ${cErr.message}` };
+  if (!cur) return { ok: false, message: "لا وجود لهذا الاستبيان." };
+  if (!canEditSurvey(grant.role, { archived: cur.archived_at != null, deleted: cur.deleted_at != null })) {
+    return { ok: false, message: "الاستبيانُ مركونٌ في الأرشيف أو المحذوفات، وصاحبُه وحده يعيده." };
+  }
 
   const { data: existing, error: eErr } = await sb
     .from("survey_questions")
@@ -215,6 +224,14 @@ export async function updateSurvey(surveyId: number, input: SurveyInput): Promis
     const aRes = await sb.from("survey_answers").select("question_id").in("question_id", [...existingById.keys()]);
     if (aRes.error) return { ok: false, message: `تعذّر فحص الإجابات: ${aRes.error.message}` };
     for (const a of aRes.data ?? []) answerCount.set(a.question_id, (answerCount.get(a.question_id) ?? 0) + 1);
+  }
+
+  // **حذفُ سؤالٍ له إجاباتٌ حذفٌ لإجاباته** (السلسلةُ في القاعدة تمحوها): فهو حذفٌ لا تحرير،
+  // ولصاحب الاستبيان (وحساب النادي) وحده. الشريكُ المحرِّر يضيف ويعدّل، ولا يمحو ما جُمع.
+  const keeping = new Set(input.questions.map((q) => q.id).filter((id): id is number => id != null));
+  const dropsAnswers = [...existingById.keys()].some((id) => !keeping.has(id) && (answerCount.get(id) ?? 0) > 0);
+  if (dropsAnswers && !canSurvey(grant.role, "delete")) {
+    return { ok: false, message: "حذفُ سؤالٍ له إجاباتٌ يمحو إجاباته، وهذا لصاحب الاستبيان وحده." };
   }
 
   for (const q of input.questions) {
@@ -267,13 +284,13 @@ export async function updateSurvey(surveyId: number, input: SurveyInput): Promis
 
 /** ينفّذ فعلًا من STATUS_OPS — التحقّق على الحالة **والعلمين** الحقيقيّين لا على ما تعرضه الواجهة. */
 export async function setSurveyStatus(surveyId: number, op: StatusOp): Promise<SurveyResult> {
-  const mgr = await getSurveyManager();
-  if (!mgr) return { ok: false, message: "لا تملك صلاحية إدارة الاستبيانات." };
-  const sb = service();
-  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
-
   const spec = STATUS_OPS[op];
   if (!spec) return { ok: false, message: "إجراء غير معروف." };
+  // كلُّ فعلٍ يسأل عمّا يحتاجه بالمصفوفة نفسها التي تُخفي أزراره في الواجهة
+  const grant = await authorizeSurvey(surveyId, OP_NEEDS[op]);
+  if (!grant.ok) return { ok: false, message: grant.message };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const { data: survey, error } = await sb.from("surveys").select("id, status, title, published_at, archived_at, deleted_at").eq("id", surveyId).maybeSingle();
   if (error) return { ok: false, message: `تعذّر قراءة الاستبيان: ${error.message}` };
@@ -300,9 +317,9 @@ export async function setSurveyStatus(surveyId: number, op: StatusOp): Promise<S
     pause:      { status: "paused" },
     close:      { status: "closed", closed_at: now },
     reopen:     { status: "active", end_date: null, closed_at: null },
-    archive:    { archived_at: now, archived_by: mgr.userId },
+    archive:    { archived_at: now, archived_by: grant.userId },
     unarchive:  { archived_at: null, archived_by: null },
-    softDelete: { deleted_at: now, deleted_by: mgr.userId },
+    softDelete: { deleted_at: now, deleted_by: grant.userId },
     restore:    { deleted_at: null, deleted_by: null },
   };
 
@@ -318,16 +335,18 @@ export async function setSurveyStatus(surveyId: number, op: StatusOp): Promise<S
 
 /** حذف نهائيّ — للمحذوف ناعمًا وحده، ويُسقط أسئلته ومشاركاته وإجاباته سلسلةً. */
 export async function deleteSurveyPermanently(surveyId: number): Promise<SurveyResult> {
-  const mgr = await getSurveyManager();
-  if (!mgr) return { ok: false, message: "لا تملك صلاحية إدارة الاستبيانات." };
+  const grant = await authorizeSurvey(surveyId, "delete");
+  if (!grant.ok) return { ok: false, message: grant.message };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  const { data: survey, error } = await sb.from("surveys").select("id, status, title").eq("id", surveyId).maybeSingle();
+  const { data: survey, error } = await sb.from("surveys").select("id, title, deleted_at").eq("id", surveyId).maybeSingle();
   if (error) return { ok: false, message: `تعذّر قراءة الاستبيان: ${error.message}` };
   if (!survey) return { ok: false, message: "لا وجود لهذا الاستبيان." };
-  // بوّابة على حالة الهدف: النهائيّ يمرّ عبر المحذوفات أوّلًا — خطوتان لا خطوة واحدة قاتلة
-  if (survey.status !== "deleted") return { ok: false, message: "انقله إلى المحذوفات أوّلًا، ثمّ احذفه نهائيًّا من هناك." };
+  // بوّابة على حالة الهدف: النهائيّ يمرّ عبر المحذوفات أوّلًا — خطوتان لا خطوة واحدة قاتلة.
+  // (العَلَم `deleted_at` لا الحالة: الحالةُ صارت رباعيّةً في 2026-07-23 ولا «deleted» فيها،
+  // فكان الشرطُ القديم `status !== "deleted"` يرفض كلَّ حذفٍ نهائيّ.)
+  if (survey.deleted_at == null) return { ok: false, message: "انقله إلى المحذوفات أوّلًا، ثمّ احذفه نهائيًّا من هناك." };
 
   const { error: dErr } = await sb.from("surveys").delete().eq("id", surveyId);
   if (dErr) return { ok: false, message: `تعذّر الحذف النهائيّ: ${dErr.message}` };
@@ -341,8 +360,8 @@ export async function deleteSurveyPermanently(surveyId: number): Promise<SurveyR
 export async function getSurveyPreview(surveyId: number): Promise<
   { ok: true; survey: PublicSurvey; questions: PublicQuestion[] } | { ok: false; message: string }
 > {
-  const mgr = await getSurveyManager();
-  if (!mgr) return { ok: false, message: "لا تملك صلاحية إدارة الاستبيانات." };
+  const grant = await authorizeSurvey(surveyId, "see");
+  if (!grant.ok) return { ok: false, message: grant.message };
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
@@ -355,4 +374,69 @@ export async function getSurveyPreview(surveyId: number): Promise<
   if (qRes.error) return { ok: false, message: `تعذّر جلب الأسئلة: ${qRes.error.message}` };
 
   return { ok: true, survey: toPublicSurvey(sRes.data), questions: toPublicQuestions(qRes.data ?? []) };
+}
+
+/* ── المشاركة — لصاحب الاستبيان وحده ──
+   الفرضُ في القاعدة (`survey_share_set`/`survey_share_remove` يفحصان الملكيّةَ وصلاحيةَ الشريك)،
+   والفاعلُ من الجلسة الحقيقيّة. والحارسُ هنا أوّلًا ليُقال السببُ بالعربيّة قبل أن يُسأل الخادم.
+   والأفعالُ الثلاثة بعقد لوح الشركاء (`SharePanel`، المشترك مع الباركود): كلٌّ يرجع `{ ok, message }`. */
+
+/** شركاءُ الاستبيان ومن يصلح شريكًا — تجلبها نافذةُ المشاركة قبل أن تُفتح، ولصاحبه وحده. */
+export async function getSurveyShares(surveyId: number): Promise<
+  { ok: true; rows: SurveyShareRow[]; candidates: SurveyShareCandidate[] } | { ok: false; message: string }
+> {
+  const grant = await authorizeSurvey(surveyId, "share");
+  if (!grant.ok) return { ok: false, message: grant.message };
+  const { rows, candidates, error } = await getSurveySharing(surveyId, grant.userId);
+  if (error) return { ok: false, message: `تعذّر جلب الشركاء: ${error}` };
+  return { ok: true, rows, candidates };
+}
+
+async function writeShare(surveyId: number, userId: string, access: ShareLevel, message: string): Promise<SurveyResult> {
+  if (!isShareLevel(access)) return { ok: false, message: shareErrorMessage("bad_access") };
+  const grant = await authorizeSurvey(surveyId, "share");
+  if (!grant.ok) return { ok: false, message: grant.message };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { error } = await sb.rpc("survey_share_set", { p_actor: grant.userId, p_survey_id: surveyId, p_user: userId, p_access: access });
+  if (error) return { ok: false, message: shareErrorMessage(error.message) };
+
+  revalidatePath("/dashboard/surveys", "layout");
+  return { ok: true, message };
+}
+
+/** يضمّ شريكًا بإذنه. */
+export async function shareSurvey(surveyId: number, userId: string, access: ShareLevel): Promise<SurveyResult> {
+  return writeShare(surveyId, userId, access, access === "edit" ? "أُضيف شريكٌ يحرّر الاستبيان." : "أُضيف شريكٌ يقرأ الاستبيان.");
+}
+
+/**
+ * يبدّل إذنَ شريكٍ **قائم** — تبديلٌ لا منح: `survey_share_set` يُدرج إن لم يجد، فلو أُخرج الشريكُ
+ * من نافذةٍ أخرى ثمّ بُدّل إذنُه من صفٍّ قديمٍ لعاد شريكًا بصمت. فيُسأل عن صفّه أوّلًا.
+ */
+export async function setSurveyShareAccess(surveyId: number, userId: string, access: ShareLevel): Promise<SurveyResult> {
+  // الحارسُ قبل السؤال عن الصفّ: لا يعرف غيرُ صاحب الاستبيان من شريكُه ومن ليس شريكَه
+  const grant = await authorizeSurvey(surveyId, "share");
+  if (!grant.ok) return { ok: false, message: grant.message };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+  const { data: row, error } = await sb.from("survey_shares").select("user_id").eq("survey_id", surveyId).eq("user_id", userId).maybeSingle();
+  if (error) return { ok: false, message: `تعذّر قراءة المشاركة: ${error.message}` };
+  if (!row) return { ok: false, message: "لم يعد هذا العضو شريكًا. حدّث النافذة." };
+  return writeShare(surveyId, userId, access, access === "edit" ? "صار الشريكُ يحرّر." : "صار الشريكُ يقرأ فقط.");
+}
+
+/** يُخرج شريكًا: يختفي الاستبيانُ من لوحته فورًا. */
+export async function unshareSurvey(surveyId: number, userId: string): Promise<SurveyResult> {
+  const grant = await authorizeSurvey(surveyId, "share");
+  if (!grant.ok) return { ok: false, message: grant.message };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { error } = await sb.rpc("survey_share_remove", { p_actor: grant.userId, p_survey_id: surveyId, p_user: userId });
+  if (error) return { ok: false, message: shareErrorMessage(error.message) };
+
+  revalidatePath("/dashboard/surveys", "layout");
+  return { ok: true, message: "أُخرج الشريك." };
 }

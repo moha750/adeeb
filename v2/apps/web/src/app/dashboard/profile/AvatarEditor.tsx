@@ -245,7 +245,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
             </Button>
           ) : null}
         </span>
-        <span className="fld-help">صورةٌ مربّعة تُقصّ هنا قبل الرفع، تظهر في اللوحة وفي كشوف أعضاء أديب.</span>
+        <span className="fld-help">صورةٌ مربّعة تُقصّ هنا قبل الرفع، تظهر في اللوحة وفي كشوف أعضاء أدِيب.</span>
       </div>
 
       <input

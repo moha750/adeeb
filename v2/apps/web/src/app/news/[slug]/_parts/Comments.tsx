@@ -7,6 +7,7 @@ import { PencilSimple } from "@/app/_components/glyphs";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { arCount } from "@/lib/arabicCount";
+import { standingName, type AdeebStanding } from "@/lib/standing";
 import { cleanComment, commentError, COMMENT_MAX } from "@/lib/news/comments";
 import { AR_COMMENT } from "./ReaderBar";
 
@@ -14,8 +15,11 @@ export type PublicComment = {
   id: string;
   /** اسمُ صاحبه — عضوٌ باسمه أو زائرٌ بما كتبه لنفسه. */
   name: string;
-  /** صاحبُ حسابٍ في أدِيب؟ يُوسَم، فالزائرُ والعضوُ لا يستويان في الميزان. */
-  member: boolean;
+  /**
+   * منزلتُه إن كان له حساب، و`null` للزائر. **تُوسَم كلُّ منزلةٍ باسمها** (قرار المالك ٢٠٢٦-١٠-٠٨):
+   * كانت الشارةُ «عضو أدِيب» لكلّ من له ملفّ، فيُعلَن العضوَ من ليس عضوًا.
+   */
+  standing: AdeebStanding | null;
   gender: "male" | "female" | null;
   avatar: string | null;
   text: string;
@@ -113,7 +117,9 @@ export function Comments({
               <div>
                 <header className="art-cmt-who">
                   <span className="art-cmt-name">{c.name}</span>
-                  {c.member && !c.pending ? <Badge tone="info" variant="soft" size="sm">عضو أدِيب</Badge> : null}
+                  {c.standing && !c.pending ? (
+                    <Badge tone="info" variant="soft" size="sm">{standingName(c.standing, c.gender)}</Badge>
+                  ) : null}
                   {c.pending ? <Badge tone="warning" variant="soft" size="sm" dot>ينتظر الإقرار</Badge> : null}
                   <span className="art-cmt-when">{c.when}</span>
                 </header>

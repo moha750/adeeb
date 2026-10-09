@@ -16,7 +16,7 @@ export type OrgData = {
   error: string | null;
 };
 
-/** جلب هيكلة أديب كاملةً (خادميّ، عبر مفتاح الخدمة) — يُشارَك بين عارض الهيكلة وتبويب التعيينات. */
+/** جلب هيكلة أدِيب كاملةً (خادميّ، عبر مفتاح الخدمة) — يُشارَك بين عارض الهيكلة وتبويب التعيينات. */
 export async function getOrgData(): Promise<OrgData> {
   const empty = { councils: [], departments: [], committees: [], roles: [], userRoles: [], profiles: [], supervision: [], members: [] };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();

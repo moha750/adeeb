@@ -10,14 +10,15 @@ node_modules/
 # Vercel
 .vercel
 
-# نسخة V1 المحلّيّة للقراءة والترحيل — لا تُرفع
+# V1 حُذف من القرص 2026-10-08 ويعيش في git فقط — لا يُعاد إنشاؤه هنا
 adeeb/
 
-# مخزنُ حزم pnpm المحلّيّ — ٨١٢ ميغا من أرشيفات التبعيّات، لا عملَ فيه
+# مخزنُ حزم pnpm — المخزن الحقيقيّ في ~/Library/pnpm/store، ونسخةٌ هنا لا عمل لها
 .pnpm-store/
 
-# مقاطع ونُسخ ضخمة تبقى على الجهاز ولا تدخل المستودع
-/Claude outputs/darb-cinematic/clips/*.mov
-/Claude outputs/_adeeb-v2-src.tgz
-/.v2-src-snapshot.tgz
-/Claude outputs/rakdat-watan/
+# ملفّات Finder
+.DS_Store
+
+# مخرجات الجلسات (وسائط ومسوّدات من مشاريع شتّى) — تبقى على الجهاز ولا تدخل المستودع
+/Claude outputs/
+*.tgz

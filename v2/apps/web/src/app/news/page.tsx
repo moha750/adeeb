@@ -6,8 +6,8 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "آخر الأخبار، أديب",
-  description: "مستجدّات نادي أديب أوّلًا بأوّل: تغطيات وشراكات وإنجازات وإعلانات.",
+  title: "آخر الأخبار، أدِيب",
+  description: "مستجدّات نادي أدِيب أوّلًا بأوّل: تغطيات وشراكات وإنجازات وإعلانات.",
 };
 
 export default async function NewsPage() {

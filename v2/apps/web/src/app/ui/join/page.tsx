@@ -31,7 +31,7 @@ const STEPS: { value: JoinStep; label: string }[] = [
   { value: "account", label: "بلا حساب" },
   { value: "data", label: "حسابٌ بلا بيانات" },
   { value: "apply", label: "لم يقدّم" },
-  { value: "edit", label: "متطوّع" },
+  { value: "edit", label: "متطوّع أدِيب" },
 ];
 
 /** شرحُ كلّ حالةٍ تحت المبدّل: من هو صاحبُها، وما الذي يُنتظَر منه. */

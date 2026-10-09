@@ -3,6 +3,7 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { buildUnitOptions, organizerValue, type UnitOption } from "@/lib/activities";
+import type { AccountType } from "@/lib/standing";
 import { deriveStatus, reservationErrorMessage, type ActivityType, type AttendanceStatus, type EventStatus } from "./vocab";
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
@@ -233,7 +234,7 @@ export type ReservationRow = {
   phone: string | null;
   email: string | null;
   gender: "male" | "female";
-  accountType: "visitor" | "member";
+  accountType: AccountType;
   status: "confirmed" | "cancelled";
   attendance: AttendanceStatus;   // محسوبة في الدالّة (registered/attended/no_show)
   whatsappConfirmed: boolean;
@@ -340,7 +341,7 @@ type RawReservation = {
   phone: string | null;
   email: string | null;
   gender_at_booking: "male" | "female";
-  account_type: "visitor" | "member";
+  account_type: AccountType;
   status: "confirmed" | "cancelled";
   attendance_status: AttendanceStatus;
   whatsapp_confirmed_at: string | null;

@@ -82,23 +82,52 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
  * والحَكَم `can_end_membership` تقرؤه الدالّتان ومرآةُ الواجهة (`members_i_may_end`) معًا، وكتابةُ
  * `account_status` مباشرةً مقفولةٌ بتريغرٍ يسري على مفتاح الخدمة نفسه — فلم يبقَ للفعلين إلّا هذا الباب.
  */
-export async function endMembership(input: { userId: string; reason: string }): Promise<MemberResult> {
+export async function endMembership(input: { userId: string; reason: string; kind: string }): Promise<MemberResult> {
   const admin = await getCurrentAdmin();
   if (!admin) return { ok: false, message: "جلستك غير صالحة." };
 
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
+  // الفئةُ تُرسل كما اختيرت، والقاعدةُ تردّ ما ليس من الخمس (`KIND_REQUIRED`)
   const { data, error } = await sb.rpc("terminate_membership", {
     p_actor: admin.id,
     p_user: input.userId,
     p_reason: input.reason,
+    p_kind: input.kind,
   });
   if (error) return { ok: false, message: `تعذّر إنهاء العضوية: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string };
   if (r.ok) revalidatePath("/dashboard/members", "layout");
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُنهيت العضوية." : "تعذّر إنهاء العضوية.") };
+}
+
+/**
+ * نقلُ العضو إلى المتطوّعين — إنهاءٌ بالسبب والسلطة نفسيهما، ويصير صاحبُه متطوّعًا نشطًا في
+ * المعاملة ذاتها (`move_member_to_volunteers`). والحكم في القاعدة وحدها كأخيه `endMembership`.
+ */
+export async function moveToVolunteers(input: { userId: string; reason: string; kind: string }): Promise<MemberResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) return { ok: false, message: "جلستك غير صالحة." };
+
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+
+  const { data, error } = await sb.rpc("move_member_to_volunteers", {
+    p_actor: admin.id,
+    p_user: input.userId,
+    p_reason: input.reason,
+    p_kind: input.kind,
+  });
+  if (error) return { ok: false, message: `تعذّر نقله إلى المتطوّعين: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string };
+  if (r.ok) {
+    revalidatePath("/dashboard/members", "layout");
+    revalidatePath("/dashboard/volunteering", "layout");
+  }
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "صار متطوّعًا." : "تعذّر نقله إلى المتطوّعين.") };
 }
 
 export async function restoreMembership(input: { userId: string }): Promise<MemberResult> {

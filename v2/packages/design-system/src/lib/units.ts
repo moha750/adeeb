@@ -5,7 +5,14 @@
  * وتُصرَّف عربيًّا بـ`Intl.PluralRules` لا تُلصَق كلمةً واحدة: «زيارة» للواحد، و«زيارتان»
  * للاثنين، و«زيارات» للثلاث إلى العشر، ثمّ يعود المفرد (١١ فأكثر).
  */
-export type ChartUnit = { one: string; two: string; few: string };
+export type ChartUnit = {
+  one: string;
+  two: string;
+  few: string;
+  /** تمييزُ ١١ إلى ٩٩ منصوبًا حين يختلف رسمُه عن المفرد: «٢٦ عضوًا» لا «٢٦ عضو».
+   *  اختياريّ: كلمةٌ مؤنّثة («زيارة») لا يتغيّر رسمُها، فتبقى على `one`. (٢٠٢٦-١٠-٠٩) */
+  many?: string;
+};
 
 const AR_PLURAL = new Intl.PluralRules("ar");
 
@@ -13,6 +20,7 @@ const AR_PLURAL = new Intl.PluralRules("ar");
 export function unitWord(n: number, unit?: ChartUnit): string | null {
   if (!unit) return null;
   const c = AR_PLURAL.select(n);
+  if (c === "many" && unit.many) return unit.many;
   return c === "two" ? unit.two : c === "few" || c === "zero" ? unit.few : unit.one;
 }
 

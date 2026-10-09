@@ -64,7 +64,7 @@ export function KnowledgeForm({ fact }: { fact?: FactEditData | null }) {
               label="العنوان"
               icon={<TextT />}
               innerIcon={<PencilSimple />}
-              placeholder="مثال: أين أديب"
+              placeholder="مثال: أين أدِيب"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required

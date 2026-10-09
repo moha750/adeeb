@@ -13,7 +13,8 @@ import { PageHeader } from "../../../_components/PageHeader";
 import { useToast } from "../../../_components/ToastProvider";
 import { Toolbar, type FilterDef } from "../../../_components/Toolbar";
 import { formatThousands as fmt } from "@/app/_components/format";
-import { targetHost } from "@/lib/qrLinks";
+import { qrFileUrl, targetHost } from "@/lib/qrLinks";
+import { QrTarget } from "../QrTarget";
 import { fmtDate, fmtSince } from "@/lib/dates";
 import { killText } from "../copy";
 import { adminDeleteQr, adminSetQrActive, transferQrOwner } from "./actions";
@@ -47,6 +48,7 @@ const KIND_LABEL: Record<QrEvent["kind"], string> = {
   schedule: "بدّل المواعيد",
   tags: "بدّل الوسوم",
   campaign: "بدّل الحملة",
+  file: "بدّل الملف",
 };
 
 const KIND_TONE: Record<QrEvent["kind"], "info" | "warning" | "danger" | "neutral"> = {
@@ -59,6 +61,8 @@ const KIND_TONE: Record<QrEvent["kind"], "info" | "warning" | "danger" | "neutra
   schedule: "neutral",
   tags: "neutral",
   campaign: "info",
+  // **وزنُ تبديل الوجهة**: من استبدل ملفَّ ملصقٍ مطبوع غيّر ما يراه الناس (م٢١)
+  file: "warning",
 };
 
 export function OversightView({ data }: { data: QrOversightData }) {
@@ -149,7 +153,7 @@ export function OversightView({ data }: { data: QrOversightData }) {
     { key: "owner", header: "صاحبه", width: "minmax(120px, 1fr)", render: (r) => <span className="txt">{r.owner?.name ?? "—"}</span> },
     {
       key: "target", header: "الوجهة", width: "minmax(120px, 1fr)",
-      render: (r) => <span className="txt font-latin" dir="ltr">{targetHost(r.targetUrl)}</span>,
+      render: (r) => <QrTarget kind={r.kind} targetUrl={r.targetUrl} filePath={r.filePath} />,
     },
     { key: "scans", header: "المسحات", width: "0.8fr", align: "center", render: (r) => <span className="txt num">{fmt(r.scanCount)}</span> },
     {
@@ -193,6 +197,9 @@ export function OversightView({ data }: { data: QrOversightData }) {
             {nameOf(e.newValue)}
             {e.oldValue ? <span className="text-content-muted"> بعد {nameOf(e.oldValue)}</span> : null}
           </span>
+        ) : e.kind === "file" && e.newValue ? (
+          // الملفُّ الجديدُ يُفتح لمن يراقب: «ما الذي صار يراه الناس؟» سؤالُ الإشراف كلُّه
+          <a className="txt" href={qrFileUrl(e.newValue)} target="_blank" rel="noreferrer">الملف الجديد</a>
         ) : e.kind === "active" ? (
           <span className="txt">{e.newValue === "true" ? "شُغّل" : "أُوقف"}</span>
         ) : (

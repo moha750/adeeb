@@ -12,25 +12,25 @@ export const revalidate = 300;
 /** سطرُ التعريف: المنصبُ الأوّل (والقيادةُ متقدّمةٌ في الترتيب من القاعدة). */
 function headline(positions: PublicPosition[]) {
   const p = positions[0];
-  if (!p) return "عضوٌ في نادي أديب";
-  return positionLine(p.roleAr, p.unitName) ?? "عضوٌ في نادي أديب";
+  if (!p) return "عضوٌ في نادي أدِيب";
+  return positionLine(p.roleAr, p.unitName) ?? "عضوٌ في نادي أدِيب";
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const me = await getPublicProfile(decodeURIComponent(slug));
-  if (!me) return { title: "صفحة عضو، أديب" };
+  if (!me) return { title: "صفحة عضو، أدِيب" };
 
   const line = headline(me.positions);
   return {
-    title: `${me.name}، أديب`,
-    description: me.bio ?? `${line} في نادي أديب.`,
+    title: `${me.name}، أدِيب`,
+    description: me.bio ?? `${line} في نادي أدِيب.`,
     openGraph: shareOg({ title: me.name, description: line, type: "profile" }),
   };
 }
 
 /**
- * **صفحةُ العضو العلنيّة** — يَنشرها صاحبُها ليُعرَف من هو وما سيرتُه في أديب.
+ * **صفحةُ العضو العلنيّة** — يَنشرها صاحبُها ليُعرَف من هو وما سيرتُه في أدِيب.
  *
  * وقارئُها غريبٌ لا زميل، فما لا يفهمه في ثانيتين لا يدخلها: المنصبُ بالعربيّة لا
  * بمفتاحه، والوحدةُ باسمها، والوسامُ بسببه. ولا بيانَ فيها يخصّ الشخصَ دون المنصب:

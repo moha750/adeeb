@@ -2,6 +2,8 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { fmtDate } from "@/lib/dates";
 import { firstAndLastOf } from "@/lib/personName";
+import { isLiveMembership } from "@/lib/memberRecord";
+import type { AdeebStanding } from "@/lib/standing";
 import type { PublicComment } from "./_parts/Comments";
 
 /**
@@ -46,13 +48,36 @@ export async function getApprovedComments(newsId: string): Promise<PublicComment
 
   // أسماءُ الأعضاء وأفتاراتُهم في نداءٍ واحدٍ لا نداءٍ لكلّ تعليق.
   const ids = [...new Set(data.map((c) => c.user_id).filter((v): v is string => !!v))];
-  const people = new Map<string, { name: string; avatar: string | null; gender: "male" | "female" | null }>();
+  const people = new Map<
+    string,
+    { name: string; avatar: string | null; gender: "male" | "female" | null; standing: AdeebStanding }
+  >();
   if (ids.length) {
-    const { data: rows } = await sb
-      .from("profiles")
-      .select("id, full_name, avatar_url, gender")
-      .in("id", ids)
-      .returns<{ id: string; full_name: string | null; avatar_url: string | null; gender: string | null }[]>();
+    /* والمنزلةُ معها (٢٠٢٦-١٠-٠٨): حدُّ العضويّة `isLiveMembership`، والمتطوّعُ صفٌّ حالُه `active`.
+       ولا يخرج منهما إلى الصفحة إلّا اسمُ المنزلة. */
+    const [{ data: rows }, { data: vols }] = await Promise.all([
+      sb
+        .from("profiles")
+        .select("id, full_name, avatar_url, gender, joined_date, account_status")
+        .in("id", ids)
+        .returns<
+          {
+            id: string;
+            full_name: string | null;
+            avatar_url: string | null;
+            gender: string | null;
+            joined_date: string | null;
+            account_status: string | null;
+          }[]
+        >(),
+      sb
+        .from("volunteers")
+        .select("user_id")
+        .in("user_id", ids)
+        .eq("status", "active")
+        .returns<{ user_id: string }[]>(),
+    ]);
+    const volunteering = new Set((vols ?? []).map((v) => v.user_id));
     for (const p of rows ?? []) {
       people.set(p.id, {
         // الاسمُ الأوّلُ والأخير لا الرباعيّ: تعليقٌ علنيٌّ، وأدِيب لا ينشر
@@ -60,6 +85,7 @@ export async function getApprovedComments(newsId: string): Promise<PublicComment
         name: firstAndLastOf(p.full_name ?? "") || "عضو أدِيب",
         avatar: p.avatar_url ?? null,
         gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
+        standing: isLiveMembership(p) ? "member" : volunteering.has(p.id) ? "volunteer" : "account",
       });
     }
   }
@@ -78,7 +104,7 @@ export async function getApprovedComments(newsId: string): Promise<PublicComment
     return {
       id: c.id,
       name: who?.name ?? c.guest_name ?? "زائر",
-      member: !!who,
+      standing: who?.standing ?? null,
       gender: who?.gender ?? null,
       avatar: who?.avatar ?? null,
       text: c.content,

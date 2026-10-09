@@ -3,7 +3,7 @@ import { clubNow } from "@/lib/volunteerPeriods";
 import { activeCommittees } from "../data";
 import { OpportunityForm } from "../OpportunityForm";
 
-export const metadata = { title: "فرصة تطوّعيّة جديدة، بوّابة أديب" };
+export const metadata = { title: "فرصة تطوّعيّة جديدة، بوّابة أدِيب" };
 
 /** إنشاءُ فرصة — صفحةٌ لا نافذة منذ صار الموعدُ فتراتٍ (٢٠٢٦-١٠-٠١، `OpportunityForm`). */
 export default async function NewOpportunityPage() {

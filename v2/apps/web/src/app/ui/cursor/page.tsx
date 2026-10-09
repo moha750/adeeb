@@ -31,7 +31,7 @@ export default function CursorPage() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">
           Design System, Cursor
         </p>
-        <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">مؤشّر أديب</h1>
+        <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">مؤشّر أدِيب</h1>
         <p className="mt-2 max-w-2xl text-content-muted">
           <strong>هالةٌ لزجة تحفّ ريشة، ومنها أثرُ حبرٍ يجفّ.</strong> الهالةُ تلحق المؤشّرَ بتأخّر، وتتمطّط في
           اتّجاه اندفاعك وتنضغط عموديًّا عليه فيثبت حجمُها كالسائل. واللزوجةُ صفةُ الهالة نفسِها، لا قطرةَ في

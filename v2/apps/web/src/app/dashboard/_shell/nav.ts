@@ -67,14 +67,14 @@ export const NAV: NavGroup[] = [
     head: "العضوية",
     // بنودٌ مسطّحة كبقيّة الأقسام — الرأس «العضوية» يحمل التجميع، فلا حاجة لمجموعةٍ قابلة للطيّ.
     items: [
-      { label: "أعضاء أديب", icon: "active", href: "/dashboard/members/active" },
-      { label: "أعضاء سابقون", icon: "suspended", href: "/dashboard/members/suspended" },
+      { label: "أعضاء أدِيب", icon: "active", href: "/dashboard/members/active" },
+      // «أعضاء سابقون» صار قسمًا داخل «أعضاء أدِيب» (قرار المالك ٢٠٢٦-١٠-٠٩)، فسقط بندُه
       { label: "من أشرف عليهم", icon: "supervise", href: "/dashboard/members/supervised" },
       { label: "الإنذارات", icon: "warn", href: "/dashboard/members/warnings" },
       { label: "طلبات الخروج", icon: "suspended", href: "/dashboard/members/exits" },
       { label: "شهادات الخبرة", icon: "certificate", href: "/dashboard/members/certificates" },
       { label: "أعياد الميلاد", icon: "cake", href: "/dashboard/members/birthdays" },
-      { label: "هيكلة أديب", icon: "tree", href: "/dashboard/members/structure" },
+      { label: "هيكلة أدِيب", icon: "tree", href: "/dashboard/members/structure" },
       { label: "تعيين المناصب", icon: "assign", href: "/dashboard/members/assignments" },
       { label: "بيانات الدخول", icon: "key", href: "/dashboard/members/credentials" },
     ],
@@ -96,6 +96,8 @@ export const NAV: NavGroup[] = [
   {
     head: "التفاعل",
     items: [
+      // **أصدقاء أدِيب** أوّلَ «التفاعل»: جمهورُ برامج النادي كلِّها، ومنهم يأتي المتطوّعون ثمّ الأعضاء
+      { label: "أصدقاء أدِيب", icon: "friends", href: "/dashboard/friends" },
       { label: "الفعاليّات", icon: "cal", href: "/dashboard/events" },
       { label: "الاستبيانات", icon: "clip", href: "/dashboard/surveys" },
       // رسائل التواصل — تفاعلٌ **وارد**: هذه أخواتُها تدعو الناسَ إلى النادي، وهي تحمل
@@ -111,12 +113,6 @@ export const NAV: NavGroup[] = [
       // وجهين: تقرأ في السجلّ أين كذب، فتصلحه في الغرفة المجاورة.
       { label: "معرفة ديبو", icon: "faq", href: "/dashboard/deebo/knowledge" },
       { label: "طبع ديبو", icon: "profile", href: "/dashboard/deebo/persona" },
-      // **خمّن الكلمة** — لعبةُ قاعةٍ تُدار في حفلٍ حيّ. موضعُها «التفاعل» لا «أدوات»:
-      // رأسُ الأدوات نصُّه «أدواتٌ لا غرفَ بيانات: تأخذ مُدخَلًا فتعطي ملفًّا». وهذه
-      // غرفةُ بياناتٍ فيها مشاركون وجولاتٌ ونتائج، وتدعو الناسَ إلى النادي كأخواتها هنا.
-      // وبندان مسطّحان لا مجموعةٌ تطويهما (علّةُ `MobileNav` نفسُها أعلاه).
-      { label: "خمّن الكلمة", icon: "game", href: "/dashboard/games" },
-      { label: "بنك الكلمات", icon: "words", href: "/dashboard/games/words" },
     ],
   },
   {

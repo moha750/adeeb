@@ -21,7 +21,7 @@ const ACTIONS: MenuGroup[] = [
 /** استبيانٌ وهميّ مختصَر — الافتراضات ثمّ ما يُهمّ العرض. */
 const S = (o: Partial<SurveyRow> & { id: number; title: string }): SurveyRow => ({
   description: null, status: "active", access: "public", scheduled: false, expired: false,
-  archived: false, deleted: false, questions: 5, responses: 33, views: 140,
+  archived: false, deleted: false, questions: 5, responses: 33, views: 140, role: "owner",
   createdBy: "بشائر فاروق الحداد", created: "٢١ مايو ٢٠٢٦", createdRaw: "2026-05-21",
   startDate: "2026-05-21T11:01:00Z", endDate: null, ...o,
 });

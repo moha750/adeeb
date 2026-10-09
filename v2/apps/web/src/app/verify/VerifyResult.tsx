@@ -36,7 +36,7 @@ export function VerifyResultView({ result }: { result: VerifyResult }) {
         {result.positionTitle}، للفترة من {certDate(result.periodFrom)} إلى {certDate(result.periodTo)}
         {result.hours ? `، ${hoursPhrase(result.hours)}` : ""}.
         {valid
-          ? ` صدرت عن نادي أديب في ${certDate(result.issuedOn)}.`
+          ? ` صدرت عن نادي أدِيب في ${certDate(result.issuedOn)}.`
           : ` أُبطلت هذه الشهادة${result.revokedOn ? ` في ${certDate(result.revokedOn)}` : ""}، فلا يُعتدّ بها.`}
       </Alert>
 

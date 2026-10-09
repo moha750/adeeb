@@ -60,7 +60,7 @@ describe("الحكم على الجملة", () => {
   const allowed = allowedNumbers("تأسّس سنة 2019", "");
 
   it("يُمرّر جملةً بلا أعداد", () => {
-    expect(inspect("أهلًا بك في أديب.", allowed)).toEqual({ ok: true });
+    expect(inspect("أهلًا بك في أدِيب.", allowed)).toEqual({ ok: true });
   });
 
   it("يُمرّر عددًا مصدرُه المعرفة", () => {
@@ -109,10 +109,10 @@ describe("مِبضع البثّ", () => {
 
   it("يمرّ نظيفًا حين لا عدد أصلًا", () => {
     const guard = createSentenceGuard(allowedNumbers("", ""));
-    let out = guard.push("نادي أديب منارةٌ أدبيّة. ");
+    let out = guard.push("نادي أدِيب منارةٌ أدبيّة. ");
     out += guard.push("أبوابنا مفتوحة.");
     out += guard.end();
-    expect(out).toBe("نادي أديب منارةٌ أدبيّة. أبوابنا مفتوحة.");
+    expect(out).toBe("نادي أدِيب منارةٌ أدبيّة. أبوابنا مفتوحة.");
     expect(guard.didBlock).toBe(false);
   });
 });

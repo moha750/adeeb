@@ -56,7 +56,7 @@ const SEAL = { cx: PAGE.w - QR.x - QR.size / 2, cy: QR.y + QR.size / 2, r: QR.si
 
 /** سطرُ الشهادة: العملُ لا المنصب. */
 const testimony = (c: ParticipationCertificate): string =>
-  `تشهد عائلة أديب بمشاركة ${c.opportunity}`;
+  `تشهد عائلة أدِيب بمشاركة ${c.opportunity}`;
 
 /** سطرُ المدّة: يومٌ واحدٌ يُقال يومًا، والأيّامُ تُقال فترة، والساعاتُ قبلهما إن حُسبت. */
 const period = (c: ParticipationCertificate): string => {
@@ -123,7 +123,7 @@ export async function renderParticipation(
     stampSeal(ctx);
     pieces.push(
       { text: "بتميّز", x: SEAL.cx, y: SEAL.cy + 12, size: 74, weight: WEIGHTS.bold, color: "#ffffff", anchor: "middle" },
-      { text: "نادي أديب", x: SEAL.cx, y: SEAL.cy + 64, size: 26, weight: WEIGHTS.body, color: "rgba(255,255,255,.82)", anchor: "middle" },
+      { text: "نادي أدِيب", x: SEAL.cx, y: SEAL.cy + 64, size: 26, weight: WEIGHTS.body, color: "rgba(255,255,255,.82)", anchor: "middle" },
     );
   }
 

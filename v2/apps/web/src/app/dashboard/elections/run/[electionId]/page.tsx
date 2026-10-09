@@ -2,7 +2,7 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { ApplyRouteBody } from "../../_member/ApplyRouteBody";
 
 /**
- * إكمالُ الترشّح **الجديد** — تحت باب «الترشُّح» (`/run/[electionId]`) فيقرأ فتاتُها «بوّابة أديب ‹
+ * إكمالُ الترشّح **الجديد** — تحت باب «الترشُّح» (`/run/[electionId]`) فيقرأ فتاتُها «بوّابة أدِيب ‹
  * الترشُّح ‹ …». يصلها العضو بعد بوّابة الشروط. محروسةٌ بقدرة `run_for_election`.
  */
 export default async function ApplyFromRun({ params }: { params: Promise<{ electionId: string }> }) {

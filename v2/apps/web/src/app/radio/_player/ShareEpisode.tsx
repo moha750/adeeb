@@ -76,7 +76,7 @@ export function ShareEpisode({
 
       {hasAt ? (
         <AnchoredPopover open={open} anchorRef={btnRef} onDismiss={() => setOpen(false)}
-          align="start" className="dm-menu" role="menu">
+          align="start" className="dm-menu stn-pop" role="menu">
           <button type="button" className="dm-item" role="menuitem" onClick={() => void share(false)}>
             <LinkSimple className="dm-ic" aria-hidden />
             رابط الحلقة

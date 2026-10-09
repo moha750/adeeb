@@ -15,7 +15,7 @@ import { getAllCards } from "./store";
  */
 export const metadata: Metadata = {
   title: "معاينة بطاقة الولاء، أَدِيب",
-  description: "معاينةُ بطاقة ولاء نادي أديب ونظامِ مكافآتها، ببياناتٍ وهميّة، للعرض قبل البناء.",
+  description: "معاينةُ بطاقة ولاء نادي أدِيب ونظامِ مكافآتها، ببياناتٍ وهميّة، للعرض قبل البناء.",
   robots: { index: false, follow: false },
 };
 

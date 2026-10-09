@@ -49,7 +49,7 @@ const SHEET_STOPS = [0.18, 0.46, 0.74];
 /* ── المحرّر ────────────────────────────────────────────────────────────── */
 
 /**
- * **محرّر رموز أديب** — نصٌّ يدخل، وصورةٌ تخرج مصمَّمةً بهويّة النادي.
+ * **محرّر رموز أدِيب** — نصٌّ يدخل، وصورةٌ تخرج مصمَّمةً بهويّة النادي.
  *
  * **والمعاينة هي المُخرَج نفسه**: تُرسَم بـ`qrSvg` الذي ينزّله الزرّ حرفًا بحرف — ومُدرَجةً
  * في الصفحة لا صورةً خارجيّة، فترث خطّ الموقع ويظهر نداء «امسحني» بخطّه الحقيقيّ.
@@ -184,7 +184,7 @@ export function QrToolView({ code, title, initial, embedded = false, onSaveSpec 
     })();
   };
 
-  /** شعار أديب من أصول العلامة — يُجلَب ويُضمَّن data URL كالمرفوع، فالملفّ الخارج قائمٌ بذاته. */
+  /** شعار أدِيب من أصول العلامة — يُجلَب ويُضمَّن data URL كالمرفوع، فالملفّ الخارج قائمٌ بذاته. */
   const pickBrandLogo = async () => {
     try {
       const res = await fetch("/brand/logo-vertical.svg");
@@ -193,7 +193,7 @@ export function QrToolView({ code, title, initial, embedded = false, onSaveSpec 
       setLogo(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
       setLogoError(null);
     } catch {
-      setLogoError("تعذّر جلب شعار أديب من أصول العلامة.");
+      setLogoError("تعذّر جلب شعار أدِيب من أصول العلامة.");
     }
   };
 
@@ -475,7 +475,7 @@ export function QrToolView({ code, title, initial, embedded = false, onSaveSpec 
                   <UploadSimple size={18} /> {logo ? "تغيير الشعار" : "رفع شعار"}
                 </Button>
                 <Button variant="ghost" size="md" onClick={() => void pickBrandLogo()}>
-                  <Sparkle size={18} /> شعار أديب
+                  <Sparkle size={18} /> شعار أدِيب
                 </Button>
                 {logo ? (
                   <Button variant="ghost-danger" size="md" onClick={() => { setLogo(null); setLogoOk(null); }}>

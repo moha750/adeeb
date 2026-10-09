@@ -9,7 +9,7 @@ import { PageHeader } from "../../_components/PageHeader";
  * محادثةٌ بعينها من سجلّ ديبو. **قفلُها قفلُ الغرفة نفسُه** (`/dashboard/deebo` ← `manage_deebo`):
  * لا قدرةَ ثانيةٌ لصفحةٍ فرعيّةٍ من غرفةٍ واحدة، وإلّا صار للباب مفتاحان.
  */
-export const metadata = { title: "محادثةٌ مع ديبو، بوّابة أديب" };
+export const metadata = { title: "محادثةٌ مع ديبو، بوّابة أدِيب" };
 
 export default async function DeeboTalkPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/deebo");

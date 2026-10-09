@@ -20,7 +20,7 @@ import { SavedLinksView } from "../SavedLinksView";
  * والقراءةُ بعميل الجلسة (`data.ts`) لا بمفتاح الخدمة: المدى «كلٌّ يرى رموزَه هو»
  * تحكمه سياسةُ own-row في القاعدة، لا سطرُ `where` في التطبيق.
  */
-export const metadata = { title: "باركوداتي، بوّابة أديب" };
+export const metadata = { title: "باركوداتي، بوّابة أدِيب" };
 
 export default async function QrLinksPage() {
   const denied = await denyUnless("/dashboard/tools/qr");

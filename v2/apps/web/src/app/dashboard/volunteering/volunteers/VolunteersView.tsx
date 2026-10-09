@@ -64,9 +64,11 @@ function tally(values: string[]): { label: string; value: number }[] {
  * وكرتُ الإحصاء **يصف ما تراه لا ما في القاعدة كلِّها**: يُحسَب من الكشف بعد التبويب والنخل،
  * فإن رشّحتَ لجنةً قال لك إحصاءَها وحدَها.
  */
-export function VolunteersView({ rows, committees }: {
+export function VolunteersView({ rows, committees, canGrant }: {
   rows: VolunteerRow[];
   committees: { id: number; name: string }[];
+  /** يملك `manage_membership_applications`، وبلاها لا يظهر زرُّ الإهداء. */
+  canGrant: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -278,7 +280,7 @@ export function VolunteersView({ rows, committees }: {
               key={r.userId}
               v={r}
               onOpen={() => setRecord(r)}
-              onGrant={() => openAsk("grant", r)}
+              onGrant={canGrant ? () => openAsk("grant", r) : undefined}
               onEnd={() => openAsk("end", r)}
             />
           ))}

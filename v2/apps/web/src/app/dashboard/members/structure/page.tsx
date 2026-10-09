@@ -6,7 +6,7 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { PageHeader } from "../../_components/PageHeader";
 
 const Head = () => (
-  <PageHeader title="هيكلة أديب" />
+  <PageHeader title="هيكلة أدِيب" />
 );
 
 export default async function StructurePage() {

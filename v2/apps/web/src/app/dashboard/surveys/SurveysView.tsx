@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation";
 import { Button, Stat, matchesSearch } from "@adeeb/design-system";
 import {
-  Archive, ChartBar, ChatCenteredDots, ClipboardText, LinkSimple, PauseCircle, Play, StopCircle } from "@phosphor-icons/react";
+  Archive, ChartBar, ChatCenteredDots, ClipboardText, LinkSimple, PauseCircle, Play, StopCircle, UsersThree } from "@phosphor-icons/react";
 import {
   ArrowClockwise, ArrowCounterClockwise, CheckCircle, Eye, MagnifyingGlass, PencilSimple, Plus,
   Trash,
@@ -19,16 +19,17 @@ import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
 import { useToast } from "../_components/ToastProvider";
-import type { MenuGroup } from "../_components/DropdownMenu";
+import type { MenuGroup, MenuItem } from "../_components/DropdownMenu";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { SurveyRow } from "./data";
-import { ACCESS_LABEL, ACCESS_TYPES, STATUS_OPS, type StatusOp } from "./vocab";
+import { ACCESS_LABEL, ACCESS_TYPES, OP_NEEDS, STATUS_OPS, canEditSurvey, canSurvey, type StatusOp } from "./vocab";
 import { deleteSurveyPermanently, getSurveyPreview, setSurveyStatus } from "./actions";
 import { StatusBadge } from "./StatusBadge";
 import { ScheduleLine } from "./ScheduleLine";
 import { SurveyPreview } from "./SurveyPreview";
 import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
 import { SurveyCard } from "./SurveyCard";
+import { SurveyShareModal, useSurveyShareOpener } from "./SurveyShares";
 import { PageHeader } from "../_components/PageHeader";
 import { copyText } from "@/lib/clipboard";
 
@@ -97,6 +98,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
   const [preview, setPreview] = useState<{ survey: PublicSurvey; questions: PublicQuestion[] } | null>(null);
   const [, startPreview] = useTransition();
   const [view, changeView] = usePersistentView("surveys-view");
+  const share = useSurveyShareOpener();
 
   const currentTab = LIFECYCLE_TABS.find((t) => t.value === tab) ?? LIFECYCLE_TABS[0];
 
@@ -234,10 +236,13 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
     { key: "created", header: "التوقيت", width: "minmax(150px, 1.4fr)", sortable: true, render: (s) => <ScheduleLine survey={s} className="text-sm" /> },
   ], [tab]);
 
-  // قائمة إجراءات الصفّ — دورة الحياة من STATUS_OPS نفسها: ما يصحّ على حالته يظهر، وما سواه لا
+  // قائمة إجراءات الصفّ — دورة الحياة من STATUS_OPS نفسها: ما يصحّ على حالته يظهر، وما سواه لا.
+  // وفوق الحالة **دورُ المستخدم** في الاستبيان (SURVEY_CAN): المُشارَك للرؤية لا يرى تحريرًا ولا
+  // دورةَ حياة، ومنطقةُ الخطر لصاحبه (ولحساب النادي على المنشور). والخادم يرفض ما يصله على كلّ حال.
   const actionsFor = (s: SurveyRow): MenuGroup[] => {
     const lifecycle = (Object.keys(STATUS_OPS) as StatusOp[])
       .filter((op) => op !== "softDelete" && op !== "restore")
+      .filter((op) => canSurvey(s.role, OP_NEEDS[op]))
       .filter((op) => STATUS_OPS[op].when({ status: s.status, archived: s.archived, deleted: s.deleted }))
       .map((op) => ({
         label: STATUS_OPS[op].label,
@@ -250,25 +255,29 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
           { label: "حذف نهائيّ", icon: <Trash />, danger: true, onSelect: () => setConfirmKill(s) },
         ]
       : [{ label: STATUS_OPS.softDelete.label, icon: OP_ICON.softDelete, danger: true, onSelect: () => setConfirm({ survey: s, op: "softDelete" }) }];
+    const offered: (MenuItem | false)[] = [
+      canSurvey(s.role, "results") && { label: "النتائج", icon: <ChartBar />, onSelect: () => router.push(`/dashboard/surveys/${s.id}/results`) },
+      canEditSurvey(s.role, s) && { label: "تحرير", icon: <PencilSimple />, onSelect: () => router.push(`/dashboard/surveys/${s.id}/edit`) },
+      // **المشاركةُ نافذةٌ فوق القائمة** (اختارها المالك من `/ui/survey-share`)، لا صفحةُ التحرير:
+      // من يشارك لا شأن له ببنّاء الأسئلة. وتغيب عمّا شُورِكتَ فيه وعمّا يرعاه حسابُ النادي.
+      canSurvey(s.role, "share") && { label: "المشاركة", icon: <UsersThree />, onSelect: () => share.open(s) },
+      canSurvey(s.role, "see") && { label: "معاينة صفحة الاستبيان", icon: <Eye />, onSelect: () => openPreview(s) },
+      { label: "نسخ رابط الاستبيان", icon: <LinkSimple />, onSelect: () => copyLink(s) },
+    ];
+    const main = offered.filter((it): it is MenuItem => it !== false);
     return [
-      {
-        header: "إجراءات",
-        items: [
-          { label: "النتائج", icon: <ChartBar />, onSelect: () => router.push(`/dashboard/surveys/${s.id}/results`) },
-          { label: "تحرير", icon: <PencilSimple />, onSelect: () => router.push(`/dashboard/surveys/${s.id}/edit`) },
-          { label: "معاينة صفحة الاستبيان", icon: <Eye />, onSelect: () => openPreview(s) },
-          { label: "نسخ رابط الاستبيان", icon: <LinkSimple />, onSelect: () => copyLink(s) },
-        ],
-      },
+      { header: "إجراءات", items: main },
       ...(lifecycle.length ? [{ header: "دورة الحياة", items: lifecycle }] : []),
-      { header: "منطقة الخطر", danger: true, items: danger },
+      ...(canSurvey(s.role, "delete") ? [{ header: "منطقة الخطر", danger: true, items: danger }] : []),
     ];
   };
 
   // الفعل الأساسيّ المُدرِك للحالة — مصدرٌ واحد للعرضين: زرُّ الكرت، ووجهةُ نقر صفّ الجدول.
   // بلا أسئلة → «أضف أسئلة» (الخطوة الناقصة)؛ مسودّةٌ بأسئلة → «متابعة التحرير»؛ وسواها → «عرض النتائج».
+  // ومن لا يحرّر (مُشارَكٌ للرؤية) فوجهتُه النتائج دائمًا: لا يُدعى إلى بابٍ يُردّ عنه.
   const primaryAction = (s: SurveyRow): { key: "results" | "edit"; label: string; icon: React.ReactNode; href: string } => {
     const base = `/dashboard/surveys/${s.id}`;
+    if (!canEditSurvey(s.role, s)) return { key: "results", label: "عرض النتائج", icon: <ChartBar />, href: `${base}/results` };
     if (s.questions === 0) return { key: "edit", label: "أضف أسئلة", icon: <Plus />, href: `${base}/edit` };
     if (s.status === "draft") return { key: "edit", label: "متابعة التحرير", icon: <PencilSimple />, href: `${base}/edit` };
     return { key: "results", label: "عرض النتائج", icon: <ChartBar />, href: `${base}/results` };
@@ -469,6 +478,8 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
       {preview ? (
         <SurveyPreview survey={preview.survey} questions={preview.questions} onClose={() => setPreview(null)} />
       ) : null}
+
+      <SurveyShareModal survey={share.target} onClose={share.close} />
     </>
   );
 }

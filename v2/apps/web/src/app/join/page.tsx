@@ -9,7 +9,7 @@ import { getCommittees, getViewerJoinState } from "./data";
 import { JoinView, type JoinStep } from "./JoinView";
 
 export const metadata: Metadata = {
-  title: "الانضمام إلى أديب",
+  title: "الانضمام إلى أدِيب",
   description: "طريقُك إلى نادي أَدِيب: حسابٌ، ثمّ تطوّعٌ في لجانِنا، ثمّ عضويّةٌ تُهدى لمن رأينا عملَه.",
   openGraph: shareOg({
     title: "الانضمام إلى نادي أَدِيب",

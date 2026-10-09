@@ -7,8 +7,8 @@ import { VerifyResultView } from "./VerifyResult";
 import { SiteHeader } from "../_components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "التحقّق من شهادة، نادي أديب",
-  description: "تأكّد من صحّة شهادة خبرةٍ صادرة عن نادي أديب برقمها المرجعيّ.",
+  title: "التحقّق من شهادة، نادي أدِيب",
+  description: "تأكّد من صحّة شهادة خبرةٍ صادرة عن نادي أدِيب برقمها المرجعيّ.",
 };
 export const dynamic = "force-dynamic";
 

@@ -158,7 +158,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
         {/* الاسمُ نصٌّ لا صورة (اللوحُ نفسُه علامة)، والرمزُ يدلّ على اللوحة لا ينوب عن الشعار */}
         <div className="ash-brand">
           <span className="ash-mark" aria-hidden><IconDashboard /></span>
-          <b className="ash-name">بوّابة أديب</b>
+          <b className="ash-name">بوّابة أدِيب</b>
         </div>
         {/* البحثُ فوق القائمة لا داخلها: `.ash-nav` هو ما يُمرَّر، فحقلٌ بداخله ينزلق
             مع البنود ويغيب عن صاحبه أوّلَ ما يمرّر. والمطويُّ يبسط نفسَه عند التركيز

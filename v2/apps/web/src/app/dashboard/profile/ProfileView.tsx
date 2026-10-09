@@ -156,7 +156,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
         <CardHeader
           variant="soft"
           icon={<IdentificationCard />}
-          title="هويّتك في أديب"
+          title="هويّتك في أدِيب"
           subtitle="بياناتٌ تُثبتها إدارة الموارد البشريّة، لتصحيح شيءٍ منها راجِعها"
         />
         <CardBody>

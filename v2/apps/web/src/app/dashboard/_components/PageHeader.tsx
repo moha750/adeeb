@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Badge, Button } from "@adeeb/design-system";
 import { ArrowRight } from "@/app/_components/glyphs";
 import { CrumbTrail } from "../_shell/Breadcrumb";
-import { crumbFor, type CrumbStep } from "../_shell/crumb";
+import { crumbFor, upFor, type CrumbStep } from "../_shell/crumb";
 import { useNav } from "../_shell/nav-context";
 import { DropdownMenu, type MenuGroup } from "./DropdownMenu";
 
@@ -58,7 +58,7 @@ export type PageHeaderProps = {
   crumbLeaf?: string;
   /** فتاتٌ مرسومٌ يحلّ محلَّ المشتقِّ من المسار — **للمعارض وحدَها** */
   crumb?: CrumbStep[];
-  /** وجهةُ زرّ الرجوع. تُشتقّ من الفتات حين لا تُمرَّر. */
+  /** وجهةُ زرّ الرجوع. تُشتقّ من الخريطة (`upFor`) حين لا تُمرَّر. */
   parent?: { label: string; href: string };
   status?: HeaderStatus;
   /** الفعلُ الواحد الذي هو غايةُ الشاشة. مفردٌ عمدًا: لا مصفوفةَ ولا `ReactNode`. */
@@ -80,13 +80,18 @@ export function PageHeader({ title, crumbLeaf, crumb, parent, status, action, me
     (s, i) => !(i === steps.length - 1 && s.kind === "leaf" && s.label.trim() === title.trim()),
   );
 
-  /** وجهةُ الرجوع: آخرُ مقطعٍ يُنقر في المسار، فهي أبُ الصفحة بلا أن تكتبه كلُّ شاشة */
+  /**
+   * وجهةُ الرجوع: أبُ الصفحة في الخريطة (`upFor`)، بلا أن تكتبه كلُّ شاشة ولا أن يتعلّق بتسميتها
+   * ورقتَها. والفتاتُ المرسومُ للمعارض (`crumb`) يبقى على آخر مقطعٍ يُنقر فيه، فلا مسارَ حيٌّ وراءه.
+   */
   const up =
     parent ??
-    [...trail].reverse().reduce<{ label: string; href: string } | undefined>(
-      (found, s) => found ?? (s.kind === "link" ? { label: s.label, href: s.href } : undefined),
-      undefined,
-    );
+    (crumb
+      ? [...trail].reverse().reduce<{ label: string; href: string } | undefined>(
+          (found, s) => found ?? (s.kind === "link" ? { label: s.label, href: s.href } : undefined),
+          undefined,
+        )
+      : upFor(pathname));
 
   return (
     <div className="phn-c">

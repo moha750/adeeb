@@ -7,7 +7,7 @@
 @source "../../../../packages/design-system/src";
 
 /* ============================================================
-   ربط Tailwind برموز نظام تصميم أديب (tokens.css هو المصدر).
+   ربط Tailwind برموز نظام تصميم أدِيب (tokens.css هو المصدر).
    @theme inline تجعل أدوات Tailwind تشير لمتغيّراتنا مباشرةً.
    ============================================================ */
 @theme inline {
@@ -218,7 +218,7 @@
    استقرّ فصار مكانه المصدر الوحيد. ممنوع إعادة تعريف صنف `.acard-*` هنا. */
 
 /* ============================================================
-   بيانات الدخول — صفحة تغيير البريد وكلمة المرور (تحت أعضاء أديب)
+   بيانات الدخول — صفحة تغيير البريد وكلمة المرور (تحت أعضاء أدِيب)
    ============================================================ */
 .cred-wrap { max-width: 620px; display: flex; flex-direction: column; gap: 16px; }
 .cred-card { padding: 22px; display: flex; flex-direction: column; gap: 22px; background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); box-shadow: var(--shadow-md); }
@@ -316,6 +316,17 @@
 ::-webkit-scrollbar-thumb:hover { background-color: var(--color-secondary-hover); }
 @supports (-moz-osx-font-smoothing: grayscale) {   /* فايرفوكس فقط — كروميوم يتجاهله فلا يُخطَف شريط الجذر */
   html { scrollbar-width: thin; scrollbar-color: var(--color-secondary) transparent; }
+}
+/* **قاعدةٌ واحدةٌ للموقع كلِّه** (أمرُ المالك ٢٠٢٦-١٠-٠٩): الشريطُ يظهر حيث توجد فأرة،
+   ويختفي حيث اللمسُ وحدَه — في الصفحة وفي كلّ حاويةٍ تُمرَّر. والشرطُ **نوعُ الإدخال لا
+   عرضُ الشاشة**: `any-pointer` لا `pointer`، فآيبادٌ وُصلت به فأرةٌ يبقى له شريطُه،
+   ونافذةُ حاسوبٍ مضيَّقةٌ تبقى نافذةَ حاسوب. والإذاعةُ تتبع القاعدةَ نفسَها بإبرتها
+   (‏`.sbi` في `components.css`). والتمريرُ نفسُه لا يُمَسّ: يُخفى المؤشّرُ لا الحركة. */
+@media not (any-pointer: fine) {
+  /* `html` مسمًّى بجانب `*`: قاعدةُ فايرفوكس أعلاه تسمّيه فتغلب `*` (لا وزنَ له)،
+     فيبقى شريطُ الصفحة رفيعًا في فايرفوكس أندرويد لو تُرك. */
+  html, * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
 }
 
 

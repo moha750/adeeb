@@ -82,7 +82,6 @@ create index concurrently if not exists idx_elections_winner_candidate_id on pub
 create index concurrently if not exists idx_elections_winner_declared_by on public.elections (winner_declared_by);  -- elections_winner_declared_by_fkey
 create index concurrently if not exists idx_experience_certificates_committee_id on public.experience_certificates (committee_id);  -- experience_certificates_committee_id_fkey
 create index concurrently if not exists idx_experience_certificates_revoked_by on public.experience_certificates (revoked_by);  -- experience_certificates_revoked_by_fkey
-create index concurrently if not exists idx_guess_word_sessions_current_word_id on public.guess_word_sessions (current_word_id);  -- guess_word_sessions_current_word_fk
 create index concurrently if not exists idx_member_badges_granted_by on public.member_badges (granted_by);  -- member_badges_granted_by_fkey
 create index concurrently if not exists idx_member_warnings_cancelled_by on public.member_warnings (cancelled_by);  -- member_warnings_cancelled_by_fkey
 create index concurrently if not exists idx_member_warnings_committee_id on public.member_warnings (committee_id);  -- member_warnings_committee_id_fkey
@@ -146,7 +145,6 @@ create index concurrently if not exists idx_volunteers_ended_by on public.volunt
 -- create index if not exists idx_elections_winner_declared_by on public.elections (winner_declared_by);  -- elections_winner_declared_by_fkey
 -- create index if not exists idx_experience_certificates_committee_id on public.experience_certificates (committee_id);  -- experience_certificates_committee_id_fkey
 -- create index if not exists idx_experience_certificates_revoked_by on public.experience_certificates (revoked_by);  -- experience_certificates_revoked_by_fkey
--- create index if not exists idx_guess_word_sessions_current_word_id on public.guess_word_sessions (current_word_id);  -- guess_word_sessions_current_word_fk
 -- create index if not exists idx_member_badges_granted_by on public.member_badges (granted_by);  -- member_badges_granted_by_fkey
 -- create index if not exists idx_member_warnings_cancelled_by on public.member_warnings (cancelled_by);  -- member_warnings_cancelled_by_fkey
 -- create index if not exists idx_member_warnings_committee_id on public.member_warnings (committee_id);  -- member_warnings_committee_id_fkey

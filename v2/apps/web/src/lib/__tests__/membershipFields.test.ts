@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEGREES, DEGREE_LABEL, DEGREE_VALUES, NATIONAL_ID_LEN, NATIONAL_ID_RE,
   PHONE_RE, RECORD_NO_MAX, RECORD_NO_MIN, RECORD_NO_RE, SOCIAL_HANDLE_RE, SOCIAL_KEYS,
-  TERMINATION_REASONS, formatDegree, hasAcademicFields, isPresetReason,
+  TERMINATION_REASONS, TERMINATION_KINDS, REASON_KIND, VOLUNTEER_MOVE_KINDS, VOLUNTEER_MOVE_REASONS, terminationKindLabel, formatDegree, hasAcademicFields, isPresetReason,
   socialColumn, socialHandle, socialLabel, socialLabelOf, socialUrl,
 } from "@/lib/membershipFields";
 import { PHONE_RE as PHONE_RE_SOURCE } from "@/lib/fieldFormats";
@@ -208,5 +208,28 @@ describe("أسبابُ إنهاء العضويّة", () => {
     expect(isPresetReason(`${TERMINATION_REASONS[0]} في الفصل الثاني`)).toBe(false);
     expect(isPresetReason("سببٌ كتبه المُصدِر")).toBe(false);
     expect(isPresetReason("")).toBe(false);
+  });
+});
+
+describe("فئاتُ سبب الخروج", () => {
+  // مرآةُ قيد القاعدة: خمسٌ بأسمائها، و«أسباب أخرى» آخرًا
+  it("الفئاتُ الخمس كما في القيد", () => {
+    expect(TERMINATION_KINDS.map((k) => k.value)).toEqual(["idle", "silent", "asked", "breach", "other"]);
+  });
+
+  // كلُّ سببٍ متكرّر له فئة، فلا يبقى خيارٌ يُختار فلا تتبعه فئته
+  it("لكلّ سببٍ متكرّرٍ فئة", () => {
+    for (const r of TERMINATION_REASONS) expect(REASON_KIND[r], r).toBeDefined();
+  });
+
+  // وأسبابُ النقل لا تقع إلّا في فئات النقل (مرآةُ شرط move_member_to_volunteers)
+  it("أسبابُ النقل في فئات النقل وحدها", () => {
+    for (const r of VOLUNTEER_MOVE_REASONS) expect(VOLUNTEER_MOVE_KINDS, r).toContain(REASON_KIND[r]);
+  });
+
+  it("المجهولُ أسبابٌ أخرى", () => {
+    expect(terminationKindLabel("asked")).toBe("بطلب العضو");
+    expect(terminationKindLabel(null)).toBe("أسباب أخرى");
+    expect(terminationKindLabel("bogus")).toBe("أسباب أخرى");
   });
 });

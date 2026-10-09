@@ -2,7 +2,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
-import { formatDegree } from "./vocab";
+import { formatDegree, type TerminationKind } from "./vocab";
 import { roleRank } from "@/lib/roleOrder";
 import { fmtDateOnly } from "@/lib/dates";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
@@ -38,6 +38,8 @@ export type MemberRow = {
   linkedin: string | null;
   // إنهاء العضوية (للموقوفين) — السبب من termination_reason، والتاريخ الحقيقيّ من terminated_at (يُختَم لحظة الإيقاف عبر تريغر، فلا يتذبذب بتعديلات لاحقة)
   endReason: string | null;
+  /** فئةُ سبب الخروج (`termination_kind`) — لا تخلو لعضويّةٍ منتهية، ويحرس ذلك قيدُ القاعدة. */
+  endKind: TerminationKind | null;
   endDate: string;
   endAgo: string; // مدّة نسبيّة منذ الإنهاء («منذ ٣ أشهر»)
   /**
@@ -127,7 +129,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
   const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes, endRes, moveRes, mayMoveRes] = await Promise.all([
     // `members` لا `profiles`: الجدولُ صار بيتَ كلِّ صاحبِ حساب بعد توحيد الهويّة، والعرضُ
     // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
-    sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at").order("joined_date", { ascending: false }),
+    sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at, termination_kind").order("joined_date", { ascending: false }),
     sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
     sb.from("roles").select("role_name, role_name_ar"),
     sb.from("departments").select("id, name_ar"),
@@ -232,6 +234,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       tiktok: md?.tiktok_account ?? null,
       linkedin: md?.linkedin_account ?? null,
       endReason: p.termination_reason ?? null,
+      endKind: (p.termination_kind as TerminationKind | null) ?? null,
       endDate: fmtDateOnly(p.terminated_at ? String(p.terminated_at).slice(0, 10) : null),
       endAgo: agoPhrase(p.terminated_at ?? null),
       // «بحدّ الإنذارات» تُقال مع الاسم لا بدلًا منه: صاحبُه أصدر الإنذار الثالث، والسحبُ بعده

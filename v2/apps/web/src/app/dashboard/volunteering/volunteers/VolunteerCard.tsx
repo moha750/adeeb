@@ -32,7 +32,7 @@ function menu(v: VolunteerRow, onEnd: () => void): MenuGroup[] {
  * بالارتداد — فكرتُ السابق رصاصيٌّ بلا زرقةٍ واحدة، والسارِي على هويّته بلا تغيير.
  */
 export function VolunteerCard({ v, onOpen, onGrant, onEnd }: {
-  v: VolunteerRow; onOpen: () => void; onGrant: () => void; onEnd: () => void;
+  v: VolunteerRow; onOpen: () => void; onGrant?: () => void; onEnd: () => void;
 }) {
   const groups = menu(v, onEnd);
   const next = v.prefs.slice(1);
@@ -116,7 +116,7 @@ export function VolunteerCard({ v, onOpen, onGrant, onEnd }: {
             <Button variant="neutral" size="sm" onClick={onOpen}>السجلُّ الكامل</Button>
           ) : (
             <div className="acard-foot-row">
-              <Button variant="primary" size="sm" onClick={onGrant}>إهداءُ العضويّة</Button>
+              {onGrant ? <Button variant="primary" size="sm" onClick={onGrant}>إهداءُ العضويّة</Button> : null}
               <Button variant="ghost" size="sm" onClick={onOpen}>السجلُّ الكامل</Button>
             </div>
           )}

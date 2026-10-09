@@ -12,7 +12,7 @@ const MEMBER: MemberRow = {
   joined: "١٢ يناير ٢٠٢٥", joinedRaw: "2025-01-12",
   college: null, major: null, degree: null, degreeRaw: null, recordNo: null,
   twitter: null, instagram: null, tiktok: null, linkedin: null,
-  endReason: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true,
+  endReason: null, endKind: null, endDate: "", endAgo: "", endBy: null, canEnd: true, canEdit: true,
   canWarn: true, warnCount: 0, canCertify: true, certName: null, certPosition: null, certCount: 0, committeeId: null,
   roleName: "committee_member", canMove: true,
 };

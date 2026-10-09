@@ -3,7 +3,7 @@ import { Container } from "@adeeb/design-system";
 import { StoryOpening } from "../_story/StoryOpening";
 import { SiteHeader } from "../_components/SiteHeader";
 
-/* معاينة معزولة لقصة أديب الافتتاحية: القصة + هيدر حقيقي (هدف التسليم)
+/* معاينة معزولة لقصة أدِيب الافتتاحية: القصة + هيدر حقيقي (هدف التسليم)
    ومحتوى بديل تحتها للتحقق من نهاية الـpin واستمرار التمرير الطبيعي.
    (المكافئ التطبيقي لـ story-preview.html في مشروع Next) */
 

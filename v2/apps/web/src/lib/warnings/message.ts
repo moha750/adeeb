@@ -10,7 +10,7 @@
  * يبقى صادقًا ولو انتقل صاحبه بعده. **واللجنة لا تُذكر في النصّ** (قرار المالك): تبقى في السجلّ.
  */
 import { fmtDate } from "@/lib/dates";
-import { positionLine } from "@/lib/positionLabel";
+import { positionLine, rankFor } from "@/lib/positionLabel";
 import { CHARTER, countWord, observationSentence, ordinalWord } from "./vocab";
 
 export type Gender = "male" | "female" | null;
@@ -41,11 +41,6 @@ export type WarningLetter = {
 /** اختيارٌ بالجنس — والمجهولُ يأخذ صيغة المذكّر (لا نخترع له جنسًا، ولا نُثقل الجملة بالوجهين). */
 const g = (gender: Gender, male: string, female: string): string => (gender === "female" ? female : male);
 
-/** تأنيث الرتبة في النداء: «قائد» ← «قائدة». والرتبةُ أوّلُ كلمةٍ في اسم المنصب. */
-const FEMININE: Record<string, string> = {
-  "قائد": "قائدة", "نائب": "نائبة", "عضو": "عضوة",
-  "منسّق": "منسّقة", "منسق": "منسقة", "رئيس": "رئيسة", "مستشار": "مستشارة",
-};
 
 /**
  * سطر النداء — **المسمّى كاملًا بلا فاصل** (قرار المالك): «قائدة لجنة التصميم زهراء العريفي» ·
@@ -59,17 +54,15 @@ export function salutation(l: Pick<WarningLetter, "name" | "gender" | "role" | "
   const title = positionLine(l.role, l.committee);
   // بلا منصب: «الأدِيب» و«الأدِيبة» — نسبةٌ إلى النادي لا نداءٌ عامّ (قرار المالك)
   if (!title) return `${g(l.gender, "الأدِيب", "الأدِيبة")} ${l.name}`;
-  // الرتبةُ أوّلُ كلمةٍ في المسمّى، وهي وحدَها ما يُؤنَّث («قائد لجنة التصميم» ← «قائدة لجنة التصميم»)
-  const [head, ...rest] = title.split(" ");
-  const named = l.gender === "female" ? [FEMININE[head] ?? head, ...rest].join(" ") : title;
-  return `${named} ${l.name}`;
+  // التأنيث من المصدر الواحد (`rankFor`): الرتبةُ أوّلُ كلمةٍ في المسمّى، و«عضو» للجنسين
+  return `${rankFor(title, l.gender)} ${l.name}`;
 }
 
 /** التحيّة — سطرٌ قائمٌ بذاته يعلو النداء (كما في البوست). */
 export const greeting = "السلام عليكم ورحمة الله وبركاته";
 
 /** التوقيع — يُكتب في الرسالة، وأمّا الورقة فتوقيعُها وختمُها مطبوعان في القالب. */
-export const signature = "إدارة الموارد البشرية، نادي أديب";
+export const signature = "إدارة الموارد البشرية، نادي أدِيب";
 
 /** هل بلغ هذا الإنذارُ الحدَّ فسُحبت به العضويّة؟ */
 const isFinal = (l: WarningLetter): boolean => l.activeCount >= l.limit;
@@ -102,7 +95,7 @@ export function letterParagraphs(l: WarningLetter): string[] {
     out.push(
       `ونحيطك علمًا بأنّه تمّ إصدار الإنذار ${ordinalWord(l.ordinal)} لك بتاريخ ${fmtDate(l.issuedAt)}، وبه ${
         g(l.gender, "بلغتَ", "بلغتِ")
-      } الحدّ المقرّر (${countWord(l.limit)} إنذارات) وفقًا ل${CHARTER}، وعليه سُحبت عضويّتك من نادي أديب اعتبارًا من تاريخه.`,
+      } الحدّ المقرّر (${countWord(l.limit)} إنذارات) وفقًا ل${CHARTER}، وعليه سُحبت عضويّتك من نادي أدِيب اعتبارًا من تاريخه.`,
       `ونشكر لك ما ${g(l.gender, "بذلتَ", "بذلتِ")}، ويبقى بابُ الإدارة مفتوحًا لأيّ توضيح.`,
     );
   } else {
@@ -134,7 +127,7 @@ export function warningWhatsappMessage(l: WarningLetter): string {
   const consequence = isFinal(l)
     ? `وبه ${g(l.gender, "بلغتَ", "بلغتِ")} الحدّ المقرّر (${
       countWord(l.limit)
-    } إنذارات) وفقًا ل${CHARTER}، وعليه سُحبت عضويّتك من نادي أديب اعتبارًا من تاريخه.`
+    } إنذارات) وفقًا ل${CHARTER}، وعليه سُحبت عضويّتك من نادي أدِيب اعتبارًا من تاريخه.`
     : `وقد بقي لك ${leftPhrase(l)} قبل بلوغ الحدّ المقرّر في ${CHARTER}.`;
 
   const closing = isFinal(l)

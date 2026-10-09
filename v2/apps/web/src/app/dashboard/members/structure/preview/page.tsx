@@ -8,7 +8,7 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { PageHeader } from "../../../_components/PageHeader";
 
 const Head = () => (
-  <PageHeader title="هيكلة أديب" crumbLeaf="معاينة المقترح" />
+  <PageHeader title="هيكلة أدِيب" crumbLeaf="معاينة المقترح" />
 );
 
 /**

@@ -101,7 +101,7 @@ export async function getExitRequests(): Promise<ExitsData> {
   const shape = (r: (typeof rows)[number]): ExitRow => ({
     id: r.id,
     userId: r.user_id,
-    name: names.get(r.user_id) ?? "عضوٌ في أديب",
+    name: names.get(r.user_id) ?? "عضوٌ في أدِيب",
     seats: seats.get(r.user_id) ?? [],
     reason: r.reason,
     at: fmtDate(r.created_at),

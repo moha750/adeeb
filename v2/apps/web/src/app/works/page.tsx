@@ -7,8 +7,8 @@ import { SiteHeader } from "../_components/SiteHeader";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "كل الأعمال، أديب",
-  description: "أرشيف إبداعات نادي أديب: مختاراتٌ من أعمال أعضائه وبرامجه.",
+  title: "كل الأعمال، أدِيب",
+  description: "أرشيف إبداعات نادي أدِيب: مختاراتٌ من أعمال أعضائه وبرامجه.",
 };
 
 export default async function WorksPage() {

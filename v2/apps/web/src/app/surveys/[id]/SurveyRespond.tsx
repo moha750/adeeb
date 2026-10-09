@@ -210,7 +210,7 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
       <header className="mb-6 text-center">
-        <p className="font-display text-sm font-bold text-steel-600">نادي أديب</p>
+        <p className="font-display text-sm font-bold text-steel-600">نادي أدِيب</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-content">{survey.title}</h1>
         {survey.description ? <p className="mt-2 text-content-muted">{survey.description}</p> : null}
       </header>

@@ -53,6 +53,72 @@ export const ACCESS_TYPES: { value: AccessType; label: string }[] = [
 ];
 export const ACCESS_LABEL: Record<AccessType, string> = { public: "عامّ", members_only: "للأعضاء" };
 
+/* ══ الملكيّة والمشاركة ══════════════════════════════════════════════ */
+
+/**
+ * دورُ المستخدم في استبيانٍ بعينه. **تحسبه القاعدة وحدها** (`survey_access_list`) وهذا مرآتُه:
+ * - `owner`: صاحبه. المنشئُ ما دام يملك صلاحية الاستبيانات، وإلّا حسابُ النادي «أَدِيب»
+ *   (انتقالٌ محسوبٌ لحظيًّا: إن عادت الصلاحية لصاحبها عادت إليه استبياناته).
+ * - `steward`: حسابُ النادي على استبيانِ غيره **المنشور**: يقرأ نتائجه ويتحكّم فيه كاملًا
+ *   ليوقف المسيء (قرار محمد 2026-10-08)، ولا يدير المشاركة: تلك خصوصيّةُ صاحبه.
+ * - `edit` / `read`: شريكٌ أذِن له صاحبُه (قيد `survey_shares_access_check`). واللفظان لفظا
+ *   شركاء الباركود (`qr_link_shares`) حرفًا: إذنُ الشريك سؤالٌ واحدٌ له جوابٌ واحد في النظام.
+ * ومن لا دور له لا يرى الاستبيان أصلًا: لا في القائمة ولا برابطٍ مباشر في اللوحة.
+ */
+export type SurveyRole = "owner" | "steward" | "edit" | "read";
+export type ShareLevel = Extract<SurveyRole, "edit" | "read">;
+
+export const SURVEY_ROLE_VALUES: SurveyRole[] = ["owner", "steward", "edit", "read"];
+export const isSurveyRole = (v: unknown): v is SurveyRole =>
+  typeof v === "string" && (SURVEY_ROLE_VALUES as string[]).includes(v);
+export const isShareLevel = (v: unknown): v is ShareLevel => v === "read" || v === "edit";
+
+/** ما يُفعل باستبيان: كلُّ فعلٍ في الغرفة يسأل عن واحدٍ منها، في الواجهة والخادم معًا. */
+export type SurveyCan = "see" | "results" | "edit" | "lifecycle" | "archive" | "delete" | "share";
+
+/**
+ * **المصفوفةُ الواحدة: من يفعل ماذا.** الواجهةُ تُخفي بها ما لا يحقّ، والخادمُ يرفض بها ما
+ * يصله على كلّ حال (إخفاءُ الزرّ ليس حارسًا). «يقرأ» يرى الاستبيانَ ونتائجه، و«يحرّر» يضيف
+ * المحتوى والنشرَ والإيقافَ والإنهاء، والأرشفةُ والحذفُ وإدارةُ المشاركة لصاحبه وحده.
+ */
+export const SURVEY_CAN: Record<SurveyRole, readonly SurveyCan[]> = {
+  owner:   ["see", "results", "edit", "lifecycle", "archive", "delete", "share"],
+  steward: ["see", "results", "edit", "lifecycle", "archive", "delete"],
+  edit:    ["see", "results", "edit", "lifecycle"],
+  read:    ["see", "results"],
+};
+
+export const canSurvey = (role: SurveyRole | null | undefined, what: SurveyCan): boolean =>
+  !!role && SURVEY_CAN[role].includes(what);
+
+/**
+ * **التحريرُ دورٌ وحال:** المؤرشفُ والمحذوفُ مركونان، لا يحرّرهما إلّا من يملك إعادتَهما
+ * (صاحبُه وحسابُ النادي). فالشريكُ المحرِّر لا يبدّل استبيانًا ركنه صاحبُه ولا يقدر على ردّه.
+ */
+export const canEditSurvey = (role: SurveyRole | null | undefined, state: { archived: boolean; deleted: boolean }): boolean =>
+  canSurvey(role, "edit") && (!(state.archived || state.deleted) || canSurvey(role, "archive"));
+
+/** ما يحتاجه كلُّ فعلٍ من أفعال دورة الحياة. الحذفُ النهائيّ يحتاج `delete` كالنقل إلى المحذوفات. */
+export const OP_NEEDS: Record<StatusOp, SurveyCan> = {
+  publish: "lifecycle", pause: "lifecycle", close: "lifecycle", reopen: "lifecycle",
+  archive: "archive", unarchive: "archive",
+  softDelete: "delete", restore: "delete",
+};
+
+/** رموز `survey_share_set`/`survey_share_remove` إلى رسائل عربيّة. */
+export const SHARE_ERRORS: Record<string, string> = {
+  bad_access: "إذنٌ غير معروف.",
+  not_owner: "المشاركة يديرها صاحب الاستبيان وحده.",
+  self_share: "لا يُشارَك الاستبيان مع صاحبه.",
+  not_manager: "المشاركة لمن يملك صلاحية الاستبيانات وحده.",
+  club_account: "حسابُ النادي يرى الاستبيانات المنشورة أصلًا، فلا يُشارَك معه.",
+};
+
+export const shareErrorMessage = (raw: string | null | undefined): string => {
+  const code = (raw ?? "").split(":")[0].trim();
+  return SHARE_ERRORS[code] ?? "تعذّر حفظ المشاركة. حاول مجدّدًا.";
+};
+
 /* ══ أنواع الأسئلة ══════════════════════════════════════════════════ */
 
 export type QuestionType =
@@ -118,7 +184,7 @@ export const SUBMIT_ERRORS: Record<string, string> = {
   not_active: "هذا الاستبيان غير متاح حاليًّا.",
   not_started: "لم يبدأ استقبال الإجابات بعد.",
   ended: "انتهت مدّة هذا الاستبيان.",
-  members_only: "هذا الاستبيان لأعضاء أديب. سجّل دخولك بعضويّة نشطة.",
+  members_only: "هذا الاستبيان لأعضاء أدِيب. سجّل دخولك بعضويّة نشطة.",
   already_answered: "سبق أن أجبت على هذا الاستبيان.",
   foreign_question: "تعذّر التحقّق من الإجابات. حدّث الصفحة وأعد المحاولة.",
   required_missing: "سؤال إلزاميّ بلا إجابة.",

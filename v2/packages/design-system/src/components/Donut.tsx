@@ -23,6 +23,14 @@ export interface DonutProps {
    * عمودٍ عرضُه ٢٣٠. وتُترَك في الكرت **العريض القصير**، فالصفُّ هناك أوفقُ للعين.
    */
   stack?: boolean;
+  /**
+   * **المخفيُّ بيد المستدعي** (اختياريّ، ٢٠٢٦-١٠-٠٩): تسمياتُ الفئات المخفيّة. بلاه تملك الحلقةُ
+   * إخفاءها وحدها كما كانت؛ ومعه يصير الضغطُ خبرًا يصعد (`onHiddenChange`) فيتبعه ما تحت الحلقة
+   * من كشفٍ وعدّاد — أوّلُه قسمُ الأعضاء السابقين: تُخفي سببًا فيخرج أصحابُه من الكشف.
+   * والسلوكُ المرئيّ واحدٌ في الحالين، فلا يتعلّم المستعملُ حلقتين.
+   */
+  hidden?: readonly string[];
+  onHiddenChange?: (labels: string[]) => void;
 }
 
 // ألوان الفئات بترتيبٍ ثابت — لا تدوير (ق١٠·٢). الزائد على الستّة يُطوى في «أخرى».
@@ -44,8 +52,8 @@ const nf = (n: number) => n.toLocaleString("en-US");
 /** نصفُ قطر الحلقة — تقرؤه الفارغةُ والمملوءةُ معًا، فيتّحد قطرُ الخاتمين. */
 const R = 56;
 
-export function Donut({ items, unit, empty, stack }: DonutProps) {
-  const [hidden, setHidden] = useState<Set<number>>(() => new Set());
+export function Donut({ items, unit, empty, stack, hidden: hiddenLabels, onHiddenChange }: DonutProps) {
+  const [ownHidden, setOwnHidden] = useState<Set<number>>(() => new Set());
   const [act, setAct] = useState<number | null>(null);
 
   const slices = useMemo(
@@ -57,6 +65,11 @@ export function Donut({ items, unit, empty, stack }: DonutProps) {
             { label: "أخرى", value: items.slice(COLORS.length - 1).reduce((s, it) => s + it.value, 0), color: OTHER },
           ],
     [items],
+  );
+  const controlled = hiddenLabels !== undefined;
+  const hidden = useMemo(
+    () => (controlled ? new Set(slices.flatMap((s, i) => (hiddenLabels!.includes(s.label) ? [i] : []))) : ownHidden),
+    [controlled, hiddenLabels, slices, ownHidden],
   );
   /**
    * **الفارغةُ مكوّنُ الموقع لا سطرٌ خاصّ** (المالك ٢٠٢٦-٠٨-٣١): `EmptyState` هو المتّبع في
@@ -75,14 +88,14 @@ export function Donut({ items, unit, empty, stack }: DonutProps) {
   const filtered = hidden.size > 0;
   const pct = (v: number) => Math.round((v / fullTotal) * 100);
 
-  const toggle = (i: number) =>
-    setHidden((prev) => {
-      const next = new Set(prev);
-      // لا يُخفى آخرُ قطاعٍ ظاهر (حلقةٌ فارغة بلا معنى).
-      if (next.has(i)) next.delete(i);
-      else if (slices.length - next.size > 1) next.add(i);
-      return next;
-    });
+  const toggle = (i: number) => {
+    const next = new Set(hidden);
+    // لا يُخفى آخرُ قطاعٍ ظاهر (حلقةٌ فارغة بلا معنى).
+    if (next.has(i)) next.delete(i);
+    else if (slices.length - next.size > 1) next.add(i);
+    if (controlled) onHiddenChange?.(slices.filter((_, k) => next.has(k)).map((s) => s.label));
+    else setOwnHidden(next);
+  };
 
   const C = 2 * Math.PI * R, GAP = slices.length - hidden.size > 1 ? 2.5 : 0;
   let acc = 0;

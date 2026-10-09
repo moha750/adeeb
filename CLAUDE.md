@@ -10,15 +10,15 @@ events, public profiles) plus a capability-gated dashboard for members and leade
 (membership records, org structure, elections, warnings, certificates, tasks, volunteering,
 analytics, content management).
 
-The live product is **`v2/`** — a Next.js 16 App Router monorepo on Supabase. `adeeb/` is the
-retired V1 (static HTML/JS + Capacitor iOS shell), kept locally for reference and data
-migration only; it is **gitignored** and is not a spec, a gate, or a compatibility target.
+The live product is **`v2/`** — a Next.js 16 App Router monorepo on Supabase. V1 (static
+HTML/JS + Capacitor iOS shell) is retired and **no longer on disk**: the local `adeeb/` copy was
+deleted 2026-10-08. It lives only in git (see §7) and is not a spec, a gate, or a compatibility
+target.
 
 ## 2. Architecture
 
 ```
 /                      repo root (no package.json — not a workspace root)
-├─ adeeb/              V1, retired. Static HTML/CSS/JS + Capacitor. GITIGNORED, read-only reference.
 ├─ supabase/           Backend source of truth (shared by V1 and V2)
 │  ├─ migrations/      532 SQL files. 353 were reconstructed from the live history on
 │  │                   2026-08-16 (the repo held only 173 of 500 applied). See its README.md.
@@ -28,7 +28,8 @@ migration only; it is **gitignored** and is not a spec, a gate, or a compatibili
 ├─ .githooks/pre-commit  CSS single-source guard (see §7)
 ├─ .prettierrc.json    printWidth 100, double quotes, semi, es5 trailing commas, LF
 ├─ .mcp.json           Supabase MCP server (project ref nnlhkfeybyhvlinbqqfa)
-├─ *.md                Historical migration/audit plans (DB-AUDIT, RBAC-MIGRATION, V2-PLAN, …)
+├─ docs/history/       Closed migration/audit plans (DB-AUDIT, RBAC-MIGRATION, V2-PLAN, …). Read-only record.
+├─ Claude outputs/     Session media and drafts. GITIGNORED, not part of the product.
 └─ v2/                 ← THE PRODUCT. pnpm workspace + Turborepo.
    ├─ apps/web/        Next.js 16.2.10 app (React 19.2.4, App Router, TypeScript strict)
    ├─ packages/core/   @adeeb/core — Supabase client factories + shared helpers (source-only, no build)
@@ -71,6 +72,17 @@ migration only; it is **gitignored** and is not a spec, a gate, or a compatibili
 - `lib/view-as.ts` implements "preview as member": the identity is swapped in the app layer only.
   `auth.uid()` still reports the real viewer, so anything the DB computes from `auth.uid()`
   reflects the previewer, not the previewed.
+- **Standings: the names people see** (owner decision 2026-10-08). Three, never overlapping, one
+  pattern: **عضو أدِيب**, **متطوّع أدِيب**, **صديق أدِيب** (an account with no live membership
+  and no active volunteering; formerly called «زائر» and «صاحب حساب»). Any `auth.users` row is a
+  صديق أدِيب, profile or not: the `profiles` row is not a standing, only what booking and volunteering
+  require (owner 2026-10-09). Gendered for women
+  («متطوّعة / صديقة أدِيب»), but «عضو أدِيب» for both (owner: the correct Arabic). A former member, whatever the reason, is صديق أدِيب again.
+  Names come from `lib/standing.ts` only (`standingName`); the boundary comes from the DB
+  (`adeeb_standing(uuid)` → `member` / `volunteer` / `visitor`, built on `is_adeeb_member`).
+  Internal keys stay: `account` in app code, `visitor` in `account_type`.
+  **«زائر» now means only someone browsing with no account** (analytics, anonymous Deebo, guest
+  news comments). Never use it, or «صاحب حساب», as the name of an account holder's standing.
 
 ## 3. Commands
 
@@ -358,8 +370,10 @@ Supabase Storage buckets in use: `images` (news), `library`, `election-files`, `
   disclosure line, the leadership one-liners) — leave them empty rather than inventing.
 - Edge functions in `supabase/functions/` may drift from what is actually deployed. Inspect the
   deployed version (and its `verify_jwt`) before redeploying anything.
-- V1 (`adeeb/`) is gitignored and retired. Read it only to understand the domain or migrate data.
-  Do not treat its behaviour as a requirement or block V2 work on it.
+- **V1 lives only in git** (local `adeeb/` folder deleted 2026-10-08). Web V1 as it last stood:
+  `git show 6ab1dd4c:<path>` (the commit before `e0b16a64` removed it from `main`). V1 + the iOS
+  shell: branch `ios-app`. Read it only to understand the domain or migrate data; never recreate
+  the folder in the working tree, and never treat its behaviour as a requirement for V2.
 - **`DataTable` never truncates, so a free-text column in `fr` forces horizontal scroll.** Every
   flexible width is wrapped in `minmax(max-content, …)` on purpose (no `…` clipping ever), which
   means a column holding long Arabic sentences pushes the grid to the width of its longest line and

@@ -148,7 +148,7 @@ export function cardFace(m: DemoMember): CardFace {
         key: "how",
         label: "كيف تعمل البطاقة",
         value:
-          `تُختَم بمشاركةٍ واحدة في كلّ فعاليّةٍ تحضرها مع أديب. ` +
+          `تُختَم بمشاركةٍ واحدة في كلّ فعاليّةٍ تحضرها مع أدِيب. ` +
           `فإذا بلغت ${num(GOAL)} مشاركاتٍ استحققتَ مكافأة الراعي، ` +
           `وبعد استلامها يعود العدّاد صفرًا وتبدأ بطاقةٌ جديدة.`,
       },
@@ -218,7 +218,7 @@ export function pointsFace(m: DemoMember): CardFace {
         key: "how",
         label: "كيف تعمل البطاقة",
         value:
-          `تكسب نقاطًا بكلّ مشاركةٍ مع أديب، وقيمتُها تتفاوت بتفاوت الجهد: ` +
+          `تكسب نقاطًا بكلّ مشاركةٍ مع أدِيب، وقيمتُها تتفاوت بتفاوت الجهد: ` +
           `الحضورُ دون التنظيم، والتنظيمُ دون التقديم. ` +
           `ثمّ تصرف رصيدك على ما تختاره من المتجر أدناه، ولا يعود العدّاد صفرًا إلّا بما تصرفه.`,
       },
@@ -251,7 +251,7 @@ export const faceFor = (m: DemoMember, mode: Mode): CardFace => (mode === "point
 /**
  * `pass.json` كاملًا — يُكتب في الحزمة كما هو.
  *
- * `hasLogo` يقرّر شيئًا واحدًا: **`logoText`**. شعارُ أديب يحمل اسمَه مرسومًا، فكتابةُ
+ * `hasLogo` يقرّر شيئًا واحدًا: **`logoText`**. شعارُ أدِيب يحمل اسمَه مرسومًا، فكتابةُ
  * الاسم بجانبه تكرارٌ — فلا تُكتب إلّا حين يتعذّر جلبُ الصورة، فتبقى البطاقة معنونةً.
  *
  * **والحقلان اللذان يجعلان التحديث لحظيًّا** هما `webServiceURL` و`authenticationToken`:
@@ -279,7 +279,7 @@ export function passJson(
     teamIdentifier: ids.teamIdentifier,
     serialNumber: serial,
     organizationName: "نادي أَدِيب",
-    description: mode === "points" ? "بطاقة نقاط نادي أديب" : "بطاقة ولاء نادي أديب",
+    description: mode === "points" ? "بطاقة نقاط نادي أدِيب" : "بطاقة ولاء نادي أدِيب",
     webServiceURL: ids.webServiceURL,
     authenticationToken: ids.authenticationToken,
     ...(ids.hasLogo ? {} : { logoText: "أَدِيب" }),

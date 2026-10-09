@@ -5,7 +5,7 @@ import { getQrAccess, getQrLink, getQrSchedules, getQrShares } from "../../data"
 import { getQrShareCandidates } from "../../shares";
 import { QrSettingsView } from "../../QrSettingsView";
 
-export const metadata = { title: "إعدادات الباركود، بوّابة أديب" };
+export const metadata = { title: "إعدادات الباركود، بوّابة أدِيب" };
 
 /**
  * **بابُ إدارة باركودٍ واحد**: وجهتُه وتصميمُه وحالُه وجدولُه وحذفُه.

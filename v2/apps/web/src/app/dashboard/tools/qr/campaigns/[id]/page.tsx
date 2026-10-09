@@ -12,7 +12,7 @@ import { CampaignRoomView } from "./CampaignRoomView";
  * **ومرشّحو الشِّركة يُقرَؤون للمالك وحدَه**: هم قائمةُ اختيارٍ في نافذةٍ لا يفتحها غيرُه،
  * وقراءتُها لكلّ ناظرٍ نداءٌ بلا مستعمِل.
  */
-export const metadata = { title: "حملة باركود، بوّابة أديب" };
+export const metadata = { title: "حملة باركود، بوّابة أدِيب" };
 
 export default async function QrCampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/tools/qr");

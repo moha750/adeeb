@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCESS_LABEL, ACCESS_TYPES, QUESTION_TYPES, QUESTION_TYPE_LABEL, QUESTION_TYPE_VALUES,
-  SCALE_MAX, SCALE_MIN, STATUS_META, STATUS_OPS, SUBMIT_ERRORS,
-  hasChoices, hasScale, submitErrorMessage,
-  type LifecycleState, type StatusOp, type SurveyStatus,
+  OP_NEEDS, SCALE_MAX, SCALE_MIN, SHARE_ERRORS, STATUS_META, STATUS_OPS,
+  SUBMIT_ERRORS, SURVEY_CAN, SURVEY_ROLE_VALUES,
+  canEditSurvey, canSurvey, hasChoices, hasScale, isShareLevel, isSurveyRole, shareErrorMessage, submitErrorMessage,
+  type LifecycleState, type StatusOp, type SurveyCan, type SurveyRole, type SurveyStatus,
 } from "@/app/dashboard/surveys/vocab";
 
 /**
@@ -194,5 +195,98 @@ describe("submitErrorMessage", () => {
 
   it("كلُّ رسائل الأخطاء عربيّةٌ غيرُ فارغة", () => {
     for (const [code, msg] of Object.entries(SUBMIT_ERRORS)) expect(msg.trim(), code).not.toBe("");
+  });
+});
+
+/**
+ * الملكيّةُ والمشاركة (2026-10-08) — **جدولُ الحقّ كاملًا**: أربعةُ أدوارٍ في سبعة أفعال.
+ * الواجهةُ تُخفي بها والخادمُ يرفض بها، فخطأٌ ههنا خطأٌ في الاثنين معًا.
+ */
+describe("SURVEY_CAN: من يفعل ماذا", () => {
+  const ALL: SurveyCan[] = ["see", "results", "edit", "lifecycle", "archive", "delete", "share"];
+  const allowed = (r: SurveyRole) => ALL.filter((w) => canSurvey(r, w));
+
+  it("صاحبُ الاستبيان يفعل كلَّ شيء", () => {
+    expect(allowed("owner")).toEqual(ALL);
+  });
+
+  it("حسابُ النادي على المنشور: كلُّ شيءٍ إلّا إدارةَ المشاركة", () => {
+    expect(allowed("steward")).toEqual(ALL.filter((w) => w !== "share"));
+  });
+
+  it("التحرير: المحتوى ودورةُ الحياة، بلا أرشفةٍ ولا حذفٍ ولا مشاركة", () => {
+    expect(allowed("edit")).toEqual(["see", "results", "edit", "lifecycle"]);
+  });
+
+  it("يقرأ: الاستبيانُ ونتائجُه وحدهما", () => {
+    expect(allowed("read")).toEqual(["see", "results"]);
+  });
+
+  it("من لا دور له لا يفعل شيئًا", () => {
+    for (const w of ALL) {
+      expect(canSurvey(null, w), w).toBe(false);
+      expect(canSurvey(undefined, w), w).toBe(false);
+    }
+  });
+
+  it("المشاركةُ لصاحبه وحده", () => {
+    expect(SURVEY_ROLE_VALUES.filter((r) => canSurvey(r, "share"))).toEqual(["owner"]);
+  });
+
+  it("كلُّ دورٍ يرى ما يحقّ له رؤيته (لا فعلَ بلا رؤية)", () => {
+    for (const r of SURVEY_ROLE_VALUES) {
+      if (SURVEY_CAN[r].length) expect(canSurvey(r, "see"), r).toBe(true);
+    }
+  });
+});
+
+describe("OP_NEEDS: كلُّ فعلِ دورةِ حياةٍ له حاجة", () => {
+  it("لا فعلَ في STATUS_OPS بلا حاجةٍ مسمّاة", () => {
+    expect(Object.keys(OP_NEEDS).sort()).toEqual(Object.keys(STATUS_OPS).sort());
+  });
+
+  it("المُحرِّرُ ينشر ويوقف ويُنهي ويعيد الفتح، ولا يؤرشف ولا يحذف", () => {
+    const byEditor = (Object.keys(OP_NEEDS) as StatusOp[]).filter((op) => canSurvey("edit", OP_NEEDS[op])).sort();
+    expect(byEditor).toEqual(["close", "pause", "publish", "reopen"]);
+  });
+
+  it("الشريكُ القارئ لا يملك فعلًا واحدًا", () => {
+    expect((Object.keys(OP_NEEDS) as StatusOp[]).filter((op) => canSurvey("read", OP_NEEDS[op]))).toEqual([]);
+  });
+});
+
+describe("المشاركة: الإذنان والرسائل", () => {
+  it("إذنان يطابقان قيد survey_shares_access_check ولفظَي شركاء الباركود", () => {
+    expect(isShareLevel("read")).toBe(true);
+    expect(isShareLevel("edit")).toBe(true);
+    for (const bad of ["view", "owner", "steward", "", null, undefined, 1]) expect(isShareLevel(bad), String(bad)).toBe(false);
+  });
+
+  it("الأدوارُ أربعةٌ لا خامس لها", () => {
+    for (const r of SURVEY_ROLE_VALUES) expect(isSurveyRole(r)).toBe(true);
+    for (const bad of ["admin", "public", "view", "", null, undefined]) expect(isSurveyRole(bad), String(bad)).toBe(false);
+  });
+
+  it("رموز القاعدة تُترجَم، والمجهولُ جملةٌ عامّة", () => {
+    for (const [code, msg] of Object.entries(SHARE_ERRORS)) expect(shareErrorMessage(code)).toBe(msg);
+    expect(shareErrorMessage("boom")).toBe("تعذّر حفظ المشاركة. حاول مجدّدًا.");
+    expect(shareErrorMessage(null)).toBe("تعذّر حفظ المشاركة. حاول مجدّدًا.");
+  });
+});
+
+describe("canEditSurvey: التحريرُ دورٌ وحال", () => {
+  const LIVE = { archived: false, deleted: false };
+  const PARKED = [{ archived: true, deleted: false }, { archived: false, deleted: true }, { archived: true, deleted: true }];
+
+  it("القائم يحرّره كلُّ من له التحرير", () => {
+    expect(SURVEY_ROLE_VALUES.filter((r) => canEditSurvey(r, LIVE))).toEqual(["owner", "steward", "edit"]);
+  });
+
+  it("المركونُ لا يحرّره إلّا من يملك إعادتَه", () => {
+    for (const st of PARKED) expect(SURVEY_ROLE_VALUES.filter((r) => canEditSurvey(r, st)), JSON.stringify(st)).toEqual(["owner", "steward"]);
+  });
+
+  it("لا تحريرَ بلا دور", () => {
+    expect(canEditSurvey(null, LIVE)).toBe(false);
   });
 });

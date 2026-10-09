@@ -47,7 +47,7 @@ if (!/^sbp_[A-Za-z0-9_-]+$/.test(token)) {
  * ويبدو الرابطُ «معطوبًا» بلا خطأ. والنمطُ `**` يغطّي المسارات كلَّها تحت الأصل.
  *
  * ومعاينات Vercel بنمطٍ مقيَّدٍ باسم المشروع (`adeeb-v2-*`) لا بـ`*.vercel.app`:
- * الثاني يجعل أيّ مشروعٍ على المنصّة وجهةً مشروعة لرمز استعادةٍ من أديب.
+ * الثاني يجعل أيّ مشروعٍ على المنصّة وجهةً مشروعة لرمز استعادةٍ من أدِيب.
  */
 const REDIRECTS = [
   "https://adeeb.club/**",
@@ -76,7 +76,7 @@ const desired = {
   // و٨ في الشاشة، فكان الخادم يقبل ما ترفضه الشاشة (وأيّ عميلٍ آخر يمرّ).
   password_min_length: 8,
 
-  mailer_subjects_recovery: "استعادة كلمة المرور — نادي أديب",
+  mailer_subjects_recovery: "استعادة كلمة المرور — نادي أدِيب",
   mailer_templates_recovery_content: template,
 
   // **تغيير بريد الدخول** — يطلبه العضو من «الإعدادات»، ولا يسري حتى يفتح الرابط. وبلا هذين
@@ -84,10 +84,10 @@ const desired = {
   // **رمزُ الدخول** (٢٠٢٦-١٠-٠٤) — رسالةُ كلّ رمز: «الدخول بالرمز» في شاشة الدخول وودجةُ الحجز.
   // كان عنوانُها «Your Magic Link» ونصُّها محرَّرًا في اللوحة يَعِد بـ«إتمام حجزك» وحده، بلا أثرٍ هنا.
   // وطولُ الرمز ستّة (`mailer_otp_length` الافتراضيّ) يطابق `maxLength` في حقل الرمز بالشاشتين.
-  mailer_subjects_magic_link: "رمز الدخول — نادي أديب",
+  mailer_subjects_magic_link: "رمز الدخول — نادي أدِيب",
   mailer_templates_magic_link_content: codeTemplate,
 
-  mailer_subjects_email_change: "تأكيد بريد الدخول الجديد — نادي أديب",
+  mailer_subjects_email_change: "تأكيد بريد الدخول الجديد — نادي أدِيب",
   mailer_templates_email_change_content: emailChangeTemplate,
 
   // **التأكيد المزدوج**: الرسالة تُرسَل إلى العنوانين — القديم يعلم بما يجري (فلا يُسلَب
@@ -130,7 +130,7 @@ const desired = {
  * أحد. (والعكسُ آمن: الرمزُ يُهمَل ما دام الدرعُ مطفأً.)
  *
  * وأوسعُ ما يحميه بابُ **رمز الحجز**: يرسل بريدًا إلى أيّ عنوانٍ يُكتب، بلا حسابٍ ولا إذن —
- * فهو أقربُ أبواب أديب إلى أن يصير مِرشّةَ بريدٍ باسم النطاق.
+ * فهو أقربُ أبواب أدِيب إلى أن يصير مِرشّةَ بريدٍ باسم النطاق.
  */
 const turnstileSecret = process.env.TURNSTILE_SECRET_KEY?.trim();
 if (turnstileSecret) {
@@ -149,7 +149,7 @@ if (resendKey) {
     smtp_user: "resend",          // اسمُ المستخدم في Resend ثابتٌ لكلّ الحسابات
     smtp_pass: resendKey,
     smtp_admin_email: "noreply@adeeb.club",   // العنوانُ الحيّ منذ الإعداد الأوّل — بلا شرطة
-    smtp_sender_name: "نادي أديب",
+    smtp_sender_name: "نادي أدِيب",
   });
 }
 

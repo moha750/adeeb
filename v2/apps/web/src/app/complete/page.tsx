@@ -6,7 +6,7 @@ import { awayIfNoSession, getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { CompleteForm } from "./CompleteForm";
 
-export const metadata: Metadata = { title: "إكمال سجلّك، نادي أديب" };
+export const metadata: Metadata = { title: "إكمال سجلّك، نادي أدِيب" };
 export const dynamic = "force-dynamic";
 
 function service() {

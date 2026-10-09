@@ -105,6 +105,30 @@ export const UPLOAD_RULES = {
     accept: "image/png,image/svg+xml,image/webp,image/jpeg",
     formats: "PNG أو SVG أو WEBP أو JPG",
   },
+  /**
+   * **ملفُّ الباركود كما يُختار: صورةٌ أو PDF** (م٢٤). نوعٌ واحدٌ في الشاشة («ملف»)، والفحصُ يفرّق:
+   * الصورةُ تُصغَّر قبل الرفع فحدُّها حدُّ الأصل الخام، والـPDF يُرفع كما هو فحدُّه حدُّ الدلو.
+   * فهذا حدُّ **الأرحب** (الصورة الخامّ)، و`checkQrFile` في `lib/qrFile` يقول حدَّ الـPDF.
+   *
+   * **ولا `image/heic` في القائمة عمدًا**: آيفون يحوّل صورَ الألبوم إلى JPEG حين لا يُذكر
+   * HEIC في `accept`، ولو ذُكر لسلّمها كما هي فعجز اللوحُ عن فكّها في غير سفاري.
+   */
+  qrFile: {
+    maxBytes: 20 * MB,
+    mimes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    accept: "image/jpeg,image/png,image/webp,application/pdf",
+    formats: "JPG أو PNG أو WEBP أو PDF",
+  },
+  /**
+   * والملفُّ **كما يُحفَظ** (دلو qr-files): الصورةُ بعد التصغير، والـPDF كما هو. ورقمُ الدلو هو
+   * حدُّ الـPDF نفسُه، يقرؤه الخادمُ قبل أن يصكّ رابطَ الرفع.
+   */
+  qrFileStored: {
+    maxBytes: 10 * MB,
+    mimes: ["image/webp", "image/jpeg", "image/png", "application/pdf"],
+    accept: "image/webp,image/jpeg,image/png,application/pdf",
+    formats: "WEBP أو JPG أو PNG أو PDF",
+  },
 } as const satisfies Record<string, UploadRule>;
 
 /** «حتّى ٥ ميغابايت» — الحدُّ كما يُقرأ. */

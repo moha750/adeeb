@@ -8,7 +8,7 @@ import { Plus, Trash } from "@/app/_components/glyphs";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
 import { fmtDate } from "@/lib/dates";
-import { checkTarget, targetHost } from "@/lib/qrLinks";
+import { checkTarget, targetHost, type QrKind } from "@/lib/qrLinks";
 import { addQrSchedule, deleteQrSchedule } from "./actions";
 import type { QrSchedule } from "./data";
 
@@ -24,7 +24,18 @@ import type { QrSchedule } from "./data";
  * **والوقتُ بتوقيت الرياض** لا بساعة الجهاز (درسُ `lib/dates`): يُكتَب في الشاشة محلّيًّا
  * ويُختَم في الفعل بإزاحة ‏+03:00 الثابتة، فلا تختلف النافذةُ باختلاف من كتبها.
  */
-export function QrSchedules({ linkId, fallback, rows }: { linkId: string; fallback: string; rows: QrSchedule[] }) {
+export function QrSchedules({
+  linkId,
+  fallback,
+  fallbackKind = "link",
+  rows,
+}: {
+  linkId: string;
+  fallback: string;
+  /** نوعُ الوجهة الأصليّة (م٢١): الملفُّ يُسمّى ملفًّا، فوجهتُه المخزونةُ صفحتُه لا وجهةٌ تُقصَد. */
+  fallbackKind?: QrKind;
+  rows: QrSchedule[];
+}) {
   const toast = useToast();
   const router = useRouter();
   const [pending, startPending] = useTransition();
@@ -113,10 +124,14 @@ export function QrSchedules({ linkId, fallback, rows }: { linkId: string; fallba
                     </span>
                   </div>
                 ))}
-                <p className="fld-help mt-2">
-                  وخارجَ هذه النوافذ يذهب الماسحُ إلى{" "}
-                  <bdi className="font-latin" dir="ltr">{targetHost(fallback)}</bdi>
-                </p>
+                {fallbackKind === "file" ? (
+                  <p className="fld-help mt-2">وخارجَ هذه النوافذ يرى الماسحُ الملف.</p>
+                ) : (
+                  <p className="fld-help mt-2">
+                    وخارجَ هذه النوافذ يذهب الماسحُ إلى{" "}
+                    <bdi className="font-latin" dir="ltr">{targetHost(fallback)}</bdi>
+                  </p>
+                )}
               </div>
             ) : (
               <EmptyState

@@ -3,7 +3,7 @@ import { clubDayKey } from "@/lib/dates";
 import { listOpportunities } from "./data";
 import { VolunteeringView } from "./VolunteeringView";
 
-export const metadata = { title: "الفرص التطوّعيّة، بوّابة أديب" };
+export const metadata = { title: "الفرص التطوّعيّة، بوّابة أدِيب" };
 
 /**
  * **غرفةُ التطوّع** — قفلُها `manage_volunteering` (الرئيسان وقائد الموارد).

@@ -7,7 +7,7 @@ import { Container } from "@adeeb/design-system";
  * القرارَ بالنظر: طولُ الوجهة، ومرتبةُ الأزرار، وازدحامُ تسميات المخطّط على ٣٩٠.
  */
 
-export const metadata = { title: "إحصاء الباركود، معرض أديب" };
+export const metadata = { title: "إحصاء الباركود، معرض أدِيب" };
 
 export default function QrStatsLab() {
   return (

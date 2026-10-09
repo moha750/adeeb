@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { dropQrFile } from "../guard";
 
 /**
  * **فعلُ الإشراف الوحيد: إيقافُ باركودٍ أو تشغيلُه.**
@@ -82,9 +83,13 @@ export async function adminDeleteQr(id: string): Promise<OversightResult> {
   if (!me.caps.includes(CAP)) return { ok: false, message: "لا تملك صلاحية الإشراف على الباركود." };
 
   const sb = await createClient();
+  // **ملفُّه يُقرأ قبل أن يُحذف** (م٢١): الدالّةُ ترجع «حُذف» ولا ترجع ما كان، والحذفُ المتسلسلُ
+  // لا يبلغ الدلو. وعينُ الإشراف تقرأ الصفوفَ كلَّها، فالقراءةُ بعميل الجلسة.
+  const { data: before } = await sb.from("qr_links").select("file_path").eq("id", id).maybeSingle();
   const { data, error } = await sb.rpc("qr_admin_delete", { p_id: id });
   if (error) return { ok: false, message: error.message };
   if (!data) return { ok: false, message: "لم يُعثر على الباركود." };
+  await dropQrFile((before as { file_path: string | null } | null)?.file_path);
 
   revalidatePath("/dashboard/tools/qr/oversight");
   revalidatePath("/dashboard/tools/qr/links");

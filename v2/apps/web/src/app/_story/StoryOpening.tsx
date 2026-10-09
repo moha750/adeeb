@@ -52,7 +52,7 @@ else if("scrollRestoration" in history){history.scrollRestoration="manual";windo
    تنتظر الشاشةُ قصّتَه (صفحةُ المعاينة `force`). */
 const READY_CAP_MS = 6000;
 
-/* حروف الفصل الأول المتناثرة — بينها أحرف «أديب» بنغمة ذهبية */
+/* حروف الفصل الأول المتناثرة — بينها أحرف «أدِيب» بنغمة ذهبية */
 const LETTERS: Array<{ ch: string; x: string; y: string; r: string; d: number; accent?: boolean }> = [
   { ch: "أ", x: "8%", y: "18%", r: "-12deg", d: 1.3, accent: true },
   { ch: "د", x: "22%", y: "64%", r: "8deg", d: 0.7, accent: true },
@@ -366,7 +366,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="st-oldlogo2" src={STORY_ASSETS.oldLogo} alt="" aria-hidden="true" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="st-newlogo-static" src={STORY_ASSETS.newLogo} alt="شعار نادي أديب" />
+              <img className="st-newlogo-static" src={STORY_ASSETS.newLogo} alt="شعار نادي أدِيب" />
             </div>
             <div className="st-ch4-copy">
               <h2 className="st-kicker">حكـايةٌ تجاوزت الأسوار</h2>

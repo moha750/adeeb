@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const surveyId = Number(id);
   const sb = service();
-  if (!sb || !Number.isInteger(surveyId)) return { title: "نظام استبيانات أديب" };
+  if (!sb || !Number.isInteger(surveyId)) return { title: "نظام استبيانات أدِيب" };
   // العنوان يُكشف لمعاينات الروابط للنشط العامّ وحده — عنوان مسودّةٍ أو استبيانِ
   // أعضاءٍ ليس لعابر يحمل الرابط (نفس حدود قراءة anon في RLS)
   const { data } = await sb
@@ -37,10 +37,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .is("archived_at", null)
     .is("deleted_at", null)
     .maybeSingle();
-  if (!data) return { title: "نظام استبيانات أديب" };
+  if (!data) return { title: "نظام استبيانات أدِيب" };
   return {
     title: data.title,
-    description: data.description ?? "شارك برأيك في استبيان نادي أديب.",
+    description: data.description ?? "شارك برأيك في استبيان نادي أدِيب.",
   };
 }
 
@@ -112,7 +112,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
   if (survey.access_type === "members_only") {
     if (!user) {
       return (
-        <StateScreen title="هذا الاستبيان لأعضاء أديب" tone="info">
+        <StateScreen title="هذا الاستبيان لأعضاء أدِيب" tone="info">
           سجّل دخولك ثمّ عد إلى هذه الصفحة.{" "}
           <Link className="font-bold underline" href={`/login?next=/surveys/${surveyId}`}>تسجيل الدخول</Link>
         </StateScreen>
@@ -123,7 +123,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
     const { data: profile } = await sb.from("members").select("account_status").eq("id", user.id).maybeSingle();
     if (profile?.account_status !== "active") {
       return (
-        <StateScreen title="لعضويّات أديب النشطة" tone="warning">
+        <StateScreen title="لعضويّات أدِيب النشطة" tone="warning">
           هذا الاستبيان متاح للأعضاء النشطين فقط.
         </StateScreen>
       );

@@ -38,12 +38,12 @@ const TITLES = [
 ];
 
 const TITLE_TEXT: Record<string, string> = {
-  short: "مجلّة أديب، العدد الثالث",
-  long: "مجلّة أديب، العدد الثالث: ملفُّ الشعر الحديث في المنطقة الشرقيّة",
+  short: "مجلّة أدِيب، العدد الثالث",
+  long: "مجلّة أدِيب، العدد الثالث: ملفُّ الشعر الحديث في المنطقة الشرقيّة",
 };
 
 const CRUMB = (leaf: string): CrumbStep[] => [
-  { kind: "link", label: "بوّابة أديب", href: "#" },
+  { kind: "link", label: "بوّابة أدِيب", href: "#" },
   { kind: "link", label: "المحتوى", href: "#" },
   { kind: "link", label: "إدارة الموقع", href: "#" },
   { kind: "link", label: "إرثٌ يُروى", href: "#" },
@@ -169,7 +169,7 @@ export default function PageHeaderNextLab() {
             <PageHeader
               title="مهامّي"
               crumb={[
-                { kind: "link", label: "بوّابة أديب", href: "#" },
+                { kind: "link", label: "بوّابة أدِيب", href: "#" },
                 { kind: "link", label: "التفاعل", href: "#" },
                 { kind: "leaf", label: "مهامّي" },
               ]}
@@ -181,13 +181,13 @@ export default function PageHeaderNextLab() {
             note="محرّرُ الخبر: فعلُ المرحلة واحدٌ ظاهر، وما دونه في النقاط مرتّبًا: الإرجاعُ أوّلًا لأنّه الفعلُ المضادّ، ثمّ ما ليس من المرحلة."
           >
             <PageHeader
-              title="أديب يفتتح موسمَه الثقافيّ"
+              title="أدِيب يفتتح موسمَه الثقافيّ"
               parent={{ label: "غرفة التحرير", href: "#" }}
               crumb={[
-                { kind: "link", label: "بوّابة أديب", href: "#" },
+                { kind: "link", label: "بوّابة أدِيب", href: "#" },
                 { kind: "link", label: "المحتوى", href: "#" },
                 { kind: "link", label: "غرفة التحرير", href: "#" },
-                { kind: "leaf", label: "أديب يفتتح موسمَه الثقافيّ" },
+                { kind: "leaf", label: "أدِيب يفتتح موسمَه الثقافيّ" },
               ]}
               status={{ label: "ينتظر المراجعة", tone: "info" }}
               action={{ label: "نشر", icon: <Megaphone size={18} />, onClick: () => {} }}

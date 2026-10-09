@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, SectionCard, Switch } from "@adeeb/design-system";
-import { Globe, LinkSimple, QrCode, TextAa } from "@phosphor-icons/react";
+import { Alert, Badge, Button, Field, FileButton, SectionCard, Switch } from "@adeeb/design-system";
+import { File as FileIcon, FilePdf, Globe, ImageSquare, LinkSimple, QrCode, TextAa } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
-import { QR_TITLE_MAX, SITE_ORIGIN, checkCode, checkTarget, newQrCode, qrShortUrl } from "@/lib/qrLinks";
+import { QR_TITLE_MAX, SITE_ORIGIN, checkCode, checkTarget, newQrCode, qrShortUrl, type QrKind } from "@/lib/qrLinks";
+import { UPLOAD_RULES, attachHint, fileMeta } from "@/lib/upload";
 import { PageHeader } from "../../../_components/PageHeader";
+import { useToast } from "../../../_components/ToastProvider";
 import { createQrLink, isQrCodeTaken } from "../actions";
 import { defaultQrSpec } from "../defaults";
+import { uploadQrFile } from "../uploadFile";
+import { KindPicker } from "../KindPicker";
+import { checkQrFile, isPdf } from "@/lib/qrFile";
+
+/** ما يُختار وما يُقال قبل الاختيار: الصيغُ الأربعُ وحدُّ الدلو (الـPDF لا يُصغَّر فحدُّه الأضيق). */
+const PICK_RULE = UPLOAD_RULES.qrFile;
+const HINT = attachHint(UPLOAD_RULES.qrFileStored);
 
 /**
  * **الخطوةُ الأولى: اسمٌ ورابط** (قرارُ المالك ٢٠٢٦-٠٨-٢٢).
@@ -23,6 +32,9 @@ import { defaultQrSpec } from "../defaults";
  *
  * **والصفُّ يُنشأ هنا قبل أن يُصمَّم**: من كتب اسمًا ورابطًا ثمّ انصرف خلّف رمزًا بهيئته
  * الأولى في «رموزي»، يُحذف بيده كأيّ رمز.
+ *
+ * **والوجهةُ رابطٌ أو ملف** (م٢١ وم٢٤): الملفُّ (صورةٌ أو PDF) يُختار هنا ويُعايَن، ولا يُرفع إلّا
+ * عند «ابدأ»: من اختار ثمّ انصرف لم يترك في الدلو ملفًّا لا يشير إليه شيء.
  */
 export function NewQrView({
   campaignId = null,
@@ -33,8 +45,18 @@ export function NewQrView({
   campaignName?: string | null;
 } = {}) {
   const router = useRouter();
+  const toast = useToast();
   const [title, setTitle] = useState("");
+  const [kind, setKind] = useState<QrKind>("link");
   const [target, setTarget] = useState("");
+  /** الملفُّ المختار، ولم يُرفع بعد. */
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  const fileRef = useRef<HTMLInputElement>(null);
+  // المعاينةُ للصورة وحدها: الـPDF يُعرَف باسمه وحجمه في زرّ المرفق
+  const imageUrl = useMemo(() => (file && !isPdf(file) ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl); }, [imageUrl]);
   const [code, setCode] = useState("");
   const [codeOpen, setCodeOpen] = useState(false);
   /**
@@ -59,7 +81,48 @@ export function NewQrView({
   const wanted = code.trim();
   const codeCheck = wanted ? checkCode(wanted) : null;
   const codeError = codeCheck && !codeCheck.ok ? codeCheck.message : null;
-  const ready = !!title.trim() && !!link?.ok && !codeError && avail !== "taken";
+  const ready =
+    !!title.trim() && (kind === "file" ? !!file : !!link?.ok) && !codeError && avail !== "taken";
+
+  /**
+   * **الملفُّ يُفحَص ساعةَ يُختار** (قانونُ المرفقات ق١٤): الرفضُ إشعارٌ يسمّي الملفّ، والمختارُ
+   * قبله يبقى. والقبولُ يُقال بصدق: أُرفق الآن ويُرفع مع «ابدأ».
+   */
+  const acceptFile = (f: File | undefined) => {
+    if (!f) return;
+    const why = checkQrFile(f);
+    if (why) { toast.error(`لم يُقبل «${f.name}» : ${why}`); return; }
+    setFile(f);
+    setError(null);
+    toast.success(`أُرفق «${f.name}»، ويُرفع حين تبدأ التصميم`);
+  };
+
+  // ملفٌّ يُسحَب لا نصٌّ ولا رابط (سابقةُ نموذج الترشّح)
+  const draggingFile = (e: React.DragEvent) => e.dataTransfer.types.includes("Files");
+  const dropZone = {
+    onDragEnter: (e: React.DragEvent) => {
+      if (!draggingFile(e) || busy) return;
+      e.preventDefault();
+      dragDepth.current += 1;
+      setDragging(true);
+    },
+    onDragOver: (e: React.DragEvent) => {
+      if (!draggingFile(e) || busy) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    },
+    onDragLeave: () => {
+      dragDepth.current = Math.max(0, dragDepth.current - 1);
+      if (dragDepth.current === 0) setDragging(false);
+    },
+    onDrop: (e: React.DragEvent) => {
+      if (!draggingFile(e)) return;
+      e.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      if (!busy) acceptFile(e.dataTransfer.files?.[0]);
+    },
+  };
 
   /**
    * **الفحصُ يسأل بعد سكون** (٢٠٢٦-٠٩-٠٥): كلُّ حرفٍ نداءٌ لو سُئل مع كلّ ضغطة، فتُنتظَر
@@ -79,13 +142,24 @@ export function NewQrView({
   }, [wanted, codeError, codeOpen]);
 
   const start = async () => {
-    if (!link?.ok) return;
+    if (kind === "link" ? !link?.ok : !file) return;
     setBusy(true);
     setError(null);
+
+    // الصورةُ تُرفع الآن لا ساعةَ اختيارها، والخادمُ يمحوها إن رُدّ الإنشاء
+    let filePath: string | undefined;
+    if (kind === "file" && file) {
+      const up = await uploadQrFile(file);
+      if (!up.ok) { setBusy(false); setError(up.message); return; }
+      filePath = up.path;
+    }
+
     // الوصفةُ الأولى هيئةُ الهويّة، ونصُّها يكتبه الخادمُ رابطًا قصيرًا بعد توليد الرمز
     const res = await createQrLink({
       title,
-      target: link.url,
+      kind,
+      target: kind === "link" && link?.ok ? link.url : undefined,
+      filePath,
       spec: defaultQrSpec(qrShortUrl("")),
       code: codeCheck?.ok ? codeCheck.code : undefined,
       campaignId,
@@ -130,19 +204,55 @@ export function NewQrView({
           />
 
           <div className="mt-4">
-            <Field
-              label="وجهة الباركود"
-              icon={<LinkSimple />}
-              innerIcon={<Globe />}
-              placeholder="https://adeeb.club"
-              dir="ltr"
-              value={target}
-              onChange={(e) => { setTarget(e.target.value); setError(null); }}
-              error={linkError ?? undefined}
-              helper="انسخ الرابط وألصقه هنا كاملًا."
-              required
-            />
+            <KindPicker value={kind} onChange={(v) => { setKind(v); setError(null); }} />
           </div>
+
+          {kind === "link" ? (
+            <div className="mt-4">
+              <Field
+                label="وجهة الباركود"
+                icon={<LinkSimple />}
+                innerIcon={<Globe />}
+                placeholder="https://adeeb.club"
+                dir="ltr"
+                value={target}
+                onChange={(e) => { setTarget(e.target.value); setError(null); }}
+                error={linkError ?? undefined}
+                helper="انسخ الرابط وألصقه هنا كاملًا."
+                required
+              />
+            </div>
+          ) : (
+            <div className="mt-4" {...dropZone}>
+              <FileButton
+                block
+                state={busy && file ? "uploading" : file ? "ready" : "attach"}
+                dragging={dragging}
+                icon={file ? (isPdf(file) ? <FilePdf /> : <ImageSquare />) : <FileIcon />}
+                label={dragging ? "أفلِت الملفَّ هنا" : file ? file.name : "اختر صورةً أو ملفّ PDF"}
+                hint={
+                  dragging ? HINT
+                    : busy && file ? "يُرفع ملفُّك الآن"
+                    : file ? fileMeta(file.type, file.size)
+                    : `اضغط أو اسحب الملف إلى هنا : ${HINT}`
+                }
+                onClick={() => fileRef.current?.click()}
+                onRemove={file && !busy ? () => setFile(null) : undefined}
+                removeLabel="إزالة الملف"
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept={PICK_RULE.accept}
+                hidden
+                onChange={(e) => { acceptFile(e.target.files?.[0]); e.target.value = ""; }}
+              />
+              {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- معاينةُ ملفٍّ محلّيّ (blob:) لا أصلٌ ثابت
+                <img className="qimg-thumb mt-3" src={imageUrl} alt="الصورة التي يراها من يمسح الباركود" />
+              ) : null}
+            </div>
+          )}
 
           {/**
             * **الرمزُ المختارُ خلف مبدّل** (المالك ٢٠٢٦-٠٩-٠٥): حالتُه نادرةٌ (ما يُقال
