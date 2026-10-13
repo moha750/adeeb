@@ -16,7 +16,7 @@ const H = (name: string): Holder => ({ userId: name, name, avatar: null, gender:
 const P = (o: Partial<Position> & { key: string; roleAr: string; scope: string }): Position => ({
   roleName: o.key, council: "executive", committeeId: null, departmentId: null, holders: [],
   singleton: true, elected: false, voteWeight: 1, councilMember: false,
-  prerequisite: null, prerequisiteAr: null, ...o,
+  prerequisite: null, prerequisiteAr: null, requiresMembership: false, ...o,
 });
 
 const FILLED_ACTIONS: MenuGroup[] = [
@@ -29,7 +29,7 @@ const ACTIONS = () => FILLED_ACTIONS;
 
 // عيّنةٌ تغطّي المحاور: مشغول/شاغر · مفرد/متعدّد · تنفيذيّ/إداريّ · عضو/تابع · منتخَب/تعيين · أوزان ١…٤
 const SAMPLE: Position[] = [
-  P({ key: "president", roleAr: "رئيس النادي", scope: "المجلس الإداري", council: "administrative", councilMember: true, voteWeight: 4, holders: [H("محمد بن إسماعيل")] }),
+  P({ key: "president", roleAr: "رئيس أدِيب", scope: "المجلس الإداري", council: "administrative", councilMember: true, voteWeight: 4, holders: [H("محمد بن إسماعيل")] }),
   P({ key: "lead", roleAr: "قائد لجنة", scope: "لجنة الإعلام", elected: true, voteWeight: 3, holders: [H("خالد العتيبي")] }),
   P({ key: "dep", roleAr: "نائب قائد لجنة", scope: "لجنة الإعلام", elected: true, voteWeight: 2, holders: [H("سارة القحطاني")] }),
   P({ key: "hr", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, voteWeight: 1 }),
@@ -40,9 +40,9 @@ const SAMPLE: Position[] = [
 // المتعدّد — منصبٌ يقبل أكثر من شاغل (`roles.holder_uniqueness='multi'`): لكلٍّ شريطُه
 // وقائمتُه، ونداءُ الزيادة يبقى مفتوحًا مهما امتلأ. والشاغرُ منه شاغرٌ كغيره.
 const MULTI: Position[] = [
-  P({ key: "adv1", roleAr: "مستشار رئيس النادي", scope: "المجلس الإداري", council: "administrative", councilMember: true, singleton: false, holders: [H("عبدالله الشمري"), H("ريم الحربي"), H("فيصل الزهراني")] }),
-  P({ key: "adv2", roleAr: "مستشار رئيس النادي", scope: "المجلس الإداري", council: "administrative", councilMember: true, singleton: false, holders: [H("عبدالله الشمري")] }),
-  P({ key: "adv3", roleAr: "مستشار رئيس النادي", scope: "المجلس الإداري", council: "administrative", councilMember: true, singleton: false }),
+  P({ key: "mul1", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, singleton: false, holders: [H("عبدالله الشمري"), H("ريم الحربي"), H("فيصل الزهراني")] }),
+  P({ key: "mul2", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, singleton: false, holders: [H("عبدالله الشمري")] }),
+  P({ key: "mul3", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, singleton: false }),
 ];
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -127,7 +127,7 @@ export default function PositionsPage() {
               <Button onClick={() => openDemo({ kind: "assign", replace: false, position: P({ key: "e1", roleAr: "قائد لجنة", scope: "لجنة الإعلام" }) })}>إسناد (شاغر)</Button>
               <Button variant="warning" onClick={() => openDemo({ kind: "assign", replace: true, position: P({ key: "e2", roleAr: "قائد لجنة", scope: "لجنة الإعلام", holders: [H("خالد العتيبي")] }) })}>استبدال</Button>
               <Button variant="danger" onClick={() => setDemo({ kind: "remove", position: P({ key: "e3", roleAr: "قائد لجنة", scope: "لجنة الإعلام", holders: [H("خالد العتيبي")] }), holder: H("خالد العتيبي") })}>إزالة</Button>
-              <Button variant="neutral" onClick={() => openDemo({ kind: "assign", replace: false, position: P({ key: "e5", roleAr: "مستشار رئيس النادي", scope: "المجلس الإداري", council: "administrative", councilMember: true, singleton: false, holders: [H("عبدالله الشمري")] }) })}>إضافة (متعدّد)</Button>
+              <Button variant="neutral" onClick={() => openDemo({ kind: "assign", replace: false, position: P({ key: "e5", roleAr: "عضو إدارة الموارد البشرية", scope: "إدارة الموارد البشرية", council: "administrative", councilMember: false, singleton: false, holders: [H("عبدالله الشمري")] }) })}>إضافة (متعدّد)</Button>
             </div>
           </section>
         </div>

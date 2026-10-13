@@ -55,7 +55,7 @@ function TopBar() {
         <IconCaretDown className="ash-gcaret" />
       </span>
       <div className="ash-tools">
-        <span className="ash-bell" aria-hidden><IconBell /><i /></span>
+        <span className="ntf-bell" aria-hidden><IconBell /></span>
       </div>
     </header>
   );
@@ -134,7 +134,7 @@ export default function NavMobileLab() {
         <div className="nvlab mt-12">
           <Frame
             nav={chiefNav}
-            tag="رئيسُ النادي (٣٤ بندًا)"
+            tag="رئيسُ أدِيب (٣٤ بندًا)"
             note="عضويّتي، مهامّي، لجنتي، الفعاليّات. وأربعةٌ وثلاثون بندًا وراء «الكلّ» مقسومةً برؤوس مجموعاتها كما هي في الشريط الجانبيّ."
           />
           <Frame

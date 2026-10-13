@@ -41,8 +41,8 @@ describe("salutation : معاملُ القالب {{1}}", () => {
   });
 
   it("رتبةٌ بلا وحدةٍ تُقال وحدها بلا مسافةٍ زائدة", () => {
-    expect(salutation({ name: "أحمد", gender: "male", role: "رئيس النادي", committee: null }))
-      .toBe("رئيس النادي أحمد");
+    expect(salutation({ name: "أحمد", gender: "male", role: "رئيس أدِيب", committee: null }))
+      .toBe("رئيس أدِيب أحمد");
   });
 });
 

@@ -133,8 +133,8 @@ export function JoinForm({
       {isVolunteer ? (
         <Alert tone="info" title="قروب متطوّعي أدِيب">
           الفرصُ تُعلَن في القروب وتظهر في{" "}
-          <Link className="font-bold underline" href="/me">حسابك</Link>.{" "}
-          <a className="font-bold underline" href={VOLUNTEERS_GROUP_URL} target="_blank" rel="noreferrer">
+          <Link className="font-bold" href="/dashboard/volunteer">بوّابتك</Link>.{" "}
+          <a className="font-bold" href={VOLUNTEERS_GROUP_URL} target="_blank" rel="noreferrer">
             ادخل القروب
           </a>
         </Alert>

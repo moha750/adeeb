@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublicNews } from "./news/data";
 import { getRadioSitemapEntries } from "./radio/data";
 import { newsHref } from "@/lib/news/link";
+import { docs } from "@/lib/regulations/data";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
 
@@ -29,6 +30,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/deebo`, changeFrequency: "monthly", priority: 0.5 },
     // رابطُ الإعلان عن التطبيق (٢٠٢٦-١٠-٠٣): يُنشر في القروبات، فيُعلَن للزاحف كذلك.
     { url: `${SITE}/app`, changeFrequency: "yearly", priority: 0.4 },
+    // «أنظمة أدِيب» (٢٠٢٦-١٠-١٣): الفهرسُ ووثائقُه السبع، تتبدّل بالتعديل وحده فتردُّدها شهريّ.
+    { url: `${SITE}/regulations`, changeFrequency: "monthly", priority: 0.7 },
+    ...(await docs().catch(() => [])).map((d) => ({ url: `${SITE}/regulations/${d.slug}`, changeFrequency: "monthly" as const, priority: 0.6 })),
   ];
 
   const [news, radio] = await Promise.all([getPublicNews(), getRadioSitemapEntries()]);

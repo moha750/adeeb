@@ -2,7 +2,7 @@ import type { Position } from "../structure/model";
 
 // أسماء المجالس (roles.council_type → عربيّ) — مصدرٌ واحد لكرت المنصب ونافذة الإسناد.
 export const COUNCIL_AR: Record<Position["council"], string> = {
-  executive: "المجلس التنفيذي",
+  executive: "المجلس التشغيلي",
   administrative: "المجلس الإداري",
 };
 

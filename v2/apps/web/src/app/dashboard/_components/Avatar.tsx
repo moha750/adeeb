@@ -5,6 +5,8 @@ type AvatarProps = {
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
   status?: "online" | "away" | "busy" | "offline";
   className?: string;
+  /** رمزٌ يقوم مقام الأحرف حين لا اسمَ يُقرأ منه (حسابٌ بلا ملف): يغلبه الصورةُ ورسمُ الجنس. */
+  icon?: React.ReactNode;
 };
 
 const initialsOf = (name?: string) =>
@@ -16,7 +18,7 @@ const FIG: Record<string, string> = {
 };
 
 /** صورة رمزية — مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية؛ صورة، فأيقونة الجنس، فالأحرف. */
-export function Avatar({ name, src, gender, size = "md", status, className }: AvatarProps) {
+export function Avatar({ name, src, gender, size = "md", status, className, icon }: AvatarProps) {
   const cls = ["av", size !== "md" ? `av-${size}` : "", className].filter(Boolean).join(" ");
   const fig = !src && gender ? FIG[gender] : undefined;
   return (
@@ -25,6 +27,8 @@ export function Avatar({ name, src, gender, size = "md", status, className }: Av
         <img className="av-img" src={src} alt={name ?? ""} />
       ) : fig ? (
         <img className="av-fig" src={fig} alt="" aria-hidden />
+      ) : icon ? (
+        <span className="av-icon" aria-hidden>{icon}</span>
       ) : (
         <span className="av-ini">{initialsOf(name)}</span>
       )}

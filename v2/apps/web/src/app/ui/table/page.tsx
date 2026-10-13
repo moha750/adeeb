@@ -48,7 +48,7 @@ const rowToneOf = (m: DemoRow): "success" | "warning" | "danger" | undefined =>
   m.status === "active" ? "success" : m.status === "pending" ? "warning" : m.status === "suspended" ? "danger" : undefined;
 
 const ROWS: DemoRow[] = [
-  { id: "1", name: "محمّد إسماعيل", role: "رئيس النادي", phone: "0551234567", email: "mohammad@adeeb.club", joined: "3 مارس 2024", joinedRaw: "2024-03-03", status: "active" },
+  { id: "1", name: "محمّد إسماعيل", role: "رئيس أدِيب", phone: "0551234567", email: "mohammad@adeeb.club", joined: "3 مارس 2024", joinedRaw: "2024-03-03", status: "active" },
   { id: "2", name: "سارة القحطاني", role: "نائبة الرئيس", phone: "0509876543", email: "sara@adeeb.club", joined: "17 سبتمبر 2024", joinedRaw: "2024-09-17", status: "active" },
   { id: "3", name: "فهد العتيبي", role: "عضو لجنة الإعلام", phone: "0567654321", email: "fahad@adeeb.club", joined: "2 يناير 2025", joinedRaw: "2025-01-02", status: "pending" },
   { id: "4", name: "ليلى المطيري", role: "منسّقة الفعاليّات", phone: "0533219876", email: "laila@adeeb.club", joined: "28 مايو 2023", joinedRaw: "2023-05-28", status: "suspended" },

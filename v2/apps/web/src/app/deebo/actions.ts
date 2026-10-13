@@ -60,7 +60,7 @@ export async function listMyConversations(): Promise<ConversationRow[]> {
  * يفتح محادثةً بعينها. يردّ `null` إن لم تكن لصاحب الجلسة أو حذفها من سجلّه.
  *
  * **والملكيّةُ تُفحَص ههنا صراحةً** لا في سياسةٍ وحدها: من له `manage_deebo` تُبيح له
- * سياسةُ اللوحة قراءةَ كلّ صفٍّ، فلولا هذا الفحصُ لفتح رئيسُ النادي بمعرّفٍ محادثةً
+ * سياسةُ اللوحة قراءةَ كلّ صفٍّ، فلولا هذا الفحصُ لفتح رئيسُ أدِيب بمعرّفٍ محادثةً
  * محذوفةً عنده (أو محادثةَ غيره) في غرفته الخاصّة.
  */
 export async function openMyConversation(id: string): Promise<ConversationTurn[] | null> {

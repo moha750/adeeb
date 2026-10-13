@@ -131,8 +131,8 @@ describe("submitCandidacy", () => {
 
   it("يردّ غيرَ المؤهّل", () => {
     const { w, id } = openSeat();
-    // مستشارُ الرئيس مجلسٌ إداريّ: لا يترشّح البتّة (البند أ)
-    expect(submitCandidacy(w, "u-advisor", id, PITCH, null).message).toBe("غير مؤهل للترشح في هذا الانتخاب");
+    // الرئيسُ التنفيذيّ مجلسٌ إداريّ: لا يترشّح البتّة (البند أ)
+    expect(submitCandidacy(w, "u-exec", id, PITCH, null).message).toBe("غير مؤهل للترشح في هذا الانتخاب");
     // ويوسفُ من لجنةٍ أخرى: خارجَ النطاق (البند ب)
     expect(submitCandidacy(w, "u-m7", id, PITCH, null).message).toBe("غير مؤهل للترشح في هذا الانتخاب");
   });
@@ -362,7 +362,7 @@ describe("castVote", () => {
   it("وزنُ الإداريّ الأعلى أربعةٌ وهو ناخبٌ في كلّ مقعد", () => {
     const w = load("self_candidate");
     const target = w.candidates[0];
-    expect(castVote(w, "u-advisor", "e-lead-11", target.id).ok).toBe(true);
+    expect(castVote(w, "u-exec", "e-lead-11", target.id).ok).toBe(true);
     expect(w.votes.at(-1)!.weight).toBe(4);
   });
 

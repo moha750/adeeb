@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 import { DASHBOARD_CAPS } from "@/lib/capabilities";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { positionLine } from "@/lib/positionLabel";
+import { actingLine, positionLine } from "@/lib/positionLabel";
 import { roleRank } from "@/lib/roleOrder";
 import { getSessionClaims } from "@/lib/auth";
 import { isLiveMembership } from "@/lib/memberRecord";
@@ -72,13 +72,17 @@ export type MeBrief = {
 async function currentPosition(sb: ReturnType<typeof createAdeebServiceClient>, userId: string) {
   const { data: rows } = await sb
     .from("user_roles")
-    .select("role_name, department_id, committee_id")
+    .select("role_name, department_id, committee_id, is_acting")
     .eq("user_id", userId)
     .eq("is_active", true);
   if (!rows?.length) return null;
 
-  type Row = { role_name: string; department_id: number | null; committee_id: number | null };
-  const list = rows as Row[];
+  type Row = { role_name: string; department_id: number | null; committee_id: number | null; is_acting: boolean };
+  // الأصيلُ هو الموضع، والتكليفُ فوقه لا يُعدّ موضعَه (20261010)؛ إلّا من جُمِّد أصيلُه فلا يجلس
+  // إلّا في تكليفه، فيُقال بلفظه.
+  const base = (rows as Row[]).filter((r) => !r.is_acting);
+  const acting = base.length === 0;
+  const list = acting ? (rows as Row[]) : base;
   const top = list.map((r) => r.role_name).sort((a, b) => roleRank(a) - roleRank(b))[0];
   const mine = list.filter((r) => r.role_name === top);
 
@@ -100,7 +104,7 @@ async function currentPosition(sb: ReturnType<typeof createAdeebServiceClient>, 
   ].filter((v): v is string => !!v);
   const unit = units.length === 1 ? units[0] : null;
 
-  return positionLine((roleRes.data as { role_name_ar: string | null } | null)?.role_name_ar ?? top, unit);
+  return actingLine(positionLine((roleRes.data as { role_name_ar: string | null } | null)?.role_name_ar ?? top, unit), acting);
 }
 
 function service() {

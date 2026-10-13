@@ -22,9 +22,8 @@ export type SimRole = {
 };
 
 export const ROLES: Record<string, SimRole> = {
-  club_president:              { roleName: "club_president",              ar: "رئيس نادي أدِيب",     weight: 4.0, council: "administrative", votesAll: true },
-  executive_council_president: { roleName: "executive_council_president", ar: "رئيس المجلس التنفيذي", weight: 4.0, council: "administrative", votesAll: true },
-  president_advisor:           { roleName: "president_advisor",           ar: "مستشار رئيس النادي",  weight: 4.0, council: "administrative", votesAll: true },
+  club_president:              { roleName: "club_president",              ar: "رئيس أدِيب",     weight: 4.0, council: "administrative", votesAll: true },
+  executive_council_president: { roleName: "executive_council_president", ar: "الرئيس التنفيذي", weight: 4.0, council: "administrative", votesAll: true },
   hr_committee_leader:         { roleName: "hr_committee_leader",         ar: "قائد",                weight: 3.5, council: "administrative", votesAll: true },
   hr_admin_member:             { roleName: "hr_admin_member",             ar: "عضو",                 weight: 3.0, council: "administrative" },
   department_head:             { roleName: "department_head",             ar: "منسّق",               weight: 2.5, council: "executive", elected: true },
@@ -88,13 +87,12 @@ export type SimMember = {
 };
 
 /**
- * الأهلُ — تسعُ وجهاتِ نظرٍ تُبدَّل من غرفة التحكّم، ومعها ناخبون يملأون الصندوق.
+ * الأهلُ — ثماني وجهاتِ نظرٍ تُبدَّل من غرفة التحكّم، ومعها ناخبون يملأون الصندوق.
  * والاسمُ يقول المنصبَ صراحةً كي يُعرَف صاحبُ الشاشة بلمحة.
  */
 export const MEMBERS: SimMember[] = [
   { id: "u-pres",    name: "سعد الرئيس",       gender: "male",   roleName: "club_president",              committeeId: null, departmentId: null },
   { id: "u-exec",    name: "ريم التنفيذيّة",    gender: "female", roleName: "executive_council_president", committeeId: null, departmentId: null },
-  { id: "u-advisor", name: "بدر المستشار",      gender: "male",   roleName: "president_advisor",           committeeId: null, departmentId: null },
   { id: "u-hrlead",  name: "هند قائدة الموارد", gender: "female", roleName: "hr_committee_leader",         committeeId: 11,   departmentId: null },
   { id: "u-hrmem",   name: "فهد عضو الموارد",   gender: "male",   roleName: "hr_admin_member",             committeeId: 11,   departmentId: null },
   { id: "u-coord",   name: "منال المنسّقة",      gender: "female", roleName: "department_head",             committeeId: null, departmentId: 2 },
@@ -120,10 +118,9 @@ export const nameOf = (id: string | null | undefined) => memberOf(id)?.name ?? "
 export type Viewpoint = { id: string; label: string; why: string };
 
 export const VIEWPOINTS: Viewpoint[] = [
-  { id: "u-pres",    label: "رئيس النادي",           why: "يدير الانتخابات، ووزنُه ٤، ويصوّت في كلّ مقعد" },
-  { id: "u-exec",    label: "رئيس المجلس التنفيذي",  why: "يدير الانتخابات، ووزنُه ٤، ويصوّت في كلّ مقعد" },
+  { id: "u-pres",    label: "رئيس أدِيب",           why: "يدير الانتخابات، ووزنُه ٤، ويصوّت في كلّ مقعد" },
+  { id: "u-exec",    label: "الرئيس التنفيذي",  why: "يدير الانتخابات، ووزنُه ٤، ويصوّت في كلّ مقعد" },
   { id: "u-hrlead",  label: "قائدة الموارد البشرية", why: "تدير الانتخابات، ووزنُها ٣٫٥، وتصوّت في كلّ مقعد" },
-  { id: "u-advisor", label: "مستشار الرئيس",         why: "ناخبٌ بوزن ٤ في كلّ مقعد، ولا يدير ولا يترشّح" },
   { id: "u-hrmem",   label: "عضو الموارد البشرية",   why: "مطّلِعٌ للقراءة على غرفة الإدارة، بلا تصريفٍ ولا ترشّح" },
   { id: "u-coord",   label: "منسّقة قسم",            why: "وزنُها ٢٫٥، وتترشّح في قسمها، وتُحجَب عن مقاعد لجانه" },
   { id: "u-leader",  label: "قائد لجنة",             why: "وزنُه ٢، ويُحجَب عن قيادة لجنته ونيابتها" },

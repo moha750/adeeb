@@ -13,7 +13,8 @@ import { ARABIC_NAME_HINT, arabicNameError } from "@/lib/personName";
 export const myDataSchema = z.object({
   // بالعربيّة وحدها، ومطبَّعًا: ما يُحفظ هو ما يُطبع في ورقةٍ ويُنادى به في كشف.
   fullName: z.string().trim().min(1, "الاسم مطلوب").refine((v) => !arabicNameError(v), ARABIC_NAME_HINT),
-  phone: z.string().trim().regex(PHONE_RE, PHONE_HINT),
+  // فارغًا لمن لم يُضِفه بعد (صديقٌ دخل بالرمز): يحرّر اسمَه ومدينتَه قبل جوّاله. ولا يُمحى رقمٌ قائم (الخادم).
+  phone: z.string().trim().regex(PHONE_RE, PHONE_HINT).or(z.literal("")),
   city: z.string().trim().max(60, "المدينة أطول من اللازم").optional().or(z.literal("")),
 });
 

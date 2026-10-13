@@ -8,6 +8,9 @@ import { PwaIntro } from "@/app/_pwa/PwaIntro";
 import { awayIfNoSession, getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
 import { getMyScope } from "@/lib/myScope";
+import { usesSidebar } from "@/lib/capabilities";
+import { standingName } from "@/lib/standing";
+import { PortalShell } from "./_portal/PortalShell";
 
 export const metadata: Metadata = {
   title: "بوّابة أدِيب",
@@ -35,13 +38,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
    * العطب. فمن لا مفتاحَ له يُساق إلى `/me` كما كان، ومن له مفتاحٌ يدخل غرفتَه ولو لم ينضمّ.
    * ولا يُمنَح بذلك مفتاحٌ جديد: `denyUnless` في كلّ غرفةٍ هو الحَكَم كما كان.
    */
-  const sessionHasKeys = session?.isAdmin ?? false;
-  if (session && !sessionHasKeys && !(await isAdeebMember(session.id))) redirect("/me");
-  if (session && !sessionHasKeys && !(await hasMemberRecord(session.id))) redirect("/complete");
+  //
+  // **ثمّ صارت البوّابةُ بابَ كلّ صاحب حساب** (٢٠٢٦-١٠-١٣): `use_portal` مفتاحٌ مشتقٌّ من المكانة
+  // يحمله الجميع، فسقط التحويلُ إلى `/me` — صار `/me` نفسُه تحويلًا إلى هنا. ومن حُظر عليه
+  // المفتاحُ صراحةً بقي يلقى شاشةَ الردّ أدناه كما كان.
+  const sessionIsMember = session ? await isAdeebMember(session.id) : false;
+  /**
+   * **وبوّابةُ السجلّ على كلّ عضوٍ، مفتاحٌ أو لا** (٢٠٢٦-١٠-١١، نظام العضوية م٩): كان شرطُها
+   * «لا مفتاحَ له»، و`view_own_membership` مفتاحٌ يحمله كلُّ صاحب مقعد — فلم تقع على عضوٍ له
+   * مقعدٌ قطّ، ودخل أعضاءٌ بلا سجلٍّ لوحتَهم شهورًا. والسجلُّ واجبٌ لأنّ العمادة تطلب رقمَ الهويّة
+   * وتاريخَ الميلاد (قرار المالك). فالمفتاحُ يُعفي من `/me` وحدَها، لا من السجلّ: حسابُ النادي
+   * يمرّ لأنّه ليس عضوًا، لا لأنّه يحمل مفاتيح.
+   */
+  if (session && sessionIsMember && !(await hasMemberRecord(session.id))) redirect("/complete");
 
   // **ومن طلب أن يذهب لا يُترَك يعمل** (٢٠٢٦-٠٨-١٩): الحسابُ في مهلته مجمَّدٌ لا مقفَل —
   // فيُساق إلى `/me` حيث خبرُ الطلب وبابُ العدول، لا إلى غرفِ العمل. وشرطُه صاحبُ الجلسة
-  // لا الهويّةَ المُعارة: من عاين طالبًا للحذف لم يُحبَس بطلبه.
+  // لا الهويّةَ المُعارة: من عاين طالبًا للحذف لم يُحبَس بطلبه. (وبقي `/me` لهذا وحدَه بعد
+  // البوّابة: خارجَ اللوحة فلا يدور التحويلُ على نفسه، ولغيره تحويلٌ إلى `/dashboard`.)
   if (session?.deletionRequestedAt) redirect("/me");
 
   // شريط المعاينة — يسبق حتّى بابَ الردّ: لو عاينتَ عضوًا لا لوحةَ له، رأيتَ ردَّه **ومعه مخرجُك**.
@@ -50,6 +64,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // حارس الهوية: كاشف العناصر الخام يعمل في اللوحة وقت التطوير فقط (مُطفأ في الإنتاج)
   const guardrail = process.env.NODE_ENV === "development";
+
+
+  // **الإطارُ يتبع المفاتيح** (قرار المالك ٢٠٢٦-١٠-١١): من حمل مفتاحَ غرفة عمل رأى الشريطَ الجانبيّ،
+  // ومن لم يحمل إلّا مفاتيحَ المكانة (صديقُ أدِيب والمتطوّع) رأى الإطارَ الخفيف — تبويباتٍ وشريطًا
+  // سفليًّا. والغرفةُ تُكتب مرّةً واحدة: الصفحةُ هي هي في الإطارين، وهذا السطرُ وحده يختار.
+  if (!usesSidebar(admin.caps)) {
+    const standing = standingName(admin.caps.includes("view_own_volunteering") ? "volunteer" : "account", admin.gender);
+    return (
+      <ToastProvider>
+        <PortalShell user={{ fullName: admin.fullName, avatar: admin.avatarUrl, gender: admin.gender }} caps={admin.caps} standing={standing}>
+          {bar}
+          {guardrail ? <div data-guardrail style={{ display: "contents" }}>{children}</div> : children}
+        </PortalShell>
+        <PwaIntro />
+      </ToastProvider>
+    );
+  }
 
   // موقعُه من الهيكل — تبويبات الهويّة الثلاثة لا تُعرَض بالقفل وحده (`lib/myScope.ts`).
   // ويتبع الهويّةَ المعروضة لا صاحبَ الجلسة: من عاين منصبًا رأى تبويباته كما يراها صاحبُه.

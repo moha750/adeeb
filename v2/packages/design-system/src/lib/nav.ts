@@ -40,6 +40,6 @@ export const footerGroups: { title: string; items: NavItem[] }[] = [
   { title: "تصفّح", items: siteNav.slice(0, PAGES) },
   {
     title: "النادي",
-    items: [...siteNav.slice(PAGES), { label: "الأسئلة الشائعة", href: "/#faq" }],
+    items: [...siteNav.slice(PAGES), { label: "أنظمة أدِيب", href: "/regulations" }, { label: "الأسئلة الشائعة", href: "/#faq" }],
   },
 ];

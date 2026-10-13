@@ -75,7 +75,8 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
   // أربعة استعلامات صغيرة: صفوفُ صاحب الجلسة وحده، وثلاثة كتالوجات بأحد عشر صفًّا.
   // (هذا يُقرأ في **كل** صفحة من اللوحة لأنّ القائمة تحتاجه — فلا يجلب الهيكلة كلّها.)
   const [seatsRes, comRes, deptRes, roleRes, sigRes, unitsRes] = await Promise.all([
-    sb.from("user_roles").select("role_name, committee_id, department_id").eq("user_id", userId).eq("is_active", true),
+    // الأصيلُ قبل التكليف (20261010): من جمعهما من نوعٍ واحد فغرفتُه غرفةُ أصيله، ومن جُمِّد أصيلُه فغرفتُه تكليفُه
+    sb.from("user_roles").select("role_name, committee_id, department_id").eq("user_id", userId).eq("is_active", true).order("is_acting", { ascending: true }),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name").eq("is_active", true),
     sb.from("departments").select("id, name_ar").eq("is_active", true),
     sb.from("roles").select("role_name, membership_kind"),

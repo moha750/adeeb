@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
-import { positionLine } from "@/lib/positionLabel";
+import { actingLine, positionLine } from "@/lib/positionLabel";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 /**
@@ -24,6 +24,8 @@ export type Member = {
   linkedin_account: string | null;
   /** عنوانُ صفحته العلنيّة `/m/<slug>` — فارغٌ لمن لم يبلغ حدَّ النشر. */
   public_slug: string | null;
+  /** مقعدُه في المجلس تكليفٌ لا أصيل (20261010)، فيُقال بلفظه. */
+  is_acting?: boolean;
 };
 
 const FIG: Record<string, string> = {
@@ -216,7 +218,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
             const st = slideStyle(rel, SPACING, VISIBLE);
             const tw = socialUrl(m.twitter_account, "tw");
             const li = socialUrl(m.linkedin_account, "in");
-            const roleLine = positionLine(m.role_ar, m.unit_name);
+            const roleLine = actingLine(positionLine(m.role_ar, m.unit_name), m.is_acting);
             return (
               <div
                 key={m.id}

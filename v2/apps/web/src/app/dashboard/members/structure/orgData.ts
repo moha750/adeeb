@@ -9,7 +9,10 @@ export type OrgData = {
   departments: RawDept[];
   committees: RawCommittee[];
   roles: RawRole[];
+  /** من يجلس الآن: الأصيل الحيّ والتكليف الحيّ معًا (قد يكون للعضو صفّان، 20261010). */
   userRoles: RawUserRole[];
+  /** الأصيلُ المجمَّد بتكليف: غائبٌ عن مقعده، والمقعدُ محجوزٌ له. لا يجلس في الوحدات؛ يقرؤه كرتُ المنصب وحده. */
+  frozenRoles: RawUserRole[];
   profiles: RawProfile[];
   supervision: RawSupervision[];
   members: { id: string; name: string; avatar: string | null; gender: "male" | "female" | null; held: string | null; heldRole: string | null }[]; // لمنتقي الإسناد (بأفتار وموضعٍ حاليّ)
@@ -18,7 +21,7 @@ export type OrgData = {
 
 /** جلب هيكلة أدِيب كاملةً (خادميّ، عبر مفتاح الخدمة) — يُشارَك بين عارض الهيكلة وتبويب التعيينات. */
 export async function getOrgData(): Promise<OrgData> {
-  const empty = { councils: [], departments: [], committees: [], roles: [], userRoles: [], profiles: [], supervision: [], members: [] };
+  const empty = { councils: [], departments: [], committees: [], roles: [], userRoles: [], frozenRoles: [], profiles: [], supervision: [], members: [] };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
   if (!url || !key) {
@@ -34,10 +37,11 @@ export async function getOrgData(): Promise<OrgData> {
 
   const [c, d, com, r, ur, p, sup, pool] = await Promise.all([
     sb.from("councils").select("id, name_ar, head_role_name, description, group_link"),
-    sb.from("departments").select("id, name_ar, display_order, description, group_link").eq("is_active", true),
-    sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, description, group_link").eq("is_active", true),
-    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name"),
-    sb.from("user_roles").select("user_id, role_name, committee_id, department_id").eq("is_active", true),
+    sb.from("departments").select("id, name_ar, display_order, description, group_link, icon").eq("is_active", true),
+    sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, supervises, description, group_link, icon").eq("is_active", true),
+    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name, requires_membership"),
+    // الحيّ (أصيلًا كان أو تكليفًا) والمجمَّد معًا، ثمّ يُفرَزان أدناه
+    sb.from("user_roles").select("id, user_id, role_name, committee_id, department_id, is_active, is_acting, acting_until, acting_parent_id, frozen_by, assigned_at").or("is_active.eq.true,frozen_by.not.is.null"),
     sb.from("members").select("id, full_name, avatar_url, gender, account_status"),
     // الإشراف جدولُه — لا صفوفُ المناصب. عضو الإدارة مُسنَدٌ إلى إدارته، وإشرافُه على
     // لجان التنفيذيّ علاقةٌ أخرى (20260731).
@@ -49,17 +53,19 @@ export async function getOrgData(): Promise<OrgData> {
   if (error) return { ...empty, error: error.message };
 
   // بِركةُ الإسناد = ما ردّته `assignable_members` للمُنفّذ: النشطون ممّن لا تحجبهم عنه
-  // `position_authority.blocked_roles`. فلا يظهر لقائد الإدارة رئيسُ النادي ولا رئيسُ
-  // المجلس التنفيذيّ — **والظهور نفسه خطأ**، لا يكفي أن تردّه القاعدة بعد الاختيار.
+  // `position_authority.blocked_roles`. فلا يظهر لقائد الإدارة رئيسُ أدِيب ولا رئيسُ
+  // المجلس التشغيليّ — **والظهور نفسه خطأ**، لا يكفي أن تردّه القاعدة بعد الاختيار.
   //
   // وهي تحمل بابَي الردّ معًا: الحالة (تريغر `enforce_assignment_status` — المعلَّق يُضمّ
   // إلى لجنةٍ عضوًا ولا يُسنَد منصبًا، والموقوف لا شيء)، والسلطة (جدول `position_authority`).
   //
-  // ولا يُطرَح شاغلو المناصب لمجرّد شغلهم: عضويّة اللجنة نفسها منصب، ومنها يُرقَّى القادة —
-  // فالسحبُ تابعٌ للإجلاس، ومن بلغ المقعدَ الجديد أخذ شاغلَه من حيث كان.
+  // ولا يُطرَح شاغلو المناصب لمجرّد شغلهم: عضويّة اللجنة نفسها منصب، ومنها يُرقَّى القادة.
+  // لكنّ **من يملك التعيين في المقعد يملك إخلاءه** (20261010): لا يظهر للمُنفّذ صاحبُ مقعدٍ
+  // لا يملكه، إلّا عضو اللجنة؛ فقائد الضمان لا يرى المنسّقين ولا أعضاء الموارد.
   //
-  // أمّا **شرطُ المقعد** (العضو الإداريّ ← عضو لجنة) فيضيّق البِركة لمقعدٍ بعينه، وتطبّقه
-  // كلُّ شاشةٍ على مقعدها من `Position.prerequisite` — بيانٌ تقرؤه، لا حُكمٌ تستنسخه.
+  // أمّا **شرطُ المقعد** (منصبٌ بعينه، أو العضويّة لعضو الإدارة) فيضيّق البِركة لمقعدٍ بعينه،
+  // وتطبّقه كلُّ شاشةٍ على مقعدها من `Position.prerequisite`/`requiresMembership` — بيانٌ
+  // تقرؤه، لا حُكمٌ تستنسخه.
   //
   // ومن أراد **ضمّ** معلَّقٍ إلى لجنته فبِركتُه أوسع من هذه بحكم القاعدة — تُبنى في شاشتها
   // من `profiles` مباشرةً بحالتها، لا تُوسَّع هذه فتصير بِركةً واحدةً لقاعدتين.
@@ -75,18 +81,21 @@ export async function getOrgData(): Promise<OrgData> {
   // ثمّ تُنسى غرفة. ومن أراد غيرَ الساري فبابُه صريح: «الموقوفون» و«قيد الإكمال» يُبنيان
   // من `getMembers` بحالتهما، والإنذاراتُ والشهاداتُ تقرآن سجلَّ من غادر عن قصد.
   const serving = new Set((p.data ?? []).filter((x) => x.account_status === "active").map((x) => x.id));
-  const userRoles = (ur.data ?? []).filter((x) => serving.has(x.user_id));
+  const seated = (ur.data ?? []).filter((x) => serving.has(x.user_id));
+  const userRoles = seated.filter((x) => x.is_active);
+  const frozenRoles = seated.filter((x) => !x.is_active && x.frozen_by != null);
   //
   // ويحمل كلٌّ منهم **موضعه الحاليّ**: اسمًا للعرض (`held`) واسمَ دورٍ للشرط (`heldRole`).
-  // يُبنى ممّا جُلب أصلًا (لا استعلامَ زائد)، وصفٌّ واحدٌ لكلّ عضوٍ بحكم ثابت «منصبٌ واحد».
+  // يُبنى ممّا جُلب أصلًا (لا استعلامَ زائد)، من **الأصيل** وحده: للعضو أصيلٌ واحد (حيًّا أو مجمَّدًا)،
+  // والتكليفُ فوقه لا يُعدّ موضعَه (20261010).
   const comAr = new Map((com.data ?? []).map((x) => [x.id, x.committee_name_ar]));
   const deptAr = new Map((d.data ?? []).map((x) => [x.id, x.name_ar]));
   // **شخصٌ لا مقعد**: رتبتُه كما هي، ووحدتُه من خانة إسناده (20260811)
   const roleAr = new Map((r.data ?? []).map((x) => [x.role_name, x.role_name_ar || x.role_name]));
   const held = new Map<string, string>();
   const heldRole = new Map<string, string>();
-  for (const row of userRoles) {
-    if (held.has(row.user_id)) continue;
+  for (const row of [...userRoles, ...frozenRoles]) {
+    if (row.is_acting || held.has(row.user_id)) continue;
     const unitName = row.committee_id != null ? comAr.get(row.committee_id) ?? null
       : row.department_id != null ? deptAr.get(row.department_id) ?? null
         : null;
@@ -105,6 +114,7 @@ export async function getOrgData(): Promise<OrgData> {
     committees: com.data ?? [],
     roles: r.data ?? [],
     userRoles,
+    frozenRoles,
     profiles: p.data ?? [],
     supervision: sup.data ?? [],
     members,

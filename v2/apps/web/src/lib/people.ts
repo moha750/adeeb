@@ -31,7 +31,8 @@ export async function getCreditPeople(): Promise<CreditPerson[]> {
     sb.from("profiles").select("id, full_name, avatar_url, gender, joined_date, account_status")
       .eq("account_status", "active").not("joined_date", "is", null),
     sb.from("volunteers").select("user_id").eq("status", "active"),
-    sb.from("user_roles").select("user_id, committee_id").eq("is_active", true).not("committee_id", "is", null),
+    // الأصيلُ قبل التكليف (20261010): الوحدةُ المميِّزة وحدةُ موضعه
+    sb.from("user_roles").select("user_id, committee_id").eq("is_active", true).not("committee_id", "is", null).order("is_acting", { ascending: true }),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
 

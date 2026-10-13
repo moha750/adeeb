@@ -235,21 +235,26 @@ export async function loadAppointOptions(electionId: string): Promise<{ members:
 }
 
 /**
- * بابُ التكليف على مقعدٍ تعثّر انتخابُه — إسنادٌ عاديٌّ بلا مدّة عبر البوّابة المحروسة
- * (`assign_position` داخل `appoint_to_seat`)، ثمّ يُوقَف الانتخاب بسببٍ مسجّل.
+ * بابُ التكليف على مقعدٍ تعثّر انتخابُه — **تكليفٌ حقيقيّ** منذ 20261010 (الخيار أ من قرارات محمد):
+ * بآخر يومٍ وخيار التجميد، عبر `appoint_to_seat` الخماسيّ (`assign_acting` داخلها)، ثمّ يُوقَف الانتخاب
+ * بسببٍ مسجّل. وينتهي التكليف بتاريخه، أو بإعلان فائز الانتخاب التالي على المقعد أيّهما أسبق.
  */
-export async function appointToSeat(electionId: string, userId: string, reason: string): Promise<ElectionResult> {
+export async function appointToSeat(electionId: string, userId: string, reason: string, until?: string | null, freeze?: boolean): Promise<ElectionResult> {
   if (!userId) return { ok: false, message: "اختر العضو المكلَّف." };
   if (!reason?.trim() || reason.trim().length < 10) return { ok: false, message: "اكتب سبب التكليف (١٠ أحرف على الأقلّ)." };
+  if (!until) return { ok: false, message: "حدِّد آخر يومٍ في التكليف." };
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
 
-  const { error } = await sb.rpc("appoint_to_seat", { p_election: electionId, p_user: userId, p_reason: reason.trim() });
+  const { error } = await sb.rpc("appoint_to_seat", {
+    p_election: electionId, p_user: userId, p_reason: reason.trim(), p_until: until, p_freeze: !!freeze,
+  });
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر التكليف على هذا المقعد.") };
 
   revalidatePath("/dashboard/elections", "layout");
   revalidatePath("/dashboard/unit", "layout");
-  return { ok: true, message: "كُلّف العضو وأُسنِد المنصب، وأُوقف الانتخاب." };
+  revalidatePath("/dashboard/members/assignments");
+  return { ok: true, message: "كُلّف العضو، وأُوقف الانتخاب." };
 }
 
 /** إعلان الفائز — القاعدة تفرض أن يكون الأعلى وزنًا، وتُسنِد المنصب عبر assign_position. */

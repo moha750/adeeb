@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving,
+  PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving, House, Ticket, Scroll,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -45,6 +45,8 @@ export const IconPanel = (p: P) => <SidebarSimple aria-hidden {...p} />;
 export const IconChart = (p: P) => <ChartLineUp aria-hidden {...p} />;
 // الانتخابات — الميزان: نبض التصويت الموزون (صوتٌ أثقل من صوت)، لا مجرّد صندوق اقتراع
 export const IconVote = (p: P) => <Scales aria-hidden {...p} />;
+// أنظمة أدِيب — اللفيفةُ رمزُ الدستور في صفحته العلنيّة، فالغرفةُ تحمل رمزَ ما تحرّره.
+export const IconRegs = (p: P) => <Scroll aria-hidden {...p} />;
 export const IconBook = (p: P) => <BookOpen aria-hidden {...p} />;
 export const IconLogout = (p: P) => <SignOut aria-hidden {...p} />;
 // محتوى الصفحة الرئيسية — معرض الأعمال، ملخص المسيرة، الرعاة، الأسئلة الشائعة
@@ -104,6 +106,11 @@ export const IconAnnounce = (p: P) => <Megaphone aria-hidden {...p} />;
    للّجان و`Handshake` للتطوّع، ولو حملت إحداهما البندَ لقالت معنًى في موضعين. */
 export const IconFriends = (p: P) => <HandWaving aria-hidden {...p} />;
 
+/* الرئيسية — البيت: صدرُ البوّابة لمن لا عضويّةَ له (صديقُ أدِيب والمتطوّع وحسابُ النادي). */
+export const IconHome = (p: P) => <House aria-hidden {...p} />;
+/* حجوزاتي — التذكرة: مقعدُك في فعاليّة. و`CalendarBlank` مأخوذةٌ لغرفة «الفعاليّات» الإداريّة. */
+export const IconTicket = (p: P) => <Ticket aria-hidden {...p} />;
+
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
   cal: IconCal, globe: IconGlobe, gear: IconGear, chart: IconChart,
@@ -116,5 +123,6 @@ export const ICONS = {
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
   announce: IconAnnounce, friends: IconFriends,
+  home: IconHome, ticket: IconTicket, regs: IconRegs,
 } as const;
 export type IconKey = keyof typeof ICONS;

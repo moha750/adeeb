@@ -23,6 +23,7 @@ import { fromClubInput, toClubInput } from "@/lib/dates";
 import { firstAndLastOf } from "@/lib/personName";
 import { tallyLine, type ResultCard } from "@/lib/elections/resultCard";
 import { ShareResultModal } from "./ShareResultModal";
+import { ActingModal } from "../members/assignments/ActingModal";
 
 // مدّة التصويت مقاديرُ جاهزة (Select منسَّق) للحالة الغالبة — voting_end = الآن + المدّة.
 // و«موعد مخصّص» يكشف حقلَ تاريخٍ وساعةٍ بساعة النادي، فتبقى الدقّة متاحةً من أوّل خطوة.
@@ -76,8 +77,6 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   // بابُ التكليف على مقعدٍ تعثّر: الأعضاء يُحمَّلون عند فتح النافذة (كبطاقة الاقتراع)
   const [appointOpen, setAppointOpen] = useState(false);
   const [appointees, setAppointees] = useState<AppointOption[] | null>(null);
-  const [appointee, setAppointee] = useState("");
-  const [appointReason, setAppointReason] = useState("");
   const [view, changeView] = usePersistentView("election-candidates-view");
 
   const run = (key: string, fn: () => Promise<ElectionResult>, onOk?: () => void) => {
@@ -181,7 +180,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
   // (فالإغلاق لا يصحّ على صندوقٍ فارغ)، والقرارُ للمشرف لا للآلة.
   const stalled = election.stalled && s === "candidacy_open";
   const openAppoint = () => {
-    setAppointee(""); setAppointReason(""); setAppointees(null); setAppointOpen(true);
+    setAppointees(null); setAppointOpen(true);
     api.loadAppointOptions(election.id).then((r) => setAppointees(r.members));
   };
 
@@ -671,50 +670,18 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         ) : null}
       </Modal>
 
-      {/* بابُ التكليف — إسنادٌ عاديّ بلا مدّة، ثمّ يُوقَف الانتخاب بسببٍ مسجّل */}
-      <Modal
-        open={appointOpen}
-        onClose={() => { if (!pending) setAppointOpen(false); }}
-        title="تكليف شاغل للمقعد"
-        description="يُسنَد المنصب كأيّ منصبٍ آخر، ويُوقَف هذا الانتخاب بسببٍ يُحفظ في سجلّه."
-        size="sm"
+      {/* بابُ التكليف — تكليفٌ بمدّة وخيار التجميد (20261010)، بنافذة التكليف نفسها، ثمّ يُوقَف الانتخاب */}
+      <ActingModal
+        key={appointOpen ? "appoint-open" : "appoint-closed"}
+        seat={appointOpen ? { roleAr: election.roleLabel, scope: election.scopeLabel ?? election.positionLabel, owner: null } : null}
+        members={appointees?.map((m) => ({ id: m.id, name: m.label, avatar: m.avatar ?? null, gender: m.gender ?? null, held: m.held ?? null })) ?? null}
         busy={pending}
-        footer={
-          <>
-            <Button variant="ghost" size="md" onClick={() => setAppointOpen(false)} disabled={pending}>تراجع</Button>
-            <Button variant="primary" size="md" loading={acting === "appoint"} disabled={pending || !appointee || appointReason.trim().length < 10}
-              onClick={() => run("appoint", () => api.appointToSeat(election.id, appointee, appointReason), () => setAppointOpen(false))}>
-              تكليف وإسناد المنصب
-            </Button>
-          </>
-        }
-      >
-        {appointees === null ? (
-          <p className="txt">جارٍ تحميل أعضاء النطاق…</p>
-        ) : appointees.length === 0 ? (
-          <Alert tone="warning" title="لا أعضاء في نطاق هذا المقعد">لا يصلح للتكليف إلّا عضوٌ سارٍ في اللجنة أو القسم المستهدَف.</Alert>
-        ) : (
-          <Select
-            label="العضو المكلَّف"
-            icon={<UserPlus />}
-            options={appointees.map((m) => ({ value: m.id, label: m.label }))}
-            value={appointee}
-            onValueChange={setAppointee}
-            searchable
-            required
-          />
-        )}
-        <Textarea
-          label="سبب التكليف"
-          icon={<PencilSimple />}
-          innerIcon={<Note />}
-          placeholder="لماذا يُكلَّف هذا العضو بدل الانتخاب؟…"
-          value={appointReason}
-          onChange={(e) => setAppointReason(e.target.value)}
-          rows={3}
-          required
-        />
-      </Modal>
+        onClose={() => { if (!pending) setAppointOpen(false); }}
+        onSubmit={(v) => run("appoint", () => api.appointToSeat(election.id, v.userId, v.reason, v.until, v.freeze), () => setAppointOpen(false))}
+        title="تكليف شاغل للمقعد"
+        description={`«${election.positionLabel}»`}
+        minReason={10}
+      />
 
       {/* إلغاء الانتخاب — بسبب */}
       <Modal

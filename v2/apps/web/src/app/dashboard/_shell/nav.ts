@@ -34,12 +34,15 @@ export const NAV: NavGroup[] = [
   {
     items: [
       { label: "عضويتي", icon: "me", href: "/dashboard" },
-      // «الملف الشخصي» — سجلُّك لا موقعُك: صورتُك وجوّالُك ودراستُك وحساباتُك، تُحرَّر بيدك.
-      { label: "الملف الشخصي", icon: "profile", href: "/dashboard/profile" },
-      // «الإعدادات» — حسابُك لا سجلُّك: بريدُ الدخول ومفتاحُه وجلساتُك. وموضعُها هنا **مع
-      // أختيها** لا في ذيل القائمة (حيث «النظام» و«أدوات»): تلك غرفُ النادي، وهذه غرفةُ نفسك —
-      // والصدرُ كلُّه «أنت»: عضويّتك ثمّ سجلُّك ثمّ بابُك، ثمّ مواقعُك من الهيكل.
-      { label: "الإعدادات", icon: "settings", href: "/dashboard/settings" },
+      // **غرفُ صاحب الحساب** (بوّابة أدِيب ٢٠٢٦-١٠-١٣): ما كان في `/me` صار غرفًا في البوّابة،
+      // يراها العضوُ هنا في شريطه كما يراها الصديقُ والمتطوّعُ في تبويباتهما. و«تطوّعي» لا يظهر
+      // إلّا لمتطوّعٍ يحمل مفتاحَ غرفة عمل (المتطوّعُ عادةً يرى الإطارَ الخفيف).
+      { label: "حجوزاتي", icon: "ticket", href: "/dashboard/bookings" },
+      { label: "شهاداتي", icon: "certificate", href: "/dashboard/certificates" },
+      { label: "تطوّعي", icon: "handshake", href: "/dashboard/volunteer" },
+      // «حسابي» — ما كان «الملف الشخصي» و«الإعدادات» معًا (قرار المالك ٢٠٢٦-١٠-١٣): هويّتُك
+      // وبياناتُك وحساباتُك، ودخولُك وأجهزتُك وإشعاراتُك، وبابُ خروجك. والصدرُ كلُّه «أنت».
+      { label: "حسابي", icon: "profile", href: "/dashboard/account" },
       // «مهامّي» — ما كُلِّفتَ به. وموضعُها في صدر «أنت» لا في «العضوية»: المهمّةُ شأنُ صاحبها
       // أوّلًا، ويراها القائدُ فيها لجنتَه كما يرى «لجنتي» كشفَها. بندٌ واحدٌ لوجهين.
       { label: "مهامّي", icon: "tasks", href: "/dashboard/tasks" },
@@ -128,6 +131,7 @@ export const NAV: NavGroup[] = [
       { label: "اللوحة الإعلانية", icon: "announce", href: "/dashboard/website/announcements" },
       { label: "الأخبار", icon: "news", href: "/dashboard/news" },
       { label: "المكتبة", icon: "book", href: "/dashboard/library" },
+      { label: "أنظمة أدِيب", icon: "regs", href: "/dashboard/regulations" },
       // «إذاعة أدِيب» باسمها كاملًا بأمر المالك (٢٠٢٦-٠٨-١٨) — كما يقول عنوانُ غرفتها.
       { label: "إذاعة أدِيب", icon: "mic", href: "/dashboard/radio" },
     ],
@@ -166,7 +170,10 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
   const has = (it: NavItem) => seated(it) && (!it.election || scope.elections[it.election]);
   // والاسمُ يتبع الحقيقة: «إدارتي» لمن له فيها مقعد، و«الإدارات» لمن يبلغها ولا يجلس فيها.
   const named = (it: NavItem): NavItem =>
-    it.seat === "unit" && !scope.unit ? { ...it, label: "الإدارات" } : it;
+    it.seat === "unit" && !scope.unit ? { ...it, label: "الإدارات" } : it.href === "/dashboard" && !caps.includes("view_own_membership")
+      // الصدرُ «عضويتي» لمن له عضويّة، و«الرئيسية» لحامل مفاتيحَ بلا عضويّة (حسابُ النادي)
+      ? { ...it, label: "الرئيسية", icon: "home" }
+      : it;
   return NAV.map((g) => ({
     ...g,
     items: g.items.flatMap((it) => {

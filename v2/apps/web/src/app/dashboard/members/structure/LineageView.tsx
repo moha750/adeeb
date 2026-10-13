@@ -3,6 +3,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Avatar } from "../../_components/Avatar";
 import type { CommitteeNode, DepartmentNode, StructureModel } from "./model";
+import { actingLine } from "@/lib/positionLabel";
 
 // تصميم «الأنساب» — شجرةٌ موصولةٌ بوصلاتٍ منحنية، نسبٌ يُضيء عند التمرير، وعقدٌ قابلةٌ للطيّ.
 const ARD = "٠١٢٣٤٥٦٧٨٩";
@@ -13,8 +14,8 @@ type TNode = { id: string; kind: Kind; name: string; who: string; av: string | n
 type Placed = TNode & { x: number; y: number };
 
 function buildTree(model: StructureModel): TNode {
-  const com = (c: CommitteeNode): TNode => ({ id: `c${c.id}`, kind: "com", name: c.name, who: c.leader ? c.leader.name : "قائدٌ شاغر", av: c.leader?.name ?? null, gender: c.leader?.gender ?? null, vac: !c.leader, count: ar(c.total), children: [] });
-  const dep = (d: DepartmentNode): TNode => ({ id: `d${d.id}`, kind: "dept", name: d.name, who: d.head ? d.head.name : "منسّقٌ شاغر", av: d.head?.name ?? null, gender: d.head?.gender ?? null, vac: !d.head, children: d.committees.map(com) });
+  const com = (c: CommitteeNode): TNode => ({ id: `c${c.id}`, kind: "com", name: c.name, who: c.leader ? actingLine(c.leader.name, !!c.leader.acting) ?? c.leader.name : "قائدٌ شاغر", av: c.leader?.name ?? null, gender: c.leader?.gender ?? null, vac: !c.leader, count: ar(c.total), children: [] });
+  const dep = (d: DepartmentNode): TNode => ({ id: `d${d.id}`, kind: "dept", name: d.name, who: d.head ? actingLine(d.head.name, !!d.head.acting) ?? d.head.name : "منسّقٌ شاغر", av: d.head?.name ?? null, gender: d.head?.gender ?? null, vac: !d.head, children: d.committees.map(com) });
   return {
     id: "root", kind: "root", name: "نادي أدِيب", who: "الهيكل التنظيميّ", av: "أدِيب", gender: null, vac: false,
     children: [

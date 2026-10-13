@@ -52,7 +52,11 @@ export type MyPeriod = {
 
 export type MyApplication = {
   id: string;
+  /** فرصتُه — لصفحتها في البوّابة (`/dashboard/volunteer/<id>`). */
+  opportunityId: string;
   title: string;
+  /** يومُ موعده (يومُ فترته أو بدءُ الفرصة) بصيغة YYYY-MM-DD، و`null` للمرنة ولما لا يومَ له. */
+  day: string | null;
   /** فترتُه، و`null` لتقديمٍ على فرصةٍ قبل الفترات أو مرنة. */
   period: string | null;
   /** فرصتُه مرنة: الحضورُ فيها إنجاز (٢٠٢٦-١٠-٠١). */
@@ -82,10 +86,14 @@ export type MyCertificate = {
   /** جملةُ تميّزه إن رُشّح: تُطبع في الورقة بختم «بتميّز». */
   distinction: string | null;
   issuedLabel: string;
+  /** يومُ إصدارها (YYYY-MM-DD) — به تُعرف «الجاهزة» في الرئيسية. */
+  issuedOn: string;
 };
 
 export type MyVolunteering = {
   isVolunteer: boolean;
+  /** متطوّعٌ منذ — عودتُه إن عاد، وإلّا تقديمُه (YYYY-MM-DD). لسطر «منذ…» في بطاقته ورحلته. */
+  since: string | null;
   /** رغباتُه بأسماء اللجان، مرتّبةً */
   prefs: string[];
   open: OpenOpportunity[];
@@ -101,13 +109,45 @@ type RawOpp = {
   flexible: boolean;
 };
 
+/**
+ * شهاداتُ مشاركته السارية — **تبقى له وإن ترك التطوّع**: الورقةُ شهادةٌ على ما مضى، لا على مكانته اليوم.
+ */
+async function readCertificates(sb: NonNullable<ReturnType<typeof service>>, userId: string): Promise<MyCertificate[]> {
+  const { data } = await sb
+    .from("participation_certificates")
+    .select("id, serial, holder_name, paper_name, holder_gender, opportunity_title, served_from, served_to, hours, distinction_note, issued_at")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("issued_at", { ascending: false });
+  return ((data ?? []) as {
+      id: string; serial: string; holder_name: string; paper_name: string | null; holder_gender: string | null;
+      opportunity_title: string; served_from: string; served_to: string | null; issued_at: string;
+      hours: number | string | null; distinction_note: string | null;
+    }[]).map((c) => ({
+      id: c.id,
+      serial: c.serial,
+      // الورقةُ تُرسَم باسمه اليوم إن صحّحه بعد الإصدار (`paper_name`، ٢٠٢٦-١٠-٠١)، والتحقّقُ يعرف ما قبله
+      holderName: c.paper_name ?? c.holder_name,
+      gender: c.holder_gender === "male" || c.holder_gender === "female" ? c.holder_gender : null,
+      opportunityTitle: c.opportunity_title,
+      servedFrom: c.served_from,
+      servedTo: c.served_to ?? c.served_from,
+      hours: c.hours == null ? null : Number(c.hours),
+      distinction: c.distinction_note,
+      issuedLabel: fmtDate(c.issued_at.slice(0, 10)),
+      issuedOn: c.issued_at.slice(0, 10),
+    }));
+}
+
 export async function getMyVolunteering(userId: string): Promise<MyVolunteering | null> {
   const sb = service();
   if (!sb) return null;
 
-  const { data: vol } = await sb.from("volunteers").select("status").eq("user_id", userId).maybeSingle();
-  const isVolunteer = (vol as { status?: string } | null)?.status === "active";
-  if (!isVolunteer) return { isVolunteer: false, prefs: [], open: [], applications: [], certificates: [] };
+  const { data: vol } = await sb.from("volunteers").select("status, applied_at, returned_at").eq("user_id", userId).maybeSingle();
+  const v = vol as { status?: string; applied_at?: string | null; returned_at?: string | null } | null;
+  const isVolunteer = v?.status === "active";
+  const since = (v?.returned_at ?? v?.applied_at ?? null)?.slice(0, 10) ?? null;
+  if (!isVolunteer) return { isVolunteer: false, since: null, prefs: [], open: [], applications: [], certificates: await readCertificates(sb, userId) };
 
   const [{ data: prefRows }, { data: profile }, { data: appRows }] = await Promise.all([
     sb.from("volunteer_preferences").select("rank, committee_id").eq("user_id", userId).order("rank"),
@@ -120,12 +160,7 @@ export async function getMyVolunteering(userId: string): Promise<MyVolunteering 
 
   const gender = (profile as { gender?: string | null } | null)?.gender ?? null;
 
-  const { data: certRows } = await sb
-    .from("participation_certificates")
-    .select("id, serial, holder_name, paper_name, holder_gender, opportunity_title, served_from, served_to, hours, distinction_note, issued_at")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .order("issued_at", { ascending: false });
+  const certificates = await readCertificates(sb, userId);
 
   const { data: openRows } = await sb
     .from("volunteer_opportunities")
@@ -229,6 +264,7 @@ export async function getMyVolunteering(userId: string): Promise<MyVolunteering 
 
   return {
     isVolunteer: true,
+    since,
     prefs: ((prefRows ?? []) as { committee_id: number }[]).map((p) => nameOf.get(p.committee_id) ?? ""),
     open: opps
       // فئةُ الفرصة تحجبها عمّن ليست له (كما في الفعاليّات)، والمقدَّم عليها لا يُعرَض ثانيةً. وذاتُ الفترات
@@ -263,7 +299,9 @@ export async function getMyVolunteering(userId: string): Promise<MyVolunteering 
       deserves_certificate: boolean | null; denial_reason: string | null;
     }[]).map((a) => ({
       id: a.id,
+      opportunityId: a.opportunity_id,
       title: titleOf.get(a.opportunity_id) ?? "فرصة",
+      day: a.period_id ? (periodStartOf.get(a.period_id)?.day ?? null) : (whenOf.get(a.opportunity_id)?.flexible ? null : (whenOf.get(a.opportunity_id)?.starts_on ?? null)),
       flexible: flexibleOf.get(a.opportunity_id) ?? false,
       period: a.period_id ? (periodNameOf.get(a.period_id) ?? null) : null,
       status: a.status,
@@ -274,22 +312,6 @@ export async function getMyVolunteering(userId: string): Promise<MyVolunteering 
       deservesCertificate: a.deserves_certificate,
       denialReason: a.denial_reason,
     })),
-    certificates: ((certRows ?? []) as {
-      id: string; serial: string; holder_name: string; paper_name: string | null; holder_gender: string | null;
-      opportunity_title: string; served_from: string; served_to: string | null; issued_at: string;
-      hours: number | string | null; distinction_note: string | null;
-    }[]).map((c) => ({
-      id: c.id,
-      serial: c.serial,
-      // الورقةُ تُرسَم باسمه اليوم إن صحّحه بعد الإصدار (`paper_name`، ٢٠٢٦-١٠-٠١)، والتحقّقُ يعرف ما قبله
-      holderName: c.paper_name ?? c.holder_name,
-      gender: c.holder_gender === "male" || c.holder_gender === "female" ? c.holder_gender : null,
-      opportunityTitle: c.opportunity_title,
-      servedFrom: c.served_from,
-      servedTo: c.served_to ?? c.served_from,
-      hours: c.hours == null ? null : Number(c.hours),
-      distinction: c.distinction_note,
-      issuedLabel: fmtDate(c.issued_at.slice(0, 10)),
-    })),
+    certificates,
   };
 }

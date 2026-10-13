@@ -102,7 +102,7 @@ export default function QrStatsScreen() {
               <button type="button" className="abtn abtn-ghost abtn-sm" onClick={() => setEmpty((v) => !v)}>
                 {empty ? "بيانات" : "بلا مسحات"}
               </button>
-              <span className="ash-bell" aria-hidden><IconBell /><i /></span>
+              <span className="ntf-bell" aria-hidden><IconBell /></span>
             </div>
           </header>
           <div className="ash-content">

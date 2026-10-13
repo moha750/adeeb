@@ -50,8 +50,8 @@ export default async function CompletePage() {
     );
   }
 
-  // ومن ليس عضوًا لا سجلَّ عضويّةٍ يُكمله — بيتُه `/me` (بعد توحيد الهويّة في م١)
-  if (!(await isAdeebMember(me.id))) redirect("/me");
+  // ومن ليس عضوًا لا سجلَّ عضويّةٍ يُكمله — بيتُه بوّابةُ أدِيب (بعد توحيد الهويّة في م١)
+  if (!(await isAdeebMember(me.id))) redirect("/dashboard");
 
   // من له سجلٌّ فلا شأن له بهذه الشاشة — وتحريرُ سجلّه في ملفّه الشخصيّ لا ههنا
   if (await hasMemberRecord(me.id)) redirect("/dashboard");

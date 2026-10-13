@@ -18,6 +18,8 @@ import { Toolbar } from "../_components/Toolbar";
 import { Pagination } from "../_components/Pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { PageHeader } from "../_components/PageHeader";
+import { usePersistentView } from "../_components/usePersistentView";
+import { FriendCard, lastParticipation } from "./FriendCard";
 import type { FriendRow, Program } from "./data";
 
 /**
@@ -29,7 +31,8 @@ import type { FriendRow, Program } from "./data";
  */
 
 const PROGRAM: Record<Program, string> = {
-  events: "الفعاليّات", darb: "دربك خضر", surveys: "الاستبيانات", radio: "الإذاعة", deebo: "ديبو",
+  // بأسمائها لا بأصنافها (المالك ٢٠٢٦-١٠-١٠): «الفعاليّات» وحدَها اسمُ قسمٍ أيضًا ولا تقول ما فعل الصديق
+  events: "فعاليّات أدِيب", darb: "دربك خضر", surveys: "استبيانات أدِيب", radio: "إذاعة أدِيب", deebo: "ديبو",
 };
 const ORDER: Program[] = ["events", "darb", "surveys", "radio", "deebo"];
 const UNIT = { one: "صديق", two: "صديقان", few: "أصدقاء" };
@@ -37,7 +40,7 @@ const GENDERS = ["فتيات", "شباب", "غير محدّد"] as const;
 const genderOf = (f: FriendRow) => (f.gender === "female" ? "فتيات" : f.gender === "male" ? "شباب" : "غير محدّد");
 
 type Rel = "" | "member" | "noprofile" | "idle";
-const REL_LABEL: Record<Exclude<Rel, "">, string> = { member: "كانوا أعضاءً", noprofile: "بلا ملف", idle: "لم يشاركوا بعد" };
+const REL_LABEL: Record<Exclude<Rel, "">, string> = { member: "كانوا أعضاءً", noprofile: "لم يُكملوا ملفّهم", idle: "لم يشاركوا بعد" };
 const relOk = (f: FriendRow, rel: Rel) =>
   !rel || (rel === "member" ? f.wasMember : rel === "noprofile" ? !f.hasProfile : f.programs.length === 0);
 
@@ -48,10 +51,10 @@ const columns: Column<FriendRow>[] = [
     key: "who", header: "الصديق", width: "minmax(240px, 2.2fr)",
     render: (f) => (
       <div className="dt-mem">
-        <Avatar name={f.name ?? f.email} gender={f.gender} size="sm" />
+        <Avatar name={f.name ?? f.email} gender={f.gender} size="sm" icon={f.hasProfile ? undefined : <UserCircleDashed />} />
         <span className="dt-mm">
           <b>{f.name ?? <span className="lat" dir="ltr">{f.email}</span>}</b>
-          <span>{f.name ? (f.city ?? "غير متوفّر") : "بلا ملف"}</span>
+          <span>{f.name ? (f.city ?? "غير متوفّر") : "لم يُكمل ملفّه"}</span>
         </span>
       </div>
     ),
@@ -62,7 +65,12 @@ const columns: Column<FriendRow>[] = [
       ? <span className="flex flex-wrap gap-1">{f.programs.map((p) => <Badge key={p} tone="info" variant="soft">{PROGRAM[p]}</Badge>)}</span>
       : <span className="txt na">لم يشارك بعد</span>),
   },
-  { key: "last", header: "آخر نشاط", width: "1.1fr", render: (f) => <span className="txt">{f.lastActive}</span> },
+  {
+    key: "last", header: "آخر مشاركة", width: "minmax(170px, 1.4fr)",
+    render: (f) => (f.lastProgram
+      ? <span className="txt" title={lastParticipation(f, PROGRAM) ?? undefined}>{lastParticipation(f, PROGRAM)}</span>
+      : <span className="txt na">لم يشارك بعد</span>),
+  },
   {
     key: "rel", header: "صلته بأدِيب", width: "1fr",
     render: (f) => (f.wasMember
@@ -79,6 +87,8 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
   const [open, setOpen] = useState<FriendRow | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  // جدولٌ أو كروت (طلب المالك ٢٠٢٦-١٠-١٠)، محفوظًا لكلّ تبويبٍ كأخواته، والافتراضُ كروت
+  const [view, changeView] = usePersistentView("friends-view");
 
   // القاعدة ١٧: الأرقامُ تسمع المرشِّحاتِ والحلقة ولا تسمع البحث، وكلُّ كرتٍ لا يسمع بُعدَه
   const scope = useMemo(
@@ -110,6 +120,10 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
     ],
   }];
 
+  const pager = shown.length ? (
+    <Pagination page={safePage} pageSize={pageSize} total={shown.length} onPageChange={setPage} onPageSizeChange={(n) => { setPageSize(n); setPage(1); }} noun="صديق" />
+  ) : null;
+
   const emptyState = search || program || rel || hiddenGender.length ? (
     <EmptyState
       variant="soft"
@@ -138,7 +152,7 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
       <div className="stat-grid" style={{ marginBottom: 18 }}>
         <Stat icon={<UsersThree />} value={scope.length} label="صديقٌ لأدِيب" />
         <Stat icon={<SquaresFour />} value={scope.filter((f) => f.programs.length > 0).length} label="شارك في برنامج أدِيب" tone="success" />
-        <Stat icon={<UserCircleDashed />} value={scope.filter((f) => !f.hasProfile).length} label="بلا ملف" />
+        <Stat icon={<UserCircleDashed />} value={scope.filter((f) => !f.hasProfile).length} label="لم يُكملوا ملفّهم" />
       </div>
 
       <div className="st-grid2" style={{ marginBottom: 18 }}>
@@ -161,19 +175,33 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
         filterValues={{ program, rel }}
         onFilter={(k, v) => { if (k === "program") setProgram(v as "" | Program); else setRel(v as Rel); setPage(1); }}
         onReset={clearAll}
+        view={view}
+        onViewChange={changeView}
       />
 
-      <DataTable
-        columns={columns}
-        rows={pageRows}
-        getRowId={(f) => f.id}
-        rowActions={actions}
-        onRowClick={(f) => setOpen(f)}
-        emptyState={emptyState}
-        footer={shown.length ? (
-          <Pagination page={safePage} pageSize={pageSize} total={shown.length} onPageChange={setPage} onPageSizeChange={(n) => { setPageSize(n); setPage(1); }} noun="صديق" />
-        ) : undefined}
-      />
+      {view === "table" ? (
+        <DataTable
+          columns={columns}
+          rows={pageRows}
+          getRowId={(f) => f.id}
+          rowActions={actions}
+          onRowClick={(f) => setOpen(f)}
+          emptyState={emptyState}
+          footer={pager ?? undefined}
+        />
+      ) : pageRows.length === 0 ? (
+        <div className="card-empty">{emptyState}</div>
+      ) : (
+        <>
+          {/* بعمودين على الحاسوب وعمودٍ على الجوّال، كشبكة سجلّ المتطوّعين: الكرتُ صفٌّ عريضٌ لا مربّع */}
+          <div className="card-grid card-grid-2col">
+            {pageRows.map((f) => (
+              <FriendCard key={f.id} f={f} programLabel={PROGRAM} actions={actions(f)} onOpen={() => setOpen(f)} />
+            ))}
+          </div>
+          <div className="card-pager">{pager}</div>
+        </>
+      )}
 
       {/* نافذةُ الحساب: كلُّ برنامجٍ قسمٌ، والبرنامجُ الذي لم يشارك فيه لا قسمَ له */}
       <Modal
@@ -182,14 +210,14 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
         title={open ? (open.name ?? open.email) : "حساب صديق"}
         size="sm"
         className="pvb-modal"
-        hero={open ? <Avatar name={open.name ?? open.email} gender={open.gender} size="2xl" className="pvb-av" /> : undefined}
+        hero={open ? <Avatar name={open.name ?? open.email} gender={open.gender} size="2xl" className="pvb-av" icon={open.hasProfile ? undefined : <UserCircleDashed />} /> : undefined}
         footer={<Button variant="ghost" size="md" onClick={() => setOpen(null)}>إغلاق</Button>}
       >
         {open ? (
           <>
             <div className="pvb-head">
               <div className="pvb-name">{open.name ?? <span className="lat" dir="ltr">{open.email}</span>}</div>
-              <div className="pvb-role">{open.hasProfile ? (open.gender === "female" ? "صديقة أدِيب" : "صديق أدِيب") : "صاحب حساب بلا ملف"}</div>
+              <div className="pvb-role">{open.hasProfile ? (open.gender === "female" ? "صديقة أدِيب" : "صديق أدِيب") : "صديق أدِيب، لم يُكمل ملفّه"}</div>
               {open.wasMember || open.volunteeredBefore ? (
                 <div className="pvb-badges">
                   {open.wasMember ? <Badge tone="neutral" variant="soft">كان عضوًا</Badge> : <Badge tone="info" variant="soft">تطوّع سابقًا</Badge>}
@@ -202,7 +230,7 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
                 {open.phone ? <Cell full lat label="رقم الجوّال" icon={<Phone />} value={open.phone} href={waHref(open.phone)} /> : null}
               </Section>
               {open.events ? (
-                <Section icon={<Ticket />} title="الفعاليّات">
+                <Section icon={<Ticket />} title={PROGRAM.events}>
                   <Cell noCopy label="حجوزات" icon={<Ticket />} value={nf(open.events.booked)} />
                   <Cell noCopy label="حضور" icon={<CalendarCheck />} value={nf(open.events.attended)} />
                   {open.events.lastAttended ? <Cell full noCopy label="آخر حضور" icon={<CalendarCheck />} value={open.events.lastAttended} /> : null}
@@ -217,12 +245,12 @@ export function FriendsView({ rows }: { rows: FriendRow[] }) {
                 </Section>
               ) : null}
               {open.radio ? (
-                <Section icon={<Radio />} title="الإذاعة">
+                <Section icon={<Radio />} title={PROGRAM.radio}>
                   <Cell full noCopy wrap label="يتابع" icon={<Radio />} value={open.radio.join("، ")} />
                 </Section>
               ) : null}
               {open.surveys ? (
-                <Section icon={<ClipboardText />} title="الاستبيانات">
+                <Section icon={<ClipboardText />} title={PROGRAM.surveys}>
                   <Cell full noCopy label="استبياناتٌ أجاب عنها" icon={<ClipboardText />} value={nf(open.surveys)} />
                 </Section>
               ) : null}

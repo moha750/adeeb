@@ -84,6 +84,31 @@ target.
   **«زائر» now means only someone browsing with no account** (analytics, anonymous Deebo, guest
   news comments). Never use it, or «صاحب حساب», as the name of an account holder's standing.
 
+### Database security rules (owner-approved hardening, 2026-10-10)
+
+Migrations `20261010122937_security_01…`, `20261010123651_security_03…`, `20261010124900_security_02…`.
+
+- **New functions are born closed.** Default privileges in `public` no longer grant `EXECUTE` to
+  `PUBLIC`/`anon`/`authenticated`. A function the browser or a public page must call needs an
+  explicit `grant execute … to authenticated` (or `anon`) in its migration, with the reason in a
+  comment. A helper used inside an RLS policy needs the grant for every role the policy applies to,
+  or the policy fails with "permission denied for function". Trigger functions need no grant.
+- **Never trust an actor id passed by the caller.** A function that takes `p_actor`/`p_user` and
+  decides on it must either be service-role only (no grant), or read the actor from `auth.uid()`
+  ("session is truth", see `get_user_candidacies`). This is how the warnings log leaked: a new
+  `members_i_may_warn(p_actor)` was born open to `anon`.
+- **No direct client writes on governance or election tables.** `user_roles`, `roles`, `committees`,
+  `councils`, `committee_supervision`, `departments`, `permissions`, `role_permissions`,
+  `user_specific_permissions`, `membership_authority`, `position_authority`, `member_warnings`,
+  `member_details`, `member_evaluations`, `profiles`, `elections`, `election_candidates`,
+  `election_votes`, `election_audit_log`, `activity_log`, `stats` are read-only to `anon`/`authenticated`.
+  Writes go through SECURITY DEFINER RPCs or the service-role client. Do not add write policies there.
+- **Storage**: `images` and `avatars` take no direct client writes; upload with the service client
+  or a signed upload URL. Only `election-files` keeps per-owner client policies.
+- **Election integrity is enforced by triggers, not by the RPC alone**: only election managers move a
+  candidacy out of «قيد المراجعة»; an approved candidacy cannot be edited; «اعتراض» is accepted only
+  in a single-candidate confidence vote; winners are summed from approve votes only.
+
 ## 3. Commands
 
 All commands run from `v2/`. Package manager is **pnpm** (`packageManager: pnpm@9.15.9`).

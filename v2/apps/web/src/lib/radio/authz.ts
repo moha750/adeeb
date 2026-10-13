@@ -2,7 +2,7 @@
 // عبر أدواره، مهما كانت رتبته. القدرة تُقرأ من user_roles→role_permissions→permissions
 // عبر `check_user_permission` (SECURITY DEFINER، بالاسم — صفر role_level).
 //
-// اليوم تُمنح للرئيس والمستشار؛ ونقلُها إلى منسّق قسم الإنتاج الإعلاميّ **سطرٌ واحد**
+// اليوم تُمنح لرئيس أدِيب؛ ونقلُها إلى منسّق قسم الإنتاج الإعلاميّ **سطرٌ واحد**
 // في القاعدة بعد ترحيل «نطاق المِنحة» — لا يمسّ هذا الملفّ ولا صفحةً من الإذاعة.
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";

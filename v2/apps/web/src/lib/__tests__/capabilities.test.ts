@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { DASHBOARD_CAPS, HOME, SECTION_CAP, canOpen, type NavHref } from "@/lib/capabilities";
+import { DASHBOARD_CAPS, HOME, SECTION_CAP, canOpen, usesSidebar, type NavHref } from "@/lib/capabilities";
 
 /**
  * أقفالُ اللوحة — والمِعيارُ ههنا **يقرأ القرص** لا الخريطةَ وحدها.
@@ -68,8 +68,8 @@ describe("SECTION_CAP", () => {
     }
   });
 
-  it("صدرُ اللوحة مفتاحٌ في الخريطة", () => {
-    expect(SECTION_CAP[HOME]).toBe("view_own_membership");
+  it("صدرُ اللوحة بابُ كلّ صاحب حساب (بوّابة أدِيب)", () => {
+    expect(SECTION_CAP[HOME]).toBe("use_portal");
   });
 });
 
@@ -103,10 +103,26 @@ describe("canOpen", () => {
 
   it("قفلٌ واحدٌ يفتح غرفَ الموضوع الواحد (عضويّتي · ملفّي · إعداداتي · مهامّي)", () => {
     const caps = ["view_own_membership"];
-    expect(canOpen(caps, "/dashboard")).toBe(true);
-    expect(canOpen(caps, "/dashboard/profile")).toBe(true);
-    expect(canOpen(caps, "/dashboard/settings")).toBe(true);
     expect(canOpen(caps, "/dashboard/tasks")).toBe(true);
+  });
+
+  // **بابُ البوّابة مفتاحُ المكانة** (٢٠٢٦-١٠-١٣): الرئيسيّةُ وحجوزاتي وشهاداتي وحسابي لكلّ صاحب
+  // حساب (`use_portal`، تشتقّه القاعدةُ ولا يُمنح بدور)، وتطوّعي للمتطوّع وحده.
+  it("مفتاحا المكانة يفتحان غرفَ البوّابة وحدَها", () => {
+    const friend = ["use_portal"];
+    expect(canOpen(friend, "/dashboard")).toBe(true);
+    expect(canOpen(friend, "/dashboard/bookings")).toBe(true);
+    expect(canOpen(friend, "/dashboard/certificates")).toBe(true);
+    expect(canOpen(friend, "/dashboard/account")).toBe(true);
+    expect(canOpen(friend, "/dashboard/volunteer")).toBe(false);
+    expect(canOpen(friend, "/dashboard/tasks")).toBe(false);
+    expect(canOpen([...friend, "view_own_volunteering"], "/dashboard/volunteer")).toBe(true);
+    expect(canOpen(["view_own_membership"], "/dashboard")).toBe(false);
+  });
+
+  it("مفتاحا المكانة لا يفتحان الشريطَ الجانبيّ، ومفتاحُ العضو يفتحه", () => {
+    expect(usesSidebar(["use_portal", "view_own_volunteering"])).toBe(false);
+    expect(usesSidebar(["use_portal", "view_own_membership"])).toBe(true);
   });
 
   // «لا مفتاحَ يفتح أربعة أبواب»: من مُنح أعياد الميلاد لم يُمنح سجلَّ الأعضاء
@@ -174,6 +190,9 @@ describe("الخريطة والقرص", () => {
       // وجذرا غرفتين صارا تحويلًا إلى بابهما الأوّل المحروس (منذ cf9bf9d)
       "/dashboard/tools/qr": "تحويلٌ إلى قسمٍ محروس",
       "/dashboard/website/announcements": "تحويلٌ إلى قسمٍ محروس",
+      // «الملف الشخصي» و«الإعدادات» دُمجا في «حسابي» (٢٠٢٦-١٠-١٣) وهو محروس
+      "/dashboard/profile": "تحويلٌ إلى قسمٍ محروس",
+      "/dashboard/settings": "تحويلٌ إلى قسمٍ محروس",
       // يحرس بـ`denyUnless(locked.section)`، والقيمةُ من خريطةٍ نوعُها `Section` فيحرسها المترجم
       "/dashboard/members/[status]": "حارسٌ بمتغيّرٍ نوعُه Section",
       // يحرس بيده على `view_election_candidates` لأنّه يفرّع بعدها بـ`manage_elections`

@@ -130,7 +130,8 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     // `members` لا `profiles`: الجدولُ صار بيتَ كلِّ صاحبِ حساب بعد توحيد الهويّة، والعرضُ
     // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
     sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at, termination_kind").order("joined_date", { ascending: false }),
-    sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").eq("is_active", true),
+    // الأصيلُ وحده (حيًّا أو مجمَّدًا): التكليفُ فوقه لا يُعدّ موضعَه في الكشف (20261010)
+    sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at").or("and(is_active.eq.true,is_acting.eq.false),frozen_by.not.is.null"),
     sb.from("roles").select("role_name, role_name_ar"),
     sb.from("departments").select("id, name_ar"),
     sb.from("committees").select("id, department_id, committee_name_ar, member_role_name, is_active"),

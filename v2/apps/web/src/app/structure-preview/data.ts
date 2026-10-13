@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { rankFor } from "@/lib/positionLabel";
+import { actingLine, rankFor } from "@/lib/positionLabel";
 import { buildStructure, type CommitteeNode, type Holder } from "../dashboard/members/structure/model";
 
 /**
@@ -27,7 +27,7 @@ export type PubPerson = {
   name: string;
   avatar: string | null;
   gender: "male" | "female" | null;
-  /** المسمّى بجنس صاحبه — «قائدة» · «منسّق» · «رئيسة نادي أدِيب». فارغٌ للعضو داخل لجنته. */
+  /** المسمّى بجنس صاحبه — «قائدة» · «منسّق» · «رئيسة أدِيب». فارغٌ للعضو داخل لجنته. */
   title: string | null;
   /** صفحتُه العلنيّة `/m/<slug>`. */
   slug: string | null;
@@ -64,8 +64,8 @@ export async function getPublicStructure(): Promise<{ data: PubStructure | null;
     sb.from("councils").select("id, name_ar, head_role_name, description, group_link"),
     sb.from("departments").select("id, name_ar, display_order, description, group_link").eq("is_active", true),
     sb.from("committees").select("id, committee_name_ar, department_id, council_id, leader_role_name, member_role_name, description, group_link").eq("is_active", true),
-    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name"),
-    sb.from("user_roles").select("user_id, role_name, committee_id, department_id").eq("is_active", true),
+    sb.from("roles").select("id, role_name, role_name_ar, council_type, is_elected, membership_kind, vote_weight, holder_uniqueness, home_committee_id, prerequisite_role_name, requires_membership"),
+    sb.from("user_roles").select("user_id, role_name, committee_id, department_id, is_acting").eq("is_active", true),
     sb.from("profiles").select("id, full_name, avatar_url, gender, account_status, public_slug").eq("account_status", "active").not("joined_date", "is", null),
     sb.from("volunteers").select("user_id", { count: "exact", head: true }).eq("status", "active"),
   ]);
@@ -85,7 +85,8 @@ export async function getPublicStructure(): Promise<{ data: PubStructure | null;
     name: h.name,
     avatar: h.avatar,
     gender: h.gender,
-    title: title ? rankFor(title, h.gender) : null,
+    // والتكليف بلفظه (20261010): «قائد لجنة التسويق تكليفًا»؛ والعضو المكلَّف بلا رتبةٍ «تكليفًا» وحدها
+    title: title ? actingLine(rankFor(title, h.gender), !!h.acting) : h.acting ? "تكليفًا" : null,
     slug: slugOf.get(h.userId) ?? null,
   });
   const byName = (a: PubPerson, b: PubPerson) => a.name.localeCompare(b.name, "ar");

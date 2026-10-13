@@ -67,10 +67,10 @@ describe("القدرةُ والوزن", () => {
   });
 
   // `is_top_admin_role` يشتقّ من `roles.votes_in_all_elections` لا من قائمةٍ محفورة
-  it("الإداريّون الأعلى أربعةٌ يصوّتون في كلّ مقعد", () => {
+  it("الإداريّون الأعلى ثلاثةٌ يصوّتون في كلّ مقعد", () => {
     const w = emptyWorld(NOW);
     const tops = MEMBERS.filter((m) => isTopAdmin(w, m.id)).map((m) => m.id);
-    expect(tops.sort()).toEqual(["u-advisor", "u-exec", "u-hrlead", "u-pres"]);
+    expect(tops.sort()).toEqual(["u-exec", "u-hrlead", "u-pres"]);
   });
 
   it("وزنُ الناخب وزنُ دوره، وأدناه واحد", () => {
@@ -135,7 +135,7 @@ describe("electionDepartment", () => {
 describe("eligibleToVote", () => {
   it("الإداريُّ الأعلى ناخبٌ في كلّ مقعدٍ أيًّا كان نطاقُه", () => {
     const w = load("self_candidate"); // مقعدُ لجنة الرواة (١١)
-    for (const id of ["u-pres", "u-exec", "u-advisor", "u-hrlead"]) {
+    for (const id of ["u-pres", "u-exec", "u-hrlead"]) {
       expect(eligibleToVote(w, id, "e-lead-11"), id).toBe(true);
     }
   });
@@ -166,7 +166,7 @@ describe("eligibleToRun", () => {
   /** (أ) لا يترشّح إداريٌّ، ولا بدّ من قدرة `run_for_election`. */
   it("المجلسُ الإداريُّ لا يترشّح البتّة", () => {
     const w = load("competition");
-    for (const id of ["u-pres", "u-exec", "u-advisor", "u-hrlead", "u-hrmem"]) {
+    for (const id of ["u-pres", "u-exec", "u-hrlead", "u-hrmem"]) {
       expect(eligibleToRun(w, id, "e-lead-11"), id).toBe(false);
     }
   });

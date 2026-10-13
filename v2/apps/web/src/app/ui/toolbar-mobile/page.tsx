@@ -33,7 +33,7 @@ const FILTERS: FilterDef[] = [
   // خيارًا بلا عناوينَ تُقرأ كومةً واحدة. ومن لا يحمل `group` يبقى قائمةً مسطّحة.
   { key: "unit", label: "الجهة", options: [
     { value: "council:administrative", label: "المجلس الإداري", group: "المجالس" },
-    { value: "council:executive", label: "المجلس التنفيذي", group: "المجالس" },
+    { value: "council:executive", label: "المجلس التشغيلي", group: "المجالس" },
     { value: "dept:1", label: "قسم الإنتاج الإعلامي", group: "الأقسام" },
     { value: "dept:3", label: "قسم صناعة المحتوى", group: "الأقسام" },
     { value: "comm:5", label: "لجنة التصوير", group: "اللجان" },

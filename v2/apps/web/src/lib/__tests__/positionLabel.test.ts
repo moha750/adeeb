@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { positionLine, positionParts, rankFor, seatName } from "@/lib/positionLabel";
+import { actingLine, positionLine, positionParts, rankFor, seatName } from "@/lib/positionLabel";
 
 /**
  * تسميةُ المنصب — القاعدةُ في سطرين: مسمّى **شخصٍ** رتبتُه ووحدةُ إسناده، ومسمّى
@@ -14,8 +14,8 @@ describe("seatName", () => {
   });
 
   it("يعيد الرتبة وحدَها إن لم تكن للمقعد وحدةٌ ملازمة", () => {
-    expect(seatName("رئيس نادي أدِيب", null)).toBe("رئيس نادي أدِيب");
-    expect(seatName("رئيس نادي أدِيب")).toBe("رئيس نادي أدِيب");
+    expect(seatName("رئيس أدِيب", null)).toBe("رئيس أدِيب");
+    expect(seatName("رئيس أدِيب")).toBe("رئيس أدِيب");
     expect(seatName("منسّق", "")).toBe("منسّق");
     expect(seatName("منسّق", "   ")).toBe("منسّق");
   });
@@ -56,8 +56,8 @@ describe("positionLine", () => {
   });
 
   it("يقول الرتبة وحدَها لمن لا وحدةَ له", () => {
-    expect(positionLine("رئيس نادي أدِيب", null)).toBe("رئيس نادي أدِيب");
-    expect(positionLine("رئيس نادي أدِيب", "")).toBe("رئيس نادي أدِيب");
+    expect(positionLine("رئيس أدِيب", null)).toBe("رئيس أدِيب");
+    expect(positionLine("رئيس أدِيب", "")).toBe("رئيس أدِيب");
   });
 
   it("يقول الوحدة وحدَها لمن لا رتبةَ له", () => {
@@ -132,7 +132,10 @@ describe("rankFor", () => {
   it("يؤنّث الرتبة وحدَها أوّلَ المسمّى", () => {
     expect(rankFor("قائد", "female")).toBe("قائدة");
     expect(rankFor("قائد إدارة الموارد البشرية", "female")).toBe("قائدة إدارة الموارد البشرية");
-    expect(rankFor("رئيس نادي أدِيب", "female")).toBe("رئيسة نادي أدِيب");
+    expect(rankFor("رئيس أدِيب", "female")).toBe("رئيسة أدِيب");
+    // المسمّى المعرَّف يُؤنَّث كلُّه لا أوّلُ كلمته
+    expect(rankFor("الرئيس التنفيذي", "female")).toBe("الرئيسة التنفيذية");
+    expect(rankFor("الرئيس التنفيذي", "male")).toBe("الرئيس التنفيذي");
   });
 
   it("يُبقي «عضو» للجنسين", () => {
@@ -142,5 +145,19 @@ describe("rankFor", () => {
   it("لا يمسّ المذكّر ولا المجهول", () => {
     expect(rankFor("منسّق", "male")).toBe("منسّق");
     expect(rankFor("منسّق", null)).toBe("منسّق");
+  });
+});
+
+describe("actingLine", () => {
+  it("يُلحق «تكليفًا» بالمسمّى المكلَّف وحده", () => {
+    expect(actingLine("قائد لجنة التسويق", true)).toBe("قائد لجنة التسويق تكليفًا");
+    expect(actingLine("قائد لجنة التسويق", false)).toBe("قائد لجنة التسويق");
+    expect(actingLine("قائد لجنة التسويق", null)).toBe("قائد لجنة التسويق");
+  });
+  it("لا يخترع مسمّى للغائب", () => {
+    expect(actingLine(null, true)).toBeNull();
+  });
+  it("يبقى التأنيث في أوّل الجملة", () => {
+    expect(actingLine(rankFor("قائد لجنة التصوير", "female"), true)).toBe("قائدة لجنة التصوير تكليفًا");
   });
 });

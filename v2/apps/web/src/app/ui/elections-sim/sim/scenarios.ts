@@ -309,7 +309,7 @@ export const SCENARIOS: Scenario[] = [
       seedVote(w, e, "u-hrlead", nora);
       seedVote(w, e, "u-m4", nora);
       seedVote(w, e, "u-m1", nora);
-      seedVote(w, e, "u-advisor", ahmad);
+      seedVote(w, e, "u-hrmem", ahmad);
       seedVote(w, e, "u-m3", ahmad);
       seedVote(w, e, "u-m2", khaled);
       return w;
@@ -333,7 +333,7 @@ export const SCENARIOS: Scenario[] = [
       const khaled = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2, file: false });
       // ناخبان وزنُهما ٤ لكلٍّ من الاثنين ⇒ تعادلٌ في الوزن لا في العدد وحدَه
       seedVote(w, e, "u-pres", nora);
-      seedVote(w, e, "u-advisor", ahmad);
+      seedVote(w, e, "u-exec", ahmad);
       seedVote(w, e, "u-m4", khaled);
       return w;
     },
@@ -516,7 +516,6 @@ export const SCENARIOS: Scenario[] = [
       "تبويبُ «الجارية»: قسمةُ «بانتظارك» ثمّ «تجري وحدها» في الكروت والجدول",
       "بدّل بين الجدول والكروت، وقس الفرق في الأعمدة",
       "بدّل الهويّة إلى «عضو الموارد»: الغرفةُ للقراءة كلُّها",
-      "بدّل إلى «مستشار الرئيس»: لا غرفةَ له أصلًا، وله بابُ تصويتٍ في كلّ مقعد",
     ],
     start: { screen: "list", viewpoint: "u-hrlead" },
     build: (now) => {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container, Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
-import { positionLine } from "@/lib/positionLabel";
+import { actingLine, positionLine } from "@/lib/positionLabel";
 import { shareOg } from "@/lib/share";
 import { getPublicProfile, type PublicPosition } from "./data";
 import { ProfileView } from "./ProfileView";
@@ -13,7 +13,7 @@ export const revalidate = 300;
 function headline(positions: PublicPosition[]) {
   const p = positions[0];
   if (!p) return "عضوٌ في نادي أدِيب";
-  return positionLine(p.roleAr, p.unitName) ?? "عضوٌ في نادي أدِيب";
+  return actingLine(positionLine(p.roleAr, p.unitName), p.acting) ?? "عضوٌ في نادي أدِيب";
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

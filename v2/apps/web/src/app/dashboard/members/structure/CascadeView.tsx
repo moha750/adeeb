@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Avatar } from "../../_components/Avatar";
 import type { CommitteeNode, Holder, StructureModel } from "./model";
+import { actingLine } from "@/lib/positionLabel";
 
 // تصميم «الأعمدة» — تنقّلٌ متتالٍ (Miller): عمودٌ لكلّ طبقة، مسارٌ مُضاء، وعمود أعضاءٍ ختاميّ.
 const ARD = "٠١٢٣٤٥٦٧٨٩";
@@ -13,11 +14,12 @@ const Chev = () => (
 
 function members(c: CommitteeNode): { h: Holder; tag: string }[] {
   const out: { h: Holder; tag: string }[] = [];
-  if (c.leader) out.push({ h: c.leader, tag: c.leader.roleAr });
-  if (c.deputy) out.push({ h: c.deputy, tag: "النائب" });
+  // والمكلَّف بلفظه (20261010)
+  if (c.leader) out.push({ h: c.leader, tag: actingLine(c.leader.roleAr, !!c.leader.acting) ?? c.leader.roleAr });
+  if (c.deputy) out.push({ h: c.deputy, tag: actingLine("النائب", !!c.deputy.acting) ?? "النائب" });
   if (c.hrOverseer) out.push({ h: c.hrOverseer, tag: "مشرف الموارد" });
   if (c.qaOverseer) out.push({ h: c.qaOverseer, tag: "مشرف الضمان" });
-  for (const m of c.members) out.push({ h: m, tag: m.roleName !== "committee_member" ? m.roleAr : "عضو" });
+  for (const m of c.members) out.push({ h: m, tag: actingLine(m.roleName !== "committee_member" ? m.roleAr : "عضو", !!m.acting) ?? "عضو" });
   return out;
 }
 

@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { fmtDate, fmtSince } from "@/lib/dates";
+import { actingLine } from "@/lib/positionLabel";
 
 /**
  * **طلباتُ إنهاء العضويّة** — ما يراه القاضي فيها.
@@ -67,7 +68,9 @@ export async function getExitRequests(): Promise<ExitsData> {
   if (svc && ids.length) {
     const [pRes, rRes] = await Promise.all([
       svc.from("profiles").select("id, full_name").in("id", ids),
-      svc.from("user_roles").select("user_id, role_name").in("user_id", ids).eq("is_active", true),
+      // والأصيلُ المجمَّد مقعدُه وإن انطفأ، والتكليفُ يُوسَم «تكليفًا» فلا يُحسب منصبًا ثانيًا
+      svc.from("user_roles").select("user_id, role_name, is_acting").in("user_id", ids)
+        .or("is_active.eq.true,frozen_by.not.is.null").order("is_acting"),
     ]);
     for (const p of (pRes.data ?? []) as { id: string; full_name: string | null }[]) {
       names.set(p.id, p.full_name ?? "بلا اسم");
@@ -79,9 +82,9 @@ export async function getExitRequests(): Promise<ExitsData> {
       : { data: [] as { role_name: string; role_name_ar: string }[] };
     const ar = new Map(((arRes.data ?? []) as { role_name: string; role_name_ar: string }[])
       .map((r) => [r.role_name, r.role_name_ar]));
-    for (const r of (rRes.data ?? []) as { user_id: string; role_name: string }[]) {
+    for (const r of (rRes.data ?? []) as { user_id: string; role_name: string; is_acting: boolean }[]) {
       const list = seats.get(r.user_id) ?? [];
-      list.push(ar.get(r.role_name) ?? r.role_name);
+      list.push(actingLine(ar.get(r.role_name) ?? r.role_name, r.is_acting) ?? r.role_name);
       seats.set(r.user_id, list);
     }
   }

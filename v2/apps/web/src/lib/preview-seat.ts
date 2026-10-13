@@ -43,7 +43,7 @@ export const PREVIEW_PHONE = "0500000000";
  */
 const NEEDS_COMMITTEE = new Set([
   "committee_leader", "deputy_committee_leader", "committee_member",
-  "hr_admin_member", "qa_admin_member", "hr_committee_leader", "qa_committee_leader",
+  "hr_admin_member", "qa_admin_member", "exec_admin_member", "hr_committee_leader", "qa_committee_leader",
 ]);
 const NEEDS_DEPARTMENT = new Set(["department_head"]);
 

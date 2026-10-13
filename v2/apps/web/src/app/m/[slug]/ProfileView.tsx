@@ -7,7 +7,7 @@ import { ICON_WEIGHT } from "@/lib/iconWeight";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { fmtDateOnly, fmtDate } from "@/lib/dates";
 import { formatDegree, SOCIAL_KEYS, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
-import { positionLine } from "@/lib/positionLabel";
+import { actingLine, positionLine } from "@/lib/positionLabel";
 import { ShareBar } from "./ShareBar";
 import type { PublicProfile } from "./data";
 
@@ -70,7 +70,7 @@ export function ProfileView({ me }: { me: PublicProfile }) {
             <div className="flex flex-col gap-2">
               <h1 className="font-display text-3xl font-black text-content">{me.name}</h1>
               {me.positions.map((p, i) => (
-                <p key={i} className="text-lg font-bold text-secondary">{positionLine(p.roleAr, p.unitName)}</p>
+                <p key={i} className="text-lg font-bold text-secondary">{actingLine(positionLine(p.roleAr, p.unitName), p.acting)}</p>
               ))}
               {tenure ? <p className="text-sm text-content-muted">{tenure}</p> : null}
             </div>

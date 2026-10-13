@@ -81,6 +81,10 @@ export function SupervisionModal({
       icon: <Avatar name={m.name} src={m.avatar ?? undefined} gender={m.gender} size="xs" />,
     }));
 
+  // ضمُّ صاحبِ مقعدٍ غيرِ «عضو لجنة» يُخلي مقعدَه: يُقال قبل التأكيد (20261010).
+  const picked = state?.kind === "recruit" ? candidates.find((m) => m.id === pick) ?? null : null;
+  const vacates = picked?.heldRole != null && picked.heldRole !== "committee_member" ? picked.held ?? null : null;
+
   // الشخص المعروض في رأس المتن: الشاغل الحاليّ (استبدال/سحب) أو صاحبُ الكرت
   const person: Person | null =
     !state ? null : state.kind === "seat" ? state.holder : state.kind === "recruit" ? null : state.member;
@@ -141,9 +145,10 @@ export function SupervisionModal({
                   onValueChange={onPick}
                   required
                 />
-                <p className="org-modal-warn">
+                {vacates ? <p className="org-modal-warn">{`سيُخلى مقعده «${vacates}» بنقله، ويبقى شاغرًا حتى يُعيَّن بديل.`}</p> : null}
+                {unit.supervises ? <p className="org-modal-warn">
                   {`التعيينُ انتماءٌ لا توزيع: يصير عضوًا إداريًّا في ${unit.name} بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
-                </p>
+                </p> : null}
               </>
             ) : (
               <p className="org-modal-warn">لا مرشّح: أعضاء النادي كلّهم في هذه الإدارة.</p>

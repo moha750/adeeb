@@ -41,9 +41,13 @@ export function pushConfigured(): boolean {
 const BATCH = 50;
 const chunks = <T,>(xs: T[]) => Array.from({ length: Math.ceil(xs.length / BATCH) }, (_, i) => xs.slice(i * BATCH, (i + 1) * BATCH));
 
-/** المسارُ داخليٌّ أو لا شيء: الإشعارُ لا يصير رابطًا إلى موقعٍ آخر ولو كتبه مرسِلٌ بالخطأ. */
+/**
+ * المسارُ داخليٌّ أو لا شيء: الإشعارُ لا يصير رابطًا إلى موقعٍ آخر ولو كتبه مرسِلٌ بالخطأ.
+ * و`/` في أوّله لا تكفي: `/\evil.com` و`/\t/evil.com` يقرؤهما المتصفّحُ خارجيَّين (توأمُ
+ * `internalHref` في `lib/notifications/render.ts`، ٢٠٢٦-١٠-١٠).
+ */
 function safePath(url?: string): string {
-  return url && url.startsWith("/") && !url.startsWith("//") ? url : "/";
+  return url && /^\/(?![/\\])[^\\\s\u0000-\u001f\u007f]*$/.test(url) ? url : "/";
 }
 
 export async function pushToUsers(

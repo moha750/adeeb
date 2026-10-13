@@ -27,9 +27,11 @@ type Props = {
   dueLabel: string | null;
   /** له هويّةُ بريدٍ وكلمةِ مرور؟ من دخل بقوقل أو أبل وحدهما لا كلمةَ مرورٍ له تُثبِت. */
   hasPassword: boolean;
+  /** زرُّ الفتح بيد صاحب الشاشة — سطرُ خطرٍ في «حسابي» بالبوّابة بدل الزرّ الأحمر، والنافذةُ هي هي. */
+  trigger?: (open: () => void) => React.ReactNode;
 };
 
-export function DeleteAccount({ pending, dueLabel, hasPassword }: Props) {
+export function DeleteAccount({ pending, dueLabel, hasPassword, trigger }: Props) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [open, setOpen] = useState(false);
@@ -96,9 +98,11 @@ export function DeleteAccount({ pending, dueLabel, hasPassword }: Props) {
 
   return (
     <>
-      <Button variant="danger" size="md" onClick={() => setOpen(true)}>
-        <Trash size={16} aria-hidden /> احذف حسابي
-      </Button>
+      {trigger ? trigger(() => setOpen(true)) : (
+        <Button variant="danger" size="md" onClick={() => setOpen(true)}>
+          <Trash size={16} aria-hidden /> احذف حسابي
+        </Button>
+      )}
       {done ? <Alert tone="success">{done}</Alert> : null}
 
       <Modal

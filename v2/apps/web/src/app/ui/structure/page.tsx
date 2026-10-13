@@ -20,18 +20,17 @@ const dept = (id: number, name: string, head: Holder | null, coms: CommitteeNode
 const seat = (roleName: string, roleAr: string, holders: Holder[], isHead = false, isElected = false) =>
   ({ roleName, roleAr, isHead, isElected, voteWeight: 1, holders });
 
-const president = P("سارة العتيبي", "رئيس النادي", "club_president");
-const execPresident = P("خالد المطيري", "رئيس المجلس التنفيذيّ", "exec_president");
+const president = P("سارة العتيبي", "رئيس أدِيب", "club_president");
+const execPresident = P("خالد المطيري", "الرئيس التنفيذيّ", "exec_president");
 const hrLeader = P("نورة الشهري", "قائدة إدارة الموارد", "hr_committee_leader");
 
 const administrative: CouncilBody & { committees: CommitteeNode[] } = {
   id: "administrative", name: "المجلس الإداريّ", desc: "يرسم سياسة النادي ويتابع تنفيذها، وتحته إدارتا الموارد البشريّة والضمان والجودة.", link: null,
-  headRoleName: "club_president", headRoleAr: "رئيس النادي", head: president,
+  headRoleName: "club_president", headRoleAr: "رئيس أدِيب", head: president,
   seats: [
-    seat("club_president", "رئيس النادي", [president], true),
+    seat("club_president", "رئيس أدِيب", [president], true),
     seat("hr_committee_leader", "قائد إدارة الموارد البشريّة", [hrLeader]),
     seat("qa_committee_leader", "قائد إدارة الضمان والجودة", []),
-    seat("club_advisor", "المستشار", []),
   ],
   memberCount: 2, subordinateCount: 0,
   committees: [
@@ -43,10 +42,10 @@ const administrative: CouncilBody & { committees: CommitteeNode[] } = {
 };
 
 const executive: CouncilBody & { departments: DepartmentNode[] } = {
-  id: "executive", name: "المجلس التنفيذيّ", desc: "يدير العمل اليوميّ: أقسامٌ تجمع لجانًا، ولكلّ لجنةٍ قائدها ونائبها وأعضاؤها.", link: null,
-  headRoleName: "exec_president", headRoleAr: "رئيس المجلس التنفيذيّ", head: execPresident,
+  id: "executive", name: "المجلس التشغيليّ", desc: "يدير العمل اليوميّ: أقسامٌ تجمع لجانًا، ولكلّ لجنةٍ قائدها ونائبها وأعضاؤها.", link: null,
+  headRoleName: "exec_president", headRoleAr: "الرئيس التنفيذيّ", head: execPresident,
   seats: [
-    seat("exec_president", "رئيس المجلس التنفيذيّ", [execPresident], true),
+    seat("exec_president", "الرئيس التنفيذيّ", [execPresident], true),
     seat("department_head", "منسّق القسم", [P("ليان القحطاني", "منسّق القسم", "department_head"), P("ريم السالم", "منسّق القسم", "department_head")], false, true),
     seat("committee_leader", "قائد اللجنة", [P("هند العمري", "قائدة اللجنة", "committee_leader")], false, true),
   ],
@@ -76,7 +75,6 @@ const executive: CouncilBody & { departments: DepartmentNode[] } = {
 const mock: StructureModel = {
   administrative, executive,
   stats: { councils: 2, administrations: 2, departments: 3, committees: 6, assignments: 22, people: 18 },
-  anomalies: [],
 };
 
 /** موضعُ قارئٍ وهميّ — ليُرى وسمُ «أنت هنا» وزرُّ «موقعي» في المعرض كما يراهما العضو. */

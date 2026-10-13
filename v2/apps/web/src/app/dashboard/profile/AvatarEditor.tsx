@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, IconButton, Modal } from "@adeeb/design-system";
-import { MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-icons/react";
+import { Camera, MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-icons/react";
 import { ArrowCounterClockwise } from "@/app/_components/glyphs";
 import { Trash, UploadSimple } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
+import { DropdownMenu } from "../_components/DropdownMenu";
 import { useToast } from "../_components/ToastProvider";
 import { removeMyAvatar, uploadMyAvatar } from "./actions";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
@@ -59,7 +60,11 @@ function clampFrame(img: { width: number; height: number }, f: Frame): Frame {
  * بـ`roundRect` من رمز `--radius`)، والأزرارُ من المكتبة — فلا صنفَ شاردًا ولا مكوّنَ
  * جديدًا يُخترَع لشاشةٍ واحدة (ق١).
  */
-export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "male" | "female" | null; avatar: string | null }) {
+/**
+ * و`look="cam"` هيئتُه في غرفة «حسابي» (بوّابة أدِيب): الأفتارُ محتضَنًا في كرت الشخص وزرُّ كاميرا
+ * دائريٌّ على حافّته (`.acc-cam`) — والقصُّ والرفعُ والحذفُ هي هي، فلا محرّرَ ثانٍ.
+ */
+export function AvatarEditor({ name, gender, avatar, look = "row" }: { name: string; gender: "male" | "female" | null; avatar: string | null; look?: "row" | "cam" }) {
   const toast = useToast();
   const router = useRouter();
   const pick = useRef<HTMLInputElement>(null);
@@ -229,7 +234,27 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className={look === "cam" ? "acc-photo" : "flex flex-wrap items-center gap-4"}>
+      {look === "cam" ? (
+        <>
+          <Avatar name={name} src={avatar ?? undefined} gender={gender} size="xl" className="acard-av" />
+          {avatar ? (
+            <DropdownMenu
+              ariaLabel="صورتك"
+              triggerClassName="acc-cam"
+              trigger={<Camera aria-hidden />}
+              groups={[
+                { items: [{ label: "تغيير الصورة", icon: <UploadSimple aria-hidden />, onSelect: () => pick.current?.click() }] },
+                { items: [{ label: "حذف الصورة", icon: <Trash aria-hidden />, danger: true, onSelect: () => setConfirmKill(true) }] },
+              ]}
+            />
+          ) : (
+            <button type="button" className="acc-cam" aria-label="رفع صورة" title="رفع صورة" onClick={() => pick.current?.click()}>
+              <Camera aria-hidden />
+            </button>
+          )}
+        </>
+      ) : <>
       <Avatar name={name} src={avatar ?? undefined} gender={gender} size="2xl" />
       <div className="flex flex-col items-start gap-2">
         {/* «حذف» لا يظهر لمن لا صورة له — زرٌّ لا يفعل شيئًا وعدٌ كاذب */}
@@ -247,6 +272,7 @@ export function AvatarEditor({ name, gender, avatar }: { name: string; gender: "
         </span>
         <span className="fld-help">صورةٌ مربّعة تُقصّ هنا قبل الرفع، تظهر في اللوحة وفي كشوف أعضاء أدِيب.</span>
       </div>
+      </>}
 
       <input
         ref={pick}

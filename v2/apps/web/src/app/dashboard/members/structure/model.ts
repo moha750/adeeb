@@ -6,17 +6,24 @@
 //   committees.council_id       -> أيّ مجلس تتبع     · departments.council_id
 //   roles.membership_kind       -> عضوٌ في المجلس (يجلس ويقرّر) أم تابعٌ لفرعه (تحته لا فيه)
 //
-// الفرق الأخير هو ما يجعل «من في المجلس التنفيذيّ؟» يعطي ٨ لا ١٥١.
+// الفرق الأخير هو ما يجعل «من في المجلس التشغيليّ؟» يعطي ٨ لا ١٥١.
 // الترتيب بالاسم عبر roleRank — أُعدم role_level، فالهُويّة لا العدد.
 import { roleRank } from "@/lib/roleOrder";
 // اسم المنصب = الرتبة + وحدته الأمّ. مصدرٌ واحد لا تُركَّب الجملة في كلّ موضع.
 import { positionParts, seatName } from "@/lib/positionLabel";
 
 export type RawCouncil = { id: string; name_ar: string | null; head_role_name: string; description: string | null; group_link: string | null };
-export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null };
-export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; description: string | null; group_link: string | null };
-export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null; prerequisite_role_name: string | null };
-export type RawUserRole = { user_id: string; role_name: string; committee_id: number | null; department_id: number | null };
+export type RawDept = { id: number; name_ar: string | null; display_order: number | null; description: string | null; group_link: string | null; icon?: string | null };
+export type RawCommittee = { id: number; committee_name_ar: string | null; department_id: number | null; council_id: string; leader_role_name: string; member_role_name: string; supervises?: boolean; description: string | null; group_link: string | null; icon?: string | null };
+export type RawRole = { id: number; role_name: string; role_name_ar: string | null; council_type: string | null; is_elected: boolean | null; membership_kind: string; vote_weight: number; holder_uniqueness: string; home_committee_id: number | null; prerequisite_role_name: string | null; requires_membership: boolean };
+// والتكليف (20261010): صفُّ التكليف حيٌّ بجانب الأصيل (`is_acting`)، والأصيلُ المجمَّد منطفئٌ يُحجَز
+// لصاحبه (`frozen_by` = صفُّ تكليفه). الحقول اختياريّة: من لا يجلبها يرى الأصيلَ وحده كما كان.
+export type RawUserRole = {
+  user_id: string; role_name: string; committee_id: number | null; department_id: number | null;
+  id?: number; is_acting?: boolean; acting_until?: string | null; acting_parent_id?: number | null; frozen_by?: number | null;
+  /** بدءُ الإسناد: به تُرسَم مدّةُ التكليف في «تعيين المناصب». */
+  assigned_at?: string | null;
+};
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null; account_status: string | null };
 // الإشراف: عضو إدارةٍ إداريّة (`unit_id`) يتابع لجنةً تنفيذيّة (`committee_id`) ليس **فيها**.
 // جدولٌ مستقلّ منذ 20260731 — كان صفَّ منصبٍ يكذب بأنّه عضوٌ في تلك اللجنة.
@@ -38,6 +45,12 @@ export type Holder = {
   unitName: string | null;
   committeeId: number | null;
   departmentId: number | null;
+  /** صفُّ الإسناد في `user_roles`: به يُمدَّد التكليف ويُنهى. */
+  rowId?: number | null;
+  /** تكليفٌ لا أصيل (20261010): آخرُ يومه، أو صاحبُ المقعد المجمَّد الذي ينتهي التكليف بعودته، وبدؤه (`since`). */
+  acting?: { until: string | null; awaits: string | null; since?: string | null } | null;
+  /** أصيلٌ مجمَّد: المقعدُ محجوزٌ له وهو مكلَّفٌ في غيره، حتى آخر يوم تكليفه (`until`). */
+  frozen?: { until: string | null } | null;
 };
 
 export type CommitteeNode = {
@@ -78,7 +91,7 @@ export type DepartmentNode = {
 export type CouncilInfo = { id: string; name: string; desc: string | null; link: string | null };
 
 // مقعدٌ في هيئة المجلس: دورٌ عضويّته member — شاغرًا كان أو مشغولًا.
-// (الشاغر يُعرض أيضًا: «المستشار» منصبٌ قائم لا شاغل له، وإخفاؤه يكذب.)
+// (الشاغر يُعرض أيضًا: منصبٌ قائمٌ لا شاغل له إخفاؤه يكذب.)
 export type CouncilSeat = {
   roleName: string;
   roleAr: string;
@@ -98,7 +111,7 @@ export type CouncilBody = CouncilInfo & {
   subordinateCount: number; // من يقع تحت فرعه
 };
 
-// لا حقل `president` هنا: رئيس النادي عضوٌ في المجلس الإداريّ ورئيسُه، تقوله
+// لا حقل `president` هنا: رئيس أدِيب عضوٌ في المجلس الإداريّ ورئيسُه، تقوله
 // القاعدة (council_type + membership_kind + head_role_name) — فيظهر في مقاعده
 // لا في قسمٍ محفورٍ فوق الشجرة. مصدرٌ واحد لا اثنان.
 export type StructureModel = {
@@ -106,7 +119,6 @@ export type StructureModel = {
   executive: CouncilBody & { departments: DepartmentNode[] };
   // الإدارة ليست لجنة — وإن سكنت جدولها. تُعدّ على حدة أو نكذب بالرقم.
   stats: { councils: number; administrations: number; departments: number; committees: number; assignments: number; people: number };
-  anomalies: string[];
 };
 
 // ما بقي من الأسماء المحفورة. ذاب سبعةٌ منها حين صارت القاعدة تقول ما كانت
@@ -142,6 +154,9 @@ function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: R
   const comName = new Map(committees.map((c) => [c.id, c.committee_name_ar]));
   const depName = new Map(departments.map((d) => [d.id, d.name_ar]));
   const profileById = new Map(profiles.map((p) => [p.id, p]));
+  // التكليف: صفُّ التكليف بمعرّفه، وصاحبُ كلّ مقعدٍ مجمَّد بمعرّف التكليف الذي جمّده.
+  const rowById = new Map(userRoles.filter((u) => u.id != null).map((u) => [u.id as number, u]));
+  const ownerOfFreeze = new Map(userRoles.filter((u) => u.frozen_by != null).map((u) => [u.frozen_by as number, u.user_id]));
   const holders: Holder[] = [];
   for (const ur of userRoles) {
     const role = roleByName.get(ur.role_name);
@@ -160,6 +175,17 @@ function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: R
           : null,
       committeeId: ur.committee_id,
       departmentId: ur.department_id,
+      rowId: ur.id ?? null,
+      acting: ur.is_acting
+        ? {
+            until: ur.acting_until ?? null,
+            awaits: ur.acting_parent_id != null
+              ? profileById.get(ownerOfFreeze.get(ur.acting_parent_id) ?? "")?.full_name ?? null
+              : null,
+            since: ur.assigned_at ?? null,
+          }
+        : null,
+      frozen: ur.frozen_by != null ? { until: rowById.get(ur.frozen_by)?.acting_until ?? null } : null,
     });
   }
   return holders;
@@ -178,7 +204,8 @@ export function committeeNodes(
   profiles: RawProfile[],
   supervision: RawSupervision[],
 ): Map<number, CommitteeNode> {
-  const holders = buildHolders(roles, committees, userRoles, profiles);
+  // المجمَّد غائبٌ عن مقعده حتى يعود، فلا يُجلَس في الوحدة (20261010)؛ يقوله كرتُ المنصب وحده.
+  const holders = buildHolders(roles, committees, userRoles, profiles).filter((h) => !h.frozen);
   const titleOf = roleTitler(roles, committees);
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
   const inCommittee = (cid: number) => holders.filter((h) => h.committeeId === cid);
@@ -212,7 +239,11 @@ export function committeeNodes(
     const inside = inCommittee(c.id);
     // القائد = من يشغل الدور الذي تُصرّح الوحدة بأنه يقودها (committees.leader_role_name).
     // يعمل للإدارتين واللجان سواءً — لا حالة خاصّة ولا مطابقة اسم.
-    const leader = inside.find((h) => h.roleName === c.leader_role_name) ?? null;
+    // والإدارة التنفيذيّة يقودها مقعدُ الرئيس التنفيذيّ نفسُه، ومقعدُه عامّ بلا وحدة (٢٠٢٦-١٠-١٠):
+    // فقائدُها شاغلُ ذلك المقعد حيث كان، لا من في الوحدة.
+    const leader = inside.find((h) => h.roleName === c.leader_role_name)
+      ?? holders.find((h) => h.roleName === c.leader_role_name && h.committeeId === null && h.departmentId === null)
+      ?? null;
     const deputy = inside.find((h) => h.roleName === R.deputy) ?? null;
     // مشرفان مستقلّان: الموارد والضمان — لكلّ إدارة مشرفها على هذه اللجنة. يُقرآن من
     // جدول الإشراف: المشرف عضوٌ في إدارته لا في هذه اللجنة، فلا يُعدّ في أعضائها.
@@ -252,7 +283,7 @@ export function buildStructure(
   profiles: RawProfile[],
   supervision: RawSupervision[],
 ): StructureModel {
-  const holders = buildHolders(roles, committees, userRoles, profiles);
+  const holders = buildHolders(roles, committees, userRoles, profiles).filter((h) => !h.frozen);
   const byRole = (name: string) => holders.filter((h) => h.roleName === name);
   const firstOf = (name: string) => byRole(name)[0] ?? null;
   const roleByName = new Map(roles.map((r) => [r.role_name, r]));
@@ -318,21 +349,7 @@ export function buildStructure(
   });
 
   const administrative = councilBody("administrative", "المجلس الإداري");
-  const executive = councilBody("executive", "المجلس التنفيذي");
-
-  const anomalies: string[] = [];
-  for (const d of departmentNodes) if (!d.head) anomalies.push(`قسم «${d.name}» بلا منسّق`);
-  for (const d of departmentNodes) for (const c of d.committees) if (!c.leader) anomalies.push(`لجنة «${c.name}» بلا قائد`);
-  // المقاعد الشاغرة تُقرأ من الهيئة لا من قائمة محفورة
-  for (const body of [administrative, executive])
-    for (const s of body.seats)
-      if (s.holders.length === 0) anomalies.push(`مقعد «${s.roleAr}» في ${body.name} شاغر`);
-  // كلّ إدارة تغطّي اللجان بمشرفيها — فالنقص يُحسب لكلٍّ منهما على حدة
-  const allCommittees = departmentNodes.flatMap((d) => d.committees);
-  const noHr = allCommittees.filter((c) => !c.hrOverseer).length;
-  const noQa = allCommittees.filter((c) => !c.qaOverseer).length;
-  if (noHr > 0) anomalies.push(`${noHr} لجنة بلا مشرف من إدارة الموارد البشرية`);
-  if (noQa > 0) anomalies.push(`${noQa} لجنة بلا مشرف من إدارة الضمان والجودة`);
+  const executive = councilBody("executive", "المجلس التشغيلي");
 
   return {
     administrative: { ...administrative, committees: adminCommittees },
@@ -345,7 +362,6 @@ export function buildStructure(
       assignments: holders.length,
       people: new Set(holders.map((h) => h.userId)).size,
     },
-    anomalies,
   };
 }
 
@@ -358,12 +374,11 @@ export type Position = {
   roleAr: string;
   scope: string; // نصّ النطاق: «قيادة النادي» / «قسم …» / «لجنة …»
   // المجلس كما تقوله القاعدة (roles.council_type). لا «قيادة النادي» — كانت
-  // تصنيفًا محفورًا لا وجود له في القاعدة، ورئيسُ النادي والمستشار كلاهما
-  // عضوٌ في المجلس الإداريّ.
+  // تصنيفًا محفورًا لا وجود له في القاعدة، ورئيسُ أدِيب عضوٌ في المجلس الإداريّ.
   council: "executive" | "administrative";
   committeeId: number | null;
   departmentId: number | null;
-  // الشاغلون — جمعٌ لا مفرد: منصبٌ كـ«مستشار رئيس النادي» يقبل أكثر من شاغل،
+  // الشاغلون — جمعٌ لا مفرد: منصبٌ كـ«عضو إدارة الموارد البشرية» يقبل أكثر من شاغل،
   // ولو حُفظ مفردًا لاختفى الثاني بلا أثر (وهو ما كان يقع).
   holders: Holder[];
   // منصب مفرد (يُستبدَل لا يُضاف). لا يُحفر هنا: مصدره `roles.holder_uniqueness`
@@ -374,11 +389,20 @@ export type Position = {
   // لا يُكتشف في انتخاب: قائدة الموارد تزن 3.0 ونظيرتها في الضمان 1.0 — سياسةٌ مقصودة.
   voteWeight: number;
   councilMember: boolean; // يجلس في المجلس ويقرّر (membership_kind='member') لا تابعٌ لفرعه
-  // شرطُ المقعد: منصبٌ يجب أن يشغله المرشّح قبله (العضو الإداريّ ← عضو لجنة).
+  // شرطُ المقعد: منصبٌ بعينه يجب أن يشغله المرشّح قبله (لا مقعدَ يشترطه منذ 20261010).
   // مصدره `roles.prerequisite_role_name`، تقرؤه القاعدة والمنتقي من مكانٍ واحد.
   prerequisite: string | null;
   prerequisiteAr: string | null;
+  // شرطُ العضويّة: لا يُسنَد إلّا لعضوٍ في أدِيب الآن، أيًّا كان مقعده — لا لمتطوّعٍ ولا لزائر
+  // (عضو الإدارة، قرار محمد 20261010). مصدره `roles.requires_membership`.
+  requiresMembership: boolean;
+  /** يقبل التكليف (20261010): لا تكليف في عضو الموارد ولا عضو الضمان (جهتا رقابة)، ولا في حساب النادي.
+   *  وما سوى ذلك تحكمه القاعدة (`assign_acting`). */
+  actable?: boolean;
 };
+
+/** مقاعدُ لا تكليفَ فيها — توأمُ `NOT_ACTABLE` في `assign_acting`. */
+const NOT_ACTABLE = new Set(["adeeb_admin", "hr_admin_member", "qa_admin_member"]);
 
 export function buildPositions(
   councils: RawCouncil[],
@@ -398,6 +422,8 @@ export function buildPositions(
     councilMember: roleByName.get(rn)?.membership_kind === "member",
     prerequisite: roleByName.get(rn)?.prerequisite_role_name ?? null,
     prerequisiteAr: roleByName.get(rn)?.prerequisite_role_name ? ar(roleByName.get(rn)!.prerequisite_role_name as string) : null,
+    requiresMembership: roleByName.get(rn)?.requires_membership ?? false,
+    actable: !NOT_ACTABLE.has(rn),
   });
 
   // كلّ من يشغل هذا الدور في هذا النطاق — لا أوّلُهم. المفرد يعطي واحدًا بطبعه
@@ -415,9 +441,9 @@ export function buildPositions(
   const out: Position[] = [];
 
   // مقاعد المجالس تُقرأ من القاعدة لا من جدولٍ محفور. الجدول القديم كان يكذب
-  // في ثلاثة صفوف من خمسة: يضع الرئيس والمستشار في «قيادة النادي» (تصنيفٌ لا
-  // وجود له)، ورئيسَ التنفيذيّ في المجلس التنفيذيّ — وهو عضوٌ في الإداريّ
-  // ويرأس التنفيذيّ (head_role_name). فالعضويّة والمجلس يقولهما العمودان.
+  // في صفّين: يضع الرئيس في «قيادة النادي» (تصنيفٌ لا وجود له)، والرئيسَ التنفيذيّ
+  // في المجلس التشغيليّ — وهو عضوٌ في الإداريّ ويرأس التنفيذيّ (head_role_name).
+  // فالعضويّة والمجلس يقولهما العمودان.
   const councilName = (id: string) => councils.find((c) => c.id === id)?.name_ar ?? id;
   for (const r of roles.filter((x) => x.membership_kind === "member" && x.council_type).sort((a, b) => roleRank(a.role_name) - roleRank(b.role_name))) {
     // المقاعد ذات النطاق (منسّق قسم/قائد/نائب) تُبنى أدناه بنطاقها، لا هنا

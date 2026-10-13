@@ -3,7 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
-import { DASHBOARD_CAPS } from "@/lib/capabilities";
+import { DASHBOARD_CAPS, STANDING_CAPS } from "@/lib/capabilities";
 
 export type PermResult = { ok: boolean; message: string };
 
@@ -48,6 +48,10 @@ export async function setCapability(input: {
   if (!permKey) return { ok: false, message: "القدرة غير موجودة." };
   if (!DASHBOARD_CAPS.includes(permKey)) {
     return { ok: false, message: "هذه القدرة لا تفتح شيئًا في اللوحة." };
+  }
+  // ومفاتيحُ المكانة تُحسب من المكانة في القاعدة — ربطُها بدورٍ يُعطيها من لا مكانةَ له
+  if (STANDING_CAPS.includes(permKey)) {
+    return { ok: false, message: "هذه القدرة تتبع مكانة صاحبها، ولا تُمنح بدور." };
   }
 
   if (granted) {

@@ -24,9 +24,13 @@ export type Unit = {
   link: string | null;
   memberRoleName: string;
   memberRoleAr: string;
-  /** شرطُ مقعد العضو: منصبٌ يجب أن يشغله المرشّح قبل الضمّ (عضو الإدارة ← عضو لجنة). */
+  /** شرطُ مقعد العضو: منصبٌ بعينه يجب أن يشغله المرشّح قبل الضمّ (لا مقعدَ يشترطه منذ 20261010). */
   memberPrerequisite: string | null;
   memberPrerequisiteAr: string | null;
+  /** شرطُ العضويّة: لا يُضمّ إلّا عضوٌ في أدِيب الآن، أيًّا كان مقعده — لا متطوّعٌ ولا زائر. */
+  memberRequiresMembership: boolean;
+  /** إدارةٌ يُشرف أعضاؤها على اللجان (الموارد والضمان)؛ والإدارة التنفيذيّة لا (٢٠٢٦-١٠-١٠). */
+  supervises: boolean;
 };
 
 /** لجنةٌ تشغيليّة يجوز توزيع الإشراف عليها. */
@@ -39,6 +43,8 @@ export type UnitMember = {
   avatar: string | null;
   gender: "male" | "female" | null;
   committees: Target[];
+  /** مكلَّفٌ لا أصيل (20261010): صفُّ تكليفه وآخرُ يومه — يُقال تحت اسمه، ويُنهى تكليفه بدل إخراجه. */
+  acting?: { rowId: number; until: string | null } | null;
 };
 
 // الجنس يصل من القاعدة نصًّا حرًّا؛ يُضيَّق هنا إلى ما تعرفه أيقونة الأفتار وحده.
@@ -84,6 +90,8 @@ export function adminUnit(
       const home = r.home_committee_id != null ? byId.get(r.home_committee_id)?.committee_name_ar ?? null : null;
       return seatName(r.role_name_ar ?? r.role_name, home);
     })(),
+    memberRequiresMembership: roles.find((x) => x.role_name === c.member_role_name)?.requires_membership ?? false,
+    supervises: c.supervises ?? false,
   };
 }
 
@@ -121,6 +129,7 @@ export function buildRoster(
         avatar: p?.avatar_url ?? null,
         gender: asGender(p?.gender),
         committees: (byUser.get(ur.user_id) ?? []).sort((a, b) => a.id - b.id),
+        acting: ur.is_acting && ur.id != null ? { rowId: ur.id, until: ur.acting_until ?? null } : null,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "ar"));
@@ -176,5 +185,6 @@ export function buildSeats(
       // مقعدُ إشرافٍ لا مقعدُ منصب — والشرط يخصّ الضمّ إلى الإدارة لا التوزيع عليها.
       prerequisite: null,
       prerequisiteAr: null,
+      requiresMembership: false,
     }));
 }

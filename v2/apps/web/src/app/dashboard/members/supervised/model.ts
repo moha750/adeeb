@@ -95,7 +95,8 @@ export function myCommittees(
 
   // الإدارة من الانتماء: صفٌّ حيّ على لجنةٍ مجلسُها إداريّ
   let unit: MyUnit | null = null;
-  for (const ur of userRoles) {
+  // الأصيلُ قبل التكليف (20261010)
+  for (const ur of [...userRoles].sort((a, b) => Number(!!a.is_acting) - Number(!!b.is_acting))) {
     if (ur.user_id !== actorId || ur.committee_id == null) continue;
     const c = comById.get(ur.committee_id);
     if (!c || c.council_id !== "administrative") continue;

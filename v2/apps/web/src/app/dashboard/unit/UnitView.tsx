@@ -3,13 +3,15 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ModalSectionHeading, Stat } from "@adeeb/design-system";
-import { Buildings, UserMinus, UserPlus, UsersFour } from "@phosphor-icons/react";
+import { Buildings, CalendarX, UserMinus, UserPlus, UserSwitch, UsersFour } from "@phosphor-icons/react";
 import { ArrowsClockwise } from "@/app/_components/glyphs";
 import { Trash } from "@/app/_components/glyphs";
 import { EmptyState } from "../_components/EmptyState";
 import { useToast } from "../_components/ToastProvider";
 import type { MenuGroup } from "../_components/DropdownMenu";
-import { assignPosition, assignSupervision, removePosition, revokeSupervision } from "../members/structure/actions";
+import { assignActing, assignPosition, assignSupervision, endActing, loadActingCandidates, removePosition, revokeSupervision, type ActingCandidate } from "../members/structure/actions";
+import { ActingModal, type ActingValues } from "../members/assignments/ActingModal";
+import { ConfirmDialog } from "../_components/ConfirmDialog";
 import type { Position } from "../members/structure/model";
 import { PositionCard } from "../members/assignments/PositionCard";
 import type { MemberOption } from "../members/assignments/AssignmentModal";
@@ -50,6 +52,32 @@ export function UnitView({
   const [modal, setModal] = useState<SupState | null>(null);
   const [pick, setPick] = useState("");
   const [busy, start] = useTransition();
+  // التكليف في الإدارة (20261010): للإدارة التنفيذيّة وحدها — لا يُكلَّف أحدٌ عضوًا في الموارد ولا الضمان
+  // (جهتا رقابة، قرار محمد). والقاعدة تقول الحكم (`NOT_ACTABLE`)؛ وهنا يُخفى بابٌ لا يُفتح.
+  const actable = !["hr_admin_member", "qa_admin_member"].includes(unit.memberRoleName);
+  const [actingOpen, setActingOpen] = useState(false);
+  const [actingPool, setActingPool] = useState<ActingCandidate[] | null>(null);
+  const [endFor, setEndFor] = useState<UnitMember | null>(null);
+  const openActing = () => {
+    setActingPool(null);
+    setActingOpen(true);
+    void loadActingCandidates(unit.memberRoleName).then((r) => {
+      if (!r.ok) toast.error(r.message ?? "تعذّر جلب المرشّحين.");
+      setActingPool(r.members);
+    });
+  };
+  const submitActing = (v: ActingValues) => start(async () => {
+    const r = await assignActing({ userId: v.userId, roleName: unit.memberRoleName, committeeId: unit.id, until: v.until, freeze: v.freeze, reason: v.reason });
+    if (r.ok) { toast.success(r.message); setActingOpen(false); router.refresh(); } else toast.error(r.message);
+  });
+  const submitEnd = () => {
+    const rowId = endFor?.acting?.rowId;
+    if (!rowId) return;
+    start(async () => {
+      const r = await endActing({ rowId });
+      if (r.ok) { toast.success(r.message); setEndFor(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
 
   const stats = useMemo(() => {
     const covered = seats.filter((s) => s.holders.length > 0).length;
@@ -61,12 +89,14 @@ export function UnitView({
     () => roster.map((s) => ({ id: s.userId, name: s.name, avatar: s.avatar, gender: s.gender })),
     [roster],
   );
-  // مرشّحو الضمّ = بقيّة النادي، مضيَّقةً بشرط المقعد: عضو الإدارة لا يُضمّ إلّا من هو
-  // عضو لجنةٍ الآن (انتقالٌ لا ضمٌّ من خارج). الشرط بيانٌ من القاعدة لا حُكمٌ مستنسخ.
+  // مرشّحو الضمّ = بقيّة النادي، مضيَّقةً بشرط المقعد: عضو الإدارة لا يُضمّ إلّا عضوٌ في أدِيب
+  // الآن، أيًّا كان مقعده (انتقالٌ لا ضمٌّ من خارج). الشرط بيانٌ من القاعدة لا حُكمٌ مستنسخ.
   const candidates: MemberOption[] = useMemo(() => {
     const inUnit = new Set(roster.map((s) => s.userId));
-    return members.filter((m) => !inUnit.has(m.id) && (!unit.memberPrerequisite || m.heldRole === unit.memberPrerequisite));
-  }, [members, roster, unit.memberPrerequisite]);
+    return members.filter((m) => !inUnit.has(m.id)
+      && (!unit.memberPrerequisite || m.heldRole === unit.memberPrerequisite)
+      && (!unit.memberRequiresMembership || m.heldRole != null));
+  }, [members, roster, unit.memberPrerequisite, unit.memberRequiresMembership]);
 
   const loadOf = useMemo(
     () => new Map(roster.map((s) => [s.userId, s.committees.length])),
@@ -95,7 +125,8 @@ export function UnitView({
     open({ kind: "remove", member: { userId: h.userId, name: h.name, avatar: h.avatar, gender: h.gender }, committee: seatOf(p) });
   };
 
-  const openExpel = (s: UnitMember) => open({ kind: "expel", member: s, count: loadOf.get(s.userId) ?? 0 });
+  // المكلَّف لا يُخرَج من الإدارة، بل يُنهى تكليفه (فيعود أصيله المجمَّد إن كان)
+  const openExpel = (s: UnitMember) => (s.acting ? setEndFor(s) : open({ kind: "expel", member: s, count: loadOf.get(s.userId) ?? 0 }));
 
   // إرسالٌ واحد يخدم الأفعال الأربعة — الفعل يُقرأ من الحالة، وبابُه يُقرأ من نوعه:
   // الانتماء إلى `assign/removePosition`، والإشراف إلى `assign/revokeSupervision`.
@@ -143,14 +174,23 @@ export function UnitView({
       {/* الإحصاءات تقول ما للإدارة من أمر: بعدد من فيها، وبتغطيتها للجان — بترتيب القسمين. */}
       <div className="stat-grid">
         <Stat icon={<UsersFour />} value={stats.people} label="عضوًا في إدارتك" tone="brand" />
-        <Stat icon={<Buildings />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
-        <Stat icon={<UserMinus />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
+        {unit.supervises ? (
+          <>
+            <Stat icon={<Buildings />} value={stats.covered} label="لجنة مُغطّاة" tone="success" />
+            <Stat icon={<UserMinus />} value={stats.vacant} label="لجنة بلا مشرف" tone="danger" />
+          </>
+        ) : null}
       </div>
 
       {/* القسم الأوّل — الانتماء: من هم أعضاء إدارتك، ضمًّا وإخراجًا. لا إشرافَ يُمسّ هنا. */}
       <section className="asg-sec">
         <div className="viewbar">
           <ModalSectionHeading icon={<UsersFour />} title="أعضاء الإدارة" />
+          {actable ? (
+            <Button variant="ghost" size="md" onClick={openActing}>
+              <UserSwitch aria-hidden /> تكليف
+            </Button>
+          ) : null}
           <Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>
             <UserPlus aria-hidden /> تعيين عضو إداريّ
           </Button>
@@ -161,7 +201,7 @@ export function UnitView({
             variant="soft"
             icon={<UsersFour />}
             title="لا عضو في إدارتك بعد"
-            description="ابدأ بتعيين عضوٍ إداريٍّ في الإدارة، ثمّ وزّع إشرافه من قسم اللجان أدناه."
+            description={unit.supervises ? "ابدأ بتعيين عضوٍ إداريٍّ في الإدارة، ثمّ وزّع إشرافه من قسم اللجان أدناه." : "ابدأ بتعيين عضوٍ إداريٍّ في الإدارة."}
             action={<Button variant="primary" size="md" onClick={() => open({ kind: "recruit" })}>تعيين عضو إداريّ</Button>}
           />
         ) : (
@@ -170,7 +210,7 @@ export function UnitView({
               <UnitMemberCard
                 key={s.userId}
                 member={s}
-                subtitle={committeesLabel(s.committees.length)}
+                subtitle={unit.supervises ? committeesLabel(s.committees.length) : null}
                 onExpel={() => openExpel(s)}
               />
             ))}
@@ -178,7 +218,9 @@ export function UnitView({
         )}
       </section>
 
-      {/* القسم الثاني — الإشراف: مقعدُ إدارتك في كلّ لجنةٍ تنفيذيّة، وهو **بابُ التوزيع الوحيد**. */}
+      {/* القسم الثاني — الإشراف: مقعدُ إدارتك في كلّ لجنةٍ تشغيليّة، وهو **بابُ التوزيع الوحيد**.
+          ولا قسمَ للإدارة التنفيذيّة: ذراعُ الرئيس التنفيذيّ لا رقيبٌ على اللجان. */}
+      {unit.supervises ? (
       <section className="asg-sec">
         <ModalSectionHeading icon={<Buildings />} title="توزيع الإشراف على اللجان" />
         <div className="card-grid">
@@ -189,6 +231,7 @@ export function UnitView({
           ))}
         </div>
       </section>
+      ) : null}
 
       <SupervisionModal
         state={modal}
@@ -200,6 +243,29 @@ export function UnitView({
         busy={busy}
         onClose={() => setModal(null)}
         onSubmit={submit}
+      />
+
+      {actable ? (
+        <ActingModal
+          key={actingOpen ? "acting-open" : "acting-closed"}
+          seat={actingOpen ? { roleAr: unit.memberRoleAr, scope: unit.name, owner: null } : null}
+          members={actingPool}
+          busy={busy}
+          onClose={() => setActingOpen(false)}
+          onSubmit={submitActing}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={endFor !== null}
+        onClose={() => setEndFor(null)}
+        tone="warning"
+        icon={<CalendarX />}
+        title="إنهاء التكليف؟"
+        text={endFor ? `ينتهي تكليف ${endFor.name} الآن.` : undefined}
+        confirmLabel="إنهاء التكليف"
+        onConfirm={submitEnd}
+        loading={busy}
       />
     </div>
   );

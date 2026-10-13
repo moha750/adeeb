@@ -1,5 +1,6 @@
 // يُستورَد فقط من مكوّنات خادميّة (page.tsx). المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import "server-only";
+import { describeCandidates } from "@/lib/actingCandidates";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { firstAndLastOf } from "@/lib/personName";
@@ -206,8 +207,10 @@ export async function getElectionCreateOptions(): Promise<ElectionCreateOptions>
     sb.from("committees").select("id, committee_name_ar").eq("is_active", true).eq("council_id", "executive"),
     sb.from("departments").select("id, name_ar").eq("is_active", true).order("display_order", { ascending: true }),
     sb.from("elections").select("target_role_name, target_committee_id, target_department_id").is("archived_at", null).in("status", ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"]),
-    // role_name عمودٌ في user_roles (مُزامَن) — لا تضمين roles تفاديًا لالتباس المفتاحين
-    sb.from("user_roles").select("committee_id, department_id, role_name").eq("is_active", true).in("role_name", ["committee_leader", "deputy_committee_leader", "department_head"]),
+    // role_name عمودٌ في user_roles (مُزامَن) — لا تضمين roles تفاديًا لالتباس المفتاحين.
+    // والمشغولُ للانتخاب أصيلٌ حيّ أو مجمَّدٌ يُحجَز لصاحبه؛ والمكلَّفُ لا يمنعه، فتكليفه ينتهي
+    // بإعلان الفائز (20261010، توأمُ `is_target_position_vacant`).
+    sb.from("user_roles").select("committee_id, department_id, role_name").or("and(is_active.eq.true,is_acting.eq.false),frozen_by.not.is.null").in("role_name", ["committee_leader", "deputy_committee_leader", "department_head"]),
   ]);
   const firstErr = rRes.error || cRes.error || dRes.error || eRes.error || occRes.error;
   if (firstErr) return { ...EMPTY_OPTS, error: firstErr.message };
@@ -512,7 +515,8 @@ export async function getElectionLog(id: string): Promise<{ events: ElectionLogE
 
 /* ══ من يصلح للتكليف على مقعدٍ تعثّر انتخابُه ═════════════════════════ */
 
-export type AppointOption = { id: string; label: string };
+// `label` اسمُه؛ والبقيّة (20261010) تصفه لنافذة التكليف: أفتاره وجنسه وموضعه الأصيل. والمحاكي يكتفي بالاسم.
+export type AppointOption = { id: string; label: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null };
 
 /**
  * أعضاءُ نطاق المقعد السارون — لبابِ «كلِّف شاغلًا» حين يقف الانتخاب بلا مرشّحين.
@@ -543,10 +547,13 @@ export async function getAppointableMembers(electionId: string): Promise<{ membe
   if (!ids.length) return { members: [], error: null };
 
   // السارون وحدهم يُعرَضون (لا موقوفَ ولا مُنهَى عضويّتُه)
-  const pRes = await sb.from("profiles").select("id, full_name").in("id", ids).eq("account_status", "active").order("full_name", { ascending: true });
+  const pRes = await sb.from("profiles").select("id").in("id", ids).eq("account_status", "active");
   if (pRes.error) return { members: [], error: pRes.error.message };
 
-  return { members: (pRes.data ?? []).map((p) => ({ id: p.id as string, label: p.full_name as string })), error: null };
+  // موصوفين لنافذة التكليف (20261010): موضعُ كلٍّ الأصيل بجنسه، كما في «تعيين المناصب»
+  const d = await describeCandidates(sb, (pRes.data ?? []).map((p) => p.id as string));
+  if (d.error) return { members: [], error: d.error };
+  return { members: d.members.map((m) => ({ id: m.id, label: m.name, avatar: m.avatar, gender: m.gender, held: m.held })), error: null };
 }
 
 /* ══ تفصيلُ الأصوات ══════════════════════════════════════════════════

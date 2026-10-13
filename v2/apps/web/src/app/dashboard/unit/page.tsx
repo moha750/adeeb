@@ -39,7 +39,7 @@ export default async function UnitPage({ searchParams }: { searchParams: Promise
         <Head />
         <Alert tone="warning" title="لا إدارة تبلغها">
           هذه الشاشة لمن يعيّن الأعضاء الإداريّين: يضمّهم إلى إداراتهم ويوزّع إشرافهم على لجان
-          المجلس التنفيذيّ. وقائدُ اللجنة التنفيذيّة غرفتُه «لجنتي»، ومنسّقُ القسم «قسمي».
+          المجلس التشغيليّ. وقائدُ اللجنة غرفتُه «لجنتي»، ومنسّقُ القسم «قسمي».
         </Alert>
       </>
     );
@@ -81,7 +81,7 @@ export default async function UnitPage({ searchParams }: { searchParams: Promise
       {scope.units.length > 1 ? <UnitSwitcher units={scope.units} current={unit.id} /> : null}
       <UnitView
         unit={unit}
-        seats={buildSeats(unit, org.committees, org.supervision, org.profiles)}
+        seats={unit.supervises ? buildSeats(unit, org.committees, org.supervision, org.profiles) : []}
         roster={buildRoster(unit, org.committees, org.userRoles, org.supervision, org.profiles)}
         members={org.members}
       />

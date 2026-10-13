@@ -25,6 +25,9 @@ export type PublicPosition = {
   roleAr: string;
   unitName: string | null;
   since: string | null;
+  /** تكليفٌ لا أصيل (20261010): يُقال بلفظه. الأصيلُ أوّلًا في الترتيب (`get_public_profile`). */
+  acting?: boolean;
+  until?: string | null;
 };
 
 export type PublicProfile = {

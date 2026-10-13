@@ -9,6 +9,7 @@ import { Avatar } from "../../_components/Avatar";
 import { AvatarStack } from "../../_components/AvatarStack";
 import { Person } from "./tree";
 import type { CommitteeNode, CouncilBody, DepartmentNode, Holder, StructureModel } from "./model";
+import { actingLine } from "@/lib/positionLabel";
 
 /**
  * **خريطة العضو** — الجيل الثاني من شجرة الهيكلة، مقترحٌ ينتظر إقرار المالك.
@@ -126,7 +127,7 @@ function Hero({ committee, dept, council, onOpen }: {
               {lead ? (
                 <div className="omap-hero-lead">
                   <Avatar name={lead.name} src={lead.avatar ?? undefined} gender={lead.gender} size="lg" />
-                  <span className="omap-hero-lead-tx"><b>{lead.name}</b><span>{committee.leaderRoleAr}</span></span>
+                  <span className="omap-hero-lead-tx"><b>{lead.name}</b><span>{actingLine(committee.leaderRoleAr, !!lead.acting)}</span></span>
                 </div>
               ) : null}
               <div className="omap-hero-rest">
@@ -217,7 +218,7 @@ export function MapView({ model, you = NO_YOU }: { model: StructureModel; you?: 
           {/* الإدارةُ لجنةٌ بنفسها، فلا يُعاد اسمُها صفًّا تحت ترويسته: وجوهُها وزرُّ كشفِها يكفيان. */}
           {adminComs.map((c) => (
             <UnitCard key={c.id} icon={<UsersFour />} title={c.name}
-              subtitle={c.leader ? `${c.leaderRoleAr}: ${c.leader.name}` : <span className="omap-vac">{vacantWord(c.leaderElected)}</span>}
+              subtitle={c.leader ? `${actingLine(c.leaderRoleAr, !!c.leader.acting)}: ${c.leader.name}` : <span className="omap-vac">{vacantWord(c.leaderElected)}</span>}
               desc={c.desc} mine={you.committees.includes(c.id)}>
               <div className="omap-inline">
                 {peopleOf(c).length ? <AvatarStack people={peopleOf(c)} max={6} /> : <span className="omap-vac">لا أعضاء بعد</span>}
@@ -234,7 +235,7 @@ export function MapView({ model, you = NO_YOU }: { model: StructureModel; you?: 
         <div className="card-grid">
           {depts.map(({ d, coms }) => (
             <UnitCard key={d.id} icon={<Buildings />} title={d.name}
-              subtitle={d.head ? `${d.headRoleAr}: ${d.head.name}` : <span className="omap-vac">{vacantWord(d.headElected)}</span>}
+              subtitle={d.head ? `${actingLine(d.headRoleAr, !!d.head.acting)}: ${d.head.name}` : <span className="omap-vac">{vacantWord(d.headElected)}</span>}
               desc={d.desc} mine={you.departments.includes(d.id) || d.committees.some((c) => you.committees.includes(c.id))}>
               <div className="omap-coms">{(coms.length ? coms : d.committees).map(row)}</div>
             </UnitCard>

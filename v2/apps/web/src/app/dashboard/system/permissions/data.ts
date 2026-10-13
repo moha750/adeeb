@@ -2,7 +2,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { ROLE_ORDER } from "@/lib/roleOrder";
-import { DASHBOARD_CAPS } from "@/lib/capabilities";
+import { DASHBOARD_CAPS, STANDING_CAPS } from "@/lib/capabilities";
 import { seatScope, type SeatScope } from "@/lib/preview-seat";
 import { seatName } from "@/lib/positionLabel";
 import type { PermRole, Capability } from "./vocab";
@@ -43,7 +43,9 @@ export async function getPermissionMatrix(): Promise<PermMatrix> {
 
   const [rRes, pRes, rpRes, cRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
-    sb.from("permissions").select("id, permission_key, permission_name_ar, category").in("permission_key", [...DASHBOARD_CAPS]),
+    // مفاتيحُ المكانة (بوّابة أدِيب) مشتقّةٌ لا تُمنح بدور، فلا تُعرَض هنا
+    sb.from("permissions").select("id, permission_key, permission_name_ar, category")
+      .in("permission_key", DASHBOARD_CAPS.filter((c) => !STANDING_CAPS.includes(c))),
     sb.from("role_permissions").select("role_name, permission_id"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
@@ -84,7 +86,8 @@ export async function getViewAsTargets(): Promise<ViewAsTarget[]> {
 
   const [rRes, urRes, pRes, cRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
-    sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
+    // الأصيلُ وحده (حيًّا أو مجمَّدًا): التكليفُ فوقه لا يُعدّ موضعَه (20261010)
+    sb.from("user_roles").select("user_id, role_name").or("and(is_active.eq.true,is_acting.eq.false),frozen_by.not.is.null"),
     sb.from("members").select("id, full_name").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);
@@ -106,10 +109,30 @@ export async function getViewAsTargets(): Promise<ViewAsTarget[]> {
     if (cur === undefined || rank(rn) < rank(cur)) best.set(uid, rn);
   }
 
-  return [...best.entries()]
+  const members = [...best.entries()]
     .map(([id, rn]) => ({ id, name: name.get(id)!, roleAr: roleAr.get(rn) ?? "بلا منصب", rank: rank(rn) }))
     .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "ar"))
     .map(({ id, name: n, roleAr: r }) => ({ id, name: n, roleAr: r }));
+
+  /**
+   * **ومن لا منصبَ له: المتطوّعُ وصديقُ أدِيب** (٢٠٢٦-١٠-١٣) — صارت لهما بوّابةٌ بإطارٍ خفيف
+   * وغرفٍ خاصّة، فلا تُعرَف كما يراها صاحبُها إلّا بعينه. مجموعتان في آخر القائمة، بعد المناصب.
+   */
+  const [vRes, fRes] = await Promise.all([
+    sb.from("volunteers").select("user_id").eq("status", "active"),
+    sb.from("profiles").select("id, full_name").is("deletion_requested_at", null).is("deleted_at", null),
+  ]);
+  if (vRes.error || fRes.error) return members;
+  const vol = new Set((vRes.data ?? []).map((v) => v.user_id as string));
+  const byName = (a: ViewAsTarget, b: ViewAsTarget) => a.name.localeCompare(b.name, "ar");
+  const rest = (fRes.data ?? [])
+    .filter((p) => !name.has(p.id as string) && (p.full_name as string | null)?.trim())
+    .map((p) => ({ id: p.id as string, name: p.full_name as string, roleAr: vol.has(p.id as string) ? "متطوّع أدِيب" : "صديق أدِيب" }));
+  return [
+    ...members,
+    ...rest.filter((t) => t.roleAr === "متطوّع أدِيب").sort(byName),
+    ...rest.filter((t) => t.roleAr === "صديق أدِيب").sort(byName),
+  ];
 }
 
 /** منصبٌ بلا شاغل — يُعايَن بإجلاس الشاغل المؤقّت عليه (`lib/preview-seat.ts`). */
@@ -131,7 +154,8 @@ export async function getVacantPositions(): Promise<VacantSeat[]> {
 
   const [rRes, urRes, pRes, cRes, dRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
-    sb.from("user_roles").select("user_id, role_name").eq("is_active", true),
+    // المشغولُ مَن جلس فيه (أصيلًا أو مكلَّفًا) أو حُجز لصاحبه المجمَّد (20261010): لا يُجلَس فيه الشاغلُ المؤقّت
+    sb.from("user_roles").select("user_id, role_name").or("is_active.eq.true,frozen_by.not.is.null"),
     sb.from("members").select("id").eq("account_status", "active"),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name, member_role_name").eq("is_active", true),
     sb.from("departments").select("id, name_ar").eq("is_active", true),

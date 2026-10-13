@@ -7,6 +7,7 @@ import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import type { MeBrief } from "@/app/api/me/brief/route";
 import { standingName } from "@/lib/standing";
+import { NotificationsBell } from "@/app/_notifications/NotificationsBell";
 
 /**
  * رأسُ الموقع كما يلبسه أدِيب — `Header` المكتبة، وقد صار **يعرف صاحبَه**.
@@ -103,6 +104,9 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
               { name: "", isMember: false, avatar: <span className="av" aria-hidden /> }
             : undefined
       }
+      /* الجرسُ لصاحب الجلسة (وفي انتظار البطاقة يحجز موضعَه كالكبسولة، فلا يقفز الرأس). وإن كذب
+         الحدسُ ردّت أفعالُه «لا جلسة» فاختفى. (v2/NOTIFICATIONS-SYSTEM.md) */
+      bell={viewer || pending ? <NotificationsBell /> : undefined}
       onSignOut={signOut}
     />
   );

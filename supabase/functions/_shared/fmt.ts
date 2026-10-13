@@ -60,7 +60,6 @@ const FEMININE: Record<string, string> = {
   "منسّق": "منسّقة",
   "منسق": "منسقة",
   "رئيس": "رئيسة",
-  "مستشار": "مستشارة",
 };
 
 export type Gender = "male" | "female" | null;

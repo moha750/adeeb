@@ -26,13 +26,12 @@ export type RoleCase = {
   caveat?: string;
 };
 
-/** أحدَ عشرَ دورًا، ١٦٠ حاملًا. والترتيب من أعلى الشجرة إلى أوسعها. */
+/** عشرةُ أدوار، ١٦٠ حاملًا. والترتيب من أعلى الشجرة إلى أوسعها. */
 export const ROLES: RoleCase[] = [
-  { key: "club_president", full: "رئيس نادي أدِيب", unit: "عامّ في النادي", holders: 1,
+  { key: "club_president", full: "رئيس أدِيب", unit: "عامّ في النادي", holders: 1,
     caveat: "لا يزيله أحدٌ ولا يزيل نفسَه، فلا مخرجَ لمقعده من الشاشات. وهو استثناءٌ صرّح به المالكُ ولم يسدّه." },
-  { key: "executive_council_president", full: "رئيس المجلس التنفيذي", unit: "عامّ في النادي", holders: 1,
+  { key: "executive_council_president", full: "الرئيس التنفيذي", unit: "عامّ في النادي", holders: 1,
     caveat: "من فوقه واحدٌ فقط، فهو قاضي طلبه وحدَه." },
-  { key: "president_advisor", full: "مستشار رئيس النادي", unit: "عامّ في النادي", holders: 0 },
   { key: "hr_committee_leader", full: "قائد إدارة الموارد البشرية", unit: "إدارة", holders: 1,
     caveat: "الرئيسان وحدَهما، فلا يقضي في طلب نفسه ولا في طلب نظيره." },
   { key: "qa_committee_leader", full: "قائد إدارة ضمان الجودة", unit: "إدارة", holders: 1,
@@ -74,7 +73,7 @@ export type Verdict = { door: Door; label: string; tone: "danger" | "warning" | 
 
 /** مقعدُ العضويّة في اللجان التنفيذيّة وحدَه يمضي بزرّ، والإدارتان في باب الطلب بأمره. */
 const SELF_EXIT = new Set(["committee_member"]);
-/** مقعدٌ لا مخرجَ منه: رئيسُ النادي وحدَه، لا يزيله أحدٌ ولا يزيل نفسَه (٢٠ أغسطس). */
+/** مقعدٌ لا مخرجَ منه: رئيسُ أدِيب وحدَه، لا يزيله أحدٌ ولا يزيل نفسَه (٢٠ أغسطس). */
 const SEALED = new Set(["club_president"]);
 
 export function judge(role: RoleCase): Verdict {
@@ -94,11 +93,10 @@ export function judge(role: RoleCase): Verdict {
  * من يقضي في طلب كلّ مقعد — مرآةُ `exit_decider_roles` (٢٠٢٦-٠٨-٢٠).
  * والسلطةُ تتبع مقعدَ الطالب: قائدا الإدارتين للرئيسين، وعضوُ الضمان لقائد إدارته.
  */
-const PRESIDENTS = ["رئيس النادي", "رئيس المجلس التنفيذي"];
+const PRESIDENTS = ["رئيس أدِيب", "الرئيس التنفيذي"];
 
 export function decidersFor(key: string): string[] {
-  if (key === "executive_council_president") return ["رئيس النادي"];
-  if (key === "president_advisor") return PRESIDENTS;
+  if (key === "executive_council_president") return ["رئيس أدِيب"];
   if (key === "hr_committee_leader" || key === "qa_committee_leader") return PRESIDENTS;
   if (key === "qa_admin_member") return [...PRESIDENTS, "قائد إدارة ضمان الجودة"];
   return [...PRESIDENTS, "قائد إدارة الموارد البشرية"];

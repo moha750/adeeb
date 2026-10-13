@@ -45,7 +45,7 @@ const FILTERS: FilterDef[] = [
 
 type Row = { id: string; name: string; role: string; dept: string; active: boolean };
 const ROWS: Row[] = [
-  { id: "1", name: "محمّد إسماعيل", role: "رئيس النادي", dept: "الإدارة", active: true },
+  { id: "1", name: "محمّد إسماعيل", role: "رئيس أدِيب", dept: "الإدارة", active: true },
   { id: "2", name: "سارة القحطاني", role: "نائبة الرئيس", dept: "الإدارة", active: true },
   { id: "3", name: "فهد العتيبي", role: "عضو لجنة الإعلام", dept: "الإعلام", active: true },
   { id: "4", name: "ليلى المطيري", role: "منسّقة الفعاليّات", dept: "المحتوى", active: false },

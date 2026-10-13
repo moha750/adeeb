@@ -57,7 +57,7 @@ export function QrFrame() {
             <IconCaretDown className="ash-gcaret" />
           </span>
           <div className="ash-tools">
-            <span className="ash-bell" aria-hidden><IconBell /><i /></span>
+            <span className="ntf-bell" aria-hidden><IconBell /></span>
           </div>
         </header>
         <div className="ash-content">

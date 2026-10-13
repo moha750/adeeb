@@ -78,6 +78,7 @@ export function Header({
   activeHref,
   className,
   viewer,
+  bell,
   portalHref = "/dashboard",
   accountHref = "/me",
   onSignOut,
@@ -129,6 +130,12 @@ export function Header({
      */
     gender?: "male" | "female" | null;
   };
+  /**
+   * **جرسُ الإشعارات** — عقدةٌ يرسمها التطبيق (عددُه وصندوقُه من القاعدة، والمكتبةُ لا تعرف
+   * Supabase)، ويسكن الشريطَ قبل كبسولة الهويّة. لا يُرسَم إلّا لصاحب جلسة: الزائرُ المجهول
+   * لا صندوقَ له. (`v2/NOTIFICATIONS-SYSTEM.md`)
+   */
+  bell?: React.ReactNode;
   portalHref?: string;
   accountHref?: string;
   /** الخروجُ فعلٌ لا وِجهة — يمرّره المستهلك لأنّ المكتبة لا تعرف Supabase. */
@@ -429,7 +436,10 @@ export function Header({
       {ctaEl(ctaCls)}
     </>
   ) : (
-    meTrigger
+    <>
+      {bell}
+      {meTrigger}
+    </>
   );
 
   /**

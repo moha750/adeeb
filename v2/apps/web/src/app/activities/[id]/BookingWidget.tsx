@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Alert, Button, Field, Select, Textarea } from "@adeeb/design-system";
 import {
@@ -223,11 +224,13 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
   if (step === "booked" && booked) {
     return (
-      <Alert tone="success" title="حجزك مؤكّد" icon={<CheckCircle />}>
+      // **«مؤكَّد» بعد واتساب لا قبله**: الحجزُ يحفظ المقعد، والتأكيدُ اتّصالٌ يأتي بعده — فلا يُقال
+      // «مؤكَّد» لمن لم يُتّصَل به بعد (كما تقوله «حجوزاتي» نفسُها).
+      <Alert tone="success" title={booked.whatsappConfirmed ? "حجزك مؤكَّد" : "حُفظ مقعدك"} icon={<CheckCircle />}>
         <div className="flex flex-col gap-3">
           <span>
-            احتفظنا بمقعدك. سنتواصل معك عبر واتساب لتأكيد الحضور، وحجزُك محفوظٌ في{" "}
-            <a className="font-bold underline" href="/me">حسابك</a>.
+            {booked.whatsappConfirmed ? "أكّدنا حضورك، ومقعدُك محفوظ." : "سنتواصل معك عبر واتساب لتأكيد حضورك."} وحجزُك في{" "}
+            <Link className="font-bold" href="/dashboard/bookings">حجوزاتي</Link>.
           </span>
           {err ? <span className="text-danger text-sm">{err}</span> : null}
           {!showCancel ? (

@@ -4,13 +4,13 @@
 // نقيّ بلا استيراد خادميّ — يستورده الخادم والنموذج معًا بأمان.
 export const ROLE_ORDER: readonly string[] = [
   "club_president",
-  "president_advisor",
   "executive_council_president",
   "hr_committee_leader",
   "qa_committee_leader",
   "department_head",
   "hr_admin_member",
   "qa_admin_member",
+  "exec_admin_member",
   "committee_leader",
   "deputy_committee_leader",
   "committee_member",

@@ -2,29 +2,49 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Stat, matchesSearch } from "@adeeb/design-system";
-import { Briefcase, UserCheck, UserMinus } from "@phosphor-icons/react";
-import { ArrowsClockwise } from "@/app/_components/glyphs";
-import { MagnifyingGlass, Trash } from "@/app/_components/glyphs";
+import { Button, Field, Modal, Stat, matchesSearch } from "@adeeb/design-system";
+import { Briefcase, CalendarBlank, CalendarCheck, CalendarX, UserCheck, UserMinus } from "@phosphor-icons/react";
+import { clubDayKey } from "@/lib/dates";
+import { ConfirmDialog } from "../../_components/ConfirmDialog";
+import { MagnifyingGlass } from "@/app/_components/glyphs";
+import { UnitIconNodesProvider } from "../../_components/UnitIcon";
 import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
-import type { MenuGroup } from "../../_components/DropdownMenu";
-import { assignPosition, removePosition } from "../structure/actions";
-import type { Holder, Position } from "../structure/model";
-import { PositionCard } from "./PositionCard";
+import { assignActing, assignPosition, endActing, extendActing, loadActingCandidates, removePosition, createOrgUnit, updateOrgUnit, type ActingCandidate } from "../structure/actions";
+import type { Holder, Position, RawCommittee, RawCouncil, RawDept } from "../structure/model";
+import { SeatBoard, buildSeatBoard, type SeatActions } from "./SeatBoard";
 import { AssignmentModal, type AssignState, type MemberOption } from "./AssignmentModal";
+import { ActingModal, type ActingSeat, type ActingValues } from "./ActingModal";
+import { UnitEditModal, type EditableUnit, type UnitValues } from "./UnitEditModal";
 
-export function AssignmentsView({ positions, members, anomalies }: { positions: Position[]; members: MemberOption[]; anomalies: string[] }) {
+export function AssignmentsView({ positions, units, members, canEditUnits, iconNodes = {} }: {
+  positions: Position[];
+  /** الأقسامُ واللجان بترتيبها: منها تُبنى لوحةُ المقاعد (المجلس، ثمّ كلُّ قسمٍ ولجانُه). */
+  units: { councils: RawCouncil[]; departments: RawDept[]; committees: RawCommittee[] };
+  members: MemberOption[];
+  /** «تعديل الوحدة» و«إضافة لجنة/قسم» لمن يملك `manage_positions` وحده (الخادمُ يقفل الحفظَ بالقدرة نفسها). */
+  canEditUnits: boolean;
+  /** رسومُ أيقونات الوحدات من خارج المقترحة (رسمها الخادمُ من المكتبة). */
+  iconNodes?: Record<string, React.ReactNode>;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [search, setSearch] = useState("");
   const [fv, setFv] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<AssignState | null>(null);
   const [pick, setPick] = useState("");
-  const [showAnoms, setShowAnoms] = useState(false);
   const [busy, start] = useTransition();
+  // التكليف (20261010): المقعدُ المفتوح للتكليف وبِركتُه (تُجلب عند الفتح لأنّها تتبع الدور)،
+  // والشاغلُ المكلَّف الذي يُعدَّل آخرُ يومه أو يُنهى تكليفه.
+  const [acting, setActing] = useState<{ position: Position; seat: ActingSeat } | null>(null);
+  const [actingPool, setActingPool] = useState<ActingCandidate[] | null>(null);
+  const [extendFor, setExtendFor] = useState<Holder | null>(null);
+  const [extendUntil, setExtendUntil] = useState("");
+  const [endFor, setEndFor] = useState<Holder | null>(null);
+  // الوحدةُ المفتوحة في نافذتها: للتعديل من زرّ رأس القسم أو اسم اللجنة، وللإنشاء (بلا معرّف) من «إضافة لجنة/قسم»
+  const [editUnit, setEditUnit] = useState<EditableUnit | null>(null);
 
   /**
    * **النطاقُ** (ق١٧): المجلسُ وحدَه. ومرشِّحُ **الحالة** يُستثنى: بطاقتا «شاغرة» و«مشغولة»
@@ -35,17 +55,22 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
     [positions, fv.council],
   );
 
-  const rows = useMemo(() => {
-    return scope.filter((p) => {
+  // ما يُعرض: المرشِّحان والبحث عدسةٌ على اللوحة (يُسقط المقعدَ، فاللجنةَ الفارغة، فالقسمَ الفارغ)
+  const visible = useMemo(() => {
+    const inScope = new Set(scope.map((p) => p.key));
+    return (p: Position) => {
+      if (!inScope.has(p.key)) return false;
       if (!matchesSearch(search, p.roleAr, p.scope, ...p.holders.map((h) => h.name))) return false;
       if (fv.status === "vacant" && p.holders.length > 0) return false;
       if (fv.status === "filled" && p.holders.length === 0) return false;
       return true;
-    });
-  }, [scope, search, fv]);
+    };
+  }, [scope, search, fv.status]);
+  const board = useMemo(() => buildSeatBoard(positions, units.departments, units.committees, units.councils), [positions, units]);
+  const anyVisible = positions.some(visible);
 
   const filters: FilterDef[] = [
-    { key: "council", label: "المجلس", options: [{ value: "administrative", label: "المجلس الإداري" }, { value: "executive", label: "المجلس التنفيذي" }] },
+    { key: "council", label: "المجلس", options: [{ value: "administrative", label: "المجلس الإداري" }, { value: "executive", label: "المجلس التشغيلي" }] },
     { key: "status", label: "الحالة", options: [{ value: "vacant", label: "الشاغرة" }, { value: "filled", label: "المشغولة" }] },
   ];
 
@@ -63,6 +88,54 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
   const openRemove = (pos: Position, holder: Holder) => {
     setPick("");
     setModal({ kind: "remove", position: pos, holder });
+  };
+
+  const openAct = (pos: Position) => {
+    const owner = pos.holders.find((h) => h.frozen) ?? null;
+    setActingPool(null);
+    setActing({ position: pos, seat: { roleAr: pos.roleAr, scope: pos.scope, owner: owner ? { name: owner.name, gender: owner.gender } : null } });
+    void loadActingCandidates(pos.roleName).then((r) => {
+      if (!r.ok) toast.error(r.message ?? "تعذّر جلب المرشّحين.");
+      setActingPool(r.members);
+    });
+  };
+  const submitActing = (v: ActingValues) => {
+    if (!acting) return;
+    const pos = acting.position;
+    start(async () => {
+      const r = await assignActing({ userId: v.userId, roleName: pos.roleName, committeeId: pos.committeeId, departmentId: pos.departmentId, until: v.until, freeze: v.freeze, reason: v.reason });
+      if (r.ok) { toast.success(r.message); setActing(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+  const submitExtend = () => {
+    const rowId = extendFor?.rowId;
+    if (!rowId || !extendUntil) return;
+    start(async () => {
+      const r = await extendActing({ rowId, until: extendUntil });
+      if (r.ok) { toast.success(r.message); setExtendFor(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+  const submitEnd = () => {
+    const rowId = endFor?.rowId;
+    if (!rowId) return;
+    start(async () => {
+      const r = await endActing({ rowId });
+      if (r.ok) { toast.success(r.message); setEndFor(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+
+  const submitUnit = (v: UnitValues) => {
+    const u = editUnit;
+    if (!u) return;
+    start(async () => {
+      // المجلسُ يُعدَّل بلا أيقونة (لا عمودَ لها، و`updateOrgUnit` يردّها له)، ولا يُنشأ
+      const r = u.kind === "council"
+        ? await updateOrgUnit({ kind: "council", id: String(u.id), description: v.description, groupLink: v.link })
+        : u.id == null
+        ? await createOrgUnit({ kind: u.kind, name: v.name, departmentId: u.parent?.id ?? null, icon: v.icon, description: v.description, groupLink: v.link })
+        : await updateOrgUnit({ kind: u.kind, id: u.id, icon: v.icon, description: v.description, groupLink: v.link });
+      if (r.ok) { toast.success(r.message); setEditUnit(null); router.refresh(); } else toast.error(r.message);
+    });
   };
 
   // إرسالٌ واحد يخدم الأوضاع الثلاثة (المحرّر يملك الشكل، والمنطق هنا).
@@ -84,15 +157,17 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
     }
   };
 
-  // لكلّ شاغلٍ قائمتُه (المتعدّد يجلس فيه أكثر من واحد، فالفعل يخصّ صاحبه لا الكرت).
-  // و«الاستبدال» للمفرد وحده: منصبٌ يقبل الزيادة لا يُستبدَل شاغلُه — يُضاف إليه أو يُزال منه.
-  const holderActions = (p: Position) => (h: Holder): MenuGroup[] => [{
-    header: "إجراءات",
-    items: [
-      ...(p.singleton ? [{ label: "استبدال الشاغل", icon: <ArrowsClockwise />, onSelect: () => openAssign(p, true) }] : []),
-      { label: "إزالة من المنصب", icon: <Trash />, danger: true, onSelect: () => openRemove(p, h) },
-    ],
-  }];
+  // أبوابُ المقعد في لوحة المقاعد: الأفعالُ نفسُها، والمكوّنُ يرسم أزرارَها ظاهرةً لا في قائمة.
+  const seatActions: SeatActions = {
+    onAssign: (p) => openAssign(p, false),
+    onReplace: (p) => openAssign(p, true),
+    onRemove: (p, h) => openRemove(p, h),
+    onAct: (p) => openAct(p),
+    onExtend: (h) => { setExtendUntil(h.acting?.until ?? ""); setExtendFor(h); },
+    onEnd: (h) => setEndFor(h),
+    onEditUnit: canEditUnits ? (u) => setEditUnit(u) : undefined,
+    onAddUnit: canEditUnits && !search.trim() && !fv.status && !fv.council ? (u) => setEditUnit(u) : undefined,
+  };
 
   const empty = (
     <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا مناصب مطابقة"
@@ -100,6 +175,7 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
   );
 
   return (
+    <UnitIconNodesProvider nodes={iconNodes}>
     <div className="asg">
       <StatsScope
         labels={scopeLabels(filters.filter((d) => d.key === "council"), fv)}
@@ -112,14 +188,6 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
         <Stat icon={<UserMinus />} value={stats.vacant} label="شاغرة" tone="danger" />
       </div>
 
-      {anomalies.length ? (
-        <Alert tone="warning" title={`${anomalies.length} ملاحظة على الهيكلة`}
-          actions={<button type="button" className="cred-link" onClick={() => setShowAnoms((v) => !v)}>{showAnoms ? "إخفاء" : "التفاصيل"}</button>}>
-          مناصب شاغرة أو لجان بلا قيادة. فصّلها وأسندها من البطاقات أدناه.
-          {showAnoms ? <ul className="org-anoms">{anomalies.map((a, i) => <li key={i}>{a}</li>)}</ul> : null}
-        </Alert>
-      ) : null}
-
       <Toolbar
         searchPlaceholder="ابحث بالمنصب أو النطاق أو الشاغل…"
         search={search}
@@ -130,13 +198,7 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
         onReset={() => setFv({})}
       />
 
-      {rows.length === 0 ? empty : (
-        <div className="card-grid">
-          {rows.map((p) => (
-            <PositionCard key={p.key} position={p} actions={holderActions(p)} onAssign={() => openAssign(p, false)} />
-          ))}
-        </div>
-      )}
+      {anyVisible ? <SeatBoard model={board} actions={seatActions} visible={visible} /> : empty}
 
       <AssignmentModal
         state={modal}
@@ -147,6 +209,58 @@ export function AssignmentsView({ positions, members, anomalies }: { positions: 
         onClose={() => setModal(null)}
         onSubmit={submit}
       />
+
+      <ActingModal
+        key={acting?.position.key ?? "none"}
+        seat={acting?.seat ?? null}
+        members={actingPool}
+        busy={busy}
+        onClose={() => setActing(null)}
+        onSubmit={submitActing}
+      />
+
+      <Modal
+        open={extendFor !== null}
+        onClose={() => setExtendFor(null)}
+        busy={busy}
+        size="sm"
+        title="تعديل آخر يوم في التكليف"
+        description={extendFor?.name}
+        footer={
+          <>
+            <Button variant="ghost" size="md" onClick={() => setExtendFor(null)} disabled={busy}>إلغاء</Button>
+            <Button variant="primary" size="md" loading={busy} disabled={!extendUntil || extendUntil === extendFor?.acting?.until} onClick={submitExtend}>حفظ</Button>
+          </>
+        }
+      >
+        <Field
+          label="آخر يوم في التكليف"
+          icon={<CalendarBlank />}
+          innerIcon={<CalendarCheck />}
+          placeholder="اختر التاريخ"
+          type="date"
+          min={clubDayKey(new Date().toISOString())}
+          value={extendUntil}
+          onChange={(e) => setExtendUntil(e.target.value)}
+          required
+        />
+      </Modal>
+
+      <UnitEditModal key={editUnit ? `unit-${editUnit.kind}-${editUnit.id ?? `new-${editUnit.parent?.id ?? ""}`}` : "unit-none"} unit={editUnit} busy={busy}
+        onClose={() => setEditUnit(null)} onSubmit={submitUnit} />
+
+      <ConfirmDialog
+        open={endFor !== null}
+        onClose={() => setEndFor(null)}
+        tone="warning"
+        icon={<CalendarX />}
+        title="إنهاء التكليف؟"
+        text={endFor ? `ينتهي تكليف ${endFor.name} الآن.` : undefined}
+        confirmLabel="إنهاء التكليف"
+        onConfirm={submitEnd}
+        loading={busy}
+      />
     </div>
+    </UnitIconNodesProvider>
   );
 }

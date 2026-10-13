@@ -1,7 +1,9 @@
 "use client";
 
 import { Button, Card } from "@adeeb/design-system";
+import { CalendarX } from "@phosphor-icons/react";
 import { SignOut } from "@/app/_components/glyphs";
+import { fmtDayMonth } from "@/lib/dates";
 import { Avatar } from "../_components/Avatar";
 import type { UnitMember } from "./model";
 
@@ -31,28 +33,31 @@ export function UnitMemberCard({
   onExpel,
 }: {
   member: UnitMember;
-  /** سطرُ ما تحت الاسم — حِملُ الإشراف خبرًا. */
-  subtitle: string;
+  /** سطرُ ما تحت الاسم — حِملُ الإشراف خبرًا؛ ولا سطرَ في إدارةٍ لا تُشرف. */
+  subtitle: string | null;
   onExpel: () => void;
 }) {
+  // المكلَّف (20261010): «تكليفًا حتى …» تحت اسمه، وبابُه إنهاءُ التكليف لا الإخراج
+  const acting = s.acting ? (s.acting.until ? `تكليفًا حتى ${fmtDayMonth(s.acting.until)}` : "تكليفًا") : null;
+  const line = [subtitle, acting].filter(Boolean).join("، ") || null;
   return (
     // النغمة تقول الحِمل لا الانتماء: بلا لجنةٍ = عضوٌ ينتظر توزيعًا، وهو عضوٌ في الإدارة
     // على كلّ حال — إخراجُه فعلٌ آخر، بابُه الزرّ لا سحبُ آخر لجنة.
-    <Card tone={s.committees.length ? "brand" : "warning"} className="ovcard">
+    <Card tone={subtitle === null || s.committees.length ? "brand" : "warning"} className="ovcard">
       <div className="ovcard-id">
         <Avatar name={s.name} src={s.avatar ?? undefined} gender={s.gender} size="sm" />
         <div className="ovcard-who">
           <h3 className="ovcard-name">{s.name}</h3>
-          <span className="ovcard-count">{subtitle}</span>
+          {line !== null ? <span className="ovcard-count">{line}</span> : null}
         </div>
         <Button
           variant="ghost-danger"
           size="sm"
           className="ovcard-out"
           onClick={onExpel}
-          aria-label={`إخراج ${s.name} من الإدارة`}
+          aria-label={s.acting ? `إنهاء تكليف ${s.name}` : `إخراج ${s.name} من الإدارة`}
         >
-          <SignOut aria-hidden /> إخراج
+          {s.acting ? <><CalendarX aria-hidden /> إنهاء التكليف</> : <><SignOut aria-hidden /> إخراج</>}
         </Button>
       </div>
     </Card>

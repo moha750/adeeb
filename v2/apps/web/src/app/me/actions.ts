@@ -46,7 +46,7 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
 
   const { data: p, error: pErr } = await sb
-    .from("profiles").select("joined_date, account_status").eq("id", me.id).maybeSingle();
+    .from("profiles").select("joined_date, account_status, phone").eq("id", me.id).maybeSingle();
   if (pErr) return { ok: false, message: "تعذّرت قراءة بياناتك. حاول مجدّدًا." };
   if (!p) return { ok: false, message: "لا بيانات لك بعد. أكمِلها أوّلًا." };
   // والعضوُ السابقُ صديقُ أدِيب يحرّر بياناتِه ههنا كغيره (٢٠٢٦-١٠-٠٣)
@@ -54,13 +54,17 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
     return { ok: false, message: "بياناتُك عضوًا تُحرَّر من ملفّك في بوّابة أدِيب." };
   }
 
+  // الجوّالُ بابُ الحجز وطريقُ التأكيد بواتساب: يُبدَّل ولا يُمحى
+  if (!v.phone && p.phone) return { ok: false, message: "رقم الجوّال لا يُمحى، بل يُبدَّل برقمٍ آخر.", fieldErrors: { phone: "أدخِل رقمك الجديد" } };
+
   const { error } = await sb
     .from("profiles")
-    .update({ full_name: normalizeName(v.fullName), phone: v.phone, city: v.city?.trim() || null })
+    .update({ full_name: normalizeName(v.fullName), phone: v.phone || null, city: v.city?.trim() || null })
     .eq("id", me.id);
   if (error) return { ok: false, message: "تعذّر حفظ بياناتك. حاول مجدّدًا." };
 
   revalidatePath("/me");
+  revalidatePath("/dashboard", "layout");
   return { ok: true, message: "حُفظت بياناتك." };
 }
 
@@ -120,7 +124,8 @@ export async function requestMyDeletion(
 
   const res = (data ?? {}) as { ok?: boolean; message?: string; dueAt?: string };
   revalidatePath("/me");
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/account");
   if (!res.ok) return { ok: false, message: res.message ?? "تعذّر تسجيل طلبك." };
   return {
     ok: true,
@@ -140,7 +145,8 @@ export async function cancelMyDeletion(): Promise<DeletionResult> {
 
   const res = (data ?? {}) as { ok?: boolean; message?: string };
   revalidatePath("/me");
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/account");
   return { ok: res.ok === true, message: res.message ?? "تعذّر إلغاء الطلب." };
 }
 
@@ -179,7 +185,8 @@ export async function requestMembershipExit(reason: string): Promise<DeletionRes
 
   const res = (data ?? {}) as { ok?: boolean; message?: string };
   revalidatePath("/me");
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/account");
   return { ok: res.ok === true, message: res.message ?? "تعذّر إرسال طلبك." };
 }
 
@@ -193,6 +200,7 @@ export async function withdrawMembershipExit(): Promise<DeletionResult> {
 
   const res = (data ?? {}) as { ok?: boolean; message?: string };
   revalidatePath("/me");
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/account");
   return { ok: res.ok === true, message: res.message ?? "تعذّر سحب طلبك." };
 }

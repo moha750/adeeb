@@ -9,18 +9,20 @@ import { CaretDown } from "@/app/_components/glyphs";
 import { PencilSimple, Warning } from "@/app/_components/glyphs";
 import { Avatar } from "../../_components/Avatar";
 import type { Holder, CommitteeNode, CouncilBody } from "./model";
+import { actingLine } from "@/lib/positionLabel";
 
 // شريحة الشخص — أفتار + اسم + دور (اختياريّ)؛ نغمتا رتبة: gold للقيادة، steel للعضويّة.
 export function Person({ h, role, tone }: { h: Holder; role?: boolean; tone?: "gold" | "steel" }) {
   return (
     <div className={"org-person" + (tone ? ` org-person-${tone}` : "")}>
       <Avatar name={h.name} src={h.avatar ?? undefined} gender={h.gender} size="sm" />
-      <span className="org-person-tx"><b>{h.name}</b>{role ? <span>{h.roleAr}</span> : null}</span>
+      {/* والمكلَّف يُقال بلفظه ولو لم تُطلب رتبتُه (20261010) */}
+      <span className="org-person-tx"><b>{h.name}</b>{role ? <span>{actingLine(h.roleAr, !!h.acting)}</span> : h.acting ? <span>تكليفًا</span> : null}</span>
     </div>
   );
 }
 
-// منصبٌ شاغر — إشارة danger صريحة (لا يُخفى: «المستشار» منصبٌ قائم بلا شاغل، وإخفاؤه يكذب).
+// منصبٌ شاغر — إشارة danger صريحة (لا يُخفى: منصبٌ قائمٌ بلا شاغل إخفاؤه يكذب).
 export const Vacant = ({ label }: { label: string }) => <span className="org-vacant"><Warning /> {label}</span>;
 
 // زرّ تعديل البيانات الوصفيّة (وصف + رابط) — light للنسخة الزجاجيّة فوق ترويسة المجلس.

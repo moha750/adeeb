@@ -51,6 +51,15 @@ export function positionLine(rank?: string | null, unitName?: string | null): st
 }
 
 /**
+ * **المسمّى بالتكليف** (20261010) — «قائد لجنة التسويق تكليفًا». التكليفُ مقعدٌ مؤقّتٌ فوق المنصب
+ * الأصيل، ويُقال بلفظه حيث يُقال المسمّى (قرار المالك: الشهادة والوسام والملفّ والمجلس). اللاحقةُ
+ * في آخر الجملة، فلا تمسّ تأنيث الرتبة في أوّلها (`rankFor`). وتوأمُها في القاعدة `position_title_of`.
+ */
+export function actingLine(line: string | null, acting?: boolean | null): string | null {
+  return line && acting ? `${line} تكليفًا` : line;
+}
+
+/**
  * القطعتان — لمن يعرضهما مفترقتين لا جملةً واحدة (جدولٌ يُبرز الرتبة ثمّ يُتبعها وحدتَها ·
  * كرتٌ يضع كلًّا في سطر · محطّةُ مسيرة). و`positionLine` وصلُ هاتين بمسافة.
  *
@@ -74,11 +83,19 @@ export function positionParts(rank?: string | null, unitName?: string | null): {
  */
 const FEMININE_RANK: Record<string, string> = {
   "قائد": "قائدة", "نائب": "نائبة",
-  "منسّق": "منسّقة", "منسق": "منسقة", "رئيس": "رئيسة", "مستشار": "مستشارة",
+  "منسّق": "منسّقة", "منسق": "منسقة", "رئيس": "رئيسة",
+};
+
+/** مسمًّى يُؤنَّث كلُّه لا أوّلُ كلمته: «الرئيس التنفيذي» ← «الرئيسة التنفيذية» (٢٠٢٦-١٠-١٠). */
+const FEMININE_TITLE: Record<string, string> = {
+  "الرئيس التنفيذي": "الرئيسة التنفيذية",
+  "الرئيس التنفيذيّ": "الرئيسة التنفيذيّة",
 };
 
 export function rankFor(title: string, gender?: "male" | "female" | string | null): string {
   if (gender !== "female") return title;
+  const whole = Object.keys(FEMININE_TITLE).find((t) => title === t || title.startsWith(`${t} `));
+  if (whole) return FEMININE_TITLE[whole] + title.slice(whole.length);
   const [head, ...rest] = title.split(" ");
   return [FEMININE_RANK[head] ?? head, ...rest].join(" ");
 }

@@ -88,7 +88,7 @@ export default function MembershipGalleryPage() {
             <Label>نشط، الإدارة العليا</Label>
             <MembershipCard
               name="محمد إسماعيل المطر"
-              role="رئيس نادي أدِيب"
+              role="رئيس أدِيب"
               status="active"
               gender="male"
               joined="16 يناير 2026"

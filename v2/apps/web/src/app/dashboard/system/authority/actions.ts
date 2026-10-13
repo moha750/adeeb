@@ -64,7 +64,7 @@ export async function setSeatAuthority(input: {
   if (targetRole === "club_president" && mode === "none") {
     const others = (rows ?? []).filter((r) => r.role_name !== roleName && ((r.target_roles as string[]) ?? []).includes("club_president"));
     if (targets.has("club_president") && others.length === 0) {
-      return { ok: false, message: "لا يمكن نزع آخر من يبلغ مقعد رئيس النادي. لن يُسنَد بعدها أبدًا." };
+      return { ok: false, message: "لا يمكن نزع آخر من يبلغ مقعد رئيس أدِيب. لن يُسنَد بعدها أبدًا." };
     }
   }
 

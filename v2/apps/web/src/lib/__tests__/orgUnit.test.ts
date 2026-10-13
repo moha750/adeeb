@@ -12,7 +12,7 @@ import { organizerValue, parseOrganizer } from "@/lib/activities";
  */
 
 const COUNCILS = [
-  { id: "executive", name_ar: "المجلس التنفيذي" },
+  { id: "executive", name_ar: "المجلس التشغيلي" },
   { id: "administrative", name_ar: "المجلس الإداري" },
 ];
 const DEPTS = [

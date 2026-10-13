@@ -45,16 +45,25 @@ export function AssignmentModal({
   const tone = isRemove ? "danger" : isReplace ? "warning" : undefined;
   // زيادةٌ لا إسناد: منصبٌ متعدّدٌ فيه شاغلون بالفعل — العنوان يقول ما يقع
   const isAdd = isAssign && !state.replace && p !== null && !p.singleton && p.holders.length > 0;
-  // عنوانٌ جملةٌ مترابطة بلا شرطة: «إسناد منصب مستشار رئيس النادي»
+  // عنوانٌ جملةٌ مترابطة بلا شرطة: «إسناد منصب قائد إدارة الموارد البشرية»
   const verb = isRemove ? "إزالة من منصب" : isReplace ? "استبدال شاغل منصب" : isAdd ? "إضافة شاغل إلى منصب" : "إسناد منصب";
   // الشاغل المعروض: من يُزال بعينه، أو الشاغل الذي يُحلّ محلّه في الاستبدال (والمفرد
   // لا يزيد عن واحد). أمّا الزيادةُ فلا «شاغل حاليّ» لها — الكرت يعرض الجميع.
   const holder = state?.kind === "remove" ? state.holder : isReplace ? p?.holders[0] ?? null : null;
 
-  // شرطُ المقعد يضيّق البِركة: «عضو إداريّ» لا يُسنَد إلّا لمن هو عضو لجنةٍ الآن. البِركة
-  // الواصلة مصفّاةٌ بالسلطة (`assignable_members`)، وهذا الشرطُ بيانٌ في `Position` تقرؤه
-  // الشاشة — لا حُكمَ مستنسخًا؛ والقاعدة تردّ ما فات (`NEEDS_PREREQUISITE`).
-  const eligible = p?.prerequisite ? members.filter((m) => m.heldRole === p.prerequisite) : members;
+  // شرطُ المقعد يضيّق البِركة: منصبٌ بعينه (`prerequisite`)، أو العضويّة (`requiresMembership`):
+  // عضو الإدارة لا يُسنَد إلّا لعضوٍ في أدِيب الآن أيًّا كان مقعده، وكلُّ عضوٍ حيٍّ له مقعد.
+  // البِركة الواصلة مصفّاةٌ بالسلطة (`assignable_members`)، وهذا الشرطُ بيانٌ في `Position`
+  // تقرؤه الشاشة — لا حُكمَ مستنسخًا؛ والقاعدة تردّ ما فات (`NEEDS_PREREQUISITE`/`NEEDS_MEMBERSHIP`).
+  const eligible = p?.prerequisite
+    ? members.filter((m) => m.heldRole === p.prerequisite)
+    : p?.requiresMembership ? members.filter((m) => m.heldRole != null) : members;
+
+  // ونقلُ صاحبِ مقعدٍ غيرِ «عضو لجنة» يُخلي مقعدَه: يُقال قبل التأكيد، فيخلو عن قصد (20261010).
+  // والبِركة لا تحمل إلّا من يملك المُنفّذ مقعدَه (`assignable_members`)، فالسطر خبرٌ لا منع.
+  const picked = members.find((m) => m.id === pick) ?? null;
+  const vacates = picked?.heldRole != null && picked.heldRole !== "committee_member" && picked.heldRole !== p?.roleName
+    ? picked.held ?? null : null;
 
   // الموضع الحاليّ تلميحًا: كلّ اختيارٍ ههنا نقلٌ من موضعٍ إلى موضع (عضويّة اللجنة نفسها
   // منصب) — فالسطر يقول **من أين** يُسحب، لا يُحذّر من أنّه مشغول. والقاعدة تحكم بعدُ.
@@ -99,6 +108,7 @@ export function AssignmentModal({
           ) : null}
 
           {isAssign ? (
+            <>
             <Select
               label={isReplace ? "الشاغل الجديد" : "العضو"}
               icon={<UserPlus />}
@@ -110,6 +120,8 @@ export function AssignmentModal({
               helper={p.prerequisite ? `المرشّحون: من يشغل «${p.prerequisiteAr}» الآن، فهذا المقعد انتقالٌ لا ضمٌّ من خارج.` : undefined}
               required
             />
+            {vacates ? <p className="org-modal-warn">{`سيُخلى مقعده «${vacates}» بنقله، ويبقى شاغرًا حتى يُعيَّن بديل.`}</p> : null}
+            </>
           ) : (
             <p className="org-modal-warn">سيُلغى تفعيل هذا المنصب. لا يُحذف السجلّ نهائيًّا، لكن قد يُسحب ترشّح العضو الانتخابيّ إن كان قائمًا.</p>
           )}

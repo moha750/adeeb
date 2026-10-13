@@ -29,7 +29,7 @@ import { ToastProvider } from "../../dashboard/_components/ToastProvider";
 
 type Program = "events" | "darb" | "radio" | "surveys" | "deebo";
 const PROGRAM: Record<Program, string> = {
-  events: "الفعاليّات", darb: "دربك خضر", radio: "الإذاعة", surveys: "الاستبيانات", deebo: "ديبو",
+  events: "فعاليّات أدِيب", darb: "دربك خضر", radio: "إذاعة أدِيب", surveys: "استبيانات أدِيب", deebo: "ديبو",
 };
 const ORDER: Program[] = ["events", "darb", "surveys", "radio", "deebo"];
 
@@ -210,7 +210,7 @@ function FriendsPreview() {
                 {open.phone ? <Cell full lat label="رقم الجوّال" icon={<Phone />} value={open.phone} /> : null}
               </Section>
               {open.events ? (
-                <Section icon={<Ticket />} title="الفعاليّات">
+                <Section icon={<Ticket />} title="فعاليّات أدِيب">
                   <Cell noCopy label="حجوزات" icon={<Ticket />} value={String(open.events.booked)} />
                   <Cell noCopy label="حضور" icon={<CalendarCheck />} value={String(open.events.attended)} />
                   <Cell full noCopy label="آخر حضور" icon={<CalendarCheck />} value={open.events.last} />
@@ -225,12 +225,12 @@ function FriendsPreview() {
                 </Section>
               ) : null}
               {open.radio?.length ? (
-                <Section icon={<Radio />} title="الإذاعة">
+                <Section icon={<Radio />} title="إذاعة أدِيب">
                   <Cell full noCopy label="يتابع" icon={<Radio />} value={open.radio.join("، ")} />
                 </Section>
               ) : null}
               {open.surveys ? (
-                <Section icon={<ClipboardText />} title="الاستبيانات">
+                <Section icon={<ClipboardText />} title="استبيانات أدِيب">
                   <Cell full noCopy label="استبياناتٌ أجاب عنها" icon={<ClipboardText />} value={String(open.surveys)} />
                 </Section>
               ) : null}

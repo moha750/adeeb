@@ -43,7 +43,7 @@ export function ViewAsPicker({ targets }: { targets: ViewAsTarget[] }) {
         الإشراف» نطاقُه هويّةُ القائد لا قدرتُه وحدها. وينتهي كلّ شيءٍ بزرّ «إنهاء المعاينة».
       </p>
       <Select
-        label="العضو"
+        label="صاحب الحساب"
         icon={<Eye aria-hidden />}
         required
         searchable

@@ -8,7 +8,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { fmtDateOnly, fmtDate } from "@/lib/dates";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
-import { positionLine, positionParts } from "@/lib/positionLabel";
+import { actingLine, positionLine, positionParts } from "@/lib/positionLabel";
 import { membershipDuration } from "@adeeb/core/membership";
 
 /** محطّةٌ في المسيرة: الانضمام، أو تولّي منصب. */
@@ -75,7 +75,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   const [pRes, urRes, rRes, dRes, cRes, coRes, wRes, wlRes, certRes] = await Promise.all([
     sb.from("profiles").select("full_name, avatar_url, gender, account_status, joined_date").eq("id", me.id).maybeSingle(),
     // التعيينات كلّها لا النشطة وحدها — المسيرة تروي ما مضى كما تروي ما هو قائم
-    sb.from("user_roles").select("role_name, department_id, committee_id, assigned_at, is_active").eq("user_id", me.id),
+    sb.from("user_roles").select("role_name, department_id, committee_id, assigned_at, is_active, is_acting, frozen_by").eq("user_id", me.id),
     sb.from("roles").select("role_name, role_name_ar, council_type, home_committee_id"),
     sb.from("departments").select("id, name_ar"),
     sb.from("committees").select("id, committee_name_ar"),
@@ -104,7 +104,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
   // **شخصٌ لا مقعد**: رتبتُه كما هي، ووحدتُه من خانة إسناده وحدها (20260811)
   const roleAr = new Map((rRes.data ?? []).map((r) => [r.role_name, (r.role_name_ar as string | null) ?? r.role_name]));
 
-  type Assignment = { role_name: string; department_id: number | null; committee_id: number | null; assigned_at: string | null; is_active: boolean | null };
+  type Assignment = { role_name: string; department_id: number | null; committee_id: number | null; assigned_at: string | null; is_active: boolean | null; is_acting: boolean | null; frozen_by: number | null };
   const assignments = (urRes.data ?? []) as Assignment[];
 
   /**
@@ -114,12 +114,15 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
    * وكان أثقلَ الحالات المشرفُ الإداريّ: تسعةُ صفوفٍ لأنّ إشرافه كان يُكتب مناصبَ في اللجان.
    * فُصل الإشراف عن الانتماء (20260731) فصار له صفٌّ واحد، وبقي الجمع لمن يستحقّه حقًّا.
    */
-  const groups = new Map<string, { roleName: string; at: string | null; active: boolean; items: Assignment[] }>();
+  // والتكليف (20261010) محطّةٌ بلفظها «… تكليفًا»، والأصيلُ المجمَّد قائمٌ لا منتهٍ: مقعدُه محجوزٌ له
+  // ويعود إليه حين ينتهي تكليفه، فلا يُروى كمنصبٍ مضى.
+  const groups = new Map<string, { roleName: string; at: string | null; active: boolean; acting: boolean; items: Assignment[] }>();
   for (const a of assignments) {
-    const k = `${a.role_name}|${a.assigned_at ?? ""}|${a.is_active ? "1" : "0"}`;
+    const live = !!a.is_active || a.frozen_by != null;
+    const k = `${a.role_name}|${a.assigned_at ?? ""}|${live ? "1" : "0"}|${a.is_acting ? "t" : ""}`;
     const g = groups.get(k);
     if (g) g.items.push(a);
-    else groups.set(k, { roleName: a.role_name, at: a.assigned_at, active: !!a.is_active, items: [a] });
+    else groups.set(k, { roleName: a.role_name, at: a.assigned_at, active: live, acting: !!a.is_acting, items: [a] });
   }
 
   /** وحدة التعيين: اللجنة، وإلّا القسم. و`null` لمن لا وحدة له (الإدارة العليا). */
@@ -134,7 +137,8 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
 
   const groupList = [...groups.values()];
   // الموضع الحاليّ = أعلى منصبٍ **قائم** بالترتيب القياسيّ (بالاسم لا برقم — أُعدم role_level)
-  const current = groupList.filter((g) => g.active).sort((a, b) => roleRank(a.roleName) - roleRank(b.roleName))[0] ?? null;
+  // والأصيلُ قبل التكليف: التكليف فوق الموضع لا هو (20261010)
+  const current = groupList.filter((g) => g.active).sort((a, b) => Number(a.acting) - Number(b.acting) || roleRank(a.roleName) - roleRank(b.roleName))[0] ?? null;
   /**
    * وحدةُ المنصب القائم كما تُحسب في المسيرة — تُوصل برتبته على البطاقة: «قائد لجنة الفعاليات».
    *
@@ -151,7 +155,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       : []),
     ...groupList.map((g, i) => {
       const units = [...new Set(g.items.map(unitOf).filter(Boolean) as string[])];
-      const title = roleAr.get(g.roleName) ?? g.roleName;
+      const title = actingLine(roleAr.get(g.roleName) ?? g.roleName, g.acting) ?? g.roleName;
       // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر»
       const rawScope = units.length ? units.join("، ") : councilOf(g.roleName);
       // المحطّة تضع الرتبةَ في سطرٍ ونطاقَها تحته، فلا تصلهما — فالقطعتان من المصدر
@@ -173,7 +177,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       avatar: p.avatar_url ?? null,
       gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
       status: MEMBER_STATUS_OF[p.account_status] ?? "inactive",
-      role: current ? positionLine(roleAr.get(current.roleName) ?? current.roleName, currentUnit) : null,
+      role: current ? actingLine(positionLine(roleAr.get(current.roleName) ?? current.roleName, currentUnit), current.acting) : null,
       joined: fmtDateOnly(p.joined_date),
       duration: membershipDuration(p.joined_date, Date.now()),
       journey,

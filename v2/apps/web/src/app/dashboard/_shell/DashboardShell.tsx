@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { firstHref, navFor, searchNav, type NavItem } from "./nav";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
-import { ICONS, IconBell, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe } from "./icons";
+import { ICONS, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconProfile } from "./icons";
+import { NotificationsBell } from "@/app/_notifications/NotificationsBell";
 import { DuotoneZone } from "@/app/_components/glyphs";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { HelpCenter } from "./HelpCenter";
@@ -243,12 +244,17 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
               </>
             }
             groups={[
-              { items: [{ label: "عضويّتي", icon: <IconMe />, onSelect: () => router.push("/dashboard") }] },
+              { items: [
+                { label: "عضويّتي", icon: <IconMe />, onSelect: () => router.push("/dashboard") },
+                // «حسابي» يُبلَغ من الأفتار ولا يقع في جزيرة الجوّال (`TAB_NEVER`)
+                { label: "حسابي", icon: <IconProfile />, onSelect: () => router.push("/dashboard/account") },
+              ] },
               { items: [{ label: "تسجيل الخروج", icon: <IconLogout />, danger: true, disabled: signingOut, onSelect: signOut }] },
             ]}
           />
           <div className="ash-tools">
-            <button type="button" className="ash-bell" aria-label="الإشعارات"><IconBell /><i /></button>
+            {/* جرسُ صاحب الجلسة وصندوقُه (v2/NOTIFICATIONS-SYSTEM.md). كان زرًّا شكليًّا بنقطةٍ ثابتة لا يقرأ شيئًا. */}
+            <NotificationsBell />
           </div>
         </header>
 

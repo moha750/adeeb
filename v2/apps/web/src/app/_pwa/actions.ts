@@ -101,7 +101,7 @@ export async function sendTestPush(endpoint: string): Promise<PushActionResult> 
     await new Promise((r) => setTimeout(r, TEST_DELAY_MS));
     await pushToUsers(
       [me.id],
-      { title: "أَدِيب", body: "هكذا تصلك أخبارُ أَدِيب: على شاشة القفل، كأيّ تطبيق.", url: "/me", tag: "adeeb-test" },
+      { title: "أَدِيب", body: "هكذا تصلك أخبارُ أَدِيب: على شاشة القفل، كأيّ تطبيق.", url: "/dashboard", tag: "adeeb-test" },
       { onlyEndpoint: endpoint, urgency: "high" },
     );
   });

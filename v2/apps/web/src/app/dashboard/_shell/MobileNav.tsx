@@ -25,8 +25,8 @@ import { NavSearch } from "./NavSearch";
    وطُردت واحدةٌ كان يعتمدها. فالمجموعةُ تُحسَب من **قدراته ومقعده** وحدهما — وهما لا
    يتبدّلان إلّا بتعيينٍ جديد — والموقوتُ يُقال **بنقطةٍ على «الكلّ»**.
 
-   ويُستبعَد دائمًا ما يُبلَغ من مكانٍ آخر أو يُفتَح مرّةً في الشهر: «الملف الشخصي»
-   و«الإعدادات» تُبلغان من الأفتار في الترويسة، فمقعدٌ دائمٌ لهما هدرٌ لخانةٍ من أربع. */
+   ويُستبعَد دائمًا ما يُبلَغ من مكانٍ آخر أو يُفتَح مرّةً في الشهر: «حسابي»
+   يُبلَغ من الأفتار في الترويسة، فمقعدٌ دائمٌ له هدرٌ لخانةٍ من أربع. */
 const ALWAYS = [
   "/dashboard",        // عضويّتي — جذرُ اللوحة
   "/dashboard/tasks",  // مهامّي — ما كُلِّفتَ به
@@ -37,7 +37,7 @@ const SEATS = ["/dashboard/committee", "/dashboard/department", "/dashboard/unit
 const WORK = ["/dashboard/events", "/dashboard/members/active", "/dashboard/surveys", "/dashboard/news"];
 
 /** لا يقع في الجزيرة أبدًا: يُبلَغ من الأفتار، أو بابٌ موقوتٌ تقوله النقطة. */
-const TAB_NEVER = new Set(["/dashboard/profile", "/dashboard/settings"]);
+const TAB_NEVER = new Set(["/dashboard/account"]);
 const isTimedDoor = (href: string) =>
   href === "/dashboard/elections/run" || href === "/dashboard/elections/vote";
 

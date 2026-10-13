@@ -14,7 +14,7 @@ import { fmtDate } from "./dates";
 
 /**
  * أربعُ حالاتٍ لا خامسة، وهي نفسُها قيمُ الدالّة في القاعدة.
- * و`sealed` لرئيس النادي وحدَه: لا يزيله أحدٌ ولا يزيل نفسَه (٢٠٢٦-٠٨-٢٠)، فلا بابَ له.
+ * و`sealed` لرئيس أدِيب وحدَه: لا يزيله أحدٌ ولا يزيل نفسَه (٢٠٢٦-٠٨-٢٠)، فلا بابَ له.
  */
 export type ExitDoor = "sealed" | "request" | "end_now" | "delete";
 
@@ -33,10 +33,10 @@ export type ExitRequest = {
  * الضمان معًا، فلا يُفرَّق بينهما في جملةٍ تُقرأ.
  */
 const DECIDER_AR: Record<string, string> = {
-  club_president: "رئيس النادي",
-  executive_council_president: "رئيس المجلس التنفيذي",
+  club_president: "رئيس أدِيب",
+  executive_council_president: "الرئيس التنفيذي",
   hr_committee_leader: "قائد إدارة الموارد البشرية",
-  qa_committee_leader: "قائد إدارة ضمان الجودة",
+  qa_committee_leader: "قائد إدارة الضمان والجودة",
 };
 
 export type MyExit = {

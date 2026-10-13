@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { fmtDate } from "@/lib/dates";
+import { fmtDate, fmtMonthYear } from "@/lib/dates";
+import { arCount, type ArForms } from "@/lib/arabicCount";
 
 /**
  * **أصدقاء أدِيب** (قرار المالك ٢٠٢٦-١٠-٠٩) — قراءةٌ واحدة من `friends_overview()`: صفٌّ لكلّ صاحب
@@ -20,10 +21,18 @@ export type FriendRow = {
   hasProfile: boolean;
   wasMember: boolean;
   volunteeredBefore: boolean;
-  /** آخرُ ما فعله في أدِيب: أحدثُ نشاطٍ في أيّ برنامج، أو آخرُ دخولٍ إلى حسابه. */
-  lastActive: string;
-  lastActiveRaw: string;
+  /**
+   * **آخرُ مشاركةٍ في برنامج**: البرنامجُ وتاريخُه معًا (ملاحظةُ ٢٠٢٦-١٠-١٠). كان «آخرُ نشاط»
+   * يخلط المشاركةَ بآخر دخولٍ وبيوم فتح الحساب، فيقول تاريخًا لا يُعرف معناه، ويُرتَّب عليه
+   * الكشفُ فيسبق من دخل أمس من حضر فعاليّةً قبل أسبوع. فالمشاركةُ وحدها هنا، وما سواها لا يُقال.
+   */
+  lastProgram: { program: Program; date: string; raw: string; event?: { title: string; attended: boolean } } | null;
+  /** في أدِيب منذ: شهرُ فتح الحساب وسنتُه. */
+  since: string;
+  sinceRaw: string;
   programs: Program[];
+  /** عمقُ المشاركة في كلّ برنامج، يُقال بجوار اسمه («حضر 3»، «17 جولةً»). */
+  depth: Partial<Record<Program, string>>;
   events: { booked: number; attended: number; lastAttended: string } | null;
   darb: { nickname: string; best: number; runs: number; tamr: number } | null;
   radio: string[] | null;
@@ -42,21 +51,28 @@ type Raw = {
   deebo_chats: number; deebo_last: string | null;
 };
 
+/** آخرُ فعاليّةٍ حجزها الصديقُ أو حضرها، من `friends_last_event()` (٢٠٢٦-١٠-١٠): يُسمّيها كرتُه بدل «فعاليّات أدِيب». */
+type LastEvent = { user_id: string; title: string | null; at: string | null; was_attended: boolean };
+
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
   return url && key ? createAdeebServiceClient(url, key) : null;
 }
 
-const latest = (...xs: (string | null)[]) =>
-  xs.filter((x): x is string => Boolean(x)).sort().at(-1) ?? "";
+/** «جولةٌ واحدة» · «جولتان» · «5 جولات» · «17 جولةً» */
+const AR_RUNS: ArForms = ["جولةٌ واحدة", "جولتان", "جولات", "جولةً"];
+/** «حضر مرّةً واحدة» · «مرّتين» · «3 مرّات» */
+const AR_TIMES: ArForms = ["مرّةً واحدة", "مرّتين", "مرّات", "مرّةً"];
 
 export async function listFriends(): Promise<{ rows: FriendRow[]; error: string | null }> {
   const sb = service();
   if (!sb) return { rows: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
-  const { data, error } = await sb.rpc("friends_overview");
+  const [{ data, error }, lastEv] = await Promise.all([sb.rpc("friends_overview"), sb.rpc("friends_last_event")]);
   if (error) return { rows: [], error: error.message };
+  // اسمُ آخر فعاليّة زيادةُ وضوح: إن تعذّرت قراءتُه بقي الكرتُ باسم البرنامج وتاريخه
+  const lastEvent = new Map(((lastEv.data ?? []) as LastEvent[]).map((e) => [e.user_id, e]));
 
   const rows = ((data ?? []) as Raw[]).map((r): FriendRow => {
     const events = r.events_booked > 0 || r.events_attended > 0
@@ -76,7 +92,19 @@ export async function listFriends(): Promise<{ rows: FriendRow[]; error: string 
       ...(radio ? ["radio" as const] : []),
       ...(deebo ? ["deebo" as const] : []),
     ];
-    const lastRaw = latest(r.events_last, r.darb_last, r.radio_last, r.surveys_last, r.deebo_last, r.last_sign_in, r.account_created);
+    // آخرُ مشاركة: أحدثُ تاريخٍ بين البرامج التي شارك فيها فعلًا، ومعه اسمُ برنامجه
+    const dated: [Program, string | null][] = [
+      ["events", events ? (lastEvent.get(r.user_id)?.at ?? r.events_last) : null], ["darb", darb ? r.darb_last : null],
+      ["surveys", surveys ? r.surveys_last : null], ["radio", radio ? r.radio_last : null], ["deebo", deebo ? r.deebo_last : null],
+    ];
+    const last = dated.filter((d): d is [Program, string] => Boolean(d[1])).sort((a, b) => b[1].localeCompare(a[1]))[0];
+    const depth: Partial<Record<Program, string>> = {};
+    const she = r.gender === "female";
+    if (events) depth.events = events.attended > 0
+      ? `${she ? "حضرت" : "حضر"} ${arCount(events.attended, AR_TIMES)}`
+      : she ? "حجزت ولم تحضر" : "حجز ولم يحضر";
+    const ev = last?.[0] === "events" ? lastEvent.get(r.user_id) : undefined;
+    if (darb && darb.runs > 0) depth.darb = arCount(darb.runs, AR_RUNS);
     return {
       id: r.user_id,
       name: r.has_profile && r.full_name?.trim() ? r.full_name : null,
@@ -87,14 +115,22 @@ export async function listFriends(): Promise<{ rows: FriendRow[]; error: string 
       hasProfile: r.has_profile,
       wasMember: r.was_member,
       volunteeredBefore: r.volunteered_before,
-      lastActive: fmtDate(lastRaw),
-      lastActiveRaw: lastRaw,
+      lastProgram: last
+        ? {
+            program: last[0], date: fmtDate(last[1]), raw: last[1],
+            ...(ev?.title ? { event: { title: ev.title, attended: ev.was_attended } } : {}),
+          }
+        : null,
+      since: fmtMonthYear(r.account_created),
+      sinceRaw: r.account_created ?? "",
       programs,
+      depth,
       events, darb, radio, surveys, deebo,
     };
   });
 
-  // الأحدثُ نشاطًا أوّلًا: من يتحرّك الآن أولى بالنظر ممّن سكن منذ شهور
-  rows.sort((a, b) => b.lastActiveRaw.localeCompare(a.lastActiveRaw));
+  // الأحدثُ مشاركةً أوّلًا، ومن لم يشارك بعدُ آخرًا (الأحدثُ حسابًا منهم أوّلًا)
+  rows.sort((a, b) =>
+    (b.lastProgram?.raw ?? "").localeCompare(a.lastProgram?.raw ?? "") || b.sinceRaw.localeCompare(a.sinceRaw));
   return { rows, error: null };
 }

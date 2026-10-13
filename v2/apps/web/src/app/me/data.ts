@@ -2,6 +2,7 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { isLiveMembership } from "@/lib/memberRecord";
 import { fmtDate, timeLabel } from "@/app/activities/data";
+import { fmtTimeRange } from "@/lib/dates";
 import type { ActivityType } from "@/lib/activities";
 
 /**
@@ -26,6 +27,9 @@ export type MyReservation = {
   date: string;
   dateLabel: string;
   timeLabel: string;
+  /** ساعتا البدء والانتهاء كما في الفعاليّة (HH:MM) — لملفّ التقويم. */
+  startTime: string | null;
+  endTime: string | null;
   location: string | null;
   cancelled: boolean;
   /** لم يمضِ يومُها بعد — وهي وحدها ما يُلغى (القاعدة تمنع إلغاء الماضي). */
@@ -44,6 +48,8 @@ export type MyAccount = {
   phone: string;
   gender: "male" | "female" | null;
   city: string;
+  /** صاحبُ حسابٍ منذ (YYYY-MM-DD) — لسطر «منذ…» في بطاقته. */
+  since: string | null;
   upcoming: MyReservation[];
   past: MyReservation[];
 };
@@ -70,7 +76,7 @@ export async function getMyAccount(userId: string): Promise<MyAccount | null> {
   if (!sb) return null;
 
   const [pRes, rRes] = await Promise.all([
-    sb.from("profiles").select("full_name, email, phone, gender, city, joined_date, account_status").eq("id", userId).maybeSingle(),
+    sb.from("profiles").select("full_name, email, phone, gender, city, joined_date, account_status, created_at").eq("id", userId).maybeSingle(),
     sb.from("activity_reservations")
       .select("id, activity_id, status, attendance_status, whatsapp_confirmed_at")
       .eq("user_id", userId),
@@ -100,7 +106,10 @@ export async function getMyAccount(userId: string): Promise<MyAccount | null> {
         type: a.activity_type,
         date: a.activity_date,
         dateLabel: fmtDate(a.activity_date),
-        timeLabel: timeLabel(a.start_time, a.end_time),
+        // «من 7 م إلى 9 م» بحكم الموقع، والقديمُ («19:00») لفعاليّةٍ بلا ساعة انتهاء
+        timeLabel: fmtTimeRange(a.start_time, a.end_time) || timeLabel(a.start_time, a.end_time),
+        startTime: a.start_time?.slice(0, 5) ?? null,
+        endTime: a.end_time?.slice(0, 5) ?? null,
         location: a.location ?? null,
         cancelled: r.status === "cancelled",
         upcoming: r.status !== "cancelled" && a.activity_date >= today,
@@ -118,6 +127,7 @@ export async function getMyAccount(userId: string): Promise<MyAccount | null> {
     phone: p?.phone ?? "",
     gender: p?.gender === "male" || p?.gender === "female" ? p.gender : null,
     city: p?.city ?? "",
+    since: (p as { created_at?: string | null } | null)?.created_at?.slice(0, 10) ?? null,
     // القادمُ الأقربُ أوّلًا، والماضي الأحدثُ أوّلًا — كلٌّ بترتيبِ ما يعني صاحبَه.
     upcoming: rows.filter((r) => r.upcoming).sort((x, y) => x.date.localeCompare(y.date)),
     past: rows.filter((r) => !r.upcoming).sort((x, y) => y.date.localeCompare(x.date)),
