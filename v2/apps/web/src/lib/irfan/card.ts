@@ -32,6 +32,12 @@ export type IrfanCard = {
   body: string;
   /** اسمُ الموسم: «اليوم العالمي للمدير». */
   season: string;
+  /**
+   * **عنوانُ البطاقة** (المالك ٢٠٢٦-١٠-١٧: «لماذا لا تكون بدل الافتتاحية هي العنوان؟»): عبارةٌ تامّة يختارها
+   * المرسل («شكرًا لكِ»)، تُرسم أكبرَ ما في البطاقة، ويصير «إلى فلان» سطرَ إهداءٍ فوقها. وبلا عنوانٍ
+   * تبقى البطاقةُ كما كانت.
+   */
+  title?: string | null;
 };
 
 export type IrfanLook = "letter" | "aurora";
@@ -111,12 +117,30 @@ const GEO: Record<IrfanLook, Geo> = {
   },
 };
 
+/**
+ * **هندسةُ البطاقة المعنونة**: العنوانُ أكبرُ ما فيها، و«إلى فلان» يصغر سطرَ إهداءٍ فوقه، و«عِرفان»
+ * يعود إلى سطر الموسم في الوجهين (كان في الشفق كلمةً كبيرة، فلو بقيت لتزاحم كبيران).
+ */
+type TitledGeo = Geo & { headline: number };
+const GEO_TITLED: Record<IrfanLook, TitledGeo> = {
+  letter: {
+    ...GEO.letter,
+    season: 196, to: 286, seat: 334, headline: 460,
+    bodyTop: 510, bodyBottom: 1050,
+  },
+  aurora: {
+    ...GEO.aurora,
+    season: 170, to: 254, seat: 300, headline: 424,
+    bodyTop: 500, bodyBottom: 1080,
+  },
+};
+
 const INK = {
   letter: (t: ReturnType<typeof tokens>) => ({ strong: t.navy800, soft: t.steel600, faint: t.steel400 }),
   aurora: () => ({ strong: "#ffffff", soft: "rgba(255,255,255,.88)", faint: "rgba(255,255,255,.62)" }),
 } as const;
 
-async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>) {
+async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false) {
   ctx.fillStyle = t.steel50;
   ctx.fillRect(0, 0, CARD.w, CARD.h);
   // ورقةٌ بيضاءُ داخل هامشٍ فولاذيّ خفيف، وزاويتُها من منحنى العلامة
@@ -137,12 +161,13 @@ async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof t
   ctx.fillText("“", 120, 400);
   ctx.restore();
 
-  // خيطٌ ذهبيٌّ رفيعٌ تحت التوقيع يختم الرسالة
+  // خيطٌ ذهبيٌّ رفيعٌ تحت التوقيع يختم الرسالة، وتوأمُه تحت العنوان إن كان: يفتحها كما يختمها
   ctx.fillStyle = `rgba(${GOLD}, .8)`;
   ctx.fillRect(CARD.w - 132 - 120, 1222, 120, 3);
+  if (titled) ctx.fillRect(CARD.w - 132 - 120, GEO_TITLED.letter.headline + 30, 120, 3);
 }
 
-async function paintAurora(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>) {
+async function paintAurora(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false) {
   const grad = ctx.createLinearGradient(0, 0, CARD.w, CARD.h);
   grad.addColorStop(0, t.steel400);
   grad.addColorStop(1, t.navy800);
@@ -158,9 +183,9 @@ async function paintAurora(ctx: CanvasRenderingContext2D, t: ReturnType<typeof t
     ctx.restore();
   }
 
-  // خيطٌ ذهبيٌّ تحت الكلمة، وآخرُ خافتٌ قبل التوقيع
+  // خيطٌ ذهبيٌّ تحت الكلمة الكبيرة (أو تحت العنوان إن كان)، وآخرُ خافتٌ قبل التوقيع
   ctx.fillStyle = `rgba(${GOLD}, .95)`;
-  ctx.fillRect(CARD.w / 2 - 60, 300, 120, 4);
+  ctx.fillRect(CARD.w / 2 - 60, titled ? GEO_TITLED.aurora.headline + 30 : 300, 120, 4);
   ctx.fillStyle = "rgba(255,255,255,.24)";
   ctx.fillRect(CARD.w / 2 - 80, 1124, 160, 2);
 }
@@ -185,9 +210,10 @@ function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo) {
 export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"): Promise<Blob> {
   const ctx = await openBlank(CARD);
   const t = tokens();
-  const g = GEO[look];
+  const heading = c.title?.trim() || "";
+  const g: Geo & { headline?: number } = heading ? GEO_TITLED[look] : GEO[look];
   const ink = look === "letter" ? INK.letter(t) : INK.aurora();
-  await (look === "letter" ? paintLetter(ctx, t) : paintAurora(ctx, t));
+  await (look === "letter" ? paintLetter(ctx, t, !!heading) : paintAurora(ctx, t, !!heading));
 
   const line = (text: string, y: number, size: number, weight: number, color: string, min = 24): Piece => ({
     text,
@@ -200,14 +226,22 @@ export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"):
   });
 
   const pieces: Piece[] = [];
-  if (look === "aurora") {
+  if (heading) {
+    // المعنونة: «عِرفان» في سطر الموسم، ثمّ الإهداءُ ومقعدُه صغيرين، ثمّ العنوانُ أكبرَ ما في البطاقة
+    pieces.push(line(`عِرفان، ${c.season}`, g.season, 32, WEIGHTS.body, ink.faint));
+    pieces.push(line(`إلى ${c.to.trim()}`, g.to, 44, WEIGHTS.bold, ink.soft, 30));
+    if (c.seat.trim()) pieces.push(line(c.seat.trim(), g.seat, 30, WEIGHTS.body, ink.faint));
+    pieces.push(line(heading, g.headline ?? 0, 88, WEIGHTS.bold, ink.strong, 48));
+  } else if (look === "aurora") {
     pieces.push(line(c.season, g.season, 32, WEIGHTS.body, ink.faint));
     pieces.push(line("عِرفان", g.title, 84, WEIGHTS.bold, ink.strong));
   } else {
     pieces.push(line(`عِرفان، ${c.season}`, g.season, 32, WEIGHTS.body, ink.faint));
   }
-  pieces.push(line(`إلى ${c.to.trim()}`, g.to, 64, WEIGHTS.bold, ink.strong, 36));
-  if (c.seat.trim()) pieces.push(line(c.seat.trim(), g.seat, 36, WEIGHTS.body, ink.soft));
+  if (!heading) {
+    pieces.push(line(`إلى ${c.to.trim()}`, g.to, 64, WEIGHTS.bold, ink.strong, 36));
+    if (c.seat.trim()) pieces.push(line(c.seat.trim(), g.seat, 36, WEIGHTS.body, ink.soft));
+  }
 
   const b = layoutBody(ctx, c.body, g);
   // الرسالةُ متوسَّطةٌ عموديًّا في حيّزها: قصيرُها لا يترك خلاءً تحته

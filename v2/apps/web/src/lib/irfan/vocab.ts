@@ -27,6 +27,20 @@ export const OPENINGS: Opening[] = [
   { value: "free", label: "بلا افتتاحيّة", text: () => "" },
 ];
 
+/**
+ * **العناوين** (المالك ٢٠٢٦-١٠-١٧، مقترحةٌ تنتظر إقراره في `/ui/irfan`): عباراتٌ تامّة لا أنصافُ جمل، تُرسم
+ * عنوانَ البطاقة، بجنس المستلم (وبجنس المرسل حيث يتكلّم عن نفسه). و«بلا عنوان» لمن لا يريده.
+ */
+export type Heading = { value: string; text: (to: Gender, from: Gender) => string };
+export const HEADINGS: Heading[] = [
+  { value: "thanks", text: (to) => f(to, "شكرًا لك", "شكرًا لكِ") },
+  { value: "grateful", text: (to, from) => `${f(from, "ممتنٌّ", "ممتنّةٌ")} ${f(to, "لك", "لكِ")}` },
+  { value: "learned", text: (to) => f(to, "تعلّمتُ منك", "تعلّمتُ منكِ") },
+  { value: "impact", text: (to) => f(to, "أثرُك باقٍ", "أثرُكِ باقٍ") },
+  { value: "role", text: () => "قدوتي" },
+  { value: "none", text: () => "" },
+];
+
 /** عددُ الأحرف بتمييزه: «حرفٌ واحد» · «حرفان» · «7 أحرف» · «27 حرفًا». */
 export function lettersPhrase(n: number): string {
   if (n === 1) return "حرفٌ واحد";

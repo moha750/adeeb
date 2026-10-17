@@ -62,6 +62,31 @@ const SAMPLES: { lab: string; card: IrfanCard }[] = [
   },
 ];
 
+/**
+ * **العنوانُ بدل الافتتاحية** (المالك ٢٠٢٦-١٠-١٧): الرسالةُ نفسُها مرّتين، كما هي اليوم (الافتتاحيّةُ ملتصقةٌ
+ * برأس المتن) وبعنوانٍ فوق متنٍ قائمٍ بنفسه. والطويلةُ لتُرى مساحةُ المتن بعد أن أخذ العنوانُ مكانه.
+ */
+const TITLED: { lab: string; before: IrfanCard; after: IrfanCard }[] = [
+  {
+    lab: "رسالةٌ متوسّطة",
+    before: SAMPLES[0].card,
+    after: {
+      ...SAMPLES[0].card,
+      title: "شكرًا لكِ",
+      body: "صبرُكِ معي في أوّل تغطيةٍ لي لن أنساه، حين أخطأتُ في الإعدادات وأعدتِ شرحها بهدوء كأنّها المرّة الأولى. تعلّمتُ منكِ أنّ القيادة تبدأ من الاستماع.",
+    },
+  },
+  {
+    lab: "أطولُ ما يُكتب",
+    before: SAMPLES[2].card,
+    after: {
+      ...SAMPLES[2].card,
+      title: "ممتنّةٌ لك",
+      body: SAMPLES[2].card.body.replace(/^ممتنّةٌ لك لأنّك /, "لأنّك "),
+    },
+  },
+];
+
 /** قادةُ المجلسين كما يراهم المرسل — مخترَعون، والحقيقيّون من القاعدة لحظةَ الفتح. */
 const LEADERS: Recipient[] = [
   { id: "l1", name: "محمد إسماعيل المطر", seat: "رئيس أدِيب", council: "المجلس الإداري", gender: "male", avatar: null },
@@ -164,6 +189,27 @@ export default function IrfanLabPage() {
                 </div>
               ))}
             </div>
+          </section>
+        ))}
+
+        {TITLED.map((t) => (
+          <section key={t.lab} className="mt-16">
+            <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">العنوانُ بدل الافتتاحية: {t.lab}</p>
+            {LOOKS.map((l) => (
+              <div key={l.value} className="mb-10">
+                <p className="mb-3 text-sm font-bold text-content">{l.title}</p>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="mb-2 text-sm text-content-muted">اليوم: الافتتاحيّة في رأس الرسالة</p>
+                    <CardImage card={t.before} look={l.value} />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm text-content-muted">المقترح: عنوانٌ ثمّ المتن</p>
+                    <CardImage card={t.after} look={l.value} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </section>
         ))}
 
