@@ -88,6 +88,51 @@ const SAMPLE_USER = "00000000-0000-0000-0000-000000000000";
 
 export const CATALOG = {
   /**
+   * **البريدُ لا يخرج** (٢٠٢٦-١٠-١٧) — يطلقه حارسُ البريد (`email_watch`، كلَّ دقيقة) إن وقفت رسالةٌ في
+   * الصادر أكثرَ من دقيقتين، أو رفض المزوّدُ آخرَ ما أُرسل. إنذارٌ واحدٌ للعطل، لا كلَّ دقيقة.
+   * - **المستلم**: من يملك `manage_website`. **الدرجة**: حرِج (الجرسُ وشاشةُ القفل)، فرمزُ الدخول يموت
+   *   في عشر دقائق. **ولا بريد**: البريدُ هو المعطّل. **الوجهة**: اللوحة، حتّى تُبنى غرفةُ سجلّ البريد.
+   */
+  "system.email_down": defineKind<{ reason: "stalled" | "rejected"; pending: number; auth: boolean; error: string | null }>({
+    section: "system",
+    when: "وقف بريدُ أدِيب: رسالةٌ لم تخرج في دقيقتين، أو رفض المزوّدُ ما أُرسل",
+    sample: { reason: "stalled", pending: 3, auth: true, error: "Resend 503: service unavailable" },
+    audiences: [
+      {
+        key: "admin",
+        level: "critical",
+        to: () => [{ capability: "manage_website" }],
+        text: (f) => {
+          const what = f.auth ? "رسائلُ الدخول" : "رسائلُ البريد";
+          const title = f.reason === "stalled" ? `${what} لا تخرج` : `المزوّدُ يرفض ${what}`;
+          const parts = [
+            f.reason === "stalled" ? `رسائلُ تنتظر أكثرَ من دقيقتين، وعددُها ${f.pending}.` : "ماتت آخرُ رسالةٍ بردٍّ نهائيّ، ولم تخرج بعدها رسالة.",
+            f.auth ? "ورمزُ الدخول يموت في عشر دقائق." : "",
+            f.error ? `آخرُ خطأ: ${f.error}` : "",
+          ];
+          return { title, body: parts.filter(Boolean).join(" ") };
+        },
+        href: () => "/dashboard",
+      },
+    ],
+  }),
+  /** **عاد البريد** — يطلقه الحارسُ حين يسلم الصادرُ بعد إنذار. مهمٌّ لا حرِج: الخبرُ طيّب. */
+  "system.email_restored": defineKind<{ since: string }>({
+    section: "system",
+    when: "عاد بريدُ أدِيب يخرج بعد عطلٍ أنذر به الحارس",
+    sample: { since: "2026-10-17T12:00:00Z" },
+    audiences: [
+      {
+        key: "admin",
+        level: "important",
+        to: () => [{ capability: "manage_website" }],
+        text: () => ({ title: "عاد البريدُ يخرج", body: "الصادرُ سليم، والرسائلُ تُرسَل كالمعتاد." }),
+        href: () => "/dashboard",
+      },
+    ],
+  }),
+
+  /**
    * **تعليقٌ جديدٌ على خبر** — أوّلُ مدخلٍ في الدليل (٢٠٢٦-١٠-١٦)، وهو شرطُ النشر المباشر للتعليقات:
    * اختار المالكُ أن يُنشَر كلُّ تعليقٍ لحظتَه، بشرط أن يعلم به رئيسُ التحرير فورًا فيحذف ما لا يليق.
    * - **المستلم**: كلُّ من يملك `manage_news`، فمن مُنحها غدًا يصله بلا تعديل. والكاتبُ لا يُشعَر بتعليقه.
