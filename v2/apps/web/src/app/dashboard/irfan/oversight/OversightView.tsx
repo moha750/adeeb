@@ -103,11 +103,10 @@ export function OversightView({ data }: { data: OversightData }) {
           {rows.map((r) => (
             <Card key={r.id} className="irf-card" interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
-              {/* الرأسُ ممتدٌّ على الكرت كلِّه فوق البطاقة والسطور معًا، وفيه طرفا الرسالة كظرفها (المالك ٢٠٢٦-١٠-١٧):
-                  «إلى» ومقعدُه في جهة، و«من» وتاريخُه في الجهة المقابلة */}
+              {/* طرفا الرسالة شريطان ممتدّان على الكرت كلِّه (المالك ٢٠٢٦-١٠-١٧): «إلى» ومقعدُه رأسًا فوق البطاقة
+                  والسطور، و«من» وتاريخُه ذيلًا تحتهما بالحُلّة نفسها */}
               <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="md" />}
-                title={`إلى ${r.to}`} subtitle={r.seat}
-                actions={<span className="acard-htexts"><span className="acard-htitle">من {r.from}</span><span className="acard-hsub">{fmtDate(r.at)}</span></span>} />
+                title={`إلى ${r.to}`} subtitle={r.seat} />
               <div className="irf-card-in">
                 <div className="irf-card-shot"><Thumb r={r} /></div>
                 <div>
@@ -120,6 +119,7 @@ export function OversightView({ data }: { data: OversightData }) {
                     sub={r.pictured ? "صورةُ معاينتها سليمة" : "لم تُرفع صورةُ معاينتها، فوصلت في واتساب بلا صورة"} />
                 </div>
               </div>
+              <CardHeader variant="soft" className="irf-card-foot" icon={<UsersThree aria-hidden />} title={`من ${r.from}`} subtitle={fmtDate(r.at)} />
             </Card>
           ))}
         </div>

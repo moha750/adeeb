@@ -7275,11 +7275,8 @@ label.acc-row.acc-pick:hover { background: var(--steel-50); }
 /* أفتارُ القائد في الرأس هو نفسُه لا أيقونةٌ في قرص: خانةُ الأيقونة في الرأس قرصٌ متدرّجٌ بقياس ٤٤، فلمّا حمل
    الأفتارَ صار وجهًا صغيرًا داخل مربّعٍ داكن (رآه المالك: «يُعرَض بهذه الطريقة القبيحة»). فتُخلع عنه حُلّةُ القرص */
 .irf-card .acard-chip:has(> .av) { width: auto; height: auto; background: none; box-shadow: none; padding: 0; }
-/* وعلى الضيّق ينزل «من» تحت «إلى» بدل أن يتزاحما في صفٍّ واحد فينكسر الاسمان */
-@container (max-width: 559px) {
-  .irf-card .acard-header { flex-wrap: wrap; }
-  .irf-card .acard-hactions { flex-basis: 100%; justify-content: flex-start; }
-}
+/* وذيلُه شريطٌ بحُلّة الرأس، «من» وتاريخُه: حدُّه فوقه لا تحته */
+.irf-card > .acard-header.irf-card-foot { border-bottom: 0; border-top: 1px solid var(--color-border); }
 .irf-card-shot { display: flex; justify-content: center; padding: 18px; }
 /* المصغّرةُ صورةُ معاينة واتساب (البطاقةُ في وسط لوحٍ عريض بهامش): تُقصّ إلى البطاقة ثمّ تُكبَّر قدرَ الهامش
    (٦٣٠ ÷ ٥٨٢) فلا يبقى من لوح المعاينة حولها شيء */
