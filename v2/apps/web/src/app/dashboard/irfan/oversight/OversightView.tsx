@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, BarList, Card, CardBody, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
-import { CalendarBlank, Crown, EnvelopeSimple, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
+import { Alert, BarList, Card, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
+import { CalendarBlank, Crown, ChatTeardropText, EnvelopeSimple, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard } from "@/lib/irfan/card";
 import { EmptyState } from "../../_components/EmptyState";
@@ -38,16 +38,6 @@ function CardShot({ row }: { row: OversightRow }) {
       {/* eslint-disable-next-line @next/next/no-img-element -- صورةٌ مرسومةٌ في المتصفّح (blob) */}
       {src ? <img className="acr-shot is-portrait" src={src} alt={`عِرفان إلى ${row.to}`} /> : <span className="acr-shot is-portrait" aria-hidden />}
     </div>
-  );
-}
-
-/** شارتا الحال: قُرئت أم لا، وصورتُها في واتساب. */
-function State({ r }: { r: OversightRow }) {
-  return (
-    <>
-      <Badge tone={r.read ? "success" : "neutral"}>{r.read ? "قُرئت" : "لم تُقرأ"}</Badge>
-      {r.pictured ? null : <Badge tone="warning">بلا صورة</Badge>}
-    </>
   );
 }
 
@@ -114,17 +104,18 @@ export function OversightView({ data }: { data: OversightData }) {
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
               <div className="irf-card-in">
                 <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
+                <div>
                 <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="sm" />}
                   title={`إلى ${r.to}`} subtitle={r.seat} />
+                {/* كلُّ حقيقةٍ سطرٌ بأيقونته وتسميته، على نسق «من» (المالك ٢٠٢٦-١٠-١٧): لا شاراتٌ مبعثرةٌ ولا نصٌّ سائب */}
                 <Row Icon={UsersThree} k="من" v={r.from} sub={fmtDate(r.at)} />
-                <CardBody><p className="whitespace-pre-line text-content">{r.card.body}</p></CardBody>
-                <CardFooter>
-                  <span className="flex flex-wrap gap-1">
-                    <Badge tone="info">{r.title ?? "بلا عنوان"}</Badge>
-                    <Badge tone="neutral">تصميم {LOOK_NAMES[r.look]}</Badge>
-                  </span>
-                  <span className="flex gap-1"><State r={r} /></span>
-                </CardFooter>
+                <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} />
+                <Row Icon={Palette} k="التصميم" v={LOOK_NAMES[r.look]} />
+                <Row Icon={ChatTeardropText} k="الرسالة" v={r.card.body} />
+                <Row Icon={EnvelopeSimple} k="الحال" v={r.read ? "قرأها في البوّابة" : "لم يقرأها بعد"}
+                  tone={r.pictured ? undefined : "wait"} toneAt="sub"
+                  sub={r.pictured ? "صورةُ معاينتها سليمة" : "لم تُرفع صورةُ معاينتها، فوصلت في واتساب بلا صورة"} />
+                </div>
               </div>
             </Card>
           ))}

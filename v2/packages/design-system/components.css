@@ -7276,10 +7276,8 @@ label.acc-row.acc-pick:hover { background: var(--steel-50); }
    القاعدة ٦) صار أفقيًّا: البطاقةُ في جنبٍ والكلامُ في جنب، بدل بطاقةٍ صغيرةٍ في وسط لوحٍ عريضٍ فارغ */
 .irf-card { container-type: inline-size; }
 @container (min-width: 560px) {
-  .irf-card-in { display: grid; grid-template-columns: 260px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; height: 100%; }
-  .irf-card-in > .acr-easel { grid-column: 1; grid-row: 1 / -1; border-width: 0 0 0 var(--card-stroke-w); border-radius: 0; justify-content: center; }
-  .irf-card-in > :not(.acr-easel) { grid-column: 2; }
-  .irf-card-in > .acard-footer { align-self: end; }
+  .irf-card-in { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; }
+  .irf-card-in > .acr-easel { border-width: 0 0 0 var(--card-stroke-w); border-radius: 0; justify-content: center; }
 }
 /* صفحةُ البطاقة العلنيّة (`/irfan/<رمز>`): كرتٌ واحدٌ في وسط الصفحة بعرض البطاقة */
 .acr-share { max-width: 520px; margin-inline: auto; }
