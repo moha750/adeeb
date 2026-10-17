@@ -21,15 +21,20 @@
 import type { IconKey } from "@/app/dashboard/_shell/icons";
 import { fmtDateOnly } from "@/lib/dates";
 import { positionLine, rankFor } from "@/lib/positionLabel";
+import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
 
-/** أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة. */
+/**
+ * أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة.
+ * و`unit` **الجهةُ المسؤولة** عن بريد القسم (قرار محمد ٢٠٢٦-١٠-١٧): تُكتب في رأس الرسالة وتوقيعها.
+ * وقسمٌ بلا جهةٍ يوقّع بريدَه «نادي أدِيب».
+ */
 export const SECTIONS = {
-  system: { label: "النظام", icon: "gear" },
-  news: { label: "الأخبار", icon: "news" },
-  irfan: { label: "عِرفان", icon: "irfan" },
-  positions: { label: "المناصب", icon: "assign" },
-} as const satisfies Record<string, { label: string; icon: IconKey }>;
+  system: { label: "النظام", icon: "gear", unit: "قسم نظم المعلومات" },
+  news: { label: "الأخبار", icon: "news", unit: null },
+  irfan: { label: "عِرفان", icon: "irfan", unit: null },
+  positions: { label: "المناصب", icon: "assign", unit: "إدارة الموارد البشرية" },
+} as const satisfies Record<string, { label: string; icon: IconKey; unit: string | null }>;
 
 export type Section = keyof typeof SECTIONS;
 
@@ -53,6 +58,11 @@ export interface Audience<F> {
    * يُرجَع إليه، وهو لما يُحفَظ لا لكلّ تنبيه. والنصُّ نصُّ الجرس نفسُه بجنس قارئه (`email.ts`).
    */
   email?: boolean;
+  /**
+   * **ما يزيده البريدُ على نصّ الجرس** (٢٠٢٦-١٠-١٧): جملةٌ تفتح الرسالة، والبياناتُ سطورًا (المنصب،
+   * والمدّة)، ومزاجُ ديبو فيها (`lib/email/layout.ts`). وبلاه يصل نصُّ الجرس كما هو بعد التحيّة.
+   */
+  mail?(f: F, g: Gender): { lead?: string; facts?: Fact[]; mood?: MailMood };
   to(f: F): Address[];
   text(f: F, g: Gender): NoteText;
   /** مسارٌ داخليٌّ يُفتح بالنقر. */
@@ -196,6 +206,14 @@ export const CATALOG = {
           title: `أُسند ${fm(g, "إليك", "إليكِ")} منصب «${seat(f, g)}»`,
           body: f.from ? `${fm(g, "ونُقلتَ", "ونُقلتِ")} إليه من «${seat(f.from, g)}».` : undefined,
         }),
+        mail: (f, g) => ({
+          mood: "congratulations",
+          lead: `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بإسناد منصبٍ ${fm(g, "إليك", "إليكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "المنصب", value: seat(f, g) },
+            ...(f.from ? [{ label: fm(g, "منصبك السابق", "منصبكِ السابق"), value: seat(f.from, g) }] : []),
+          ],
+        }),
         href: () => ACCOUNT,
       },
     ],
@@ -221,6 +239,15 @@ export const CATALOG = {
           body: f.back
             ? `${fm(g, "وعُدتَ", "وعُدتِ")} إلى «${seat(f.back, g)}».`
             : f.how === "replaced" ? "أُسند المقعدُ إلى عضوٍ آخر." : undefined,
+        }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بتغيّرٍ في ${fm(g, "منصبك", "منصبكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "المنصبُ الذي أُزيل", value: seat(f, g) },
+            ...(f.back ? [{ label: fm(g, "منصبك الآن", "منصبكِ الآن"), value: seat(f.back, g) }] : []),
+            ...(f.how === "replaced" ? [{ label: "السبب", value: "أُسند المقعدُ إلى عضوٍ آخر" }] : []),
+          ],
         }),
         href: () => ACCOUNT,
       },
@@ -251,6 +278,17 @@ export const CATALOG = {
             : "";
           return { title: `${fm(g, "كُلِّفتَ", "كُلِّفتِ")} بمنصب «${seat(f, g)}»`, body: (term + frozen).trim() || undefined };
         },
+        mail: (f, g) => ({
+          mood: "congratulations",
+          lead: `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بتكليفٍ مؤقّتٍ في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "المنصب", value: seat(f, g) },
+            ...(f.until
+              ? [{ label: "ينتهي التكليف", value: fmtDateOnly(f.until) }]
+              : f.owner ? [{ label: "ينتهي التكليف", value: `بعودة ${f.owner} إلى المقعد` }] : []),
+            ...(f.frozen ? [{ label: fm(g, "منصبك الأصيل", "منصبكِ الأصيل"), value: `${seat(f.frozen, g)}، مجمَّدٌ حتّى ينتهي التكليف` }] : []),
+          ],
+        }),
         href: () => ACCOUNT,
       },
     ],
@@ -277,6 +315,15 @@ export const CATALOG = {
             body: `صار آخرُ يومٍ فيه ${fmtDateOnly(f.until)}.`,
           };
         },
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بتعديل أجل ${fm(g, "تكليفك", "تكليفكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "المنصب", value: seat(f, g) },
+            { label: "آخرُ يومٍ فيه", value: fmtDateOnly(f.until) },
+            ...(f.was ? [{ label: "كان آخرُ يوم", value: fmtDateOnly(f.was) }] : []),
+          ],
+        }),
         href: () => ACCOUNT,
       },
     ],
@@ -302,6 +349,14 @@ export const CATALOG = {
           title: `${f.how === "expired" ? "انتهت مدّةُ" : "انتهى"} ${fm(g, "تكليفك", "تكليفكِ")} بمنصب «${seat(f, g)}»`,
           body: f.back ? `${fm(g, "وعُدتَ إلى منصبك", "وعُدتِ إلى منصبكِ")} «${seat(f.back, g)}».` : undefined,
         }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بانتهاء ${fm(g, "تكليفك", "تكليفكِ")} في نادي أدِيب، وشكرًا لما ${fm(g, "قدّمتَ", "قدّمتِ")} فيه:`,
+          facts: [
+            { label: "المنصب", value: seat(f, g) },
+            ...(f.back ? [{ label: fm(g, "منصبك الآن", "منصبكِ الآن"), value: seat(f.back, g) }] : []),
+          ],
+        }),
         href: () => ACCOUNT,
       },
     ],
@@ -323,6 +378,14 @@ export const CATALOG = {
         email: true,
         to: (f) => [{ user: f.userId }],
         text: (f, g) => ({ title: `أُسند ${fm(g, "إليك", "إليكِ")} الإشرافُ على ${f.committee}`, body: `عن ${f.unit}.` }),
+        mail: (f, g) => ({
+          mood: "congratulations",
+          lead: `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بإسناد إشرافٍ ${fm(g, "إليك", "إليكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "اللجنة", value: f.committee },
+            { label: "الإشرافُ عن", value: f.unit },
+          ],
+        }),
         href: () => ACCOUNT,
       },
       {
@@ -333,6 +396,14 @@ export const CATALOG = {
         text: (f, g) => ({
           title: `${f.gender === "female" ? "صارت" : "صار"} ${f.name} ${f.gender === "female" ? "مشرفةً" : "مشرفًا"} على ${fm(g, "لجنتك", "لجنتكِ")}`,
           body: `عن ${f.unit}.`,
+        }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بمشرفٍ جديدٍ على ${fm(g, "لجنتك", "لجنتكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: f.gender === "female" ? "المشرفة" : "المشرف", value: f.name },
+            { label: "الإشرافُ عن", value: f.unit },
+          ],
         }),
         href: () => "/dashboard/committee",
       },
@@ -354,6 +425,14 @@ export const CATALOG = {
         email: true,
         to: (f) => [{ user: f.userId }],
         text: (f, g) => ({ title: `سُحب ${fm(g, "منك", "منكِ")} الإشرافُ على ${f.committee}`, body: `عن ${f.unit}.` }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بانتهاء ${fm(g, "إشرافك", "إشرافكِ")} في نادي أدِيب، وشكرًا لما ${fm(g, "قدّمتَ", "قدّمتِ")} فيه:`,
+          facts: [
+            { label: "اللجنة", value: f.committee },
+            { label: "الإشرافُ عن", value: f.unit },
+          ],
+        }),
         href: () => ACCOUNT,
       },
       {
@@ -364,6 +443,14 @@ export const CATALOG = {
         text: (f, g) => ({
           title: `${f.gender === "female" ? "لم تعد" : "لم يعد"} ${f.name} ${f.gender === "female" ? "مشرفةً" : "مشرفًا"} على ${fm(g, "لجنتك", "لجنتكِ")}`,
           body: `عن ${f.unit}.`,
+        }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بتغيّرٍ في الإشراف على ${fm(g, "لجنتك", "لجنتكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: f.gender === "female" ? "المشرفةُ السابقة" : "المشرفُ السابق", value: f.name },
+            { label: "الإشرافُ عن", value: f.unit },
+          ],
         }),
         href: () => "/dashboard/committee",
       },

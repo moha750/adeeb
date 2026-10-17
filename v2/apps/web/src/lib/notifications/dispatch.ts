@@ -3,7 +3,7 @@ import { pushToUsers } from "@/lib/push/send";
 import { catalogEntries, kindOf, type Audience } from "./catalog";
 import { chunks, notificationsDb, type NotificationsDb } from "./db";
 import { enqueueEmail } from "@/lib/email/outbox";
-import { renderNote } from "./render";
+import { renderNote, renderNoteEmail } from "./render";
 import type { Gender } from "./types";
 
 /**
@@ -180,13 +180,14 @@ async function emailGroup(sb: NotificationsDb, ev: EventRow, audience: Audience<
   if (expires.getTime() <= Date.now()) return;
 
   for (const part of chunks(users, 200)) {
-    const { data } = await sb.from("profiles").select("id, email, gender").in("id", part);
-    for (const p of (data ?? []) as Array<{ id: string; email: string | null; gender: string | null }>) {
+    const { data } = await sb.from("profiles").select("id, email, gender, full_name").in("id", part);
+    for (const p of (data ?? []) as Array<{ id: string; email: string | null; gender: string | null; full_name: string | null }>) {
       const to = p.email?.trim();
       if (!to) continue;
       const gender: Gender = p.gender === "female" ? "female" : p.gender === "male" ? "male" : null;
-      const note = renderNote(ev.kind, audience.key, ev.facts, gender);
-      await enqueueEmail("notify.note", to, { title: note.title, body: note.body, href: note.href }, {
+      // نصُّ الجرس وما يزيده البريد (جملتُه، وبياناتُه، ومزاجُ ديبو، وجهةُ القسم)، واسمُ القارئ للتحيّة.
+      const mail = renderNoteEmail(ev.kind, audience.key, ev.facts, gender, p.full_name?.trim() || null);
+      await enqueueEmail("notify.note", to, mail, {
         user: p.id,
         dedupe: `n${ev.id}:${audience.key}:${p.id}`,
         expires,

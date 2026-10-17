@@ -9,7 +9,7 @@
  */
 import { fmtDate, fmtStamp } from "@/lib/dates";
 import { targetHost } from "@/lib/qrLinks";
-import type { EmailContent } from "./layout";
+import type { EmailContent, Fact, MailMood } from "./layout";
 import { SITE } from "./layout";
 
 // ══ المصادقة: أدواتُ النصّ ══════════════════════════════════════════════════
@@ -44,11 +44,29 @@ function verifyUrl(d: AuthData): string {
 }
 
 /** «أدِيبنا محمد،» أو «أدِيبتنا سارة،» — ومن لا اسمَ له «مرحبًا بك،». */
-function greeting(d: AuthData): string {
-  const name = d.name?.trim();
-  if (!name) return "مرحبًا بك،";
-  return `${d.gender === "female" ? "أدِيبتنا" : "أدِيبنا"} ${name}،`;
+function greet(name: string | null, gender: string | null): string {
+  const n = name?.trim();
+  if (!n) return "مرحبًا بك،";
+  return `${gender === "female" ? "أدِيبتنا" : "أدِيبنا"} ${n}،`;
 }
+const greeting = (d: AuthData) => greet(d.name, d.gender);
+
+/**
+ * **حقائقُ بريد الإشعار** كما يكتبها الموزِّعُ (`lib/notifications/dispatch.ts`): نصُّ الجرس بجنس قارئه،
+ * وما يخصّ البريد من مدخل الدليل (`mail`: جملتُه، وبياناتُه سطورًا، ومزاجُ ديبو)، وجهةُ قسمه، واسمُ
+ * القارئ للتحيّة.
+ */
+export type NoteEmail = {
+  title: string;
+  body: string | null;
+  href: string | null;
+  unit?: string | null;
+  name?: string | null;
+  gender?: string | null;
+  mood?: MailMood | null;
+  lead?: string | null;
+  facts?: Fact[] | null;
+};
 
 const AUTH_SAMPLE: AuthData = {
   name: "محمد إسماعيل المطر",
@@ -83,14 +101,30 @@ export const EMAIL_KINDS = {
    * **إشعارٌ بريديّ** — كلُّ مخاطَبٍ في دليل الإشعارات قال `email: true` يصله نصُّ جرسه رسالةً.
    * يرسمه الموزِّعُ بجنس قارئه ساعةَ التوزيع ويحفظه هنا (`lib/notifications/dispatch.ts`).
    */
-  "notify.note": defineEmail<{ title: string; body: string | null; href: string | null; unit?: string | null }>({
+  "notify.note": defineEmail<NoteEmail>({
     when: "إشعارٌ في النظام مخاطَبُه يتلقّاه بريدًا",
-    sample: { title: "أُسند إليك منصب «قائد لجنة التأليف»", body: "ونُقلتَ إليه من «عضو لجنة التأليف».", href: "/dashboard/account", unit: HR },
+    sample: {
+      title: "أُسند إليك منصب «قائد لجنة التأليف»",
+      body: "ونُقلتَ إليه من «عضو لجنة التأليف».",
+      href: "/dashboard/account",
+      unit: HR,
+      name: "محمد إسماعيل المطر",
+      gender: "male",
+      mood: "congratulations",
+      lead: "يسرّنا إبلاغك بإسناد منصبٍ جديدٍ إليك في نادي أدِيب، وهذه تفاصيله:",
+      facts: [
+        { label: "المنصب", value: "قائد لجنة التأليف" },
+        { label: "منصبك السابق", value: "عضو لجنة التأليف" },
+      ],
+    },
     render: (d) => ({
       unit: d.unit ?? null,
+      mood: d.mood ?? "announcement",
+      facts: d.facts ?? null,
       subject: d.title,
       title: d.title,
-      paragraphs: d.body ? [d.body] : [],
+      // التحيّةُ أوّلًا ثمّ جملةُ البريد (أو نصُّ الجرس إن لم تكن): رسالةٌ إلى إنسانٍ لا تنبيهُ آلة.
+      paragraphs: [greet(d.name ?? null, d.gender ?? null), (d.lead ?? d.body ?? "").trim()].filter(Boolean),
       cta: { label: "افتحه في أدِيب", href: d.href ?? "/dashboard" },
     }),
   }),
@@ -112,9 +146,10 @@ export const EMAIL_KINDS = {
     },
     render: (d) => ({
       unit: OUTREACH,
+      mood: "writing",
       subject: d.subject?.trim() ? `ردُّ نادي أدِيب: ${d.subject.trim()}` : "ردُّ نادي أدِيب على رسالتك",
-      title: `أهلًا ${d.name}،`,
-      paragraphs: ["شكرًا لتواصلك مع نادي أدِيب. وهذا ردُّنا على رسالتك:", ...d.reply.split(/\n{2,}/)],
+      title: "ردُّنا على رسالتك",
+      paragraphs: [`أهلًا ${d.name}،`, "شكرًا لتواصلك مع نادي أدِيب. وهذا ردُّنا على رسالتك:", ...d.reply.split(/\n{2,}/)],
       quote: {
         label: ["رسالتك", d.subject?.trim() ? `«${d.subject.trim()}»` : null, d.sentAt ? fmtDate(d.sentAt) : null]
           .filter(Boolean).join("، "),
@@ -143,11 +178,16 @@ export const EMAIL_KINDS = {
     },
     render: (d) => ({
       unit: IT,
+      mood: "reminder",
       subject: `تبدّلت وجهةُ باركود: ${d.title}`,
       title: "تبدّلت وجهةُ باركود",
-      paragraphs: [
-        `«${d.title}»`,
-        `كانت: ${d.oldValue ? targetHost(d.oldValue) : "غير معروفة"}\nصارت: ${d.newValue ? targetHost(d.newValue) : "غير معروفة"}\nبيد: ${d.actor ?? "غير معروف"}\nالوقت: ${fmtStamp(d.at)}`,
+      paragraphs: [],
+      facts: [
+        { label: "الباركود", value: d.title },
+        { label: "كانت وجهته", value: d.oldValue ? targetHost(d.oldValue) : "غير معروفة", ltr: !!d.oldValue },
+        { label: "صارت", value: d.newValue ? targetHost(d.newValue) : "غير معروفة", ltr: !!d.newValue },
+        { label: "بيد", value: d.actor ?? "غير معروف" },
+        { label: "الوقت", value: fmtStamp(d.at) },
       ],
       cta: { label: "افتح صفحة الباركود", href: `/dashboard/tools/qr/${encodeURIComponent(d.linkId)}` },
       note: `إن لم تكن تعرف هذا التغيير فأوقِف الباركود من صفحته، ثمّ راجِع صاحبَه. الوجهةُ الجديدة كاملةً: ${d.newValue ?? ""}`,
@@ -165,11 +205,16 @@ export const EMAIL_KINDS = {
       const verify = d.type === "reauthentication";
       return {
         unit: IT,
+        mood: "confident",
         subject: verify ? "رمز التحقّق في نادي أدِيب" : "رمز الدخول إلى نادي أدِيب",
         title: verify ? "رمز التحقّق" : "رمز الدخول",
         paragraphs: [greeting(d), "اكتب هذا الرمز في الصفحة التي طلبتَه منها:"],
         code: d.token,
-        note: `الرمز صالح عشر دقائق ولمرّةٍ واحدة، فلا تشاركه مع أحد، ولن يطلبه منك أحدٌ من النادي. ${UNASKED}`,
+        facts: [
+          { label: "صالحٌ لمدّة", value: "عشر دقائق" },
+          { label: "يُستعمل", value: "مرّةً واحدة" },
+        ],
+        note: `لا تشارك الرمز مع أحد، ولن يطلبه منك أحدٌ من النادي. ${UNASKED}`,
       };
     },
   }),
@@ -180,11 +225,16 @@ export const EMAIL_KINDS = {
     sample: AUTH_SAMPLE,
     render: (d) => ({
       unit: IT,
+        mood: "customer-support",
         subject: "إعادة تعيين كلمة المرور في نادي أدِيب",
       title: "إعادة تعيين كلمة المرور",
       paragraphs: [greeting(d), "تلقَّينا طلبًا لإعادة تعيين كلمة المرور لحسابك. اضغط الزرّ لتعيين كلمة مرورٍ جديدة من ثمانية أحرفٍ فأكثر."],
       cta: { label: "عيّن كلمة مرورٍ جديدة", href: verifyUrl(d) },
-      note: `الرابط صالح عشر دقائق ولمرّةٍ واحدة. ${UNASKED}`,
+      facts: [
+        { label: "الرابط صالحٌ لمدّة", value: "عشر دقائق" },
+        { label: "يُستعمل", value: "مرّةً واحدة" },
+      ],
+      note: UNASKED,
     }),
   }),
 
@@ -197,14 +247,19 @@ export const EMAIL_KINDS = {
     sample: { ...AUTH_SAMPLE, type: "email_change", from: "old@example.com", to: "new@example.com" },
     render: (d) => ({
       unit: IT,
+        mood: "explaining",
         subject: "طلب تغيير بريد الدخول في نادي أدِيب",
       title: "تأكيد تغيير بريد الدخول",
       paragraphs: [
         greeting(d),
-        `طُلب تغيير بريد الدخول لحسابك إلى ${d.to ?? "عنوانٍ جديد"}.`,
+        "طُلب تغيير بريد الدخول لحسابك.",
         "لا يسري التغيير حتى يُؤكَّد من هذا العنوان ومن العنوان الجديد معًا.",
       ],
       cta: { label: "أؤكّد التغيير", href: verifyUrl(d) },
+      facts: [
+        { label: "من", value: d.from ?? "عنوانك الحاليّ", ltr: !!d.from },
+        { label: "إلى", value: d.to ?? "عنوانٌ جديد", ltr: !!d.to },
+      ],
       note: "الرابط صالح عشر دقائق ولمرّةٍ واحدة. إن لم تطلب هذا التغيير فلا تضغط الزرّ، ويبقى دخولك بعنوانك الحاليّ.",
     }),
   }),
@@ -215,6 +270,7 @@ export const EMAIL_KINDS = {
     sample: { ...AUTH_SAMPLE, type: "email_change", from: "old@example.com", to: "new@example.com" },
     render: (d) => ({
       unit: IT,
+        mood: "explaining",
         subject: "تأكيد بريد الدخول الجديد في نادي أدِيب",
       title: "تأكيد بريد الدخول الجديد",
       paragraphs: [
@@ -223,6 +279,10 @@ export const EMAIL_KINDS = {
         "بعد التأكيد تدخل بهذا العنوان، وتبقى كلمةُ مرورك كما هي.",
       ],
       cta: { label: "أؤكّد بريدي الجديد", href: verifyUrl(d) },
+      facts: [
+        { label: "من", value: d.from ?? "عنوانك السابق", ltr: !!d.from },
+        { label: "إلى", value: d.to ?? "هذا العنوان", ltr: !!d.to },
+      ],
       note: `الرابط صالح عشر دقائق ولمرّةٍ واحدة. ${UNASKED}`,
     }),
   }),
@@ -237,6 +297,7 @@ export const EMAIL_KINDS = {
     sample: { ...AUTH_SAMPLE, type: "signup" },
     render: (d) => ({
       unit: IT,
+        mood: "welcome",
         subject: d.type === "invite" ? "دعوةٌ إلى نادي أدِيب" : "تأكيد بريدك في نادي أدِيب",
       title: d.type === "invite" ? "دعوةٌ إلى نادي أدِيب" : "تأكيد البريد",
       paragraphs: [greeting(d), d.type === "invite" ? "دُعيتَ إلى حسابٍ في نادي أدِيب. اضغط الزرّ لقبول الدعوة." : "اضغط الزرّ لتأكيد بريدك وإتمام حسابك."],
@@ -251,6 +312,7 @@ export const EMAIL_KINDS = {
     sample: { by: "محمد" },
     render: (d) => ({
       unit: IT,
+        mood: "thumbs-up",
         subject: "رسالةُ تجربة من نادي أدِيب",
       title: "وصلت رسالةُ التجربة",
       paragraphs: [`طلبها ${d.by}. وصولُها يعني أنّ الطريق كلَّه سليم: الصادر، والمُرسِل، والمزوّد.`],
@@ -258,22 +320,6 @@ export const EMAIL_KINDS = {
     }),
   }),
 
-  /**
-   * **تجربةُ وجهٍ من وجهي التصميم** (٢٠٢٦-١٠-١٧، مؤقّتة) — رسالةُ نوعٍ آخر بعيّنته، لابسةً وجهًا من
-   * `looks.ts`، تُرسَل إلى محمد ليرى في Gmail وغيره بأيّ خطٍّ وشكلٍ تصل. تُحذف مع `looks.ts` حين يُختار.
-   */
-  "system.look_test": defineEmail<{ of: string; look: "ink" | "seal"; plain?: boolean }>({
-    when: "طُلبت رسالةُ تجربةٍ بأحد وجهي التصميم",
-    sample: { of: "auth.code", look: "seal" },
-    render: (d) => {
-      const kind = emailKindOf(d.of);
-      if (!kind || d.of === "system.look_test") throw new Error(`لا عيّنةَ للنوع ${d.of}`);
-      const c = kind.render(kind.sample);
-      const name = d.look === "ink" ? "الحِبر" : "الختم";
-      // `plain`: بعنوان الرسالة الحقيقيّ بلا «تجربة»، فلا يكون العنوانُ نفسُه سببَ التصنيف.
-      return { ...c, subject: d.plain ? c.subject : `تجربة الوجه «${name}»: ${c.subject}`, look: d.look };
-    },
-  }),
 } satisfies Record<string, EmailKind<unknown>>;
 
 export type EmailKindKey = keyof typeof EMAIL_KINDS;

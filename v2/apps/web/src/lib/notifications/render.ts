@@ -7,6 +7,7 @@
  */
 import { SECTIONS, kindOf } from "./catalog";
 import type { IconKey } from "@/app/dashboard/_shell/icons";
+import type { NoteEmail } from "@/lib/email/kinds";
 import type { Gender, Level } from "./types";
 
 export type RenderedNote = {
@@ -59,4 +60,34 @@ export function renderNote(
   } catch {
     return orphan;
   }
+}
+
+/**
+ * **بريدُ الإشعار** — حقائقُ رسالة `notify.note` لمستلمٍ بعينه: نصُّ الجرس بجنسه، وما يزيده البريدُ من
+ * مدخل الدليل (`mail`: الجملة، والبيانات، ومزاجُ ديبو)، وجهةُ القسم، واسمُه للتحيّة. يناديه الموزِّعُ
+ * عند الإرسال، والمعرضُ `/ui/emails` بعيّنات الدليل، فما يُرى هناك هو ما يصل.
+ *
+ * وما يزيده البريدُ يُحمى كالنصّ: إن كسرته حقائقُ ناقصةٌ وصل نصُّ الجرس وحده، ولا تسقط الرسالة.
+ */
+export function renderNoteEmail(kind: string, audience: string, facts: unknown, gender: Gender, name: string | null): NoteEmail {
+  const note = renderNote(kind, audience, facts, gender);
+  const k = kindOf(kind);
+  const a = k?.audiences.find((x) => x.key === audience);
+  let extra: ReturnType<NonNullable<NonNullable<typeof a>["mail"]>> = {};
+  try {
+    extra = a?.mail?.(facts, gender) ?? {};
+  } catch {
+    extra = {};
+  }
+  return {
+    title: note.title,
+    body: note.body,
+    href: note.href,
+    unit: k ? SECTIONS[k.section].unit : null,
+    name,
+    gender,
+    mood: extra.mood ?? null,
+    lead: extra.lead ?? null,
+    facts: extra.facts?.length ? extra.facts : null,
+  };
 }

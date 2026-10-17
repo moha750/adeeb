@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Segmented } from "@adeeb/design-system";
 
-type Pair = { ink: string; seal: string };
-export type MailRow = { key: string; when: string; subject: string; html: Record<"adeeb" | "desktop" | "phone", Pair> };
+type Font = "adeeb" | "desktop" | "phone";
+export type MailRow = { key: string; when: string; subject: string; html: Record<Font, string> };
 
 const FONTS = [
   { value: "phone", label: "تطبيق Gmail على الآيفون" },
@@ -28,8 +28,7 @@ function Mail({ html, width, title }: { html: string; width: string; title: stri
   const fit = useCallback(() => {
     // طولُ المحتوى لا طولُ الإطار: `scrollHeight` لا ينقص عن ارتفاع النافذة، فيبقى الإطارُ طويلًا
     // بعد أن يتّسع العرضُ ويقصر النصّ.
-    const body = ref.current?.contentDocument?.body;
-    const first = body?.firstElementChild;
+    const first = ref.current?.contentDocument?.body?.firstElementChild;
     if (first) setHeight(Math.ceil(first.getBoundingClientRect().height));
   }, []);
 
@@ -40,8 +39,7 @@ function Mail({ html, width, title }: { html: string; width: string; title: stri
 
   const onLoad = () => {
     fit();
-    const doc = ref.current?.contentDocument;
-    doc?.fonts?.ready.then(fit).catch(() => {});
+    ref.current?.contentDocument?.fonts?.ready.then(fit).catch(() => {});
   };
 
   return (
@@ -57,9 +55,9 @@ function Mail({ html, width, title }: { html: string; width: string; title: stri
   );
 }
 
-export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names: { ink: string; seal: string } }) {
+export default function EmailLooksView({ groups }: { groups: Array<{ title: string; rows: MailRow[] }> }) {
   const [width, setWidth] = useState("375");
-  const [font, setFont] = useState<keyof MailRow["html"]>("phone");
+  const [font, setFont] = useState<Font>("phone");
 
   return (
     <>
@@ -68,23 +66,21 @@ export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names
         <span className="text-sm text-content-muted">الشاشةُ التي تُقرأ فيها الرسالة</span>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <Segmented items={FONTS} value={font} onValueChange={(v) => setFont(v as keyof MailRow["html"])} aria-label="برنامج البريد" />
+        <Segmented items={FONTS} value={font} onValueChange={(v) => setFont(v as Font)} aria-label="برنامج البريد" />
         <span className="text-sm text-content-muted">البرنامجُ الذي تُقرأ فيه، ومعه خطُّه</span>
       </div>
 
-      {rows.map((r) => (
-        <section key={r.key} className="mt-14">
-          <h2 className="font-display text-2xl font-black text-content">{r.subject}</h2>
-          <p className="mt-1 text-sm text-content-muted">
-            {r.when}، <span className="font-latin" dir="ltr">{r.key}</span>
-          </p>
-          <div className="mt-4 grid gap-6 lg:grid-cols-2">
-            {(["ink", "seal"] as const).map((look) => (
-              <div key={look}>
-                <p className="mb-2 font-display text-lg font-bold text-content">
-                  {look === "ink" ? "الوجه الأوّل" : "الوجه الثاني"}: {names[look]}
+      {groups.map((g) => (
+        <section key={g.title} className="mt-14">
+          <h2 className="font-display text-2xl font-black text-content">{g.title}</h2>
+          <div className="mt-4 grid gap-10 lg:grid-cols-2">
+            {g.rows.map((r) => (
+              <div key={r.key}>
+                <p className="font-display text-lg font-bold text-content">{r.subject}</p>
+                <p className="mb-2 text-sm text-content-muted">
+                  {r.when}، <span className="font-latin" dir="ltr">{r.key}</span>
                 </p>
-                <Mail html={r.html[font][look]} width={width} title={`${r.subject}، ${names[look]}`} />
+                <Mail html={r.html[font]} width={width} title={r.subject} />
               </div>
             ))}
           </div>

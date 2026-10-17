@@ -1,6 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { EMAIL_KIND_SHAPE, emailKindEntries, emailKindOf } from "../email/kinds";
-import { SITE, absoluteUrl, esc, renderLayout } from "../email/layout";
+import { MAIL_MOODS, SITE, absoluteUrl, esc, renderLayout } from "../email/layout";
+import { catalogEntries } from "../notifications/catalog";
+import { renderNoteEmail } from "../notifications/render";
 
 /**
  * حارسُ دليل البريد (`v2/EMAIL-SYSTEM.md`): كلُّ نوعٍ يُرسَم بعيّنته رسالةً تامّة، ولا يدخل الرسالةَ
@@ -33,7 +37,9 @@ describe("دليل البريد", () => {
 
   it("رسائلُ المصادقة: الرمزُ بارز، ورابطُ التأكيد نقطةُ verify ببصمته ونوعه ووجهته", () => {
     const code = renderLayout(emailKindOf("auth.code")!.render({ name: "سارة", gender: "female", type: "magiclink", hash: null, token: "305805", redirect: null, site: null }));
-    expect(code.html).toContain("305805");
+    // الرمزُ خاناتٌ في الرسالة، ومتّصلٌ في نصّها البديل (يُنسخ منه كاملًا).
+    expect(code.text).toContain("305805");
+    expect(code.html.match(/class="digit"/g)?.length).toBe(6);
     expect(code.html).toContain("أدِيبتنا سارة");
     const rec = emailKindOf("auth.recovery")!.render({ name: null, gender: null, type: "recovery", hash: "pkce_abc", token: "1", redirect: "https://adeeb.club/reset-password", site: null });
     const u = new URL(rec.cta!.href);
@@ -47,5 +53,42 @@ describe("دليل البريد", () => {
   it("الرابطُ الداخليّ يصير كاملًا على الموقع، والكاملُ يبقى", () => {
     expect(absoluteUrl("/dashboard")).toBe(`${SITE}/dashboard`);
     expect(absoluteUrl("https://adeeb.club/x")).toBe("https://adeeb.club/x");
+  });
+});
+
+describe("ثوبُ ديبو", () => {
+  it("لكلّ وجهٍ يلبسه البريدُ ملفُّه PNG (يخبزه scripts/mail-art.mjs)", () => {
+    for (const mood of Object.keys(MAIL_MOODS)) {
+      expect(fs.existsSync(path.join(__dirname, "../../../public/deebo/mail", `${mood}.png`)), mood).toBe(true);
+    }
+  });
+
+  it("كلُّ رسالةٍ تحمل وجهَ ديبو والجهةَ والتوقيع، والوجهُ من المعروف", () => {
+    for (const [key, kind] of emailKindEntries()) {
+      const c = kind.render(kind.sample);
+      if (c.mood) expect(MAIL_MOODS[c.mood], key).toBeDefined();
+      const { html } = renderLayout(c);
+      expect(html, key).toContain("/deebo/mail/");
+      expect(html, key).toContain(esc(c.unit?.trim() || "نادي أدِيب"));
+    }
+  });
+
+  it("بريدُ كلّ إشعارٍ يُرسَم للجنسين: تحيّةٌ بالاسم، وجهةُ القسم، وبياناتٌ لا تخلو قيمُها", () => {
+    const note = emailKindOf("notify.note")!;
+    for (const [key, kind] of catalogEntries()) {
+      for (const a of kind.audiences.filter((x) => x.email)) {
+        for (const g of ["male", "female", null] as const) {
+          const d = renderNoteEmail(key, a.key, kind.sample, g, "سارة محمد");
+          const c = note.render(d);
+          expect(c.paragraphs[0], `${key}/${a.key}`).toContain("سارة محمد");
+          expect(d.unit, `${key}/${a.key}`).toBeTruthy();
+          for (const f of d.facts ?? []) {
+            expect(f.label.trim(), `${key}/${a.key}`).not.toBe("");
+            expect(f.value.trim(), `${key}/${a.key}`).not.toBe("");
+          }
+          if (d.mood) expect(MAIL_MOODS[d.mood], `${key}/${a.key}`).toBeDefined();
+        }
+      }
+    }
   });
 });

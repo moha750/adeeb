@@ -2,7 +2,6 @@ import "server-only";
 import { notificationsDb } from "@/lib/notifications/db";
 import { emailKindOf, type EmailDataOf, type EmailKindKey } from "./kinds";
 import { renderLayout } from "./layout";
-import { renderLook } from "./looks";
 import { providerConfigured, sendEmail } from "./provider";
 
 /**
@@ -73,9 +72,7 @@ export async function drainEmails(limit = 20): Promise<DrainOutcome> {
       if (!kind) throw Object.assign(new Error(`نوعٌ لا يعرفه الدليل: ${row.kind}`), { final: true });
       const content = kind.render(row.data);
       subject = content.subject;
-      const plain = renderLayout(content);
-      // تجربةُ الوجهين (مؤقّتة، `system.look_test`): الرسالةُ بالوجه المطلوب، ونصُّها البديلُ كما هو.
-      const { html, text } = content.look ? { html: renderLook(content, content.look), text: plain.text } : plain;
+      const { html, text } = renderLayout(content);
       const res = await sendEmail({
         to: row.to_email,
         subject: content.subject,
