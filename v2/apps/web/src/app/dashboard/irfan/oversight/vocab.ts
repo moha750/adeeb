@@ -13,6 +13,9 @@ export type OversightRow = {
   from: string;
   to: string;
   seat: string;
+  /** جنسُ القائد وصورتُه: أفتارُه في رأس الكرت (`Avatar`). */
+  toGender: "male" | "female" | null;
+  toAvatar: string | null;
   title: string | null;
   look: IrfanLook;
   /** البطاقةُ للعرض، أو `null` لرسالةٍ نصُّها محجوب (كُتبت قبل الإفصاح). */

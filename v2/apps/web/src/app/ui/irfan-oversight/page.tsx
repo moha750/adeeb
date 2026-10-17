@@ -19,7 +19,8 @@ const card = (to: string, seat: string, from: string, title: string | null, body
   ({ to, seat, from, title, body, season: SEASON });
 
 const R = (id: number, at: string, from: string, to: string, seat: string, title: string | null, look: "letter" | "aurora", body: string | null, pictured = true, read = false): OversightRow =>
-  ({ id, at, from, to, seat, title, look, card: body ? card(to, seat, from, title, body) : null, pictured, read, thumb: null });
+  ({ id, at, from, to, seat, toGender: seat.startsWith("قائدة") || seat.startsWith("الرئيسة") ? "female" : "male", toAvatar: null,
+     title, look, card: body ? card(to, seat, from, title, body) : null, pictured, read, thumb: null });
 
 const ROWS: OversightRow[] = [
   R(1, "2026-10-17T09:30:00Z", "ريم سعد الخالدي", "سديم بندر القحطاني", "قائدة لجنة التصوير", "شكرًا لكِ", "aurora", null, false, true),

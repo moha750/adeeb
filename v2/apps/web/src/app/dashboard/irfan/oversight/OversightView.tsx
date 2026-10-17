@@ -6,6 +6,7 @@ import { CalendarBlank, Crown, EnvelopeSimple, EyeSlash, HandHeart, ImageBroken,
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard } from "@/lib/irfan/card";
 import { EmptyState } from "../../_components/EmptyState";
+import { Avatar } from "../../_components/Avatar";
 import { Row } from "../../_portal/Row";
 import { LOOK_NAMES } from "../vocab";
 import type { OversightData, OversightRow } from "./vocab";
@@ -115,17 +116,21 @@ export function OversightView({ data, list = "cards" }: { data: OversightData; l
         // الشكلُ الأوّل: جدارُ بطاقات، كلُّ رسالةٍ بطاقتُها معلّقةٌ في رأس كرتها، وتحتها مَن ولمن ومتى
         <div className="card-grid">
           {rows.map((r) => (
-            <Card key={r.id} interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
+            <Card key={r.id} className="irf-card" interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
-              <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
-              {/* الشكلُ الذي أحبّه المالك (رأسٌ منسّمٌ وسطرٌ بأيقونة)، وطُوِّر: السطرُ يُسمّي ما فيه («العنوان»)
-                  بدل أن يكون التاريخُ تسميتَه، والتاريخُ نزل إلى الذيل بجوار الحال */}
-              <CardHeader variant="soft" title={`إلى ${r.to}`} subtitle={`من ${r.from}`} />
-              <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[r.look]}`} />
-              <CardFooter>
-                <small className="text-content-muted">{fmtDate(r.at)}</small>
-                <span className="flex gap-1"><State r={r} /></span>
-              </CardFooter>
+              {/* الشكلُ الذي أحبّه المالك (البطاقةُ معلّقة، ثمّ رأسٌ منسّم، ثمّ سطرٌ بأيقونة، ثمّ ذيل)، وطُوِّر:
+                  أفتارُ القائد في الرأس فيُعرف بوجهه قبل اسمه، والسطرُ يُسمّي ما فيه، والتاريخُ في الذيل بأيقونته،
+                  واليتيمُ الممتدّ يصير أفقيًّا (`.irf-card`) */}
+              <div className="irf-card-in">
+                <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
+                <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="sm" />}
+                  title={`إلى ${r.to}`} subtitle={`من ${r.from}`} />
+                <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[r.look]}`} />
+                <CardFooter>
+                  <small className="inline-flex items-center gap-1 text-content-muted"><CalendarBlank aria-hidden />{fmtDate(r.at)}</small>
+                  <span className="flex gap-1"><State r={r} /></span>
+                </CardFooter>
+              </div>
             </Card>
           ))}
         </div>
