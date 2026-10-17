@@ -1,6 +1,6 @@
 /**
  * مفرداتُ غرفة «عِرفان» — بلا إطار، فيستوردها الخادمُ والعميل. ورموزُ الردّ توأمُ ما يُرجعه
- * `send_irfan` و`report_irfan` في القاعدة (`20261017075122_irfan_01.sql`).
+ * `send_irfan` في القاعدة (`20261017081023_irfan_02_whatsapp_share.sql`).
  */
 import type { IrfanCard, IrfanLook } from "@/lib/irfan/card";
 
@@ -30,25 +30,19 @@ export const LOOK_NAMES: Record<IrfanLook, string> = { letter: "رسالة", aur
 /** رسالةٌ كما تعرضها الغرفة: البطاقةُ جاهزةٌ للرسم، ومعها ما يخصّ الناظر. */
 export type IrfanItem = {
   id: number;
-  /** وصلتني · أرسلتُها · بُلِّغ عنها (للرئيسين). */
-  dir: "in" | "out" | "report";
+  /** وصلتني · أرسلتُها. */
+  dir: "in" | "out";
   card: IrfanCard;
   look: IrfanLook;
   at: string;
   unread: boolean;
-  reported: boolean;
-  note: string | null;
 };
-
-/** قائدٌ لم تصله رسالةٌ بعد في الموسم — للرئيسين، بلا أعداد. */
-export type Uncovered = { id: string; name: string; seat: string };
 
 export type IrfanSeason = { id: number; title: string; closesAt: string };
 
 export type IrfanRoomData = {
   season: IrfanSeason | null;
   items: IrfanItem[];
-  uncovered: Uncovered[] | null;
   error: string | null;
 };
 

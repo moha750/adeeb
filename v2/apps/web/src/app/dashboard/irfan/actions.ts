@@ -7,7 +7,7 @@ import { notificationsDb } from "@/lib/notifications/db";
 import { kickDispatch } from "@/lib/notifications/emit";
 import { BODY_MAX, BODY_MIN } from "@/lib/irfan/vocab";
 import { irfanPreviewPath, irfanWhatsAppLink } from "@/lib/irfan/whatsapp";
-import { SEND_ERRORS, type IrfanResult, type IrfanSent } from "./vocab";
+import { SEND_ERRORS, type IrfanSent } from "./vocab";
 
 /**
  * أفعالُ «عِرفان» — بجلسة صاحبها، والفاعلُ تقرؤه القاعدة من `auth.uid()` لا من مُدخَل. والإشعارُ يُطلَق
@@ -59,14 +59,4 @@ export async function markIrfanRead(id: number): Promise<void> {
   if (!Number.isSafeInteger(id)) return;
   const sb = await createClient();
   await sb.rpc("mark_irfan_read", { p_id: id });
-}
-
-export async function reportIrfan(id: number, note: string): Promise<IrfanResult> {
-  if (!Number.isSafeInteger(id)) return { ok: false, message: "رسالةٌ غير معروفة." };
-  const sb = await createClient();
-  const { data, error } = await sb.rpc("report_irfan", { p_id: id, p_note: (note ?? "").slice(0, 300) });
-  if (error || !(data as { ok: boolean })?.ok) return { ok: false, message: "تعذّر البلاغ." };
-  kickDispatch();
-  revalidatePath("/dashboard/irfan");
-  return { ok: true, message: "وصل بلاغُك إلى الرئيسين." };
 }

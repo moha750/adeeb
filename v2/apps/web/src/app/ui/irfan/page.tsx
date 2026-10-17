@@ -72,18 +72,13 @@ const LEADERS: Recipient[] = [
   { id: "l6", name: "عبد الرحمن بن عبد العزيز الدوسري", seat: "نائب قائد لجنة السفراء", council: "المجلس التشغيلي", gender: "male", avatar: null },
 ];
 
-/** الغرفةُ كما يراها رئيسٌ في الموسم: وصله، وأرسل، وبلاغٌ واحد، وقادةٌ لم تصلهم رسالة. */
+/** الغرفةُ كما يراها قائدٌ في الموسم: ما وصله، وما أرسل. */
 const ROOM: IrfanRoomData = {
   season: { id: 1, title: SEASON, closesAt: "2026-10-23T21:00:00.000Z" },
   items: [
-    { id: 1, dir: "in", card: { ...SAMPLES[2].card, to: "محمد إسماعيل المطر", seat: "رئيس أدِيب" }, look: "aurora", at: "2026-10-17T09:00:00.000Z", unread: true, reported: false, note: null },
-    { id: 2, dir: "in", card: { ...SAMPLES[1].card, to: "محمد إسماعيل المطر", seat: "رئيس أدِيب" }, look: "letter", at: "2026-10-17T08:00:00.000Z", unread: false, reported: false, note: null },
-    { id: 3, dir: "out", card: SAMPLES[0].card, look: "letter", at: "2026-10-17T07:00:00.000Z", unread: false, reported: false, note: null },
-    { id: 4, dir: "report", card: { ...SAMPLES[1].card, from: "ماجد فيصل الحربي", to: "نواف ثلاب الشمري" }, look: "letter", at: "2026-10-17T06:00:00.000Z", unread: false, reported: true, note: "كلامٌ فيه سخرية" },
-  ],
-  uncovered: [
-    { id: "u1", name: "عبد الرحمن بن عبد العزيز الدوسري", seat: "نائب قائد لجنة السفراء" },
-    { id: "u2", name: "فاطمة زكريا الكويتي", seat: "قائدة لجنة الفعاليات" },
+    { id: 1, dir: "in", card: { ...SAMPLES[2].card, to: "محمد إسماعيل المطر", seat: "رئيس أدِيب" }, look: "aurora", at: "2026-10-17T09:00:00.000Z", unread: true },
+    { id: 2, dir: "in", card: { ...SAMPLES[1].card, to: "محمد إسماعيل المطر", seat: "رئيس أدِيب" }, look: "letter", at: "2026-10-17T08:00:00.000Z", unread: false },
+    { id: 3, dir: "out", card: SAMPLES[0].card, look: "letter", at: "2026-10-17T07:00:00.000Z", unread: false },
   ],
   error: null,
 };
@@ -185,7 +180,7 @@ export default function IrfanLabPage() {
         </section>
 
         <section className="mt-16">
-          <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">الغرفة في البوّابة، كما يراها رئيسٌ في الموسم</p>
+          <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">الغرفة في البوّابة، كما يراها قائدٌ في الموسم</p>
           <IrfanRoom data={ROOM} demo />
         </section>
 

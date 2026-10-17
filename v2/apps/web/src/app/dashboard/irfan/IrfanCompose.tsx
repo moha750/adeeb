@@ -37,20 +37,16 @@ function usePreview(card: IrfanCard, look: IrfanLook) {
   return src;
 }
 
-export function IrfanCompose({ leaders, season, sender, initialTo, send }: {
+export function IrfanCompose({ leaders, season, sender, send }: {
   leaders: Recipient[];
   season: string;
   sender: { name: string; gender: "male" | "female" | null };
-  initialTo?: string | null;
   send: (to: string, body: string, look: IrfanLook) => Promise<IrfanSent>;
 }) {
   const router = useRouter();
   const [done, setDone] = useState<{ id?: number; whatsapp: string | null; to: string } | null>(null);
   const [look, setLook] = useState<IrfanLook>("letter");
-  const [toName, setToName] = useState<string[]>(() => {
-    const l = leaders.find((x) => x.id === initialTo);
-    return l ? [l.name] : [];
-  });
+  const [toName, setToName] = useState<string[]>([]);
   const [opening, setOpening] = useState("thanks");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);

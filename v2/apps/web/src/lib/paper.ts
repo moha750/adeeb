@@ -169,12 +169,25 @@ export function elongationRatio(
   }
 }
 
-/** لفُّ الفقرة على عرضٍ معلوم — قياسٌ بالكلمة، فالعربيّة لا تُقصّ في وسط الكلمة. */
+/**
+ * لفُّ الفقرة على عرضٍ معلوم — قياسٌ بالكلمة، فالعربيّة لا تُقصّ في وسط الكلمة.
+ *
+ * **إلّا كلمةً أعرضَ من السطر كلِّه** (٢٠٢٦-١٠-١٧): رابطٌ أو حروفٌ متّصلةٌ بلا مسافة كانت تُرسَم
+ * سطرًا واحدًا يخرج عن الورقة (رآه المالك في بطاقة «عِرفان»). فتُكسَر هي وحدها بالمحرف، وما سواها
+ * يبقى على اللفّ بالكلمة.
+ */
 export function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";
   for (const w of words) {
+    if (ctx.measureText(w).width > maxWidth) {
+      if (line) lines.push(line);
+      const parts = breakWord(ctx, w, maxWidth);
+      lines.push(...parts.slice(0, -1));
+      line = parts[parts.length - 1] ?? "";
+      continue;
+    }
     const next = line ? `${line} ${w}` : w;
     if (ctx.measureText(next).width > maxWidth && line) {
       lines.push(line);
@@ -185,6 +198,23 @@ export function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: numb
   }
   if (line) lines.push(line);
   return lines;
+}
+
+/** كسرُ كلمةٍ أعرضَ من السطر إلى قطعٍ تسعه — بالمحرف (`Array.from` فلا يُشطَر رمزٌ مركّب). */
+function breakWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
+  const parts: string[] = [];
+  let cur = "";
+  for (const ch of Array.from(word)) {
+    const next = cur + ch;
+    if (ctx.measureText(next).width > maxWidth && cur) {
+      parts.push(cur);
+      cur = ch;
+    } else {
+      cur = next;
+    }
+  }
+  if (cur) parts.push(cur);
+  return parts;
 }
 
 /**

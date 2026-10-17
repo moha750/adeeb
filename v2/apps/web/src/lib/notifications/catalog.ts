@@ -84,24 +84,6 @@ export const CATALOG = {
       },
     ],
   }),
-  /**
-   * **بلاغٌ على رسالة عِرفان** — المستلمُ رأى ما لا يليق. تُطلَق داخل `report_irfan`.
-   * - **المستلم**: مقعدا الرئيسين (من يشغلهما الآن). **الدرجة**: مهمّ. **الوجهة**: الرسالةُ نفسُها في الغرفة.
-   */
-  "irfan.reported": defineKind<{ messageId: number }>({
-    section: "irfan",
-    when: "بلّغ قائدٌ عن رسالة عِرفان",
-    sample: { messageId: 1 },
-    audiences: [
-      {
-        key: "presidents",
-        level: "important",
-        to: () => [{ seat: "club_president" }, { seat: "executive_council_president" }],
-        text: () => ({ title: "بلاغٌ على رسالة عِرفان", body: "افتحها لترى ما بُلِّغ عنه." }),
-        href: (f) => `/dashboard/irfan?m=${f.messageId}`,
-      },
-    ],
-  }),
 } satisfies Record<string, Kind<unknown>>;
 
 export type KindKey = keyof typeof CATALOG;

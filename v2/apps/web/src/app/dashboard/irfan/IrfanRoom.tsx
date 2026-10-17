@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Card, CardHeader, CarouselNav, Modal, Textarea } from "@adeeb/design-system";
-import { Flag, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, Quotes, UserCircle, ChatTeardropText, WhatsappLogo } from "@phosphor-icons/react";
-import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
+import { Alert, Card, CardHeader, CarouselNav } from "@adeeb/design-system";
+import { HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, WhatsappLogo } from "@phosphor-icons/react";
+import { DownloadSimple } from "@/app/_components/glyphs";
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard, saveIrfanCard } from "@/lib/irfan/card";
 import { useToast } from "../_components/ToastProvider";
 import { CaretAct, Row, type Ico } from "../_portal/Row";
-import { irfanWhatsApp, markIrfanRead, reportIrfan } from "./actions";
+import { irfanWhatsApp, markIrfanRead } from "./actions";
 import type { IrfanItem, IrfanRoomData } from "./vocab";
 
 /**
  * **غرفةُ «عِرفان»** — على معرض «شهاداتي» المعتمَد (قائمةٌ يمنةً والبطاقةُ معلّقةٌ يسرةً)، لأنّ الشيءَ
  * واحد: ورقةٌ تُرى وتُحفظ. والفرقُ أنّ البطاقة قائمة (‎`.acr-shot.is-portrait`‎).
  *
- * - **وصلني** و**أرسلتُ** لكلّ عضو، و**البلاغات** و**لم تصله رسالةٌ بعد** للرئيسين.
+ * - **وصلني** و**أرسلتُ**، ولا شيء سواهما (أسقط المالكُ «لم تصله رسالةٌ بعد» والبلاغَ، ٢٠٢٦-١٠-١٧:
+ *   «ليس لها داعٍ»).
  * - **لا عدّادَ في أيّ موضع** (قرار المالك): لا يُقال لأحدٍ كم وصله ولا كم وصل غيرَه.
  * - المختارةُ غيرُ المقروءة تُوسَم مقروءةً لحظةَ تُفتح.
  */
@@ -44,7 +45,6 @@ function Shot({ it, alt }: { it: IrfanItem; alt: string }) {
 const GROUPS: { dir: IrfanItem["dir"]; label: string; Icon: Ico; say: string }[] = [
   { dir: "in", label: "وصلني", Icon: HandHeart, say: "ما كتبه لك أعضاءُ أدِيب" },
   { dir: "out", label: "أرسلتُ", Icon: PaperPlaneTilt, say: "ما كتبتَه لقادتك" },
-  { dir: "report", label: "البلاغات", Icon: Flag, say: "رسائلُ بلّغ عنها مستلموها" },
 ];
 
 /** الإغلاقُ منتصفُ الليل، فآخرُ أيّامه اليومُ الذي قبله: ثانيةٌ قبل الإغلاق تقع فيه. */
@@ -54,11 +54,9 @@ const party = (it: IrfanItem) => (it.dir === "out" ? `إلى ${it.card.to}` : `�
 
 export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initial?: number | null; demo?: boolean }) {
   const toast = useToast();
-  const { season, items, uncovered, error } = data;
+  const { season, items, error } = data;
   const order = GROUPS.flatMap((g) => items.filter((i) => i.dir === g.dir));
   const [sel, setSel] = useState<number | null>(initial && order.some((i) => i.id === initial) ? initial : order[0]?.id ?? null);
-  const [reporting, setReporting] = useState(false);
-  const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const read = useRef<Set<number>>(new Set());
   const stage = useRef<HTMLElement>(null);
@@ -100,15 +98,6 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
       setBusy(null);
     }
   };
-  const report = async () => {
-    if (!cur || demo) { setReporting(false); return; }
-    setBusy("report");
-    const r = await reportIrfan(cur.id, note);
-    setBusy(null);
-    setReporting(false);
-    if (r.ok) toast.success(r.message); else toast.error(r.message);
-  };
-
   const write = season
     ? <Row Icon={NotePencil} k={season.title} v="اكتب عِرفانًا لقائد" sub={`آخرُ أيّام الموسم ${lastDay(season.closesAt)}`}
         act={CaretAct("اكتب عِرفانًا", "اكتب")} href="/dashboard/irfan/new" />
@@ -143,17 +132,6 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
           })}
         </nav>
       ) : null}
-      {uncovered && uncovered.length ? (
-        <div className="acr-group">
-          <h3>
-            <span className="acr-gic" aria-hidden><UserCircle /></span>
-            <span className="acr-gtx">لم تصله رسالةٌ بعد<small>اكتبا لهم فلا يخرج قائدٌ من الموسم بلا عِرفان</small></span>
-          </h3>
-          {uncovered.map((u) => (
-            <Row key={u.id} Icon={UserCircle} k={u.seat} v={u.name} act={CaretAct(`اكتب إلى ${u.name}`, "اكتب")} href={`/dashboard/irfan/new?to=${u.id}`} />
-          ))}
-        </div>
-      ) : null}
     </Card>
   );
 
@@ -166,7 +144,6 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
             subtitle={season ? "اكتب لقائدٍ في أدِيب، وما يصلك يظهر هنا" : "يُفتح موسمُ عِرفان في مناسباته، وما يصلك يبقى هنا"} />
           {write}
         </Card>
-        {uncovered && uncovered.length ? list : null}
       </div>
     );
   }
@@ -191,22 +168,10 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
               <Row Icon={WhatsappLogo} k="واتساب" v={`أرسله إلى ${cur.card.to.split(" ")[0]}`} sub="محادثتُه، وفيها رسالتُك ورابطُ بطاقتها"
                 act={CaretAct("أرسله في واتساب", "افتح")} href={waHref} />
             ) : null}
-            {cur.dir === "report" && cur.note ? <Row Icon={Quotes} k="ملاحظةُ المبلِّغ" v={`«${cur.note}»`} /> : null}
-            {cur.dir === "in" && !cur.reported ? (
-              <Row Icon={Flag} k="ما لا يليق" v="بلّغ عن هذه الرسالة" sub="تصل إلى الرئيسين وحدهما" danger
-                act={{ Icon: Flag, label: "بلاغ", text: "بلاغ", danger: true }} disabled={busy !== null} onClick={() => setReporting(true)} />
-            ) : null}
-            {cur.dir === "in" && cur.reported ? <Row Icon={Flag} k="بلاغ" v="بلّغتَ عنها" tone="muted" /> : null}
           </Card>
         </section>
       </div>
 
-      <Modal open={reporting} onClose={() => { if (!busy) setReporting(false); }} busy={busy === "report"} size="sm"
-        title="بلاغٌ على هذه الرسالة" description="تصل الرسالةُ وملاحظتُك إلى الرئيسين، ولا يعلم بها مرسلُها."
-        footer={<><Button variant="danger" loading={busy === "report"} onClick={report}>أرسل البلاغ</Button><Button variant="ghost" onClick={() => setReporting(false)} disabled={busy === "report"}>إلغاء</Button></>}>
-        <Textarea label="ملاحظة" icon={<ChatTeardropText />} innerIcon={<PencilSimple />} placeholder="ما الذي لا يليق فيها؟"
-          optional rows={3} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} />
-      </Modal>
     </>
   );
 }

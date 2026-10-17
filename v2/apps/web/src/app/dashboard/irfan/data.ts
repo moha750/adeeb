@@ -2,17 +2,17 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { irfanSeat } from "@/lib/irfan/seat";
 import type { IrfanLook } from "@/lib/irfan/card";
-import type { IrfanItem, IrfanRoomData, IrfanSeason, Recipient, Uncovered } from "./vocab";
+import type { IrfanItem, IrfanRoomData, IrfanSeason, Recipient } from "./vocab";
 
 /**
  * قراءاتُ «عِرفان» — **بجلسة صاحبها** (`createClient`) لا بمفتاح الخدمة: القاعدةُ تقرّر ما يرى
- * (`irfan_messages_read`: رسائلُه، والمُبلَّغُ عنها للرئيسين)، فلا يُرشَّح هنا ما لا يُرى.
+ * (`irfan_messages_read`: رسائلُه وحدها، مرسلًا أو مستلمًا)، فلا يُرشَّح هنا ما لا يُرى.
  */
 
 type Row = {
   id: number; sender_id: string; recipient_id: string; sender_name: string; recipient_name: string;
   recipient_gender: string | null; role_name: string; unit_name: string | null; body: string; look: string;
-  created_at: string; read_at: string | null; reported_at: string | null; report_note: string | null;
+  created_at: string; read_at: string | null;
   irfan_seasons: { title: string } | { title: string }[] | null;
 };
 
@@ -37,14 +37,14 @@ export async function getIrfanRoom(meId: string): Promise<IrfanRoomData> {
     getOpenSeason(),
     roleNames(sb),
     sb.from("irfan_messages")
-      .select("id, sender_id, recipient_id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, created_at, read_at, reported_at, report_note, irfan_seasons(title)")
+      .select("id, sender_id, recipient_id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, created_at, read_at, irfan_seasons(title)")
       .order("created_at", { ascending: false })
       .limit(400),
   ]);
 
   const items: IrfanItem[] = ((msgs.data ?? []) as Row[]).map((r) => {
     const s = Array.isArray(r.irfan_seasons) ? r.irfan_seasons[0] : r.irfan_seasons;
-    const dir: IrfanItem["dir"] = r.recipient_id === meId ? "in" : r.sender_id === meId ? "out" : "report";
+    const dir: IrfanItem["dir"] = r.recipient_id === meId ? "in" : "out";
     return {
       id: r.id,
       dir,
@@ -58,25 +58,10 @@ export async function getIrfanRoom(meId: string): Promise<IrfanRoomData> {
       look: (r.look === "aurora" ? "aurora" : "letter") as IrfanLook,
       at: r.created_at,
       unread: dir === "in" && !r.read_at,
-      reported: !!r.reported_at,
-      note: r.report_note,
     };
   });
 
-  // من لم تصله رسالةٌ بعد: للرئيسين وحدهما، والقاعدةُ تردّ غيرَهما (42501) فيبقى `null`
-  let uncovered: Uncovered[] | null = null;
-  if (season) {
-    const { data, error } = await sb.rpc("irfan_uncovered", { p_season: season.id });
-    if (!error && Array.isArray(data)) {
-      uncovered = data.map((l: { user_id: string; full_name: string; gender: string | null; role_name: string; unit_name: string | null }) => ({
-        id: l.user_id,
-        name: l.full_name,
-        seat: irfanSeat(roles.get(l.role_name), l.unit_name, l.gender),
-      }));
-    }
-  }
-
-  return { season, items, uncovered, error: msgs.error ? "تعذّر جلب رسائل عِرفان." : null };
+  return { season, items, error: msgs.error ? "تعذّر جلب رسائل عِرفان." : null };
 }
 
 /** من يستطيع صاحبُ الجلسة أن يكتب له الآن — ومن كتب له في الموسم يسقط من القائمة. */
