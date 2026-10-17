@@ -103,14 +103,15 @@ export function OversightView({ data }: { data: OversightData }) {
           {rows.map((r) => (
             <Card key={r.id} className="irf-card" interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
-              {/* طرفا الرسالة شريطان ممتدّان على الكرت كلِّه (المالك ٢٠٢٦-١٠-١٧): «إلى» ومقعدُه رأسًا فوق البطاقة
-                  والسطور، و«من» وتاريخُه ذيلًا تحتهما بالحُلّة نفسها */}
+              {/* الرأسُ ممتدٌّ على الكرت كلِّه فوق البطاقة والسطور معًا (المالك ٢٠٢٦-١٠-١٧). وجُرِّب «من» في طرفه
+                  ثمّ ذيلًا ممتدًّا تحته، فأعاده المالكُ سطرًا أوّلَ بين السطور: «كانت أجمل» */}
               <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="md" />}
                 title={`إلى ${r.to}`} subtitle={r.seat} />
               <div className="irf-card-in">
                 <div className="irf-card-shot"><Thumb r={r} /></div>
                 <div>
-                  {/* كلُّ حقيقةٍ سطرٌ بأيقونته وتسميته، على نسق سطر «من» الأوّل (المالك ٢٠٢٦-١٠-١٧): لا شاراتٌ مبعثرةٌ ولا نصٌّ سائب */}
+                  {/* كلُّ حقيقةٍ سطرٌ بأيقونته وتسميته، على نسق «من» (المالك ٢٠٢٦-١٠-١٧): لا شاراتٌ مبعثرةٌ ولا نصٌّ سائب */}
+                  <Row Icon={UsersThree} k="من" v={r.from} sub={fmtDate(r.at)} />
                   <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} />
                   <Row Icon={Palette} k="التصميم" v={LOOK_NAMES[r.look]} />
                   <Row Icon={ChatTeardropText} k="الرسالة" v={r.card.body} />
@@ -119,7 +120,6 @@ export function OversightView({ data }: { data: OversightData }) {
                     sub={r.pictured ? "صورةُ معاينتها سليمة" : "لم تُرفع صورةُ معاينتها، فوصلت في واتساب بلا صورة"} />
                 </div>
               </div>
-              <CardHeader variant="soft" className="irf-card-foot" icon={<UsersThree aria-hidden />} title={`من ${r.from}`} subtitle={fmtDate(r.at)} />
             </Card>
           ))}
         </div>
