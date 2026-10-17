@@ -8,8 +8,8 @@ import { buildStructure, type CommitteeNode, type Holder } from "../dashboard/me
  * مقصوصًا إلى ما يُنشَر. فلا شجرةٌ ثانية تُبنى من الصفوف، ولا عددٌ يفترق عن اللوحة.
  *
  * ### ما يُقصّ ولماذا
- * - **الشاغرُ لا يُقال**: في اللوحة عملٌ ينتظر صاحبَه، وفي صفحة الناس فراغٌ لا يُخبر بشيء.
- *   واللجنةُ الخالية (لا أحدَ فيها) تسقط كلُّها.
+ * - **كلُّ وحدةٍ قائمة تُنشَر وإن خلت** (عدل المالك ٢٠٢٦-١٠-١٧ عن إسقاط الخالية): الهيكلُ تخطيطٌ
+ *   ثابت، والمقعدُ الخالي يُرسم في الصفحة «شاغرًا».
  * - **المشرفان لا يُقالان**: إشرافُ عضو الإدارة على لجنةٍ ليس **فيها** علاقةُ عمل لا موضع،
  *   وصاحبُه ظاهرٌ في إدارته أصلًا.
  * - **حسابُ النادي (`adeeb_admin`) ليس عضوًا**: استثناءٌ مؤسّسيّ خارج المنازل.
@@ -99,7 +99,8 @@ export async function getPublicStructure(): Promise<{ data: PubStructure | null;
     members: n.members.map((m) => person(m, null)).sort(byName),
     total: n.total,
   });
-  const filled = (u: PubUnit) => u.total > 0;
+  // كلُّ وحدةٍ قائمة تُعرض وإن خلت (٢٠٢٦-١٠-١٧، المالك): الهيكلُ تخطيطٌ ثابت لا يتبدّل بمن حضر —
+  // «يدخل اليوم فلا يجد قائدًا للتقارير والأرشفة، ثمّ يدخل بعد أسبوعٍ فيرى العكس». والخالي يُرسم شاغرًا.
 
   // رئيسُ المجلس أوّلًا (`isHead`) — الصفحةُ تضعه في القلب، فلا يُستنتَج من ترتيب الأدوار
   const seats = [...model.administrative.seats.filter((s) => s.isHead), ...model.administrative.seats.filter((s) => !s.isHead)]
@@ -107,17 +108,16 @@ export async function getPublicStructure(): Promise<{ data: PubStructure | null;
 
   const departments = model.executive.departments
     .map((dn): PubDepartment => {
-      const units = dn.committees.map(unit).filter(filled);
+      const units = dn.committees.map(unit);
       return { id: dn.id, name: dn.name, head: dn.head ? person(dn.head, dn.head.roleAr) : null, units, total: units.reduce((s, u) => s + u.total, 0) };
-    })
-    .filter((dn) => dn.units.length > 0 || dn.head);
+    });
 
   const counted = new Set<string>();
   for (const x of userRoles) counted.add(x.user_id);
 
   return {
     data: {
-      administrative: { name: model.administrative.name, seats, units: model.administrative.committees.map(unit).filter(filled) },
+      administrative: { name: model.administrative.name, seats, units: model.administrative.committees.map(unit) },
       executive: { name: model.executive.name, head: model.executive.head ? person(model.executive.head, model.executive.headRoleAr) : null, departments },
       counts: { members: counted.size, volunteers: v.count ?? 0 },
     },
