@@ -3,7 +3,7 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "../../_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
 import { PageHeader } from "../../_components/PageHeader";
-import { getOpenSeason, getRecipients } from "../data";
+import { amILeader, getOpenSeason, getRecipients } from "../data";
 import { sendIrfan } from "../actions";
 import { IrfanCompose } from "../IrfanCompose";
 
@@ -16,13 +16,13 @@ export default async function IrfanNewPage() {
   const me = (await getCurrentAdmin())!;
   const season = await getOpenSeason();
   if (!season) redirect("/dashboard/irfan");
-  const { list, error } = await getRecipients();
+  const [{ list, error }, canReceive] = await Promise.all([getRecipients(), amILeader(me.id)]);
   const gender = me.gender === "female" || me.gender === "male" ? me.gender : null;
   return (
     <>
-      <PageHeader title="اكتب عِرفانًا" parent={{ label: "عِرفان", href: "/dashboard/irfan" }} />
+      <PageHeader title="اكتب عِرفانًا" crumbLeaf="اكتب عِرفانًا" parent={{ label: "عِرفان", href: "/dashboard/irfan" }} />
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      <IrfanCompose leaders={list} season={season.title} sender={{ name: me.fullName ?? "", gender }} send={sendIrfan} />
+      <IrfanCompose leaders={list} season={season.title} sender={{ name: me.fullName ?? "", gender }} canReceive={canReceive} send={sendIrfan} />
     </>
   );
 }

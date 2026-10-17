@@ -64,6 +64,20 @@ export async function getIrfanRoom(meId: string): Promise<IrfanRoomData> {
   return { season, items, error: msgs.error ? "تعذّر جلب رسائل عِرفان." : null };
 }
 
+/**
+ * أيشغل صاحبُ الجلسة مقعدَ قيادةٍ (`membership_kind = 'member'`)؟ هو وحده من يصله عِرفان، فبه تُقال
+ * الغرفةُ «ما أرسلتَه وما وصلك» أو «ما أرسلتَه». والحدُّ نفسُه حدُّ `irfan_leaders` في القاعدة.
+ */
+export async function amILeader(meId: string): Promise<boolean> {
+  const sb = await createClient();
+  const [seats, kinds] = await Promise.all([
+    sb.from("user_roles").select("role_name").eq("user_id", meId).eq("is_active", true),
+    sb.from("roles").select("role_name").eq("membership_kind", "member").neq("role_name", "adeeb_admin"),
+  ]);
+  const lead = new Set((kinds.data ?? []).map((r: { role_name: string }) => r.role_name));
+  return (seats.data ?? []).some((s: { role_name: string }) => lead.has(s.role_name));
+}
+
 /** من يستطيع صاحبُ الجلسة أن يكتب له الآن — ومن كتب له في الموسم يسقط من القائمة. */
 export async function getRecipients(): Promise<{ list: Recipient[]; error: string | null }> {
   const sb = await createClient();

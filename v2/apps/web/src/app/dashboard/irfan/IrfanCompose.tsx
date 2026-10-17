@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Alert, Button, Card, CardHeader, PersonPicker, Segmented, Select, Textarea } from "@adeeb/design-system";
-import { ChatTeardropText, Crown, HandHeart, NotePencil, PaperPlaneTilt, Quotes, WhatsappLogo } from "@phosphor-icons/react";
+import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, Quotes, WhatsappLogo } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import { PencilSimple } from "@/app/_components/glyphs";
-import { renderIrfanCard, renderIrfanPreview, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
+import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
+import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
 import { BODY_MAX, BODY_MIN, OPENINGS, lettersPhrase, ownWords } from "@/lib/irfan/vocab";
 import { Avatar } from "../_components/Avatar";
 import { CaretAct, Row } from "../_portal/Row";
@@ -37,14 +36,18 @@ function usePreview(card: IrfanCard, look: IrfanLook) {
   return src;
 }
 
-export function IrfanCompose({ leaders, season, sender, send }: {
+export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   leaders: Recipient[];
   season: string;
   sender: { name: string; gender: "male" | "female" | null };
+  /** أيصله هو عِرفان؟ القادةُ وحدهم يصلهم، فلا يُقال لعضو لجنةٍ «وما وصلك» (المالك ٢٠٢٦-١٠-١٧). */
+  canReceive: boolean;
   send: (to: string, body: string, look: IrfanLook) => Promise<IrfanSent>;
 }) {
-  const router = useRouter();
-  const [done, setDone] = useState<{ id?: number; whatsapp: string | null; to: string } | null>(null);
+  // بعد الحفظ تُحفظ البطاقةُ لقطةً: الإجراءُ الخادميّ يُحدِّث القائمةَ (`revalidatePath`) فيسقط منها مَن كُتب له،
+  // ولو رُسمت البطاقةُ من القائد المختار لخلت من اسمه ومقعده (رآه المالك: «إلى» وحدها).
+  const [done, setDone] = useState<{ id?: number; whatsapp: string | null; to: string; card: IrfanCard; look: IrfanLook } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [look, setLook] = useState<IrfanLook>("letter");
   const [toName, setToName] = useState<string[]>([]);
   const [opening, setOpening] = useState("thanks");
@@ -74,7 +77,7 @@ export function IrfanCompose({ leaders, season, sender, send }: {
     () => ({ to: leader?.name ?? "", seat: leader?.seat ?? "", from: sender.name, body: body.trim() || "…", season }),
     [leader, sender.name, body, season],
   );
-  const src = usePreview(card, look);
+  const src = usePreview(done ? done.card : card, done ? done.look : look);
 
   const submit = async () => {
     if (!leader || short) return;
@@ -91,9 +94,7 @@ export function IrfanCompose({ leaders, season, sender, send }: {
       } catch { /* تمضي بلا صورة معاينة */ }
     }
     setBusy(false);
-    // لا يُحدَّث الخادمُ هنا: البطاقةُ المعروضة بعد الحفظ تُرسم من القائد المختار، ولو حُدِّثت القائمةُ
-    // لسقط منها (كتب له في الموسم) فخلت البطاقة من اسمه. يُحدَّث حين يمضي إلى قائدٍ آخر.
-    setDone({ id: r.id, whatsapp: r.whatsapp ?? null, to: leader.name });
+    setDone({ id: r.id, whatsapp: r.whatsapp ?? null, to: leader.name, card, look });
   };
 
   /**
@@ -112,9 +113,12 @@ export function IrfanCompose({ leaders, season, sender, send }: {
               ? <Row Icon={WhatsappLogo} k="واتساب" v={`أرسله إلى ${first}`} sub="تُفتح محادثتُه وفيها رسالتُك ورابطُ بطاقتها"
                   act={CaretAct(`أرسله إلى ${first} في واتساب`, "افتح")} href={done.whatsapp} tone="ok" />
               : null}
-            <Row Icon={HandHeart} k="عِرفان" v="ما أرسلتَه وما وصلك" act={CaretAct("عِرفان")} href={done.id ? `/dashboard/irfan?m=${done.id}` : "/dashboard/irfan"} />
+            <Row Icon={ImageIcon} k="البطاقة" v="احفظها صورة" sub="لتنشرها أو تحتفظ بها"
+              act={{ Icon: DownloadSimple, label: "حفظ البطاقة", text: "حفظ" }} disabled={saving}
+              onClick={async () => { setSaving(true); try { await saveIrfanCard(done.card, done.look); } finally { setSaving(false); } }} />
+            <Row Icon={HandHeart} k="عِرفان" v={canReceive ? "ما أرسلتَه وما وصلك" : "ما أرسلتَه"} act={CaretAct("عِرفان")} href={done.id ? `/dashboard/irfan?m=${done.id}` : "/dashboard/irfan"} />
             <Row Icon={NotePencil} k="قائدٌ آخر" v="اكتب عِرفانًا جديدًا" act={CaretAct("اكتب عِرفانًا جديدًا", "اكتب")}
-              onClick={() => { setDone(null); setToName([]); setBody(openingText); router.refresh(); }} />
+              onClick={() => { setDone(null); setToName([]); setBody(openingText); }} />
           </Card>
         </div>
         <section className="acc-aside">

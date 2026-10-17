@@ -186,7 +186,7 @@ export default function IrfanLabPage() {
 
         <section className="mt-16">
           <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">شاشة الكتابة، بمعاينةٍ حيّة، والتصميمُ يختاره المرسل</p>
-          <IrfanCompose leaders={LEADERS} season={SEASON} sender={{ name: "عبد الرحمن خالد الشيخ", gender: "male" }} send={demoSend} />
+          <IrfanCompose leaders={LEADERS} season={SEASON} sender={{ name: "عبد الرحمن خالد الشيخ", gender: "male" }} canReceive={false} send={demoSend} />
         </section>
       </Container>
     </main>
