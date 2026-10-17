@@ -140,18 +140,20 @@ const INK = {
   aurora: () => ({ strong: "#ffffff", soft: "rgba(255,255,255,.88)", faint: "rgba(255,255,255,.62)" }),
 } as const;
 
-async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false) {
-  ctx.fillStyle = t.steel50;
+async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false, frame = true) {
+  ctx.fillStyle = frame ? t.steel50 : t.surface;
   ctx.fillRect(0, 0, CARD.w, CARD.h);
-  // ورقةٌ بيضاءُ داخل هامشٍ فولاذيّ خفيف، وزاويتُها من منحنى العلامة
-  const m = 56;
-  ctx.fillStyle = t.surface;
-  ctx.beginPath();
-  ctx.roundRect(m, m, CARD.w - m * 2, CARD.h - m * 2, 32);
-  ctx.fill();
-  ctx.strokeStyle = t.steel200;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  if (frame) {
+    // ورقةٌ بيضاءُ داخل هامشٍ فولاذيّ خفيف، وزاويتُها من منحنى العلامة
+    const m = 56;
+    ctx.fillStyle = t.surface;
+    ctx.beginPath();
+    ctx.roundRect(m, m, CARD.w - m * 2, CARD.h - m * 2, 32);
+    ctx.fill();
+    ctx.strokeStyle = t.steel200;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
 
   // علامةُ الاقتباس الكبيرة في الركن المقابل لبداية السطر — صوتُ كاتبٍ لا بيانُ جهة، ولا تزاحم النصّ
   ctx.save();
@@ -208,7 +210,7 @@ function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo, max = 5
 }
 
 /** خياراتُ المختبر وحده (`/ui/irfan`): تُعرض بها البدائلُ قبل أن تُعتمد، ولا يمرّرها الإنتاج. */
-export type IrfanLab = { bodyMax?: number };
+export type IrfanLab = { bodyMax?: number; frame?: boolean };
 
 export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter", lab: IrfanLab = {}): Promise<Blob> {
   const ctx = await openBlank(CARD);
@@ -216,7 +218,7 @@ export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter", 
   const heading = c.title?.trim() || "";
   const g: Geo & { headline?: number } = heading ? GEO_TITLED[look] : GEO[look];
   const ink = look === "letter" ? INK.letter(t) : INK.aurora();
-  await (look === "letter" ? paintLetter(ctx, t, !!heading) : paintAurora(ctx, t, !!heading));
+  await (look === "letter" ? paintLetter(ctx, t, !!heading, lab.frame ?? true) : paintAurora(ctx, t, !!heading));
 
   const line = (text: string, y: number, size: number, weight: number, color: string, min = 24): Piece => ({
     text,

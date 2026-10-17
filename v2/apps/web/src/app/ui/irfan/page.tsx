@@ -77,6 +77,8 @@ const SHORT: { lab: string; card: IrfanCard }[] = [
 
 const LAB_NOW: IrfanLab = { bodyMax: 56 };
 const LAB_GROW: IrfanLab = { bodyMax: 76 };
+/** «هناك مساحة إطارٍ فارغ، ما هو؟» (المالك ٢٠٢٦-١٠-١٧): الهامشُ الرماديّ حول الورقة، والبديلُ ورقةٌ بلا هامش. */
+const LAB_NOFRAME: IrfanLab = { frame: false };
 
 /** قادةُ المجلسين كما يراهم المرسل — مخترَعون، والحقيقيّون من القاعدة لحظةَ الفتح. */
 const LEADERS: Recipient[] = [
@@ -182,6 +184,22 @@ export default function IrfanLabPage() {
             </div>
           </section>
         ))}
+
+        <section className="mt-16">
+          <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">إطارُ الورقة في «رسالة»</p>
+          {SAMPLES.slice(0, 2).map((t, i) => (
+            <div key={t.lab} className="mb-10 grid grid-cols-2 gap-6">
+              <div>
+                <p className="mb-2 text-sm text-content-muted">اليوم: ورقةٌ داخل هامشٍ رماديّ</p>
+                <CardImage card={t.card} look="letter" delay={i * 100} />
+              </div>
+              <div>
+                <p className="mb-2 text-sm text-content-muted">المقترح: الورقةُ البطاقةُ كلُّها</p>
+                <CardImage card={t.card} look="letter" delay={i * 100} lab={LAB_NOFRAME} />
+              </div>
+            </div>
+          ))}
+        </section>
 
         {SHORT.map((t) => (
           <section key={t.lab} className="mt-16">
