@@ -6,6 +6,7 @@ import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, Pap
 import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
 import { renderIrfanCard, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
 import { uploadIrfanPreview } from "@/lib/irfan/preview";
+import { irfanPreviewFailed } from "./actions";
 import { BODY_MAX, BODY_MIN, HEADINGS, TITLE_MAX, headingLabel, headingText, lettersPhrase } from "@/lib/irfan/vocab";
 import { Avatar } from "../_components/Avatar";
 import { CaretAct, Row } from "../_portal/Row";
@@ -20,21 +21,28 @@ import { LOOK_NAMES, type IrfanSent, type Recipient } from "./vocab";
 // «تصميم: رسالة» لا «رسالة» وحدها: كلمةٌ مفردةٌ بجانب «رسالتك» تُقرأ نوعَ رسالةٍ لا شكلَ بطاقة (المالك ٢٠٢٦-١٠-١٧)
 const LOOKS = (Object.keys(LOOK_NAMES) as IrfanLook[]).map((value) => ({ value, label: `تصميم: ${LOOK_NAMES[value]}` }));
 
+/** بصمةُ البطاقة: بها يُعرف أنّ ما في المعاينة هو ما سيُرسل حرفًا حرفًا، فيُعاد استعمالُه بلا رسم. */
+const printOf = (card: IrfanCard, look: IrfanLook) => JSON.stringify([card, look]);
+
+/**
+ * المعاينةُ الحيّة، ومعها البطاقةُ نفسُها (`blob`) وبصمتُها: يأخذها الإرسالُ فيبني منها صورةَ واتساب بلوحٍ
+ * واحد بدل أن يرسم البطاقةَ من جديد.
+ */
 function usePreview(card: IrfanCard, look: IrfanLook) {
-  const [src, setSrc] = useState<string | null>(null);
+  const [shot, setShot] = useState<{ src: string; blob: Blob; print: string } | null>(null);
   useEffect(() => {
     let alive = true;
-    let made: string | null = null;
+    const print = printOf(card, look);
     const t = setTimeout(() => {
-      renderIrfanCard(card, look).then((b) => {
+      renderIrfanCard(card, look).then((blob) => {
         if (!alive) return;
-        made = URL.createObjectURL(b);
-        setSrc((old) => { if (old) URL.revokeObjectURL(old); return made; });
+        const src = URL.createObjectURL(blob);
+        setShot((old) => { if (old) URL.revokeObjectURL(old.src); return { src, blob, print }; });
       }, () => { /* تبقى المعاينةُ السابقة */ });
     }, 600);
     return () => { alive = false; clearTimeout(t); };
   }, [card, look]);
-  return src;
+  return shot;
 }
 
 export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
@@ -47,7 +55,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
 }) {
   // بعد الحفظ تُحفظ البطاقةُ لقطةً: الإجراءُ الخادميّ يُحدِّث القائمةَ (`revalidatePath`) فيسقط منها مَن كُتب له،
   // ولو رُسمت البطاقةُ من القائد المختار لخلت من اسمه ومقعده (رآه المالك: «إلى» وحدها).
-  const [done, setDone] = useState<{ id?: number; whatsapp: string | null; to: string; card: IrfanCard; look: IrfanLook } | null>(null);
+  const [done, setDone] = useState<{ id?: number; whatsapp: string | null; to: string; card: IrfanCard; look: IrfanLook; pictured: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
   const [look, setLook] = useState<IrfanLook>("letter");
   const [toName, setToName] = useState<string[]>([]);
@@ -78,7 +86,8 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
     () => ({ to: leader?.name ?? "", seat: leader?.seat ?? "", from: sender.name, body: body.trim() || "…", season, title }),
     [leader, sender.name, body, season, title],
   );
-  const src = usePreview(done ? done.card : card, done ? done.look : look);
+  const shot = usePreview(done ? done.card : card, done ? done.look : look);
+  const src = shot?.src ?? null;
 
   const submit = async () => {
     if (!leader || short || noTitle) return;
@@ -88,9 +97,16 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
     if (!r.ok) { setBusy(false); setError(r.message); return; }
     // صورةُ المعاينة تُرفع قبل أن تُفتح المحادثة، فيجدها واتساب حين يقرأ الرابط. وتعثّرُها لا يُسقط
     // شيئًا: الرسالةُ حُفظت، والرابطُ يفتح البطاقةَ وإن غابت صورتُه عن المعاينة.
-    if (r.upload) await uploadIrfanPreview(card, look, r.upload);
+    // زرُّ واتساب لا يظهر قبل أن تُرفع الصورة: الرابطُ يخرج بصورته أو يُقال لصاحبه إنّه بلاها
+    let pictured = false;
+    if (r.upload) {
+      const ready = shot && shot.print === printOf(card, look) ? shot.blob : null;
+      const res = await uploadIrfanPreview(card, look, r.upload, ready);
+      pictured = res.ok;
+      if (!res.ok && r.id) void irfanPreviewFailed(r.id, res.step, "compose", res.error, navigator.userAgent);
+    }
     setBusy(false);
-    setDone({ id: r.id, whatsapp: r.whatsapp ?? null, to: leader.name, card, look });
+    setDone({ id: r.id, whatsapp: r.whatsapp ?? null, to: leader.name, card, look, pictured });
     // الزرُّ آخرُ الصفحة وشاشةُ ما بعد الحفظ أوّلُها: بلا صعودٍ يرى صاحبُ الجوال البطاقةَ وحدها ويحسب أنّ
     // الأمر انتهى، ولا يرى زرَّ واتساب فوقها (المالك ٢٠٢٦-١٠-١٧)
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -109,7 +125,8 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
             <CardHeader variant="soft" icon={<HandHeart aria-hidden />} title="حُفظ عِرفانُك"
               subtitle={done.whatsapp ? `يجده ${first} في بوّابته، وأرسله إليه في واتساب ليصله الآن` : `يجده ${first} في بوّابته`} />
             {done.whatsapp
-              ? <Row Icon={WhatsappLogo} k="واتساب" v={`أرسله إلى ${first}`} sub="تُفتح محادثتُه وفيها رسالتُك ورابطُ بطاقتها"
+              ? <Row Icon={WhatsappLogo} k="واتساب" v={`أرسله إلى ${first}`}
+                  sub={done.pictured ? "تُفتح محادثتُه وفيها رسالتُك ورابطُ بطاقتها" : "تعذّر تجهيزُ صورة البطاقة، فيصله الرابطُ بلا صورتها، والبطاقةُ تُفتح منه كاملة"}
                   act={CaretAct(`أرسله إلى ${first} في واتساب`, "افتح")} href={done.whatsapp} tone="ok" />
               : null}
             <Row Icon={ImageIcon} k="البطاقة" v="احفظها صورة" sub="لتنشرها أو تحتفظ بها"

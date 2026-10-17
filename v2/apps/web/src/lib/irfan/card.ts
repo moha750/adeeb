@@ -263,7 +263,15 @@ export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"):
 const OG: PageSize = { w: 1200, h: 630 };
 
 export async function renderIrfanPreview(c: IrfanCard, look: IrfanLook = "letter"): Promise<Blob> {
-  const card = await renderIrfanCard(c, look);
+  return await composeIrfanPreview(await renderIrfanCard(c, look), look);
+}
+
+/**
+ * **المعاينةُ من بطاقةٍ مرسومةٍ أصلًا**: لوحٌ واحدٌ عريضٌ تُوضع فيه صورةُ البطاقة، بلا رسمٍ للنصّ ولا خطوط.
+ * فشاشةُ الكتابة تعطيها البطاقةَ التي في معاينتها الحيّة، فلا تُرسم البطاقةُ مرّةً ثانيةً في أثقل لحظة،
+ * لحظةِ الإرسال، وهي التي سقطت فيها الصورةُ في الآيفون (٢٠٢٦-١٠-١٧).
+ */
+export async function composeIrfanPreview(card: Blob, look: IrfanLook = "letter"): Promise<Blob> {
   const img = await loadTemplate(URL.createObjectURL(card));
   const canvas = document.createElement("canvas");
   canvas.width = OG.w;

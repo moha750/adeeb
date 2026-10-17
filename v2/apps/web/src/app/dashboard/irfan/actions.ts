@@ -98,6 +98,27 @@ export async function irfanPreviewSlot(id: number): Promise<IrfanSent["upload"]>
   return !t.error && t.data ? { path: t.data.path, token: t.data.token } : null;
 }
 
+/**
+ * **سجلُّ ما سقط** (`irfan_preview_failures`): تجهيزُ صورةٍ سقط بعد محاولاته كلِّها، بخطوته وخطئه وجهازه.
+ * رسالةُ صاحب الجلسة وحدها، والقيمُ تُقصّ ولا تُرفض: السجلُّ يُكتب ولو جاء ناقصًا.
+ */
+export async function irfanPreviewFailed(
+  id: number, step: string, origin: string, error: string | null, userAgent: string | null,
+): Promise<void> {
+  const me = await getSessionAdmin();
+  const db = notificationsDb();
+  if (!me || !db || !Number.isSafeInteger(id)) return;
+  if (step !== "render" && step !== "upload") return;
+  if (origin !== "compose" && origin !== "room") return;
+  const { data } = await db.from("irfan_messages").select("id").eq("id", id).eq("sender_id", me.id).maybeSingle();
+  if (!data) return;
+  await db.from("irfan_preview_failures").insert({
+    message_id: id, sender_id: me.id, step, origin,
+    error: error ? error.slice(0, 500) : null,
+    user_agent: userAgent ? userAgent.slice(0, 400) : null,
+  });
+}
+
 export async function markIrfanRead(id: number): Promise<void> {
   if (!Number.isSafeInteger(id)) return;
   const sb = await createClient();

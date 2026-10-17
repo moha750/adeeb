@@ -9,7 +9,7 @@ import { renderIrfanCard, saveIrfanCard } from "@/lib/irfan/card";
 import { useToast } from "../_components/ToastProvider";
 import { CaretAct, Row, type Ico } from "../_portal/Row";
 import { uploadIrfanPreview } from "@/lib/irfan/preview";
-import { irfanPreviewSlot, irfanWhatsApp, markIrfanRead } from "./actions";
+import { irfanPreviewFailed, irfanPreviewSlot, irfanWhatsApp, markIrfanRead } from "./actions";
 import type { IrfanItem, IrfanRoomData } from "./vocab";
 
 /**
@@ -92,7 +92,9 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
     void (async () => {
       for (const it of mine) {
         const slot = await irfanPreviewSlot(it.id);
-        if (slot) await uploadIrfanPreview(it.card, it.look, slot);
+        if (!slot) continue;
+        const res = await uploadIrfanPreview(it.card, it.look, slot);
+        if (!res.ok) void irfanPreviewFailed(it.id, res.step, "room", res.error, navigator.userAgent);
       }
     })();
   }, [items, demo]);
