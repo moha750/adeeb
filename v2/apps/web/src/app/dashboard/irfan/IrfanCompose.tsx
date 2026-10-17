@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, CardHeader, PersonPicker, Segmented, Select, Textarea } from "@adeeb/design-system";
-import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, Quotes, WhatsappLogo } from "@phosphor-icons/react";
+import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, TextT, WhatsappLogo } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
 import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
-import { BODY_MAX, BODY_MIN, OPENINGS, lettersPhrase, ownWords } from "@/lib/irfan/vocab";
+import { BODY_MAX, BODY_MIN, HEADINGS, headingText, lettersPhrase } from "@/lib/irfan/vocab";
 import { Avatar } from "../_components/Avatar";
 import { CaretAct, Row } from "../_portal/Row";
 import { LOOK_NAMES, type IrfanSent, type Recipient } from "./vocab";
 
 /**
- * **شاشةُ الكتابة** — كما عُرضت على المالك في `/ui/irfan` وأقرّها: القائدُ، ثمّ الافتتاحيّة، ثمّ ما يكتبه
- * بيده، ومعاينةٌ حيّةٌ للبطاقة **بتصميمٍ يختاره المرسل** («رسالة» أو «شفق»، المالك: «وليكن تصميمين»).
+ * **شاشةُ الكتابة** — كما عُرضت على المالك في `/ui/irfan` وأقرّها: القائدُ، ثمّ العنوان، ثمّ المتنُ يكتبه
+ * كلَّه بيده (العنوانُ حلّ محلَّ الافتتاحيّة ٢٠٢٦-١٠-١٧، فلا يُحشى في رأس الرسالة شيء)، ومعاينةٌ حيّةٌ للبطاقة **بتصميمٍ يختاره المرسل** («رسالة» أو «شفق»، المالك: «وليكن تصميمين»).
  * ومكوّنٌ واحدٌ للمعرض والغرفة: المعرضُ يمرّر قادةً مخترَعين وإرسالًا لا يُرسِل.
  */
 
@@ -42,7 +42,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   sender: { name: string; gender: "male" | "female" | null };
   /** أيصله هو عِرفان؟ القادةُ وحدهم يصلهم، فلا يُقال لعضو لجنةٍ «وما وصلك» (المالك ٢٠٢٦-١٠-١٧). */
   canReceive: boolean;
-  send: (to: string, body: string, look: IrfanLook) => Promise<IrfanSent>;
+  send: (to: string, body: string, look: IrfanLook, heading: string) => Promise<IrfanSent>;
 }) {
   // بعد الحفظ تُحفظ البطاقةُ لقطةً: الإجراءُ الخادميّ يُحدِّث القائمةَ (`revalidatePath`) فيسقط منها مَن كُتب له،
   // ولو رُسمت البطاقةُ من القائد المختار لخلت من اسمه ومقعده (رآه المالك: «إلى» وحدها).
@@ -50,32 +50,28 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   const [saving, setSaving] = useState(false);
   const [look, setLook] = useState<IrfanLook>("letter");
   const [toName, setToName] = useState<string[]>([]);
-  const [opening, setOpening] = useState("thanks");
+  const [heading, setHeading] = useState("thanks");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const prev = useRef("");
   const leader = leaders.find((l) => l.name === toName[0]);
 
-  const openingText = OPENINGS.find((x) => x.value === opening)?.text(leader?.gender, sender.gender) ?? "";
-  // الافتتاحيّةُ تُبدَّل في رأس الرسالة ولا تمسّ ما كتبه المرسلُ بعدها (وتتبع جنسَ القائد إن تبدّل)
-  // (والقديمةُ تُلتقط قبل النداء: المُحدِّثُ يجري عند الرسم التالي، وقد تبدّل المرجعُ حينها فتتكرّر الافتتاحيّة)
-  useEffect(() => {
-    const was = prev.current;
-    prev.current = openingText;
-    setBody((b) => (b.startsWith(was) ? openingText + b.slice(was.length) : openingText + b));
-  }, [openingText]);
+  // العناوينُ تُعرض بجنس القائد المختار (والمرسلِ حيث يتكلّم عن نفسه)، فيرى المرسلُ ما سيُرسم حرفيًّا
+  const headings = useMemo(
+    () => HEADINGS.map((h) => ({ value: h.value, label: h.text(leader?.gender, sender.gender) || "بلا عنوان" })),
+    [leader?.gender, sender.gender],
+  );
+  const title = headingText(heading, leader?.gender, sender.gender);
 
   const people = useMemo(
     () => leaders.map((l) => ({ name: l.name, hint: l.seat, group: l.council, icon: <Avatar name={l.name} gender={l.gender ?? undefined} src={l.avatar ?? undefined} size="xs" /> })),
     [leaders],
   );
   const len = body.trim().length;
-  const own = ownWords(body, openingText).length;
-  const short = own < BODY_MIN;
+  const short = len < BODY_MIN;
   const card = useMemo<IrfanCard>(
-    () => ({ to: leader?.name ?? "", seat: leader?.seat ?? "", from: sender.name, body: body.trim() || "…", season }),
-    [leader, sender.name, body, season],
+    () => ({ to: leader?.name ?? "", seat: leader?.seat ?? "", from: sender.name, body: body.trim() || "…", season, title }),
+    [leader, sender.name, body, season, title],
   );
   const src = usePreview(done ? done.card : card, done ? done.look : look);
 
@@ -83,7 +79,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
     if (!leader || short) return;
     setBusy(true);
     setError(null);
-    const r = await send(leader.id, body, look);
+    const r = await send(leader.id, body, look, heading);
     if (!r.ok) { setBusy(false); setError(r.message); return; }
     // صورةُ المعاينة تُرفع قبل أن تُفتح المحادثة، فيجدها واتساب حين يقرأ الرابط. وتعثّرُها لا يُسقط
     // شيئًا: الرسالةُ حُفظت، والرابطُ يفتح البطاقةَ وإن غابت صورتُه عن المعاينة.
@@ -118,7 +114,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
               onClick={async () => { setSaving(true); try { await saveIrfanCard(done.card, done.look); } finally { setSaving(false); } }} />
             <Row Icon={HandHeart} k="عِرفان" v={canReceive ? "ما أرسلتَه وما وصلك" : "ما أرسلتَه"} act={CaretAct("عِرفان")} href={done.id ? `/dashboard/irfan?m=${done.id}` : "/dashboard/irfan"} />
             <Row Icon={NotePencil} k="قائدٌ آخر" v="اكتب عِرفانًا جديدًا" act={CaretAct("اكتب عِرفانًا جديدًا", "اكتب")}
-              onClick={() => { setDone(null); setToName([]); setBody(openingText); }} />
+              onClick={() => { setDone(null); setToName([]); setBody(""); }} />
           </Card>
         </div>
         <section className="acc-aside">
@@ -142,11 +138,10 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
         {error ? <Alert tone="danger" className="form-full">{error}</Alert> : null}
         <PersonPicker className="form-full" label="إلى من؟" icon={<Crown />} people={people} value={toName} onChange={setToName}
           single required placeholder="ابحث باسم القائد أو مقعده" />
-        <Select className="form-full" label="الافتتاحيّة" icon={<Quotes />} options={OPENINGS.map((o) => ({ value: o.value, label: o.label }))}
-          value={opening} onValueChange={setOpening} />
+        <Select className="form-full" label="العنوان" icon={<TextT />} options={headings} value={heading} onValueChange={setHeading} />
         <Textarea className="form-full" label="رسالتك" icon={<ChatTeardropText />} innerIcon={<PencilSimple />} placeholder="اكتب ما تريد أن يعرفه"
           required rows={7} maxLength={BODY_MAX} value={body} onChange={(e) => setBody(e.target.value)}
-          helper={short ? `بقي ${lettersPhrase(BODY_MIN - own)} بعد الافتتاحيّة` : `${len} من ${BODY_MAX}`} />
+          helper={short ? `بقي ${lettersPhrase(BODY_MIN - len)}` : `${len} من ${BODY_MAX}`} />
         <div className="form-full">
           <Button loading={busy} disabled={!leader || short} onClick={submit}>
             <PaperPlaneTilt size={18} />أرسل عِرفانك

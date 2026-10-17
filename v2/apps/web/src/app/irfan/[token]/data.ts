@@ -5,7 +5,7 @@ import type { IrfanCard, IrfanLook } from "@/lib/irfan/card";
 
 /**
  * بطاقةُ «عِرفان» برمزها — بمفتاح الخدمة، لأنّ الصفحة علنيّة (يقرؤها واتساب بلا جلسة). ولا يُقرأ إلّا
- * ما يُرسم في البطاقة نفسِها: الاسمان والمقعدُ والرسالةُ والموسم. لا رقمَ ولا معرّف.
+ * ما يُرسم في البطاقة نفسِها: الاسمان والمقعدُ والعنوانُ والرسالةُ والموسم. لا رقمَ ولا معرّف.
  */
 export type SharedIrfan = { id: number; card: IrfanCard; look: IrfanLook };
 
@@ -17,7 +17,7 @@ export async function getSharedIrfan(token: string): Promise<SharedIrfan | null>
   if (!db) return null;
   const { data } = await db
     .from("irfan_messages")
-    .select("id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, irfan_seasons(title)")
+    .select("id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, title, irfan_seasons(title)")
     .eq("share_token", token)
     .maybeSingle();
   if (!data) return null;
@@ -32,6 +32,7 @@ export async function getSharedIrfan(token: string): Promise<SharedIrfan | null>
       from: data.sender_name,
       body: data.body,
       season: (s as { title?: string } | null)?.title ?? "",
+      title: data.title,
     },
   };
 }

@@ -1,6 +1,6 @@
 /**
  * مفرداتُ غرفة «عِرفان» — بلا إطار، فيستوردها الخادمُ والعميل. ورموزُ الردّ توأمُ ما يُرجعه
- * `send_irfan` في القاعدة (`20261017081023_irfan_02_whatsapp_share.sql`).
+ * `send_irfan` في القاعدة (`20261017105200_irfan_03_title.sql`).
  */
 import type { IrfanCard, IrfanLook } from "@/lib/irfan/card";
 
@@ -22,6 +22,7 @@ export const SEND_ERRORS: Record<string, string> = {
   NOT_LEADER: "لم يعد في مقعد قيادة.",
   LENGTH: "الرسالةُ بين 40 و500 حرف.",
   LOOK: "اختر تصميم البطاقة.",
+  TITLE: "اختر عنوانًا من القائمة.",
   ALREADY: "كتبتَ له في هذا الموسم.",
 };
 

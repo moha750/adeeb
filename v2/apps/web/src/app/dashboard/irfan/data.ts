@@ -11,7 +11,7 @@ import type { IrfanItem, IrfanRoomData, IrfanSeason, Recipient } from "./vocab";
 
 type Row = {
   id: number; sender_id: string; recipient_id: string; sender_name: string; recipient_name: string;
-  recipient_gender: string | null; role_name: string; unit_name: string | null; body: string; look: string;
+  recipient_gender: string | null; role_name: string; unit_name: string | null; body: string; look: string; title: string | null;
   created_at: string; read_at: string | null;
   irfan_seasons: { title: string } | { title: string }[] | null;
 };
@@ -37,7 +37,7 @@ export async function getIrfanRoom(meId: string): Promise<IrfanRoomData> {
     getOpenSeason(),
     roleNames(sb),
     sb.from("irfan_messages")
-      .select("id, sender_id, recipient_id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, created_at, read_at, irfan_seasons(title)")
+      .select("id, sender_id, recipient_id, sender_name, recipient_name, recipient_gender, role_name, unit_name, body, look, title, created_at, read_at, irfan_seasons(title)")
       .order("created_at", { ascending: false })
       .limit(400),
   ]);
@@ -54,6 +54,7 @@ export async function getIrfanRoom(meId: string): Promise<IrfanRoomData> {
         from: r.sender_name,
         body: r.body,
         season: s?.title ?? "",
+        title: r.title,
       },
       look: (r.look === "aurora" ? "aurora" : "letter") as IrfanLook,
       at: r.created_at,

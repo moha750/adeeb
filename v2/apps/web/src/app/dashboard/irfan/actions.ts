@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getSessionAdmin } from "@/lib/auth";
+import { getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
 import { notificationsDb } from "@/lib/notifications/db";
 import { kickDispatch } from "@/lib/notifications/emit";
-import { BODY_MAX, BODY_MIN } from "@/lib/irfan/vocab";
+import { BODY_MAX, BODY_MIN, HEADINGS, headingText } from "@/lib/irfan/vocab";
 import { irfanPreviewPath, irfanWhatsAppLink } from "@/lib/irfan/whatsapp";
 import { SEND_ERRORS, type IrfanSent } from "./vocab";
 
@@ -17,14 +17,18 @@ import { SEND_ERRORS, type IrfanSent } from "./vocab";
 /** دلوُ صورة المعاينة: `images` العامّ، فواتساب يجلبها بلا جلسة. ولا كتابةَ فيه من المتصفّح إلّا برابطٍ موقَّع. */
 const BUCKET = "images";
 
-export async function sendIrfan(recipient: string, body: string, look: string): Promise<IrfanSent> {
-  if (!(await getSessionAdmin())) return { ok: false, message: "انتهت جلستك، ادخل من جديد." };
+export async function sendIrfan(recipient: string, body: string, look: string, heading: string): Promise<IrfanSent> {
+  const me = await getCurrentAdmin();
+  if (!me) return { ok: false, message: "انتهت جلستك، ادخل من جديد." };
   const text = (body ?? "").trim();
   // تحقّقُ العميل تجربةٌ لا حراسة: يُعاد هنا، والقاعدةُ بعده
   if (text.length < BODY_MIN || text.length > BODY_MAX) return { ok: false, message: SEND_ERRORS.LENGTH };
   if (look !== "letter" && look !== "aurora") return { ok: false, message: SEND_ERRORS.LOOK };
+  if (!HEADINGS.some((h) => h.value === heading)) return { ok: false, message: SEND_ERRORS.TITLE };
+  // العنوانُ يصوغه الخادمُ من مفتاحه بجنسَي الطرفين، فلا يصل القاعدةَ نصٌّ كتبه المتصفّح
+  const title = headingText(heading, await recipientGender(recipient), me.gender);
   const sb = await createClient();
-  const { data, error } = await sb.rpc("send_irfan", { p_recipient: recipient, p_body: text, p_look: look });
+  const { data, error } = await sb.rpc("send_irfan", { p_recipient: recipient, p_body: text, p_look: look, p_title: title });
   if (error) return { ok: false, message: "تعذّر الإرسال، حاول مرّةً أخرى." };
   const r = data as { ok: boolean; code?: string; id?: number; token?: string; phone?: string | null };
   if (!r?.ok || !r.token) return { ok: false, message: SEND_ERRORS[r?.code ?? ""] ?? "تعذّر الإرسال." };
@@ -40,6 +44,13 @@ export async function sendIrfan(recipient: string, body: string, look: string): 
   }
   const whatsapp = r.id ? await whatsappFor(r.id, null) : null;
   return { ok: true, message: "حُفظ عِرفانُك.", id: r.id, upload, whatsapp };
+}
+
+/** جنسُ المستلم لصياغة العنوان. والمستلمُ قائدٌ، وجنسُه ظاهرٌ في مقعده أصلًا. */
+async function recipientGender(id: string): Promise<"male" | "female" | null> {
+  const { data } = (await notificationsDb()?.from("profiles").select("gender").eq("id", id).maybeSingle()) ?? {};
+  const g = (data as { gender?: string } | null | undefined)?.gender;
+  return g === "female" || g === "male" ? g : null;
 }
 
 /**
