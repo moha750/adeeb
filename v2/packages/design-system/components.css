@@ -7268,6 +7268,10 @@ label.acc-row.acc-pick:hover { background: var(--steel-50); }
 .acr-list .acr-pick .acr-shot.is-portrait { width: 44px; }
 /* ولوحُ المعاينة في شاشة الكتابة بلا نقش، كلوح الغرفة (المالك ٢٠٢٦-١٠-١٣: الإكليلُ يزاحم) */
 .acr-easel.is-plain::before { content: none; }
+/* **جدارُ عِرفان** في إشراف الرئيس (٢٠٢٦-١٠-١٧): كلُّ كرتٍ بطاقتُه في رأسه مصغّرةً، فلا تكبر إذا امتدّ الكرتُ
+   اليتيمُ على الصفّ كلِّه (القاعدة ٦)؛ تبقى بقدر أخواتها في الصفّ الذي قبله */
+.acr-easel.is-thumb { padding: 18px 18px 14px; }
+.acr-easel.is-thumb > .acr-shot.is-portrait { max-width: 200px; }
 /* صفحةُ البطاقة العلنيّة (`/irfan/<رمز>`): كرتٌ واحدٌ في وسط الصفحة بعرض البطاقة */
 .acr-share { max-width: 520px; margin-inline: auto; }
 .acr-share .acr-easel { border: 0; border-radius: 0; border-bottom: 1px solid var(--color-border); }
