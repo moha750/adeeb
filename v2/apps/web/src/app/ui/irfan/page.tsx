@@ -15,7 +15,7 @@
 import { useEffect, useState } from "react";
 import { Button, Container } from "@adeeb/design-system";
 import { ImageSquare } from "@phosphor-icons/react";
-import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLab, type IrfanLook } from "@/lib/irfan/card";
+import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
 import { ToastProvider } from "../../dashboard/_components/ToastProvider";
 import { IrfanRoom } from "../../dashboard/irfan/IrfanRoom";
 import { IrfanCompose } from "../../dashboard/irfan/IrfanCompose";
@@ -65,21 +65,6 @@ const SAMPLES: { lab: string; card: IrfanCard }[] = [
   },
 ];
 
-/**
- * **الرسالةُ القصيرة** (المالك ٢٠٢٦-١٠-١٧: «هناك مساحة فارغة لم أفهم لماذا هي موجودة»): حيّزُ المتن محجوزٌ
- * لخمسمئة حرف، فالقصيرةُ تتوسّطه بمقاسها الأقصى (56) ويبقى حولها فراغ. والبديلُ أن يكبر الخطُّ للقصيرة
- * حتّى يملأ حيّزها (إلى 76، والعنوانُ 88 فيبقى أكبرَ منها).
- */
-const SHORT: { lab: string; card: IrfanCard }[] = [
-  { lab: "خمسة عشر حرفًا، أقصرُ ما يُقبل", card: { to: "نواف ثلاب الشمري", seat: "منسّق قسم الإعلام", from: "مريم هاني العلوي", title: "شكرًا لك", body: "كنتَ سندًا لنا.", season: SEASON } },
-  { lab: "سطرٌ صادقٌ قصير", card: { to: "سديم بندر القحطاني", seat: "قائدة لجنة التصوير", from: "عبد الرحمن خالد الشيخ", title: "تعلّمتُ منكِ", body: "أنّ القيادة تبدأ من الاستماع، وأنّ الصبر على المبتدئ أوّلُ التعليم.", season: SEASON } },
-];
-
-const LAB_NOW: IrfanLab = { bodyMax: 56 };
-const LAB_GROW: IrfanLab = { bodyMax: 76 };
-/** «هناك مساحة إطارٍ فارغ، ما هو؟» (المالك ٢٠٢٦-١٠-١٧): الهامشُ الرماديّ حول الورقة، والبديلُ ورقةٌ بلا هامش. */
-const LAB_NOFRAME: IrfanLab = { frame: false };
-
 /** قادةُ المجلسين كما يراهم المرسل — مخترَعون، والحقيقيّون من القاعدة لحظةَ الفتح. */
 const LEADERS: Recipient[] = [
   { id: "l1", name: "محمد إسماعيل المطر", seat: "رئيس أدِيب", council: "المجلس الإداري", gender: "male", avatar: null },
@@ -104,14 +89,14 @@ const ROOM: IrfanRoomData = {
 /** إرسالٌ لا يُرسِل: يُري شاشةَ ما بعد الحفظ، ورابطُ واتساب فيه بلا رقم (يفتح قائمة جهات الاتّصال). */
 const demoSend = async (): Promise<IrfanSent> => ({ ok: true, message: "معاينة", upload: null, whatsapp: "https://wa.me/?text=%D9%85%D8%B9%D8%A7%D9%8A%D9%86%D8%A9" });
 
-function useCard(card: IrfanCard, look: IrfanLook, delay = 0, lab?: IrfanLab) {
+function useCard(card: IrfanCard, look: IrfanLook, delay = 0) {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let url: string | null = null;
     let alive = true;
     const t = setTimeout(() => {
-      renderIrfanCard(card, look, lab)
+      renderIrfanCard(card, look)
         .then((blob) => {
           if (!alive) return;
           url = URL.createObjectURL(blob);
@@ -120,7 +105,7 @@ function useCard(card: IrfanCard, look: IrfanLook, delay = 0, lab?: IrfanLab) {
         .catch((e: unknown) => { if (alive) setError(e instanceof Error ? e.message : "تعذّر رسم البطاقة."); });
     }, delay);
     return () => { alive = false; clearTimeout(t); };
-  }, [card, look, delay, lab]);
+  }, [card, look, delay]);
   return { src, error };
 }
 
@@ -141,8 +126,8 @@ function PreviewImage({ card, look }: { card: IrfanCard; look: IrfanLook }) {
   );
 }
 
-function CardImage({ card, look, delay, lab }: { card: IrfanCard; look: IrfanLook; delay?: number; lab?: IrfanLab }) {
-  const { src, error } = useCard(card, look, delay, lab);
+function CardImage({ card, look, delay }: { card: IrfanCard; look: IrfanLook; delay?: number }) {
+  const { src, error } = useCard(card, look, delay);
   return (
     <div className="overflow-hidden rounded border border-line bg-surface-2" style={{ aspectRatio: "4 / 5" }}>
       {error
@@ -182,43 +167,6 @@ export default function IrfanLabPage() {
                 </div>
               ))}
             </div>
-          </section>
-        ))}
-
-        <section className="mt-16">
-          <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">إطارُ الورقة في «رسالة»</p>
-          {SAMPLES.slice(0, 2).map((t, i) => (
-            <div key={t.lab} className="mb-10 grid grid-cols-2 gap-6">
-              <div>
-                <p className="mb-2 text-sm text-content-muted">اليوم: ورقةٌ داخل هامشٍ رماديّ</p>
-                <CardImage card={t.card} look="letter" delay={i * 100} />
-              </div>
-              <div>
-                <p className="mb-2 text-sm text-content-muted">المقترح: الورقةُ البطاقةُ كلُّها</p>
-                <CardImage card={t.card} look="letter" delay={i * 100} lab={LAB_NOFRAME} />
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {SHORT.map((t) => (
-          <section key={t.lab} className="mt-16">
-            <p className="mb-4 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">الرسالةُ القصيرة: {t.lab}</p>
-            {LOOKS.map((l) => (
-              <div key={l.value} className="mb-10">
-                <p className="mb-3 text-sm font-bold text-content">{l.title}</p>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="mb-2 text-sm text-content-muted">اليوم: المقاسُ ثابتٌ والفراغُ حوله</p>
-                    <CardImage card={t.card} look={l.value} lab={LAB_NOW} />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-sm text-content-muted">المقترح: الخطُّ يكبر ليملأ حيّزه</p>
-                    <CardImage card={t.card} look={l.value} lab={LAB_GROW} />
-                  </div>
-                </div>
-              </div>
-            ))}
           </section>
         ))}
 

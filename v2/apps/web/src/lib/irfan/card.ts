@@ -49,7 +49,6 @@ function tokens() {
   const cs = typeof document !== "undefined" ? getComputedStyle(document.documentElement) : null;
   const v = (name: string, fb: string) => cs?.getPropertyValue(name).trim() || fb;
   return {
-    steel50: v("--steel-50", "#eef3f8"),
     steel100: v("--steel-100", "#dce5ef"),
     steel200: v("--steel-200", "#bccfe0"),
     steel300: v("--steel-300", "#92aac3"),
@@ -140,20 +139,11 @@ const INK = {
   aurora: () => ({ strong: "#ffffff", soft: "rgba(255,255,255,.88)", faint: "rgba(255,255,255,.62)" }),
 } as const;
 
-async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false, frame = true) {
-  ctx.fillStyle = frame ? t.steel50 : t.surface;
+async function paintLetter(ctx: CanvasRenderingContext2D, t: ReturnType<typeof tokens>, titled = false) {
+  // الورقةُ البطاقةُ كلُّها: كان حولها هامشٌ فولاذيٌّ بحدٍّ وزوايا (ورقةٌ على طاولة)، فحذفه المالك ٢٠٢٦-١٠-١٧
+  // («مساحة إطارٍ فارغ، ما هو؟»): يأكل عُشرَ العرض، ويصير في المعاينة إطارًا داخل إطار
+  ctx.fillStyle = t.surface;
   ctx.fillRect(0, 0, CARD.w, CARD.h);
-  if (frame) {
-    // ورقةٌ بيضاءُ داخل هامشٍ فولاذيّ خفيف، وزاويتُها من منحنى العلامة
-    const m = 56;
-    ctx.fillStyle = t.surface;
-    ctx.beginPath();
-    ctx.roundRect(m, m, CARD.w - m * 2, CARD.h - m * 2, 32);
-    ctx.fill();
-    ctx.strokeStyle = t.steel200;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
 
   // علامةُ الاقتباس الكبيرة في الركن المقابل لبداية السطر — صوتُ كاتبٍ لا بيانُ جهة، ولا تزاحم النصّ
   ctx.save();
@@ -193,10 +183,17 @@ async function paintAurora(ctx: CanvasRenderingContext2D, t: ReturnType<typeof t
 }
 
 /**
+ * **أكبرُ مقاسٍ للمتن**: القصيرةُ يكبر خطُّها حتّى يملأ حيّزَها (المالك ٢٠٢٦-١٠-١٧، رآه في `/ui/irfan`: كانت
+ * تقف بـ56 في وسط حيّزٍ محجوزٍ لخمسمئة حرف ويبقى حولها فراغ). ويبقى دون ما فوقه: العنوانُ 88، و«إلى فلان» 64
+ * في البطاقة بلا عنوان.
+ */
+const BODY_MAX_SIZE = { titled: 76, plain: 60 } as const;
+
+/**
  * **لفُّ الرسالة بأكبر مقاسٍ يسعها**: ينزل المقاسُ حتّى تقع الأسطرُ كلُّها بين حدّيها. والقياسُ
  * مضيَّقٌ بنسبة المدّ (canvas يقيس الحرفَ غيرَ ممدود)، والأسطرُ الفارغةُ التي كتبها صاحبُها تبقى.
  */
-function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo, max = 56) {
+function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo, max: number) {
   const room = g.bodyBottom - g.bodyTop;
   const paras = body.trim().split(/\n+/).map((p) => p.trim()).filter(Boolean);
   for (let size = max; size >= 28; size -= 2) {
@@ -209,16 +206,13 @@ function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo, max = 5
   return { size: 28, lead: 49, lines: [] as string[] };
 }
 
-/** خياراتُ المختبر وحده (`/ui/irfan`): تُعرض بها البدائلُ قبل أن تُعتمد، ولا يمرّرها الإنتاج. */
-export type IrfanLab = { bodyMax?: number; frame?: boolean };
-
-export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter", lab: IrfanLab = {}): Promise<Blob> {
+export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"): Promise<Blob> {
   const ctx = await openBlank(CARD);
   const t = tokens();
   const heading = c.title?.trim() || "";
   const g: Geo & { headline?: number } = heading ? GEO_TITLED[look] : GEO[look];
   const ink = look === "letter" ? INK.letter(t) : INK.aurora();
-  await (look === "letter" ? paintLetter(ctx, t, !!heading, lab.frame ?? true) : paintAurora(ctx, t, !!heading));
+  await (look === "letter" ? paintLetter(ctx, t, !!heading) : paintAurora(ctx, t, !!heading));
 
   const line = (text: string, y: number, size: number, weight: number, color: string, min = 24): Piece => ({
     text,
@@ -248,7 +242,7 @@ export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter", 
     if (c.seat.trim()) pieces.push(line(c.seat.trim(), g.seat, 36, WEIGHTS.body, ink.soft));
   }
 
-  const b = layoutBody(ctx, c.body, g, lab.bodyMax);
+  const b = layoutBody(ctx, c.body, g, heading ? BODY_MAX_SIZE.titled : BODY_MAX_SIZE.plain);
   // الرسالةُ متوسَّطةٌ عموديًّا في حيّزها: قصيرُها لا يترك خلاءً تحته
   const used = b.lines.length * b.lead;
   const top = g.bodyTop + Math.max(0, (g.bodyBottom - g.bodyTop - used) / 2) + b.size;
