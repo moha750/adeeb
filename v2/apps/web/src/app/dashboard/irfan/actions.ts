@@ -38,7 +38,24 @@ export async function sendIrfan(recipient: string, body: string, look: string): 
     const t = await store.createSignedUploadUrl(irfanPreviewPath(r.token), { upsert: true });
     if (!t.error && t.data) upload = { path: t.data.path, token: t.data.token };
   }
-  return { ok: true, message: "حُفظ عِرفانُك.", id: r.id, upload, whatsapp: irfanWhatsAppLink(r.phone, text, r.token) };
+  const whatsapp = r.id ? await whatsappFor(r.id, null) : null;
+  return { ok: true, message: "حُفظ عِرفانُك.", id: r.id, upload, whatsapp };
+}
+
+/**
+ * رابطُ المحادثة لرسالةٍ بعينها: رقمُ المستلم وجنسُه واسمُ الموسم من القاعدة بمفتاح الخدمة. و`sender`
+ * يحصرها في رسائل صاحب الجلسة (`null` بعد الإرسال مباشرةً: الرسالةُ رسالتُه بحكم أنّه أرسلها الآن).
+ */
+async function whatsappFor(id: number, sender: string | null): Promise<string | null> {
+  const db = notificationsDb();
+  if (!db) return null;
+  let q = db.from("irfan_messages").select("share_token, recipient_id, recipient_gender, irfan_seasons(title)").eq("id", id);
+  if (sender) q = q.eq("sender_id", sender);
+  const { data } = await q.maybeSingle();
+  if (!data) return null;
+  const { data: p } = await db.from("profiles").select("phone").eq("id", data.recipient_id).maybeSingle();
+  const s = Array.isArray(data.irfan_seasons) ? data.irfan_seasons[0] : data.irfan_seasons;
+  return irfanWhatsAppLink(p?.phone, data.share_token, { gender: data.recipient_gender, season: (s as { title?: string } | null)?.title });
 }
 
 /**
@@ -47,12 +64,8 @@ export async function sendIrfan(recipient: string, body: string, look: string): 
  */
 export async function irfanWhatsApp(id: number): Promise<string | null> {
   const me = await getSessionAdmin();
-  const db = notificationsDb();
-  if (!me || !db || !Number.isSafeInteger(id)) return null;
-  const { data } = await db.from("irfan_messages").select("body, share_token, recipient_id").eq("id", id).eq("sender_id", me.id).maybeSingle();
-  if (!data) return null;
-  const { data: p } = await db.from("profiles").select("phone").eq("id", data.recipient_id).maybeSingle();
-  return irfanWhatsAppLink(p?.phone, data.body, data.share_token);
+  if (!me || !Number.isSafeInteger(id)) return null;
+  return await whatsappFor(id, me.id);
 }
 
 export async function markIrfanRead(id: number): Promise<void> {
