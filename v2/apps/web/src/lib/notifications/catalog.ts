@@ -24,6 +24,7 @@ import type { Address, Gender, Level } from "./types";
 /** أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة. */
 export const SECTIONS = {
   system: { label: "النظام", icon: "gear" },
+  irfan: { label: "عِرفان", icon: "irfan" },
 } as const satisfies Record<string, { label: string; icon: IconKey }>;
 
 export type Section = keyof typeof SECTIONS;
@@ -64,7 +65,44 @@ export function defineKind<F>(k: Kind<F>): Kind<F> {
   return k;
 }
 
-export const CATALOG = {} satisfies Record<string, Kind<unknown>>;
+export const CATALOG = {
+  /**
+   * **وصلك عِرفان** (٢٠٢٦-١٠-١٧) — رسالةُ شكرٍ من عضوٍ إلى قائد. تُطلَق داخل `send_irfan`.
+   * - **المستلم**: القائدُ نفسُه. **الدرجة**: مهمّ، فالشكرُ يُفرِح ساعةَ يصل. **الوجهة**: غرفةُ عِرفان.
+   */
+  "irfan.received": defineKind<{ messageId: number; recipientId: string; senderName: string; season: string }>({
+    section: "irfan",
+    when: "كتب عضوٌ عِرفانًا لقائد",
+    sample: { messageId: 1, recipientId: "00000000-0000-0000-0000-000000000000", senderName: "عبد الرحمن خالد الشيخ", season: "اليوم العالمي للمدير" },
+    audiences: [
+      {
+        key: "recipient",
+        level: "important",
+        to: (f) => [{ user: f.recipientId }],
+        text: (f, g) => ({ title: `${g === "female" ? "وصلكِ" : "وصلك"} عِرفانٌ من ${f.senderName}`, body: `بمناسبة ${f.season}.` }),
+        href: (f) => `/dashboard/irfan?m=${f.messageId}`,
+      },
+    ],
+  }),
+  /**
+   * **بلاغٌ على رسالة عِرفان** — المستلمُ رأى ما لا يليق. تُطلَق داخل `report_irfan`.
+   * - **المستلم**: مقعدا الرئيسين (من يشغلهما الآن). **الدرجة**: مهمّ. **الوجهة**: الرسالةُ نفسُها في الغرفة.
+   */
+  "irfan.reported": defineKind<{ messageId: number }>({
+    section: "irfan",
+    when: "بلّغ قائدٌ عن رسالة عِرفان",
+    sample: { messageId: 1 },
+    audiences: [
+      {
+        key: "presidents",
+        level: "important",
+        to: () => [{ seat: "club_president" }, { seat: "executive_council_president" }],
+        text: () => ({ title: "بلاغٌ على رسالة عِرفان", body: "افتحها لترى ما بُلِّغ عنه." }),
+        href: (f) => `/dashboard/irfan?m=${f.messageId}`,
+      },
+    ],
+  }),
+} satisfies Record<string, Kind<unknown>>;
 
 export type KindKey = keyof typeof CATALOG;
 export type FactsOf<K extends KindKey> = (typeof CATALOG)[K] extends Kind<infer F> ? F : never;

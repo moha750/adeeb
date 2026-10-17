@@ -7266,6 +7266,16 @@ label.acc-row.acc-pick:hover { background: var(--steel-50); }
 /* ولا نقشَ في اللوح: كان الإكليلُ يطلّ من بين سهمَي التنقّل (المالك ٢٠٢٦-١٠-١٣) */
 .acr-stage .acr-easel::before { content: none; }
 .acr-stage .acr-easel + .acc-row { border-top: 0; }
+/* **غرفةُ «عِرفان»** (٢٠٢٦-١٠-١٧) على معرض «شهاداتي» نفسِه: البطاقةُ قائمةٌ ٤:٥ لا ورقةٌ مستلقية،
+   فلا تُمدّ على عرض اللوح كلِّه وإلّا طالت عن الشاشة؛ ومصغّرتُها أضيقُ فتبقى بارتفاع أخواتها */
+.acr-shot.is-portrait { aspect-ratio: 4 / 5; }
+.acr-easel > .acr-shot.is-portrait { max-width: 400px; }
+.acr-list .acr-pick .acr-shot.is-portrait { width: 44px; }
+/* ولوحُ المعاينة في شاشة الكتابة بلا نقش، كلوح الغرفة (المالك ٢٠٢٦-١٠-١٣: الإكليلُ يزاحم) */
+.acr-easel.is-plain::before { content: none; }
+/* صفحةُ البطاقة العلنيّة (`/irfan/<رمز>`): كرتٌ واحدٌ في وسط الصفحة بعرض البطاقة */
+.acr-share { max-width: 520px; margin-inline: auto; }
+.acr-share .acr-easel { border: 0; border-radius: 0; border-bottom: 1px solid var(--color-border); }
 /* مُعدِّلُ الأعمدة لغرف السجلّ («حجوزاتي» و«تطوّعي»): العمودُ الضيّق أعرضُ قليلًا من بطاقة «حسابي»
    لأنّ سطورَه أسماءُ فعاليّاتٍ وبجانبها «شهادتك»، وعلى الجوّال ما ينتظرك أوّلًا ثمّ سجلّك (لا كبطاقة «حسابي» التي تتقدّم) */
 /* ولا يلتصق: السجلُّ ينفتح فيطول عن الشاشة، واللاصقُ الأطولُ من الشاشة يُخفي ذيلَه */

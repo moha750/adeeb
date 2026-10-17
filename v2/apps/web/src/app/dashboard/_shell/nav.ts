@@ -46,6 +46,9 @@ export const NAV: NavGroup[] = [
       // «مهامّي» — ما كُلِّفتَ به. وموضعُها في صدر «أنت» لا في «العضوية»: المهمّةُ شأنُ صاحبها
       // أوّلًا، ويراها القائدُ فيها لجنتَه كما يرى «لجنتي» كشفَها. بندٌ واحدٌ لوجهين.
       { label: "مهامّي", icon: "tasks", href: "/dashboard/tasks" },
+      // **عِرفان** (٢٠٢٦-١٠-١٧) — رسائلُ الشكر: ما وصلك وما كتبت. في صدر «أنت» لأنّه بريدُ صاحبه،
+      // وقفلُه قفلُ «مهامّي» (للعضو وحده، بقرار المالك: لا متطوّعَ ولا صديق).
+      { label: "عِرفان", icon: "irfan", href: "/dashboard/irfan" },
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },

@@ -52,6 +52,9 @@ export const SECTION_CAP = {
   // تقولها القاعدة بـ`can_manage_tasks_of` (القدرة `manage_tasks` + موقعُه من الوحدة)، فمن
   // بلغ الغرفة بلا سلطةٍ رأى مهامَّه ولم يرَ زرًّا.
   "/dashboard/tasks": "view_own_membership",
+  // **عِرفان** (٢٠٢٦-١٠-١٧) — رسائلُ شكر الأعضاء لقادتهم. للعضو وحده (قرار المالك)، فقفلُه قفلُ أختيه
+  // للعلّة نفسها: بريدُ المرء. ومن يكتب ولمن يُكتب تقولهما القاعدة (`send_irfan`، `irfan_recipients`).
+  "/dashboard/irfan": "view_own_membership",
   "/dashboard/members/active": "view_members",
   "/dashboard/members/suspended": "view_suspended_members",
   // **أصدقاء أدِيب** (٢٠٢٦-١٠-٠٩): من له حسابٌ بلا عضويّةٍ ولا تطوّع، وبياناتُ التواصل معه. للرئاسة
