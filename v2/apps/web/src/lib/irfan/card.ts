@@ -194,10 +194,10 @@ async function paintAurora(ctx: CanvasRenderingContext2D, t: ReturnType<typeof t
  * **لفُّ الرسالة بأكبر مقاسٍ يسعها**: ينزل المقاسُ حتّى تقع الأسطرُ كلُّها بين حدّيها. والقياسُ
  * مضيَّقٌ بنسبة المدّ (canvas يقيس الحرفَ غيرَ ممدود)، والأسطرُ الفارغةُ التي كتبها صاحبُها تبقى.
  */
-function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo) {
+function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo, max = 56) {
   const room = g.bodyBottom - g.bodyTop;
   const paras = body.trim().split(/\n+/).map((p) => p.trim()).filter(Boolean);
-  for (let size = 56; size >= 28; size -= 2) {
+  for (let size = max; size >= 28; size -= 2) {
     const lead = Math.round(size * (size > 46 ? 1.6 : 1.75));
     ctx.font = `${WEIGHTS.body} ${size}px ${FONT}`;
     const ratio = elongationRatio(ctx, paras.join(" ").slice(0, 80), size, WEIGHTS.body);
@@ -207,7 +207,10 @@ function layoutBody(ctx: CanvasRenderingContext2D, body: string, g: Geo) {
   return { size: 28, lead: 49, lines: [] as string[] };
 }
 
-export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"): Promise<Blob> {
+/** خياراتُ المختبر وحده (`/ui/irfan`): تُعرض بها البدائلُ قبل أن تُعتمد، ولا يمرّرها الإنتاج. */
+export type IrfanLab = { bodyMax?: number };
+
+export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter", lab: IrfanLab = {}): Promise<Blob> {
   const ctx = await openBlank(CARD);
   const t = tokens();
   const heading = c.title?.trim() || "";
@@ -243,7 +246,7 @@ export async function renderIrfanCard(c: IrfanCard, look: IrfanLook = "letter"):
     if (c.seat.trim()) pieces.push(line(c.seat.trim(), g.seat, 36, WEIGHTS.body, ink.soft));
   }
 
-  const b = layoutBody(ctx, c.body, g);
+  const b = layoutBody(ctx, c.body, g, lab.bodyMax);
   // الرسالةُ متوسَّطةٌ عموديًّا في حيّزها: قصيرُها لا يترك خلاءً تحته
   const used = b.lines.length * b.lead;
   const top = g.bodyTop + Math.max(0, (g.bodyBottom - g.bodyTop - used) / 2) + b.size;

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, CardHeader, PersonPicker, Segmented, Select, Textarea } from "@adeeb/design-system";
+import { Alert, Button, Card, CardHeader, Field, PersonPicker, Segmented, Select, Textarea } from "@adeeb/design-system";
 import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, TextT, WhatsappLogo } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
 import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
-import { BODY_MAX, BODY_MIN, HEADINGS, headingText, lettersPhrase } from "@/lib/irfan/vocab";
+import { BODY_MAX, BODY_MIN, HEADINGS, TITLE_MAX, headingLabel, headingText, lettersPhrase } from "@/lib/irfan/vocab";
 import { Avatar } from "../_components/Avatar";
 import { CaretAct, Row } from "../_portal/Row";
 import { LOOK_NAMES, type IrfanSent, type Recipient } from "./vocab";
@@ -17,7 +17,8 @@ import { LOOK_NAMES, type IrfanSent, type Recipient } from "./vocab";
  * ومكوّنٌ واحدٌ للمعرض والغرفة: المعرضُ يمرّر قادةً مخترَعين وإرسالًا لا يُرسِل.
  */
 
-const LOOKS = (Object.keys(LOOK_NAMES) as IrfanLook[]).map((value) => ({ value, label: LOOK_NAMES[value] }));
+// «تصميم: رسالة» لا «رسالة» وحدها: كلمةٌ مفردةٌ بجانب «رسالتك» تُقرأ نوعَ رسالةٍ لا شكلَ بطاقة (المالك ٢٠٢٦-١٠-١٧)
+const LOOKS = (Object.keys(LOOK_NAMES) as IrfanLook[]).map((value) => ({ value, label: `تصميم: ${LOOK_NAMES[value]}` }));
 
 function usePreview(card: IrfanCard, look: IrfanLook) {
   const [src, setSrc] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   sender: { name: string; gender: "male" | "female" | null };
   /** أيصله هو عِرفان؟ القادةُ وحدهم يصلهم، فلا يُقال لعضو لجنةٍ «وما وصلك» (المالك ٢٠٢٦-١٠-١٧). */
   canReceive: boolean;
-  send: (to: string, body: string, look: IrfanLook, heading: string) => Promise<IrfanSent>;
+  send: (to: string, body: string, look: IrfanLook, heading: string, custom?: string | null) => Promise<IrfanSent>;
 }) {
   // بعد الحفظ تُحفظ البطاقةُ لقطةً: الإجراءُ الخادميّ يُحدِّث القائمةَ (`revalidatePath`) فيسقط منها مَن كُتب له،
   // ولو رُسمت البطاقةُ من القائد المختار لخلت من اسمه ومقعده (رآه المالك: «إلى» وحدها).
@@ -51,6 +52,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   const [look, setLook] = useState<IrfanLook>("letter");
   const [toName, setToName] = useState<string[]>([]);
   const [heading, setHeading] = useState("thanks");
+  const [custom, setCustom] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +60,13 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
 
   // العناوينُ تُعرض بجنس القائد المختار (والمرسلِ حيث يتكلّم عن نفسه)، فيرى المرسلُ ما سيُرسم حرفيًّا
   const headings = useMemo(
-    () => HEADINGS.map((h) => ({ value: h.value, label: h.text(leader?.gender, sender.gender) || "بلا عنوان" })),
+    () => HEADINGS.map((h) => ({ value: h.value, label: headingLabel(h, leader?.gender, sender.gender) })),
     [leader?.gender, sender.gender],
   );
-  const title = headingText(heading, leader?.gender, sender.gender);
+  const writing = heading === "custom";
+  const title = headingText(heading, leader?.gender, sender.gender, custom);
+  // «عنوانٌ أكتبه» بلا عنوانٍ صالحٍ يُبقي الزرَّ مطفأً، فلا تخرج بطاقةٌ بلا العنوان الذي قصده صاحبُها
+  const noTitle = writing && !title;
 
   const people = useMemo(
     () => leaders.map((l) => ({ name: l.name, hint: l.seat, group: l.council, icon: <Avatar name={l.name} gender={l.gender ?? undefined} src={l.avatar ?? undefined} size="xs" /> })),
@@ -76,10 +81,10 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
   const src = usePreview(done ? done.card : card, done ? done.look : look);
 
   const submit = async () => {
-    if (!leader || short) return;
+    if (!leader || short || noTitle) return;
     setBusy(true);
     setError(null);
-    const r = await send(leader.id, body, look, heading);
+    const r = await send(leader.id, body, look, heading, writing ? custom : null);
     if (!r.ok) { setBusy(false); setError(r.message); return; }
     // صورةُ المعاينة تُرفع قبل أن تُفتح المحادثة، فيجدها واتساب حين يقرأ الرابط. وتعثّرُها لا يُسقط
     // شيئًا: الرسالةُ حُفظت، والرابطُ يفتح البطاقةَ وإن غابت صورتُه عن المعاينة.
@@ -114,7 +119,7 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
               onClick={async () => { setSaving(true); try { await saveIrfanCard(done.card, done.look); } finally { setSaving(false); } }} />
             <Row Icon={HandHeart} k="عِرفان" v={canReceive ? "ما أرسلتَه وما وصلك" : "ما أرسلتَه"} act={CaretAct("عِرفان")} href={done.id ? `/dashboard/irfan?m=${done.id}` : "/dashboard/irfan"} />
             <Row Icon={NotePencil} k="قائدٌ آخر" v="اكتب عِرفانًا جديدًا" act={CaretAct("اكتب عِرفانًا جديدًا", "اكتب")}
-              onClick={() => { setDone(null); setToName([]); setBody(""); }} />
+              onClick={() => { setDone(null); setToName([]); setBody(""); setCustom(""); }} />
           </Card>
         </div>
         <section className="acc-aside">
@@ -139,14 +144,14 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
         <PersonPicker className="form-full" label="إلى من؟" icon={<Crown />} people={people} value={toName} onChange={setToName}
           single required placeholder="ابحث باسم القائد أو مقعده" />
         <Select className="form-full" label="العنوان" icon={<TextT />} options={headings} value={heading} onValueChange={setHeading} />
+        {writing ? (
+          <Field className="form-full" label="عنوانك" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثلًا: أستاذي في الإعلام"
+            required maxLength={TITLE_MAX} value={custom} onChange={(e) => setCustom(e.target.value)}
+            helper={`${custom.trim().length} من ${TITLE_MAX}`} />
+        ) : null}
         <Textarea className="form-full" label="رسالتك" icon={<ChatTeardropText />} innerIcon={<PencilSimple />} placeholder="اكتب ما تريد أن يعرفه"
           required rows={7} maxLength={BODY_MAX} value={body} onChange={(e) => setBody(e.target.value)}
           helper={short ? `بقي ${lettersPhrase(BODY_MIN - len)}` : `${len} من ${BODY_MAX}`} />
-        <div className="form-full">
-          <Button loading={busy} disabled={!leader || short} onClick={submit}>
-            <PaperPlaneTilt size={18} />أرسل عِرفانك
-          </Button>
-        </div>
       </div>
       </div>
       <section className="acc-aside">
@@ -156,6 +161,13 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
           {src ? <img className="acr-shot is-portrait" src={src} alt="معاينة البطاقة" /> : <span className="acr-shot is-portrait" aria-hidden />}
         </div>
       </section>
+      {/* الزرُّ آخرُ الشبكة لا آخرُ العمود: على الجوال يقع بعد التصميم والمعاينة فلا يُرسَل ما لم يُرَ
+          (المالك ٢٠٢٦-١٠-١٧)، وعلى الحاسب ينزل تحت الحقول في عمودها */}
+      <div>
+        <Button loading={busy} disabled={!leader || short || noTitle} onClick={submit}>
+          <PaperPlaneTilt size={18} />أرسل عِرفانك
+        </Button>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
 import { notificationsDb } from "@/lib/notifications/db";
 import { kickDispatch } from "@/lib/notifications/emit";
-import { BODY_MAX, BODY_MIN, HEADINGS, headingText } from "@/lib/irfan/vocab";
+import { BODY_MAX, BODY_MIN, HEADINGS, customTitle, headingText } from "@/lib/irfan/vocab";
 import { irfanPreviewPath, irfanWhatsAppLink } from "@/lib/irfan/whatsapp";
 import { SEND_ERRORS, type IrfanSent } from "./vocab";
 
@@ -17,7 +17,7 @@ import { SEND_ERRORS, type IrfanSent } from "./vocab";
 /** دلوُ صورة المعاينة: `images` العامّ، فواتساب يجلبها بلا جلسة. ولا كتابةَ فيه من المتصفّح إلّا برابطٍ موقَّع. */
 const BUCKET = "images";
 
-export async function sendIrfan(recipient: string, body: string, look: string, heading: string): Promise<IrfanSent> {
+export async function sendIrfan(recipient: string, body: string, look: string, heading: string, custom?: string | null): Promise<IrfanSent> {
   const me = await getCurrentAdmin();
   if (!me) return { ok: false, message: "انتهت جلستك، ادخل من جديد." };
   const text = (body ?? "").trim();
@@ -25,8 +25,9 @@ export async function sendIrfan(recipient: string, body: string, look: string, h
   if (text.length < BODY_MIN || text.length > BODY_MAX) return { ok: false, message: SEND_ERRORS.LENGTH };
   if (look !== "letter" && look !== "aurora") return { ok: false, message: SEND_ERRORS.LOOK };
   if (!HEADINGS.some((h) => h.value === heading)) return { ok: false, message: SEND_ERRORS.TITLE };
-  // العنوانُ يصوغه الخادمُ من مفتاحه بجنسَي الطرفين، فلا يصل القاعدةَ نصٌّ كتبه المتصفّح
-  const title = headingText(heading, await recipientGender(recipient), me.gender);
+  if (heading === "custom" && !customTitle(custom)) return { ok: false, message: SEND_ERRORS.CUSTOM_TITLE };
+  // العنوانُ يصوغه الخادمُ من مفتاحه بجنسَي الطرفين، فلا يصل القاعدةَ من المتصفّح إلّا ما كتبه صاحبُه بيده
+  const title = headingText(heading, await recipientGender(recipient), me.gender, custom);
   const sb = await createClient();
   const { data, error } = await sb.rpc("send_irfan", { p_recipient: recipient, p_body: text, p_look: look, p_title: title });
   if (error) return { ok: false, message: "تعذّر الإرسال، حاول مرّةً أخرى." };
