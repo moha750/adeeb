@@ -6,10 +6,10 @@ import { Alert, Button, Field } from "@adeeb/design-system";
 import { At, Envelope } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { logSignin } from "@/lib/signinEvents";
-import { toArabicAuthError, waitSeconds } from "@/lib/authErrors";
+import { CAPTCHA_PENDING, toArabicAuthError, waitSeconds } from "@/lib/authErrors";
 import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 import { markResetSent } from "@/lib/resetWindow";
-import { TurnstileWidget } from "@/app/_components/Turnstile";
+import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -34,6 +34,7 @@ export function ForgotForm() {
   // درعُ الباب — الرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسالٍ نجح أو ردّ
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
+  const waitToken = useTurnstileWait(tsToken, !!TURNSTILE_SITE_KEY);
   /** رايةُ الصيغة تُرفع عند مغادرة الحقل أو عند الإرسال — لا وهو يكتب أوّلَ محرف. */
   const [emailTouched, setEmailTouched] = useState(false);
 
@@ -50,10 +51,13 @@ export function ForgotForm() {
     // لَجلس صاحبُه ينتظر رابطًا لا يجيء ولا شيء يقول له لِمَ. والصيغةُ ليست إفشاءً لحساب.
     if (!isEmail(email)) { setEmailTouched(true); setErr(`${EMAIL_HINT}.`); return; }
     start(async () => {
+      // الزرُّ يدور ريثما يجيء رمزُ الدرع — لا يُرسَل طلبٌ بلا رمزٍ فيُردّ (انظر `useTurnstileWait`)
+      const captchaToken = await waitToken();
+      if (TURNSTILE_SITE_KEY && !captchaToken) { setErr(CAPTCHA_PENDING); return; }
       const supabase = createClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
-        captchaToken: tsToken ?? undefined,
+        captchaToken,
       });
       setTsReset((n) => n + 1);
       if (error) {

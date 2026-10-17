@@ -8,7 +8,7 @@
 //   • أبوابُ المصادقة (دخول · استعادة · رمزُ الحجز): **GoTrue** يسأل Cloudflare بنفسه، فيُمرَّر
 //     الرمزُ إليه في `options.captchaToken` ولا نتحقّق منه نحن. وحمايتُه أصدق: الحارسُ عند
 //     الطرَف نفسِه، فلا يُلتَفّ عليه بنداءٍ مباشرٍ بالمفتاح العلنيّ.
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -99,4 +99,31 @@ export function TurnstileWidget({
   // كلاودفلير تُبقي للودجة صندوقًا بمقاسه (300×72) وإن لم تَرسم فيه شيئًا، فيَحفِر في النموذج
   // فجوةً بلا ساكن. فنطويه نحن ما دام خفيًّا، ونبسطه حين يُنادى بالتحدّي.
   return <div ref={containerRef} className={shown ? "flex justify-center" : "hidden"} />;
+}
+
+/**
+ * **انتظارُ الرمز قبل الإرسال** (٢٠٢٦-١٠-١٧).
+ *
+ * الودجةُ خفيّةٌ (`interaction-only`) وتحتاج لحظةً بعد رسم الصفحة كي تُخرج رمزها، وتحتاج
+ * لحظةً أخرى بعد كلّ إعادة ضبط. فمن ضغط الزرّ في تلك اللحظة خرج طلبُه **بلا رمز** فردّه
+ * GoTrue بـ`captcha_failed` — وقع هذا فعلًا على طلب استعادةٍ حيّ (السجلّ، ٢٠٢٦-١٠-١٧ ٠٩:١٦Z).
+ *
+ * ولم يُعطَّل الزرُّ حتى يجيء الرمز: زرٌّ معطّلٌ بلا سببٍ ظاهرٍ يقول «غير متاح» وهو متاح،
+ * ولو حُجب سكربتُ كلاودفلير لبقي معطّلًا أبدًا بلا كلمة. فالزرُّ يُضغط، ويدور، وينتظر الرمزَ
+ * ثوانيَ معدودة؛ فإن جاء مضى الطلب، وإلّا قيل للمستخدم ما جرى بدل خطأٍ مبهم.
+ *
+ * يُرجع الرمز، أو `undefined` حين لا درعَ أصلًا (لا مفتاحَ للموقع) أو انقضت المهلة.
+ */
+export function useTurnstileWait(token: string | null, enabled: boolean) {
+  const ref = useRef(token);
+  useEffect(() => { ref.current = token; }, [token]);
+  return useCallback(
+    async (ms = 8000): Promise<string | undefined> => {
+      if (!enabled) return undefined;
+      const until = Date.now() + ms;
+      while (!ref.current && Date.now() < until) await new Promise((r) => setTimeout(r, 150));
+      return ref.current ?? undefined;
+    },
+    [enabled],
+  );
 }

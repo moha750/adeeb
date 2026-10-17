@@ -36,6 +36,9 @@ export function isSessionGone(msg: string): boolean {
  * أخطاءُ **الدخول بالرمز** — لسانُها غيرُ لسان الرابط: من كتب رمزًا يُقال له «الرمز» لا «الرابط».
  * وما عدا الرمزَ الخاطئَ والمنتهي يمرّ إلى المترجم العامّ.
  */
+/** رمزُ الدرع لم يجئ في مهلته — تقوله الشاشةُ قبل الإرسال، ويقوله المترجمُ إن ردّه الخادم. */
+export const CAPTCHA_PENDING = "لم يكتمل التحقّق الأمنيّ بعد. انتظر لحظة ثمّ أعِد المحاولة، أو حدّث الصفحة.";
+
 export function toArabicCodeError(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes("token has expired or is invalid") || m.includes("otp_expired") || m.includes("invalid otp"))
@@ -60,6 +63,9 @@ export function toArabicAuthError(msg: string): string {
     return "أخفيتَ بريدك فتعذّر أن نعرف حسابك، وأبل لا تعيد سؤالك. أزِل «نادي أدِيب» من «تسجيل الدخول باستخدام Apple» في appleid.apple.com ثمّ أعِد المحاولة، أو ادخل بكلمة المرور.";
   if (m.includes("oauth_failed") || m.includes("unsupported provider"))
     return "تعذّر إتمام الدخول عبر المزوّد. أعِد المحاولة أو ادخل بكلمة المرور.";
+
+  // الدرعُ ردّ الطلب: رمزٌ لم يُرسَل أو انتهى أو استُعمل
+  if (m.includes("captcha")) return CAPTCHA_PENDING;
 
   if (isSessionGone(msg)) return "انتهت جلسة الاستعادة أو أُوقفت. اطلب رابطًا جديدًا.";
 

@@ -8,12 +8,13 @@ import {
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { logSignin } from "@/lib/signinEvents";
-import { TurnstileWidget } from "@/app/_components/Turnstile";
+import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
 import {
   EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, emailError, isEmail, isPhone, phoneError,
 } from "@/lib/fieldFormats";
 import { arabicNameError } from "@/lib/personName";
+import { CAPTCHA_PENDING } from "@/lib/authErrors";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -48,6 +49,7 @@ const bookError = (raw: string | null | undefined): string => {
 };
 const authError = (raw: string): string => {
   const m = raw.toLowerCase();
+  if (m.includes("captcha")) return CAPTCHA_PENDING;
   if (m.includes("rate") || m.includes("too many")) return "محاولات كثيرة. انتظر قليلًا ثمّ أعِد المحاولة.";
   if (m.includes("expired") || m.includes("invalid")) return "الرمز غير صحيح أو انتهت صلاحيّته. اطلب رمزًا جديدًا.";
   return "تعذّرت العمليّة. حاول مجدّدًا.";
@@ -73,6 +75,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   // بلا حارس. والرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسال.
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
+  const waitToken = useTurnstileWait(tsToken, !!TURNSTILE_SITE_KEY);
   /** رايتا الصيغة تُرفعان عند مغادرة الحقل أو عند الإرسال — لا والزائر يكتب أوّلَ محرف. */
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -137,9 +140,12 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     // بريدٌ مكسورُ الصيغة يُرسَل إلى العدم: الرمزُ يذهب ولا يصل، فينتظره الزائرُ ولا يجيء
     if (!isEmail(email)) { setEmailTouched(true); setErr(`${EMAIL_HINT}.`); return; }
     setBusy(true);
+    // الزرُّ يدور ريثما يجيء رمزُ الدرع — لا يُرسَل طلبٌ بلا رمزٍ فيُردّ (انظر `useTurnstileWait`)
+    const captchaToken = await waitToken();
+    if (TURNSTILE_SITE_KEY && !captchaToken) { setBusy(false); setErr(CAPTCHA_PENDING); return; }
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true, captchaToken: tsToken ?? undefined },
+      options: { shouldCreateUser: true, captchaToken },
     });
     setBusy(false);
     setTsReset((n) => n + 1);

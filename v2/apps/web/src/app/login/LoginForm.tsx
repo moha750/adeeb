@@ -6,11 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, Button, Divider, Field, Segmented } from "@adeeb/design-system";
 import { At, Envelope, Hash, Key, Lock } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import { toArabicAuthError, toArabicCodeError, waitSeconds } from "@/lib/authErrors";
+import { CAPTCHA_PENDING, toArabicAuthError, toArabicCodeError, waitSeconds } from "@/lib/authErrors";
 import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 import { safeNext } from "@/lib/safeNext";
 import { logSignin } from "@/lib/signinEvents";
-import { TurnstileWidget } from "@/app/_components/Turnstile";
+import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
 import { OAuthButtons } from "./OAuthButtons";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -53,6 +53,7 @@ export function LoginForm() {
   // درعُ الباب — الرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسال
   const [tsToken, setTsToken] = useState<string | null>(null);
   const [tsReset, setTsReset] = useState(0);
+  const waitToken = useTurnstileWait(tsToken, !!TURNSTILE_SITE_KEY);
 
   useEffect(() => {
     if (left <= 0) return;
@@ -75,11 +76,14 @@ export function LoginForm() {
 
   const signInWithPassword = () => {
     start(async () => {
+      // الزرُّ يدور ريثما يجيء رمزُ الدرع — لا يُرسَل طلبٌ بلا رمزٍ فيُردّ (انظر `useTurnstileWait`)
+      const captchaToken = await waitToken();
+      if (TURNSTILE_SITE_KEY && !captchaToken) { setErr(CAPTCHA_PENDING); return; }
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: pw,
-        options: { captchaToken: tsToken ?? undefined },
+        options: { captchaToken },
       });
       setTsReset((n) => n + 1);
       if (error) {
@@ -96,10 +100,12 @@ export function LoginForm() {
     setErr(null);
     if (!emailOk()) return;
     start(async () => {
+      const captchaToken = await waitToken();
+      if (TURNSTILE_SITE_KEY && !captchaToken) { setErr(CAPTCHA_PENDING); return; }
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
-        options: { shouldCreateUser: true, captchaToken: tsToken ?? undefined },
+        options: { shouldCreateUser: true, captchaToken },
       });
       setTsReset((n) => n + 1);
       if (error) {
