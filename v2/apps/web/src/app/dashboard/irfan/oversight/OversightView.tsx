@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, BarList, Card, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
-import { CalendarBlank, Crown, EnvelopeSimple, EyeSlash, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
+import { Alert, Badge, BarList, Card, CardBody, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
+import { CalendarBlank, Crown, EnvelopeSimple, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard } from "@/lib/irfan/card";
 import { EmptyState } from "../../_components/EmptyState";
@@ -28,15 +28,11 @@ function count<T>(rows: T[], key: (r: T) => string): BarItem[] {
 function CardShot({ row }: { row: OversightRow }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
-    if (!row.card) return;
     let alive = true;
     let url: string | null = null;
     renderIrfanCard(row.card, row.look).then((b) => { url = URL.createObjectURL(b); if (alive) setSrc(url); }, () => {});
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [row]);
-  if (!row.card) {
-    return <Alert tone="info" title="النصُّ محجوب">كُتبت هذه الرسالةُ قبل أن يُخبَر الأعضاءُ أنّ الرئيس يطّلع عليها، فنصُّها لمرسلها ومستلمها وحدهما.</Alert>;
-  }
   return (
     <div className="acr-easel is-plain">
       {/* eslint-disable-next-line @next/next/no-img-element -- صورةٌ مرسومةٌ في المتصفّح (blob) */}
@@ -56,26 +52,22 @@ function State({ r }: { r: OversightRow }) {
 }
 
 /**
- * المصغّرة: صورةُ المعاينة، وإلّا فلوحٌ يقول لماذا غابت (نصٌّ محجوب، أو صورةٌ لم تُرفع)، لا مربّعٌ رماديٌّ
- * أخرس يُحسب عطلًا.
+ * المصغّرة: صورةُ المعاينة، وإلّا فلوحٌ يقول إنّها لم تُرفع، لا مربّعٌ رماديٌّ أخرس يُحسب عطلًا.
  */
 function Thumb({ r }: { r: OversightRow }) {
   // eslint-disable-next-line @next/next/no-img-element -- صورةُ المعاينة من التخزين، تُقصّ إلى البطاقة
   if (r.thumb) return <img className="acr-shot is-portrait" src={r.thumb} alt="" />;
-  const hidden = !r.card;
   return (
     <span className="acr-shot is-portrait grid place-content-center justify-items-center gap-2 text-content-muted">
-      {hidden ? <EyeSlash size={28} aria-hidden /> : <ImageBroken size={28} aria-hidden />}
-      <small>{hidden ? "النصُّ محجوب" : "لم تُرفع صورتُها"}</small>
+      <ImageBroken size={28} aria-hidden />
+      <small>لم تُرفع صورتُها</small>
     </span>
   );
 }
 
-export function OversightView({ data, list = "cards" }: { data: OversightData; list?: "cards" | "gallery" }) {
+export function OversightView({ data }: { data: OversightData }) {
   const { rows, leaders, error } = data;
   const [open, setOpen] = useState<OversightRow | null>(null);
-  const [sel, setSel] = useState<number | null>(rows[0]?.id ?? null);
-  const cur = rows.find((r) => r.id === sel) ?? rows[0];
 
   const senders = new Set(rows.map((r) => r.from)).size;
   const reached = new Set(rows.map((r) => r.to)).size;
@@ -112,57 +104,30 @@ export function OversightView({ data, list = "cards" }: { data: OversightData; l
 
       {!rows.length ? <EmptyState icon={<Tray />} title="لا رسائل بعد" description="ما يُكتب في الموسم يظهر هنا." /> : null}
 
-      {rows.length && list === "cards" ? (
-        // الشكلُ الأوّل: جدارُ بطاقات، كلُّ رسالةٍ بطاقتُها معلّقةٌ في رأس كرتها، وتحتها مَن ولمن ومتى
-        <div className="card-grid">
+      {rows.length ? (
+        // **صفٌّ كاملٌ لكلّ رسالة** (المالك ٢٠٢٦-١٠-١٧: رأى الكرتَ اليتيمَ ممتدًّا أفقيًّا فاستحسنه، «يعطينا مساحةً
+        // لعرض بياناتٍ أكثر بأريحيّة»): البطاقةُ في جنب، وفي الجنب الآخر لمن ومقعدُه، ومن كتب ومتى، ونصُّ الرسالة
+        // نفسُه، ثمّ العنوانُ والتصميمُ والحال. وعلى الجوّال يعود الكرتُ قائمًا (`.irf-card` يقيس عرضَه هو).
+        <div className="card-grid card-grid-1col">
           {rows.map((r) => (
             <Card key={r.id} className="irf-card" interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
-              {/* الشكلُ الذي أحبّه المالك (البطاقةُ معلّقة، ثمّ رأسٌ منسّم، ثمّ سطرٌ بأيقونة، ثمّ ذيل)، وطُوِّر:
-                  أفتارُ القائد في الرأس فيُعرف بوجهه قبل اسمه، والسطرُ يُسمّي ما فيه، والتاريخُ في الذيل بأيقونته،
-                  واليتيمُ الممتدّ يصير أفقيًّا (`.irf-card`) */}
               <div className="irf-card-in">
                 <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
                 <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="sm" />}
-                  title={`إلى ${r.to}`} subtitle={`من ${r.from}`} />
-                <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[r.look]}`} />
+                  title={`إلى ${r.to}`} subtitle={r.seat} />
+                <Row Icon={UsersThree} k="من" v={r.from} sub={fmtDate(r.at)} />
+                <CardBody><p className="whitespace-pre-line text-content">{r.card.body}</p></CardBody>
                 <CardFooter>
-                  <small className="inline-flex items-center gap-1 text-content-muted"><CalendarBlank aria-hidden />{fmtDate(r.at)}</small>
+                  <span className="flex flex-wrap gap-1">
+                    <Badge tone="info">{r.title ?? "بلا عنوان"}</Badge>
+                    <Badge tone="neutral">تصميم {LOOK_NAMES[r.look]}</Badge>
+                  </span>
                   <span className="flex gap-1"><State r={r} /></span>
                 </CardFooter>
               </div>
             </Card>
           ))}
-        </div>
-      ) : null}
-
-      {rows.length && list === "gallery" && cur ? (
-        // الشكلُ الثاني: معرضُ الغرفة نفسُه، قائمةٌ بمصغّراتها والبطاقةُ معلّقةٌ في جنبها
-        <div className="acr-room">
-          <Card className="acr-list">
-            <CardHeader variant="soft" icon={<HandHeart aria-hidden />} title="الرسائل" subtitle="الأحدثُ أوّلًا" />
-            <nav aria-label="رسائل عِرفان">
-              {rows.map((r) => (
-                <button key={r.id} type="button" className="acc-row acr-pick" aria-current={cur.id === r.id} onClick={() => setSel(r.id)}>
-                  <Thumb r={r} />
-                  <span className="acc-kv">
-                    <span className="acr-title"><b>إلى {r.to}</b></span>
-                    <small>من {r.from}، {fmtDate(r.at)}</small>
-                  </span>
-                </button>
-              ))}
-            </nav>
-          </Card>
-          <section className="acr-stage" aria-live="polite">
-            <Card>
-              <CardHeader variant="soft" icon={<HandHeart aria-hidden />} title={`إلى ${cur.to}`} subtitle={cur.seat} />
-              <CardShot key={cur.id} row={cur} />
-              <Row Icon={UsersThree} k="من" v={cur.from} sub={fmtDate(cur.at)} />
-              <Row Icon={TextT} k="العنوان" v={cur.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[cur.look]}`} />
-              <Row Icon={EnvelopeSimple} k="الحال" v={cur.read ? "قرأها في البوّابة" : "لم يقرأها بعد"}
-                sub={cur.pictured ? "صورةُ معاينتها سليمة" : "وصلت في واتساب بلا صورة"} />
-            </Card>
-          </section>
         </div>
       ) : null}
 

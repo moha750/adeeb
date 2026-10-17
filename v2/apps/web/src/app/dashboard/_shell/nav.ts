@@ -49,6 +49,8 @@ export const NAV: NavGroup[] = [
       // **عِرفان** (٢٠٢٦-١٠-١٧) — رسائلُ الشكر: ما وصلك وما كتبت. في صدر «أنت» لأنّه بريدُ صاحبه،
       // وقفلُه قفلُ «مهامّي» (للعضو وحده، بقرار المالك: لا متطوّعَ ولا صديق).
       { label: "عِرفان", icon: "irfan", href: "/dashboard/irfan" },
+      // بندٌ لا يراه إلّا حاملُ مفتاحه (`navFor` ينخُل بالقدرات): رئيسُ أدِيب
+      { label: "إشراف عِرفان", icon: "irfan", href: "/dashboard/irfan/oversight" },
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
