@@ -248,7 +248,7 @@ export const EMAIL_KINDS = {
    * **تجربةُ وجهٍ من وجهي التصميم** (٢٠٢٦-١٠-١٧، مؤقّتة) — رسالةُ نوعٍ آخر بعيّنته، لابسةً وجهًا من
    * `looks.ts`، تُرسَل إلى محمد ليرى في Gmail وغيره بأيّ خطٍّ وشكلٍ تصل. تُحذف مع `looks.ts` حين يُختار.
    */
-  "system.look_test": defineEmail<{ of: string; look: "band" | "letter" }>({
+  "system.look_test": defineEmail<{ of: string; look: "band" | "letter" | "letter_text"; plain?: boolean }>({
     when: "طُلبت رسالةُ تجربةٍ بأحد وجهي التصميم",
     sample: { of: "auth.code", look: "letter" },
     render: (d) => {
@@ -256,7 +256,8 @@ export const EMAIL_KINDS = {
       if (!kind || d.of === "system.look_test") throw new Error(`لا عيّنةَ للنوع ${d.of}`);
       const c = kind.render(kind.sample);
       const name = d.look === "band" ? "الترويسة" : "الرسالة";
-      return { ...c, subject: `تجربة الوجه «${name}»: ${c.subject}`, look: d.look };
+      // `plain`: بعنوان الرسالة الحقيقيّ بلا «تجربة»، فلا يكون العنوانُ نفسُه سببَ التصنيف.
+      return { ...c, subject: d.plain ? c.subject : `تجربة الوجه «${name}»: ${c.subject}`, look: d.look };
     },
   }),
 } satisfies Record<string, EmailKind<unknown>>;

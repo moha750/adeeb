@@ -124,7 +124,12 @@ function codeCells(code: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" dir="ltr"><tr>${cells}</tr></table>`;
 }
 
-function letter(c: EmailContent): string {
+/**
+ * **وبلا صورة** (`letter_text`، تجربةٌ ٢٠٢٦-١٠-١٧): الوجهان وصلا Gmail محمد في «الترويجيّة»، والقالبُ
+ * القديمُ بلا صورٍ كان يصل «الوارد». فهذا الوجهُ نفسُه والشعارُ كلمةٌ مكتوبة والريشةُ محذوفة، ليُعرف
+ * أهي الصورُ السبب.
+ */
+function letter(c: EmailContent, images = true): string {
   const row = (inner: string, pad: string, style: string, align: "right" | "center" = "right") =>
     `<tr><td class="px" dir="rtl" align="${align}" style="padding:${pad};${FONT}text-align:${align};${style}">${inner}</td></tr>`;
 
@@ -154,11 +159,13 @@ function letter(c: EmailContent): string {
 
   const card = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${C.white};border-radius:6px;border:1px solid ${C.n200};">
 <tr><td style="height:5px;background:${C.navy700};background-image:linear-gradient(90deg,${C.navy800},${C.steel400});border-radius:6px 6px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
-<tr><td align="center" style="padding:34px 44px 6px;"><img src="${SITE}/brand/logo-horizontal.png" width="116" height="68" alt="نادي أدِيب" style="display:block;border:0;outline:none;width:116px;height:68px;"></td></tr>
+${images
+    ? `<tr><td align="center" style="padding:34px 44px 6px;"><img src="${SITE}/brand/logo-horizontal.png" width="116" height="68" alt="نادي أدِيب" style="display:block;border:0;outline:none;width:116px;height:68px;"></td></tr>`
+    : row("نادي أدِيب", "32px 44px 2px", `color:${C.navy700};font-size:20px;font-weight:bold;letter-spacing:.5px;`, "center")}
 ${row(esc(c.title), "22px 44px 4px", `color:${C.navy900};font-size:24px;line-height:1.6;font-weight:bold;`, "center")}
 ${paras}${quote}${code}${cta}${note}${signature}
-<tr><td align="center" style="padding:34px 44px 0;"><img src="${SITE}/brand/quill-96.png" width="24" height="31" alt="" style="display:block;border:0;width:24px;height:31px;"></td></tr>
-${row(`نادي أدِيب، جامعة الملك فيصل<br><a href="${SITE}" style="color:${C.navy700};text-decoration:none;">adeeb.club</a>`, "10px 44px 30px", `color:${C.n500};font-size:12px;line-height:1.9;`, "center")}
+${images ? `<tr><td align="center" style="padding:34px 44px 0;"><img src="${SITE}/brand/quill-96.png" width="24" height="31" alt="" style="display:block;border:0;width:24px;height:31px;"></td></tr>` : ""}
+${row(`نادي أدِيب، جامعة الملك فيصل<br><a href="${SITE}" style="color:${C.navy700};text-decoration:none;">adeeb.club</a>`, images ? "10px 44px 30px" : "30px 44px 30px", `color:${C.n500};font-size:12px;line-height:1.9;`, "center")}
 </table>`;
 
   return shell(c, C.page, card);
@@ -174,8 +181,8 @@ ${row(`نادي أدِيب، جامعة الملك فيصل<br><a href="${SITE}"
  */
 export type FontView = "adeeb" | "desktop" | "phone";
 
-export function renderLook(c: EmailContent, look: Look, font: FontView = "adeeb"): string {
-  const html = look === "band" ? band(c) : letter(c);
+export function renderLook(c: EmailContent, look: Look | "letter_text", font: FontView = "adeeb"): string {
+  const html = look === "band" ? band(c) : letter(c, look !== "letter_text");
   if (font === "adeeb") return html;
   const bare = html.replace(/@font-face\{[^}]*\}\n?/g, "");
   return font === "desktop"

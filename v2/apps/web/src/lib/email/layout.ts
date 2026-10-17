@@ -30,7 +30,7 @@ export type EmailContent = {
    * **وجهٌ من وجهي التصميم بدل هذا الثوب** — لرسالة تجربة الوجهين وحدها (`system.look_test`)، كي يراهما
    * محمد في صندوقه لا في المعرض فقط. مؤقّتٌ: يُحذف مع `looks.ts` حين يُختار الوجه.
    */
-  look?: "band" | "letter";
+  look?: "band" | "letter" | "letter_text";
 };
 
 export function esc(s: string): string {
