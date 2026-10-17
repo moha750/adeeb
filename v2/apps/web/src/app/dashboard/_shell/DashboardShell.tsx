@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../_components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { firstHref, navFor, searchNav, type NavItem } from "./nav";
+import { navOwnerHref } from "./crumb";
 import { NavProvider } from "./nav-context";
 import type { MyScope } from "@/lib/myScope";
 import { ICONS, IconCaret, IconCaretDown, IconDashboard, IconLogout, IconMe, IconProfile } from "./icons";
@@ -56,6 +57,8 @@ function groupHasActive(pathname: string, item: NavItem) {
 
 export function DashboardShell({ children, user, caps, scope }: { children: React.ReactNode; user: ShellUser; caps: string[]; scope: MyScope }) {
   const pathname = usePathname();
+  // البندُ المضاء: صاحبُ المسار في الخريطة (الصفحةُ الفرعيّة تُضيء بندَها)، لا المطابقةُ الحرفيّة
+  const here = navOwnerHref(pathname) ?? pathname;
   const router = useRouter();
   // الخريطة كما يراها صاحب هذه القدرات في موقعه — بندٌ لا مفتاح له لا يُعرَض، وبندُ الهويّة
   // لا يُعرَض بلا غرفة (والحراسة في الصفحة نفسها)
@@ -92,10 +95,10 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
   const initialOpen = useMemo(() => {
     const s = new Set<string>();
     nav.forEach((g) => g.items.forEach((it) => {
-      if (it.children && groupHasActive(pathname, it)) s.add(it.label);
+      if (it.children && groupHasActive(here, it)) s.add(it.label);
     }));
     return s;
-  }, [pathname, nav]);
+  }, [here, nav]);
   const [open, setOpen] = useState<Set<string>>(initialOpen);
   const toggle = (label: string) =>
     setOpen((prev) => {
@@ -189,7 +192,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
                 const Icon = ICONS[it.icon];
                 if (!it.children) {
                   return (
-                    <Link key={it.label} href={it.href!} className={"ash-i" + (isActive(pathname, it.href) ? " on" : "")}>
+                    <Link key={it.label} href={it.href!} className={"ash-i" + (isActive(here, it.href) ? " on" : "")}>
                       <Icon /><span className="lbl">{it.label}</span>
                       {it.badge ? <em className="ash-b">{it.badge}</em> : null}
                     </Link>
@@ -204,7 +207,7 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
                     <div className="ash-sub">
                       <div className="ash-sub-in">
                         {it.children.map((c) => (
-                          <Link key={c.href} href={c.href} className={"ash-s" + (isActive(pathname, c.href) ? " on" : "")}>
+                          <Link key={c.href} href={c.href} className={"ash-s" + (isActive(here, c.href) ? " on" : "")}>
                             <span className="lbl">{c.label}</span>
                             {c.badge ? <em className="ash-b">{c.badge}</em> : null}
                           </Link>
@@ -268,8 +271,8 @@ export function DashboardShell({ children, user, caps, scope }: { children: Reac
           على سطح المكتب شيءٌ ولا يُقاس بعرض مكوّنٍ عرضَ نافذة. والشريطُ الجانبيُّ نفسُه
           هو ما ترفعه الورقة، فلا خريطةَ ثانيةٌ تُصان. */}
       <div className="ash-mob">
-        <MobileTabs nav={nav} pathname={pathname} sheetOpen={sheetOpen} onOpenAll={() => setSheetOpen(true)} />
-        <MobileSheet nav={nav} pathname={pathname} open={sheetOpen} onClose={() => setSheetOpen(false)} />
+        <MobileTabs nav={nav} pathname={here} sheetOpen={sheetOpen} onOpenAll={() => setSheetOpen(true)} />
+        <MobileSheet nav={nav} pathname={here} open={sheetOpen} onClose={() => setSheetOpen(false)} />
       </div>
     </div>
   );
