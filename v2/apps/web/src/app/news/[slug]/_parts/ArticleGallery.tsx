@@ -5,15 +5,21 @@ import { Lightbox, type LightboxShot } from "@adeeb/design-system";
 import { Camera } from "@phosphor-icons/react";
 import { X } from "@/app/_components/glyphs";
 
+/** ما يُعرض في الشبكة: أربعٌ، والرابعةُ تحمل «+N» إن زاد المعرض — والعارضُ يحمل الكلّ. */
+const SHOWN = 4;
+
 /**
- * معرضُ صور الخبر — **تُنقَر فتكبر**.
+ * معرضُ صور الخبر — **شبكةٌ تُرتَّب بعدد صورها** (المالك ٢٠٢٦-١٠-١٤)، تُنقَر فتكبر.
  *
- * وكان قبلَه ثلاثةَ كروتٍ مرصوفةً لا تُفتَح: صورةُ الحدث تُعرَض بعرض ٣٤٥ بكسل ولا
- * سبيلَ إلى رؤيتها، وهي أغلى ما في تغطيةٍ مصوَّرة. وأوّلُ الصور تأخذ ضِعفَ إخوتها
- * على السعة لأنّ معرضًا من أربعٍ متساويةٍ شبكةٌ لا معرض.
+ * كانت شبكةً منسابةً بأساس ١٥rem: على الحاسوب ثلاثٌ صغيرةٌ في صفٍّ ثمّ الرابعةُ وحدَها
+ * بعرض المقال كلِّه (٩٢٨×٦٩٦ — أكبرُ صورةٍ في الصفحة، أكبرُ من الغلاف، بالمصادفة)،
+ * وعلى الجوّال أربعُ صورٍ مكدّسةٌ بطول ١٠٧٧px. والآن لكلّ عددٍ ترتيبٌ يملأ صفوفَه (ق٦):
+ * الأولى صدرُ المعرض، وما بعدها حولها. والترتيبُ في الـCSS بـ`data-n`.
  *
- * والنسبةُ إلى المصوّر تُقال **في العارض** لا تحت كلّ مصغّرة: الاسمُ تحت صورةٍ
- * بحجم الإبهام سطرٌ يُزاحم ولا يُقرأ، وفي العارض هو أوّلُ ما تقع عليه العين.
+ * **واسمُ المصوّر على كلّ صورة** (المالك ٢٠٢٦-١٠-١٤): حبّةٌ زجاجيّةٌ في منتصف قاعها كنسبة
+ * الغلاف، فتُنسَب كلُّ صورةٍ إلى عدستها قبل أن تُفتح. **والاسمُ وحدَه بعد أيقونة الكاميرا**
+ * بلا لفظ «عدسة»: في مربّعات الجوّال الصغيرة (١٠٥px) قُصّ «عدسة روان…» فضاع الاسمُ نفسُه،
+ * والكاميرا تقول «عدسة» بلا حرف. والعارضُ يقولها كاملة.
  */
 export function ArticleGallery({
   images,
@@ -33,15 +39,21 @@ export function ArticleGallery({
   }));
 
   if (!images.length) return null;
+  const shown = shots.slice(0, SHOWN);
+  const more = shots.length - SHOWN;
 
   return (
     <>
-      <div className="art-gal">
-        {shots.map((s, i) => (
+      <div className="art-gal" data-n={shown.length}>
+        {shown.map((s, i) => (
           <figure key={s.src} className="art-shot">
             <button type="button" onClick={() => setOpen(i)} aria-label={`افتح ${s.alt}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={s.src} alt={s.alt} loading="lazy" />
+              {s.by ? (
+                <span className="art-shot-by" title={`عدسة ${s.by}`}><Camera size={12} aria-label="عدسة" /><span>{s.by}</span></span>
+              ) : null}
+              {i === SHOWN - 1 && more > 0 ? <span className="art-shot-more">+{more}</span> : null}
             </button>
           </figure>
         ))}

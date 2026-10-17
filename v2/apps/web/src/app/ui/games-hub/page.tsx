@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { Segmented } from "@adeeb/design-system";
 import { Hub } from "@/app/games/_components/Hub";
+import { HALL_LOOK } from "@/lib/games/look";
 import { COUNTS, DEMO_EVENT, DEMO_STATS, gamesFor } from "./demo";
 
 /**
@@ -33,17 +34,16 @@ import { COUNTS, DEMO_EVENT, DEMO_STATS, gamesFor } from "./demo";
  * اللوحة: الشعارُ بلا لون، فلا لوحةَ تُشتقّ منه، فعُرض مظهران، وما يختاره يصير اللوحةَ ويُحذف الآخر.
  */
 
-type Look = "synth" | "cabinet";
-
-const LOOKS: Record<Look, { title: string; note: string }> = {
-  synth: {
-    title: "أ. ليلُ السِّنث",
-    note: "نيلٌ عميقٌ ونيونٌ ورديٌّ وسماويّ، وأرضيّةُ شبكةٍ تغيب في الأفق. والكابينةُ تتوهّج بلون لعبتها، واسمُها على لافتتها من نيون.",
-  },
-  cabinet: {
-    title: "ب. كابينةُ الأركيد",
-    note: "سوادُ الصالة، والشعارُ أنبوبُ نيونٍ أبيضُ القلب بهالةٍ كهرمانيّة وحوله أضواءُ لافتة. ولافتةُ الكابينة لوحٌ مضاءٌ بلون لعبتها، وأزرارُها صفراءُ من الصالة.",
-  },
+/**
+ * ══ والجولةُ الخامسة (٢٠٢٦-١٠-١٧) — الحسم ══
+ * قال المالك: «أ» أجمل، وترتيبُ الألوان في «ب» أجمل. فعُرض مزيجان (هيئةُ «أ» بألوان «ب»، وهيئةُ «أ»
+ * على سواد «ب»)، **فاختار «أ» نفسَها ومعها أضواءُ اللافتة المنقّطة حول الشعار من «ب»**، بالسماويّ لونِ
+ * «Adeeb Games» (الورديُّ يذوب في الشعار العربيّ بجانبه). وحُذف «ب» والمزيجان من المعرض والأنماط.
+ * فالمعرضُ اليوم سجلٌّ للقرار، و«عدد الألعاب» باقٍ يُري الصالةَ بأكثر من كابينة.
+ */
+const LOOK = {
+  title: "أ. ليلُ السِّنث (المعتمَد)",
+  note: "نيلٌ عميقٌ ونيونٌ ورديٌّ وسماويّ، وأرضيّةُ شبكةٍ تغيب في الأفق، وحول الشعار أضواءُ لافتةٍ سماويّة. والكابينةُ تتوهّج بلون لعبتها، واسمُها على لافتتها من نيون.",
 };
 
 const DEVICES = [
@@ -53,7 +53,6 @@ const DEVICES = [
 ] as const;
 
 export default function GamesHubLab() {
-  const [look, setLook] = useState<Look>("synth");
   const [count, setCount] = useState(1);
   const games = gamesFor(count);
 
@@ -72,35 +71,26 @@ export default function GamesHubLab() {
 
       <div className="mt-7 flex flex-wrap items-center gap-4">
         <Segmented
-          aria-label="المظهر"
-          value={look}
-          onValueChange={(v) => setLook(v as Look)}
-          items={[
-            { value: "synth", label: "أ. ليلُ السِّنث" },
-            { value: "cabinet", label: "ب. كابينةُ الأركيد" },
-          ]}
-        />
-        <Segmented
           aria-label="عدد الألعاب"
           value={String(count)}
           onValueChange={(v) => setCount(Number(v))}
           items={COUNTS.map((n) => ({ value: String(n), label: n === 1 ? "لعبةٌ واحدة" : n === 2 ? "لعبتان" : `${n} ألعاب` }))}
         />
-        <Link href={`/ui/games-hub/full?look=${look}&n=${count}`} className="text-sm font-bold text-content underline">
+        <Link href={`/ui/games-hub/full?n=${count}`} className="text-sm font-bold text-content underline">
           افتحه بملء الشاشة
         </Link>
       </div>
 
       <div className="mt-6 stnp-cap">
-        <b>{LOOKS[look].title}</b>
-        <p>{LOOKS[look].note}</p>
+        <b>{LOOK.title}</b>
+        <p>{LOOK.note}</p>
       </div>
 
       <div className="mt-4 agmp-row">
         {DEVICES.map((d) => (
           <div key={d.key} className="agmp-dev">
             <div className="agmp-dev-box" style={{ "--w": d.w, "--h": d.h, "--s": d.s } as CSSProperties}>
-              <div className="agmp-dev-in agm agmp-demo" data-look={look}>
+              <div className="agmp-dev-in agm" {...HALL_LOOK}>
                 <Hub games={games} event={DEMO_EVENT} stats={DEMO_STATS} />
               </div>
             </div>

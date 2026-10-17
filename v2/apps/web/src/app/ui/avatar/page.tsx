@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@adeeb/design-system";
+import { UserCircleDashed } from "@phosphor-icons/react";
 import { Avatar } from "../../dashboard/_components/Avatar";
 
 const IMG = "/brand/pattern-circular.svg";
@@ -48,7 +49,7 @@ export default function AvatarPage() {
           معرض الصورة الرمزيّة
         </h1>
         <p className="mt-2 max-w-xl text-content-muted">
-          مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية، صورة مع رجوع للأحرف الأولى، خمسة أحجام ومؤشّر حالة.
+          مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية، صورة مع رجوع لأيقونة الجنس ثمّ أيقونة المستخدم، خمسة أحجام ومؤشّر حالة.
         </p>
 
         <div className="mt-12 space-y-14">
@@ -66,8 +67,8 @@ export default function AvatarPage() {
             </div>
           </Sec>
 
-          <Sec title="صورة مقابل الأحرف الأولى">
-            <Lab>src موجود ← الصورة، بلا src ← الأحرف الأولى من الاسم</Lab>
+          <Sec title="صورة مقابل أيقونة المستخدم">
+            <Lab>src موجود ← الصورة، بلا src ولا جنس ← أيقونة المستخدم</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
                 <Avatar key={s} name="نادي أدِيب" src={IMG} size={s} />
@@ -80,8 +81,8 @@ export default function AvatarPage() {
             </div>
           </Sec>
 
-          <Sec title="أيقونة الجنس: رجوعٌ قبل الأحرف">
-            <Lab>بلا src وبجنسٍ معلوم ← أيقونة الذكر/الأنثى (فوق تدرّج الهوية)، المجهول يبقى بالأحرف</Lab>
+          <Sec title="أيقونة الجنس: رجوعٌ قبل أيقونة المستخدم">
+            <Lab>بلا src وبجنسٍ معلوم ← أيقونة الذكر/الأنثى (فوق تدرّج الهوية)، المجهول بأيقونة المستخدم</Lab>
             <div className="flex flex-wrap items-end gap-6">
               {SIZES.map((s) => (
                 <Avatar key={s} name="عبدالله القحطاني" gender="male" size={s} />
@@ -114,11 +115,11 @@ export default function AvatarPage() {
           </Sec>
 
           <Sec title="الرجوع الافتراضيّ">
-            <Lab>اسم من كلمة واحدة ← حرف واحد، بلا اسم ← «؟»</Lab>
+            <Lab>بلا صورة ولا جنس ← أيقونة المستخدم، وicon يستبدلها عند الحاجة</Lab>
             <div className="flex flex-wrap items-center gap-6">
-              <Avatar name="أدِيب" size="lg" />
-              <Avatar size="lg" />
               <Avatar name="عبدالله بن سعد الشمري" size="lg" />
+              <Avatar size="lg" />
+              <Avatar name="صديق بلا ملف" size="lg" icon={<UserCircleDashed />} />
             </div>
           </Sec>
         </div>

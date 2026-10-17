@@ -3,6 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getElectionManager } from "@/lib/elections/authz";
+import { kickDispatch } from "@/lib/notifications/emit";
 import { createClient } from "@/lib/supabase/server";
 import { getAppointableMembers, type AppointOption } from "./data";
 import { statementError } from "./vocab";
@@ -254,6 +255,7 @@ export async function appointToSeat(electionId: string, userId: string, reason: 
   revalidatePath("/dashboard/elections", "layout");
   revalidatePath("/dashboard/unit", "layout");
   revalidatePath("/dashboard/members/assignments");
+  kickDispatch(); // إشعارُ التكليف وُلد في القاعدة (`assign_acting`)، فيوزَّع بعد الردّ
   return { ok: true, message: "كُلّف العضو، وأُوقف الانتخاب." };
 }
 
@@ -266,6 +268,7 @@ export async function declareWinner(electionId: string, candidateId: string): Pr
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر إعلان الفائز.") };
 
   revalidatePath("/dashboard/elections", "layout");
+  kickDispatch(); // إشعارُ الإسناد وُلد في القاعدة (`assign_position`)
   return { ok: true, message: "أُعلن الفائز وأُسنِد المنصب." };
 }
 
@@ -281,6 +284,7 @@ export async function resolveDepartmentWinners(departmentId: number): Promise<El
   if (error) return { ok: false, message: rpcMessage(error, "تعذّر إعلان فائزي القسم.") };
 
   revalidatePath("/dashboard/elections", "layout");
+  kickDispatch();
   return { ok: true, message: "أُعلن فائزو القسم وأُسنِدت مناصبهم." };
 }
 

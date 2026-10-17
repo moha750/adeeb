@@ -50,8 +50,11 @@ export function QrSchedules({
   const linkError = link && !link.ok ? link.message : null;
   const ready = !!link?.ok && (!!startsAt || !!endsAt);
 
-  /** السارية الآن: أوّلُ نافذةٍ بدأت ولم تنتهِ في القائمة المرتّبة بالبداية تنازليًّا. */
-  const now = Date.now();
+  /**
+   * السارية الآن: أوّلُ نافذةٍ بدأت ولم تنتهِ في القائمة المرتّبة بالبداية تنازليًّا.
+   * و«الآن» لحظةُ فتح الصفحة: قراءةُ الساعة في كلّ رسمٍ تجعل الرسمَ غيرَ نقيّ.
+   */
+  const [now] = useState(Date.now);
   const liveId = rows.find(
     (r) => (!r.startsAt || Date.parse(r.startsAt) <= now) && (!r.endsAt || Date.parse(r.endsAt) > now),
   )?.id;

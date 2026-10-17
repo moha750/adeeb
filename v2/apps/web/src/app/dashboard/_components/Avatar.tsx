@@ -1,3 +1,6 @@
+import { User } from "@phosphor-icons/react";
+import { avatarFace } from "@/lib/avatarFace";
+
 type AvatarProps = {
   name?: string;
   src?: string;
@@ -5,32 +8,27 @@ type AvatarProps = {
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
   status?: "online" | "away" | "busy" | "offline";
   className?: string;
-  /** رمزٌ يقوم مقام الأحرف حين لا اسمَ يُقرأ منه (حسابٌ بلا ملف): يغلبه الصورةُ ورسمُ الجنس. */
+  /** رمزٌ يقوم مقام أيقونة المستخدم الافتراضيّة (حسابٌ بلا ملف): يغلبه الصورةُ ورسمُ الجنس. */
   icon?: React.ReactNode;
 };
 
-const initialsOf = (name?: string) =>
-  name ? name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join(" ") : "؟";
-
-const FIG: Record<string, string> = {
-  male: "/brand/avatar/avatar-male.svg",
-  female: "/brand/avatar/avatar-female.svg",
-};
-
-/** صورة رمزية — مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية؛ صورة، فأيقونة الجنس، فالأحرف. */
+/**
+ * صورة رمزية — مربّع بزوايا مستديرة وحدّ، بتدرّج الهوية؛ صورة، فأيقونة الجنس، فأيقونةُ المستخدم.
+ * **لا أحرف** (المالك ٢٠٢٦-١٠-١٦): مَن لا صورةَ له ولا جنسَ كان يُرسَم بأحرف اسمه، فكسر نمطَ
+ * «الرسمِ لا الحرف» الذي يحمله سائرُ مَن لا صورةَ لهم. جُرّب له رسمٌ محايدٌ من رسمَي الهويّة
+ * (الريشةُ وحدها، وظلُّ وجهٍ مُصمَت) فاختار المالكُ أيقونةَ المكتبة: «أراها أجمل بكثير».
+ */
 export function Avatar({ name, src, gender, size = "md", status, className, icon }: AvatarProps) {
   const cls = ["av", size !== "md" ? `av-${size}` : "", className].filter(Boolean).join(" ");
-  const fig = !src && gender ? FIG[gender] : undefined;
+  const face = avatarFace(src, gender);
   return (
     <span className={cls} aria-label={name} role="img">
-      {src ? (
-        <img className="av-img" src={src} alt={name ?? ""} />
-      ) : fig ? (
-        <img className="av-fig" src={fig} alt="" aria-hidden />
-      ) : icon ? (
-        <span className="av-icon" aria-hidden>{icon}</span>
+      {face.kind === "photo" ? (
+        <img className="av-img" src={face.url} alt={name ?? ""} />
+      ) : face.kind === "figure" ? (
+        <img className="av-fig" src={face.url} alt="" aria-hidden />
       ) : (
-        <span className="av-ini">{initialsOf(name)}</span>
+        <span className="av-icon" aria-hidden>{icon ?? <User />}</span>
       )}
       {status ? <i className={`av-dot av-dot-${status}`} /> : null}
     </span>

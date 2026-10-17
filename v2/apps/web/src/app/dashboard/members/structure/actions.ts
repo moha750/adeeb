@@ -2,6 +2,7 @@
 
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
+import { kickDispatch } from "@/lib/notifications/emit";
 import { getCurrentAdmin } from "@/lib/auth";
 import { describeCandidates, type ActingCandidate } from "@/lib/actingCandidates";
 import { isCatalogIcon } from "@/lib/unitIconCatalog";
@@ -63,7 +64,8 @@ export async function assignPosition(input: {
   if (error) return { ok: false, message: `تعذّر الإسناد: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string; current_user_id?: string };
-  if (r.ok) revalidateAll();
+  // إشعارُ المنصب يولد في دالّة القاعدة نفسِها، ويوزَّع بعد الردّ (`NOTIFICATIONS-SYSTEM.md` §٤)
+  if (r.ok) { revalidateAll(); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّ." : "تعذّر الإسناد."), code: r.code, currentUserId: r.current_user_id };
 }
 
@@ -93,7 +95,7 @@ export async function removePosition(input: {
   if (error) return { ok: false, message: `تعذّرت الإزالة: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
-  if (r.ok) revalidateAll();
+  if (r.ok) { revalidateAll(); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّت الإزالة." : "تعذّرت الإزالة."), code: r.code };
 }
 
@@ -150,7 +152,7 @@ export async function assignActing(input: {
   if (error) return { ok: false, message: `تعذّر التكليف: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
-  if (r.ok) { revalidateAll(); revalidatePath("/"); }
+  if (r.ok) { revalidateAll(); revalidatePath("/"); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّ التكليف." : "تعذّر التكليف."), code: r.code };
 }
 
@@ -165,7 +167,7 @@ export async function extendActing(input: { rowId: number; until: string }): Pro
   if (error) return { ok: false, message: `تعذّر التعديل: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
-  if (r.ok) revalidateAll();
+  if (r.ok) { revalidateAll(); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "عُدِّل آخر يوم." : "تعذّر التعديل."), code: r.code };
 }
 
@@ -180,7 +182,7 @@ export async function endActing(input: { rowId: number }): Promise<ActionResult>
   if (error) return { ok: false, message: `تعذّر الإنهاء: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
-  if (r.ok) { revalidateAll(); revalidatePath("/"); }
+  if (r.ok) { revalidateAll(); revalidatePath("/"); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "انتهى التكليف." : "تعذّر الإنهاء."), code: r.code };
 }
 
@@ -210,7 +212,7 @@ export async function assignSupervision(input: {
   if (error) return { ok: false, message: `تعذّر التوزيع: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string; current_user_id?: string };
-  if (r.ok) revalidateAll();
+  if (r.ok) { revalidateAll(); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "تمّ." : "تعذّر التوزيع."), code: r.code, currentUserId: r.current_user_id };
 }
 
@@ -234,7 +236,7 @@ export async function revokeSupervision(input: {
   if (error) return { ok: false, message: `تعذّر السحب: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
-  if (r.ok) revalidateAll();
+  if (r.ok) { revalidateAll(); kickDispatch(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "سُحب الإشراف." : "تعذّر السحب."), code: r.code };
 }
 

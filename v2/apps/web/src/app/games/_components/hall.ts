@@ -17,13 +17,14 @@ export function countAr(k: number, f: Forms): string {
 export const PLAYERS: Forms = { one: "لاعبٌ واحد", two: "لاعبان", few: "لاعبين", many: "لاعبًا" };
 export const RUNS: Forms = { one: "جولةٌ واحدة", two: "جولتان", few: "جولات", many: "جولة" };
 
-/** وحداتُ «أعلى النقاط»: المسافةُ بالمتر، والأكوابُ والنقاطُ عدًّا. */
-export type ScoreUnit = "m" | "cups" | "pts";
+/** وحداتُ «أعلى النقاط» والمسابقات: المسافةُ بالمتر، والأكوابُ والتمرُ والنقاطُ عدًّا. */
+export type ScoreUnit = "m" | "cups" | "tamr" | "pts";
 const CUPS: Forms = { one: "كوبٌ واحد", two: "كوبان", few: "أكواب", many: "كوبًا" };
 const PTS: Forms = { one: "نقطةٌ واحدة", two: "نقطتان", few: "نقاط", many: "نقطة" };
+const TAMR: Forms = { one: "تمرةٌ واحدة", two: "تمرتان", few: "تمرات", many: "تمرة" };
 export function score(unit: ScoreUnit, v: number): string {
   if (unit === "m") return `${num(v)} م`;
-  return countAr(v, unit === "cups" ? CUPS : PTS);
+  return countAr(v, unit === "cups" ? CUPS : unit === "tamr" ? TAMR : PTS);
 }
 
 /** العدّادُ بساعاتٍ لا تُطوى في أيّام (مسابقاتُنا يومان أو ثلاثة): ٤٧:٥٩:٥٩. */

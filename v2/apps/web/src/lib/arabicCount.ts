@@ -40,4 +40,7 @@ export const AR_LINE: ArForms = ["سطرٌ واحد", "سطران", "أسطرٍ"
 export const AR_CATEGORY: ArForms = ["تصنيفٌ واحد", "تصنيفان", "تصنيفات", "تصنيفًا"];
 export const AR_PLAYER: ArForms = ["لاعبٌ واحد", "لاعبان", "لاعبين", "لاعبًا"];
 export const AR_CERTIFICATE: ArForms = ["شهادةٌ واحدة", "شهادتان", "شهادات", "شهادةً"];
+export const AR_READ_MIN: ArForms = ["دقيقةُ قراءة", "دقيقتا قراءة", "دقائق قراءة", "دقيقةَ قراءة"];
+export const AR_NEWS: ArForms = ["خبرٌ واحد", "خبران", "أخبار", "خبرًا"];
+export const AR_VIEW: ArForms = ["مشاهدةٌ واحدة", "مشاهدتان", "مشاهدات", "مشاهدةً"];
 export const AR_VOLUNTEER: ArForms = ["متطوّعٌ واحد", "متطوّعان", "متطوّعين", "متطوّعًا"];

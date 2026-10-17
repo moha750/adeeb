@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { Footer, Container, LandingHeading } from "@adeeb/design-system";
+import { Ambient, Footer, Container } from "@adeeb/design-system";
 import { getMoreNews, getPublicNewsItem } from "../data";
-import { PublicNewsCard } from "../PublicNewsCard";
 import { ArticleView } from "./ArticleView";
+import { MoreNews } from "./_parts/MoreNews";
 import { ReadingProgress } from "./_parts/ReadingProgress";
 import { getApprovedComments } from "./data";
 import { SiteHeader } from "../../_components/SiteHeader";
@@ -33,7 +33,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
   const n = await getPublicNewsItem(decodeURIComponent(slug));
   if (!n) notFound();
 
-  const [more, comments] = await Promise.all([getMoreNews(n.id), getApprovedComments(n.id)]);
+  const [more, comments] = await Promise.all([getMoreNews(n.id, 3, n.category, n.publishedAt), getApprovedComments(n.id)]);
 
   return (
     <>
@@ -41,8 +41,9 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
           إليها لا إلى الشاشة. */}
       <ReadingProgress targetId="art" />
       <SiteHeader activeHref="/news" />
-      <main>
-        <section className="py-16 md:py-24">
+      <main className="amb-host">
+        <Ambient />
+        <section className="pt-4 pb-16 md:pt-6 md:pb-24">
           <Container>
             <ArticleView
               n={n}
@@ -54,12 +55,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
         {more.length ? (
           <section className="pb-20 md:pb-28">
             <Container>
-              <LandingHeading eyebrow="أخبار" title="اقرأ أيضًا" deck="مستجدّاتٌ أخرى من منصّة أدِيب." align="center" />
-              <div className="card-grid" style={{ marginTop: 32 }}>
-                {more.map((m) => (
-                  <PublicNewsCard key={m.id} n={m} />
-                ))}
-              </div>
+              <MoreNews items={more} />
             </Container>
           </section>
         ) : null}

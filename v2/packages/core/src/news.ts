@@ -13,11 +13,16 @@
 
 export type Category = "coverage" | "partnership" | "achievement" | "announcement";
 
-export const CATEGORY_META: Record<Category, { label: string; hint: string }> = {
-  coverage: { label: "تغطية", hint: "فعاليّةٌ أقامها أدِيب أو شارك فيها" },
-  partnership: { label: "شراكة", hint: "اتفاقيّة أو مذكّرة تفاهم" },
-  achievement: { label: "إنجاز", hint: "تكريمٌ أو جائزة" },
-  announcement: { label: "إعلان", hint: "بيانٌ من النادي" },
+/**
+ * `featured` اسمُ الفئة حين يكون الخبرُ مميَّزًا: **التمييزُ صفةٌ للفئة لا شارةٌ ثانية**
+ * (المالك ٢٠٢٦-١٠-١٤ — «تغطية مميّزة» بدل شارتَي «تغطية» و«مميّز»). والصفةُ تتبع جنسَ
+ * الموصوف، فلا تُركَّب بوصلٍ نصّيٍّ بل تُكتب لكلّ فئةٍ كاملة.
+ */
+export const CATEGORY_META: Record<Category, { label: string; featured: string; hint: string }> = {
+  coverage: { label: "تغطية", featured: "تغطية مميّزة", hint: "فعاليّةٌ أقامها أدِيب أو شارك فيها" },
+  partnership: { label: "شراكة", featured: "شراكة مميّزة", hint: "اتفاقيّة أو مذكّرة تفاهم" },
+  achievement: { label: "إنجاز", featured: "إنجاز مميّز", hint: "تكريمٌ أو جائزة" },
+  announcement: { label: "إعلان", featured: "إعلان مميّز", hint: "بيانٌ من النادي" },
 };
 
 export const CATEGORY_VALUES = Object.keys(CATEGORY_META) as Category[];

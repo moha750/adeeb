@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { ensureReaderId } from "@/lib/news/guest";
 import { cleanComment, commentError } from "@/lib/news/comments";
+import { firstAndLastOf } from "@/lib/personName";
+import { emit } from "@/lib/notifications/emit";
+import { revalidatePath } from "next/cache";
 
 /**
  * أفعالُ قارئ الخبر — إعجابٌ وتعليقٌ وإعجابٌ بتعليق.
@@ -101,7 +104,8 @@ export async function toggleCommentLike(commentId: string): Promise<ReaderResult
     .from("comment_likes").select("id").eq("comment_id", commentId).eq(column, value).maybeSingle();
 
   if (existing) {
-    await sb.from("comment_likes").delete().eq("id", existing.id);
+    const { error } = await sb.from("comment_likes").delete().eq("id", existing.id);
+    if (error) return { ok: false, message: "تعذّر نزعُ الإعجاب. أعد المحاولة." };
   } else {
     const { error } = await sb
       .from("comment_likes")
@@ -109,14 +113,26 @@ export async function toggleCommentLike(commentId: string): Promise<ReaderResult
     if (error && error.code !== "23505") return { ok: false, message: "تعذّر الإعجاب. أعد المحاولة." };
   }
 
-  const { count } = await sb
-    .from("comment_likes").select("id", { count: "exact", head: true }).eq("comment_id", commentId);
+  // **الحالُ كما صارت في القاعدة لا كما افترضناها** (٢٠٢٦-١٠-١٥): كان «23505» يُعدّ نجاحًا ويُردّ `liked: true`
+  // افتراضًا، فأخفى قيدًا معطوبًا (NULLS NOT DISTINCT) يرفض كلَّ إعجابٍ بعد الأوّل، والقلبُ أحمرُ لا يُحفظ.
+  const [{ data: mine }, { count }] = await Promise.all([
+    sb.from("comment_likes").select("id").eq("comment_id", commentId).eq(column, value).maybeSingle(),
+    sb.from("comment_likes").select("id", { count: "exact", head: true }).eq("comment_id", commentId),
+  ]);
 
-  return { ok: true, message: "", liked: !existing, total: count ?? 0 };
+  return { ok: true, message: "", liked: !!mine, total: count ?? 0 };
 }
 
 /**
- * تعليقٌ جديد — يدخل **غيرَ مُقَرٍّ دائمًا**، كما تفرض سياسةُ القاعدة.
+ * تعليقٌ جديد — **يُنشَر لحظتَه** (قرار المالك ٢٠٢٦-١٠-١٦: الخيار «ج»، الكلُّ مباشرٌ والحذفُ بعده).
+ *
+ * كان يدخل غيرَ مُقَرٍّ وينتظر رئيسَ التحرير. ووُزنت ثلاثة: الكلُّ ينتظر، والعضوُ مباشرٌ والزائرُ ينتظر، والكلُّ
+ * مباشر. فاختار المالكُ الثالثَ **بشرطين**: إشعارٌ فوريٌّ لرئيس التحرير بكلّ تعليق (`news.comment_posted`
+ * أدناه)، وحذفٌ بتأكيد. والحارسُ قبل الكتابة الدرعُ وحدُّ الحروف؛ وما يفلت منهما يُرى في الجرس ويُحذف.
+ *
+ * **وسياسةُ الإدراج في القاعدة ما زالت تشترط `is_approved = false`، وهي معطّلةٌ عمدًا:** نُزع منحُ
+ * `INSERT` عن `anon` و`authenticated` في ٢٠٢٦-٠٩-٢٤، فلا يكتب تعليقًا إلّا هذا الفعلُ بمفتاح الخدمة،
+ * ومفتاحُ الخدمة لا تحكمه RLS. فالقرارُ ههنا، ولا ترحيلَ له.
  *
  * ولا يُقبَل من العميل إلّا نصُّه واسمُه إن كان زائرًا: العضويّةُ تُقرأ من الجلسة،
  * و`is_approved` لا يُمرَّر أصلًا فلا يُنتحَل.
@@ -143,7 +159,7 @@ export async function postComment(input: {
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص. أبلغ الإدارة." };
 
   const { data: item } = await sb
-    .from("news").select("id").eq("id", input.newsId).eq("workflow_status", "published").maybeSingle();
+    .from("news").select("id, title, slug").eq("id", input.newsId).eq("workflow_status", "published").maybeSingle();
   if (!item) return { ok: false, message: "خبرٌ غير منشور." };
 
   const { data, error } = await sb
@@ -153,11 +169,46 @@ export async function postComment(input: {
       user_id: user?.id ?? null,
       guest_name: name,
       content: text,
-      is_approved: false,
+      is_approved: true,
     })
     .select("id")
     .single();
 
   if (error || !data) return { ok: false, message: "تعذّر إرسالُ تعليقك. أعد المحاولة." };
-  return { ok: true, message: "وصل تعليقُك، ويظهر بعد أن يُقرأ.", id: data.id };
+
+  // الصفحةُ ساكنةٌ دقيقةً (`revalidate = 60`)، فبلا هذا لا يرى القارئُ التالي التعليقَ إلّا بعدها.
+  // بنمط المسار لا بالرابط: المعرّفُ عربيٌّ، ونمطُ المسار يسلم من ترميزه.
+  revalidatePath("/news/[slug]", "page");
+
+  // الشرطُ الأوّل من شرطَي النشر المباشر. والنصُّ يُحفظ مقتطفًا: الإشعارُ تنبيهٌ يُفتح، لا نسخةٌ من التعليق.
+  // وفشلُه لا يُفشل التعليق: نُشر، والإشعارُ يُسجَّل في سجلّ الخادم (`emit`).
+  const who = user ? await authorName(sb, user.id) : (name || "زائر");
+  await emit(
+    "news.comment_posted",
+    {
+      newsTitle: item.title as string,
+      slug: (item.slug as string | null) ?? input.newsId,
+      who,
+      excerpt: excerptOf(text),
+    },
+    user?.id ?? null,
+  );
+
+  // بلا رسالة نجاح (المالك ٢٠٢٦-١٠-١٦): ظهورُ الكرت في رأس القائمة هو التأكيد.
+  return { ok: true, message: "", id: data.id };
+}
+
+/** اسمُ صاحب الحساب كما يُنشَر به تعليقُه: الأوّلُ والأخير، و«عضو أدِيب» لمن لا ملفَّ له (كمسار العرض). */
+async function authorName(sb: NonNullable<ReturnType<typeof service>>, userId: string): Promise<string> {
+  const { data } = await sb.from("profiles").select("full_name").eq("id", userId).maybeSingle<{ full_name: string | null }>();
+  return firstAndLastOf(data?.full_name ?? "") || "عضو أدِيب";
+}
+
+/** أوّلُ ثمانين حرفًا بلا قطعٍ في منتصف كلمة. */
+function excerptOf(text: string): string {
+  const flat = text.replace(/\s+/g, " ");
+  if (flat.length <= 80) return flat;
+  const cut = flat.slice(0, 80);
+  const at = cut.lastIndexOf(" ");
+  return `${(at > 40 ? cut.slice(0, at) : cut).trimEnd()}…`;
 }

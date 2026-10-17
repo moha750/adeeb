@@ -4,12 +4,12 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Accordion, Alert, Badge, Button, Checkbox, Field, PersonPicker, SaveBar, SectionCard, Segmented, Select, Textarea, Modal } from "@adeeb/design-system";
 import {
-  Newspaper, TextAlignLeft, Tag, UsersThree, Buildings, ClipboardText, Image as ImageIcon, Images,
+  Newspaper, TextAlignLeft, UsersThree, Buildings, ClipboardText, Image as ImageIcon, Images,
   PaperPlaneTilt, Megaphone, Archive, ChatCircleDots, ClockCounterClockwise, Camera, Users,
   FloppyDisk, LinkSimple, Hash,
 } from "@phosphor-icons/react";
 import {
-  PencilSimple, UploadSimple, Trash, EyeSlash, ArrowUUpLeft, Star, CheckCircle, XCircle,
+  PencilSimple, UploadSimple, Trash, EyeSlash, ArrowUUpLeft, Star, XCircle,
   WarningCircle,
 } from "@/app/_components/glyphs";
 import { DropdownMenu } from "../../_components/DropdownMenu";
@@ -29,7 +29,7 @@ import {
 } from "../vocab";
 import {
   addCollabComment, addGalleryImage, assignWriters, createImageUploadUrl, deleteCollabComment,
-  moderatePublicComment, removeCover, removeGalleryImage, returnForEdits, saveNews,
+  deletePublicComment, removeCover, removeGalleryImage, returnForEdits, saveNews,
   setCover, setNewsStatus, submitForReview, toggleFeatured,
 } from "../actions";
 import { PageHeader } from "../../_components/PageHeader";
@@ -98,7 +98,6 @@ export function NewsEditorView({
     // فيرى المحرّرُ بنيتَه جاهزةً ولا يُطالَب بإعادة تقطيعها بيده.
     sections: (row.sections ?? textToSections(row.content)) as Section[],
     category: row.category,
-    tags: row.tags.join("، "),
     authors: row.authors,
     unit: row.unit,
     coverPhotographer: detail.coverPhotographer ? [detail.coverPhotographer] : [],
@@ -107,7 +106,6 @@ export function NewsEditorView({
   const [dirty, setDirty] = useState(false);
   const edit = (p: Partial<typeof f>) => { patch(p); setDirty(true); };
 
-  const splitList = (v: string) => v.split(/[،,\n]/).map((s) => s.trim()).filter(Boolean);
 
   const save = () => startPending(async () => {
     const r = await saveNews(row.id, {
@@ -115,7 +113,6 @@ export function NewsEditorView({
       ...(may("summary") ? { summary: f.summary || null } : {}),
       ...(may("content") ? { sections: f.sections } : {}),
       ...(may("category") ? { category: f.category } : {}),
-      ...(may("tags") ? { tags: splitList(f.tags) } : {}),
       ...(may("authors") ? { authors: f.authors } : {}),
       ...(may("cover_photographer") ? { coverPhotographer: f.coverPhotographer[0] ?? null } : {}),
       ...(isChief ? { slug: f.slug, unit: f.unit } : {}),
@@ -194,6 +191,8 @@ export function NewsEditorView({
   const [comment, setComment] = useState("");
   const [confirmCover, setConfirmCover] = useState(false);
   const [killImage, setKillImage] = useState<number | null>(null);
+  /** تعليقُ الجمهور المطلوبُ حذفُه — الحذفُ نهائيٌّ ومعه إعجاباتُه، فيُسأل عنه أوّلًا (شرطُ النشر المباشر الثاني). */
+  const [killComment, setKillComment] = useState<string | null>(null);
 
   // حارسُ النشر يسأل عن المتن نصًّا، فيُسأل عن إسقاط الأقسام — لا عن حقلٍ ثانٍ يُحرَّر.
   const gaps = missingForPublish({
@@ -302,13 +301,6 @@ export function NewsEditorView({
           onValueChange={(v) => edit({ unit: v })} />
       ) : <ReadOnly label="الجهة" value={row.unitName} />}
 
-      {may("tags") ? (
-        <Field className="form-full" label="الوسوم" icon={<Tag />} innerIcon={<PencilSimple />}
-          placeholder="أدِيب، ورشة، تطوّع"
-          value={f.tags} onChange={(e) => edit({ tags: e.target.value })}
-          helper="تفصلها فاصلة." />
-      ) : <ReadOnly label="الوسوم" value={row.tags.join("، ") || "—"} />}
-
       {isChief ? (
         <Field className="form-full" label="المعرّف (رابط الخبر)" icon={<LinkSimple />} innerIcon={<Hash />}
           placeholder="news-…"
@@ -393,7 +385,10 @@ export function NewsEditorView({
     </div>
   );
 
-  /** الجمهور — ما كتبه القرّاء، وإقرارُه لرئيس التحرير. */
+  /**
+   * الجمهور — ما كتبه القرّاء. **لا إقرارَ بعد ٢٠٢٦-١٠-١٦**: التعليقُ يُنشَر لحظتَه، ويصل رئيسَ التحرير
+   * إشعارُه، والحذفُ ههنا. و«غير منشور» لما بقي من أيّام الإقرار وحدَه، لا يراه القرّاء.
+   */
   const audience = detail.publicComments.length ? (
     <div className="nwe-stack-sm">
       {detail.publicComments.map((c) => (
@@ -402,22 +397,13 @@ export function NewsEditorView({
             <div className="nwe-row-top">
               <b className="nwe-row-name">{c.who}</b>
               {c.isGuest ? <Badge tone="neutral" variant="outline">زائر</Badge> : null}
-              <Badge tone={c.isApproved ? "success" : "warning"} dot>
-                {c.isApproved ? "منشور" : "ينتظر الإقرار"}
-              </Badge>
+              {c.isApproved ? null : <Badge tone="neutral" dot>غير منشور</Badge>}
               <span className="nwe-meta">{dt(c.createdAt)}</span>
             </div>
             <div className="nwe-row-text">{c.content}</div>
           </div>
           <div className="btn-row">
-            {!c.isApproved ? (
-              <Button variant="ghost" size="sm" loading={pending}
-                onClick={() => run(() => moderatePublicComment(c.id, "approve"))}>
-                <CheckCircle size={16} />إقرار
-              </Button>
-            ) : null}
-            <Button variant="ghost" size="sm" loading={pending}
-              onClick={() => run(() => moderatePublicComment(c.id, "reject"))}>
+            <Button variant="ghost" size="sm" onClick={() => setKillComment(c.id)}>
               <XCircle size={16} />حذف
             </Button>
           </div>
@@ -538,9 +524,9 @@ export function NewsEditorView({
                   placeholder="سطران يُغريان بالقراءة، يظهران في بطاقة الخبر."
                   value={f.summary} onChange={(e) => edit({ summary: e.target.value })}
                   error={f.summary.length > SUMMARY_MAX
-                    ? `يزيد ${f.summary.length - SUMMARY_MAX} حرفًا عمّا تسعه البطاقة، فيُقصّ فيها. احذف منه.`
+                    ? `يزيد ${f.summary.length - SUMMARY_MAX} حرفًا، فيطول رأسُ الخبر على الجوّال ويدفع الخبرَ عن الشاشة الأولى. احذف منه.`
                     : undefined}
-                  helper={`${f.summary.length} من ${SUMMARY_MAX} حرفًا. وهو وعدٌ للقارئ لا أوّلُ الخبر: يظهر في البطاقة وتحت العنوان، فإن كرّر أوّلَ سطرٍ من المتن قرأه الزائر مرّتين.`} />
+                  helper={`${f.summary.length} من ${SUMMARY_MAX} حرفًا. وهو عنوانٌ فرعيٌّ يظهر تحت العنوان في رأس الخبر، وفي بطاقته، وفي معاينة رابطه حين يُشارَك.`} />
               ) : <ReadOnly label="الملخّص" value={row.summary ?? "—"} />}
             </div>
           </SectionCard>
@@ -568,7 +554,7 @@ export function NewsEditorView({
           items={[
             ...(isChief ? [{ q: detail.assignments.length ? `الطاقم (${detail.assignments.length})` : "الطاقم", a: crew }] : []),
             { q: detail.comments.length ? `الغرفة (${detail.comments.length})` : "الغرفة", a: roomTalk },
-            ...(isChief ? [{ q: row.pendingComments ? `الجمهور (${row.pendingComments} ينتظر)` : "الجمهور", a: audience }] : []),
+            ...(isChief ? [{ q: detail.publicComments.length ? `الجمهور (${detail.publicComments.length})` : "الجمهور", a: audience }] : []),
             { q: "السجلّ", a: history },
           ]}
         />
@@ -690,6 +676,22 @@ export function NewsEditorView({
           if (killImage === null) return;
           const r = await removeGalleryImage(row.id, killImage);
           if (r.ok) { toast.success(r.message); setKillImage(null); router.refresh(); } else toast.error(r.message);
+        })}
+      />
+
+      <ConfirmDialog
+        open={killComment !== null}
+        onClose={() => setKillComment(null)}
+        tone="danger"
+        icon={<Trash />}
+        title="حذف التعليق؟"
+        text="يُحذف نهائيًّا ومعه إعجاباته."
+        confirmLabel="حذف"
+        loading={pending}
+        onConfirm={() => startPending(async () => {
+          if (killComment === null) return;
+          const r = await deletePublicComment(killComment);
+          if (r.ok) { toast.success(r.message); setKillComment(null); router.refresh(); } else toast.error(r.message);
         })}
       />
 

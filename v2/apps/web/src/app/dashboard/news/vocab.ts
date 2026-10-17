@@ -50,14 +50,13 @@ export type { Category } from "@adeeb/core/news";
  * وكلاهما مهجورٌ لم يُستعمل قطّ، ومسجَّلٌ في قائمة موت V1.)
  */
 export type FieldKey =
-  | "title" | "summary" | "content" | "tags" | "category" | "authors"
+  | "title" | "summary" | "content" | "category" | "authors"
   | "image_url" | "gallery_images" | "cover_photographer" | "gallery_photographers";
 
 export const FIELD_META: Record<FieldKey, { label: string; group: "نصّ" | "وسائط" }> = {
   title:                 { label: "العنوان",          group: "نصّ" },
   summary:               { label: "الملخّص",           group: "نصّ" },
   content:               { label: "المتن",            group: "نصّ" },
-  tags:                  { label: "الوسوم",           group: "نصّ" },
   category:              { label: "القسم",            group: "نصّ" },
   authors:               { label: "الكتّاب",           group: "نصّ" },
   image_url:             { label: "صورة الغلاف",      group: "وسائط" },
@@ -69,7 +68,7 @@ export const FIELD_META: Record<FieldKey, { label: string; group: "نصّ" | "و
 export const FIELD_VALUES = Object.keys(FIELD_META) as FieldKey[];
 
 /** ما يُكلَّف به الكاتب افتراضًا: الكلمة له، والصورة لأهلها. */
-export const DEFAULT_FIELDS: FieldKey[] = ["title", "summary", "content", "tags", "authors"];
+export const DEFAULT_FIELDS: FieldKey[] = ["title", "summary", "content", "authors"];
 
 /* ══ حالة التكليف ════════════════════════════════════════════════════ */
 
@@ -99,16 +98,15 @@ export type Publishable = {
 /**
  * حدُّ الملخّص حرفًا.
  *
- * **مقيسٌ لا مُقدَّر:** بطاقةُ قائمة الأخبار تقصّ الملخّصَ عند **ثلاثة أسطر**
- * (`line-clamp-3`)، وعرضُ فقرتها على الجوّال ‏300px. وقياسُ ٢٠٢٦-٠٩-٢٤ بالمتصفّح:
- * ‏١٥٤ حرفًا بكلماتٍ طويلة و١٦٤ بكلماتٍ قصيرةٍ فعليّة، فاعتُمد ‏١٦٠ وسطًا آمنًا.
+ * **مقيسٌ على رأس الخبر في الجوّال** (المالك ٢٠٢٦-١٠-١٤): الموجزُ عنوانٌ فرعيٌّ في اللوح الكحليّ تحت
+ * العنوان (`.art-hang-dek`)، وسطرُه على ‏375 يسع نحوَ ‏38 حرفًا. فـ‏120 ثلاثةُ أسطر، و‏160 خمسةٌ تدفع
+ * أوّلَ سطرٍ من الخبر خارجَ الشاشة الأولى متى طال العنوانُ إلى حدّه (‏60). وهو دون ما تعرضه
+ * معايناتُ الروابط (نحوَ ‏150) فلا يُقصّ في واتساب. (كان ‏160 حين لم يظهر الموجزُ إلّا في البطاقة.)
  *
- * **ولا حدَّ في القاعدة عمدًا:** العمودُ `text`، وستّةُ ملخّصاتٍ حيّةٍ تتجاوزه (أطولُها
- * ‏٢٩٠). فالحدُّ يمنع الزيادةَ ولا يبتر ما كُتب — يراه صاحبُه كاملًا ويحذف منه بيده.
- *
- * والشُّرفةُ (صفحةُ الخبر) لا تقصّ شيئًا: تعرضه كاملًا مهما طال.
+ * **ولا حدَّ في القاعدة عمدًا:** العمودُ `text`. فالحدُّ يمنع الزيادةَ ولا يبتر ما كُتب — يراه صاحبُه
+ * كاملًا ويحذف منه بيده. واختُصرت الأربعةُ المنشورةُ التي تجاوزته يومَ نزل (٢٠٢٦-١٠-١٤).
  */
-export const SUMMARY_MAX = 160;
+export const SUMMARY_MAX = 120;
 
 /**
  * حدُّ عنوان الخبر حرفًا.

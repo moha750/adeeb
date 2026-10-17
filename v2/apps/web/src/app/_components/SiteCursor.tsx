@@ -39,7 +39,8 @@ export function SiteCursor() {
      حالةٍ نصفُها من صيغةٍ ونصفُها من أخرى عند عبور الحدّ. */
   const station = path === "/radio" || path?.startsWith("/radio/")
     // و«دربك خضر» مثلُها: الريشةُ علامةُ النادي، والنادي لا يظهر في اللعبة بأيّ صورة.
-    || path === "/games/darbak-khadar" || path?.startsWith("/games/darbak-khadar/");
+    // وصالةُ `/games` كذلك (٢٠٢٦-١٠-١٧): هويّتُها منعزلةٌ بلا شيءٍ من الموقع (القاعدة ١).
+    || path === "/games" || path?.startsWith("/games/");
   /* **وقرصُ التصويب للإذاعة وحدَها:** خارجَها طرفُ الريشة هو النقطةُ الدقيقة،
      فقرصٌ معه شكلٌ ثانٍ بلا فائدة. */
   return station ? <Cursor key="stn" nib="none" point="dot" /> : <Cursor key="site" />;

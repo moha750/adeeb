@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { countPhrase, type ChartUnit } from "@adeeb/design-system";
+import { User } from "@phosphor-icons/react";
 import { ArrowUpRight, CaretDown } from "@/app/_components/glyphs";
+import { avatarFace } from "@/lib/avatarFace";
 import type { PubPerson, PubStructure, PubUnit } from "./data";
 
 /**
@@ -15,33 +17,53 @@ import type { PubPerson, PubStructure, PubUnit } from "./data";
  * - **النائبُ بجوار قائده** لا بين الأعضاء.
  * - **الانتقالُ بزرٍّ ظاهرٍ وحده**: دائرةٌ بسهمٍ على حافّة الوجه هي الرابط، والوجهُ والاسمُ لا ينقلان —
  *   «لو ضغط بالخطأ على شخصٍ لانصدم أنّ الصفحة حوّلته».
- * - **من لا صورة له** يأخذ هيئةَ جنسه (هيئةُ «أهل الدفّة» نفسُها) لا حرفًا.
+ * - **من لا صورة له** يأخذ هيئةَ جنسه (هيئةُ «أهل الدفّة» نفسُها) لا حرفًا، ومَن لا جنسَ له
+ *   أيقونةَ المستخدم (المالك ٢٠٢٦-١٠-١٦) لا حرفَ اسمه.
+ * - **شاغرُ القيادة يُعرض** (٢٠٢٦-١٠-١٣) ليتّسق شكلُ الشجرة: مكانُ الوجه دائرةٌ متقطّعة و«شاغر»،
+ *   بلا زرّ. للقائد والمنسّق، ولنائب اللجنة أيضًا (طلبُ المالك: «ضع حتّى النائب»). والإدارتان
+ *   (الموارد، الضمان) لا مقعدَ نائبٍ فيهما فلا يُرسم لهما.
  */
 
 const MEMBER: ChartUnit = { one: "عضو", two: "عضوان", few: "أعضاء", many: "عضوًا" };
 const VOLUNTEER: ChartUnit = { one: "متطوّع", two: "متطوّعان", few: "متطوّعين", many: "متطوّعًا" };
-const FIG = { male: "/brand/avatar/avatar-male.svg", female: "/brand/avatar/avatar-female.svg" } as const;
 const href = (p: PubPerson) => (p.slug ? `/m/${encodeURIComponent(p.slug)}` : undefined);
-const initial = (name: string) => Array.from(name.trim().split(/\s+/)[0] ?? "")[0] ?? "";
 
 /** الوجه، ومعه زرُّ صفحته إن كانت له. `go={false}` للوجوه المتراكبة في الحزمة. */
 function Face({ p, size, go = true }: { p: PubPerson; size: number; go?: boolean }) {
   const h = go ? href(p) : undefined;
-  const fig = !p.avatar && p.gender ? FIG[p.gender] : null;
+  const face = avatarFace(p.avatar, p.gender);
   return (
     <span className="sx-fw" style={{ ["--s" as string]: `${size}px` }}>
-      <span className={"sx-f" + (p.avatar ? "" : fig ? " is-fig" : " is-mono")} aria-hidden>
-        {p.avatar ? <img src={p.avatar} alt="" loading="lazy" draggable={false} />
-          : fig ? <i style={{ backgroundImage: `url(${fig})` }} />
-          : <b>{initial(p.name)}</b>}
+      <span className={"sx-f" + (face.kind === "photo" ? "" : face.kind === "figure" ? " is-fig" : " is-mono")} aria-hidden>
+        {face.kind === "photo" ? <img src={face.url} alt="" loading="lazy" draggable={false} />
+          : face.kind === "figure" ? <i style={{ backgroundImage: `url(${face.url})` }} />
+          : <b><User /></b>}
       </span>
       {h ? <a className="sx-go" href={h} aria-label={`صفحة ${p.name}`}><ArrowUpRight /></a> : null}
     </span>
   );
 }
 
-/** عقدةُ الرأس: الوجهُ فوق الاسم. بلا شاغلٍ تبقى اسمَ وحدتها. */
-function Node({ p, unit, lead }: { p: PubPerson | null; unit?: string; lead?: boolean }) {
+/** مقعدٌ شاغر: مكانُ الوجه بحجمه، دائرةٌ متقطّعة بلا زرّ. */
+function Vacant({ size }: { size: number }) {
+  return <span className="sx-fw" style={{ ["--s" as string]: `${size}px` }}><span className="sx-f is-vacant" aria-hidden /></span>;
+}
+
+/** عقدةُ الرأس: الوجهُ فوق الاسم. `vacant` لمقعدٍ بلا شاغل (منسّقُ قسم)، وبلا `p` ولا `vacant`
+ *  تبقى اسمَ وحدتها وحدَه (الإدارةُ التنفيذيّة يقودها الرئيسُ التنفيذيّ فوقها). */
+function Node({ p, unit, lead, vacant }: { p: PubPerson | null; unit?: string; lead?: boolean; vacant?: string }) {
+  if (!p && vacant) {
+    return (
+      <div className="sx-node is-vacant">
+        <Vacant size={80} />
+        <span className="sx-tx">
+          {unit ? <span className="sx-un">{unit}</span> : null}
+          <span className="sx-nm">شاغر</span>
+          <span className="sx-rl">{vacant}</span>
+        </span>
+      </div>
+    );
+  }
   if (!p) return <div className="sx-node is-empty"><span className="sx-nm">{unit}</span></div>;
   return (
     <div className={"sx-node" + (lead ? " is-lead" : "")}>
@@ -55,8 +77,8 @@ function Node({ p, unit, lead }: { p: PubPerson | null; unit?: string; lead?: bo
   );
 }
 
-/** الوحدة: قائدُها ونائبُه بجواره، وفريقُها في ذيلها يُطوى ويُفتح. */
-function Unit({ u }: { u: PubUnit }) {
+/** الوحدة: قائدُها ونائبُه بجواره، وفريقُها في ذيلها يُطوى ويُفتح. `deputySeat` للجنة: لها مقعدُ نائبٍ يُرسم شاغرًا إن خلا. */
+function Unit({ u, deputySeat }: { u: PubUnit; deputySeat?: boolean }) {
   const [open, setOpen] = useState(false);
   const team = u.members;
   const stack = [...team].sort((a, b) => Number(!!b.avatar) - Number(!!a.avatar)).slice(0, 5);
@@ -69,13 +91,27 @@ function Unit({ u }: { u: PubUnit }) {
           <span className="sx-nm">{u.leader.name}</span>
           {u.leader.title ? <span className="sx-rl">{u.leader.title}</span> : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="sx-lead is-vacant">
+          <Vacant size={76} />
+          <span className="sx-nm">شاغر</span>
+          <span className="sx-rl">القائد</span>
+        </div>
+      )}
       {u.deputy ? (
         <div className="sx-dep">
           <Face p={u.deputy} size={44} />
           <span className="sx-tx">
             <span className="sx-dn">{u.deputy.name}</span>
             <span className="sx-rl">{u.deputy.title ?? "نائب"}</span>
+          </span>
+        </div>
+      ) : deputySeat ? (
+        <div className="sx-dep is-vacant">
+          <Vacant size={44} />
+          <span className="sx-tx">
+            <span className="sx-dn">شاغر</span>
+            <span className="sx-rl">النائب</span>
           </span>
         </div>
       ) : null}
@@ -128,11 +164,11 @@ export function StructureMix({ s }: { s: PubStructure }) {
       <div className="sx-fork sx-depts" style={{ ["--n" as string]: depts.length }}>
         {depts.map((d) => (
           <div key={d.id} className="sx-col">
-            <Node p={d.head} unit={d.name} />
+            <Node p={d.head} unit={d.name} vacant="المنسّق" />
             {d.units.map((u) => (
               <div key={u.id} className="sx-col sx-w">
                 <div className="sx-v" />
-                <Unit u={u} />
+                <Unit u={u} deputySeat />
               </div>
             ))}
           </div>

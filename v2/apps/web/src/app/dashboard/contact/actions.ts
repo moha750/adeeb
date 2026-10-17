@@ -69,9 +69,10 @@ export async function saveContactNotes(id: string, notes: string): Promise<Conta
 /**
  * الردّ — **بريدٌ فعليّ يخرج من نطاق النادي**، لا سطرٌ يُخزَّن ويُنسى.
  *
- * الإرسالُ والتسجيلُ في دالّة الحافة `send-contact-reply` معًا: هي وحدها تعرف مفتاح Resend،
- * وتقرأ وجهةَ البريد من الصفّ نفسه فلا يُمرَّر عنوانٌ من هنا. ونداؤها بمفتاح الخدمة —
- * وسلطةُ الإنسان فُحصت قبله في `authorized()`.
+ * فعلٌ واحدٌ في القاعدة (`reply_contact_message`): يُسجَّل الردُّ وتُكتب رسالتُه في صادر البريد معًا،
+ * والمُرسِلُ الواحدُ يرسلها في ثوانٍ بإعاداته وسجلّه (`v2/EMAIL-SYSTEM.md`). ووجهةُ البريد تُقرأ من
+ * الصفّ نفسه فلا يُمرَّر عنوانٌ من هنا، و«ردَّ على هذا البريد» يصل الرادَّ نفسَه.
+ * وسلطةُ الإنسان فُحصت قبله في `authorized()`، والدالّةُ لمفتاح الخدمة وحده.
  */
 export async function sendContactReply(id: string, reply: string): Promise<ContactResult> {
   const { admin, deny } = await authorized();
@@ -83,48 +84,18 @@ export async function sendContactReply(id: string, reply: string): Promise<Conta
   const sb = service();
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  const { data, error } = await sb.functions.invoke("send-contact-reply", {
-    body: {
-      message_id: id,
-      reply: body,
-      responder_id: admin.id,
-      responder_name: admin.fullName,
-      responder_email: admin.email,
-    },
+  const { data, error } = await sb.rpc("reply_contact_message", {
+    p_actor: admin.id,
+    p_id: id,
+    p_reply: body,
+    p_responder_name: admin.fullName,
+    p_responder_email: admin.email,
   });
+  if (error) return { ok: false, message: `تعذّر حفظ الردّ: ${error.message}` };
 
-  if (error) {
-    // جوابُ الدالّة يحمل سببًا مقروءًا (مفتاحٌ ناقص · Resend رفض) — نُظهره كما هو.
-    const detail = await readFunctionError(error);
-    return { ok: false, message: detail ?? "تعذّر إرسال الردّ." };
-  }
-
-  const res = (data ?? {}) as { ok?: boolean; recorded?: boolean; error?: string };
-  if (!res.ok) return { ok: false, message: res.error ?? "تعذّر إرسال الردّ." };
+  const res = (data ?? {}) as { ok?: boolean; message?: string };
+  if (!res.ok) return { ok: false, message: res.message ?? "تعذّر حفظ الردّ." };
 
   refresh();
-  return {
-    ok: true,
-    // صدقٌ في الحالة النادرة: خرج البريد ولم يُثبَت في السجلّ.
-    message: res.recorded === false
-      ? "أُرسل الردّ إلى بريد المُرسِل، لكن تعذّر تسجيله في السجلّ."
-      : "أُرسل الردّ إلى بريد المُرسِل.",
-  };
-}
-
-/** رسالةُ خطأ دالّة الحافة — جسدُ الجواب إن كان، وإلّا نصُّ الخطأ نفسه. */
-async function readFunctionError(error: unknown): Promise<string | null> {
-  const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
-  if (ctx?.json) {
-    try {
-      const j = (await ctx.json()) as { error?: string };
-      if (j?.error === "RESEND_API_KEY not configured") {
-        return "مفتاح Resend غير مُهيّأ في دوالّ الحافة، لم يخرج البريد.";
-      }
-      if (j?.error) return `تعذّر إرسال الردّ: ${j.error}`;
-    } catch {
-      /* جسدٌ غير قابل للقراءة — نسقط إلى نصّ الخطأ */
-    }
-  }
-  return error instanceof Error ? `تعذّر إرسال الردّ: ${error.message}` : null;
+  return { ok: true, message: "حُفظ الردّ، ويصل بريدَ المُرسِل خلال لحظات." };
 }

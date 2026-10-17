@@ -25,6 +25,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/works`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE}/library`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE}/radio`, changeFrequency: "weekly", priority: 0.8 },
+    // صالةُ «ألعاب أدِيبيّة» منذ صارت صالةً تُدار من اللوحة (٢٠٢٦-١٠-١٧)، وكانت مخفيّةً ما دامت عنوانًا وحدَه.
+    { url: `${SITE}/games`, changeFrequency: "weekly", priority: 0.6 },
     // ديبو: صفحةٌ ثابتةٌ بلا محتوًى يتجدّد (المحادثةُ تُبنى في المتصفّح)، فأولويّتُها أدنى
     // من أقسام المحتوى وتردُّدها شهريّ. وكانت غائبةً كما غابت الإذاعةُ قبلها (٢٠٢٦-٠٨-١٩).
     { url: `${SITE}/deebo`, changeFrequency: "monthly", priority: 0.5 },

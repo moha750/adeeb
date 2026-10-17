@@ -34,13 +34,27 @@ const nextConfig: NextConfig = {
    * **في الأصل نفسِه** مع أبوابها (`/games/darbak-khadar/api/*`): فكوكيزُ اللاعب تُرسَل بلا CORS ولا
    * كوكيزِ طرفٍ ثالثٍ يحجبها سفاري. (v2/DARB-SYSTEM.md)
    */
+  /**
+   * **إحصائيّاتُ «دربك خضر» انتقلت إلى غرفة الألعاب** (٢٠٢٦-١٠-١٧): كانت تحت «إحصائيّات الزوّار»،
+   * وصارت تبويبًا في صفحة اللعبة. والرابطُ القديم يُحوَّل فلا تنكسر مفضّلةٌ محفوظة.
+   */
+  async redirects() {
+    return [
+      { source: "/dashboard/analytics/darb", destination: "/dashboard/games/darbak-khadar", permanent: true },
+      // «بنك أدِيب» دخل الصالة (٢٠٢٦-١٠-١٧) فصار تحت `/games` كأخته، و`/bank` القصيرُ (رابطُ تابلت
+      // المعرض) يُحوَّل إليه فلا ينكسر رابطٌ كُتب أو طُبع.
+      { source: "/bank", destination: "/games/bank-adeeb/play", permanent: true },
+      // وصفحاتُ المسابقات تحت `/games/contests/<id>`، ولا فهرسَ لها: المسابقةُ الجاريةُ يعلنها شريطُ الصالة.
+      { source: "/games/contests", destination: "/games", permanent: false },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/games/darbak-khadar/play", destination: "/games/darbak-khadar/game.html" },
       // «بنك أدِيب»: ركنُ بنك الأسئلة في معرض اليوم الوطني (٢٠٢٦-٠٩-٢٨)، صفحةٌ مكتفيةٌ بنفسها كأختها،
       // تكتب كلَّ جولةٍ في `bank_plays` عبر `bank_log_play` (الترحيل 20260928034545_bank_01_plays).
-      // والعنوانُ قصيرٌ عمدًا: يُكتَب بيدٍ على تابلت الركن.
-      { source: "/bank", destination: "/games/bank-adeeb/game.html" },
+      // كان عنوانُها `/bank` قصيرًا لتابلت الركن، وصار `/games/bank-adeeb/play` حين دخلت الصالة (والقديمُ تحويل).
+      { source: "/games/bank-adeeb/play", destination: "/games/bank-adeeb/game.html" },
     ];
   },
   /**

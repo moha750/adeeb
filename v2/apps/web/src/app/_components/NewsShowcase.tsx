@@ -15,7 +15,8 @@ export type NewsCard = {
   dateStr: string;
   author: string | null;
   views: number | null;
-  featured: boolean;
+  /** اسمُ الفئة، أو صيغتُها المميّزة («تغطية مميّزة»). */
+  badge: string;
   href: string;
 };
 
@@ -173,7 +174,7 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
           <div className="ns-layer" ref={l1} />
           <div className="ns-grad" />
           <div className="ns-cap" key={cur}>
-            <Badge variant="glass" className="mb-3">{it.featured ? "مميّز" : "خبر"}</Badge>
+            <Badge variant="glass" className="mb-3">{it.badge}</Badge>
             <Meta n={it} />
             <h3 className="ns-clamp3">{it.title}</h3>
             {it.summary ? <p className="ns-clamp2">{it.summary}</p> : null}

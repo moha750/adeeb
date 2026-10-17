@@ -1,24 +1,19 @@
 import { Container } from "@adeeb/design-system";
-import { qrAlertMail } from "@/lib/qrAlertMail";
+import { EMAIL_KINDS } from "@/lib/email/kinds";
+import { renderLayout } from "@/lib/email/layout";
 
 /**
- * **معاينةُ بريد التنبيه** — يُبنى من الوحدة نفسِها التي يقرؤها منفذُ الإرسال
- * (`lib/qrAlertMail`)، فما تراه هنا هو ما يصل صندوقَ البريد حرفًا بحرف.
+ * **معاينةُ بريد التنبيه** — يُبنى من الدليل والثوب اللذين يرسم بهما مُرسِلُ البريد
+ * (`lib/email/kinds.ts` · `lib/email/layout.ts`)، فما تراه هنا هو ما يصل صندوقَ البريد حرفًا بحرف.
  *
  * والحالُ المعروضةُ أسوأُ ما يقع: وجهةٌ بُدّلت إلى نطاقٍ يتشبّه باسم النادي.
  */
 
 export const metadata = { title: "بريد تنبيه الوجهة، معرض أدِيب" };
 
-const SAMPLE = qrAlertMail({
-  link: { id: "sample", title: "ملصق الملتقى التعريفيّ", code: "majles" },
-  ev: {
-    old_value: "https://docs.google.com/forms/d/e/1FAIpQLSf/viewform",
-    new_value: "https://adeeb-club-login.example.com/verify?u=1",
-    at: "2026-09-04T18:41:00Z",
-  },
-  actor: "محمد إسماعيل المطر",
-});
+const KIND = EMAIL_KINDS["qr.destination_changed"];
+const CONTENT = KIND.render(KIND.sample);
+const SAMPLE = { subject: CONTENT.subject, html: renderLayout(CONTENT).html };
 
 export default function QrAlertMailLab() {
   return (

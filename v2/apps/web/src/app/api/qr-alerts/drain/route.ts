@@ -1,9 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { qrAlertMail } from "@/lib/qrAlertMail";
+import { enqueueEmail } from "@/lib/email/outbox";
 
 /**
- * **حارسُ الوجهات** — يستنزف صادرَ التنبيهات ويُرسله بريدًا.
+ * **حارسُ الوجهات** — يستنزف صادرَ التنبيهات ويسلّمه لنظام البريد.
+ *
+ * ## والبريدُ لنظام البريد (٢٠٢٦-١٠-١٧)
+ * كان يكلّم Resend بنفسه بقالبٍ ومرسِلٍ خاصّين. صار يكتب رسالةً لكلّ مشرفٍ في صادر البريد
+ * (`qr.destination_changed`، `v2/EMAIL-SYSTEM.md`)، والمُرسِلُ الواحدُ يرسلها بإعاداته وسجلّه.
+ * فـ`sent` هنا تعني «سُلّمت لنظام البريد»، وما جرى بعدها في سجلّ البريد.
  *
  * ## لماذا منفذٌ يُنادى لا محفّزٌ يُرسل
  * إرسالُ البريد داخل محفّز القاعدة يعلّق المعاملةَ على شبكةٍ خارجيّة، وفشلُ الطرف الآخر
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
   const rows = (data ?? []) as unknown as Row[];
   if (!rows.length) return NextResponse.json({ ok: true, drained: 0 });
 
-  const enabled = !!process.env.QR_ALERTS_ENABLED?.trim() && !!process.env.RESEND_API_KEY?.trim();
+  const enabled = !!process.env.QR_ALERTS_ENABLED?.trim();
 
   // أسماءُ الباركودات والفاعلين في نداءين، لا نداءٍ لكلّ صفّ.
   const linkIds = [...new Set(rows.map((r) => r.link_id))];
@@ -91,7 +96,7 @@ export async function POST(request: NextRequest) {
   const linkById = new Map((links ?? []).map((l) => [l.id as string, l as { id: string; title: string; code: string }]));
   const actorById = new Map((actors ?? []).map((p) => [p.id as string, p.full_name as string]));
 
-  const to = await overseerEmails(sb);
+  const to = await overseers(sb);
 
   let sent = 0;
   for (const row of rows) {
@@ -110,7 +115,7 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    const res = await sendMail(to, link, ev, actorById.get(ev.actor_id ?? "") ?? null);
+    const res = await handOver(to, row.id, link, ev, actorById.get(ev.actor_id ?? "") ?? null);
     await sb
       .from("qr_alert_outbox")
       .update(
@@ -126,37 +131,35 @@ export async function POST(request: NextRequest) {
 }
 
 /** المُنبَّهون: حاملو قدرة الإشراف. تُقرأ قدرتُهم من مصدرها لا من قائمةٍ محفورة. */
-async function overseerEmails(sb: ReturnType<typeof createAdeebServiceClient>): Promise<string[]> {
+async function overseers(sb: ReturnType<typeof createAdeebServiceClient>): Promise<Array<{ id: string; email: string }>> {
   const { data } = await sb.from("profiles").select("id, email");
   const people = (data ?? []) as { id: string; email: string | null }[];
-  const out: string[] = [];
+  const out: Array<{ id: string; email: string }> = [];
   for (const p of people) {
     if (!p.email) continue;
     const { data: can } = await sb.rpc("check_user_permission", { p_user_id: p.id, p_permission_key: "oversee_qr" });
-    if (can === true) out.push(p.email);
+    if (can === true) out.push({ id: p.id, email: p.email });
   }
   return out;
 }
 
-async function sendMail(
-  to: string[],
+/** رسالةٌ لكلّ مشرفٍ في صادر البريد، بمفتاح تكرارٍ من صفّ التنبيه والمشرف: الاستنزافُ المكرَّر لا يضاعفها. */
+async function handOver(
+  to: Array<{ id: string; email: string }>,
+  rowId: number,
   link: { id: string; title: string; code: string },
   ev: { old_value: string | null; new_value: string | null; at: string },
   actor: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const mail = qrAlertMail({ link, ev, actor });
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from: "أَدِيب <no-reply@adeeb.club>", to, subject: mail.subject, html: mail.html }),
-    });
-    if (!res.ok) return { ok: false, error: `resend-${res.status}` };
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "send-failed" };
+  let handed = 0;
+  for (const person of to) {
+    const id = await enqueueEmail(
+      "qr.destination_changed",
+      person.email,
+      { linkId: link.id, title: link.title, code: link.code, oldValue: ev.old_value, newValue: ev.new_value, at: ev.at, actor },
+      { user: person.id, dedupe: `qr:${rowId}:${person.id}` },
+    );
+    if (id) handed++;
   }
+  return handed === to.length ? { ok: true } : { ok: false, error: `enqueue ${handed}/${to.length}` };
 }

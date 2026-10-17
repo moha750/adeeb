@@ -129,6 +129,16 @@ export const UPLOAD_RULES = {
     accept: "image/webp,image/jpeg,image/png,application/pdf",
     formats: "WEBP أو JPG أو PNG أو PDF",
   },
+  /**
+   * **مقطعُ شاشة الكابينة** (دلو games، ٢٠٢٦-١٠-١٧) — يدور بلا صوتٍ في شاشة اللعبة بصالة `/games`.
+   * وصورتُه الثابتةُ تُقتطع منه في المتصفّح (`dashboard/games/media.ts`)، فلا وصفةَ لها هنا.
+   */
+  gameVideo: {
+    maxBytes: 15 * MB,
+    mimes: ["video/mp4", "video/webm"],
+    accept: "video/mp4,video/webm",
+    formats: "MP4 أو WEBM",
+  },
 } as const satisfies Record<string, UploadRule>;
 
 /** «حتّى ٥ ميغابايت» — الحدُّ كما يُقرأ. */

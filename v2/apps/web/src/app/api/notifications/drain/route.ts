@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cronAllowed } from "@/lib/cronGuard";
 import { dispatchPending } from "@/lib/notifications/dispatch";
 
 /**
@@ -12,6 +13,9 @@ import { dispatchPending } from "@/lib/notifications/dispatch";
  *
  * **وحارسُه سرٌّ لا جلسة**: `x-cron-secret` يساوي `NOTIFICATIONS_DRAIN_SECRET`. وبلا سرٍّ مضبوط
  * يُردّ كلُّ نداءٍ ٤٠١ — البابُ مغلقٌ حتّى يُفتح عمدًا.
+ *
+ * **أو سرًّا مشتقًّا من مفتاح الخدمة** (٢٠٢٦-١٠-١٧، `lib/cronGuard.ts`): المحفوظُ في Vault باسم
+ * `notifications_drain_secret`، ويحمله `pg_cron`.
  */
 
 export const dynamic = "force-dynamic";
@@ -19,13 +23,8 @@ export const dynamic = "force-dynamic";
 const BATCH = 50;
 const ROUNDS = 5;
 
-function guard(request: NextRequest): boolean {
-  const secret = process.env.NOTIFICATIONS_DRAIN_SECRET?.trim();
-  return !!secret && request.headers.get("x-cron-secret") === secret;
-}
-
 export async function POST(request: NextRequest) {
-  if (!guard(request)) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!cronAllowed(request, "adeeb-notifications-drain", "NOTIFICATIONS_DRAIN_SECRET")) return NextResponse.json({ ok: false }, { status: 401 });
   let events = 0;
   let recipients = 0;
   let failed = 0;

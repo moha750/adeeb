@@ -89,3 +89,12 @@ describe("رسم الإشعار", () => {
     expect(KIND_SHAPE.test("تطوع.قبول")).toBe(false);
   });
 });
+
+describe("قناة البريد في الإشعارات", () => {
+  it("المناصبُ تُصرَّف بجنس القارئ", () => {
+    const m = renderNote("position.assigned", "holder", { userId: "u", rank: "قائد", unit: "لجنة التأليف", from: null }, "male");
+    const f = renderNote("position.assigned", "holder", { userId: "u", rank: "قائد", unit: "لجنة التأليف", from: null }, "female");
+    expect(m.title).toBe("أُسند إليك منصب «قائد لجنة التأليف»");
+    expect(f.title).toBe("أُسند إليكِ منصب «قائدة لجنة التأليف»");
+  });
+});

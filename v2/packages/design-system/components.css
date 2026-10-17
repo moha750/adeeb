@@ -3298,15 +3298,10 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
 /* أيقونة الجنس — جسمٌ كامل أبيض (fill:#fff) فوق تدرّج الهوية، كعلامة الحمّام: مربّعٌ بـ64%
    من الأفتار تُوسّطه شبكة .av، وobject-fit: contain يحتوي الجسم الطويل داخله بلا فيضان. */
 .av-fig { width: 85%; aspect-ratio: 1; object-fit: contain; display: block; }
-/* رمزٌ بدل الأحرف حين لا اسمَ يُقرأ منه شيء (صاحبُ حسابٍ بلا ملف، ٢٠٢٦-١٠-١٠): بلون الأحرف نفسِه */
+/* أيقونةُ المستخدم حين لا صورةَ ولا جنس (المالك ٢٠٢٦-١٠-١٦، بدل الأحرف)، أو رمزٌ تمرّره الصفحة
+   مكانها (صاحبُ حسابٍ بلا ملف، ٢٠٢٦-١٠-١٠): بلون الأفتار نفسِه. */
 .av-icon { width: 58%; height: 58%; display: grid; place-items: center; }
 .av-icon svg { width: 100%; height: 100%; }
-/* **الحرفان لا يلتفّان**: اسمٌ من كلمتين يعطي حرفين، وصندوقُ الأفتار ثابتُ العرض،
-   فبلا هذا ينزل الثاني سطرًا ويركب الأولَ (‏`line-height: 1` يجعله تراكبًا لا سطرين).
-   أُمسك ٢٠٢٦-٠٩-٠٦ على «بشائر فاروق» في الأفتار الصغير. */
-/* الأحرفُ بالمكدّس اللاتينيّ الآمن (المالك ٢٠٢٦-١٠-١٠): حرفُ بريدٍ إنجليزيٌّ كان يُرسَم بخطّ Lyon العربيّ.
-   والحرفُ العربيّ يسقط إلى Lyon من المكدّس نفسِه (القاعدة ٣، «الخطّ اللاتينيّ»)، فلا يتغيّر شيءٌ في الأسماء العربيّة. */
-.av-ini { line-height: 1; white-space: nowrap; font-family: var(--font-latin); }
 /* أداة: نصّ لاتينيّ صريح بخط Eras (للبريد/الأرقام خارج الجدول) */
 .lat { font-family: var(--font-latin); }
 /* أدوات تعبئة العلامة — تدرّج الهوية الزاويّ بدل تعبئة كحلية/فولاذية صلبة */
@@ -13958,18 +13953,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .ppk-av { width: 26px; height: 26px; flex: 0 0 auto; }
 .ppk-av > * { width: 100%; height: 100%; }
 
-/* الغلافُ عمودٌ واحد: صورةٌ ثمّ اسمُ مصوّرها ثمّ فعلاه. عرضُه محدودٌ لأنّه صورةٌ تُرى
-   لا لوحٌ يمتدّ — وكان مرسومًا في الشاشة بأسلوبٍ سطريّ، فنُقل إلى المكتبة كما هو. */
-.gcr-cover { display: grid; gap: 10px; max-width: 460px; }
-/* **الغلافُ محدودُ الطول بلا قصّ.** غلافٌ طوليٌّ بعرض العمود يأخذ ‎500px‎ على ٣٧٥ فيدفع
-   المعرضَ كلَّه تحت الطيّة — واللوحةُ منتَجُ جوّالٍ بالقياس. فيُحَدّ بـ`contain` لا
-   بـ`cover`: المحرّرُ يحكم على ما سيُنشَر، فلا يجوز أن يُريه النظامُ قصاصةً منه. */
-.gcr-cover-img {
-  width: 100%; max-height: 340px; object-fit: contain;
-  border-radius: var(--radius-sm); display: block;
-  background: var(--color-surface-2);
-}
-
 /* ══════════════════════════════════════════════════════════════════════
    عارضُ الصورة (`.lbx`) — صورةٌ تُفتَح كبيرةً، وحدَها أو في سربٍ يُتصفَّح.
 
@@ -14048,13 +14031,17 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    لا تُطابِق أبدًا ولا تُخطئ بصوت. (وقع في مختبر الأبطال ٢٠٢٦-٠٩-١١.)
    ⚠️ ولها ثمنٌ يُعرَف: الحاويةُ تصير مرجعًا لكلّ `position: fixed` تحتها. فشريطُ
    القراءة (`.art-read`) يُوضَع **خارج** `.art` في الوسم، لا داخله. */
-.art { container: art / inline-size; --art-col: 40rem; --art-wide: 58rem; }
+/* الإطارُ بعرض شبكة الموقع (1104px = محتوى الهيدر والفوتر وصفحة الأخبار)، والمتنُ وحده ضيّقٌ داخله
+   لأجل طول السطر. كان 58rem مجموعَ المتن والفهرس، فبدت الصفحةُ أضيقَ من هيدرها (محمد ٢٠٢٦-١٠-١٥). */
+.art { container: art / inline-size; --art-col: 40rem; --art-wide: 69rem; }
 .art-col { max-width: var(--art-col); margin-inline: auto; }
 .art-wide { max-width: var(--art-wide); margin-inline: auto; }
-
+/* بلا فهرس (تحت 54rem) عرضٌ واحد للصفحة كلّها: الرأسُ والمعرضُ و«اقرأ أيضًا» بعرض المتن،
+   لا يمتدّ بعضُها إلى حافّة الشاشة ويبقى المتنُ في الوسط بفراغين. ومع الفهرس يملأ المتنُ وفهرسُه عرضَ الرأس.
+   والفهرسُ يظهر من 54rem لا 64rem (محمد ٢٠٢٦-١٠-١٥): غيابُه بين 760 و1023 كان يترك فراغين كبيرين. */
+@media (max-width: 53.99rem) { .art { --art-col: 44rem; --art-wide: 44rem; } }
 /* ── الرأس: العنوانُ وما يحفّه ───────────────────────────────────────── */
 
-.art-kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .art-title {
   margin-block-start: 14px;
   font-family: var(--font-display); font-weight: 900;
@@ -14062,155 +14049,158 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   line-height: 1.22; color: var(--color-text);
   text-wrap: balance;
 }
-.art-lede {
-  margin-block-start: 14px;
-  font-size: clamp(1.0625rem, 1rem + .4cqi, 1.1875rem);
-  line-height: 1.85; color: var(--color-text-muted);
-}
-
-/* صفُّ الحقائق: تاريخٌ وكاتبٌ ومدّةُ قراءة. فواصلُه مسافاتٌ لا نقطٌ ولا شُرَط. */
-/* **صفُّ الحقائق يتبدّل بثلاث حالات، والقياسُ بالحاوية لا الشاشة** (ق١٥ · قرارُ
-   المالك ٢٠٢٦-٠٩-١٩). كان صفًّا مرنًا واحدًا، فيتكوّم على الجوّال ويبقى على الحاسوب
-   مزدحمًا في صدر اللوح وأكثرُه خلاء.
-
-   عمودٌ واحد  → الجوّال: اسمُ الكاتب قد يكون أربعةَ أسماءٍ موصولةٍ بالواو، فلا يقاسم
-                  خانتَه أحد.
-   عمودان      → الوسط: أربعُ حقائقَ في مربّعٍ نظيف (عمودان وصفّان).
-   صفٌّ ممتدّ  → السعة: تتوزّع على عرض اللوح كلِّه بدل أن تتكوّم في صدره. */
-.art-meta {
-  display: grid; grid-template-columns: minmax(0, 1fr);
-  gap: 10px 18px;
-  margin-block-start: 18px;
-  font-size: .875rem; color: var(--color-text-muted);
-}
-@container art (min-width: 26rem) {
-  .art-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 /* **الامتدادُ صفٌّ واحدٌ لا يُكسَر** — و`flex-wrap` كان غلطًا: مع `space-between`
    تُرمى الحقائقُ إلى الأطراف بفجواتٍ عشوائيّة، ثمّ تسقط آخرُها **يتيمةً في سطرٍ ثانٍ**
    متى طال اسمُ الكاتب (أربعةُ كتّابٍ في خبرٍ حيّ). فالصفُّ يُمنَع من الالتفاف، وتنكمش
    الريشةُ وحدَها (هي الأطولُ، و`min-width: 0` يأذن لها) فتلتفّ **داخل خانتها** لا
    خارج الصفّ. فيبقى سطرٌ واحدٌ مهما طالت الأسماء. */
-@container art (min-width: 46rem) {
-  .art-meta { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; }
+
+/* ── الصدر: «الشُّرفةُ المقلوبة» — أقرّها المالك ٢٠٢٦-١٠-١٤ وحلّت محلّ الشُّرفة ──
+   اللوحُ الكحليُّ المنقوش يحمل الكلام، والغلافُ يتدلّى منه إلى الورق فلا يغطّيه شيء.
+   **والعلّةُ التي أسقطت الشُّرفة مقيسة:** لوحُها كان يحمل الموجزَ وأربعَ حقائق فبلغ
+   ٤١٥px على ٣٧٥، وغطّى قاعَ الغلاف، ودفع أوّلَ كلمةٍ من الخبر إلى ٨٤٣px — خارجَ الشاشة
+   الأولى (٧٣٢ تحت الرأس العلويّ). وبالمقلوبة تبدأ عند ٧١٣ على أطول عناويننا.
+   فاللوحُ لا يحمل إلّا الهويّة (التصنيف والتاريخ والعنوان والكاتب)، والموجزُ على الورق،
+   ونسبةُ الصورة على الصورة، ومدّةُ القراءة مع التاريخ في سطر الفئة. */
+.art-hang { --hang: clamp(72px, 20cqi, 170px); --hang-pad: clamp(20px, 4cqi, 32px); --hang-pat: 84px; }
+.art-hang-panel {
+  position: relative; isolation: isolate; overflow: clip;
+  padding: clamp(20px, 5cqi, 40px) clamp(20px, 5cqi, 40px) calc(var(--hang) + var(--hang-pad));
+  border-radius: var(--radius); background: var(--grad-primary); color: var(--color-on-primary);
 }
-/* **والأيقونةُ تُحاذي أوّلَ سطرٍ لا وسطَ الكتلة:** «بِرِيَش فلان وفلان وفلان وفلان»
-   تلتفّ ثلاثةَ أسطرٍ على الجوّال، فالوسطُ يترك الريشةَ معلّقةً في منتصف الاسم.
-   والإزاحةُ بالـ`em` لا بالبكسل فتتبع حجمَ السطر إن تغيّر. */
-.art-meta-i { display: inline-flex; align-items: flex-start; gap: 6px; min-width: 0; }
-.art-meta-i svg { flex: 0 0 auto; opacity: .8; margin-block-start: .18em; }
-
-/* ── الصدر: «الشُّرفة» ───────────────────────────────────────────────
-   **أقرّها المالك ٢٠٢٦-٠٩-١٩** بعد أن رأى خمسةَ رؤوسٍ في صفحاتٍ كاملة.
-
-   شريطُ الغلاف يمتدّ، ثمّ **تركبه بطاقةُ العنوان من أسفلَ فترتفع فيه**. والتراكبُ
-   يصنع العمقَ بلا حجابٍ يبتلع الصورة.
-
-   **ولِمَ نُزع الصدرُ الأوّل (غلافٌ تغمره ستارة)؟** لأنّ مادّتَنا لا تحتمله، مقيسًا لا
-   مظنونًا: أغلفتُنا لقطاتُ جوّالٍ مزدحمة (وجوهٌ مصطفّة وأركانُ معارض)، وعناوينُنا
-   طويلة — عنوانٌ من أربعة أسطرٍ على ٣٧٥، وأطولُها يقارب التسعين حرفًا. وحروفٌ بيضاءُ
-   على صورةٍ كهذه تحتاج حجابًا ثقيلًا، فيُخسَر الاثنان: العنوانُ يُقرأ بعناء والصورةُ
-   تُبتلَع. والشُّرفةُ تفصلهما: الصورةُ صافيةٌ بلا حجاب، والعنوانُ على الورق يُقرأ مهما
-   طال — وبالسلوك نفسِه على ٣٧٥ وعلى الحاسوب، وجمهورُنا جوّاليّ. */
-
-/* **الشريطُ يُقاس بنسبةٍ لا بارتفاعٍ ثابت** (قرارُ المالك ٢٠٢٦-٠٩-١٩، بعد أن رأى
-   أربعَ نسبٍ في صفحاتٍ كاملة). وكان `clamp(9rem, 34cqi, 17rem)`، فتغلبه أرضيّتُه على
-   الجوّال ويثبت عند ١٤٤px مهما اتّسعت الشاشة — بينما التراكبُ نسبيٌّ فيكبر معها.
-   ونتيجتُه مقيسة: يظهر من الغلاف **٩٨px** على ٣٧٥ و**٩١** على ٤٣٠، أي أنّ الجوّالَ
-   الأكبرَ يُري صورةً أقلّ.
-
-   **ولِمَ ٣:٢ دون غيرها؟** لأنّ أغلفتَنا منقسمةٌ ولا نسبةَ تُرضي الطرفين: من أربعةَ
-   عشرَ غلافًا **أربعةٌ طوليّة** (‏612×1080 وأخواتها) وخمسةٌ عريضةٌ نحو ١٦:٩ وثلاثةٌ
-   ‏٤:٣. فالشريطُ الأفقيُّ يقصّ الطوليّةَ من طرفيها، والطويلُ يقصّ العريضةَ من جانبيها،
-   و٣:٢ أقلُّها ظلمًا للطرفين (ترفع المرئيَّ من الطوليّة إلى ٣٨٪ بدل ٣١٪ في ١٦:٩).
-
-   **والسقفُ ليس زينة:** ٣:٢ على عمودٍ عرضُه ٩٢٨ تعطي ٦١٩px — صدرٌ يبتلع الشاشة قبل
-   أن تبدأ الكلمة. فالنسبةُ تحكم ما دام العمودُ ضيّقًا (الجوّالُ كلُّه)، ثمّ يمسكها
-   السقفُ على السعة. */
-.art-band {
-  display: block; width: 100%;
-  aspect-ratio: 3 / 2; max-block-size: 26rem;
-  object-fit: cover; border-radius: var(--radius);
+/* نقشُ الهويّة خفيفًا كرؤوس الكروت المنقوشة. **يبدأ تحت سطر الكاتب ويمتدّ إلى قاع اللوح**
+   (المالك ٢٠٢٦-١٠-١٤): كان شريطًا واحدًا في القاع فاختبأ أكثرُه خلف الصورة المتدلّية،
+   ثمّ رُفع شريطًا تحت الكاتب فبقي ما تحته خاليًا. فالمساحةُ كلُّها هي الفسحةُ المتروكة
+   للصورة (`--hang` + `--hang-pad`) إلّا عشرةَ بكسلاتٍ تحت الكاتب، **والنقشُ شريطٌ واحدٌ
+   ممدودٌ فيها (`cover`) لا مكرَّر** (المالك ٢٠٢٦-١٠-١٤): كُرِّر صفوفًا أوّلًا فرُدّ.
+   و`cover` يحفظ نسبةَ الرسم فلا يتشوّه، ويُقصّ من جانبيه ما يفيض. */
+.art-hang-panel::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset-inline: 0; inset-block-end: 0;
+  block-size: calc(var(--hang) + var(--hang-pad) - 10px);
+  background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .07;
 }
-/* الرفعُ بالهامش السالب **مقيسٌ بالحاوية** (`cqi`) لا بالشاشة: البطاقةُ ترتفع في
-   الشريط بنسبةٍ ثابتةٍ من عرضه، فلا تبتلعه على الضيّق ولا تكاد تمسّه على السعة.
-   والحدُّ الأدنى والأقصى يمنعان الطرفين. */
-/* الشاراتُ على الغلاف: شريطُ الصورة كان خلاءً، وبطاقةُ العنوان تركبه من أسفل —
-   فالركنُ الأعلى موضعٌ فارغٌ يسعها بلا أن تدفع العنوانَ سطرًا.
-   **وتُوضَع في الصدر (يمينًا في العربيّة)** حيث تبدأ العينُ القراءة. */
-.art-bandwrap { position: relative; }
-.art-band-tags {
-  position: absolute; z-index: 1;
-  inset-block-start: clamp(10px, 2.5cqi, 16px);
-  inset-inline-start: clamp(10px, 2.5cqi, 16px);
-  display: flex; flex-wrap: wrap; gap: 6px;
+.art-hang-panel-bare::after { block-size: var(--hang-pat); }
+/* **العودةُ إلى الأخبار: لسانٌ من اللوح فوقه يمينًا** (المالك ٢٠٢٦-١٠-١٥). تدرّجُه هو تدرّجُ اللوح بمقاس
+   اللوح ومرسى ركنه الأيمن، فيتّصل لونُه بلون اللوح تحته بلا درز. وارتفاعُ اللوح تقديرٌ (`--tab-bh`) لأنّ CSS
+   لا يقيسه، وخطؤه لا يُرى: الفرقُ على عرض اللسان بضعُ درجاتٍ من التدرّج. وركنُ اللوح تحته قائمٌ ليتّصلا. */
+/* ارتفاعُ اللوح مقيسًا في الأخبار الـ14: 319–443px على الجوّال، 421–501px على السعة — فالوسط. */
+.art-back { --tab-bw: min(100cqi, var(--art-wide)); --tab-bh: 24rem; }
+@container art (min-width: 46rem) { .art-back { --tab-bh: 29rem; } }
+.art-back a {
+  display: inline-flex; align-items: center; gap: 7px; min-block-size: 44px; padding-inline: 16px 20px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--grad-primary); background-size: var(--tab-bw) var(--tab-bh); background-position: right top;
+  font-size: .9375rem; font-weight: 700; color: #fff; text-decoration: none;
+  transition: filter var(--dur-fast) var(--ease-standard);
 }
-/* **والشارةُ ههنا `glass` لا `soft`**، ولم تُخترع لها هيئة: المكتبةُ تحمل نغمةً
-   مصنوعةً لهذا بعينه («تُقرأ فوق الصور والخلفيات الداكنة» — `.abadge-glass`). والناعمةُ
-   مضبوطةٌ لسطحٍ معلومِ اللون، وأغلفتُنا لقطاتُ جوّالٍ لا يُعرَف ما تحت الشارة منها،
-   فتُقرأ على غلافٍ وتغيب على آخر. ولا يبقى إلّا ظلٌّ خفيفٌ يفصلها عن الزحام. */
-.art-band-tags .abadge { box-shadow: var(--shadow-sm); }
-
-/* نسبةُ الصورة **على الصورة**: هي نسبةُ الغلاف لا نسبةُ الخبر، فمكانُها ما تنسبه.
-   وكانت سطرًا وحدَها تحت اللوح فبدت شاردة، ثمّ نُقلت إلى صفّ الحقائق فزاحمته.
-   والركنُ الأسفلُ للغلاف: لا تكلّف الصدرَ سطرًا، ولا تُنسَب إلى غير صاحبها. */
-.art-band-credit {
-  position: absolute; z-index: 1;
-  /* **ترتفع فوق حافّة البطاقة، لا إلى قاع الغلاف.** وُضعت أوّلًا في القاع فاختفت
-     كلُّها: البطاقةُ تركب قاعَ الغلاف بمقدار `14cqi`، فالقاعُ مغطًّى أصلًا. والإزاحةُ
-     ههنا **صدى ذلك الرقم نفسِه** لا رقمٌ ثانٍ يُخمَّن، فإن تبدّل التراكبُ يومًا
-     تبعته النسبةُ ولم تُنسَ. */
-  inset-block-end: calc(clamp(2.5rem, 14cqi, 4.5rem) + clamp(8px, 2cqi, 14px));
-  inset-inline-start: clamp(10px, 2.5cqi, 16px);
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: var(--radius-full);
-  background: var(--glass-bg); border: 1px solid var(--glass-border);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  color: #fff; font-size: .75rem; box-shadow: var(--shadow-sm);
-  max-inline-size: calc(100% - clamp(20px, 5cqi, 32px)); min-inline-size: 0;
+.art-back a:hover { filter: brightness(1.12); }
+.art-back a:focus-visible { outline: 0; box-shadow: var(--ring); }
+.art-back + .art-hang-panel { border-start-start-radius: 0; }
+.art-hang-panel-bare { padding-block-end: clamp(20px, 5cqi, 40px); }
+.art-hang-panel .art-title { margin-block-start: 12px; max-inline-size: 48rem; color: var(--color-on-primary); }
+.art-hang-kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.art-hang-facts { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.art-hang-facts-low { display: none; }
+.art-hang-sub { margin-block-start: 14px; }
+.art-hang-sub .art-hang-by { margin-block-start: 0; }
+.art-hang-fact {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .875rem; color: color-mix(in oklab, var(--color-on-primary) 78%, transparent);
 }
-.art-band-credit svg { flex: 0 0 auto; }
-.art-band-credit > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.art-hang-fact svg { flex: 0 0 auto; opacity: .85; }
+/* «بريشة» سطرٌ واحد، والأيقونةُ تُحاذي أوّلَ سطرٍ إن التفّت الأسماء */
+.art-hang-by {
+  display: flex; align-items: flex-start; gap: 8px; margin-block-start: 14px;
+  font-size: .9375rem; font-weight: 700; line-height: 1.7;
+  color: color-mix(in oklab, var(--color-on-primary) 90%, transparent);
+}
+.art-hang-by svg { flex: 0 0 auto; margin-block-start: .2em; opacity: .85; }
 
-/* مدّةُ القراءة **أداةُ قارئٍ لا حقيقةَ خبر**، فموضعُها حيث يقرّر أن يبدأ: في شريط
-   الأفعال، نصًّا هادئًا لا زرًّا — فهي تُقرأ ولا تُنقَر. */
-.art-bar-note { display: inline-flex; align-items: center; gap: 6px; font-size: .8125rem; color: var(--color-text-muted); }
-.art-bar-note svg { flex: 0 0 auto; opacity: .8; }
-
-/* **والبطاقةُ لوحُ أدِيب المذهّب لا ورقةٌ بيضاء** (قرارُ المالك ٢٠٢٦-٠٩-١٩): سطحُها
-   `--grad-primary` — وهي أرضُ `.aauth-side` نفسُها، فاللوحُ الذي يراه العضو لحظةَ
-   الدخول هو الذي يستقبل الغريبَ في الخبر.
-
-   **ولا حدَّ عليها ولا نقش** (المالك ٢٠٢٦-٠٩-١٩، بعد أن جرّب الاثنين ورفعهما):
-   حدُّ الأسطح (ق٤) لغةُ السطح الفاتح، وأسطحُ أدِيب المذهّبةُ لا تحمله — `.aauth-side`
-   و`.ash-side` كلتاهما بلا حدّ. فاللوحُ لونٌ خالصٌ، **والظلُّ وحدَه يبقى** لأنّه صادق:
-   البطاقةُ **ترتفع فعلًا** فوق شريط الغلاف. */
-.art-ledge {
+/* الغلافُ يتدلّى بمقدار `--hang` نفسِه الذي يُفسَح له في قاع اللوح — رقمٌ واحدٌ لا اثنان */
+.art-hang-cover {
   position: relative; z-index: 1;
-  margin: clamp(-4.5rem, -14cqi, -2.5rem) clamp(10px, 4cqi, 28px) 0;
-  padding: clamp(18px, 4.5cqi, 28px);
-  border-radius: var(--radius);
-  background: var(--grad-primary); color: var(--color-on-primary);
-  box-shadow: var(--shadow-lg);
+  margin: calc(-1 * var(--hang)) clamp(12px, 3.5cqi, 40px) 0;
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
 }
-/* الحبرُ على اللوح: الأسطعُ للعنوان، ثمّ المتنُ، ثمّ الحقائق — سلّمُ `.ash` نفسُه
-   مُعبَّرًا عنه بـ`color-mix` من `--color-on-primary` فلا يُخترع لون. */
-.art-ledge .art-title { color: var(--color-on-primary); }
-.art-ledge .art-lede { color: color-mix(in oklab, var(--color-on-primary) 84%, transparent); }
-.art-ledge .art-meta { color: color-mix(in oklab, var(--color-on-primary) 74%, transparent); }
+.art-hang-cover button {
+  display: block; width: 100%; padding: 0; border: 0; background: none;
+  border-radius: var(--radius); overflow: hidden; cursor: zoom-in;
+}
+.art-hang-cover button:focus-visible { outline: 0; box-shadow: var(--ring); }
+.art-hang-cover img {
+  display: block; width: 100%; aspect-ratio: 3 / 2; max-block-size: 30rem; object-fit: cover;
+  transition: transform var(--dur) var(--ease-standard);
+}
+@media (hover: hover) { .art-hang-cover button:hover img { transform: scale(1.015); } }
+/* **الغلافُ أقصرُ على السعة** (المالك ٢٠٢٦-١٠-١٤): كان أوّلُ سطرٍ من الخبر يبدأ بين ‏944 و‏1023px في
+   شاشةٍ طولُها ‏900، فلا يُرى من الخبر شيءٌ قبل التمرير. وبـ‏19rem مع الموجز في اللوح يبدأ بين ‏745 و‏827. */
+@container art (min-width: 46rem) { .art-hang-cover img { max-block-size: 19rem; } }
+/* نسبةُ الصورة حبّةٌ زجاجيّة **في منتصف قاع الصورة** (المالك ٢٠٢٦-١٠-١٤): موضعُ التعليق
+   على الصورة عادةً، وبعيدةٌ عن سطر الكاتب فوقها فلا يتزاحمان. و`left` فيزيائيٌّ عمدًا:
+   التوسيطُ واحدٌ في الاتّجاهين. */
+.art-hang-credit {
+  position: absolute; z-index: 2; pointer-events: none;
+  inset-block-end: clamp(10px, 2.5cqi, 16px); left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 6px; max-inline-size: calc(100% - 32px);
+  padding: 4px 12px; border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--navy-900) 45%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; font-size: .75rem; font-weight: 700;
+}
+.art-hang-credit svg { flex: 0 0 auto; }
+.art-hang-credit > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* لا موجزَ في صفحة الخبر (المالك ٢٠٢٦-١٠-١٤): مكانُه بطاقةُ الخبر ووصفُ الرابط. انظر `ArticleView`. */
 
-/* خبرٌ بلا غلاف: لا شريطَ يُركَب، فيبقى اللوحُ سطحًا مستويًا بلا رفعٍ ولا ظلّ —
-   ظلٌّ بلا ما يعلوه يزعم ارتفاعًا كاذبًا (ق٥). */
-.art-ledge-bare { margin: 0; box-shadow: none; }
+/* **على السعة يتوسّط الكلامُ اللوح** (المالك ٢٠٢٦-١٠-١٤): الصورةُ تحته متوسّطة، والعنوانُ
+   القصيرُ إلى اليمين كان يترك نصفَ اللوح الأيسرَ خاليًا فيبدو الصدرُ مائلًا. وعلى الجوّال
+   يبقى إلى اليمين: الأسطرُ تملأ العرضَ أصلًا، والمتوسّطُ الطويلُ يُتعب العين. */
+@container art (min-width: 46rem) {
+  .art-hang-panel { text-align: center; }
+  /* **العنوانُ يأخذ عرضَ اللوح كلَّه** (المالك ٢٠٢٦-١٠-١٤ سأل: لِمَ سطران وحولهما فراغان
+     كبيران؟). كان سقفُه 48rem (768) واللوحُ 848، و`balance` يقسمه سطرين متساويين: عنوانٌ
+     عرضُه سطرًا واحدًا 850 خرج سطرين كلٌّ منهما ~430 وحولهما ~200 فراغًا من كلّ جانب.
+     فسقط السقف، ونزل الحجمُ على السعة من 44 إلى 40 فيسع اللوحُ عنوانًا قصيرًا في سطر.
+     **و`balance` باقٍ:** جُرّب `pretty` فترك «الأحساء» وحدَها في سطرٍ ثانٍ. والطويلُ يبقى
+     سطرين متوازنين وفراغُه حينئذٍ هامشٌ لا خلاء. */
+  .art-hang-panel .art-title { margin-inline: auto; max-inline-size: none; font-size: min(2.5rem, .95rem + 3.1cqi); }
+  .art-hang-kicker, .art-hang-by { justify-content: center; }
+  /* على السعة تنفرد الفئةُ في سطرها، وينزل التاريخُ ومدّةُ القراءة إلى سطر الكاتب */
+  .art-hang-facts-top { display: none; }
+  .art-hang-facts-low { display: inline-flex; }
+  .art-hang-sub { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 8px 20px; }
+  /* **ونازلُهما يلبس ثوبَ «بريشة» نفسَه**: الحجمُ والوزنُ واللونُ وارتفاعُ السطر ومقاسُ
+     الأيقونة ومحاذاتُها — فالسطرُ يُقرأ صفًّا واحدًا لا كلامَين بخطّين. */
+  .art-hang-facts-low { gap: 8px 20px; }
+  .art-hang-facts-low .art-hang-fact {
+    align-items: flex-start; gap: 8px;
+    font-size: .9375rem; font-weight: 700; line-height: 1.7;
+    color: color-mix(in oklab, var(--color-on-primary) 90%, transparent);
+  }
+  .art-hang-facts-low .art-hang-fact svg { width: 17px; height: 17px; margin-block-start: .2em; opacity: .85; }
+}
 
 /* ── المتن ───────────────────────────────────────────────────────────── */
 
-.art-body { margin-block-start: 30px; display: flex; flex-direction: column; gap: 22px; }
-.art-body p { font-size: 1.0625rem; line-height: 2.05; color: var(--color-text); }
-/* العنوانُ الداخليّ يُعرَف قبل أن يُقرأ: شخطةٌ قصيرةٌ بلون العلامة فوقه، لا حجمٌ أكبر
-   وحدَه — فالحجمُ في جدارِ نصٍّ لا يُرى إلّا بالمقارنة، والعلامةُ تُرى وحدَها. */
+/* **ثوبُ المتن بلغة لوح الاقتباس** (أقرّه المالك ٢٠٢٦-١٠-١٤؛ الرسمُ في `ArticleBody`).
+   الإيقاعُ بالمسافة لا بالزخرفة: الفصلُ يبتعد عمّا قبله ويلتصق بما بعده. */
+.art-body { margin-block-start: 30px; display: flex; flex-direction: column; }
+.art-body > * + * { margin-block-start: 18px; }
+.art-body > .art-h { margin-block-start: 40px; }
+.art-body > .art-h:first-child { margin-block-start: 0; }
+.art-body > .art-h + * { margin-block-start: 18px; }
+.art-body > .art-h3 { margin-block-start: 28px; }
+.art-body > .art-h3 + * { margin-block-start: 8px; }
+.art-body > .art-quote { margin-block: 34px 6px; }
+.art-body p { font-size: 1.0625rem; line-height: 1.85; color: var(--color-text); }
+/* المدخل: الفقرةُ الأولى أكبرُ من أخواتها */
+.art-body .art-lead { font-size: 1.1875rem; line-height: 1.8; font-weight: 500; }
+/* الأرقامُ في المتن بخطّ Eras عريضةً بلون الهويّة */
+.art-num { font-family: var(--font-latin); font-weight: 700; color: var(--color-primary); }
+
+/* العنوانُ الداخليّ (لكلّ ما خارج المتن: «معرض الصور»، «التعليقات») */
 .art-h {
-  margin-block-start: 12px;
   font-family: var(--font-display); font-weight: 900;
   font-size: 1.375rem; line-height: 1.4; color: var(--color-text);
   scroll-margin-block-start: 90px;
@@ -14219,99 +14209,197 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   content: ""; display: block; width: 34px; height: 3px; margin-block-end: 12px;
   border-radius: var(--radius-full); background: var(--grad-primary);
 }
-.art-ul { display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0; list-style: none; }
-.art-ul li {
+
+/* رأسُ الفصل في المتن: لوحٌ كحليٌّ منقوشٌ (النقشُ `cover` يغطّيه كاملًا)، والرقمُ خلف
+   العنوان أبيضُ يذوب في اللوح، والعنوانُ أبيضُ صريحٌ فوقه في قاع اللوح. */
+.art-body .art-h, .art-sec-h {
+  position: relative; isolation: isolate; overflow: clip;
+  display: flex; align-items: flex-end; min-block-size: 92px;
+  padding: 30px 22px 18px;
+  border-radius: var(--radius);
+  background: var(--grad-primary); color: var(--color-on-primary);
+  font-size: 1.5rem; line-height: 1.35;
+}
+.art-body .art-h::before, .art-sec-h::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; inline-size: auto; block-size: auto;
+  margin: 0; border-radius: 0; pointer-events: none;
+  background: url("/brand/pattern-white.svg") no-repeat center / cover; opacity: .07;
+  /* **النقشُ يبدأ من اليسار ويذوب حتى أقصى اليمين** (المالك ٢٠٢٦-١٠-١٤): كان يغطّي اللوحَ كلَّه
+     فيزاحم الرقمَ والعنوانَ في اليمين. و`to right` فيزيائيٌّ عمدًا: الكلامُ يمينٌ في العربيّة دائمًا. */
+  -webkit-mask-image: linear-gradient(to right, #000 0%, rgb(0 0 0 / .55) 40%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, rgb(0 0 0 / .55) 40%, transparent 100%);
+}
+.art-h-n {
+  position: absolute; z-index: -1; inset-block-start: 8px; inset-inline-start: 14px;
+  font-family: var(--font-latin); font-weight: 800; font-size: 4.5rem; line-height: .82; letter-spacing: -.03em;
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / .34) 0%, rgb(255 255 255 / .12) 55%, transparent 92%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.art-h-t { position: relative; }
+/* رأسُ قسمٍ خارج المتن (معرضُ الصور) من عائلة رؤوس الفصول: الأيقونةُ خلف العنوان تذوب كما
+   يذوب الرقم، والعددُ حبّةٌ زجاجيّةٌ في الطرف الآخر. */
+/* **وخطُّه خطُّ رؤوس الفصول** (Lyon 900) **والكلامُ في منتصف اللوح عموديًّا**: لا رقمَ خلفه
+   يحتاج القاعَ ليُرى (المالك ٢٠٢٦-١٠-١٤). */
+.art-sec-h {
+  gap: 12px; justify-content: space-between; align-items: center;
+  min-block-size: 76px; padding-block: 18px; scroll-margin-block-start: 90px;
+  font-family: var(--font-display); font-weight: 900;
+}
+/* والعنوانُ يُزاح عن الأيقونة لا يركبها (المالك ٢٠٢٦-١٠-١٤): الرقمُ يُقرأ تحت الكلام لأنّه
+   أرقامٌ ضخمة، والأيقونةُ يطمسها الكلامُ فوقها. فالمسافةُ = موضعُها + عرضُها + فسحة. */
+.art-sec-h:has(> .art-sec-ic) { padding-inline-start: calc(16px + 60px + 14px); }
+/* الأيقونةُ بوزن الموقع (duotone لا `fill`) في طرف اللوح، والعنوانُ مُزاحٌ عنها فلا يطمسها
+   (المالك ٢٠٢٦-١٠-١٤: كانت خلف العنوان بشفافية .22 فلا تُرى). وتذوب إلى أسفل قليلًا كالرقم. */
+.art-sec-ic {
+  position: absolute; z-index: -1; inset-block-start: calc(50% - 30px); inset-inline-start: 16px;
+  inline-size: 60px; block-size: 60px; color: rgb(255 255 255 / .6);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .7) 60%, rgb(0 0 0 / .35) 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .7) 60%, rgb(0 0 0 / .35) 100%);
+}
+.art-sec-h .abadge { flex: 0 0 auto; }
+
+/* العنوانُ الفرعيّ: سطرٌ قصيرٌ بلا علامة وقف */
+.art-h3 { font-family: var(--font-display); font-weight: 800; font-size: 1.1875rem; line-height: 1.5; color: var(--color-primary); }
+
+/* القوائم: نقاطٌ كحليّة؛ و«عنوان: شرح» عنوانُها عريضٌ في السطر كمواد «أنظمة أدِيب» */
+.art-ul, .art-defs { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
+.art-ul li, .art-defs li {
   position: relative; padding-inline-start: 20px;
-  font-size: 1.0625rem; line-height: 1.95; color: var(--color-text);
+  font-size: 1.0625rem; line-height: 1.85; color: var(--color-text);
 }
-.art-ul li::before {
-  content: ""; position: absolute; inset-inline-start: 4px; inset-block-start: .82em;
-  width: 6px; height: 6px; border-radius: 50%; background: var(--color-secondary);
+.art-ul li::before, .art-defs li::before {
+  content: ""; position: absolute; inset-inline-start: 2px; inset-block-start: .78em;
+  inline-size: 7px; block-size: 7px; border-radius: 2px; background: var(--color-primary);
 }
-/* الاقتباسُ المقتطَع: خطٌّ في صدره لا إطارٌ حوله — سطحٌ مؤطَّرٌ داخل المتن يقول
-   «شيءٌ قائمٌ بذاته» وهو منه (ق١٢). */
-.art-quote { padding-inline-start: 18px; border-inline-start: 3px solid var(--color-secondary); }
-.art-quote p {
-  font-family: var(--font-display); font-size: 1.25rem; font-weight: 500;
-  line-height: 1.85; color: var(--color-text);
+.art-defs b { font-weight: 800; color: var(--color-text); }
+.art-defs b::after { content: ": "; }
+
+/* الاقتباس: لوحُ الصدر في قلب المتن — تدرّجُ الهويّة ونقشُها وقولٌ أبيضُ بخطّ العناوين */
+.art-quote {
+  position: relative; isolation: isolate; overflow: clip; margin: 0;
+  padding: 24px 22px 22px; border-radius: var(--radius);
+  background: var(--grad-primary); color: var(--color-on-primary);
 }
-.art-quote cite { display: block; margin-block-start: 10px; font-style: normal; font-size: .875rem; color: var(--color-text-muted); }
+.art-quote::after {
+  content: ""; position: absolute; inset: auto 0 0 0; block-size: 70%; z-index: -1; pointer-events: none;
+  background: url("/brand/pattern-white.svg") no-repeat center bottom / cover; opacity: .07;
+}
+.art-quote-q { display: block; margin-block-end: 8px; opacity: .55; }
+.art-quote p { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; line-height: 1.75; color: var(--color-on-primary); }
+.art-quote cite {
+  display: block; margin-block-start: 12px; font-style: normal; font-size: .875rem; font-weight: 700;
+  color: color-mix(in oklab, var(--color-on-primary) 78%, transparent);
+}
 
 /* ── فهرسُ المقال: يُرى على السعة وحدَها ─────────────────────────────── */
 
 .art-toc { position: sticky; inset-block-start: 96px; align-self: start; }
-.art-toc-h { font-size: .75rem; font-weight: 700; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); }
-.art-toc-l { display: flex; flex-direction: column; gap: 2px; margin-block-start: 10px; padding: 0; list-style: none; }
+/* فهرسُ الخبر بلغة جانب «أنظمة أدِيب» (المالك ٢٠٢٦-١٠-١٤): رقمُ الفصل رقاقةٌ بخطّ Eras
+   كما على لوح فصله، والمضاءُ بأرض الأبواب ورقاقتُه بتدرّج العلامة. لا خطَّ ملوّنًا في حافّة البند. */
+.art-toc-l { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 8px; list-style: none; }
 .art-toc-l a {
-  display: block; padding: 6px 10px; border-radius: var(--radius-sm);
-  font-size: .875rem; color: var(--color-text-muted); text-decoration: none;
-  border-inline-start: 2px solid transparent;
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm);
+  font-size: .875rem; font-weight: 700; line-height: 1.6; color: var(--color-text-muted); text-decoration: none;
   transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
-.art-toc-l a:hover { background: var(--color-surface-2); color: var(--color-text); }
+.art-toc-l a i {
+  flex: 0 0 auto; display: inline-grid; place-items: center; min-inline-size: 30px; block-size: 24px;
+  border-radius: var(--radius-sm); background: var(--color-surface-2);
+  font-style: normal; font-family: var(--font-latin); font-weight: 800; font-size: .8125rem; color: var(--color-text-muted);
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.art-toc-l a span { padding-block-start: 1px; }
+.art-toc-l a:hover { color: var(--color-primary); }
 .art-toc-l a:focus-visible { outline: 0; box-shadow: var(--ring); }
-.art-toc-l a[aria-current="true"] { color: var(--color-primary); border-inline-start-color: var(--color-primary); background: var(--color-surface-2); }
+.art-toc-l a[aria-current="true"] { background: linear-gradient(135deg, var(--steel-100), var(--steel-50)); color: var(--color-primary); }
+.art-toc-l a[aria-current="true"] i { background: var(--grad-primary); color: var(--color-on-primary); box-shadow: var(--shadow-sm); }
 
 /* اللوحُ ذو العمودين: المتنُ وفهرسُه. والفهرسُ يسقط حين يضيق — لا يُكدَّس فوق المتن. */
 .art-split { display: grid; gap: 40px; }
-@media (min-width: 64rem) { .art-split { grid-template-columns: minmax(0, 1fr) 13rem; } }
-@media (max-width: 63.99rem) { .art-toc { display: none; } }
-
-/* ── شريطُ القارئ: إعجابٌ وتعليقٌ ومشاركة ────────────────────────────── */
-
-.art-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  padding-block: 14px;
-  border-block: var(--card-stroke-w) solid var(--color-border);
-}
-/* الفاصلُ يدفع «شارك» إلى آخر الصفّ متى اتّسع، و**ينكمش إلى الصفر متى ضاق**:
-   بـ`auto` كان يحتفظ بعرضٍ أصليٍّ فيُنزل «شارك» وحدَه إلى سطرٍ ثانٍ، فيبقى في الصفّ
-   خلاءٌ تمنعه ق١٦. والصفرُ يجعله يتنازل قبل أن ينكسر الصفّ. */
-.art-bar-sp { flex: 1 1 0; min-width: 0; }
-.art-act {
-  display: inline-flex; align-items: center; gap: 7px;
-  min-height: 40px; padding-inline: 14px;
-  border: var(--ctl-stroke); border-radius: var(--radius-full);
-  background: var(--color-surface); color: var(--color-text-muted);
-  font-size: .875rem; font-weight: 600; cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-standard),
-              border-color var(--dur-fast) var(--ease-standard),
-              background var(--dur-fast) var(--ease-standard);
-}
-.art-act svg { flex: 0 0 auto; }
-.art-act > b { font-family: var(--font-latin); font-weight: 700; }
-.art-act:hover { color: var(--color-text); background: var(--color-surface-2); }
-.art-act:focus-visible { outline: 0; box-shadow: var(--ring); }
-/* المُعجَب: القلبُ يمتلئ واللونُ يُعلنه. **والحالُ تُقال بشيئين لا بلونٍ وحده** (ق١٠). */
-.art-act[aria-pressed="true"] {
-  color: var(--danger-500);
-  border-color: color-mix(in oklab, var(--danger-500) 42%, transparent);
-  background: var(--danger-50);
-}
+/* المتنُ حتى 42.5rem (680px) والفهرسُ يأخذ ما بقي، ولا يضيق عن 13rem. */
+@media (min-width: 54rem) { .art-split { grid-template-columns: minmax(0, 42.5rem) minmax(13rem, 1fr); gap: 32px; } }
+/* مع الفهرس يملأ المتنُ عمودَه كلّه (648–688px)، فلا تبقى بينه وبين حافّة الرأس فجوة. */
+@media (min-width: 54rem) { .art-split .art-col { max-width: none; } }
+@media (min-width: 64rem) { .art-split { gap: 56px; } }
+@media (max-width: 53.99rem) { .art-toc { display: none; } }
 /* **الصفُّ الواحد يُحفَظ بتضييق الحشو لا بكسر السطر** (ق١٦: لا خلاءَ في صفّ).
    قِيس على ٣٧٥: الأزرارُ الثلاثةُ وفجواتُها ٣٣٩px في صفٍّ عرضُه ٣٢٧، فينزل «شارك»
    وحدَه إلى سطرٍ ثانٍ ويبقى فيه خلاء. وتضييقُ الحشو والفجوة يردّ نحو ٢٨px فيسعُها
    الصفُّ كلَّها. وقياسُ الحاوية لا الشاشة (ق١٥). */
-@container art (max-width: 26rem) {
-  .art-bar { gap: 6px; }
-  .art-act { padding-inline: 10px; gap: 5px; }
-}
 
 @keyframes art-thump { 0% { transform: scale(1); } 42% { transform: scale(1.28); } 100% { transform: scale(1); } }
-.art-act[aria-pressed="true"] svg { animation: art-thump var(--dur) var(--ease-standard); }
-@media (prefers-reduced-motion: reduce) { .art-act svg { animation: none !important; } }
 
-/* الشريطُ الملازم على الجوّال: الفعلُ لا يُطلَب من القارئ أن يعود إليه. */
-.art-dock {
-  position: sticky; inset-block-end: 0; z-index: var(--z-base);
-  display: flex; align-items: center; gap: 8px;
-  margin-block-start: 26px; padding: 10px 14px;
-  padding-block-end: calc(10px + env(safe-area-inset-bottom));
-  border-block-start: var(--card-stroke-w) solid var(--color-border);
-  background: var(--glass-bg); backdrop-filter: blur(10px);
+
+/* ── خاتمةُ الخبر: «سطرُ الترويسة» (المالك ٢٠٢٦-١٠-١٤؛ `ReaderEnd`) ──────────────
+   بلا صندوق، في المنتصف: سؤالٌ ودائرةُ إعجابٍ تحتها لفظُها، ثمّ «شارك الخبر على» بين خطّين
+   (سطرُ التاريخ في ترويسة الأخبار) وزرٌّ باسم كلّ منصّة. */
+.art-close { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.art-close-q { font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; line-height: 1.4; color: var(--color-text); }
+
+/* الإعجاب: الدائرةُ واللفظُ زرٌّ واحد. **والدائرةُ كلُّها تحمرّ** بالإعجاب، والعددُ شارةٌ على طرفها */
+.art-like {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 0; border: 0; background: none; cursor: pointer; color: var(--color-text-muted);
 }
-.art-dock .art-act { flex: 1 1 0; justify-content: center; }
-@media (min-width: 48rem) { .art-dock { display: none; } }
+.art-like-c {
+  position: relative; display: grid; place-items: center; inline-size: 68px; block-size: 68px;
+  border-radius: 50%; background: var(--grad-primary); color: #fff; box-shadow: var(--shadow-lg);
+  transition: background var(--dur) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+.art-like-c > b {
+  position: absolute; inset-block-start: -4px; inset-inline-start: 46px;
+  display: inline-grid; place-items: center; min-inline-size: 26px; block-size: 26px; padding-inline: 7px;
+  border-radius: var(--radius-full); border: 2px solid var(--color-surface); background: var(--color-surface); color: var(--color-primary);
+  box-shadow: var(--shadow-sm); font-family: var(--font-latin); font-size: .8125rem; font-weight: 700;
+}
+.art-like-t { font-size: .9375rem; font-weight: 700; }
+.art-like:hover .art-like-c { transform: scale(1.04); }
+.art-like:focus-visible { outline: 0; }
+.art-like:focus-visible .art-like-c { box-shadow: var(--ring); }
+/* **لونُ الإعجاب خاصٌّ به لا لونُ الخطر، وفي الوسط** (المالك ٢٠٢٦-١٠-١٤): كان الأحمرَ الطوبيَّ
+   للأخطاء (#d23b2c→#93261b) فرُدّ «غامقًا جدًّا»، ثمّ ورديَّ المنصّات (#f43f5e→#e11d48) فرُدّ
+   «فاتحًا مؤذيًا»، ثمّ قرمزيًّا (#cc3d60→#a6274a) فرُدّ «عنّابيًّا». فصار أحمرَ القلب الصريح: لا
+   يميل إلى البرتقاليّ كالطوبيّ، ولا إلى البنفسجيّ كالعنّابيّ، ولا إلى الورديّ كالفاتح. */
+.art-like { --like: #c62b3d; }
+.art-like[aria-pressed="true"] .art-like-c { background: linear-gradient(135deg, #e33d4e, #c62b3d); }
+.art-like[aria-pressed="true"] .art-like-c > b { color: var(--like); }
+.art-like[aria-pressed="true"] .art-like-t { color: var(--like); }
+.art-like[aria-pressed="true"] svg { animation: art-thump var(--dur) var(--ease-standard); }
+
+/* «شارك الخبر على» بين خطّين، ثمّ زرٌّ بأيقونة المنصّة واسمِها */
+/* **وسؤالُ المشاركة في مقام سؤال الإعجاب** (المالك ٢٠٢٦-١٠-١٤): كان لفظًا صغيرًا خافتًا (15px)
+   تحت عنوانٍ بـ22px فبدا حاشيةً لا قسمًا. فصار بخطّ السؤال ووزنه، والخطّان يفصلان القسمين. */
+.art-close-rule {
+  display: flex; align-items: center; gap: 14px; align-self: stretch; margin-block-start: 14px;
+  font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; line-height: 1.4; color: var(--color-text);
+}
+.art-close-rule::before, .art-close-rule::after { content: ""; flex: 1 1 20px; block-size: 1px; background: var(--color-border); }
+/* **صفٌّ واحدٌ أو عمودان منتظمان، لا التفافٌ عشوائيّ** (المالك ٢٠٢٦-١٠-١٥): كان الالتفافُ الحرّ يترك
+   أربعةً في صفٍّ وواحدًا تحتها على العروض المتوسّطة. فالأصلُ عمودان (‏2·2·1 والنسخُ سطرٌ كامل، أو ‏2·2·2 مع
+   «المزيد»)، والخمسةُ صفٌّ واحدٌ متى وسعها العمود (نحوَ ‏550px). والستّةُ لا يسعها عمودُ المتن (‏640) فتبقى عمودين. */
+.art-share {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  align-self: stretch; inline-size: 100%;
+}
+.art-share-copy:nth-child(odd) { grid-column: 1 / -1; }
+/* **والخمسةُ تتقاسم الصفَّ بالتساوي فتملأ العمود** (المالك ٢٠٢٦-١٠-١٥): كانت بعرض أسمائها في الوسط (٥٦٥ من ٦٨٠)،
+   فبدا الصفُّ أقصرَ من خطَّي «شارك الخبر على» فوقه وكروتِ التعليقات تحته. ومن ٤٠rem لا ٣٦: أعرضُها «نسخ الرابط»
+   (‏~114px)، وخمسةٌ متساويةٌ بعرضه تحتاج نحو ‏٦٠٠px. وما دونها عمودان يملآن العمودَ كذلك (سقطَ سقفُ ‏26rem). */
+@container art (min-width: 40rem) {
+  .art-share[data-n="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .art-share[data-n="5"] .art-share-copy { grid-column: auto; }
+}
+.art-share-b {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  block-size: 42px; padding-inline: 14px 16px; cursor: pointer; text-decoration: none; white-space: nowrap;
+  border-radius: var(--radius-full); border: 1.5px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  background: var(--color-surface); color: var(--color-primary); font-size: .875rem; font-weight: 700;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.art-share-b svg { flex: 0 0 auto; }
+.art-share-b:hover, .art-share-b[data-done] { background: var(--grad-primary); color: #fff; border-color: transparent; }
+.art-share-b:focus-visible { outline: 0; box-shadow: var(--ring); }
+@media (prefers-reduced-motion: reduce) { .art-like svg { animation: none !important; } }
 
 /* شريطُ التقدّم: خيطٌ في أعلى الصفحة يقول كم بقي. لا رقمَ ولا نسبة. */
 .art-read {
@@ -14327,50 +14415,363 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    الشبكة كلِّها لا في الصفّ الأخير وحدَه، فلا تحلّها. و`flex-grow` يفعلها بطبعه:
    الصفُّ الناقص يمتلئ بما فيه مهما كان العدد ومهما كان العرض، بلا استعلام وسائط.
    والبذرةُ هي الحدُّ الأدنى الذي كان في `minmax`. */
-.art-gal { display: flex; flex-wrap: wrap; gap: 10px; }
-/* **و`min-width: 0` ليست زينة:** أساسُ عنصر flex هو `min-width: auto`، أي عرضُ
-   محتواه الأصغر — وعرضُ صورةٍ أصلُها ٦٠٧ بكسل هو ٦٠٧. فبلا الصفر تأبى كلُّ صورةٍ
-   أن تنكمش فتنفرد بصفّها، ويصير المعرضُ عمودًا واحدًا على الحاسوب. */
-.art-gal > * { flex: 1 1 15rem; min-width: 0; }
-/* **شبكةٌ متساوية، لا صدارةَ بضعف الحجم.** جُرِّبت الصدارةُ فتركت **خانةً خاوية**:
-   معارضُنا كلُّها بين صورتين وأربع (قياسُ الأخبار الأربعة عشر)، وصورةٌ تبتلع عمودين
-   وصفَّين من أربعٍ تُبقي نصفَ الصفّ الثاني فارغًا — وهي ق٦ بعينها: الصفُّ الأخير لا
-   يترك فراغًا. والصدارةُ تعود يوم يصير المعرضُ ثمانيًا. */
-.art-shot { margin: 0; position: relative; }
-.art-shot button {
-  display: block; width: 100%; padding: 0; border: 0; cursor: zoom-in;
-  background: none; border-radius: var(--radius-sm); overflow: hidden;
+/* **المعرضُ شبكةٌ تُرتَّب بعدد صورها** (المالك ٢٠٢٦-١٠-١٤؛ `data-n` من `ArticleGallery`).
+   كانت منسابةً بأساس ١٥rem فتركت الرابعةَ وحدَها بعرض المقال (٩٢٨×٦٩٦) على الحاسوب،
+   وكدّست أربعًا بطول ١٠٧٧px على الجوّال. والآن لكلّ عددٍ ترتيبٌ يملأ صفوفَه كلَّها (ق٦):
+   الأولى صدرُ المعرض وما بعدها حولها.
+     الضيّق (ستّةُ أعمدة):  ٤ ⇒ الأولى كاملةً ثمّ ثلاثٌ مربّعة · ٣ ⇒ كاملةٌ ثمّ اثنتان · ٢ ⇒ اثنتان مربّعتان
+     السعة (أربعةُ أعمدة):  ٤ ⇒ الأولى ٢×٢ والثانيةُ ٢×١ والأخيرتان ١×١ · ٣ ⇒ الأولى ٢×٢ واثنتان ٢×١ · ٢ ⇒ نصفان */
+.art-gal { display: grid; gap: 8px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.art-shot { position: relative; margin: 0; grid-column: span 6; aspect-ratio: 16 / 10; }
+.art-gal[data-n="1"] > .art-shot { aspect-ratio: 3 / 2; }
+.art-gal[data-n="2"] > .art-shot { grid-column: span 3; aspect-ratio: 1; }
+.art-gal[data-n="3"] > .art-shot:not(:first-child) { grid-column: span 3; aspect-ratio: 1; }
+.art-gal[data-n="4"] > .art-shot:not(:first-child) { grid-column: span 2; aspect-ratio: 1; }
+@container art (min-width: 40rem) {
+  /* **قواعدُ السعة بصنفٍ مضاعَف** (`.art-gal.art-gal`): قواعدُ الضيّق تحمل `:not(:first-child)` فهي أعلى
+     نوعيّةً، وكانت تغلب هذه فتُعطي الثانيةَ والثالثةَ من ثلاثٍ ثلاثةَ أعمدةٍ من أربعة، فتنزلان تحت
+     الأولى بدل أن تجاوراها (وقع في خبرٍ بفهرسٍ وثلاث صور، ٢٠٢٦-١٠-١٤). */
+  .art-gal.art-gal { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: clamp(140px, 22cqi, 210px); }
+  .art-gal.art-gal[data-n] > .art-shot.art-shot { aspect-ratio: auto; grid-column: span 2; grid-row: span 1; }
+  .art-gal.art-gal[data-n="1"] > .art-shot.art-shot { grid-column: span 4; grid-row: span 2; }
+  .art-gal.art-gal[data-n="2"] > .art-shot.art-shot { grid-row: span 2; }
+  .art-gal.art-gal[data-n="3"] > .art-shot.art-shot:first-child,
+  .art-gal.art-gal[data-n="4"] > .art-shot.art-shot:first-child { grid-row: span 2; }
+  .art-gal.art-gal[data-n="4"] > .art-shot.art-shot:nth-child(n + 3) { grid-column: span 1; }
 }
-.art-shot img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; transition: transform var(--dur) var(--ease-standard); }
-.art-shot button:hover img { transform: scale(1.03); }
+.art-shot button {
+  position: relative; display: block; inline-size: 100%; block-size: 100%; padding: 0; border: 0; cursor: zoom-in;
+  background: var(--color-surface-2); border-radius: var(--radius-sm); overflow: hidden;
+}
+.art-shot img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; transition: transform var(--dur) var(--ease-standard); }
+@media (hover: hover) { .art-shot button:hover img { transform: scale(1.03); } }
 .art-shot button:focus-visible { outline: 0; box-shadow: var(--ring); }
+/* اسمُ المصوّر على الصورة: حبّةٌ زجاجيّةٌ في منتصف القاع كنسبة الغلاف (`.art-hang-credit`)، تُقصّ بنقاطٍ إن ضاقت */
+.art-shot-by {
+  /* التوسيطُ بحدّين وهامشٍ تلقائيّ لا بـ`left: 50%`: ذاك يحبس الحبّةَ في نصف عرض الصورة فتلتفّ الأسماءُ مبكّرًا */
+  position: absolute; z-index: 1; inset-block-end: 8px; inset-inline: 8px; inline-size: fit-content; margin-inline: auto;
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 12px;
+  background: color-mix(in oklab, var(--navy-900) 45%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; font-size: .6875rem; font-weight: 700; pointer-events: none;
+}
+.art-shot-by svg { flex: 0 0 auto; }
+/* الاسمُ يلتفّ سطرين في المربّعات الصغيرة (١٠٥px على الجوّال) بدل أن يُقصّ: قُصّ «روان الهنـ…» فضاع الاسم */
+.art-shot-by > span {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  text-align: center; line-height: 1.35;
+}
+/* «+N» على الرابعة إن زاد المعرض: أرضٌ كحليّةٌ شفّافةٌ ورقمٌ أبيضُ بخطّ Eras */
+.art-shot-more {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: color-mix(in oklab, var(--navy-900) 58%, transparent);
+  font-family: var(--font-latin); font-weight: 800; font-size: 1.75rem; color: #fff;
+}
+
+/* ── «اقرأ أيضًا» (المالك ٢٠٢٦-١٠-١٤؛ `MoreNews`) ─────────────────────────────
+   ثلاثةُ أخبارٍ بكرت «ختم التاريخ» (`.scard`، مع كرت صفحة الأخبار). رُدّ قبله: صفوفٌ بيضاءُ
+   مدمجة، ثمّ بطاقاتُ «الأخبار» في شريطٍ متحرّك، ثمّ شُرفاتٌ مقلوبةٌ صغيرة («فانسي وغير عمليّ»). */
+.art-more { max-inline-size: var(--art-wide); margin-inline: auto; }
+/* **ثلاثةٌ أو واحد، لا اثنان** (المالك ٢٠٢٦-١٠-١٤): `auto-fill` كان يصفّ اثنين ويترك الثالثَ
+   وحده في صفٍّ على الشاشات المتوسّطة. فثلاثةُ أعمدةٍ متى وسعتها الحاوية، وإلّا عمودٌ واحد،
+   وصورتُه فيه أعرضُ (21:9) على المتوسّط فلا يطول الكرت. */
+.art-more-l { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-block-start: 16px; }
+/* **الكرتُ الطوليُّ للصفّ الواحد وحده، والعمودُ الواحدُ شرائط** (المالك ٢٠٢٦-١٠-١٤): ثلاثةُ كروتٍ
+   طوليّةٍ فوق بعضها كانت نحو ثلاث شاشاتٍ من التمرير بعد نهاية الخبر. فالصورةُ مربّعٌ في طرف
+   الشريط، والختمُ يتدلّى منها إلى الورق جانبيًّا، وبجانبه العنوانُ ثمّ الكاتبُ ومدّةُ القراءة.
+   وتسقط حبّةُ الفئة، والموجزُ إلّا على المتوسّط حيث يتّسع له الشريط. */
+@container art (max-width: 47.99rem) {
+  .art-more-l { gap: 12px; }
+  .art-more-l .scard { display: grid; grid-template-columns: 100px minmax(0, 1fr); }
+  .art-more-l .ncard-media { aspect-ratio: auto; min-block-size: 100px; }
+  .art-more-l .ncard-media img, .art-more-l .ncard-ph { position: absolute; inset: 0; }
+  .art-more-l .ncard-cat, .art-more-l .ncard-sum { display: none; }
+  .art-more-l .scard-body { padding: 12px 14px 12px 14px; justify-content: center; }
+  .art-more-l .scard-head { gap: 0 8px; align-items: center; }
+  .art-more-l .scard-seal {
+    inline-size: 50px; padding: 6px 2px; margin: 0; margin-inline-start: -40px; border-radius: 12px;
+  }
+  .art-more-l .scard-seal b { font-size: 1.25rem; }
+  .art-more-l .scard-seal small { margin-block-start: 3px; font-size: .6875rem; }
+  .art-more-l .scard-seal i { display: none; }
+  .art-more-l .scard-head .ncard-title { font-size: .9375rem; line-height: 1.55; }
+  .art-more-l .scard-foot {
+    flex-direction: column; align-items: flex-start; gap: 0;
+    margin-block-start: 6px; padding: 0; padding-inline-start: 18px;
+  }
+  .art-more-l .scard-by { max-inline-size: 100%; }
+}
+/* المتوسّط: شريطٌ أعرض، صورتُه أكبر، والموجزُ يعود سطرًا، والكاتبُ ومدّةُ القراءة صفٌّ واحد */
+@container art (min-width: 30rem) and (max-width: 47.99rem) {
+  .art-more-l .scard { grid-template-columns: 168px minmax(0, 1fr); }
+  .art-more-l .ncard-media { min-block-size: 140px; }
+  .art-more-l .scard-body { padding: 14px 18px; }
+  .art-more-l .scard-head .ncard-title { font-size: 1.0625rem; -webkit-line-clamp: 2; block-size: calc(2 * 1.55em); }
+  .art-more-l .ncard-sum { display: -webkit-box; -webkit-line-clamp: 1; block-size: 1.8em; margin-block-start: 4px; padding-inline-start: 18px; }
+  .art-more-l .scard-foot { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 14px; }
+}
+@container art (min-width: 48rem) { .art-more-l { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* ── التعليقات ───────────────────────────────────────────────────────── */
 
-.art-cmts { display: flex; flex-direction: column; gap: 18px; }
-.art-cmt { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
-.art-cmt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
-.art-cmt-name { font-weight: 700; font-size: .9375rem; color: var(--color-text); }
-.art-cmt-when { font-size: .75rem; color: var(--color-text-muted); }
-.art-cmt-txt { margin-block-start: 5px; font-size: .9375rem; line-height: 1.85; color: var(--color-text); overflow-wrap: anywhere; }
-.art-cmt-act { display: flex; align-items: center; gap: 4px; margin-block-start: 8px; }
-.art-cmt-like {
-  display: inline-flex; align-items: center; gap: 5px;
-  min-height: 32px; padding-inline: 10px; border: 0; cursor: pointer;
-  border-radius: var(--radius-full); background: none;
+/* القفزُ إلى القسم من الفهرس أو «علِّق» يقف تحت الرأس العلويّ لا خلفه */
+.art-anchor { scroll-margin-block-start: 90px; }
+/* ── التعليقات بلغة الصفحة (المالك ٢٠٢٦-١٠-١٥) ─────────────────────────────────────────────────
+   رُدّ تنفيذٌ أوّلُ بصناديقَ بيضاءَ عامّة. وهذا بلغة الصفحة: **المُنشئ يتدلّى من شريط القسم** كما
+   يتدلّى الغلافُ من الشُّرفة (الشريطُ يطول من تحت، واللوحُ الأبيض يركب قاعَه)، **وكلُّ تعليقٍ اقتباسٌ
+   موقَّع** بلا صندوق: علامةُ اقتباس، والنصُّ، ثمّ سطرُ توقيعٍ كسطر «بريشة»، وبين التعليقات خطوطٌ رفيعة. */
+.cm-hang { --cm-hang: 44px; }
+/* الشريطُ بارتفاعه المعتاد (76) ثمّ يطول بقدر ما يركبه اللوح، فتبقى الأيقونةُ والعنوانُ كاملين فوقه. */
+.cm-hang > .art-sec-h { min-block-size: calc(76px + var(--cm-hang)); padding-block: 18px calc(18px + var(--cm-hang)); align-items: flex-start; }
+.cm-hang > .art-sec-h .art-sec-ic { inset-block-start: 16px; }
+/* **سطحُ كرت التعليق المنشور نفسُه** (المالك ٢٠٢٦-١٠-١٥: كانت الخانةُ بيضاءَ مسطّحةً والتعليقُ بسطح الكروت — «تخبّط»):
+   فالخانةُ تعليقُك قبل نشره. وتنفرد بظلّها الأكبر وحدَه: هي معلّقةٌ بالشريط فوقها. */
+.cm-compose {
+  position: relative; margin: calc(-1 * var(--cm-hang)) 14px 0; padding: 14px 18px 16px;
+  border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%);
+  box-shadow: var(--shadow-lg);
+  outline: 2px solid transparent; outline-offset: -2px;
+  transition: outline-color var(--dur-fast) var(--ease-standard);
+}
+.cm-compose:focus-within { outline-color: var(--steel-300); }
+.cm-who { display: flex; align-items: center; gap: 10px; min-block-size: 40px; }
+.cm-sig { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.cm-name { font-size: .9375rem; font-weight: 800; color: var(--color-primary); }
+/* الصورةُ والحقلُ والزرُّ بارتفاعٍ واحد (٣٦) لا ارتفاعِ حقول النماذج (٤٨): صفٌّ واحدٌ بخطٍّ واحد. */
+.cm-guest { flex: 1; min-width: 0; --fld-h: 36px; }
+.cm-login { flex: 0 0 auto; min-block-size: 36px; margin-inline-start: auto; white-space: nowrap; }
+.cm-text {
+  display: block; width: 100%; margin-block-start: 10px; padding: 0;
+  border: 0; background: none; resize: none; outline: 0;
+  font: inherit; font-size: 1.0625rem; line-height: 1.85; color: var(--color-text);
+}
+.cm-text::placeholder { color: var(--color-text-muted); }
+.cm-compose iframe { margin-block-start: 12px; }
+/* خطٌّ بين النصّ والذيل كالذي بين نصّ التعليق المنشور وتوقيعه: بنيةٌ واحدة — رأس، نصّ، خطّ، ذيل. */
+.cm-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-block-start: 14px; padding-block-start: 14px; border-block-start: 1px solid var(--card-stroke); }
+.cm-count {
+  display: inline-flex; gap: 2px; font-family: var(--font-latin); font-size: .8125rem; font-weight: 600; color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.cm-count[data-level="near"] { color: var(--warning-500); }
+.cm-count[data-level="over"] { color: var(--danger-500); }
+
+@container art (max-width: 30rem) { .cm-compose { margin-inline: 10px; padding-inline: 14px; } }
+
+/* ── عرضُ التعليقات: الاقتباسُ بطلُ التعليق (المالك ٢٠٢٦-١٠-١٥) ──────────────────────────────
+   رُدّت قبلُ: الاقتباساتُ الموقَّعة بعلامةٍ صغيرة، و«الأبرز»، والجدار، والفقاعات، والوسام، والعلامةُ الجانبيّة العارية.
+   والآن كرتٌ لكلّ تعليقٍ، علامةُ الاقتباس بطلُه، والتوقيعُ شريطٌ في قاعه. والمنزلةُ سطرٌ خافتٌ تحت الاسم. */
+.cm-ident { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; text-align: start; }
+.cm-nameline { display: inline-flex; align-items: center; gap: 5px; max-inline-size: 100%; min-width: 0; }
+.cm-ident .cm-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-verified { position: relative; flex: 0 0 auto; display: inline-grid; place-items: center; color: var(--steel-500); cursor: help; border-radius: 50%; }
+.cm-verified:focus-visible { outline: 0; box-shadow: var(--ring); }
+.cm-verified::after {
+  content: attr(data-tip); position: absolute; z-index: 5; inset-block-end: calc(100% + 8px); inset-inline-start: 50%; translate: 50% 4px;
+  padding: 6px 10px; border-radius: var(--radius-sm); background: var(--navy-800); box-shadow: var(--shadow-md);
+  font-size: .75rem; font-weight: 700; line-height: 1.4; color: #fff; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-standard), translate var(--dur-fast) var(--ease-standard);
+}
+.cm-verified:hover::after, .cm-verified:focus::after { opacity: 1; translate: 50% 0; }
+.cm-standing { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600; color: var(--steel-600); }
+.cm-standing svg { flex: 0 0 auto; }
+.cm-like {
+  display: inline-flex; align-items: center; gap: 6px; min-block-size: 34px; padding-inline: 12px;
+  border: 1.5px solid var(--card-stroke); border-radius: var(--radius-full); background: var(--color-surface); cursor: pointer;
   font-size: .8125rem; color: var(--color-text-muted);
+  transition: border-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
-.art-cmt-like:hover { background: var(--color-surface-2); color: var(--color-text); }
-.art-cmt-like:focus-visible { outline: 0; box-shadow: var(--ring); }
-.art-cmt-like[aria-pressed="true"] { color: var(--danger-500); }
-.art-cmt-like > b { font-family: var(--font-latin); font-weight: 700; }
+.cm-like > b { font-family: var(--font-latin); font-weight: 700; }
+.cm-like:hover { border-color: var(--steel-300); color: var(--color-text); }
+.cm-like:focus-visible { outline: 0; box-shadow: var(--ring); }
+.cm-like[aria-pressed="true"] { border-color: color-mix(in oklab, #c62b3d 35%, transparent); color: #c62b3d; }
+/* **«لسانُ الحذف»** (المالك ٢٠٢٦-١٠-١٦): يتدلّى من قاع الكرت يسارًا كما يتدلّى لسانُ العودة من الشُّرفة، بتدرّج الخطر.
+   لرئيس التحرير وحده. ورُدّت قبله ثمانيةُ أشكالٍ بجانب القلب: زرُّ الهويّة الأيقونيّ، ودائرتان بمقاس القلب، والقلبُ
+   والسلّةُ من الهويّة، والكبسولة، والقرصُ على الحافّة، والعاري. والمسافةُ بين الكروت (٦٠) تسعه بلا تعديل. */
+.cm-k-tab {
+  position: absolute; inset-block-start: 100%; inset-inline-end: 24px; margin-block-start: -1px;
+  display: inline-flex; align-items: center; gap: 6px; min-block-size: 32px; padding-inline: 12px 14px;
+  border: 0; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--grad-danger); color: #fff;
+  font-size: .8125rem; font-weight: 700; cursor: pointer; transition: filter var(--dur-fast) var(--ease-standard);
+}
+.cm-k-tab:hover { filter: brightness(1.08); }
+.cm-k-tab:focus-visible { outline: 0; box-shadow: var(--ring); }
+
+/* ══ «العلامة الخارجة عن الإطار» مطوَّرة (المالك ٢٠٢٦-١٠-١٥) ════════════════════════════════════
+   رُدّت: الديوان، والمنصّة، والخيط، والرسائل («ولا واحدٌ أرضى غروري»)، وكانت هذه واللسانُ قبلها «أفضل بكثير».
+   فطُوّرت بأربع: العلامةُ أكبرُ وأثقلُ بتدرّج الهويّة، وسطحُ الكروت المعتمد، ونصٌّ أكبر، وتوقيعٌ بلا خلفيّة. */
+.cm-cards { display: flex; flex-direction: column; gap: 60px; margin-block-start: 64px; }
+.cm-k {
+  position: relative; margin: 0; padding: 52px 24px 0;
+  border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%);
+  box-shadow: var(--shadow-md);
+}
+/* الهالةُ بلون الصفحة حول العلامة تقطع حدَّ الكرت حيث تعبره، فتبدو العلامةُ موضوعةً على الحافّة لا مرسومةً فوق خطّ. */
+.cm-k-halo {
+  position: absolute; inset-block-start: -44px; inset-inline-start: 16px; display: block; line-height: 0;
+  filter: drop-shadow(3px 0 0 var(--color-bg)) drop-shadow(-3px 0 0 var(--color-bg)) drop-shadow(0 3px 0 var(--color-bg)) drop-shadow(0 -3px 0 var(--color-bg));
+}
+.cm-k-mark { display: block; inline-size: 88px; block-size: 88px; }
+/* التاريخُ بأيقونة التقويم كتاريخ الخبر في كرته ورأسه: توحيدٌ لا زينة. */
+.cm-k-when { position: absolute; inset-block-start: 16px; inset-inline-end: 20px; display: inline-flex; align-items: center; gap: 5px; font-size: .8125rem; color: var(--color-text-muted); }
+.cm-k-when svg { flex: 0 0 auto; opacity: .85; }
+.cm-k-t {
+  margin: 0; font-size: 1.1875rem; font-weight: 600; line-height: 1.85; color: var(--navy-800);
+  overflow-wrap: anywhere; white-space: pre-line;
+}
+.cm-k-sig {
+  display: flex; align-items: center; gap: 12px; margin-block-start: 18px; padding-block: 14px 16px;
+  border-block-start: 1px solid var(--card-stroke);
+}
+.cm-k-sig .cm-ident { flex: 1; }
+@container art (max-width: 30rem) {
+  .cm-k { padding-inline: 18px; }
+  /* اللسانُ يبدأ من حافّة القلب في كلّ عرض (المالك ٢٠٢٦-١٠-١٦، لاحظه بعينه): مرساه حشوةُ الكرت، فينتقل معها. */
+  .cm-k-tab { inset-inline-end: 18px; }
+  .cm-k-t { font-size: 1.0625rem; }
+  .cm-k { padding-block-start: 42px; }
+  .cm-k-mark { inline-size: 68px; block-size: 68px; }
+  .cm-k-halo { inset-block-start: -34px; }
+  .cm-k-when { inset-inline-end: 16px; inset-block-start: 14px; }
+}
+/* ══ المحرّرُ الجديد في وضع «الكتابة» — **معاينة** (`/ui/news-editor-v2`، ٢٠٢٦-١٠-١٦) ══════════════════════
+   **الكتابةُ نموذجٌ بحقول الهويّة، والمعاينةُ الخبرُ كما يُنشَر، لوحان منفصلان** (اختيار المالك). جُرّب قبله
+   «على هيئة الخبر» (الكتابةُ في شكل الخبر نفسه) فقال المالك: «لا أعلم هل سأفهمها مكانًا للتحرير أم عرضًا»،
+   و«المخطّط» (عمودٌ فقريٌّ وجزءٌ في كلّ مرّة) فسقط بنقده: يقطع الكتابةَ ويخفي الهيكلَ على الجوّال. */
+.nwx-frame { container: nwx / inline-size; margin-inline: auto; padding-inline: 16px; }
+.nwx-ed { max-inline-size: 48rem; margin-inline: auto; }
+.nwx-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-block-end: 14px; }
+.nwx-top-id { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.nwx-top-t { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; line-height: 1.4; color: var(--navy-800); }
+.nwx-save { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; font-size: .8125rem; font-weight: 600; color: var(--steel-600); }
+.nwx-save[data-state="saving"] { color: var(--color-text-muted); }
+.nwx-later { margin: 0; padding: 32px 16px; text-align: center; color: var(--color-text-muted); }
+.nwx-form { display: flex; flex-direction: column; gap: 16px; }
+
+/* تكليفُ المكلَّف وملاحظةُ الإعادة: أوّلُ ما يقرؤه حين يفتح الخبر. */
+.nwx-brief { display: grid; gap: 10px; }
+.nwx-brief-ret, .nwx-brief-task { padding: 12px 14px; border-radius: var(--radius); border: var(--card-stroke-w) solid var(--card-stroke); background: var(--color-surface); }
+.nwx-brief-ret { display: flex; align-items: flex-start; gap: 10px; border-color: color-mix(in oklab, var(--danger-500) 35%, var(--card-stroke)); background: color-mix(in oklab, var(--danger-500) 6%, var(--color-surface)); color: var(--danger-600); }
+.nwx-brief-ret b, .nwx-brief-task b { font-weight: 800; }
+.nwx-brief-ret p, .nwx-brief-task p { margin: 4px 0 0; color: var(--color-text); }
+.nwx-brief-task { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.nwx-brief-task p { flex-basis: 100%; }
+.nwx-brief-fields { display: inline-flex; gap: 6px; }
+.nwx-brief-fields span { padding: 2px 10px; border-radius: var(--radius-full); background: var(--steel-50); color: var(--navy-800); font-size: .8125rem; font-weight: 700; }
+
+/* الفصل: رقمُه قبل عنوانه في رأس البطاقة، وأدواتُه أزرارُ الهويّة الأيقونيّة. */
+.nwx-chwrap { display: grid; gap: 16px; }
+.nwx-chtitle { display: inline-flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nwx-chtitle b { font-family: var(--font-latin); font-weight: 800; color: var(--steel-400); }
+.nwx-chacts { display: inline-flex; gap: 6px; }
+.nwx-chform { display: grid; gap: 14px; }
+/* زرّا «بند» و«اقتباس» في سطر عنوان الحقل، يظهران ما دام الكاتبُ فيه. */
+.nwx-bodyf { position: relative; }
+.nwx-tools { position: absolute; z-index: 1; inset-block-start: -2px; inset-inline-end: 0; display: flex; gap: 6px; visibility: hidden; }
+.nwx-bodyf[data-on] .nwx-tools { visibility: visible; }
+.nwx-tools button {
+  display: inline-flex; align-items: center; gap: 5px; min-block-size: 28px; padding-inline: 10px;
+  border: 1px solid var(--card-stroke); border-radius: var(--radius-full); background: var(--color-surface);
+  font: inherit; font-size: .8125rem; font-weight: 700; color: var(--color-text-muted); cursor: pointer;
+}
+.nwx-tools button:hover { color: var(--color-primary); border-color: var(--steel-400); }
+.nwx-f-cover { display: block; inline-size: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-sm); }
+.nwx-f-by { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: .8125rem; color: var(--color-text-muted); }
+
+.nwx-offer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-block-start: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--steel-50); font-weight: 700; color: var(--navy-800); }
+.nwx-offer span { margin-inline-end: auto; }
+.nwx-gone { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-block-size: 52px; padding-inline: 16px 8px; border: 2px dashed var(--card-stroke); border-radius: var(--radius); color: var(--color-text-muted); font-weight: 600; }
+.nwx-add {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-block-size: 56px; inline-size: 100%;
+  border: 2px dashed var(--card-stroke); border-radius: var(--radius); background: transparent; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.0625rem; color: var(--color-primary);
+}
+.nwx-add:hover { border-color: var(--steel-400); background: var(--color-surface); }
+.nwx-gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.nwx-gal-grid img { display: block; inline-size: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-sm); }
+.nwx-gal-add { margin-block-start: 10px; min-block-size: 48px; font-size: .9375rem; }
+
+/* الختام: الجاهزيّةُ وفعلُ المرحلة حيث ينتهي الكاتب. */
+.nwx-end { display: grid; gap: 14px; margin-block-start: 4px; padding-block-start: 18px; border-block-start: 1px solid var(--card-stroke); }
+.nwx-ready { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.nwx-ready li {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: var(--radius-full);
+  border: 1px solid color-mix(in oklab, var(--warning-500) 45%, var(--card-stroke)); background: var(--color-surface);
+  font-size: .8125rem; font-weight: 700; color: var(--warning-500);
+}
+.nwx-ready li[data-ok] { border-color: var(--card-stroke); color: var(--steel-600); }
+
+/* المعاينة: لوحُ الشُّرفة والغلافُ المتدلّي وعارضُ المتن نفسُه. */
+.nwx-panel {
+  --nwx-hang: clamp(5rem, 16cqi, 8rem);
+  position: relative; isolation: isolate; overflow: clip;
+  padding: clamp(20px, 4cqi, 36px) clamp(20px, 5cqi, 44px) calc(var(--nwx-hang) + clamp(18px, 3cqi, 28px));
+  border-radius: var(--radius); background: var(--grad-primary); color: var(--color-on-primary);
+}
+.nwx-panel::after {
+  content: ""; position: absolute; z-index: -1; inset-inline: 0; inset-block-end: 0; block-size: calc(var(--nwx-hang) + 18px);
+  background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .07; pointer-events: none;
+}
+@container nwx (min-width: 46rem) { .nwx-panel { text-align: center; } }
+.nwx-cat { display: inline-flex; padding: 4px 13px; border-radius: var(--radius-full); font-size: .8125rem; font-weight: 700; background: rgb(255 255 255 / .14); border: 1px solid rgb(255 255 255 / .24); }
+.nwx-p-title { margin: 12px 0 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(1.625rem, 4.6cqi, 2.625rem); line-height: 1.32; }
+.nwx-p-dek { margin: 12px 0 0; font-size: clamp(1rem, 2.2cqi, 1.1875rem); font-weight: 500; line-height: 1.75; opacity: .9; }
+.nwx-by { margin: 12px 0 0; font-size: .875rem; opacity: .8; }
+.nwx-cover {
+  --nwx-hang: clamp(5rem, 16cqi, 8rem);
+  position: relative; margin: calc(-1 * var(--nwx-hang)) clamp(14px, 4cqi, 40px) 0; block-size: clamp(11rem, 36cqi, 19rem);
+  border-radius: var(--radius); overflow: hidden; background: var(--color-surface-2); box-shadow: var(--shadow-lg);
+}
+.nwx-cover img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
+.nwx-cover-acts { position: absolute; inset-inline: 0; inset-block-end: 12px; display: flex; justify-content: center; gap: 8px; }
+.nwx-glass {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--navy-800) 55%, transparent); backdrop-filter: blur(8px);
+  color: var(--color-on-primary); font-size: .8125rem; font-weight: 600;
+}
+.nwx-p-body { margin-block-start: 28px; }
+
+/* ══ رحلةُ الخبر — **نموذجٌ يُلعَب** (`/ui/news-journey`، ٢٠٢٦-١٠-١٦): إطارُ تطبيقٍ مصغّر، وجرسٌ لكلّ دور ══ */
+.jr-app { border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-bg); overflow: clip; }
+.jr-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-block-end: 1px solid var(--card-stroke); background: var(--color-surface); }
+.jr-bar-id { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; color: var(--navy-800); }
+.jr-bell { position: relative; }
+.jr-bell-btn { position: relative; display: grid; place-items: center; inline-size: 38px; block-size: 38px; border: 0; border-radius: var(--radius-full); background: var(--color-surface-2); color: var(--navy-800); cursor: pointer; }
+.jr-bell-btn b { position: absolute; inset-block-start: -2px; inset-inline-end: -2px; min-inline-size: 18px; padding-inline: 4px; border-radius: var(--radius-full); background: var(--grad-danger); color: var(--color-on-primary); font-family: var(--font-latin); font-size: .6875rem; line-height: 18px; text-align: center; }
+.jr-bell-pop { position: absolute; z-index: 5; inset-block-start: calc(100% + 8px); inset-inline-end: 0; inline-size: min(300px, 80vw); display: grid; gap: 4px; padding: 8px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-lg); }
+.jr-note { display: block; inline-size: 100%; padding: 10px; border: 0; border-radius: var(--radius-sm); background: transparent; text-align: start; font: inherit; font-size: .875rem; line-height: 1.6; color: var(--color-text-muted); cursor: pointer; }
+.jr-note[data-unread] { background: var(--steel-50); color: var(--navy-800); font-weight: 700; }
+.jr-note:hover { background: var(--color-surface-2); }
+.jr-note-empty { margin: 0; padding: 8px; color: var(--color-text-muted); }
+.jr-screen { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.jr-screen > .nwx-top { margin-block-end: 0; }
+.jr-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.jr-head h2 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; color: var(--navy-800); }
+.jr-list { display: grid; gap: 8px; }
+.jr-item { display: grid; gap: 6px; inline-size: 100%; padding: 12px 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); text-align: start; font: inherit; cursor: pointer; }
+.jr-item:hover { border-color: var(--steel-400); }
+.jr-item[data-static] { cursor: default; opacity: .7; }
+.jr-item-t { font-weight: 800; color: var(--navy-800); }
+.jr-item-s { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .8125rem; color: var(--color-text-muted); }
+.jr-back { align-self: flex-start; padding: 0; border: 0; background: transparent; font: inherit; font-weight: 700; color: var(--color-primary); cursor: pointer; }
+.jr-crew { display: grid; gap: 8px; }
+.jr-crew-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); }
+.jr-crew-who { display: grid; gap: 2px; min-width: 0; }
+.jr-crew-who b { color: var(--navy-800); }
+.jr-crew-who span { font-size: .8125rem; color: var(--color-text-muted); }
+.jr-ctx { margin: -8px 0 0; color: var(--color-text-muted); font-weight: 600; }
+.jr-done { display: flex; align-items: center; gap: 8px; margin: 0; padding: 14px; border-radius: var(--radius); background: var(--steel-50); color: var(--navy-800); font-weight: 700; }
+.jr-rooms { display: flex; gap: 8px; opacity: .45; }
+.jr-rooms span { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); font-weight: 700; }
+.jr-pick-g { display: grid; gap: 6px; }
+.jr-pick-h { margin: 0; font-size: .8125rem; font-weight: 800; color: var(--color-text-muted); }
+.jr-prev-gal { margin-block-start: 20px; }
+
 /* رقعةُ اللمس ٤٤ للزرّ الصغير — قانونُ اللمس عابرٌ للمكوّنات. */
-@media (pointer: coarse) {
-  .art-cmt-like { position: relative; }
-  .art-cmt-like::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 100%; height: 44px; transform: translate(50%, -50%); }
-}
-/* ملاحظةُ «يُقرَأ قبل أن يُنشَر»: تُقال مرّةً فوق الحقل، لا مع كلّ تعليق. */
-.art-cmt-note { font-size: .8125rem; color: var(--color-text-muted); }
 
 /* ══════════════════════════════════════════════════════════════════════
    «أنظمة أدِيب» · .rg (المتن) · .reg (الفهرس وصفحةُ الوثيقة)
@@ -14990,50 +15391,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .rgx-follow li { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .875rem; color: var(--color-text-muted); }
 .rgx-follow li b { color: var(--color-text); }
 
-/* ══════════════════════════════════════════════════════════════════════
-   أثاثُ معرضِ الشارات · .artv — **يسقط مع صفحته يوم يُقَرّ الحال** (سابقةُ `.nvlab`).
-   صنفٌ معرضيٌّ لا تلمسه شاشةٌ حيّة.
-   ══════════════════════════════════════════════════════════════════════ */
-.artv-lab { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
-.artv-col { flex: 0 0 auto; width: var(--artv-w, 375px); max-width: 100%; }
-/* الإطارُ **حاويةُ استعلام**: الصفحةُ تقيس حاويتَها لا الشاشة، فبلا `container-type`
-   لا تُطابِق استعلاماتُها شيئًا. وذو ارتفاعٍ وتمرير كي تُقرأ كاملةً في عمودها. */
-.artv-frame {
-  container: art / inline-size;
-  height: 74vh; min-height: 500px; overflow-y: auto; overscroll-behavior: contain;
-  padding: 16px;
-  border: var(--card-stroke-w) solid var(--card-stroke);
-  border-radius: var(--radius); background: var(--color-bg);
-}
-.artv-tag { display: flex; align-items: center; gap: 8px; margin-block-end: 8px; font-size: 12.5px; font-weight: 800; color: var(--color-text-muted); }
-.artv-tag .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-border); }
-.artv-tag.live .dot { background: var(--success); }
-.artv-why { margin-block-start: 8px; font-size: 12.5px; line-height: 1.75; color: var(--color-text-muted); }
-
-/* ── تجربةُ الزجاج على الشُّرفة (معرضٌ، يسقط مع صفحته) ─────────────────
-   **والمفارقةُ تُقال أوّلًا:** `--glass-bg` أبيضُ شفّافٌ بـ١٦٪، وكلُّ استعمالاته في
-   المستودع فوق **سطحٍ داكن** (رأسُ المجلس · عقدةُ الشجرة · شارةُ الصورة). والشُّرفةُ
-   تركب الغلافَ بطرفها وتجلس أكثرُها على الورق الفاتح — فالزجاجُ الأبيضُ عليها يقع
-   على فاتحٍ فيختفي. فوجهان لا وجه: فاتحٌ بحبرٍ داكن، وداكنٌ بحبرٍ فاتح. */
-
-/* فاتح: الرمزُ كما هو، والحبرُ يُقلَب داكنًا وإلّا لم يُقرأ على الورق. */
-.artv-ledge-glass {
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  border: var(--card-stroke-w) solid var(--card-stroke);
-  color: var(--color-text);
-}
-.artv-ledge-glass .art-title { color: var(--color-text); }
-.artv-ledge-glass .art-lede, .artv-ledge-glass .art-meta { color: var(--color-text-muted); }
-
-/* داكن: ليس رمزًا قائمًا بل **مشتقٌّ** من كحليّ الهوية بـ`color-mix` — فالحبرُ يبقى
-   فاتحًا كما هو اليوم، والغلافُ يتنفّس من خلف اللوح حيث يركبه. */
-.artv-ledge-smoke {
-  background: color-mix(in oklab, var(--navy-800) 70%, transparent);
-  backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1);
-  border: var(--card-stroke-w) solid var(--glass-border);
-}
-
 /* ═══ محرّرُ أقسام الخبر ═══════════════════════════════════════════════
    المتنُ صار أقسامًا مصرَّحةً لا نصًّا يُخمَّن (٢٠٢٦-٠٩-٢٤)، فصار لكلّ قسمٍ خانةُ
    عنوانٍ وخانةُ متن. وهذه أسرةُ الصفِّ الذي يحملهما.
@@ -15634,8 +15991,10 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
    الذي اقتُرح أوّلًا. والشعارُ رسمُه (`app/games/_components/GamesLogo.tsx`) والخطُّ Rooyin اختيارُه.
 
    **واللوحةُ مقترَحةٌ لا مشتقّة، على خلاف المحطّة ودربك خضر:** الشعارُ أسودُ بلا لون، فلا لونَ
-   يُستخرج منه. فعُرض مظهران على `data-look` في المعرض (`/ui/games-hub`)، وما يختاره المالكُ
-   يصير اللوحة ويُحذف الآخر. وكلُّ هكسٍ في كتل الرموز أدناه، ولا لونَ حرفيٌّ بعدها.
+   يُستخرج منه. فعُرض مظهران («أ. ليلُ السِّنث» و«ب. كابينةُ الأركيد») ثمّ مزيجان بينهما في
+   `/ui/games-hub`، **فاختار المالكُ «أ» ومعه أضواءُ اللافتة حول الشعار من «ب»** (٢٠٢٦-١٠-١٧)،
+   وحُذف الباقي. و`data-look="synth"` باقٍ على الجذر سمةً للمظهر المعتمد (`lib/games/look.ts`).
+   وكلُّ هكسٍ في كتل الرموز أدناه، ولا لونَ حرفيٌّ بعدها.
 
    **والخطُّ بكسليّ، فالأحجامُ بالبكسل لا بـrem:** بكسلُ Rooyin عُشرُ حجمه، فكلُّ حجمٍ من
    مضاعفات ٢٠، وكلُّ سطرٍ ومسافةٍ من مضاعفات ١٠ (انظر `fonts.css`). والتوهّجُ على الشعار
@@ -15653,6 +16012,11 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --agm-void: #000000;
   /* نغماتُ الألعاب: كلُّ كابينةٍ تُضاء بلون لعبتها، لا بلون الصالة */
   --agm-darb: #7ED06A; /* = --drb-suit-lit: بدلةُ خضيران مضاءةً */
+  /* ونغماتٌ تختارها غرفةُ الألعاب للعبةٍ بلا لونٍ من علامتها (٢٠٢٦-١٠-١٧)، وكانت نغماتِ المعرض
+     التجريبيّة. وكلُّ نغمةٍ هنا قيمةٌ في قيد `games.tone` وفي `dashboard/games/vocab.ts`. */
+  --agm-amber: #FF8A3D;
+  --agm-sky: #5AB4FF;
+  --agm-violet: #B07CFF;
   /* دائرةٌ بكسليّة: درجاتٌ من عُشر القطر، لأزرار الكابينة وكرة عصاها */
   --agm-round: polygon(30% 0, 70% 0, 70% 10%, 90% 10%, 90% 30%, 100% 30%, 100% 70%, 90% 70%, 90% 90%, 70% 90%, 70% 100%, 30% 100%, 30% 90%, 10% 90%, 10% 70%, 0 70%, 0 30%, 10% 30%, 10% 10%, 30% 10%);
 
@@ -15683,28 +16047,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --agm-cue: #3CE8FF;
   --agm-floor: #FF4FD8;
   --agm-stick: #FF4FD8;
+  --agm-bulb: #3CE8FF;
   --agm-rule: #4A3A86;
   --agm-scan: 3%;
-}
-
-/* ب. «كابينةُ الأركيد»: سوادُ الصالة، والشعارُ أنبوبُ نيونٍ أبيضُ القلب بهالةٍ كهرمانيّة،
-   وأضواءُ لافتةٍ صفراءُ حوله، والكابينةُ لافتتُها مضاءةٌ بلون لعبتها وأزرارُها صفراء */
-.agm[data-look="cabinet"] {
-  --agm-bg: #09090B;
-  --agm-bg-2: #111114;
-  --agm-body: #16161A;
-  --agm-bezel: #050506;
-  --agm-deck: #202026;
-  --agm-ink: #F6F1E4;
-  --agm-ink-2: #8E8A7E;
-  --agm-logo-ar: #FFF6DA;
-  --agm-logo-la: #FFD23F;
-  --agm-glow: #FFA91F;
-  --agm-cue: #FFD23F;
-  --agm-bulb: #FFD23F;
-  --agm-stick: #E8412C;
-  --agm-rule: #2C2C33;
-  --agm-scan: 5%;
 }
 
 .agm *, .agm *::before, .agm *::after { box-sizing: border-box; }
@@ -15729,7 +16074,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
     radial-gradient(130% 90% at 50% 0%, transparent 55%, color-mix(in oklab, var(--agm-void) 55%, transparent)),
     linear-gradient(to bottom, var(--agm-bg), var(--agm-bg-2));
 }
-/* الأرضيّة: شبكةُ السِّنث تغيب في الأفق، وفي الكابينة بقعةُ ضوءٍ تحت الآلات */
+/* الأرضيّة: شبكةُ السِّنث تغيب في الأفق */
 .agm-hub::before {
   content: "";
   position: absolute;
@@ -15747,12 +16092,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   transform: perspective(240px) rotateX(58deg);
   transform-origin: bottom;
 }
-.agm[data-look="cabinet"] .agm-hub::before {
-  inset-inline: 0;
-  height: 360px;
-  background: radial-gradient(60% 100% at 50% 100%, color-mix(in oklab, var(--agm-bulb) 12%, transparent), transparent 70%);
-}
-
 .agm-hall { display: grid; gap: 40px; max-width: 1200px; margin-inline: auto; }
 
 /* ── الواجهة: الشعارُ يشتعل مرّةً عند الفتح كأنبوب نيون، ثمّ يثبت ── */
@@ -15769,9 +16108,10 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .agm-logo-la { fill: var(--agm-logo-la); }
 .agm-start { display: flex; align-items: center; gap: 10px; color: var(--agm-cue); font-weight: 700; }
 .agm-caret { display: block; width: 10px; height: 20px; background: currentColor; animation: agm-blink 1s steps(1, end) infinite; }
-/* ب: أضواءُ اللافتة حول الشعار */
-.agm[data-look="cabinet"] .agm-hero { padding: 40px 30px; }
-.agm[data-look="cabinet"] .agm-hero::before {
+/* أضواءُ اللافتة حول الشعار: كانت لـ«ب» وحدَها، وطلبها المالكُ في «أ» (٢٠٢٦-١٠-١٧)، فصارت للصالة كلِّها
+   بلون `--agm-bulb` من لوحة كلّ مظهر */
+.agm .agm-hero { padding: 40px 30px; }
+.agm .agm-hero::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -15794,6 +16134,124 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 }
 /* النغمةُ على كلّ ما يحمل لعبةً: كابينتُها ولوحتُها في «أعلى النقاط» وشريطُ حدثِها */
 .agm [data-tone="darb"] { --agm-tone: var(--agm-darb); }
+.agm [data-tone="amber"] { --agm-tone: var(--agm-amber); }
+.agm [data-tone="sky"] { --agm-tone: var(--agm-sky); }
+.agm [data-tone="violet"] { --agm-tone: var(--agm-violet); }
+
+/* الصفحةُ نفسُها (`/games`): الصالةُ تملأ الشاشةَ ولا رأسَ للموقع حولها (القاعدة ١) */
+.agm-page { min-height: 100dvh; display: grid; }
+
+/* معاينةُ الكابينة في غرفة الألعاب: الصالةُ نفسُها مصغَّرةً إلى كابينةٍ واحدة في إطارٍ بزاوية الهويّة */
+.agm-preview { border-radius: var(--radius); overflow: clip; }
+.agm-preview .agm-hub { padding: 24px 16px; min-height: 0; }
+.agm-preview .agm-grid { grid-template-columns: minmax(0, 380px); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   غرفةُ الألعاب في اللوحة · بادئة .gmr  (معرض الاتّجاهين: /ui/games-room، ٢٠٢٦-١٠-١٧)
+   ══════════════════════════════════════════════════════════════════════
+   قال المالك: «طريقةُ العرض بدائيّةٌ جدًّا». فاللعبةُ تُعرَف بشاشتها الحيّة (مقطعُ كابينتها يدور)
+   وباسمها بخطّ الصالة (Rooyin)، والباقي سطحُ اللوحة هادئًا. ونغمةُ كلّ لعبةٍ هنا هي نغمتُها في
+   الصالة (`--agm-*`)، ومعها حبرٌ أعمقُ يُقرأ على السطح الفاتح. */
+.gmr { --gmr-tone: var(--steel-500); --gmr-ink: var(--color-text); }
+.gmr [data-tone="darb"] { --gmr-tone: #7ED06A; --gmr-ink: #2E7A1F; }
+.gmr [data-tone="amber"] { --gmr-tone: #FF8A3D; --gmr-ink: #B4520F; }
+.gmr [data-tone="sky"] { --gmr-tone: #5AB4FF; --gmr-ink: #1D6BAE; }
+.gmr [data-tone="violet"] { --gmr-tone: #B07CFF; --gmr-ink: #6B3DC2; }
+
+/* الشاشة: مقطعُ اللعبة في إطارٍ داكن، تُضيئه نغمتُها كما تُضيء الكابينةُ في الصالة */
+.gmr-screen {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--gmr-sw, 112px);
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--navy-950);
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--gmr-tone) 55%, transparent),
+    0 12px 28px -8px color-mix(in oklab, var(--gmr-tone) 55%, transparent);
+}
+.gmr-screen video, .gmr-screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gmr-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, color-mix(in oklab, var(--navy-950) 22%, transparent) 0 1px, transparent 1px 3px);
+}
+.gmr-screen-off { display: grid; place-items: center; color: var(--steel-300); font-family: "Rooyin", var(--font-body); font-size: 14px; }
+
+.gmr-name { font-family: "Rooyin", var(--font-body); font-weight: 700; font-size: 26px; line-height: 1.25; color: var(--gmr-ink); font-feature-settings: normal; }
+.gmr-line { font-size: .875rem; line-height: 1.75; color: var(--color-text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 3.5em; }
+.gmr-facts { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.gmr-fact { display: inline-flex; align-items: baseline; gap: 6px; font-size: .8125rem; color: var(--color-text-muted); }
+.gmr-fact b { font-family: var(--font-latin); font-size: 1.25rem; font-weight: 700; color: var(--color-text); }
+
+/* شريطُ المسابقة الجارية: ليلٌ في صدر الغرفة، لأنّه الشيءُ الوحيدُ الذي يتغيّر بالدقيقة */
+.gmr-live {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  border-radius: var(--radius);
+  background: var(--navy-950);
+  color: var(--steel-50);
+  box-shadow: var(--shadow-md);
+}
+.gmr-live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gmr-tone); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gmr-tone) 30%, transparent); animation: gmr-pulse 1.6s ease-in-out infinite; }
+.gmr-live-t { min-width: 0; }
+.gmr-live-t b { display: block; font-weight: 700; }
+.gmr-live-t span { font-size: .8125rem; color: var(--steel-300); }
+.gmr-live-clock { font-family: var(--font-latin); font-size: 1.375rem; font-weight: 700; color: var(--gmr-tone); }
+@keyframes gmr-pulse { 50% { box-shadow: 0 0 0 8px color-mix(in oklab, var(--gmr-tone) 0%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .gmr-live-dot { animation: none; } }
+
+/* ── أ. الرفّ: كلُّ لعبةٍ صفٌّ فيه شاشتُها، والصفوفُ تتدفّق (القاعدة ٦) ── */
+.gmr-rack { display: flex; flex-wrap: wrap; gap: 18px; }
+.gmr-rack > * { flex: 1 1 400px; }
+.gmr-row { display: flex; gap: 16px; padding: 14px; align-items: stretch; }
+.gmr-row-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
+.gmr-row .gmr-name { font-size: 24px; }
+.gmr-chips { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── أ. صدرُ صفحة اللعبة: الشاشةُ كبيرةٌ بجانب اسمها وأرقامها ── */
+.gmr-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "screen head" "body body";
+  gap: 16px 20px;
+  padding: 18px;
+  margin-bottom: 18px;
+  /* بنغمة لعبته (اختيارُ المالك ٢٠٢٦-١٠-١٧): Aurora الهويّة نفسُها (القاعدة ٤) بلون اللعبة لا بالفولاذيّ،
+     فتحضر اللعبةُ ولا يخرج الصدرُ من لغة اللوحة. ورُدّت قبلها لافتةُ الصالة الداكنة: «كحبّة الهيل في الكعكة». */
+  background: linear-gradient(135deg, color-mix(in oklab, var(--gmr-tone) 22%, var(--color-surface)), var(--color-surface) 62%);
+  border-color: color-mix(in oklab, var(--gmr-tone) 45%, var(--card-stroke));
+}
+.gmr-hero .gmr-screen { grid-area: screen; --gmr-sw: 120px; }
+.gmr-hero-head { grid-area: head; display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; }
+.gmr-hero-head .gmr-name { font-size: 34px; }
+.gmr-hero-body { grid-area: body; display: flex; flex-direction: column; gap: 16px; }
+.gmr-hero .gmr-fact b { font-size: 1.75rem; }
+@container (min-width: 720px) {
+  .gmr-hero { grid-template-areas: "screen head" "screen body"; grid-template-rows: auto 1fr; }
+  .gmr-hero .gmr-screen { --gmr-sw: 220px; }
+  .gmr-hero-head .gmr-name { font-size: 44px; }
+}
+.gmr-cq { container-type: inline-size; }
+
+/* صدارةُ المسابقة في كرتها: الأوائلُ من جولات نافذتها وحدَها (`game_contest_board`) */
+.gmr-board { display: grid; gap: 6px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--color-border); }
+.gmr-board-h { font-size: .8125rem; color: var(--color-text-muted); }
+.gmr-board ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gmr-board li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: .875rem; }
+.gmr-board-rank { font-family: var(--font-latin); font-weight: 700; color: var(--color-text-muted); }
+.gmr-board li:first-child .gmr-board-rank { color: var(--warning-600); }
+.gmr-board-who { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+.gmr-board-val { color: var(--color-text-muted); }
+
 
 /* اللافتة: أعرضُ من جسم الكابينة، تبرز فوق جانبيه */
 .agm-cab-marquee { margin-inline: -10px; padding: 10px 20px; text-align: center; }
@@ -15897,19 +16355,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .agm[data-look="synth"] .agm-cab-name { color: var(--agm-tone); text-shadow: 0 0 10px color-mix(in oklab, var(--agm-tone) 70%, transparent); }
 .agm[data-look="synth"] .agm-push { filter: drop-shadow(0 0 8px color-mix(in oklab, var(--cap) 60%, transparent)); }
 
-/* ب: اللافتةُ لوحٌ مضاءٌ بلون اللعبة، والزرّان من الصالة: أصفرُ للّعب وعاجيٌّ للصدارة */
-.agm[data-look="cabinet"] .agm-cab {
-  --agm-go: var(--agm-cue);
-  --agm-alt: var(--agm-ink);
-}
-.agm[data-look="cabinet"] .agm-cab-marquee {
-  position: relative;
-  z-index: 1;
-  background: var(--agm-tone);
-  color: var(--agm-void);
-  box-shadow: 0 0 30px color-mix(in oklab, var(--agm-tone) 50%, transparent);
-}
-
 /* ── الرأس: اسمُ الصالة وبابٌ إلى موقع النادي، لا رأسُ الموقع (القاعدة ١) ── */
 .agm-top {
   position: relative;
@@ -15977,6 +16422,12 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .agm-who { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .agm-val { color: var(--agm-ink-2); }
 .agm-board-more { display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--agm-cue); font-weight: 700; }
+
+/* ── صفحةُ المسابقة (`/games/contests/<id>`): العدّادُ ثمّ العنوانُ والجوائزُ ثمّ الصدارة، في عمودٍ واحدٍ وسط الصالة ── */
+.agm-contest { position: relative; display: grid; justify-items: center; gap: 20px; max-width: 720px; margin: 10px auto 40px; text-align: center; }
+.agm-contest .agm-event { width: 100%; margin: 0; cursor: default; }
+.agm-contest .agm-event:hover { background: color-mix(in oklab, var(--agm-tone) 10%, var(--agm-body)); }
+.agm-contest .agm-board { width: min(100%, 460px); text-align: start; }
 
 /* ── التذييل: الصالةُ ومَن وراءها، والدعم، والحسابات ── */
 .agm-foot {
@@ -16085,14 +16536,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .agmp-dev-cap { margin-top: 8px; text-align: center; font-size: .8125rem; color: var(--color-text-muted); }
 .agmp-full { min-height: 100dvh; display: grid; }
 /* ألعابٌ للعرض فقط في المعرض، لتُرى الصالةُ بأكثر من كابينة: نغماتُها هنا لا في الصالة */
-.agmp-demo {
-  --agmp-demo-a: #FF8A3D;
-  --agmp-demo-b: #5AB4FF;
-  --agmp-demo-c: #B07CFF;
-}
-.agmp-demo [data-tone="demo-a"] { --agm-tone: var(--agmp-demo-a); }
-.agmp-demo [data-tone="demo-b"] { --agm-tone: var(--agmp-demo-b); }
-.agmp-demo [data-tone="demo-c"] { --agm-tone: var(--agmp-demo-c); }
 
 /* ── الفائزون بعد الإقفال، والاحتفاءُ بالفائز حين يدخل (طلبُ المالك ٢٠٢٦-٠٩-٢٧) ── */
 .drba-wins { display: flex; flex-direction: column; gap: 14px; }
@@ -16265,6 +16708,10 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .sx-f img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .sx-f i { position: absolute; inset: 0; background: center bottom / auto 86% no-repeat; }
 .sx-f.is-mono b { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: calc(var(--s) * .42); color: var(--color-on-primary); }
+/* الشاغر: مكانُ الوجه بحجمه، حلقةٌ متقطّعة على أرضٍ فاتحة، والاسمُ «شاغر» بلونٍ هادئ */
+.sx-f.is-vacant { background: var(--navy-50); box-shadow: none; border: 1.5px dashed var(--navy-300); }
+.sx-node.is-vacant .sx-nm, .sx-lead.is-vacant .sx-nm, .sx-dep.is-vacant .sx-dn { color: var(--navy-400); font-weight: 800; }
+.sx-dep.is-vacant { background: none; border: 1px dashed var(--navy-200); }
 .sx-node.is-lead .sx-f { box-shadow: 0 0 0 5px var(--color-bg), 0 0 0 6px var(--navy-500), 0 0 0 11px var(--color-bg), 0 0 0 12px var(--navy-200); }
 /* زرُّ الصفحة: الرابطُ الوحيد للشخص — دائرةٌ كحليّةٌ بسهمٍ على حافّة الوجه. الوجهُ والاسمُ لا ينقلان */
 .sx-go { position: absolute; bottom: calc(var(--s) * .02); inset-inline-start: calc(var(--s) * .02); display: grid; place-items: center; width: clamp(22px, calc(var(--s) * .3), 32px); height: clamp(22px, calc(var(--s) * .3), 32px); border-radius: 50%; background: var(--navy-800); color: var(--color-on-primary); box-shadow: 0 0 0 3px var(--color-bg); transition: transform var(--dur-fast) var(--ease-standard), background var(--dur-fast); }
@@ -16457,3 +16904,495 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 @media (max-width: 480px) {
   .ntf-drawer { border-radius: 0; border-inline-start: 0; }
 }
+
+/* ── ترويسةُ صفحة الأخبار (معاينة ٢٠٢٦-١٠-١٤) ──────────────────────────────
+   لغةُ «الشُّرفة المقلوبة» نفسُها: لوحٌ كحليٌّ منقوش، والشبكةُ تتدلّى منه بمقدار
+   `--hang` الذي يُفسَح له في قاعه — رقمٌ واحدٌ لا اثنان، كغلاف المقال. */
+.news-mast { container: mast / inline-size; --hang: clamp(56px, 9cqi, 104px); --hang-pad: clamp(20px, 4cqi, 32px); }
+.news-mast-panel {
+  position: relative; isolation: isolate; overflow: clip; text-align: center;
+  padding: clamp(18px, 4cqi, 32px) clamp(20px, 5cqi, 48px) calc(var(--hang) + var(--hang-pad));
+  border-radius: var(--radius); background: var(--grad-primary); color: var(--color-on-primary);
+}
+.news-mast-panel::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset-inline: 0; inset-block-end: 0;
+  block-size: calc(var(--hang) + var(--hang-pad) - 10px);
+  background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .07;
+}
+/* سطرُ التاريخ بين خطّين رفيعين كترويسة الصحيفة */
+.news-mast-date {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  font-size: .875rem; font-weight: 700; color: color-mix(in oklab, var(--color-on-primary) 78%, transparent);
+}
+.news-mast-date::before, .news-mast-date::after {
+  content: ""; flex: 1 1 20px; block-size: 1px; background: color-mix(in oklab, var(--color-on-primary) 26%, transparent);
+}
+/* اليومان (الميلاديّ والهجريّ) سطرٌ واحدٌ على السعة، وعلى الضيق يتراكبان بين الخطّين */
+.news-mast-date-t { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 20px; flex: 0 1 auto; }
+.news-mast-title {
+  margin-block-start: clamp(14px, 3cqi, 26px);
+  font-family: var(--font-display); font-weight: 900; line-height: 1.15;
+  font-size: clamp(2.5rem, 1.2rem + 6cqi, 4.75rem); color: var(--color-on-primary);
+}
+.news-mast-deck {
+  margin-block-start: 10px;
+  font-size: clamp(1rem, .95rem + .4cqi, 1.1875rem); line-height: 1.8; text-wrap: balance;
+  color: color-mix(in oklab, var(--color-on-primary) 78%, transparent);
+}
+/* أرقامُ النشرة بثوب «بريشة» في صدر المقال */
+.news-mast-facts {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px;
+  margin: clamp(14px, 3cqi, 22px) 0 0; padding: 0; list-style: none;
+}
+.news-mast-facts li {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: .9375rem; font-weight: 700; line-height: 1.7;
+  color: color-mix(in oklab, var(--color-on-primary) 90%, transparent);
+}
+.news-mast-facts svg { flex: 0 0 auto; width: 17px; height: 17px; opacity: .85; }
+/* الشبكةُ تتدلّى من اللوح: يصعد صفُّها الأوّل بمقدار `--hang` ويُحاذي داخلَه */
+.news-mast-grid {
+  position: relative; z-index: 1;
+  margin: calc(-1 * var(--hang)) clamp(12px, 3cqi, 32px) 0;
+}
+/* شبكةٌ لا انسياب: الصفُّ الأخيرُ الناقصُ يبقى بعرض أعمدته فلا تتضخّم كروتُه */
+.card-grid.news-mast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 18px; }
+
+/* ── كرتا الخبر (المالك ٢٠٢٦-١٠-١٤) — `NewsCard.tsx` ──────────────────────────
+   أجزاءٌ مشتركة: الصورةُ وحبّةُ الفئة والعنوانُ والموجز. */
+.ncard-media { position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10; background: var(--grad-primary); }
+.ncard-media img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; transition: transform var(--dur) var(--ease-standard); }
+.ncard-ph {
+  position: absolute; inset: 0; display: grid; place-items: center; color: color-mix(in oklab, #fff 70%, transparent);
+  background: url("/brand/pattern-white.svg") no-repeat center bottom / cover;
+}
+/* الفئةُ حبّةٌ زجاجيّةٌ بثوب نسبة المصوّر (`.art-hang-credit`) فتُقرأ على أيّ صورة */
+.ncard-cat {
+  position: absolute; inset-block-start: 12px; inset-inline-start: 12px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 11px; border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--navy-900) 50%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.6;
+}
+/* العنوانُ سطران محجوزان على الأقلّ فتتساوى الكروت */
+.ncard-title {
+  margin-block-start: 8px;
+  font-family: var(--font-display); font-weight: 900; font-size: 1.125rem; line-height: 1.55;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  min-block-size: calc(2 * 1.55em);
+  transition: color var(--dur) var(--ease-standard);
+}
+.ncard-sum {
+  margin-block-start: 6px; font-size: .9375rem; line-height: 1.8; color: var(--color-text-muted);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+
+
+/* أ — الغلافُ الزجاجيّ: الصورةُ هي الكرت، والكلامُ على لوحٍ كحليٍّ زجاجيٍّ منقوشٍ في قاعها */
+.gcard {
+  position: relative; isolation: isolate; display: block; overflow: hidden; aspect-ratio: 4 / 5;
+  border-radius: var(--radius); background: var(--grad-primary); box-shadow: var(--shadow-md);
+  color: #fff; text-decoration: none;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.gcard:focus-visible { outline: 0; box-shadow: var(--ring); }
+.gcard > img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; transition: transform .5s var(--ease-standard); }
+.gcard-ph { position: absolute; inset: 0; display: grid; place-items: center; color: color-mix(in oklab, #fff 70%, transparent); background: url("/brand/pattern-white.svg") no-repeat center bottom / cover; }
+@media (hover: hover) {
+  .gcard:hover { transform: scale(var(--hover-scale)); box-shadow: var(--shadow-lg); }
+  .gcard:hover > img { transform: scale(1.05); }
+}
+.gcard-panel {
+  position: absolute; inset-inline: 10px; inset-block-end: 10px; isolation: isolate; overflow: hidden;
+  display: flex; flex-direction: column; padding: 14px 16px 15px;
+  border-radius: calc(var(--radius) - 6px); border: 1px solid var(--glass-border);
+  background: color-mix(in oklab, var(--navy-900) 58%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+.gcard-panel::after {
+  content: ""; position: absolute; z-index: -1; inset-inline: 0; inset-block-end: 0; block-size: 70%;
+  background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .08; pointer-events: none;
+}
+.gcard-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .75rem; font-weight: 700; color: color-mix(in oklab, #fff 72%, transparent); }
+.gcard-facts > span { display: inline-flex; align-items: center; gap: 5px; }
+/* العنوانُ سطران ثابتان (قانونُ الأسطر): فيبدأ لوحُ الزجاج من الارتفاع نفسِه في كلّ كرت */
+.gcard-title {
+  margin-block-start: 6px; font-family: var(--font-display); font-weight: 900; font-size: 1.125rem; line-height: 1.55;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; block-size: calc(2 * 1.55em);
+}
+.gcard-by { display: flex; align-items: flex-start; gap: 6px; margin-block-start: 8px; font-size: .8125rem; font-weight: 700; line-height: 1.6; color: color-mix(in oklab, #fff 85%, transparent); }
+.gcard-by svg { flex: 0 0 auto; margin-block-start: .22em; opacity: .85; }
+.gcard .ncard-cat { z-index: 1; }
+/* **كلُّ كرتٍ يسع عنوانًا بحدّ المحرّر (`TITLE_MAX` = ‏٦٠ حرفًا) في أسطره المحجوزة** (المالك
+   ٢٠٢٦-١٠-١٤). قيس أنّ الكرتَ الضيّق (جوّالٌ، وعمودان على المتوسّط) لا يسع فوق ‏٤٧–٤٩ حرفًا
+   بخطّ ‏18px، فينزل الخطُّ إلى ‏16 ويضيق الإطارُ قليلًا هنا وحده. ومن غيّر حدَّ المحرّر فليُعِد القياس. */
+.gcard { container-type: inline-size; }
+@container (max-width: 320px) {
+  .gcard-panel { inset-inline: 8px; inset-block-end: 8px; padding: 12px 13px 13px; }
+  .gcard-title { font-size: 1rem; }
+}
+
+/* ب — ختمُ التاريخ: ختمٌ كحليٌّ منقوشٌ يتدلّى من الصورة إلى الورق، والعنوانُ بجانبه */
+.scard { display: flex; flex-direction: column; block-size: 100%; color: var(--color-text); text-decoration: none; }
+.scard:focus-visible { outline: 0; box-shadow: var(--ring); }
+@media (hover: hover) {
+  .scard:hover .ncard-media img { transform: scale(1.03); }
+  .scard:hover .ncard-title { color: var(--color-primary); }
+}
+.scard-body { display: flex; flex-direction: column; flex: 1 1 auto; padding: 14px 18px 18px; }
+.scard-head { display: grid; grid-template-columns: auto 1fr; gap: 0 12px; align-items: start; }
+/* **قانونُ الأسطر** (المالك ٢٠٢٦-١٠-١٤): كلُّ نصٍّ في الكرت بعددِ أسطرٍ ثابتٍ **محجوزٍ ولو قصر
+   ومقصوصٍ إن طال** — فلا يطول كرتٌ عن جاره ولا تتعرّج الأسطرُ في الصفّ. والعنوانُ كاملًا في الخبر نفسِه. */
+.scard-head .ncard-title { margin: 0; font-size: 1.0625rem; -webkit-line-clamp: 3; block-size: calc(3 * 1.55em); min-block-size: 0; }
+.scard-seal {
+  position: relative; z-index: 1; isolation: isolate; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  inline-size: 60px; padding: 9px 4px 8px; margin-block-start: -48px;
+  border-radius: 14px; border: 3px solid var(--color-surface);
+  background: var(--grad-primary); color: #fff; box-shadow: var(--shadow-lg); text-align: center;
+}
+.scard-seal::after {
+  content: ""; position: absolute; z-index: -1; inset-inline: 0; inset-block-end: 0; block-size: 55%;
+  background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .12; pointer-events: none;
+}
+.scard-seal b { font-family: var(--font-latin); font-weight: 700; font-size: 1.75rem; line-height: 1; }
+.scard-seal small { margin-block-start: 5px; font-size: .75rem; font-weight: 700; line-height: 1.2; }
+.scard-seal i { font-style: normal; font-family: var(--font-latin); font-size: .6875rem; line-height: 1.3; color: color-mix(in oklab, #fff 65%, transparent); }
+.scard .ncard-sum { margin-block-start: 10px; block-size: calc(2 * 1.8em); }
+.scard-foot {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap;
+  margin-block-start: auto; padding-block-start: 14px;
+  font-size: .8125rem; font-weight: 700; line-height: 1.7; color: var(--color-text-muted);
+}
+.scard-by, .scard-time { display: inline-flex; align-items: flex-start; gap: 6px; }
+.scard-by svg, .scard-time svg { flex: 0 0 auto; margin-block-start: .25em; opacity: .8; }
+.scard-time { font-weight: 400; white-space: nowrap; }
+/* **الكاتبُ سطرٌ واحدٌ يُقصّ بنقاط** كالعنوان والموجز (المالك ٢٠٢٦-١٠-١٤): خبرٌ بأربعة كتّاب
+   كان يأخذ سطرين. والاسمُ كاملًا في تلميح المرور (`title`). */
+.scard-foot { flex-wrap: nowrap; }
+.scard-by, .gcard-by { min-inline-size: 0; flex: 0 1 auto; }
+.scard-by > span, .gcard-by > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-inline-size: 0; }
+.scard-time { flex: 0 0 auto; }
+
+/* **الموجزُ عنوانٌ فرعيٌّ في اللوح تحت العنوان** (المالك ٢٠٢٦-١٠-١٤؛ `Hero`) — أبيضُ أخفُّ منه، ومتوازنُ الأسطر على السعة */
+.art-hang-dek {
+  margin-block-start: 10px; max-inline-size: 46rem;
+  font-size: clamp(1rem, .95rem + .4cqi, 1.1875rem); line-height: 1.75; font-weight: 500;
+  color: color-mix(in oklab, var(--color-on-primary) 84%, transparent); text-wrap: pretty;
+}
+@container art (min-width: 46rem) { .art-hang-dek { margin-inline: auto; text-wrap: balance; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   معاينة «مميّز» و«الأخبار المعروضة» · .nft (/ui/news-featured، ٢٠٢٦-١٠-١٦)
+   ══════════════════════════════════════════════════════════════════════ */
+.nft { display: grid; gap: 40px; }
+.nft-head { display: grid; gap: 12px; }
+.nft-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.75rem; color: var(--navy-800); }
+.nft-head p { margin: 0; color: var(--color-text-muted); }
+.nft-head .nft-say { color: var(--navy-800); font-weight: 700; }
+.nft-sec { display: grid; gap: 12px; }
+.nft-sec h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; color: var(--navy-800); }
+.nft-note { margin: 0; font-size: .875rem; color: var(--color-text-muted); }
+.nft-two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 64rem) { .nft-two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.nft-place { display: grid; gap: 6px; align-content: start; }
+.nft-where { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: .8125rem; font-weight: 800; color: var(--steel-500); }
+.nft-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); }
+.nft-thumb { inline-size: 48px; block-size: 48px; border-radius: calc(var(--radius) - 4px); object-fit: cover; }
+.nft-row-main { display: grid; gap: 4px; justify-items: start; min-inline-size: 0; }
+.nft-row-main b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-inline-size: 100%; font-size: .875rem; color: var(--navy-800); }
+.nft-ctl { display: flex; gap: 12px; }
+.nft-strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(180px, 1fr); gap: 12px; overflow-x: auto; padding-block-end: 6px; }
+.nft-slide { position: relative; margin: 0; aspect-ratio: 16 / 10; border-radius: var(--radius); overflow: clip; background: var(--navy-800); }
+.nft-slide img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; opacity: .75; }
+.nft-slide figcaption { position: absolute; inset-inline: 10px; inset-block-end: 8px; color: #fff; font-weight: 800; font-size: .8125rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nft-slide-n { position: absolute; inset-block-start: 8px; inset-inline-start: 8px; display: grid; place-items: center; inline-size: 26px; block-size: 26px; border-radius: var(--radius-full); background: #fff; color: var(--navy-800); font-family: var(--font-latin); font-weight: 800; font-size: .8125rem; }
+.nft-slide-star { position: absolute; inset-block-start: 8px; inset-inline-end: 8px; display: grid; place-items: center; inline-size: 26px; block-size: 26px; border-radius: var(--radius-full); background: rgba(255,255,255,.2); backdrop-filter: blur(6px); color: #fff; }
+
+/* رحلةُ الخبر — «الإدارة» والمحادثة (٢٠٢٦-١٠-١٦، هيكلةٌ لا تصميم). */
+.jr-crew-item { display: grid; gap: 8px; }
+.jr-crew-row { flex-wrap: wrap; }
+.jr-thread { display: grid; gap: 8px; padding: 12px; border-radius: var(--radius); background: var(--steel-50); }
+.jr-msg { display: grid; gap: 2px; justify-self: end; max-inline-size: 85%; padding: 8px 12px; border-radius: var(--radius); background: var(--color-surface); border: var(--card-stroke-w) solid var(--card-stroke); }
+.jr-msg[data-me] { justify-self: start; background: color-mix(in oklab, var(--steel-500) 10%, var(--color-surface)); }
+.jr-msg[data-kind="return"] { border-color: color-mix(in oklab, var(--danger-500) 40%, var(--card-stroke)); background: color-mix(in oklab, var(--danger-500) 6%, var(--color-surface)); }
+.jr-msg small { font-size: .75rem; font-weight: 800; color: var(--color-text-muted); }
+.jr-msg p { margin: 0; color: var(--color-text); white-space: pre-line; }
+.jr-thread-send { display: grid; gap: 8px; }
+.jr-from { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; margin: 0; font-weight: 700; color: var(--navy-800); overflow-wrap: anywhere; }
+.jr-slug { display: flex; align-items: center; gap: 6px; margin: 0; font-size: .8125rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.jr-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.jr-log li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding-block: 6px; border-block-end: 1px solid var(--card-stroke); font-size: .875rem; }
+.jr-log li:last-child { border-block-end: 0; }
+.jr-filter { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 700; color: var(--navy-800); }
+.jr-cmt { display: grid; gap: 6px; padding: 12px 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); }
+.jr-cmt-top { display: flex; align-items: center; gap: 8px; color: var(--navy-800); }
+.jr-cmt p { margin: 0; }
+.jr-cmt-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: .8125rem; color: var(--color-text-muted); }
+.jr-item-t { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   شاشة مهمّة الكاتب — ثلاثة توجّهات للمعاينة · .tk (/ui/news-task-design، ٢٠٢٦-١٠-١٦)
+   ══════════════════════════════════════════════════════════════════════ */
+.tk-ctl { display: flex; flex-wrap: wrap; gap: 10px; margin-block-start: 20px; }
+.tk-hint { display: flex; align-items: center; gap: 6px; margin: 12px 0 0; font-size: .8125rem; color: var(--color-text-muted); }
+.tk-frame { container: tk / inline-size; margin: 24px auto 0; padding-inline: 16px; }
+
+/* المشترك: نصٌّ بلا إطار حقل يتمدّد مع الكتابة، والرسائل، والردّ، والتسليم. */
+.tk-text {
+  display: block; inline-size: 100%; min-block-size: 3lh; field-sizing: content; padding: 0;
+  border: 0; background: none; resize: none; outline: 0;
+  font: inherit; font-size: 1.0625rem; line-height: 1.9; color: var(--color-text);
+}
+.tk-text::placeholder { color: var(--color-text-muted); }
+.tk-msgs { display: grid; gap: 10px; }
+.tk-msg { display: grid; gap: 2px; }
+.tk-msg b { font-size: .8125rem; font-weight: 800; color: var(--steel-600); }
+.tk-msg p { margin: 0; font-size: 1rem; line-height: 1.75; color: var(--color-text); }
+.tk-msg[data-me] { padding-inline-start: 12px; border-inline-start: 2px solid var(--steel-300); }
+.tk-msg[data-me] b { color: var(--color-text-muted); }
+.tk-msg[data-kind="return"] b { color: var(--danger-600); }
+.tk-reply { display: flex; align-items: center; gap: 8px; margin-block-start: 12px; padding: 6px 6px 6px 6px; padding-inline-start: 14px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius-full); background: var(--color-surface); }
+.tk-reply input { flex: 1; min-inline-size: 0; border: 0; background: none; outline: 0; font: inherit; font-size: .9375rem; color: var(--color-text); }
+.tk-reply button { display: grid; place-items: center; inline-size: 36px; block-size: 36px; border: 0; border-radius: 50%; background: var(--grad-primary); color: #fff; cursor: pointer; transform: scaleX(-1); }
+.tk-link { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: inherit; font-size: .875rem; font-weight: 700; color: var(--color-primary); cursor: pointer; }
+.tk-submit { display: grid; margin-block-start: 28px; }
+.tk-submit .abtn { inline-size: 100%; }
+.tk-done { display: flex; align-items: flex-start; gap: 8px; margin: 28px 0 0; padding: 16px 18px; border-radius: var(--radius); background: var(--steel-50); color: var(--navy-800); font-weight: 700; line-height: 1.7; }
+.tk-done svg { flex: 0 0 auto; margin-block-start: .3em; }
+.tk-glass { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: var(--radius-full); background: rgb(255 255 255 / .14); border: 1px solid rgb(255 255 255 / .22); backdrop-filter: blur(8px); font-size: .8125rem; font-weight: 700; color: #fff; }
+
+/* (أ) الشُّرفة */
+.tk-a { --hang: 56px; }
+.tk-a-tab span { display: inline-flex; align-items: center; min-block-size: 40px; padding-inline: 16px 20px; border-radius: var(--radius) var(--radius) 0 0; background: var(--grad-primary); color: #fff; font-size: .9375rem; font-weight: 700; }
+.tk-a-panel {
+  position: relative; isolation: isolate; overflow: clip;
+  padding: 22px 22px calc(var(--hang) + 22px);
+  border-radius: 0 var(--radius) var(--radius) var(--radius); border-start-start-radius: 0;
+  background: var(--grad-primary); color: #fff;
+}
+.tk-a-panel::after { content: ""; position: absolute; z-index: -1; inset-inline: 0; inset-block-end: 0; block-size: calc(var(--hang) + 30px); background: url("/brand/pattern-white.svg") no-repeat center top / cover; opacity: .07; }
+.tk-a-kick { display: flex; flex-wrap: wrap; gap: 8px; }
+.tk-a-title { margin: 14px 0 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(1.5rem, 5cqi, 2.125rem); line-height: 1.35; color: #fff; }
+.tk-a-sub { margin: 8px 0 0; font-size: .9375rem; color: rgb(255 255 255 / .78); }
+.tk-a-hang {
+  position: relative; margin: calc(-1 * var(--hang)) 14px 0; padding: 16px 18px;
+  border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 12%, var(--color-surface)), var(--color-surface) 62%);
+  box-shadow: var(--shadow-lg);
+}
+.tk-a-hang[data-kind="return"] { background: linear-gradient(135deg, color-mix(in oklab, var(--danger-500) 12%, var(--color-surface)), var(--color-surface) 62%); border-color: color-mix(in oklab, var(--danger-500) 30%, var(--card-stroke)); }
+.tk-a-hang-foot { margin-block-start: 12px; padding-block-start: 12px; border-block-start: 1px solid var(--card-stroke); }
+.tk-a-lead { margin-block-start: 32px; }
+.tk-a-label { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: .875rem; font-weight: 800; color: var(--steel-600); }
+.tk-a-ch { margin-block-start: 28px; }
+.tk-a-plate {
+  position: relative; isolation: isolate; overflow: clip; display: flex; align-items: flex-end;
+  min-block-size: 92px; margin-block-end: 14px; padding: 30px 22px 16px;
+  border-radius: var(--radius); background: var(--grad-primary);
+}
+.tk-a-plate::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url("/brand/pattern-white.svg") no-repeat center / cover; opacity: .07; -webkit-mask-image: linear-gradient(to right, #000, transparent); mask-image: linear-gradient(to right, #000, transparent); }
+.tk-a-n { position: absolute; z-index: -1; inset-block-start: 8px; inset-inline-start: 14px; font-family: var(--font-latin); font-weight: 800; font-size: 4.5rem; line-height: .82; letter-spacing: -.03em; background-image: linear-gradient(to bottom, rgb(255 255 255 / .34), rgb(255 255 255 / .12) 55%, transparent 92%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tk-a-plate input { inline-size: 100%; padding: 0; border: 0; border-block-end: 1px dashed rgb(255 255 255 / .28); background: none; outline: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; line-height: 1.4; color: #fff; }
+.tk-a-plate input::placeholder { color: rgb(255 255 255 / .5); }
+.tk-a-plate input:focus { border-block-end-color: rgb(255 255 255 / .7); }
+.tk-a-plate input[readonly] { border-block-end-color: transparent; }
+.tk-a-ch .tk-text, .tk-a-lead .tk-text { padding-inline: 4px; }
+.tk-add { display: flex; align-items: center; justify-content: center; gap: 8px; inline-size: 100%; min-block-size: 56px; margin-block-start: 24px; border: 2px dashed var(--steel-200); border-radius: var(--radius); background: none; font: inherit; font-weight: 800; color: var(--color-primary); cursor: pointer; }
+.tk-add:hover { border-color: var(--steel-400); background: var(--steel-50); }
+
+/* (ب) الورقة */
+.tk-b-tab { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-block-size: 44px; padding-inline: 18px; border-radius: var(--radius) var(--radius) 0 0; background: var(--grad-primary); color: #fff; font-size: .875rem; font-weight: 700; }
+.tk-b-tab span { display: inline-flex; align-items: center; gap: 6px; }
+.tk-b-tab span + span { color: rgb(255 255 255 / .75); font-weight: 600; }
+.tk-b-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+.tk-b-sheet { position: relative; padding: clamp(22px, 6cqi, 56px) clamp(20px, 7cqi, 72px) clamp(28px, 6cqi, 56px); border-radius: 0 var(--radius) var(--radius) var(--radius); border-start-start-radius: 0; background: var(--color-surface); box-shadow: 0 1px 0 var(--card-stroke), 0 18px 48px -24px rgb(16 32 64 / .35); }
+.tk-b-ctx { margin: 0 0 22px; font-size: .875rem; color: var(--color-text-muted); }
+.tk-b-lead { font-size: 1.1875rem; line-height: 1.95; }
+.tk-b-ch { position: relative; margin-block-start: 40px; }
+.tk-b-n { position: absolute; inset-inline-start: calc(-1 * clamp(14px, 5cqi, 48px)); inset-block-start: 14px; font-family: var(--font-latin); font-size: .8125rem; font-weight: 800; color: var(--steel-400); }
+.tk-b-h { display: block; inline-size: 100%; margin-block-end: 10px; padding: 0; border: 0; background: none; outline: 0; font-family: var(--font-display); font-weight: 900; font-size: 1.625rem; line-height: 1.4; color: var(--navy-800); }
+.tk-b-h::before { content: ""; }
+.tk-b-ch::before { content: ""; display: block; inline-size: 34px; block-size: 3px; margin-block-end: 12px; border-radius: var(--radius-full); background: var(--grad-primary); }
+.tk-b-h::placeholder { color: var(--steel-300); }
+.tk-b-add { display: inline-flex; align-items: center; gap: 6px; margin-block-start: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 800; color: var(--color-primary); cursor: pointer; }
+.tk-b-margin { margin: 16px 0 0; padding: 16px 18px; border-radius: var(--radius); background: color-mix(in oklab, #f6d860 22%, var(--color-surface)); box-shadow: 0 10px 24px -16px rgb(16 32 64 / .4); transform: rotate(-.6deg); }
+.tk-b-margin[data-kind="return"] { background: color-mix(in oklab, var(--danger-500) 10%, var(--color-surface)); }
+.tk-b-mh { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: .8125rem; font-weight: 800; color: var(--navy-800); }
+@container tk (min-width: 60rem) {
+  .tk-b-grid { grid-template-columns: minmax(0, 1fr) 17rem; gap: 28px; align-items: start; }
+  .tk-b-margin { position: sticky; inset-block-start: 24px; margin: 44px 0 0; }
+  .tk-b-grid + .tk-submit { max-inline-size: calc(100% - 17rem - 28px); }
+}
+@container tk (max-width: 59.99rem) { .tk-b-grid { grid-template-areas: "note" "sheet"; } .tk-b-margin { grid-area: note; margin: 0 0 18px; } .tk-b-sheet { grid-area: sheet; border-radius: var(--radius); } .tk-b-tab + .tk-b-grid .tk-b-margin { border-start-start-radius: 0; transform: none; } }
+
+/* (ج) الخطوات */
+.tk-c { display: grid; gap: 16px; }
+.tk-c-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.tk-c-ctx { margin: 0; font-size: .9375rem; color: var(--color-text-muted); }
+.tk-c-ctx b { font-family: var(--font-display); font-weight: 900; font-size: 1.375rem; color: var(--navy-800); }
+.tk-c-due { font-size: .8125rem; font-weight: 700; color: var(--steel-600); }
+.tk-c-note { padding: 14px 16px; border-inline-start: 3px solid var(--steel-500); border-radius: var(--radius); background: var(--steel-50); }
+.tk-c-note[data-kind="return"] { border-inline-start-color: var(--danger-500); background: color-mix(in oklab, var(--danger-500) 7%, var(--color-surface)); }
+.tk-c-bar { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.tk-c-bar li { flex: 1 0 auto; }
+.tk-c-bar button { display: flex; align-items: center; gap: 8px; inline-size: 100%; padding: 8px 10px; border: 0; border-block-end: 3px solid var(--steel-100); background: none; font: inherit; font-size: .8125rem; font-weight: 700; color: var(--color-text-muted); cursor: pointer; white-space: nowrap; }
+.tk-c-bar li[data-done] button { border-block-end-color: var(--steel-400); color: var(--navy-800); }
+.tk-c-bar li[data-on] button { border-block-end-color: var(--navy-800); color: var(--navy-800); }
+.tk-c-dot { display: grid; place-items: center; inline-size: 22px; block-size: 22px; border-radius: 50%; background: var(--steel-100); font-family: var(--font-latin); font-size: .75rem; }
+.tk-c-bar li[data-on] .tk-c-dot, .tk-c-bar li[data-done] .tk-c-dot { background: var(--grad-primary); color: #fff; }
+.tk-c-s { max-inline-size: 9rem; overflow: hidden; text-overflow: ellipsis; }
+.tk-c-card { min-block-size: 50vh; padding: 24px 22px; border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-md); }
+.tk-c-of { margin: 0; font-size: .8125rem; font-weight: 700; color: var(--steel-500); }
+.tk-c-h { display: block; inline-size: 100%; margin: 6px 0 16px; padding: 0; border: 0; background: none; outline: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(1.625rem, 6cqi, 2.25rem); line-height: 1.35; color: var(--navy-800); }
+.tk-c-t { min-block-size: 8lh; font-size: 1.125rem; }
+.tk-c-nav { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.tk-c-nav .abtn { inline-size: 100%; }
+/* سطرُ القراءة: الكتابةُ بعرض متن الخبر (680) لا بعرض الشاشة — الرأسُ عريضٌ والمتنُ ضيّقٌ كصفحة الخبر. */
+.tk-a-lead, .tk-a-ch, .tk-a > .tk-add, .tk-a > .tk-submit, .tk-a > .tk-done { max-inline-size: 42.5rem; margin-inline: auto; }
+.tk-a > .tk-add, .tk-a > .tk-submit, .tk-a > .tk-done { margin-block-start: 28px; }
+.tk-c { max-inline-size: 42.5rem; margin-inline: auto; }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   «بنك أدِيب» · بادئة .bnk  (صفحتُها `/games/bank-adeeb`، ٢٠٢٦-١٠-١٧)
+   ══════════════════════════════════════════════════════════════════════
+   هويّتُها هويّةُ اللعبة نفسِها لا الموقع (القاعدة ١، كأختها «دربك خضر»): صرّافُ بنكٍ بجدارٍ داكن،
+   وشاشةٍ خضراءَ بنقشِ الأوراق النقديّة، وأزرارٍ ذهبيّة، وإيصالٍ ورقيّ. **واللوحةُ مستخرَجةٌ من اللعبة**
+   (`:root` في `public/games/bank-adeeb/game.html`) لا مخترَعة. وما في الصفحة من أرقامٍ يأتي من `bank_stats`. */
+.bnk {
+  --bnk-wall: #0a130f;
+  --bnk-metal: #26332d;
+  --bnk-metal-2: #1b2521;
+  --bnk-metal-3: #121a16;
+  --bnk-lcd: #0d5e3c;
+  --bnk-lcd-2: #063522;
+  --bnk-text: #f2f9f5;
+  --bnk-muted: #a6c7b6;
+  --bnk-paper: #f4f8f5;
+  --bnk-ink: #05201a;
+  --bnk-ink-2: #3b5a4c;
+  --bnk-gold: #d6b262;
+  --bnk-gold-hi: #f1da97;
+  --bnk-gold-lo: #8d6c24;
+  --bnk-ok: #22b872;
+  min-height: 100dvh;
+  color: var(--bnk-text);
+  background:
+    radial-gradient(90% 60% at 50% 0%, color-mix(in oklab, var(--bnk-lcd) 35%, transparent), transparent 70%),
+    var(--bnk-wall);
+  font-family: var(--font-body);
+}
+.bnk :where(h1, h2, h3, p, ol, ul) { margin: 0; padding: 0; }
+.bnk :where(ol, ul) { list-style: none; }
+.bnk :where(a) { color: inherit; text-decoration: none; }
+.bnk :focus-visible { outline: 3px solid var(--bnk-gold-hi); outline-offset: 3px; }
+.bnk-wrap { max-width: 1080px; margin-inline: auto; padding: 0 16px 48px; }
+
+/* اللافتة: اسمُ الفرع كما على جبين الصرّاف، وبابٌ إلى الصالة */
+.bnk-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
+.bnk-sign { display: grid; line-height: 1.3; }
+.bnk-sign b { font-size: 26px; font-weight: 900; color: var(--bnk-gold-hi); text-shadow: 0 0 18px color-mix(in oklab, var(--bnk-gold-hi) 45%, transparent); }
+.bnk-sign span { font-size: 13px; font-weight: 700; color: var(--bnk-muted); }
+.bnk-back { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--bnk-muted); }
+.bnk-back:hover { color: var(--bnk-text); }
+
+/* الصرّاف: إطارٌ معدنيٌّ حول شاشةٍ خضراء، فيها الترحيبُ وزرُّ «ابدأ العملية»، وبجانبها مقطعُ اللعب */
+.bnk-atm {
+  display: grid;
+  gap: 18px;
+  padding: 14px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--bnk-metal), var(--bnk-metal-3));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--bnk-text) 12%, transparent), 0 24px 60px -20px var(--bnk-wall);
+}
+.bnk-screen {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 36px 20px;
+  border: 8px solid var(--bnk-wall);
+  border-radius: 14px;
+  text-align: center;
+  background:
+    repeating-radial-gradient(circle at 8% 112%, color-mix(in oklab, var(--bnk-text) 4%, transparent) 0 1px, transparent 1.4px 9px),
+    repeating-radial-gradient(circle at 98% -12%, color-mix(in oklab, var(--bnk-text) 3%, transparent) 0 1px, transparent 1.4px 11px),
+    radial-gradient(120% 90% at 50% 0%, var(--bnk-lcd), var(--bnk-lcd-2));
+}
+.bnk-eyebrow { font-weight: 700; color: var(--bnk-gold); }
+.bnk-big {
+  font-weight: 900;
+  font-size: clamp(56px, 14vw, 104px);
+  line-height: 1.4;
+  padding-block: .08em .04em;
+  margin-block: -.18em -.1em;
+  background: linear-gradient(180deg, var(--bnk-text) 40%, var(--bnk-gold-hi));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bnk-lead { max-width: 34ch; font-size: 18px; line-height: 1.8; text-wrap: balance; }
+.bnk-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: min(100%, 320px);
+  margin-top: 8px;
+  padding: 14px 28px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--bnk-gold-hi), var(--bnk-gold));
+  box-shadow: 0 4px 0 var(--bnk-gold-lo);
+  color: var(--bnk-ink);
+  font-size: 20px;
+  font-weight: 900;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.bnk-go small { display: block; font-family: var(--font-latin); font-size: 12px; font-weight: 600; opacity: .7; }
+.bnk-go:hover { transform: translateY(-1px); }
+.bnk-go:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--bnk-gold-lo); }
+.bnk-clip { justify-self: center; width: min(100%, 260px); aspect-ratio: 3 / 4; border: 8px solid var(--bnk-wall); border-radius: 14px; overflow: hidden; background: var(--bnk-wall); }
+.bnk-clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
+@container (min-width: 760px) {
+  .bnk-atm { grid-template-columns: minmax(0, 1fr) 260px; align-items: stretch; }
+  .bnk-clip { width: 100%; align-self: center; }
+}
+.bnk-cq { container-type: inline-size; }
+
+/* الأرقام: سجلُّ الفرع كما يُطبع في أسفل الإيصال */
+.bnk-figs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 36px; margin: 28px 0 8px; text-align: center; }
+.bnk-fig { display: grid; font-size: 14px; color: var(--bnk-muted); }
+.bnk-fig b { font-family: var(--font-latin); font-size: 30px; font-weight: 700; color: var(--bnk-gold-hi); }
+
+/* العمليّة: إيصالٌ ورقيٌّ بخطواتها، فهي تسلسلٌ حقًّا فتُرقَّم */
+.bnk-sec-h { margin: 40px 0 16px; text-align: center; font-size: 24px; font-weight: 900; color: var(--bnk-gold-hi); }
+.bnk-rcpt {
+  position: relative;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: 26px 24px 30px;
+  background: var(--bnk-paper);
+  color: var(--bnk-ink);
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 18px 40px -18px var(--bnk-wall);
+  /* حافّةٌ مسنّنةٌ كإيصال الصرّاف */
+  mask: conic-gradient(from -45deg at bottom, transparent, var(--bnk-wall) 1deg 89deg, transparent 90deg) 50% / 16px 100%;
+}
+.bnk-rcpt-h { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px dashed color-mix(in oklab, var(--bnk-ink) 25%, transparent); font-weight: 900; }
+.bnk-rcpt-h span { font-weight: 700; color: var(--bnk-ink-2); font-size: 14px; }
+.bnk-steps { display: grid; gap: 14px; counter-reset: bnk; }
+.bnk-steps li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; counter-increment: bnk; }
+.bnk-steps li::before { content: counter(bnk); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--bnk-lcd); color: var(--bnk-gold-hi); font-family: var(--font-latin); font-weight: 700; }
+.bnk-steps b { display: block; font-weight: 900; }
+.bnk-steps p { font-size: 15px; line-height: 1.7; color: var(--bnk-ink-2); }
+.bnk-levels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.bnk-level { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 10px; background: linear-gradient(180deg, var(--bnk-gold-hi), var(--bnk-gold)); color: var(--bnk-ink); font-weight: 900; font-size: 14px; }
+.bnk-level small { font-family: var(--font-latin); font-weight: 600; font-size: 12px; }
+
+.bnk-foot { margin-top: 44px; text-align: center; font-size: 13px; color: var(--bnk-muted); }
+.bnk-foot a { color: var(--bnk-gold-hi); }
+@media (prefers-reduced-motion: reduce) { .bnk-go { transition: none; } }

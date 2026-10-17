@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { XLogo, LinkedinLogo } from "@phosphor-icons/react";
+import { XLogo, LinkedinLogo, User } from "@phosphor-icons/react";
 import { CarouselNav, useInView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core";
 import { actingLine, positionLine } from "@/lib/positionLabel";
+import { avatarFace } from "@/lib/avatarFace";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
 /**
@@ -28,15 +29,6 @@ export type Member = {
   is_acting?: boolean;
 };
 
-const FIG: Record<string, string> = {
-  male: "/brand/avatar/avatar-male.svg",
-  female: "/brand/avatar/avatar-female.svg",
-};
-
-function initials(name: string): string {
-  const p = name.trim().split(/\s+/);
-  return ((p[0]?.[0] ?? "") + " " + (p[1]?.[0] ?? "")).trim() || "؟";
-}
 function socialUrl(v: string | null, kind: "tw" | "in"): string | null {
   if (!v) return null;
   if (/^https?:\/\//i.test(v)) return v;
@@ -216,6 +208,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
             else if (rel < -n / 2) rel += n;
             const a = Math.abs(rel);
             const st = slideStyle(rel, SPACING, VISIBLE);
+            const face = avatarFace(m.avatar_url, m.gender);
             const tw = socialUrl(m.twitter_account, "tw");
             const li = socialUrl(m.linkedin_account, "in");
             const roleLine = actingLine(positionLine(m.role_ar, m.unit_name), m.is_acting);
@@ -233,12 +226,12 @@ export function BoardCarousel({ members }: { members: Member[] }) {
                 aria-hidden={st.opacity < 0.5}
               >
                 <div className="bc-card" style={{ width: CARD }}>
-                  {m.avatar_url ? (
-                    <div className="bc-bg" style={{ backgroundImage: `url(${m.avatar_url})` }} />
-                  ) : m.gender && FIG[m.gender] ? (
-                    <div className="bc-fig" style={{ backgroundImage: `url(${FIG[m.gender]})` }} />
+                  {face.kind === "photo" ? (
+                    <div className="bc-bg" style={{ backgroundImage: `url(${face.url})` }} />
+                  ) : face.kind === "figure" ? (
+                    <div className="bc-fig" style={{ backgroundImage: `url(${face.url})` }} />
                   ) : (
-                    <div className="bc-mono" style={{ fontSize: monoSize }}>{initials(m.full_name)}</div>
+                    <div className="bc-mono" style={{ fontSize: monoSize }}><User /></div>
                   )}
                   <div className="bc-grad" />
                   <div className="bc-info">

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LATER_KEY, LATER_LIMIT, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES, RATE_KEY } from "@adeeb/core";
 import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
@@ -143,6 +143,39 @@ export function useRadioPlayer(): Api {
   };
 }
 
+
+/**
+ * **السرعةُ عادةُ أذنٍ لا اختيارُ حلقة**، فتُقرأ من الجهاز وتُكتَب فيه.
+ *
+ * **مخزنٌ خارجيّ لا حالة**: `useSyncExternalStore` يرسم لقطةَ الخادم (١×) في الترطيب
+ * ثم يقرأ الجهاز، فلا يختلف الشجران (انكسر الترطيبُ بالمُهيِّئ الكسول، رُصد ٢٠٢٦-٠٨-٢٨:
+ * `Hydration failed`). والقيمةُ في الذاكرة أوّلًا: في التصفّح الخاصّ تعمل السرعةُ ولا تُحفَظ.
+ */
+let memRate: number | null = null;
+const rateListeners = new Set<() => void>();
+function readRate(): number {
+  if (memRate !== null) return memRate;
+  try {
+    const v = Number(localStorage.getItem(RATE_KEY));
+    return PLAYBACK_RATES.includes(v as (typeof PLAYBACK_RATES)[number]) ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+function subscribeRate(cb: () => void) {
+  rateListeners.add(cb);
+  return () => { rateListeners.delete(cb); };
+}
+function writeRate(next: number) {
+  memRate = next;
+  try {
+    localStorage.setItem(RATE_KEY, String(next));
+  } catch {
+    /* تصفّحٌ خاصّ: تعمل السرعةُ ولا تُحفَظ، ولا يُكسَر شيء */
+  }
+  rateListeners.forEach((cb) => cb());
+}
+
 export function RadioPlayerProvider({
   children,
   stationName,
@@ -166,24 +199,8 @@ export function RadioPlayerProvider({
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  /**
-   * **السرعةُ عادةُ أذنٍ لا اختيارُ حلقة**، فتُقرأ من الجهاز وتُكتَب فيه.
-   *
-   * **وتُقرأ بعد الترطيب لا في المُهيِّئ**: جرّبتُ المُهيِّئَ الكسولَ فانكسر
-   * الترطيبُ فعلًا (رُصد ٢٠٢٦-٠٨-٢٨: `Hydration failed`) — الخادمُ يرسم
-   * «السرعة ١×» ويقرأ المتصفّحُ ١٫٢٥ من مخزنه، فيختلف الشجران. والثمنُ
-   * المقبولُ رسمةٌ واحدةٌ بالواحد قبل أن تصحّ، وهي حبّةٌ صغيرةٌ لا صوتٌ يُسمَع:
-   * المشغّلُ لا يبدأ إلّا بضغطة، والضغطةُ بعد الترطيب بيقين.
-   */
-  const [rate, setRate] = useState(1);
-  useEffect(() => {
-    try {
-      const v = Number(localStorage.getItem(RATE_KEY));
-      if (PLAYBACK_RATES.includes(v as (typeof PLAYBACK_RATES)[number])) setRate(v);
-    } catch {
-      /* متصفّحٌ يمنع التخزين: تعمل السرعةُ ولا تُستعاد */
-    }
-  }, []);
+  /** السرعة من مخزن الجهاز (انظر `readRate` أعلى الملف). */
+  const rate = useSyncExternalStore(subscribeRate, readRate, () => 1);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   // المقبضُ من المخزن لا من حالةٍ تنسخه — والخادمُ لا مخزنَ له فلقطتُه الافتراضيّ
@@ -328,10 +345,8 @@ export function RadioPlayerProvider({
   }, []);
 
   useEffect(() => {
-    if (sleepEnd === null) {
-      setSleepLeft(null);
-      return;
-    }
+    // لا مؤقّت: `setSleep` ونهايةُ العدّ يصفّران الباقيَ معه، فلا شيء يُصفَّر هنا
+    if (sleepEnd === null) return;
     const tick = () => {
       const left = Math.round((sleepEnd - Date.now()) / 1000);
       if (left <= 0) {
@@ -544,15 +559,7 @@ export function RadioPlayerProvider({
   };
 
   const cycleRate = () =>
-    setRate((r) => {
-      const next = PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(r as (typeof PLAYBACK_RATES)[number]) + 1) % PLAYBACK_RATES.length] ?? 1;
-      try {
-        localStorage.setItem(RATE_KEY, String(next));
-      } catch {
-        /* تصفّحٌ خاصّ: تعمل السرعةُ ولا تُحفَظ، ولا يُكسَر شيء */
-      }
-      return next;
-    });
+    writeRate(PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(rate as (typeof PLAYBACK_RATES)[number]) + 1) % PLAYBACK_RATES.length] ?? 1);
 
   /**
    * **اختصاراتُ لوحة المفاتيح** — لا يملكها سبوتيفاي ولا أبل في الوِب، ويملكها

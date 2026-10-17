@@ -46,9 +46,9 @@ export default async function NewsEditorLabPage() {
     row: {
       id: n.id, title: n.title, slug: n.slug ?? "", summary: n.summary,
       category: n.category, workflow: "ready_for_review", isFeatured: n.featured,
-      imageUrl: n.cover, galleryCount: n.gallery.length, authors: n.authors, tags: n.tags,
+      imageUrl: n.cover, galleryCount: n.gallery.length, authors: n.authors,
       unit: "comm:3", unitName: "لجنة التقارير والأرشفة",
-      views: n.views, likes: n.likes, comments: 3, pendingComments: 2,
+      views: n.views, likes: n.likes, comments: 3,
       writers: [{ id: "w1", name: n.authors[0] ?? "كاتب", avatarUrl: null, gender: null, status: "accepted" }],
       rejectionReason: null,
       publishedAt: n.publishedAt, updatedAt: ago(1), createdAt: ago(9),
@@ -64,7 +64,7 @@ export default async function NewsEditorLabPage() {
     assignments: [
       {
         writerId: "w1", writerName: n.authors[0] ?? "كاتب", avatarUrl: null, gender: null,
-        status: "accepted", fields: ["title", "summary", "content", "tags"],
+        status: "accepted", fields: ["title", "summary", "content"],
         notes: "اكتب التقرير كاملًا قبل الخميس.", assignedAt: ago(8), startedAt: ago(7), completedAt: null,
       },
       {

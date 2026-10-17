@@ -30,7 +30,6 @@ export type NewsRow = {
   imageUrl: string | null;
   galleryCount: number;
   authors: string[];
-  tags: string[];
   /** الجهةُ مرمَّزةً (`council:<id>` · `dept:<id>` · `comm:<id>` · "" للنادي) — قيمةُ المرشِّح والمنسدل. */
   unit: string;
   /** اسمُ الجهة كما يُعرَض — «نادي أدِيب» حين لا جهةَ بعينها، فلا يبقى الحقلُ صامتًا. */
@@ -38,7 +37,6 @@ export type NewsRow = {
   views: number;
   likes: number;
   comments: number;
-  pendingComments: number;
   writers: WriterChip[];
   /** ملاحظة الإعادة القائمة — تُبرز الصفّ للكاتب: عليك عملٌ الآن. */
   rejectionReason: string | null;
@@ -78,7 +76,7 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
   // وأيّ تركيبٍ يُسقط الاستدلال إلى `GenericStringError`.
   let q = sb
     .from("news")
-    .select("id, title, slug, summary, content, blocks, category, workflow_status, is_featured, image_url, gallery_images, authors, tags, committee_id, department_id, council_id, views, likes_count, rejection_reason, published_at, updated_at, created_at")
+    .select("id, title, slug, summary, content, blocks, category, workflow_status, is_featured, image_url, gallery_images, authors, committee_id, department_id, council_id, views, likes_count, rejection_reason, published_at, updated_at, created_at")
     .order("updated_at", { ascending: false });
   if (allowed) q = q.in("id", allowed);
 
@@ -96,7 +94,7 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
   const [aRes, pcRes] = ids.length
     ? await Promise.all([
         sb.from("news_writer_assignments").select("news_id, writer_id, status").in("news_id", ids),
-        sb.from("news_public_comments").select("news_id, is_approved").in("news_id", ids),
+        sb.from("news_public_comments").select("news_id").in("news_id", ids),
       ])
     : [{ data: [] as never[] }, { data: [] as never[] }];
 
@@ -124,11 +122,10 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
     writersByNews.set(a.news_id, list);
   }
 
-  const commentsByNews = new Map<string, { total: number; pending: number }>();
-  for (const c of (pcRes.data ?? []) as { news_id: string; is_approved: boolean }[]) {
-    const cur = commentsByNews.get(c.news_id) ?? { total: 0, pending: 0 };
+  const commentsByNews = new Map<string, { total: number }>();
+  for (const c of (pcRes.data ?? []) as { news_id: string }[]) {
+    const cur = commentsByNews.get(c.news_id) ?? { total: 0 };
     cur.total += 1;
-    if (!c.is_approved) cur.pending += 1;
     commentsByNews.set(c.news_id, cur);
   }
 
@@ -136,7 +133,7 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
     unitValue({ committeeId: n.committee_id, departmentId: n.department_id, councilId: n.council_id });
 
   const rows: NewsRow[] = (nRes.data ?? []).map((n) => {
-    const counts = commentsByNews.get(n.id) ?? { total: 0, pending: 0 };
+    const counts = commentsByNews.get(n.id) ?? { total: 0 };
     const content = (n.content as string | null) ?? null;
     return {
       id: n.id,
@@ -151,13 +148,11 @@ export async function getNews(actor: NewsroomActor): Promise<{ rows: NewsRow[]; 
       imageUrl: n.image_url ?? null,
       galleryCount: (n.gallery_images as string[] | null)?.length ?? 0,
       authors: (n.authors as string[] | null) ?? [],
-      tags: (n.tags as string[] | null) ?? [],
       unit: unitOf(n),
       unitName: nameOf.get(unitOf(n)) ?? CLUB_LABEL,
       views: n.views ?? 0,
       likes: n.likes_count ?? 0,
       comments: counts.total,
-      pendingComments: counts.pending,
       writers: writersByNews.get(n.id) ?? [],
       rejectionReason: n.rejection_reason ?? null,
       publishedAt: n.published_at ?? null,

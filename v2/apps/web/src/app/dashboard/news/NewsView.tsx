@@ -83,7 +83,7 @@ export function NewsView({
     const q = search.trim().toLowerCase();
     return staged.filter((n) => {
       if (q) {
-        const hay = [n.title, n.summary ?? "", n.authors.join(" "), n.tags.join(" ")].join(" ").toLowerCase();
+        const hay = [n.title, n.summary ?? "", n.authors.join(" ")].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       if (fv.category && n.category !== fv.category) return false;
@@ -211,9 +211,8 @@ export function NewsView({
         <span className="txt num" style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
           <span title="مشاهدات"><Eye size={14} style={{ verticalAlign: "-2px" }} /> {n.views}</span>
           <span title="إعجابات"><Heart size={14} style={{ verticalAlign: "-2px" }} /> {n.likes}</span>
-          <span title={n.pendingComments ? `${n.pendingComments} بانتظار الإقرار` : "تعليقات"}>
+          <span title="تعليقات">
             <ChatCircleDots size={14} style={{ verticalAlign: "-2px" }} /> {n.comments}
-            {n.pendingComments ? <b className="text-warning"> ({n.pendingComments})</b> : null}
           </span>
         </span>
       ) : (
@@ -272,7 +271,6 @@ export function NewsView({
   const inFlight = scope.filter((n) => (IN_FLIGHT as string[]).includes(n.workflow)).length;
   const awaiting = scope.filter((n) => n.workflow === "ready_for_review").length;
   const published = scope.filter((n) => n.workflow === "published").length;
-  const pendingComments = scope.reduce((s, n) => s + n.pendingComments, 0);
 
   const tabs = useMemo(
     () => STAGES.map((s) => {
@@ -293,9 +291,6 @@ export function NewsView({
         <Stat icon={<ClipboardText />} value={inFlight} label="قيد العمل" tone="brand" />
         <Stat icon={<PaperPlaneTilt />} value={awaiting} label={isChief ? "تنتظر مراجعتك" : "رفعتها للمراجعة"} tone="warning" />
         <Stat icon={<Megaphone />} value={published} label="منشور" tone="success" />
-        {isChief && pendingComments ? (
-          <Stat icon={<ChatCircleDots />} value={pendingComments} label="تعليقات تنتظر الإقرار" tone="warning" />
-        ) : null}
       </div>
 
       <Tabs items={tabs} value={stage} onValueChange={setStage} variant="underline" className="mb-4" />

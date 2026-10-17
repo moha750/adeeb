@@ -2,6 +2,7 @@ import "server-only";
 import { pushToUsers } from "@/lib/push/send";
 import { catalogEntries, kindOf, type Audience } from "./catalog";
 import { chunks, notificationsDb, type NotificationsDb } from "./db";
+import { enqueueEmail } from "@/lib/email/outbox";
 import { renderNote } from "./render";
 import type { Gender } from "./types";
 
@@ -110,6 +111,12 @@ async function dispatchOne(sb: NotificationsDb, ev: EventRow): Promise<number | 
         console.error("[notifications] push failed", { event: ev.id, error: e instanceof Error ? e.message : String(e) }),
       );
     }
+    for (const g of groups) {
+      if (!g.audience.email) continue;
+      await emailGroup(sb, ev, g.audience, g.users).catch((e: unknown) =>
+        console.error("[notifications] email failed", { event: ev.id, error: e instanceof Error ? e.message : String(e) }),
+      );
+    }
     return rows.length;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -155,6 +162,35 @@ async function pushGroup(sb: NotificationsDb, ev: EventRow, audience: Audience<u
     const now = new Date().toISOString();
     for (const part of chunks(ids, 200)) {
       await sb.from("notification_inbox").update({ pushed_at: now }).eq("event_id", ev.id).in("user_id", part);
+    }
+  }
+}
+
+/**
+ * **البريد** (٢٠٢٦-١٠-١٧) — لمخاطَبٍ دليلُه يقول `email: true`. رسالةٌ لكلّ مستلمٍ بنصّه وجنسه، تُكتب
+ * في صادر البريد (`email_outbox`) ويرسلها مُرسِلُه بإعاداته وسجلّه (`v2/EMAIL-SYSTEM.md`). فهذه
+ * القناةُ لا تعرف المزوّد ولا تنتظره.
+ *
+ * ومفتاحُ التكرار من الواقعة والمخاطَب والمستلم: إعادةُ التوزيع بعد عطلٍ لا تُضاعف رسالة. وأجلُها
+ * يومان من الواقعة: بريدٌ يصل بعدهما يكذب على قارئه («أُسند إليك» لمنصبٍ ربما نُزع بعدها)، والجرسُ
+ * يحفظ الخبر. ومن لا بريدَ في ملفّه يُتخطّى.
+ */
+async function emailGroup(sb: NotificationsDb, ev: EventRow, audience: Audience<unknown>, users: string[]) {
+  const expires = new Date(new Date(ev.created_at).getTime() + 48 * 3600_000);
+  if (expires.getTime() <= Date.now()) return;
+
+  for (const part of chunks(users, 200)) {
+    const { data } = await sb.from("profiles").select("id, email, gender").in("id", part);
+    for (const p of (data ?? []) as Array<{ id: string; email: string | null; gender: string | null }>) {
+      const to = p.email?.trim();
+      if (!to) continue;
+      const gender: Gender = p.gender === "female" ? "female" : p.gender === "male" ? "male" : null;
+      const note = renderNote(ev.kind, audience.key, ev.facts, gender);
+      await enqueueEmail("notify.note", to, { title: note.title, body: note.body, href: note.href }, {
+        user: p.id,
+        dedupe: `n${ev.id}:${audience.key}:${p.id}`,
+        expires,
+      });
     }
   }
 }

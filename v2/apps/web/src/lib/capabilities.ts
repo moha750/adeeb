@@ -123,6 +123,9 @@ export const SECTION_CAP = {
   // تفتح الغرفةَ والتحرير، والنشرُ يشترط فوقها موافقةَ المقعدين معًا (`lib/regulations/authz.ts`).
   "/dashboard/regulations": "manage_regulations",
   "/dashboard/radio": "manage_radio",
+  // **ألعاب أدِيب** (٢٠٢٦-١٠-١٧): صالةُ `/games` ومسابقاتُها وإحصائيّاتُ كلّ لعبة، للرئيسين وحدهما.
+  // وصفحةُ كلّ لعبةٍ تحتها (`/dashboard/games/<slug>`) بالقفل نفسِه.
+  "/dashboard/games": "manage_games",
   // باب غرفة التحرير: `write_news`. ورئيس التحرير (`manage_news`) يملكها معه —
   // فالمفتاح واحدٌ للباب، والفارق بين رئيسٍ وكاتب داخل الغرفة لا عندها.
   "/dashboard/news": "write_news",

@@ -1,36 +1,36 @@
 import type { Metadata } from "next";
-import { Footer, Container, LandingHeading } from "@adeeb/design-system";
-import { SiteHeader } from "../_components/SiteHeader";
+import { shareOg } from "@/lib/share";
+import { getHall } from "@/lib/games/hall";
+import { HALL_LOOK } from "@/lib/games/look";
+import { Hub } from "./_components/Hub";
 
 /**
- * **ألعابُ أدِيبيّة** — البيتُ الذي ستسكنه ألعابُ النادي كلُّها، وأوّلُها «دربك خضر» تحته
- * (`/games/darbak-khadar`). فارغةٌ الآن بقرار المالك (٢٠٢٦-٠٩-٢٥): عنوانٌ وحدَه حتى تُطوَّر.
- * واسمُها كما في شعارها، والرابطُ `/games` باقٍ كما هو (قرارُه ٢٠٢٦-٠٩-٢٦).
+ * **ألعابُ أدِيبيّة** (`/games`) — صالةُ ألعاب النادي، وكلُّ لعبةٍ تحتها على هويّتها في مسارها
+ * (أوّلُها «دربك خضر» على `/games/darbak-khadar`). واسمُها كما في شعارها، والرابطُ باقٍ (قرارُ المالك ٢٠٢٦-٠٩-٢٦).
  *
- * **وهويّتُها منعزلةٌ كالمحطّة** (القاعدة ١، ونطاقُها هذه الصفحةُ وحدَها بكلمته ٢٠٢٦-٠٩-٢٦):
- * صالةُ أركيد ليليّة بشعاره وخطّ Rooyin، ومظهرُها ينتظر اختيارَه في `/ui/games-hub`. فما تحت
- * هذا السطر رأسُ الموقع وتذييلُه مؤقّتًا إلى أن يختار، ثمّ تحلّ الصالةُ (`_components/Hub`) محلَّهما.
- * وكلُّ لعبةٍ تحتها تبقى على هويّتها في مسارها.
+ * **هويّتُها منعزلةٌ كالمحطّة** (القاعدة ١، ونطاقُها هذه الصفحةُ وحدَها بكلمته ٢٠٢٦-٠٩-٢٦): لا رأسَ
+ * للموقع ولا تذييل، ولا شاشةَ بدءٍ ولا ريشة (`BootSplash` و`SiteCursor`). ومظهرُها «أ. ليلُ السِّنث» بأضواء
+ * اللافتة حول الشعار (اختيارُه ٢٠٢٦-١٠-١٧، `lib/games/look.ts`).
  *
- * ولا فهرسةَ لها ما دامت فارغة: صفحةٌ بلا محتوى في نتائج البحث وعدٌ لا يُوفى.
+ * **ومحتواها من القاعدة لا من الكود** منذ ٢٠٢٦-١٠-١٧ (`lib/games/hall.ts`): الألعابُ وترتيبُها وظهورُها
+ * والمسابقةُ الجارية تُدار من غرفة الألعاب في اللوحة (`/dashboard/games`)، وكلُّ حفظٍ هناك يُنعشها.
+ * وكانت قبلها عنوانًا وحدَه بقراره (٢٠٢٦-٠٩-٢٥) غيرَ مفهرسة، فلمّا امتلأت فُتحت للفهرسة.
  */
+export const revalidate = 60;
+
+const LEDE = "ألعابٌ من نادي أدِيب، تُلعب في متصفّح جوّالك مجّانًا وبلا تحميل.";
+
 export const metadata: Metadata = {
   title: "ألعاب أدِيبيّة",
-  robots: { index: false, follow: false },
+  description: LEDE,
+  openGraph: shareOg({ title: "ألعاب أدِيبيّة", description: LEDE, type: "website" }),
 };
 
-export default function GamesPage() {
+export default async function GamesPage() {
+  const { games, event, stats } = await getHall();
   return (
-    <>
-      <SiteHeader activeHref="/games" />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container>
-            <LandingHeading eyebrow="ألعاب" title="ألعاب أدِيبيّة" align="center" />
-          </Container>
-        </section>
-      </main>
-      <Footer />
-    </>
+    <div className="agm agm-page" {...HALL_LOOK}>
+      <Hub games={games} event={event} stats={stats} />
+    </div>
   );
 }

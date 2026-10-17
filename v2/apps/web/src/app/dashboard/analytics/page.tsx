@@ -14,10 +14,9 @@ const SOURCES: Source[] = ["web", "app"];
  */
 const FROM_DAYS: Record<string, string> = { "7": "7", "30": "mtd", "90": "90", "3650": "all" };
 
-// «دربك خضر» لها صفحةُ أرقامها تحت هذا القسم وبقفله (٢٠٢٦-٠٩-٢٥)، والبابُ إليها من هنا
-const Head = () => (
-  <PageHeader title="إحصائيّات الزوّار" action={{ label: "إحصائيّات دربك خضر", href: "/dashboard/analytics/darb" }} />
-);
+// كانت لـ«دربك خضر» صفحةُ أرقامها تحت هذا القسم وبابُها من هنا (٢٠٢٦-٠٩-٢٥)، فنُقلت إلى
+// غرفة الألعاب (`/dashboard/games/darbak-khadar`) يومَ بُنيت (٢٠٢٦-١٠-١٧)، والرابطُ القديم يُحوَّل إليها.
+const Head = () => <PageHeader title="إحصائيّات الزوّار" />;
 
 type Params = { preset?: string; from?: string; to?: string; days?: string; src?: string; cmp?: string };
 

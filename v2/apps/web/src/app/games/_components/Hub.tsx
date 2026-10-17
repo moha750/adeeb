@@ -13,7 +13,11 @@ import { PLAYERS, RUNS, countAr, score, type ScoreUnit } from "./hall";
  * منعزلةٌ كالمحطّة (القاعدة ١، ووسّع المالكُ نطاقَها إلى `/games` وحدَها ٢٠٢٦-٠٩-٢٦): صالةُ أركيد
  * ليليّة بالنيون وخطوطِ الشاشة القديمة، باختياره هو على «دفتر المربّعات» الذي اقتُرح أوّلًا.
  * والشعارُ والخطُّ (Rooyin) منه. **واللوحةُ مقترَحةٌ لا مشتقّة**: الشعارُ أسودُ بلا لون، فعُرض
- * مظهران (`data-look` على الجذر) والمالكُ يختار.
+ * مظهران (`data-look` على الجذر)، فاختار «أ. ليلُ السِّنث» ومعه أضواءُ اللافتة من «ب» (٢٠٢٦-١٠-١٧).
+ *
+ * ══ ومن القاعدة (٢٠٢٦-١٠-١٧) ══
+ * الألعابُ والحدثُ و«أعلى النقاط» تمرّرها الصفحةُ من `lib/games/hall.ts`، وتُدار من غرفة الألعاب في
+ * اللوحة. والكابينةُ مكوّنٌ مستقلٌّ (`Cabinet`) تعرضه الغرفةُ معاينةً حيّةً ساعةَ التحرير.
  *
  * ══ الكابينة (الجولةُ الثانية) ══
  * **لافتةٌ** مضاءةٌ باسم اللعبة، و**شاشةٌ** في إطارها يدور فيها مقطعُ لعبٍ من اللعبة نفسِها
@@ -44,7 +48,8 @@ export type HubGame = {
   /** مقطعُ الشاشة وصورتُه الثابتة (`public/games/cabinets/`). وبلا مقطعٍ تعرض الشاشةُ «بلا إشارة» لا صورةً مستعارة. */
   attract?: { video: string; poster: string };
   play: string;
-  board: string;
+  /** صفحةُ الصدارة. وركنٌ بلا لوحةٍ (كبنك أدِيب) بلا زرّ صدارة. */
+  board?: string | null;
   /** أعلى ثلاثةٍ في لوحتها لـ«أعلى النقاط». وبلا صفوفٍ لا تظهر لوحتُها. */
   top?: { title: string; unit: ScoreUnit; rows: HubScore[] };
 };
@@ -68,7 +73,7 @@ export function Hub({
   event?: HubEvent | null;
   stats?: { players: number; runs: number } | null;
 }) {
-  const boards = games.filter((g) => g.top && g.top.rows.length > 0);
+  const boards = games.filter((g) => g.board && g.top && g.top.rows.length > 0);
 
   return (
     <div className="agm-hub">
@@ -98,41 +103,7 @@ export function Hub({
 
         <ul className="agm-grid">
           {games.map((g) => (
-            <li key={g.slug} className="agm-cab" data-tone={g.tone}>
-              <div className="agm-cab-marquee">
-                <h2 className="agm-cab-name">{g.name}</h2>
-              </div>
-              <div className="agm-cab-bezel">
-                {/* الشاشةُ نفسُها «اضغط للّعب» كما في الأركيد: في الحاسوب تقع أزرارُ اللوحة تحت
-                    الطيّة، والشاشةُ فوقها دائمًا. وللوحة المفاتيح زرُّ «العب» وحدَه، فلا رابطان مكرّران في التنقّل. */}
-                <Link href={g.play} className="agm-cab-screen" tabIndex={-1} aria-hidden>
-                  {g.attract ? (
-                    <AttractVideo src={g.attract.video} poster={g.attract.poster} />
-                  ) : (
-                    <span className="agm-cab-static" />
-                  )}
-                  <span className="agm-cab-press">اضغط للّعب</span>
-                </Link>
-              </div>
-              <div className="agm-cab-deck">
-                <p className="agm-cab-card">{g.line}</p>
-                <div className="agm-cab-controls">
-                  <span className="agm-stick" aria-hidden />
-                  <Link href={g.play} className="agm-push agm-push-go">
-                    <span className="agm-push-cap" aria-hidden />
-                    <span>العب</span>
-                  </Link>
-                  <Link href={g.board} className="agm-push">
-                    <span className="agm-push-cap" aria-hidden />
-                    <span>الصدارة</span>
-                  </Link>
-                </div>
-              </div>
-              <div className="agm-cab-door">
-                <span className="agm-coin" aria-hidden />
-                <span>لعبٌ مجّاني</span>
-              </div>
-            </li>
+            <Cabinet key={g.slug} g={g} />
           ))}
         </ul>
       </div>
@@ -154,14 +125,14 @@ export function Hub({
                 <p className="agm-board-label">{g.top!.title}</p>
                 <ol className="agm-board-list">
                   {g.top!.rows.slice(0, 3).map((r, i) => (
-                    <li key={r.name}>
+                    <li key={i}>
                       <span className="agm-rank">{i + 1}</span>
                       <span className="agm-who">{r.name}</span>
                       <span className="agm-val">{score(g.top!.unit, r.value)}</span>
                     </li>
                   ))}
                 </ol>
-                <Link href={g.board} className="agm-board-more">
+                <Link href={g.board!} className="agm-board-more">
                   <span>الصدارة كاملة</span>
                   <ArrowLeft aria-hidden />
                 </Link>
@@ -214,5 +185,52 @@ export function Hub({
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * **كابينةُ لعبةٍ واحدة** — لافتةٌ وشاشةٌ ولوحةُ تحكّمٍ وبابُ عملة. مفصولةٌ عن الصالة لأنّ غرفةَ
+ * الألعاب في اللوحة تعرضها معاينةً حيّةً ساعةَ التحرير: ما يُكتب في النموذج يُرى في كابينته كما
+ * سيقع في `/games`. وبلا رابط صدارةٍ (ركنٌ بلا لوحة) يبقى زرُّ «العب» وحدَه.
+ */
+export function Cabinet({ g }: { g: HubGame }) {
+  return (
+    <li className="agm-cab" data-tone={g.tone}>
+      <div className="agm-cab-marquee">
+        <h2 className="agm-cab-name">{g.name}</h2>
+      </div>
+      <div className="agm-cab-bezel">
+        {/* الشاشةُ نفسُها «اضغط للّعب» كما في الأركيد: في الحاسوب تقع أزرارُ اللوحة تحت
+            الطيّة، والشاشةُ فوقها دائمًا. وللوحة المفاتيح زرُّ «العب» وحدَه، فلا رابطان مكرّران في التنقّل. */}
+        <Link href={g.play} className="agm-cab-screen" tabIndex={-1} aria-hidden>
+          {g.attract ? (
+            <AttractVideo src={g.attract.video} poster={g.attract.poster} />
+          ) : (
+            <span className="agm-cab-static" />
+          )}
+          <span className="agm-cab-press">اضغط للّعب</span>
+        </Link>
+      </div>
+      <div className="agm-cab-deck">
+        <p className="agm-cab-card">{g.line}</p>
+        <div className="agm-cab-controls">
+          <span className="agm-stick" aria-hidden />
+          <Link href={g.play} className="agm-push agm-push-go">
+            <span className="agm-push-cap" aria-hidden />
+            <span>العب</span>
+          </Link>
+          {g.board ? (
+            <Link href={g.board} className="agm-push">
+              <span className="agm-push-cap" aria-hidden />
+              <span>الصدارة</span>
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <div className="agm-cab-door">
+        <span className="agm-coin" aria-hidden />
+        <span>لعبٌ مجّاني</span>
+      </div>
+    </li>
   );
 }

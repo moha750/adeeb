@@ -113,6 +113,12 @@ const desired = {
   // يضمّ هويّةً إلى حسابٍ قائمٍ لا يُنشئ حسابًا — وخطّافُ ما‑قبل‑الإنشاء أعلاه على حاله.
   // وحارسُ «آخرِ طريق» في `settings/actions.ts` يمنع أن يفكّ العضوُ ما يحبس به نفسَه.
   security_manual_linking_enabled: true,
+
+  // **خطّافُ إرسال البريد** (٢٠٢٦-١٠-١٧، `v2/EMAIL-SYSTEM.md`): رسائلُ المصادقة تُكتب في صادر البريد
+  // بدل SMTP، فتخرج بقالب أدِيب ومُرسِله وسجلّه. ونظيرُه في القاعدة `public.hook_send_email`.
+  // **مطفأٌ حتى يُختبر المُرسِلُ حيًّا**، ثمّ يُقلب `true`. وإطفاؤه يُعيد SMTP أعلاه كما كان: هو الاحتياط.
+  hook_send_email_enabled: false,
+  hook_send_email_uri: "pg-functions://postgres/public/hook_send_email",
 };
 
 /**

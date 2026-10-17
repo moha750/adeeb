@@ -16,7 +16,7 @@ function tick(cb: () => void) {
 }
 const nowSec = () => Math.floor(Date.now() / 1000) * 1000;
 const noClock = () => null;
-function useNow(): number | null {
+export function useNow(): number | null {
   return useSyncExternalStore(tick, nowSec, noClock);
 }
 
@@ -39,9 +39,10 @@ export function EventStrip({ event }: { event: HubEvent }) {
 
   return (
     <Link href={event.href} className="agm-event" data-tone={event.tone} aria-label={`${event.title}: التفاصيل`}>
-      <span className="agm-event-live">{before ? "قريبًا" : "مباشر"}</span>
+      {/* الطورُ من ساعة الجهاز، وفي الخادم لا ساعة: فلا يُقال «مباشر» لمسابقةٍ قادمةٍ ثمّ يُصحَّح (مراجعة ٢٠٢٦-١٠-١٧). */}
+      <span className="agm-event-live">{now == null ? "\u00a0" : before ? "قريبًا" : "مباشر"}</span>
       <span className="agm-event-clock">
-        <span>{before ? "تبدأ بعد" : "تنتهي بعد"}</span>
+        <span>{now == null ? "\u00a0" : before ? "تبدأ بعد" : "تنتهي بعد"}</span>
         <b dir="ltr">{clock(left)}</b>
       </span>
       <span className="agm-event-title">

@@ -26,7 +26,6 @@ function guardMessage(msg: string): string | null {
   if (/news_publish_guard/.test(msg)) return "لا يُنشَر خبرٌ ناقص. أكمِل الملخّص والغلاف واسم الكاتب.";
   if (/news_category_check/.test(msg)) return "قسمٌ غير معروف.";
   if (/news_gallery_photographers_aligned/.test(msg)) return "عدد مصوّري المعرض لا يطابق عدد صوره.";
-  if (/news_tags_clean/.test(msg)) return "فيه وسمٌ فارغ. احذفه.";
   if (/news_slug_present/.test(msg)) return "المعرّف مطلوب.";
   if (/news_assigned_fields_known/.test(msg)) return "حقلٌ غير معروف في التكليف.";
   if (/duplicate key|unique/i.test(msg)) return "هذا المعرّف مستخدَم. اختر غيره.";
@@ -86,7 +85,6 @@ export type NewsInput = Partial<{
   content: string;
   sections: Section[];
   category: Category;
-  tags: string[];
   authors: string[];
   unit: string | null;
   coverPhotographer: string | null;
@@ -95,7 +93,7 @@ export type NewsInput = Partial<{
 
 /** خريطة حقل الواجهة إلى عمود القاعدة — مصدرٌ واحد يقرؤه الترشيح والكتابة معًا. */
 const COLUMN: Record<FieldKey, string> = {
-  title: "title", summary: "summary", content: "content", tags: "tags",
+  title: "title", summary: "summary", content: "content",
   category: "category", authors: "authors", image_url: "image_url",
   gallery_images: "gallery_images", cover_photographer: "cover_photographer",
   gallery_photographers: "gallery_photographers",
@@ -157,7 +155,6 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
       patch.content = sectionsToText(secs);
     } else rejected.push("content");
   }
-  put("tags", cleanList(input.tags), input.tags !== undefined);
   put("authors", cleanList(input.authors), input.authors !== undefined);
   put("cover_photographer", clean(input.coverPhotographer), input.coverPhotographer !== undefined);
   put("gallery_photographers", cleanList(input.galleryPhotographers), input.galleryPhotographers !== undefined);
@@ -485,9 +482,13 @@ export async function deleteCollabComment(commentId: string): Promise<Result> {
   return { ok: true, message: "حُذف التعليق." };
 }
 
-/* ══ تعليقات الجمهور — إقرارٌ أو حذف ═════════════════════════════════ */
+/* ══ تعليقات الجمهور — حذفٌ وحده ═════════════════════════════════════ */
 
-export async function moderatePublicComment(commentId: string, op: "approve" | "reject"): Promise<Result> {
+/**
+ * حذفٌ نهائيّ، ومعه إعجاباتُه (`comment_likes` بالـcascade). **وسقط الإقرار** (٢٠٢٦-١٠-١٦): التعليقُ يُنشَر
+ * لحظتَه (`postComment`)، ورئيسُ التحرير يعلم به بإشعار، فلا يبقى له إلّا الحذف.
+ */
+export async function deletePublicComment(commentId: string): Promise<Result> {
   const sb = newsService();
   if (!sb) return { ok: false, message: ENV_MISSING };
 
@@ -497,11 +498,9 @@ export async function moderatePublicComment(commentId: string, op: "approve" | "
     return { ok: false, message: "مراجعة تعليقات الجمهور لرئيس التحرير وحده." };
   }
 
-  const { error } = op === "approve"
-    ? await sb.from("news_public_comments").update({ is_approved: true }).eq("id", commentId)
-    : await sb.from("news_public_comments").delete().eq("id", commentId);
-  if (error) return fail(error.message, "تعذّر التنفيذ");
+  const { error } = await sb.from("news_public_comments").delete().eq("id", commentId);
+  if (error) return fail(error.message, "تعذّر الحذف");
 
   touch();
-  return { ok: true, message: op === "approve" ? "أُقرّ التعليق ونُشر." : "حُذف التعليق." };
+  return { ok: true, message: "حُذف التعليق." };
 }

@@ -65,7 +65,8 @@ export function NewQrView({
    */
   const [sample] = useState(() => newQrCode());
   /** حالُ الفحص اللحظيّ: لا شيء · يُسأل · متاح · مأخوذ. */
-  const [avail, setAvail] = useState<"idle" | "asking" | "free" | "taken">("idle");
+  /** جوابُ الفحص مقرونًا بالرمز الذي سُئل عنه؛ والحالةُ المعروضة تُشتقّ منه تحت. */
+  const [checked, setChecked] = useState<{ code: string; state: "idle" | "free" | "taken" } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +82,8 @@ export function NewQrView({
   const wanted = code.trim();
   const codeCheck = wanted ? checkCode(wanted) : null;
   const codeError = codeCheck && !codeCheck.ok ? codeCheck.message : null;
+  const avail: "idle" | "asking" | "free" | "taken" =
+    !codeOpen || !wanted || codeError ? "idle" : checked?.code === wanted ? checked.state : "asking";
   const ready =
     !!title.trim() && (kind === "file" ? !!file : !!link?.ok) && !codeError && avail !== "taken";
 
@@ -130,13 +133,12 @@ export function NewQrView({
    * «متاح» عن رمزٍ لم يعد مكتوبًا (سباقُ الأجوبة).
    */
   useEffect(() => {
-    if (!codeOpen || !wanted || codeError) { setAvail("idle"); return; }
+    if (!codeOpen || !wanted || codeError) return;
     let alive = true;
-    setAvail("asking");
     const t = setTimeout(async () => {
       const res = await isQrCodeTaken(wanted);
       if (!alive) return;
-      setAvail(res.ok ? (res.taken ? "taken" : "free") : "idle");
+      setChecked({ code: wanted, state: res.ok ? (res.taken ? "taken" : "free") : "idle" });
     }, 400);
     return () => { alive = false; clearTimeout(t); };
   }, [wanted, codeError, codeOpen]);

@@ -137,6 +137,7 @@ export const NAV: NavGroup[] = [
       { label: "أنظمة أدِيب", icon: "regs", href: "/dashboard/regulations" },
       // «إذاعة أدِيب» باسمها كاملًا بأمر المالك (٢٠٢٦-٠٨-١٨) — كما يقول عنوانُ غرفتها.
       { label: "إذاعة أدِيب", icon: "mic", href: "/dashboard/radio" },
+      { label: "ألعاب أدِيب", icon: "games", href: "/dashboard/games" },
     ],
   },
   {
