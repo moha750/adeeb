@@ -8,7 +8,8 @@ import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard, saveIrfanCard } from "@/lib/irfan/card";
 import { useToast } from "../_components/ToastProvider";
 import { CaretAct, Row, type Ico } from "../_portal/Row";
-import { irfanWhatsApp, markIrfanRead } from "./actions";
+import { uploadIrfanPreview } from "@/lib/irfan/preview";
+import { irfanPreviewSlot, irfanWhatsApp, markIrfanRead } from "./actions";
 import type { IrfanItem, IrfanRoomData } from "./vocab";
 
 /**
@@ -80,6 +81,21 @@ export function IrfanRoom({ data, initial, demo }: { data: IrfanRoomData; initia
     return () => { alive = false; };
   }, [cur, demo]);
   const waHref = cur && wa?.id === cur.id ? wa.href : null;
+
+  // ترميمُ ما سقطت صورةُ معاينته مما أرسلتُ (`irfanPreviewSlot`): رسالةً رسالة لا معًا، فلا تمتلئ ذاكرةُ
+  // الألواح التي أسقطتها أوّلَ مرّة. ومرّةً لكلّ فتحٍ للغرفة
+  const mended = useRef(false);
+  useEffect(() => {
+    if (demo || mended.current) return;
+    mended.current = true;
+    const mine = items.filter((i) => i.dir === "out");
+    void (async () => {
+      for (const it of mine) {
+        const slot = await irfanPreviewSlot(it.id);
+        if (slot) await uploadIrfanPreview(it.card, it.look, slot);
+      }
+    })();
+  }, [items, demo]);
 
   const pick = (id: number) => {
     setSel(id);

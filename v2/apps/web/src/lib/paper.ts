@@ -287,6 +287,19 @@ function inkCount(data: Uint8ClampedArray): number {
   return n;
 }
 
+/**
+ * **يُفرغ لوحًا انتهى عمله.** سفاري في الآيفون يحسب ذاكرةَ الألواح كلِّها ولا يُفرغها إلّا متى شاء،
+ * فإذا جاوزت سقفَه أعاد `getContext` لا شيء، وقد يُعيد تحميلَ الصفحة. والرسمةُ الواحدةُ تفتح ألواحًا
+ * عدّة بمقاس الورقة (مرجعٌ وشاهدٌ ومحاولاتٌ لكلّ وزن)، والمعاينةُ الحيّةُ ترسم مع كلّ وقفةٍ في الكتابة:
+ * فسقطت صورةُ معاينة عِرفان مرّتين في يومه الأوّل وأُعيد تحميلُ الصفحة (٢٠٢٦-١٠-١٧). فكلُّ لوحٍ
+ * يُصفَّر مقاسُه حين ينقضي، فتُردّ ذاكرتُه في الحال.
+ */
+export function releaseCanvas(c: HTMLCanvasElement | null | undefined): void {
+  if (!c) return;
+  c.width = 0;
+  c.height = 0;
+}
+
 /** لوحٌ شفّافٌ بمقاس الورقة — يُرسَم فيه قبل أن يُنقل إلى الورقة، فلا يُلطَّخ القالب بمحاولة. */
 function scratch(page: PageSize): CanvasRenderingContext2D | null {
   const canvas = document.createElement("canvas");
@@ -360,9 +373,11 @@ async function drawLayer(
     if (ref) {
       drawOnCanvas(ref, pieces);
       refInk = inkCount(ref.getImageData(0, 0, page.w, page.h).data);
+      releaseCanvas(ref.canvas);
     }
     const c = await rasterize(control, page);
     fallbackPixels = c ? c.getImageData(0, 0, page.w, page.h).data : null;
+    releaseCanvas(c?.canvas);
   } catch {
     refInk = 0;
     fallbackPixels = null;
@@ -380,6 +395,7 @@ async function drawLayer(
     } catch { /* تعذّرت القراءة ⇒ نقبل */ }
 
     if (sound) return drawn.canvas;
+    releaseCanvas(drawn.canvas);
     if (tries > 1) await new Promise((r) => setTimeout(r, RASTER_WAIT));
   }
   return null; // لم يصل الخطّ بعد كلّ المحاولات ⇒ ارتدادٌ إلى canvas (بخطّ الموقع بلا مدّ)
@@ -401,10 +417,14 @@ async function drawWithElongation(
     const font = pack.find((f) => f.weight === w) ?? pack[0];
     if (!font) return false;
     const layer = await drawLayer(pieces.filter((p) => p.weight === w), page, font, w);
-    if (!layer) return false;
+    if (!layer) {
+      layers.forEach(releaseCanvas);
+      return false;
+    }
     layers.push(layer);
   }
   for (const layer of layers) ctx.drawImage(layer, 0, 0);
+  layers.forEach(releaseCanvas);
   return true;
 }
 
@@ -455,9 +475,14 @@ export async function sealPaper(
   const drawn = b64 ? await drawWithElongation(ctx, pieces, page, b64) : false;
   if (!drawn) drawOnCanvas(ctx, pieces);
 
+  // الورقةُ تُختم مرّةً ثمّ يُفرغ لوحُها (`releaseCanvas`): لا يرسم فيها أحدٌ بعد الختم
   return await new Promise<Blob>((resolve, reject) => {
     ctx.canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("تعذّر توليد صورة الورقة."))),
+      (b) => {
+        releaseCanvas(ctx.canvas);
+        if (b) resolve(b);
+        else reject(new Error("تعذّر توليد صورة الورقة."));
+      },
       type,
       type === "image/jpeg" ? quality : undefined,
     );

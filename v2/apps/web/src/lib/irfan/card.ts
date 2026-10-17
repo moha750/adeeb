@@ -17,7 +17,7 @@
  */
 import { shareOrDownloadBlob, type SaveResult } from "@/lib/download";
 import {
-  openBlank, sealPaper, fitSize, elongationRatio, loadTemplate, svgToDataUrl, wrap, FONT, WEIGHTS,
+  openBlank, sealPaper, fitSize, elongationRatio, loadTemplate, svgToDataUrl, wrap, releaseCanvas, FONT, WEIGHTS,
   type PageSize, type Piece,
 } from "@/lib/paper";
 
@@ -290,7 +290,11 @@ export async function renderIrfanPreview(c: IrfanCard, look: IrfanLook = "letter
   ctx.restore();
   URL.revokeObjectURL(img.src);
   return await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("تعذّر رسم معاينة البطاقة."))), "image/jpeg", 0.86);
+    canvas.toBlob((b) => {
+      releaseCanvas(canvas);
+      if (b) resolve(b);
+      else reject(new Error("تعذّر رسم معاينة البطاقة."));
+    }, "image/jpeg", 0.86);
   });
 }
 

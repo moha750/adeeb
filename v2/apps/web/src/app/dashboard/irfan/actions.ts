@@ -80,6 +80,24 @@ export async function irfanWhatsApp(id: number): Promise<string | null> {
   return await whatsappFor(id, me.id);
 }
 
+/**
+ * **ترميمُ صورة المعاينة** — رسالةٌ أرسلها صاحبُ الجلسة ولم تُرفع صورتُها (سقط رسمُها في متصفّحه يومَ
+ * أُرسلت، فعرض واتساب شعارَ الموقع بدل البطاقة). تُفتح الغرفةُ فيُسأل عنها: إن غابت الصورةُ صُكّ رابطُ
+ * رفعٍ لها وحدها، فيرسمها المتصفّحُ ويرفعها. ورسائلُه وحدها (`sender_id`)، والمسارُ من رمزها لا منه.
+ */
+export async function irfanPreviewSlot(id: number): Promise<IrfanSent["upload"]> {
+  const me = await getSessionAdmin();
+  const db = notificationsDb();
+  if (!me || !db || !Number.isSafeInteger(id)) return null;
+  const { data } = await db.from("irfan_messages").select("share_token").eq("id", id).eq("sender_id", me.id).maybeSingle();
+  if (!data?.share_token) return null;
+  const store = db.storage.from(BUCKET);
+  const { data: found, error } = await store.list("irfan", { search: `${data.share_token}.jpg`, limit: 1 });
+  if (error || (found ?? []).some((f) => f.name === `${data.share_token}.jpg`)) return null;
+  const t = await store.createSignedUploadUrl(irfanPreviewPath(data.share_token), { upsert: true });
+  return !t.error && t.data ? { path: t.data.path, token: t.data.token } : null;
+}
+
 export async function markIrfanRead(id: number): Promise<void> {
   if (!Number.isSafeInteger(id)) return;
   const sb = await createClient();

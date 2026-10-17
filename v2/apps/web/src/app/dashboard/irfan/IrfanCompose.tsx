@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, CardHeader, Field, PersonPicker, Segmented, Select, Textarea } from "@adeeb/design-system";
 import { ChatTeardropText, Crown, HandHeart, Image as ImageIcon, NotePencil, PaperPlaneTilt, TextT, WhatsappLogo } from "@phosphor-icons/react";
-import { createClient } from "@/lib/supabase/client";
 import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
-import { renderIrfanCard, renderIrfanPreview, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
+import { renderIrfanCard, saveIrfanCard, type IrfanCard, type IrfanLook } from "@/lib/irfan/card";
+import { uploadIrfanPreview } from "@/lib/irfan/preview";
 import { BODY_MAX, BODY_MIN, HEADINGS, TITLE_MAX, headingLabel, headingText, lettersPhrase } from "@/lib/irfan/vocab";
 import { Avatar } from "../_components/Avatar";
 import { CaretAct, Row } from "../_portal/Row";
@@ -31,7 +31,7 @@ function usePreview(card: IrfanCard, look: IrfanLook) {
         made = URL.createObjectURL(b);
         setSrc((old) => { if (old) URL.revokeObjectURL(old); return made; });
       }, () => { /* تبقى المعاينةُ السابقة */ });
-    }, 350);
+    }, 600);
     return () => { alive = false; clearTimeout(t); };
   }, [card, look]);
   return src;
@@ -88,14 +88,12 @@ export function IrfanCompose({ leaders, season, sender, canReceive, send }: {
     if (!r.ok) { setBusy(false); setError(r.message); return; }
     // صورةُ المعاينة تُرفع قبل أن تُفتح المحادثة، فيجدها واتساب حين يقرأ الرابط. وتعثّرُها لا يُسقط
     // شيئًا: الرسالةُ حُفظت، والرابطُ يفتح البطاقةَ وإن غابت صورتُه عن المعاينة.
-    if (r.upload) {
-      try {
-        const blob = await renderIrfanPreview(card, look);
-        await createClient().storage.from("images").uploadToSignedUrl(r.upload.path, r.upload.token, blob, { contentType: "image/jpeg" });
-      } catch { /* تمضي بلا صورة معاينة */ }
-    }
+    if (r.upload) await uploadIrfanPreview(card, look, r.upload);
     setBusy(false);
     setDone({ id: r.id, whatsapp: r.whatsapp ?? null, to: leader.name, card, look });
+    // الزرُّ آخرُ الصفحة وشاشةُ ما بعد الحفظ أوّلُها: بلا صعودٍ يرى صاحبُ الجوال البطاقةَ وحدها ويحسب أنّ
+    // الأمر انتهى، ولا يرى زرَّ واتساب فوقها (المالك ٢٠٢٦-١٠-١٧)
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /**
