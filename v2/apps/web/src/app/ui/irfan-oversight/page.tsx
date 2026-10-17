@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * **معاينةُ إشراف عِرفان** (٢٠٢٦-١٠-١٧) — صفحةُ رئيس أدِيب، بشكلين للقائمة يختار المالكُ أحدَهما:
- * جدولٌ مسطّحٌ بالرسائل، أو مجموعاتٌ بالقائد. والأرقامُ والتوزيعاتُ واحدةٌ في الشكلين.
+ * **معاينةُ إشراف عِرفان** (٢٠٢٦-١٠-١٧) — صفحةُ رئيس أدِيب كما اختارها: القائمةُ المسطّحة كروتًا، والتصميمُ حلقة.
  * الأسماءُ مخترَعة: `/ui` صفحةٌ عامّة.
  */
 
@@ -25,17 +24,14 @@ const ROWS: OversightRow[] = [
   R(4, "2026-10-18T08:00:00Z", "لطيفة عبد العزيز السليطين", "نواف ثلاب الشمري", "منسّق قسم الإعلام", null, "aurora", "شكرًا على صبرك معنا في المعرض حتّى آخر الليل.", true, true),
   R(5, "2026-10-18T11:45:00Z", "ريم سعد الخالدي", "بشائر فاروق الحداد", "الرئيسة التنفيذية", "قدوتي", "aurora", "أثرُك في أدِيب يراه كلُّ من دخله هذا العام.", true, false),
 ];
-const DATA: OversightData = { season: { title: SEASON, closesAt: "2026-10-23T21:00:00.000Z" }, leaders: 17, rows: ROWS, failures: 1, error: null };
+const DATA: OversightData = { season: { title: SEASON, closesAt: "2026-10-23T21:00:00.000Z" }, leaders: 17, rows: ROWS, error: null };
 
 export default function IrfanOversightLab() {
   return (
     <ToastProvider>
       <main className="py-16">
         <Container className="max-w-5xl">
-          <p className="font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">الشكل الأوّل: جدولٌ بالرسائل كلِّها</p>
-          <div className="mt-4"><OversightView data={DATA} layout="table" /></div>
-          <p className="mt-20 font-latin text-xs font-bold uppercase tracking-[0.16em] text-content-muted">الشكل الثاني: الرسائلُ مجموعةً تحت قائدها</p>
-          <div className="mt-4"><OversightView data={DATA} layout="leaders" /></div>
+          <OversightView data={DATA} />
         </Container>
       </main>
     </ToastProvider>

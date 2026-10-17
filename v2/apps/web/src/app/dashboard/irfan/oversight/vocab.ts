@@ -27,7 +27,5 @@ export type OversightData = {
   /** عددُ قادة المجلسين الآن: مقامُ «وصلهم عِرفان». */
   leaders: number;
   rows: OversightRow[];
-  /** صورٌ سقط تجهيزُها بعد محاولاتها (`irfan_preview_failures`). */
-  failures: number;
   error: string | null;
 };
