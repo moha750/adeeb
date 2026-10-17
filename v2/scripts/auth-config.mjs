@@ -6,24 +6,18 @@
  * مصدرُ الإعداد، ويُطبَّق بـ Management API. غيّر القيمة هنا ثمّ ارفعها.
  *
  * **التشغيل** (من `v2/`):
- *   SUPABASE_ACCESS_TOKEN=sbp_… RESEND_API_KEY=re_… GOOGLE_OAUTH_SECRET=GOCSPX-… node scripts/auth-config.mjs
+ *   SUPABASE_ACCESS_TOKEN=sbp_… GOOGLE_OAUTH_SECRET=GOCSPX-… node scripts/auth-config.mjs
  *   node scripts/auth-config.mjs --dry     ← يعرض الفرق ولا يكتب شيئًا
  *
  * والمفاتيح **من البيئة لا من ملفّ**: لا يُكتب سرٌّ في المستودع ولا يُطبع في مخرَج.
- * وكلُّ سرٍّ يحرس بابَه وحده: بلا `RESEND_API_KEY` يُطبَّق كلُّ شيءٍ عدا SMTP، وبلا
- * `GOOGLE_OAUTH_SECRET` عدا الدخول بقوقل، وبلا `APPLE_OAUTH_SECRET` عدا الدخول بأبل
+ * وكلُّ سرٍّ يحرس بابَه وحده: بلا `GOOGLE_OAUTH_SECRET` يُطبَّق كلُّ شيءٍ عدا الدخول بقوقل، وبلا
+ * `APPLE_OAUTH_SECRET` عدا الدخول بأبل
  * (‏يولّده `scripts/apple-secret.mjs`) — فترتيبُ الخطوات لا يحبس بعضها بعضًا.
  */
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-
-const HERE = dirname(fileURLToPath(import.meta.url));
 const PROJECT_REF = "nnlhkfeybyhvlinbqqfa";
 const API = `https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth`;
 
 const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
-const resendKey = process.env.RESEND_API_KEY?.trim();
 const googleSecret = process.env.GOOGLE_OAUTH_SECRET?.trim();
 const appleSecret = process.env.APPLE_OAUTH_SECRET?.trim();
 const dry = process.argv.includes("--dry");
@@ -56,9 +50,6 @@ const REDIRECTS = [
   "http://localhost:3000/**",
 ];
 
-const template = readFileSync(join(HERE, "..", "emails", "recovery.html"), "utf8");
-const emailChangeTemplate = readFileSync(join(HERE, "..", "emails", "email-change.html"), "utf8");
-const codeTemplate = readFileSync(join(HERE, "..", "emails", "magic-link.html"), "utf8");
 
 /** القيم المقصودة — كلُّ سطرٍ منها له نظيرٌ في الكود يعتمد عليه. */
 const desired = {
@@ -76,19 +67,8 @@ const desired = {
   // و٨ في الشاشة، فكان الخادم يقبل ما ترفضه الشاشة (وأيّ عميلٍ آخر يمرّ).
   password_min_length: 8,
 
-  mailer_subjects_recovery: "استعادة كلمة المرور — نادي أدِيب",
-  mailer_templates_recovery_content: template,
-
-  // **تغيير بريد الدخول** — يطلبه العضو من «الإعدادات»، ولا يسري حتى يفتح الرابط. وبلا هذين
-  // السطرين يخرج نصُّ Supabase الإنجليزيّ الافتراضيّ إلى صندوق عضوٍ عربيّ.
-  // **رمزُ الدخول** (٢٠٢٦-١٠-٠٤) — رسالةُ كلّ رمز: «الدخول بالرمز» في شاشة الدخول وودجةُ الحجز.
-  // كان عنوانُها «Your Magic Link» ونصُّها محرَّرًا في اللوحة يَعِد بـ«إتمام حجزك» وحده، بلا أثرٍ هنا.
-  // وطولُ الرمز ستّة (`mailer_otp_length` الافتراضيّ) يطابق `maxLength` في حقل الرمز بالشاشتين.
-  mailer_subjects_magic_link: "رمز الدخول — نادي أدِيب",
-  mailer_templates_magic_link_content: codeTemplate,
-
-  mailer_subjects_email_change: "تأكيد بريد الدخول الجديد — نادي أدِيب",
-  mailer_templates_email_change_content: emailChangeTemplate,
+  // **رسائلُ المصادقة لا تُكتب هنا** (٢٠٢٦-١٠-١٧): لا قوالبَ في Supabase ولا SMTP. خطّافُ إرسال البريد
+  // أدناه يكتبها في صادر أدِيب، وقوالبُها في `lib/email/kinds.ts` (`v2/EMAIL-SYSTEM.md`).
 
   // **التأكيد المزدوج**: الرسالة تُرسَل إلى العنوانين — القديم يعلم بما يجري (فلا يُسلَب
   // حسابٌ من جلسةٍ مسروقة بصمت)، والجديد يُثبت ملكيّته. وهو افتراض Supabase؛ يُعلَن هنا
@@ -116,8 +96,9 @@ const desired = {
 
   // **خطّافُ إرسال البريد** (٢٠٢٦-١٠-١٧، `v2/EMAIL-SYSTEM.md`): رسائلُ المصادقة تُكتب في صادر البريد
   // بدل SMTP، فتخرج بقالب أدِيب ومُرسِله وسجلّه. ونظيرُه في القاعدة `public.hook_send_email`.
-  // **مطفأٌ حتى يُختبر المُرسِلُ حيًّا**، ثمّ يُقلب `true`. وإطفاؤه يُعيد SMTP أعلاه كما كان: هو الاحتياط.
-  hook_send_email_enabled: false,
+  // **أُشعل ٢٠٢٦-١٠-١٧** بعد أن خرجت رسالةُ التجربة حيّةً في ثانية. **ولا احتياط** (قرار محمد): أُزيل SMTP
+  // ومفتاحُه القديم، فإطفاءُ هذا الخطّاف يُسكت بريدَ المصادقة كلَّه. لا يُطفأ إلّا ومعه بديل.
+  hook_send_email_enabled: true,
   hook_send_email_uri: "pg-functions://postgres/public/hook_send_email",
 };
 
@@ -144,18 +125,6 @@ if (turnstileSecret) {
     security_captcha_enabled: true,
     security_captcha_provider: "turnstile",
     security_captcha_secret: turnstileSecret,
-  });
-}
-
-/** SMTP: يُضاف إن وُجد المفتاح وحده — وبدونه يبقى الإرسالُ على مرسِل Supabase المحدود. */
-if (resendKey) {
-  Object.assign(desired, {
-    smtp_host: "smtp.resend.com",
-    smtp_port: "465",
-    smtp_user: "resend",          // اسمُ المستخدم في Resend ثابتٌ لكلّ الحسابات
-    smtp_pass: resendKey,
-    smtp_admin_email: "noreply@adeeb.club",   // العنوانُ الحيّ منذ الإعداد الأوّل — بلا شرطة
-    smtp_sender_name: "نادي أدِيب",
   });
 }
 
@@ -213,7 +182,7 @@ if (appleSecret) {
 }
 
 /** أسرارٌ تُقرأ **مقنَّعةً** من الخادم — تُستثنى من الطباعة ومن مقارنة التحقّق (انظر أسفلَه). */
-const SECRETS = new Set(["smtp_pass", "external_google_secret", "external_apple_secret", "security_captcha_secret"]);
+const SECRETS = new Set(["external_google_secret", "external_apple_secret", "security_captcha_secret"]);
 
 /** لا يُطبع سرٌّ ولا قالبٌ كامل — المفتاح يُقنَّع، والقالب يُقاس بطولِه. */
 const show = (k, v) => {
@@ -266,4 +235,3 @@ if (stuck.length) {
   process.exit(1);
 }
 console.log(`\n✅ طُبِّق ${changed.length} حقلًا وتُحقِّق منه بالقراءة.`);
-if (!resendKey) console.log("ℹ️  بلا RESEND_API_KEY — إعدادُ SMTP لم يُلمس بعد.");
