@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, BarList, Card, CardBody, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
+import { Alert, Badge, BarList, Card, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
 import { CalendarBlank, Crown, EnvelopeSimple, EyeSlash, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard } from "@/lib/irfan/card";
@@ -118,16 +118,10 @@ export function OversightView({ data, list = "cards" }: { data: OversightData; l
             <Card key={r.id} interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
               <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
-              {/* الهرمُ: لمن (أثقلُ ما في الكرت) ومقعدُه، ثمّ مَن كتب، ثمّ شارتا العنوان والتصميم؛ والتاريخُ والحالُ في الذيل */}
-              <CardBody>
-                <b className="block text-content">إلى {r.to}</b>
-                <small className="block text-content-muted">{r.seat}</small>
-                <p className="mt-3 text-sm text-content">من {r.from}</p>
-                <span className="mt-3 flex flex-wrap gap-1">
-                  <Badge tone="info">{r.title ?? "بلا عنوان"}</Badge>
-                  <Badge tone="neutral">تصميم {LOOK_NAMES[r.look]}</Badge>
-                </span>
-              </CardBody>
+              {/* الشكلُ الذي أحبّه المالك (رأسٌ منسّمٌ وسطرٌ بأيقونة)، وطُوِّر: السطرُ يُسمّي ما فيه («العنوان»)
+                  بدل أن يكون التاريخُ تسميتَه، والتاريخُ نزل إلى الذيل بجوار الحال */}
+              <CardHeader variant="soft" title={`إلى ${r.to}`} subtitle={`من ${r.from}`} />
+              <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[r.look]}`} />
               <CardFooter>
                 <small className="text-content-muted">{fmtDate(r.at)}</small>
                 <span className="flex gap-1"><State r={r} /></span>
