@@ -34,7 +34,8 @@ function CardShot({ row }: { row: OversightRow }) {
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [row]);
   return (
-    <div className="acr-easel is-plain">
+    // البطاقةُ كاملةً في النافذة، بلا لوحٍ حولها كما في الصفّ
+    <div className="irf-card-shot">
       {/* eslint-disable-next-line @next/next/no-img-element -- صورةٌ مرسومةٌ في المتصفّح (blob) */}
       {src ? <img className="acr-shot is-portrait" src={src} alt={`عِرفان إلى ${row.to}`} /> : <span className="acr-shot is-portrait" aria-hidden />}
     </div>
@@ -46,9 +47,9 @@ function CardShot({ row }: { row: OversightRow }) {
  */
 function Thumb({ r }: { r: OversightRow }) {
   // eslint-disable-next-line @next/next/no-img-element -- صورةُ المعاينة من التخزين، تُقصّ إلى البطاقة
-  if (r.thumb) return <img className="acr-shot is-portrait" src={r.thumb} alt="" />;
+  if (r.thumb) return <span className="irf-thumb"><img src={r.thumb} alt="" /></span>;
   return (
-    <span className="acr-shot is-portrait grid place-content-center justify-items-center gap-2 text-content-muted">
+    <span className="irf-thumb is-missing">
       <ImageBroken size={28} aria-hidden />
       <small>لم تُرفع صورتُها</small>
     </span>
@@ -102,19 +103,20 @@ export function OversightView({ data }: { data: OversightData }) {
           {rows.map((r) => (
             <Card key={r.id} className="irf-card" interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
+              {/* الرأسُ ممتدٌّ على الكرت كلِّه فوق البطاقة والسطور معًا (المالك ٢٠٢٦-١٠-١٧) */}
+              <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="sm" />}
+                title={`إلى ${r.to}`} subtitle={r.seat} />
               <div className="irf-card-in">
-                <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
+                <div className="irf-card-shot"><Thumb r={r} /></div>
                 <div>
-                <CardHeader variant="soft" icon={<Avatar name={r.to} gender={r.toGender ?? undefined} src={r.toAvatar ?? undefined} size="sm" />}
-                  title={`إلى ${r.to}`} subtitle={r.seat} />
-                {/* كلُّ حقيقةٍ سطرٌ بأيقونته وتسميته، على نسق «من» (المالك ٢٠٢٦-١٠-١٧): لا شاراتٌ مبعثرةٌ ولا نصٌّ سائب */}
-                <Row Icon={UsersThree} k="من" v={r.from} sub={fmtDate(r.at)} />
-                <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} />
-                <Row Icon={Palette} k="التصميم" v={LOOK_NAMES[r.look]} />
-                <Row Icon={ChatTeardropText} k="الرسالة" v={r.card.body} />
-                <Row Icon={EnvelopeSimple} k="الحال" v={r.read ? "قرأها في البوّابة" : "لم يقرأها بعد"}
-                  tone={r.pictured ? undefined : "wait"} toneAt="sub"
-                  sub={r.pictured ? "صورةُ معاينتها سليمة" : "لم تُرفع صورةُ معاينتها، فوصلت في واتساب بلا صورة"} />
+                  {/* كلُّ حقيقةٍ سطرٌ بأيقونته وتسميته، على نسق «من» (المالك ٢٠٢٦-١٠-١٧): لا شاراتٌ مبعثرةٌ ولا نصٌّ سائب */}
+                  <Row Icon={UsersThree} k="من" v={r.from} sub={fmtDate(r.at)} />
+                  <Row Icon={TextT} k="العنوان" v={r.title ?? "بلا عنوان"} />
+                  <Row Icon={Palette} k="التصميم" v={LOOK_NAMES[r.look]} />
+                  <Row Icon={ChatTeardropText} k="الرسالة" v={r.card.body} />
+                  <Row Icon={EnvelopeSimple} k="الحال" v={r.read ? "قرأها في البوّابة" : "لم يقرأها بعد"}
+                    tone={r.pictured ? undefined : "wait"} toneAt="sub"
+                    sub={r.pictured ? "صورةُ معاينتها سليمة" : "لم تُرفع صورةُ معاينتها، فوصلت في واتساب بلا صورة"} />
                 </div>
               </div>
             </Card>

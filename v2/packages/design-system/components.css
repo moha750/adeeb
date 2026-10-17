@@ -7268,16 +7268,18 @@ label.acc-row.acc-pick:hover { background: var(--steel-50); }
 .acr-list .acr-pick .acr-shot.is-portrait { width: 44px; }
 /* ولوحُ المعاينة في شاشة الكتابة بلا نقش، كلوح الغرفة (المالك ٢٠٢٦-١٠-١٣: الإكليلُ يزاحم) */
 .acr-easel.is-plain::before { content: none; }
-/* **جدارُ عِرفان** في إشراف الرئيس (٢٠٢٦-١٠-١٧): كلُّ كرتٍ بطاقتُه في رأسه مصغّرةً، فلا تكبر إذا امتدّ الكرتُ
-   اليتيمُ على الصفّ كلِّه (القاعدة ٦)؛ تبقى بقدر أخواتها في الصفّ الذي قبله */
-.acr-easel.is-thumb { padding: 18px 18px 14px; }
-.acr-easel.is-thumb > .acr-shot.is-portrait { max-width: 200px; }
-/* **كرتُ الجدار** (`.irf-card`): يقيس عرضَه هو لا عرضَ الشاشة. فإذا امتدّ وحده على الصفّ كلِّه (اليتيمُ في
-   القاعدة ٦) صار أفقيًّا: البطاقةُ في جنبٍ والكلامُ في جنب، بدل بطاقةٍ صغيرةٍ في وسط لوحٍ عريضٍ فارغ */
+/* **صفُّ إشراف عِرفان** (`.irf-card`، ٢٠٢٦-١٠-١٧): رأسٌ ممتدٌّ على الكرت كلِّه، وتحته البطاقةُ مصغّرةً في جنبٍ
+   وسطورُ الحقائق في جنب. يقيس عرضَه هو لا عرضَ الشاشة، فإذا ضاق (الجوّال) نزلت السطورُ تحت البطاقة.
+   والمصغّرةُ بلا لوحٍ ولا حدٍّ حولها (المالك: «الإطارُ حول البطاقة قبيح»): البطاقةُ وحدها بظلّها. */
 .irf-card { container-type: inline-size; }
+.irf-card-shot { display: flex; justify-content: center; padding: 18px; }
+/* المصغّرةُ صورةُ معاينة واتساب (البطاقةُ في وسط لوحٍ عريض بهامش): تُقصّ إلى البطاقة ثمّ تُكبَّر قدرَ الهامش
+   (٦٣٠ ÷ ٥٨٢) فلا يبقى من لوح المعاينة حولها شيء */
+.irf-thumb { display: block; width: 100%; max-width: 200px; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius-sm); box-shadow: var(--shadow-md); background: var(--color-surface-2); }
+.irf-thumb > img { display: block; width: 100%; height: 100%; object-fit: cover; scale: 1.09; }
+.irf-thumb.is-missing { display: grid; place-content: center; justify-items: center; gap: 8px; box-shadow: none; color: var(--color-text-muted); }
 @container (min-width: 560px) {
-  .irf-card-in { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; }
-  .irf-card-in > .acr-easel { border-width: 0 0 0 var(--card-stroke-w); border-radius: 0; justify-content: center; }
+  .irf-card-in { display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: start; }
 }
 /* صفحةُ البطاقة العلنيّة (`/irfan/<رمز>`): كرتٌ واحدٌ في وسط الصفحة بعرض البطاقة */
 .acr-share { max-width: 520px; margin-inline: auto; }
