@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, BarList, Card, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
-import { CalendarBlank, Crown, EnvelopeSimple, HandHeart, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
+import { Alert, Badge, BarList, Card, CardBody, CardFooter, CardHeader, Donut, Modal, SectionCard, Stat, type BarItem } from "@adeeb/design-system";
+import { CalendarBlank, Crown, EnvelopeSimple, EyeSlash, HandHeart, ImageBroken, Image as ImageIcon, Palette, TextT, Tray, UsersThree } from "@phosphor-icons/react";
 import { fmtDate } from "@/lib/dates";
 import { renderIrfanCard } from "@/lib/irfan/card";
 import { EmptyState } from "../../_components/EmptyState";
@@ -54,10 +54,20 @@ function State({ r }: { r: OversightRow }) {
   );
 }
 
-/** المصغّرة: صورةُ المعاينة، أو لوحٌ بأيقونةٍ لما حُجب نصُّه أو لم تُرفع صورتُه. */
+/**
+ * المصغّرة: صورةُ المعاينة، وإلّا فلوحٌ يقول لماذا غابت (نصٌّ محجوب، أو صورةٌ لم تُرفع)، لا مربّعٌ رماديٌّ
+ * أخرس يُحسب عطلًا.
+ */
 function Thumb({ r }: { r: OversightRow }) {
   // eslint-disable-next-line @next/next/no-img-element -- صورةُ المعاينة من التخزين، تُقصّ إلى البطاقة
-  return r.thumb ? <img className="acr-shot is-portrait" src={r.thumb} alt="" /> : <span className="acr-shot is-portrait" aria-hidden />;
+  if (r.thumb) return <img className="acr-shot is-portrait" src={r.thumb} alt="" />;
+  const hidden = !r.card;
+  return (
+    <span className="acr-shot is-portrait grid place-content-center justify-items-center gap-2 text-content-muted">
+      {hidden ? <EyeSlash size={28} aria-hidden /> : <ImageBroken size={28} aria-hidden />}
+      <small>{hidden ? "النصُّ محجوب" : "لم تُرفع صورتُها"}</small>
+    </span>
+  );
 }
 
 export function OversightView({ data, list = "cards" }: { data: OversightData; list?: "cards" | "gallery" }) {
@@ -108,9 +118,20 @@ export function OversightView({ data, list = "cards" }: { data: OversightData; l
             <Card key={r.id} interactive role="button" tabIndex={0} aria-label={`عِرفان إلى ${r.to} من ${r.from}`} onClick={() => setOpen(r)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}>
               <div className="acr-easel is-plain is-thumb"><Thumb r={r} /></div>
-              <CardHeader variant="soft" title={`إلى ${r.to}`} subtitle={`من ${r.from}`} />
-              <Row Icon={TextT} k={fmtDate(r.at)} v={r.title ?? "بلا عنوان"} sub={`تصميم ${LOOK_NAMES[r.look]}`} />
-              <CardFooter><State r={r} /></CardFooter>
+              {/* الهرمُ: لمن (أثقلُ ما في الكرت) ومقعدُه، ثمّ مَن كتب، ثمّ شارتا العنوان والتصميم؛ والتاريخُ والحالُ في الذيل */}
+              <CardBody>
+                <b className="block text-content">إلى {r.to}</b>
+                <small className="block text-content-muted">{r.seat}</small>
+                <p className="mt-3 text-sm text-content">من {r.from}</p>
+                <span className="mt-3 flex flex-wrap gap-1">
+                  <Badge tone="info">{r.title ?? "بلا عنوان"}</Badge>
+                  <Badge tone="neutral">تصميم {LOOK_NAMES[r.look]}</Badge>
+                </span>
+              </CardBody>
+              <CardFooter>
+                <small className="text-content-muted">{fmtDate(r.at)}</small>
+                <span className="flex gap-1"><State r={r} /></span>
+              </CardFooter>
             </Card>
           ))}
         </div>
