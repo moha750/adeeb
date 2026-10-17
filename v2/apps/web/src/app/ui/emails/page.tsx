@@ -1,6 +1,6 @@
 import { Container } from "@adeeb/design-system";
 import { emailKindEntries } from "@/lib/email/kinds";
-import { LOOKS, renderLook } from "@/lib/email/looks";
+import { LOOKS, renderLook, type FontView } from "@/lib/email/looks";
 import EmailLooksView, { type MailRow } from "./EmailLooksView";
 
 /**
@@ -12,6 +12,9 @@ import EmailLooksView, { type MailRow } from "./EmailLooksView";
  */
 
 export const metadata = { title: "بريد أدِيب: الوجهان، معرض أدِيب" };
+
+/** الخطوطُ الثلاثة التي قد تُقرأ بها الرسالة (`FontView` في `looks.ts`). */
+const FONTS: FontView[] = ["adeeb", "desktop", "phone"];
 
 /** الأكثرُ وصولًا أوّلًا: رمزُ الدخول والاستعادة يراهما كلُّ عضو. */
 const ORDER = ["auth.code", "auth.recovery", "notify.note", "contact.reply"];
@@ -25,8 +28,9 @@ export default function EmailLooksLab() {
         key,
         when: kind.when,
         subject: content.subject,
-        band: renderLook(content, "band"),
-        letter: renderLook(content, "letter"),
+        html: Object.fromEntries(
+          FONTS.map((f) => [f, { band: renderLook(content, "band", f), letter: renderLook(content, "letter", f) }]),
+        ) as MailRow["html"],
       };
     });
 
@@ -40,8 +44,8 @@ export default function EmailLooksLab() {
           «{LOOKS.letter.name}»: {LOOKS.letter.idea}
         </p>
         <p className="mt-2 max-w-3xl text-sm text-content-muted">
-          الخطُّ هنا خطُّ الموقع، وهو ما يظهر في بريد أبل. وفي Gmail وOutlook يحلّ محلَّه Tahoma، والشكلُ
-          باقٍ كما هو.
+          والخطُّ لا نملكه: برنامجُ البريد يقرّر. فاختر البرنامجَ لترى الرسالةَ بالخطّ الذي يظهر فيه. وعلى
+          أندرويد يظهر خطُّ الجهاز العربيّ، وهو قريبٌ من خيار «تطبيق Gmail على الآيفون».
         </p>
         <EmailLooksView rows={rows} names={{ band: LOOKS.band.name, letter: LOOKS.letter.name }} />
       </Container>

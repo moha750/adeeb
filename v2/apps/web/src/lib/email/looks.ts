@@ -164,6 +164,21 @@ ${row(`نادي أدِيب، جامعة الملك فيصل<br><a href="${SITE}"
   return shell(c, C.page, card);
 }
 
-export function renderLook(c: EmailContent, look: Look): string {
-  return look === "band" ? band(c) : letter(c);
+/**
+ * **بأيّ خطٍّ تُقرأ** — البريدُ لا يضمن خطَّنا، فالمعرضُ يُري الرسالةَ بما يحلّ محلَّه (طلب محمد ٢٠٢٦-١٠-١٧:
+ * «أريد أن أرى الخطّ الذي سيُعرَض»). والرسالةُ المُرسَلة واحدةٌ في الثلاثة، والفرقُ في برنامج القارئ:
+ * - `adeeb`: يقبل `@font-face` (بريدُ أبل): خطُّ أدِيب.
+ * - `desktop`: يُسقطه وعلى الجهاز Tahoma (Gmail في متصفّح الحاسوب): Tahoma.
+ * - `phone`: يُسقطه ولا Tahoma على الجهاز (تطبيقُ Gmail على الآيفون): خطُّ النظام العربيّ. ويُحاكى هنا
+ *   بـ`system-ui`، فهو على الآيفون والماك خطُّ النظام نفسُه. وعلى أندرويد خطٌّ آخر (Noto) لا يُحاكى.
+ */
+export type FontView = "adeeb" | "desktop" | "phone";
+
+export function renderLook(c: EmailContent, look: Look, font: FontView = "adeeb"): string {
+  const html = look === "band" ? band(c) : letter(c);
+  if (font === "adeeb") return html;
+  const bare = html.replace(/@font-face\{[^}]*\}\n?/g, "");
+  return font === "desktop"
+    ? bare.replaceAll("'Lyon Arabic',", "")
+    : bare.replaceAll("'Lyon Arabic',Tahoma,Arial,", "system-ui,");
 }

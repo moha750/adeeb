@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Segmented } from "@adeeb/design-system";
 
-export type MailRow = { key: string; when: string; subject: string; band: string; letter: string };
+type Pair = { band: string; letter: string };
+export type MailRow = { key: string; when: string; subject: string; html: Record<"adeeb" | "desktop" | "phone", Pair> };
+
+const FONTS = [
+  { value: "phone", label: "تطبيق Gmail على الآيفون" },
+  { value: "desktop", label: "Gmail على الحاسوب" },
+  { value: "adeeb", label: "بريد أبل" },
+];
 
 const WIDTHS = [
   { value: "600", label: "حاسوب" },
@@ -52,12 +59,17 @@ function Mail({ html, width, title }: { html: string; width: string; title: stri
 
 export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names: { band: string; letter: string } }) {
   const [width, setWidth] = useState("375");
+  const [font, setFont] = useState<keyof MailRow["html"]>("phone");
 
   return (
     <>
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <Segmented items={WIDTHS} value={width} onValueChange={setWidth} aria-label="عرض الشاشة" />
         <span className="text-sm text-content-muted">الشاشةُ التي تُقرأ فيها الرسالة</span>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Segmented items={FONTS} value={font} onValueChange={(v) => setFont(v as keyof MailRow["html"])} aria-label="برنامج البريد" />
+        <span className="text-sm text-content-muted">البرنامجُ الذي تُقرأ فيه، ومعه خطُّه</span>
       </div>
 
       {rows.map((r) => (
@@ -72,7 +84,7 @@ export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names
                 <p className="mb-2 font-display text-lg font-bold text-content">
                   {look === "band" ? "الوجه الأوّل" : "الوجه الثاني"}: {names[look]}
                 </p>
-                <Mail html={r[look]} width={width} title={`${r.subject}، ${names[look]}`} />
+                <Mail html={r.html[font][look]} width={width} title={`${r.subject}، ${names[look]}`} />
               </div>
             ))}
           </div>
