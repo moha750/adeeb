@@ -60,6 +60,11 @@ const AUTH_SAMPLE: AuthData = {
   site: "https://adeeb.club",
 };
 
+/** الجهاتُ كما تُكتب في الرسائل. أسماؤها أسماءُ وحداتها في الهيكلة. */
+const IT = "قسم نظم المعلومات";
+const HR = "إدارة الموارد البشرية";
+const OUTREACH = "قسم التواصل المجتمعي";
+
 const UNASKED = "إن لم تطلب هذا فتجاهل الرسالة، ولن يتغيّر شيء في حسابك.";
 
 export interface EmailKind<D> {
@@ -78,10 +83,11 @@ export const EMAIL_KINDS = {
    * **إشعارٌ بريديّ** — كلُّ مخاطَبٍ في دليل الإشعارات قال `email: true` يصله نصُّ جرسه رسالةً.
    * يرسمه الموزِّعُ بجنس قارئه ساعةَ التوزيع ويحفظه هنا (`lib/notifications/dispatch.ts`).
    */
-  "notify.note": defineEmail<{ title: string; body: string | null; href: string | null }>({
+  "notify.note": defineEmail<{ title: string; body: string | null; href: string | null; unit?: string | null }>({
     when: "إشعارٌ في النظام مخاطَبُه يتلقّاه بريدًا",
-    sample: { title: "أُسند إليك منصب «قائد لجنة التأليف»", body: "ونُقلتَ إليه من «عضو لجنة التأليف».", href: "/dashboard/account" },
+    sample: { title: "أُسند إليك منصب «قائد لجنة التأليف»", body: "ونُقلتَ إليه من «عضو لجنة التأليف».", href: "/dashboard/account", unit: HR },
     render: (d) => ({
+      unit: d.unit ?? null,
       subject: d.title,
       title: d.title,
       paragraphs: d.body ? [d.body] : [],
@@ -105,6 +111,7 @@ export const EMAIL_KINDS = {
       responder: "محمد إسماعيل المطر",
     },
     render: (d) => ({
+      unit: OUTREACH,
       subject: d.subject?.trim() ? `ردُّ نادي أدِيب: ${d.subject.trim()}` : "ردُّ نادي أدِيب على رسالتك",
       title: `أهلًا ${d.name}،`,
       paragraphs: ["شكرًا لتواصلك مع نادي أدِيب. وهذا ردُّنا على رسالتك:", ...d.reply.split(/\n{2,}/)],
@@ -135,6 +142,7 @@ export const EMAIL_KINDS = {
       actor: "محمد إسماعيل المطر",
     },
     render: (d) => ({
+      unit: IT,
       subject: `تبدّلت وجهةُ باركود: ${d.title}`,
       title: "تبدّلت وجهةُ باركود",
       paragraphs: [
@@ -156,6 +164,7 @@ export const EMAIL_KINDS = {
     render: (d) => {
       const verify = d.type === "reauthentication";
       return {
+        unit: IT,
         subject: verify ? "رمز التحقّق في نادي أدِيب" : "رمز الدخول إلى نادي أدِيب",
         title: verify ? "رمز التحقّق" : "رمز الدخول",
         paragraphs: [greeting(d), "اكتب هذا الرمز في الصفحة التي طلبتَه منها:"],
@@ -170,7 +179,8 @@ export const EMAIL_KINDS = {
     when: "طلب أحدٌ إعادةَ تعيين كلمة المرور",
     sample: AUTH_SAMPLE,
     render: (d) => ({
-      subject: "إعادة تعيين كلمة المرور في نادي أدِيب",
+      unit: IT,
+        subject: "إعادة تعيين كلمة المرور في نادي أدِيب",
       title: "إعادة تعيين كلمة المرور",
       paragraphs: [greeting(d), "تلقَّينا طلبًا لإعادة تعيين كلمة المرور لحسابك. اضغط الزرّ لتعيين كلمة مرورٍ جديدة من ثمانية أحرفٍ فأكثر."],
       cta: { label: "عيّن كلمة مرورٍ جديدة", href: verifyUrl(d) },
@@ -186,7 +196,8 @@ export const EMAIL_KINDS = {
     when: "طلب صاحبُ حسابٍ تغييرَ بريد دخوله: الرسالةُ إلى عنوانه الحاليّ",
     sample: { ...AUTH_SAMPLE, type: "email_change", from: "old@example.com", to: "new@example.com" },
     render: (d) => ({
-      subject: "طلب تغيير بريد الدخول في نادي أدِيب",
+      unit: IT,
+        subject: "طلب تغيير بريد الدخول في نادي أدِيب",
       title: "تأكيد تغيير بريد الدخول",
       paragraphs: [
         greeting(d),
@@ -203,7 +214,8 @@ export const EMAIL_KINDS = {
     when: "طلب صاحبُ حسابٍ تغييرَ بريد دخوله: الرسالةُ إلى العنوان الجديد",
     sample: { ...AUTH_SAMPLE, type: "email_change", from: "old@example.com", to: "new@example.com" },
     render: (d) => ({
-      subject: "تأكيد بريد الدخول الجديد في نادي أدِيب",
+      unit: IT,
+        subject: "تأكيد بريد الدخول الجديد في نادي أدِيب",
       title: "تأكيد بريد الدخول الجديد",
       paragraphs: [
         greeting(d),
@@ -224,7 +236,8 @@ export const EMAIL_KINDS = {
     when: "طُلب تأكيدُ بريد حسابٍ جديد، أو دُعي أحدٌ إلى أدِيب",
     sample: { ...AUTH_SAMPLE, type: "signup" },
     render: (d) => ({
-      subject: d.type === "invite" ? "دعوةٌ إلى نادي أدِيب" : "تأكيد بريدك في نادي أدِيب",
+      unit: IT,
+        subject: d.type === "invite" ? "دعوةٌ إلى نادي أدِيب" : "تأكيد بريدك في نادي أدِيب",
       title: d.type === "invite" ? "دعوةٌ إلى نادي أدِيب" : "تأكيد البريد",
       paragraphs: [greeting(d), d.type === "invite" ? "دُعيتَ إلى حسابٍ في نادي أدِيب. اضغط الزرّ لقبول الدعوة." : "اضغط الزرّ لتأكيد بريدك وإتمام حسابك."],
       cta: { label: d.type === "invite" ? "أقبل الدعوة" : "أؤكّد بريدي", href: verifyUrl(d) },
@@ -237,7 +250,8 @@ export const EMAIL_KINDS = {
     when: "طُلبت رسالةُ تجربةٍ للتحقّق من الطريق",
     sample: { by: "محمد" },
     render: (d) => ({
-      subject: "رسالةُ تجربة من نادي أدِيب",
+      unit: IT,
+        subject: "رسالةُ تجربة من نادي أدِيب",
       title: "وصلت رسالةُ التجربة",
       paragraphs: [`طلبها ${d.by}. وصولُها يعني أنّ الطريق كلَّه سليم: الصادر، والمُرسِل، والمزوّد.`],
       cta: { label: "افتح أدِيب", href: "/dashboard" },
@@ -248,14 +262,14 @@ export const EMAIL_KINDS = {
    * **تجربةُ وجهٍ من وجهي التصميم** (٢٠٢٦-١٠-١٧، مؤقّتة) — رسالةُ نوعٍ آخر بعيّنته، لابسةً وجهًا من
    * `looks.ts`، تُرسَل إلى محمد ليرى في Gmail وغيره بأيّ خطٍّ وشكلٍ تصل. تُحذف مع `looks.ts` حين يُختار.
    */
-  "system.look_test": defineEmail<{ of: string; look: "band" | "letter" | "letter_text"; plain?: boolean }>({
+  "system.look_test": defineEmail<{ of: string; look: "ink" | "seal"; plain?: boolean }>({
     when: "طُلبت رسالةُ تجربةٍ بأحد وجهي التصميم",
-    sample: { of: "auth.code", look: "letter" },
+    sample: { of: "auth.code", look: "seal" },
     render: (d) => {
       const kind = emailKindOf(d.of);
       if (!kind || d.of === "system.look_test") throw new Error(`لا عيّنةَ للنوع ${d.of}`);
       const c = kind.render(kind.sample);
-      const name = d.look === "band" ? "الترويسة" : "الرسالة";
+      const name = d.look === "ink" ? "الحِبر" : "الختم";
       // `plain`: بعنوان الرسالة الحقيقيّ بلا «تجربة»، فلا يكون العنوانُ نفسُه سببَ التصنيف.
       return { ...c, subject: d.plain ? c.subject : `تجربة الوجه «${name}»: ${c.subject}`, look: d.look };
     },

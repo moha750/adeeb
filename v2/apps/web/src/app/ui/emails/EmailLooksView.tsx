@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Segmented } from "@adeeb/design-system";
 
-type Pair = { band: string; letter: string };
+type Pair = { ink: string; seal: string };
 export type MailRow = { key: string; when: string; subject: string; html: Record<"adeeb" | "desktop" | "phone", Pair> };
 
 const FONTS = [
@@ -57,7 +57,7 @@ function Mail({ html, width, title }: { html: string; width: string; title: stri
   );
 }
 
-export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names: { band: string; letter: string } }) {
+export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names: { ink: string; seal: string } }) {
   const [width, setWidth] = useState("375");
   const [font, setFont] = useState<keyof MailRow["html"]>("phone");
 
@@ -79,10 +79,10 @@ export default function EmailLooksView({ rows, names }: { rows: MailRow[]; names
             {r.when}، <span className="font-latin" dir="ltr">{r.key}</span>
           </p>
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
-            {(["band", "letter"] as const).map((look) => (
+            {(["ink", "seal"] as const).map((look) => (
               <div key={look}>
                 <p className="mb-2 font-display text-lg font-bold text-content">
-                  {look === "band" ? "الوجه الأوّل" : "الوجه الثاني"}: {names[look]}
+                  {look === "ink" ? "الوجه الأوّل" : "الوجه الثاني"}: {names[look]}
                 </p>
                 <Mail html={r.html[font][look]} width={width} title={`${r.subject}، ${names[look]}`} />
               </div>

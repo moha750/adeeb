@@ -29,7 +29,7 @@ export default function EmailLooksLab() {
         when: kind.when,
         subject: content.subject,
         html: Object.fromEntries(
-          FONTS.map((f) => [f, { band: renderLook(content, "band", f), letter: renderLook(content, "letter", f) }]),
+          FONTS.map((f) => [f, { ink: renderLook(content, "ink", f), seal: renderLook(content, "seal", f) }]),
         ) as MailRow["html"],
       };
     });
@@ -40,14 +40,14 @@ export default function EmailLooksLab() {
         <p className="font-latin text-xs font-bold uppercase tracking-[0.22em] text-secondary">Design System, Mail</p>
         <h1 className="mt-1 font-display text-3xl font-black text-content md:text-4xl">بريدُ أدِيب: الوجهان</h1>
         <p className="mt-2 max-w-3xl text-content-muted">
-          كلُّ رسالةٍ يرسلها أدِيب في وجهين، لتختار واحدًا يلبسه البريدُ كلُّه. «{LOOKS.band.name}»: {LOOKS.band.idea}{" "}
-          «{LOOKS.letter.name}»: {LOOKS.letter.idea}
+          كلُّ رسالةٍ يرسلها أدِيب في وجهين، لتختار واحدًا يلبسه البريدُ كلُّه. «{LOOKS.ink.name}»: {LOOKS.ink.idea}{" "}
+          «{LOOKS.seal.name}»: {LOOKS.seal.idea}
         </p>
         <p className="mt-2 max-w-3xl text-sm text-content-muted">
           والخطُّ لا نملكه: برنامجُ البريد يقرّر. فاختر البرنامجَ لترى الرسالةَ بالخطّ الذي يظهر فيه. وعلى
           أندرويد يظهر خطُّ الجهاز العربيّ، وهو قريبٌ من خيار «تطبيق Gmail على الآيفون».
         </p>
-        <EmailLooksView rows={rows} names={{ band: LOOKS.band.name, letter: LOOKS.letter.name }} />
+        <EmailLooksView rows={rows} names={{ ink: LOOKS.ink.name, seal: LOOKS.seal.name }} />
       </Container>
     </main>
   );
