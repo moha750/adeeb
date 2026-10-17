@@ -1,5 +1,9 @@
-import { User } from "@phosphor-icons/react";
+// مدخلُ الخادم (`dist/ssr`) لا الجذر: الصورةُ الرمزيّةُ تُرسَم في مكوّناتِ خادمٍ (البروفايل العلنيّ
+// `/m/[slug]`)، ومدخلُ الجذر يقرأ سياقًا (`createContext`) فيُسقط بناءَها. ولا سياقَ هناك يحمل الوزن،
+// فيُمرَّر صراحةً (`lib/iconWeight.ts`).
+import { User } from "@phosphor-icons/react/dist/ssr";
 import { avatarFace } from "@/lib/avatarFace";
+import { ICON_WEIGHT } from "@/lib/iconWeight";
 
 type AvatarProps = {
   name?: string;
@@ -28,7 +32,7 @@ export function Avatar({ name, src, gender, size = "md", status, className, icon
       ) : face.kind === "figure" ? (
         <img className="av-fig" src={face.url} alt="" aria-hidden />
       ) : (
-        <span className="av-icon" aria-hidden>{icon ?? <User />}</span>
+        <span className="av-icon" aria-hidden>{icon ?? <User weight={ICON_WEIGHT} />}</span>
       )}
       {status ? <i className={`av-dot av-dot-${status}`} /> : null}
     </span>
