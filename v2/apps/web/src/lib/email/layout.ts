@@ -26,6 +26,11 @@ export type EmailContent = {
   cta?: { label: string; href: string } | null;
   /** سطرٌ صغيرٌ تحت الزرّ (عمرُ الرابط، أو «إن لم تطلبه فتجاهله»). */
   note?: string | null;
+  /**
+   * **وجهٌ من وجهي التصميم بدل هذا الثوب** — لرسالة تجربة الوجهين وحدها (`system.look_test`)، كي يراهما
+   * محمد في صندوقه لا في المعرض فقط. مؤقّتٌ: يُحذف مع `looks.ts` حين يُختار الوجه.
+   */
+  look?: "band" | "letter";
 };
 
 export function esc(s: string): string {
