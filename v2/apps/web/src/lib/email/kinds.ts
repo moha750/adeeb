@@ -321,26 +321,6 @@ export const EMAIL_KINDS = {
   }),
 
 
-  /**
-   * **تجربةُ «الترويجيّة»** (٢٠٢٦-١٠-١٨، مؤقّتة): إشعارُ منصبٍ بعيّنةٍ يُرسَل إلى محمد، باسم الجهة مُرسِلًا
-   * (`senderName`) والزرِّ الكبير، ليُعرف أيبقى الزرُّ أم يصير رابطًا. يُحذف بعد الحكم.
-   */
-  "system.trial": defineEmail<{ rank: string }>({
-    when: "طُلبت رسالةُ تجربةٍ لتبويب Gmail",
-    sample: { rank: "قائد لجنة الفعاليات" },
-    render: (d) => ({
-      subject: `أُسند إليك منصب «${d.rank}»`,
-      title: `أُسند إليك منصب «${d.rank}»`,
-      unit: HR,
-      mood: "congratulations",
-      paragraphs: ["أدِيبنا محمد إسماعيل المطر،", "يسرّنا إبلاغك بإسناد منصبٍ إليك في نادي أدِيب، وهذه تفاصيله:"],
-      facts: [
-        { label: "المنصب", value: d.rank },
-        { label: "منصبك السابق", value: "عضو لجنة الفعاليات" },
-      ],
-      cta: { label: "افتحه في أدِيب", href: "/dashboard/account" },
-    }),
-  }),
 } satisfies Record<string, EmailKind<unknown>>;
 
 export type EmailKindKey = keyof typeof EMAIL_KINDS;

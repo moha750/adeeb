@@ -73,14 +73,13 @@ export type EmailContent = {
    * الصلاحية. و`ltr` لقيمةٍ لاتينيّة (بريدٌ، رابط) تُعزَل باتّجاهها.
    */
   facts?: Fact[] | null;
-  /** الزرُّ رابطًا نصّيًّا (تجربةُ «الترويجيّة» ٢٠٢٦-١٠-١٨: يُحسم بها أيبقى الزرُّ في بريد الإشعارات). */
-  linkCta?: boolean;
 };
 
 /**
  * **اسمُ المُرسِل الجهةُ لا النادي** (قرار محمد ٢٠٢٦-١٠-١٨): «إدارة الموارد البشرية، نادي أدِيب»، و«قسم نظم
  * المعلومات، نادي أدِيب». والعنوانُ هو هو (`noreply@adeeb.club`). وُجد في تجربةٍ على Gmail محمد: إشعارُ المنصب
- * باسم الجهة وصل «الوارد»، وباسم النادي وقع في «الترويجيّة» مرّتين، وحذفُ صورة ديبو لم يغيّر شيئًا.
+ * باسم الجهة وصل «الوارد» بالزرّ الكبير وبرابطٍ نصّيّ، وباسم النادي وقع في «الترويجيّة» مرّتين، وحذفُ صورة
+ * ديبو لم يغيّر شيئًا. فالرافعةُ اسمُ المُرسِل، والتصميمُ باقٍ كما هو.
  * ورسالةٌ بلا جهةٍ تخرج باسم «نادي أدِيب».
  */
 export function senderName(c: EmailContent): string | null {
@@ -177,9 +176,7 @@ function body(c: EmailContent, unit: string): string {
     ? `<tr><td class="px" dir="rtl" style="padding:20px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td dir="rtl" style="background:${C.steel50};border-right:3px solid ${C.steel400};border-radius:14px;padding:16px 20px;${FONT}text-align:right;"><div style="color:${C.steel600};font-size:12px;font-weight:bold;margin-bottom:6px;">${esc(c.quote.label)}</div><div style="color:${C.n600};font-size:15px;line-height:1.85;">${lines(c.quote.text)}</div></td></tr></table></td></tr>`
     : "";
 
-  const button = c.cta && c.linkCta
-    ? `<tr><td class="px" dir="rtl" style="padding:22px ${P}px 0;${FONT}text-align:right;font-size:16px;line-height:1.9;"><a href="${esc(absoluteUrl(c.cta.href))}" style="color:${C.steel600};font-weight:bold;text-decoration:underline;">${esc(c.cta.label)}</a></td></tr>`
-    : c.cta
+  const button = c.cta
     ? `<tr><td class="px" style="padding:26px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:${C.navy700};background-image:linear-gradient(135deg,${C.steel400},${C.navy800});border-radius:14px;"><a href="${esc(absoluteUrl(c.cta.href))}" style="display:block;padding:17px 20px;${FONT}font-size:17px;font-weight:bold;color:${C.white};text-decoration:none;text-align:center;">${esc(c.cta.label)}</a></td></tr></table></td></tr>`
     : "";
 
