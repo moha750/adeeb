@@ -37,9 +37,9 @@ describe("دليل البريد", () => {
 
   it("رسائلُ المصادقة: الرمزُ بارز، ورابطُ التأكيد نقطةُ verify ببصمته ونوعه ووجهته", () => {
     const code = renderLayout(emailKindOf("auth.code")!.render({ name: "سارة", gender: "female", type: "magiclink", hash: null, token: "305805", redirect: null, site: null }));
-    // الرمزُ خاناتٌ في الرسالة، ومتّصلٌ في نصّها البديل (يُنسخ منه كاملًا).
+    // الرمزُ رقمٌ واحدٌ متّصلٌ يُحدَّد بلمسةٍ ويُنسخ نظيفًا، في الرسالة ونصّها البديل.
+    expect(code.html).toContain(">305805<");
     expect(code.text).toContain("305805");
-    expect(code.html.match(/class="digit"/g)?.length).toBe(6);
     expect(code.html).toContain("أدِيبتنا سارة");
     const rec = emailKindOf("auth.recovery")!.render({ name: null, gender: null, type: "recovery", hash: "pkce_abc", token: "1", redirect: "https://adeeb.club/reset-password", site: null });
     const u = new URL(rec.cta!.href);
@@ -48,6 +48,13 @@ describe("دليل البريد", () => {
     expect(u.searchParams.get("type")).toBe("recovery");
     expect(u.searchParams.get("redirect_to")).toBe("https://adeeb.club/reset-password");
     expect(rec.paragraphs[0]).toBe("مرحبًا بك،");
+  });
+
+  it("كلُّ جدولٍ يصرّح باتّجاهه، فلا يقلبه Gmail حين يُسقط اتّجاهَ الصفحة", () => {
+    const { html } = renderLayout(emailKindOf("auth.code")!.render(emailKindOf("auth.code")!.sample));
+    const tables = html.match(/<table role="presentation"[^>]*>/g) ?? [];
+    expect(tables.length).toBeGreaterThan(3);
+    for (const t of tables) expect(t, t).toMatch(/\bdir="(rtl|ltr)"/);
   });
 
   it("الرابطُ الداخليّ يصير كاملًا على الموقع، والكاملُ يبقى", () => {

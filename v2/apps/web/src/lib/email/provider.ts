@@ -19,6 +19,8 @@ export type OutgoingEmail = {
   html: string;
   text: string;
   replyTo?: string | null;
+  /** اسمُ المُرسِل الظاهر بدل «نادي أدِيب» (والعنوانُ هو هو). يُنقّى من أقواس العنوان وعلامات الاقتباس. */
+  fromName?: string | null;
   /** يمنع المزوّدَ من إخراج الرسالة مرّتين إن أُعيد الطلبُ نفسُه. */
   idempotencyKey: string;
 };
@@ -47,7 +49,7 @@ export async function sendEmail(mail: OutgoingEmail): Promise<SendOutcome> {
         "Idempotency-Key": mail.idempotencyKey,
       },
       body: JSON.stringify({
-        from: EMAIL_FROM,
+        from: mail.fromName?.trim() ? `${mail.fromName.replace(/[<>"\r\n]/g, "").trim()} <noreply@adeeb.club>` : EMAIL_FROM,
         to: [mail.to],
         subject: mail.subject,
         html: mail.html,

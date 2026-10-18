@@ -73,6 +73,14 @@ export type EmailContent = {
    * الصلاحية. و`ltr` لقيمةٍ لاتينيّة (بريدٌ، رابط) تُعزَل باتّجاهها.
    */
   facts?: Fact[] | null;
+  /**
+   * **تجربةُ «الترويجيّة»** (٢٠٢٦-١٠-١٨، مؤقّتة، `system.trial`): إشعارُ المنصب يصل Gmail محمد في «الترويجيّة»
+   * رغم التحيّة والتوقيع. فتُجرَّب رافعتان كلٌّ في رسالة: `sender` اسمُ المُرسِل جهةً لا «نادي أدِيب»، مع
+   * `linkCta` رابطًا نصّيًّا بدل الزرّ؛ و`bare` رسالةً بلا صورة ديبو. وما ثبت منها يصير حكمًا، والباقي يُحذف.
+   */
+  sender?: string | null;
+  linkCta?: boolean;
+  bare?: boolean;
 };
 
 export function esc(s: string): string {
@@ -117,9 +125,10 @@ const P = 36;
  */
 /** الخطُّ من موقعنا لمن يقبله، وهوامشُ أضيق على الجوّال لمن يقرأ `<style>`. */
 const HEAD_STYLE = `<style>
+:root{color-scheme:light only;supported-color-schemes:light only;}
 @font-face{font-family:'Lyon Arabic';font-weight:400 600;src:url(${SITE}/fonts/lyon-arabic-medium.woff2) format('woff2');}
 @font-face{font-family:'Lyon Arabic';font-weight:700 900;src:url(${SITE}/fonts/lyon-arabic-bold.woff2) format('woff2');}
-@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.wrap{padding:12px 6px!important}.hero-t{font-size:19px!important}.deebo{width:116px!important;height:116px!important}.deebo-td{width:116px!important}.hero{padding:16px 8px 0 12px!important}.bub{padding:14px 16px!important}.digit{width:38px!important;height:50px!important;font-size:24px!important}}
+@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.wrap{padding:12px 6px!important}.hero-t{font-size:19px!important}.deebo{width:116px!important;height:116px!important}.deebo-td{width:116px!important}.hero{padding:16px 8px 0 12px!important}.bub{padding:14px 16px!important}.code{font-size:30px!important;letter-spacing:7px!important;padding:14px 22px!important}}
 </style>`;
 
 /** سطرٌ في النصّ يبقى سطرًا في الرسالة. */
@@ -143,14 +152,14 @@ function factTiles(facts: Fact[]): string {
 }
 
 /** الرمزُ خاناتٌ كحليّة بأرقامٍ بيضاء: يُقرأ رقمًا رقمًا، ويبقى نصًّا يُنسخ. */
-function codeTiles(code: string): string {
-  const digits = [...code]
-    .map(
-      (ch) =>
-        `<td style="padding:0 3px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td class="digit" align="center" valign="middle" width="46" height="60" style="width:46px;height:60px;background:${C.navy800};background-image:linear-gradient(160deg,${C.navy500},${C.navy900});border-radius:12px;${LATIN}font-size:28px;font-weight:bold;color:${C.white};">${esc(ch)}</td></tr></table></td>`,
-    )
-    .join("");
-  return `<tr><td class="px" align="center" style="padding:24px 16px 4px;"><table role="presentation" cellpadding="0" cellspacing="0" dir="ltr"><tr>${digits}</tr></table></td></tr>`;
+/**
+ * **الرمزُ رقمٌ واحدٌ متّصل** في لوحٍ كحليّ (طلب محمد ٢٠٢٦-١٠-١٨: «أليس الأفضل زرُّ نسخٍ بدل أن يُكتب رقمًا
+ * رقمًا؟»). البريدُ لا يُجري نصوصًا، فلا زرَّ نسخٍ يعمل فيه. لكنّ الرقمَ المتّصل يُحدَّد كلُّه بلمسةٍ مطوّلة
+ * (`user-select:all`) ويُنسخ نظيفًا، والآيفون يقرؤه من بريد أبل فيقترحه فوق لوحة المفاتيح بلا نسخ. وكانت
+ * خاناتٍ منفصلة، فكان النسخُ يحمل فراغاتٍ بين الأرقام ولا يقرؤه الاقتراح.
+ */
+function codeBlock(code: string): string {
+  return `<tr><td class="px" align="center" style="padding:24px 16px 4px;"><table role="presentation" cellpadding="0" cellspacing="0" dir="ltr"><tr><td class="code" align="center" style="background:${C.navy800};background-image:linear-gradient(160deg,${C.navy500},${C.navy900});border-radius:16px;padding:16px 30px;${LATIN}font-size:38px;font-weight:bold;letter-spacing:10px;color:${C.white};-webkit-user-select:all;user-select:all;">${esc(code)}</td></tr></table></td></tr>`;
 }
 
 function body(c: EmailContent, unit: string): string {
@@ -163,7 +172,9 @@ function body(c: EmailContent, unit: string): string {
     ? `<tr><td class="px" dir="rtl" style="padding:20px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td dir="rtl" style="background:${C.steel50};border-right:3px solid ${C.steel400};border-radius:14px;padding:16px 20px;${FONT}text-align:right;"><div style="color:${C.steel600};font-size:12px;font-weight:bold;margin-bottom:6px;">${esc(c.quote.label)}</div><div style="color:${C.n600};font-size:15px;line-height:1.85;">${lines(c.quote.text)}</div></td></tr></table></td></tr>`
     : "";
 
-  const button = c.cta
+  const button = c.cta && c.linkCta
+    ? `<tr><td class="px" dir="rtl" style="padding:22px ${P}px 0;${FONT}text-align:right;font-size:16px;line-height:1.9;"><a href="${esc(absoluteUrl(c.cta.href))}" style="color:${C.steel600};font-weight:bold;text-decoration:underline;">${esc(c.cta.label)}</a></td></tr>`
+    : c.cta
     ? `<tr><td class="px" style="padding:26px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:${C.navy700};background-image:linear-gradient(135deg,${C.steel400},${C.navy800});border-radius:14px;"><a href="${esc(absoluteUrl(c.cta.href))}" style="display:block;padding:17px 20px;${FONT}font-size:17px;font-weight:bold;color:${C.white};text-decoration:none;text-align:center;">${esc(c.cta.label)}</a></td></tr></table></td></tr>`
     : "";
 
@@ -174,11 +185,11 @@ function body(c: EmailContent, unit: string): string {
 
   // ختمُ الرسالة: شريطٌ هادئٌ بالجهة والنادي، والشعارُ الملوّن في آخره.
   const signOff = `<tr><td style="padding:32px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="background:${C.tile};border-top:1px solid ${C.tileLine};padding:18px ${P}px;border-radius:0 0 24px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td dir="rtl" valign="middle" style="${FONT}text-align:right;color:${C.n500};font-size:12px;line-height:1.8;"><span style="color:${C.navy700};font-size:13px;font-weight:bold;">${esc(unit)}</span><br>${RIGHTS}</td>
+<td dir="rtl" valign="middle" style="width:100%;${FONT}text-align:right;color:${C.n500};font-size:12px;line-height:1.8;"><span style="color:${C.navy700};font-size:13px;font-weight:bold;">${esc(unit)}</span><br>${RIGHTS}</td>
 <td width="76" align="left" valign="middle" style="width:76px;"><img src="${SITE}/brand/logo-horizontal.png" width="76" height="45" alt="نادي أدِيب" style="display:block;border:0;width:76px;height:45px;"></td>
 </tr></table></td></tr></table></td></tr>`;
 
-  return `${greet}${paras}${c.code ? codeTiles(c.code) : ""}${c.facts?.length ? factTiles(c.facts) : ""}${quote}${button}${note}${signature}${signOff}`;
+  return `${greet}${paras}${c.code ? codeBlock(c.code) : ""}${c.facts?.length ? factTiles(c.facts) : ""}${quote}${button}${note}${signature}${signOff}`;
 }
 
 /**
@@ -190,7 +201,7 @@ function body(c: EmailContent, unit: string): string {
 function hero(c: EmailContent, mood: MailMood): string {
   return `<tr><td class="hero" style="background:${C.steel50};background-image:linear-gradient(180deg,${C.steel100} 0%,${C.steel50} 60%,${C.white} 100%);border-radius:24px 24px 0 0;padding:22px 16px 0 20px;">
 <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td class="deebo-td" width="180" valign="bottom" style="width:180px;font-size:0;line-height:0;padding-left:4px;"><img class="deebo" src="${SITE}/deebo/mail/${mood}.png" width="180" height="180" alt="${MAIL_MOODS[mood]}" style="display:block;border:0;width:180px;height:180px;"></td>
+${c.bare ? "" : `<td class="deebo-td" width="180" valign="bottom" style="width:180px;font-size:0;line-height:0;padding-left:4px;"><img class="deebo" src="${SITE}/deebo/mail/${mood}.png" width="180" height="180" alt="${MAIL_MOODS[mood]}" style="display:block;border:0;width:180px;height:180px;"></td>`}
 <td dir="rtl" valign="middle" style="padding:0 0 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="bub" dir="rtl" style="background:${C.white};border:1px solid ${C.steel100};border-radius:22px 22px 4px 22px;padding:18px 22px;${FONT}text-align:right;">
     <div class="hero-t" style="color:${C.navy900};font-size:22px;font-weight:bold;line-height:1.5;">${esc(c.title)}</div>
@@ -211,7 +222,7 @@ ${body(c, unit)}
 
   const html = `<!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(c.subject)}</title>${HEAD_STYLE}</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><title>${esc(c.subject)}</title>${HEAD_STYLE}</head>
 <body style="margin:0;padding:0;background:${page};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${page};">
 <tr><td class="wrap" align="center" style="padding:32px 16px;">
@@ -221,6 +232,10 @@ ${card}
 </table>
 </body>
 </html>`;
+
+  // كلُّ جدولٍ يصرّح باتّجاهه: Gmail يُسقط `dir` الصفحة، فتنقلب الصفوفُ يسارًا (ظهر ٢٠٢٦-١٠-١٨: الشعارُ
+  // ملتصقٌ بالنصّ في الختام، وبطاقتا البيانات بترتيبٍ معكوس). وجدولُ الرمز يبقى على `ltr` المصرَّح به.
+  const directed = html.replace(/<table role="presentation"(?![^>]*\bdir=)/g, '<table role="presentation" dir="rtl"');
 
   const text = [
     unit,
@@ -239,7 +254,7 @@ ${card}
     "adeeb.club",
   ].filter((x, i, a) => x !== "" || (i > 0 && a[i - 1] !== "")).join("\n");
 
-  return { html, text };
+  return { html: directed, text };
 }
 
 /**
