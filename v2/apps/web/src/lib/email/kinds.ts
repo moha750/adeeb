@@ -322,28 +322,24 @@ export const EMAIL_KINDS = {
 
 
   /**
-   * **تجربةُ «الترويجيّة»** (٢٠٢٦-١٠-١٨، مؤقّتة): إشعارُ منصبٍ بعيّنةٍ، برافعةٍ واحدةٍ في كلّ رسالة، يُرسَل إلى
-   * محمد ليُعرف ما يُخرجه إلى «الوارد». يُحذف بعد الحكم (انظر `sender` في `layout.ts`).
+   * **تجربةُ «الترويجيّة»** (٢٠٢٦-١٠-١٨، مؤقّتة): إشعارُ منصبٍ بعيّنةٍ يُرسَل إلى محمد، باسم الجهة مُرسِلًا
+   * (`senderName`) والزرِّ الكبير، ليُعرف أيبقى الزرُّ أم يصير رابطًا. يُحذف بعد الحكم.
    */
-  "system.trial": defineEmail<{ variant: "sender" | "bare" }>({
+  "system.trial": defineEmail<{ rank: string }>({
     when: "طُلبت رسالةُ تجربةٍ لتبويب Gmail",
-    sample: { variant: "sender" },
-    render: (d) => {
-      const rank = d.variant === "sender" ? "قائد لجنة التصوير" : "نائب لجنة التصوير";
-      return {
-        subject: `أُسند إليك منصب «${rank}»`,
-        title: `أُسند إليك منصب «${rank}»`,
-        unit: HR,
-        mood: "congratulations",
-        paragraphs: ["أدِيبنا محمد إسماعيل المطر،", "يسرّنا إبلاغك بإسناد منصبٍ إليك في نادي أدِيب، وهذه تفاصيله:"],
-        facts: [
-          { label: "المنصب", value: rank },
-          { label: "منصبك السابق", value: "عضو لجنة التصوير" },
-        ],
-        cta: { label: "افتحه في أدِيب", href: "/dashboard/account" },
-        ...(d.variant === "sender" ? { sender: `${HR}، نادي أدِيب`, linkCta: true } : { bare: true }),
-      };
-    },
+    sample: { rank: "قائد لجنة الفعاليات" },
+    render: (d) => ({
+      subject: `أُسند إليك منصب «${d.rank}»`,
+      title: `أُسند إليك منصب «${d.rank}»`,
+      unit: HR,
+      mood: "congratulations",
+      paragraphs: ["أدِيبنا محمد إسماعيل المطر،", "يسرّنا إبلاغك بإسناد منصبٍ إليك في نادي أدِيب، وهذه تفاصيله:"],
+      facts: [
+        { label: "المنصب", value: d.rank },
+        { label: "منصبك السابق", value: "عضو لجنة الفعاليات" },
+      ],
+      cta: { label: "افتحه في أدِيب", href: "/dashboard/account" },
+    }),
   }),
 } satisfies Record<string, EmailKind<unknown>>;
 

@@ -1,7 +1,7 @@
 import "server-only";
 import { notificationsDb } from "@/lib/notifications/db";
 import { emailKindOf, type EmailDataOf, type EmailKindKey } from "./kinds";
-import { renderLayout } from "./layout";
+import { renderLayout, senderName } from "./layout";
 import { providerConfigured, sendEmail } from "./provider";
 
 /**
@@ -79,7 +79,7 @@ export async function drainEmails(limit = 20): Promise<DrainOutcome> {
         html,
         text,
         replyTo: row.reply_to,
-        fromName: content.sender ?? null,
+        fromName: senderName(content),
         idempotencyKey: row.dedupe_key ? `e:${row.dedupe_key}` : `e:${row.id}`,
       });
       if (res.ok) {

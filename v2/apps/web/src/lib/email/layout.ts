@@ -73,15 +73,20 @@ export type EmailContent = {
    * الصلاحية. و`ltr` لقيمةٍ لاتينيّة (بريدٌ، رابط) تُعزَل باتّجاهها.
    */
   facts?: Fact[] | null;
-  /**
-   * **تجربةُ «الترويجيّة»** (٢٠٢٦-١٠-١٨، مؤقّتة، `system.trial`): إشعارُ المنصب يصل Gmail محمد في «الترويجيّة»
-   * رغم التحيّة والتوقيع. فتُجرَّب رافعتان كلٌّ في رسالة: `sender` اسمُ المُرسِل جهةً لا «نادي أدِيب»، مع
-   * `linkCta` رابطًا نصّيًّا بدل الزرّ؛ و`bare` رسالةً بلا صورة ديبو. وما ثبت منها يصير حكمًا، والباقي يُحذف.
-   */
-  sender?: string | null;
+  /** الزرُّ رابطًا نصّيًّا (تجربةُ «الترويجيّة» ٢٠٢٦-١٠-١٨: يُحسم بها أيبقى الزرُّ في بريد الإشعارات). */
   linkCta?: boolean;
-  bare?: boolean;
 };
+
+/**
+ * **اسمُ المُرسِل الجهةُ لا النادي** (قرار محمد ٢٠٢٦-١٠-١٨): «إدارة الموارد البشرية، نادي أدِيب»، و«قسم نظم
+ * المعلومات، نادي أدِيب». والعنوانُ هو هو (`noreply@adeeb.club`). وُجد في تجربةٍ على Gmail محمد: إشعارُ المنصب
+ * باسم الجهة وصل «الوارد»، وباسم النادي وقع في «الترويجيّة» مرّتين، وحذفُ صورة ديبو لم يغيّر شيئًا.
+ * ورسالةٌ بلا جهةٍ تخرج باسم «نادي أدِيب».
+ */
+export function senderName(c: EmailContent): string | null {
+  const unit = c.unit?.trim();
+  return unit ? `${unit}، نادي أدِيب` : null;
+}
 
 export function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -201,7 +206,7 @@ function body(c: EmailContent, unit: string): string {
 function hero(c: EmailContent, mood: MailMood): string {
   return `<tr><td class="hero" style="background:${C.steel50};background-image:linear-gradient(180deg,${C.steel100} 0%,${C.steel50} 60%,${C.white} 100%);border-radius:24px 24px 0 0;padding:22px 16px 0 20px;">
 <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0"><tr>
-${c.bare ? "" : `<td class="deebo-td" width="180" valign="bottom" style="width:180px;font-size:0;line-height:0;padding-left:4px;"><img class="deebo" src="${SITE}/deebo/mail/${mood}.png" width="180" height="180" alt="${MAIL_MOODS[mood]}" style="display:block;border:0;width:180px;height:180px;"></td>`}
+<td class="deebo-td" width="180" valign="bottom" style="width:180px;font-size:0;line-height:0;padding-left:4px;"><img class="deebo" src="${SITE}/deebo/mail/${mood}.png" width="180" height="180" alt="${MAIL_MOODS[mood]}" style="display:block;border:0;width:180px;height:180px;"></td>
 <td dir="rtl" valign="middle" style="padding:0 0 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="bub" dir="rtl" style="background:${C.white};border:1px solid ${C.steel100};border-radius:22px 22px 4px 22px;padding:18px 22px;${FONT}text-align:right;">
     <div class="hero-t" style="color:${C.navy900};font-size:22px;font-weight:bold;line-height:1.5;">${esc(c.title)}</div>

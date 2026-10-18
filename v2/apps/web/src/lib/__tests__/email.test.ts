@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { EMAIL_KIND_SHAPE, emailKindEntries, emailKindOf } from "../email/kinds";
-import { MAIL_MOODS, SITE, absoluteUrl, esc, renderLayout } from "../email/layout";
+import { MAIL_MOODS, SITE, absoluteUrl, esc, renderLayout, senderName } from "../email/layout";
 import { catalogEntries } from "../notifications/catalog";
 import { renderNoteEmail } from "../notifications/render";
 
@@ -55,6 +55,12 @@ describe("دليل البريد", () => {
     const tables = html.match(/<table role="presentation"[^>]*>/g) ?? [];
     expect(tables.length).toBeGreaterThan(3);
     for (const t of tables) expect(t, t).toMatch(/\bdir="(rtl|ltr)"/);
+  });
+
+  it("اسمُ المُرسِل الجهةُ ثمّ النادي، ورسالةٌ بلا جهةٍ باسم النادي", () => {
+    const code = emailKindOf("auth.code")!;
+    expect(senderName(code.render(code.sample))).toBe("قسم نظم المعلومات، نادي أدِيب");
+    expect(senderName({ subject: "x", title: "x", paragraphs: [] })).toBeNull();
   });
 
   it("الرابطُ الداخليّ يصير كاملًا على الموقع، والكاملُ يبقى", () => {
