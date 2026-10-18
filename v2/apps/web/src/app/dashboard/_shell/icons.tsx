@@ -5,7 +5,7 @@ import {
   ImagesSquare, ChartBar, Handshake, UserCheck, HourglassMedium, Cake,
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
-  PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving, House, Ticket, Scroll, HandHeart, GameController,
+  PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving, House, Ticket, Scroll, HandHeart, GameController, PaperPlaneTilt,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -116,6 +116,9 @@ export const IconIrfan = (p: P) => <HandHeart aria-hidden {...p} />;
 /* ألعاب أدِيب — يدُ التحكّم: صالةُ ألعابٍ تُلعب، لا كأسُ مسابقة (٢٠٢٦-١٠-١٧). */
 export const IconGames = (p: P) => <GameController aria-hidden {...p} />;
 
+/* سجلُّ البريد — الطائرةُ الورقيّة: رسائلُ خرجت منّا. و`EnvelopeSimpleOpen` مأخوذةٌ لـ«رسائل التواصل» الواردة. */
+export const IconMail = (p: P) => <PaperPlaneTilt aria-hidden {...p} />;
+
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
   cal: IconCal, globe: IconGlobe, gear: IconGear, chart: IconChart,
@@ -128,6 +131,6 @@ export const ICONS = {
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
   announce: IconAnnounce, friends: IconFriends,
-  home: IconHome, ticket: IconTicket, regs: IconRegs, irfan: IconIrfan, games: IconGames,
+  home: IconHome, ticket: IconTicket, regs: IconRegs, irfan: IconIrfan, games: IconGames, mail: IconMail,
 } as const;
 export type IconKey = keyof typeof ICONS;

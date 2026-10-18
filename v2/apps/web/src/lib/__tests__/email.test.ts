@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { explainEmailError } from "../email/errors";
 import { EMAIL_KIND_SHAPE, emailKindEntries, emailKindOf } from "../email/kinds";
 import { MAIL_MOODS, SITE, absoluteUrl, esc, renderLayout, senderName } from "../email/layout";
 import { catalogEntries } from "../notifications/catalog";
@@ -103,5 +104,23 @@ describe("ثوبُ ديبو", () => {
         }
       }
     }
+  });
+});
+
+
+describe("سببُ التعثّر بالعربيّة (سجلّ البريد)", () => {
+  it("يقول ردودَ المزوّد ووقائعَ الصادر جملةً عربيّة", () => {
+    expect(explainEmailError(null)).toBeNull();
+    expect(explainEmailError("expired")).toBe("فات أجلُها قبل أن تخرج");
+    expect(explainEmailError("503: upstream ؛ expired")).toBe("فات أجلُها قبل أن تخرج");
+    expect(explainEmailError("RESEND_API_KEY غيرُ مضبوطٍ في الخادم")).toBe("مفتاحُ المزوّد غيرُ مضبوطٍ في الخادم");
+    expect(explainEmailError("network: fetch failed")).toBe("انقطع الاتّصالُ بالمزوّد");
+    expect(explainEmailError("render: x")).toBe("تعذّر رسمُها من قالبها");
+    expect(explainEmailError("429: rate limit")).toBe("المزوّدُ مزدحم");
+    expect(explainEmailError("502: bad gateway")).toBe("المزوّدُ متعطّلٌ مؤقّتًا");
+    expect(explainEmailError('401: {"message":"API key is invalid"}')).toBe("رفض المزوّدُ المفتاح");
+    expect(explainEmailError('403: {"message":"The adeeb.club domain is not verified"}')).toBe("النطاقُ غيرُ موثَّقٍ عند المزوّد");
+    expect(explainEmailError('422: {"message":"Invalid `to` field"}')).toBe("عنوانُ المستلم غيرُ صالح");
+    expect(explainEmailError("418: teapot")).toBe("ردّها المزوّدُ (418)");
   });
 });

@@ -23,6 +23,7 @@ import { fmtDateOnly } from "@/lib/dates";
 import { positionLine, rankFor } from "@/lib/positionLabel";
 import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
+import { explainEmailError } from "@/lib/email/errors";
 
 /**
  * أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة.
@@ -101,7 +102,7 @@ export const CATALOG = {
    * **البريدُ لا يخرج** (٢٠٢٦-١٠-١٧) — يطلقه حارسُ البريد (`email_watch`، كلَّ دقيقة) إن وقفت رسالةٌ في
    * الصادر أكثرَ من دقيقتين، أو رفض المزوّدُ آخرَ ما أُرسل. إنذارٌ واحدٌ للعطل، لا كلَّ دقيقة.
    * - **المستلم**: من يملك `manage_website`. **الدرجة**: حرِج (الجرسُ وشاشةُ القفل)، فرمزُ الدخول يموت
-   *   في عشر دقائق. **ولا بريد**: البريدُ هو المعطّل. **الوجهة**: اللوحة، حتّى تُبنى غرفةُ سجلّ البريد.
+   *   في عشر دقائق. **ولا بريد**: البريدُ هو المعطّل. **الوجهة**: سجلُّ البريد (٢٠٢٦-١٠-١٨)، وفيه النبضُ وما تعثّر.
    */
   "system.email_down": defineKind<{ reason: "stalled" | "rejected"; pending: number; auth: boolean; error: string | null }>({
     section: "system",
@@ -118,11 +119,12 @@ export const CATALOG = {
           const parts = [
             f.reason === "stalled" ? `رسائلُ تنتظر أكثرَ من دقيقتين، وعددُها ${f.pending}.` : "ماتت آخرُ رسالةٍ بردٍّ نهائيّ، ولم تخرج بعدها رسالة.",
             f.auth ? "ورمزُ الدخول يموت في عشر دقائق." : "",
-            f.error ? `آخرُ خطأ: ${f.error}` : "",
+            // السببُ بالعربيّة لا ردُّ المزوّد الخام: الإنذارُ يُقرأ على شاشة القفل، والخامُ في صفحة الرسالة.
+            f.error ? `السبب: ${explainEmailError(f.error)}.` : "",
           ];
           return { title, body: parts.filter(Boolean).join(" ") };
         },
-        href: () => "/dashboard",
+        href: () => "/dashboard/system/email",
       },
     ],
   }),
@@ -137,7 +139,7 @@ export const CATALOG = {
         level: "important",
         to: () => [{ capability: "manage_website" }],
         text: () => ({ title: "عاد البريدُ يخرج", body: "الصادرُ سليم، والرسائلُ تُرسَل كالمعتاد." }),
-        href: () => "/dashboard",
+        href: () => "/dashboard/system/email",
       },
     ],
   }),

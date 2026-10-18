@@ -148,6 +148,8 @@ export const NAV: NavGroup[] = [
       { label: "الصلاحيات", icon: "gear", href: "/dashboard/system/permissions" },
       { label: "السلطة", icon: "assign", href: "/dashboard/system/authority" },
       { label: "إحصائيّات الزوّار", icon: "chart", href: "/dashboard/analytics" },
+      // سجلُّ البريد: إدارةٌ لا تفاعل، فما فيه رسائلُ النادي إلى الناس لا كلامُ الناس إليه.
+      { label: "سجلّ البريد", icon: "mail", href: "/dashboard/system/email" },
     ],
   },
   {
