@@ -12,7 +12,8 @@ import { messageIdFrom, stripQuoted } from "@/lib/contact/inbound";
  * **خطّافٌ مستقلٌّ بسرّه** (`RESEND_INBOUND_WEBHOOK_SECRET`) عن خطّاف ما بعد الإرسال (`/api/email/webhook`):
  * لكلٍّ حدثُه (`email.received` هنا)، فلا يمسّ أحدُهما الآخر. وبلا سرٍّ يُردّ 503 فيعيد Resend الطرقة لاحقًا.
  *
- * والطرقةُ لا تحمل نصَّ البريد، فيُجلب من Resend بمعرّفه (`GET /emails/receiving/{id}`). ويُجاب بـ200 لكلّ ما
+ * والطرقةُ لا تحمل نصَّ البريد، فيُجلب من Resend بمعرّفه (`GET /emails/receiving/{id}`) بمفتاحٍ يقرأ
+ * (`RESEND_INBOUND_API_KEY`، «Full access»)، فمفتاحُ الإرسال لا يقرأ. ويُجاب بـ200 لكلّ ما
  * تحقّق منه ولو لم يتبع رسالةً نعرفها (بريدٌ تائه)، وإلّا ظلّ Resend يعيده. ويُجاب بـ500 إن تعثّر الجلبُ أو
  * الكتابة، فيعيده هو، والدورُ لا يُكتب مرّتين (`provider_id` فريد).
  */
@@ -26,7 +27,10 @@ async function fetchText(id: string, key: string): Promise<string | null> {
     headers: { Authorization: `Bearer ${key}` },
     cache: "no-store",
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[contact] inbound fetch failed", { status: res.status, body: (await res.text()).slice(0, 200) });
+    return null;
+  }
   const mail = (await res.json()) as { text?: string | null; html?: string | null };
   if (mail.text?.trim()) return mail.text;
   // بلا نصٍّ صريح: الـHTML بلا وسومه، سطرًا لكلّ كتلة
@@ -45,7 +49,9 @@ async function fetchText(id: string, key: string): Promise<string | null> {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_INBOUND_WEBHOOK_SECRET?.trim();
-  const key = process.env.RESEND_API_KEY?.trim();
+  // مفتاحُ القراءة غيرُ مفتاح الإرسال (٢٠٢٦-١٠-١٩): مفتاحُ الإرسال «Sending access» لا يقرأ البريدَ الوارد،
+  // وقراءتُه تحتاج «Full access». فيبقى مفتاحُ الإرسال محصورًا في الإرسال، ولهذا البابِ مفتاحُه.
+  const key = process.env.RESEND_INBOUND_API_KEY?.trim();
   if (!secret || !key) return NextResponse.json({ ok: false, error: "not configured" }, { status: 503 });
 
   // الجسمُ خامًا كما وصل: التوقيعُ على حروفه.
