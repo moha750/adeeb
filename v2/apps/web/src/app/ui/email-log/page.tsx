@@ -29,13 +29,15 @@ const M = (
   status: MailRow["status"], extra: Partial<MailRow> = {},
 ): MailRow => ({
   id, kind: extra.auth ? "auth.code" : "notify.note", subject, to, email, unit, status,
-  attempts: 1, why: null, createdAt: ago(min), sentAt: status === "sent" ? ago(min) : null, auth: false, ...extra,
+  attempts: 1, why: null, createdAt: ago(min), sentAt: status === "sent" ? ago(min) : null, auth: false,
+  delivery: status === "sent" ? "delivered" : null, suppressed: false, ...extra,
 });
 
 const ROWS: MailRow[] = [
   M(1, "رمزُ دخولك إلى أدِيب", "سديم القحطاني", "sadeem.q@example.com", IT, 4, "sent", { auth: true }),
-  M(2, "أُسند إليك منصب", "فهد العتيبي", "fahad.ot@example.com", HR, 38, "sent"),
-  M(3, "أُسند إليك منصب", "ريما المحسن", "rima.m@exmaple.com", HR, 38, "dead", { why: "عنوانُ المستلم غيرُ صالح" }),
+  M(2, "أُسند إليك منصب", "فهد العتيبي", "fahad.ot@example.com", HR, 38, "sent", { delivery: null }),
+  M(3, "أُسند إليك منصب", "ريما المحسن", "rima.m@exmaple.com", HR, 38, "sent", { delivery: "bounced", suppressed: true, why: "ارتدّت: العنوانُ لا يستقبل البريد، فأُوقف" }),
+  M(10, "انتهى تكليفك", "سعد العبود", "saad.a@example.com", HR, 50, "dead", { why: "المزوّدُ متعطّلٌ مؤقّتًا" }),
   M(4, "ردُّنا على رسالتك", "نوف الشمري", "n.alshammari@example.com", OUT, 2, "queued", { attempts: 2, why: "المزوّدُ مزدحم" }),
   M(5, "رمزُ دخولك إلى أدِيب", "يوسف البقمي", "yousef.b@example.com", IT, 60 * 20, "sent", { auth: true }),
   M(6, "انتهى تكليفك", "لطيفة السليطين", "latifa.s@example.com", HR, 60 * 27, "sent"),

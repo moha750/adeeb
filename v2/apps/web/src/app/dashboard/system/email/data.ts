@@ -2,12 +2,13 @@
 import "server-only";
 import { notificationsDb } from "@/lib/notifications/db";
 import { emailKindOf } from "@/lib/email/kinds";
-import { explainEmailError } from "@/lib/email/errors";
+import { explainDelivery, explainEmailError, type Delivery } from "@/lib/email/errors";
 import { asSeenIn, renderLayout } from "@/lib/email/layout";
 
 /**
  * **سجلُّ البريد: ما يُقرأ** (٢٠٢٦-١٠-١٨). `email_outbox` طابورٌ وسجلٌّ معًا (`v2/EMAIL-SYSTEM.md`)، فهذه
- * الغرفةُ نافذتُه: نبضُ البريد، وما تعثّر، وكلُّ رسالةٍ في ثلاثين يومًا.
+ * الغرفةُ نافذتُه: نبضُ البريد، وما تعثّر، وكلُّ رسالةٍ في ثلاثين يومًا. ومنذ ٢٠٢٦-١٠-١٩ ما جرى لها بعد
+ * خروجها أيضًا (`delivery`، من خطّاف Resend): وصلت، تأخّرت، ارتدّت، شكا صاحبُها.
  *
  * **ولا تخرج حقائقُ الرسالة (`data`) من الخادم أبدًا**: فيها رمزُ الدخول ورابطُه (`token`، `hash`)، ومن
  * قرأهما دخل حسابَ صاحبهما. فيُرسَم منها هنا موضوعُ الرسالة وجهتُها فقط، ويُرمى الباقي.
@@ -31,6 +32,10 @@ export type MailRow = {
   sentAt: string | null;
   /** رسالةُ مصادقة: لا تُعرَض ولا تُعاد. */
   auth: boolean;
+  /** ما جرى بعد الخروج، من خطّاف Resend (`/api/email/webhook`): وصلت، تأخّرت، ارتدّت، شكا صاحبُها. */
+  delivery: Delivery | null;
+  /** عنوانُها موقوفٌ الآن (`email_suppressions`): لا يُراسَل حتى يُرفع إيقافُه. */
+  suppressed: boolean;
 };
 
 export type MailHealth = {
@@ -48,8 +53,26 @@ const WINDOW_DAYS = 30;
 type Raw = {
   id: number; kind: string; to_email: string; to_user: string | null; data: Record<string, unknown>;
   status: MailStatus; attempts: number; subject: string | null; last_error: string | null;
-  created_at: string; sent_at: string | null;
+  created_at: string; sent_at: string | null; delivery: Delivery | null;
 };
+
+const COLS = "id, kind, to_email, to_user, data, status, attempts, subject, last_error, created_at, sent_at, delivery";
+
+/** سببُ الرسالة: تعثّرُها قبل الخروج، أو ما جرى لها بعده. */
+function whyOf(r: Raw, suppressed: boolean): string | null {
+  if (r.delivery && r.delivery !== "delivered") return explainDelivery(r.delivery, suppressed);
+  return r.status === "sent" || r.status === "cancelled" ? null : explainEmailError(r.last_error);
+}
+
+/** أيُّ هذه العناوين موقوف. */
+async function suppressedOf(sb: NonNullable<ReturnType<typeof notificationsDb>>, emails: string[]): Promise<Set<string>> {
+  const set = new Set<string>();
+  const list = [...new Set(emails.map((e) => e.toLowerCase()))];
+  if (!list.length) return set;
+  const { data } = await sb.from("email_suppressions").select("email").in("email", list);
+  for (const s of (data ?? []) as Array<{ email: string }>) set.add(s.email);
+  return set;
+}
 
 /** موضوعُ الرسالة وجهتُها من قالبها، بلا شيءٍ آخر. ونوعٌ حُذف قالبُه يقع على ما خُزّن ساعةَ الإرسال. */
 function face(r: Raw): { subject: string; unit: string | null; name: string | null } {
@@ -69,7 +92,7 @@ export async function getMailLog(): Promise<MailLog> {
   const since = new Date(Date.now() - WINDOW_DAYS * 864e5).toISOString();
   const [log, last, queue, watch] = await Promise.all([
     sb.from("email_outbox")
-      .select("id, kind, to_email, to_user, data, status, attempts, subject, last_error, created_at, sent_at")
+      .select(COLS)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(500),
@@ -94,8 +117,11 @@ export async function getMailLog(): Promise<MailLog> {
     }
   }
 
+  const stopped = await suppressedOf(sb, raw.map((r) => r.to_email));
+
   const rows: MailRow[] = raw.map((r) => {
     const f = face(r);
+    const suppressed = stopped.has(r.to_email.toLowerCase());
     return {
       id: r.id,
       kind: r.kind,
@@ -105,10 +131,12 @@ export async function getMailLog(): Promise<MailLog> {
       unit: f.unit,
       status: r.status,
       attempts: r.attempts,
-      why: r.status === "sent" || r.status === "cancelled" ? null : explainEmailError(r.last_error),
+      why: whyOf(r, suppressed),
       createdAt: r.created_at,
       sentAt: r.sent_at,
       auth: r.kind.startsWith("auth."),
+      delivery: r.delivery,
+      suppressed,
     };
   });
 
@@ -124,6 +152,9 @@ export async function getMailLog(): Promise<MailLog> {
 export type MailDetail = MailRow & {
   /** الخطأُ كما ردّه المزوّد، لمن يلاحقه عند Resend. */
   rawError: string | null;
+  deliveryAt: string | null;
+  /** ردُّ خادم المستلم كما جاء في الارتداد. */
+  deliveryNote: string | null;
   provider: string | null;
   providerId: string | null;
   /**
@@ -146,12 +177,13 @@ export async function getMail(
   if (!sb) return { mail: null, error: KEY_HINT };
   const { data, error } = await sb
     .from("email_outbox")
-    .select("id, kind, to_email, to_user, data, status, attempts, subject, last_error, created_at, sent_at, provider, provider_id")
+    .select(`${COLS}, provider, provider_id, delivery_at, delivery_note`)
     .eq("id", id)
     .maybeSingle();
   if (error) return { mail: null, error: error.message };
   if (!data) return { mail: null, error: null };
-  const r = data as Raw & { provider: string | null; provider_id: string | null };
+  const r = data as Raw & { provider: string | null; provider_id: string | null; delivery_at: string | null; delivery_note: string | null };
+  const suppressed = (await suppressedOf(sb, [r.to_email])).size > 0;
 
   let name: string | null = null;
   if (r.to_user) {
@@ -180,11 +212,15 @@ export async function getMail(
       unit: f.unit,
       status: r.status,
       attempts: r.attempts,
-      why: r.status === "sent" || r.status === "cancelled" ? null : explainEmailError(r.last_error),
+      why: whyOf(r, suppressed),
       createdAt: r.created_at,
       sentAt: r.sent_at,
       auth,
+      delivery: r.delivery,
+      suppressed,
       rawError: r.last_error,
+      deliveryAt: r.delivery_at,
+      deliveryNote: r.delivery_note,
       provider: r.provider,
       providerId: r.provider_id,
       html,

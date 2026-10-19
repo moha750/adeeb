@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { explainEmailError } from "../email/errors";
+import { createHmac } from "node:crypto";
+import { explainDelivery, explainEmailError } from "../email/errors";
+import { readDeliveryEvent, verifyWebhook } from "../email/webhook";
 import { EMAIL_KIND_SHAPE, emailKindEntries, emailKindOf } from "../email/kinds";
 import { MAIL_MOODS, SITE, absoluteUrl, esc, renderLayout, senderName } from "../email/layout";
 import { catalogEntries } from "../notifications/catalog";
@@ -122,5 +124,38 @@ describe("سببُ التعثّر بالعربيّة (سجلّ البريد)", (
     expect(explainEmailError('403: {"message":"The adeeb.club domain is not verified"}')).toBe("النطاقُ غيرُ موثَّقٍ عند المزوّد");
     expect(explainEmailError('422: {"message":"Invalid `to` field"}')).toBe("عنوانُ المستلم غيرُ صالح");
     expect(explainEmailError("418: teapot")).toBe("ردّها المزوّدُ (418)");
+  });
+});
+
+describe("خطّافُ Resend", () => {
+  // سرٌّ مخترَعٌ بصيغة Svix (whsec_ ثمّ base64)، لا صلةَ له بسرٍّ حقيقيّ.
+  const secret = `whsec_${Buffer.from("adeeb-test-secret-0123456789").toString("base64")}`;
+  const body = JSON.stringify({ type: "email.bounced", data: { email_id: "abc", bounce: { type: "Permanent", message: "No such user" } } });
+  const sign = (id: string, ts: string, b: string) =>
+    `v1,${createHmac("sha256", Buffer.from(secret.slice(6), "base64")).update(`${id}.${ts}.${b}`).digest("base64")}`;
+  const now = 1_800_000_000;
+
+  it("يقبل توقيعًا صحيحًا ويرفض المزوَّرَ والقديم", () => {
+    const h = { id: "msg_1", timestamp: String(now), signature: sign("msg_1", String(now), body) };
+    expect(verifyWebhook(secret, h, body, now)).toBe(true);
+    expect(verifyWebhook(secret, { ...h, signature: `v1,${"A".repeat(44)}` }, body, now)).toBe(false);
+    expect(verifyWebhook(secret, h, body.replace("abc", "xyz"), now)).toBe(false);
+    expect(verifyWebhook(secret, h, body, now + 600)).toBe(false);
+    expect(verifyWebhook(secret, { ...h, signature: `v1,bad ${h.signature}` }, body, now)).toBe(true);
+    expect(verifyWebhook("", h, body, now)).toBe(false);
+  });
+
+  it("يقرأ واقعةَ التسليم ويُوقف الدائمَ وحدَه", () => {
+    expect(readDeliveryEvent(JSON.parse(body))).toEqual({ providerId: "abc", type: "bounced", note: "No such user", permanent: true });
+    expect(readDeliveryEvent({ type: "email.bounced", data: { email_id: "a", bounce: { type: "Transient" } } })?.permanent).toBe(false);
+    expect(readDeliveryEvent({ type: "email.complained", data: { email_id: "a" } })?.type).toBe("complained");
+    expect(readDeliveryEvent({ type: "email.opened", data: { email_id: "a" } })).toBeNull();
+    expect(readDeliveryEvent(null)).toBeNull();
+  });
+
+  it("يقول ما بعد الخروج بالعربيّة", () => {
+    expect(explainDelivery("bounced", true)).toBe("ارتدّت: العنوانُ لا يستقبل البريد، فأُوقف");
+    expect(explainDelivery("delivered", false)).toBeNull();
+    expect(explainEmailError("suppressed: bounced")).toBe("لم تُرسَل: العنوانُ موقوفٌ لأنّه ارتدّ");
   });
 });

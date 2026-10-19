@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, SectionCard, Stat, countPhrase, matchesSearch, unitWord } from "@adeeb/design-system";
 import { Buildings, Clock, EnvelopeSimple, Heartbeat, Hourglass, PaperPlaneTilt } from "@phosphor-icons/react";
-import { ArrowsClockwise, Warning } from "@/app/_components/glyphs";
+import { ArrowCounterClockwise, ArrowsClockwise, Warning } from "@/app/_components/glyphs";
 import { DataCards, type CardSpec } from "../../_components/DataCards";
 import type { Column, Group } from "../../_components/DataTable";
 import type { MenuGroup } from "../../_components/DropdownMenu";
@@ -14,7 +14,7 @@ import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { useToast } from "../../_components/ToastProvider";
 import { clubDayKey, daysBetweenKeys, fmtSince } from "@/lib/dates";
-import { retryMail, sendTestMail } from "./actions";
+import { liftSuppression, retryMail, sendTestMail } from "./actions";
 import type { MailHealth, MailRow, MailStatus } from "./data";
 
 /**
@@ -38,14 +38,33 @@ const STATUS: Record<MailStatus, { label: string; tone: "success" | "warning" | 
   dead: { label: "تعثّرت", tone: "danger" },
   cancelled: { label: "أُلغيت", tone: "neutral" },
 };
+/**
+ * **حالُ ما بعد الخروج يغلب «خرجت»** (خطّافُ Resend، ٢٠٢٦-١٠-١٩): «خرجت» تعني أنّ المزوّد قبلها، فإن قال بعدها
+ * وصلت أو ارتدّت قيل ذلك مكانها.
+ */
+const DELIVERY: Record<NonNullable<MailRow["delivery"]>, { label: string; tone: "success" | "warning" | "danger" }> = {
+  delivered: { label: "وصلت", tone: "success" },
+  delayed: { label: "تتأخّر", tone: "warning" },
+  bounced: { label: "ارتدّت", tone: "danger" },
+  complained: { label: "عُدّت مزعجة", tone: "danger" },
+};
+const badgeOf = (m: MailRow) => (m.status === "sent" && m.delivery ? DELIVERY[m.delivery] : STATUS[m.status]);
 const MAIL_UNIT = { one: "رسالة", two: "رسالتان", few: "رسائل" };
 /** المتعثّرُ في أسبوعه يحتاج نظرًا، وما بعده صار تاريخًا يُقرأ في السجلّ لا مهمّةً في الصدر. */
 const NEEDS_DAYS = 7;
 
-const canRetry = (m: MailRow) => m.status === "dead" && !m.auth;
+/** الإعادةُ لما مات قبل الخروج، لا لرسالة مصادقة، ولا لعنوانٍ موقوف: تموت ثانيةً حتى يُرفع إيقافُه. */
+const canRetry = (m: MailRow) => m.status === "dead" && !m.auth && !m.suppressed;
 const pending = (m: MailRow) => m.status === "queued" || m.status === "sending";
-const toneOf = (m: MailRow) => (m.status === "dead" ? "danger" : pending(m) ? "warning" : undefined);
-const ticoOf = (m: MailRow) => (m.status === "dead" ? "tico-danger" : pending(m) ? "tico-warning" : "tico-steel");
+const returned = (m: MailRow) => m.delivery === "bounced" || m.delivery === "complained";
+const toneOf = (m: MailRow) => {
+  const t = badgeOf(m).tone;
+  return t === "danger" || t === "warning" ? t : undefined;
+};
+const ticoOf = (m: MailRow) => {
+  const t = toneOf(m);
+  return t === "danger" ? "tico-danger" : t === "warning" ? "tico-warning" : "tico-steel";
+};
 
 /** الزمنُ رأسُ مجموعة، بقسمة سجلّ ديبو نفسِها: يُقال مرّةً لعشرٍ لا عشرَ مرّات. */
 function byDay(rows: MailRow[], todayKey: string): Group<MailRow>[] {
@@ -100,6 +119,16 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
       router.refresh();
     });
   };
+  const lift = (m: MailRow) => {
+    setBusyId(m.id);
+    start(async () => {
+      const r = await liftSuppression(m.email);
+      setBusyId(null);
+      if (r.ok) toast.success(r.message);
+      else toast.error(r.message);
+      router.refresh();
+    });
+  };
   const test = () =>
     start(async () => {
       const r = await sendTestMail();
@@ -109,7 +138,7 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
     });
 
   const needs = useMemo(
-    () => rows.filter((m) => m.status === "dead" && daysBetweenKeys(clubDayKey(m.createdAt), todayKey) <= NEEDS_DAYS),
+    () => rows.filter((m) => (m.status === "dead" || returned(m)) && daysBetweenKeys(clubDayKey(m.createdAt), todayKey) <= NEEDS_DAYS),
     [rows, todayKey],
   );
 
@@ -121,6 +150,7 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
       label: "الحال",
       options: [
         { value: "sent", label: "خرجت" },
+        { value: "returned", label: "ارتدّت" },
         { value: "pending", label: "تنتظر" },
         { value: "dead", label: "تعثّرت" },
         { value: "cancelled", label: "أُلغيت" },
@@ -132,7 +162,8 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
   const filtered = useMemo(
     () =>
       rows.filter((m) => {
-        if (filters.status === "pending" ? !pending(m) : filters.status && m.status !== filters.status) return false;
+        const st = filters.status;
+        if (st === "pending" ? !pending(m) : st === "returned" ? !returned(m) : st && m.status !== st) return false;
         if (filters.unit && m.unit !== filters.unit) return false;
         return matchesSearch(search, `${m.subject} ${m.to} ${m.email}`);
       }),
@@ -158,15 +189,21 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
         </span>
       ),
     },
-    { key: "state", header: "", render: (m) => <Badge tone={STATUS[m.status].tone} size="sm" dot>{STATUS[m.status].label}</Badge> },
+    { key: "state", header: "", render: (m) => <Badge tone={badgeOf(m).tone} size="sm" dot>{badgeOf(m).label}</Badge> },
     { key: "why", header: "", render: (m) => (m.why ? fact(m, <Warning aria-hidden />, m.why) : null) },
     { key: "unit", header: "", render: (m) => (m.unit ? fact(m, <Buildings aria-hidden />, m.unit) : null) },
     { key: "when", header: "", render: (m) => fact(m, <Clock aria-hidden />, fmtSince(m.sentAt ?? m.createdAt)) },
   ];
   const spec: CardSpec = { title: "subject", subtitle: "to", badge: "state", facts: ["why", "unit", "when"], bareFacts: true };
 
-  const actions = (m: MailRow): MenuGroup[] =>
-    canRetry(m) ? [{ items: [{ label: "أعد إرسالها", icon: <ArrowsClockwise />, onSelect: () => retry(m), disabled: busy }] }] : [];
+  const actions = (m: MailRow): MenuGroup[] => [
+    {
+      items: [
+        ...(canRetry(m) ? [{ label: "أعد إرسالها", icon: <ArrowsClockwise />, onSelect: () => retry(m), disabled: busy }] : []),
+        ...(m.suppressed ? [{ label: "ارفع إيقاف العنوان", icon: <ArrowCounterClockwise />, onSelect: () => lift(m), disabled: busy }] : []),
+      ],
+    },
+  ];
 
   const last = lastSentStat(health.lastSentAt);
 
@@ -193,15 +230,26 @@ export function EmailLogView({ rows, health, todayKey }: { rows: MailRow[]; heal
               <div key={m.id} className="grid gap-1">
                 <b className="font-display text-content">{m.subject}، إلى {m.to}</b>
                 <span className="text-sm text-content-muted">{m.why ?? "تعثّرت"}، <span className="whitespace-nowrap">{fmtSince(m.createdAt)}</span></span>
-                {canRetry(m) ? (
+                {/* العنوانُ الموقوف يُرفع إيقافُه بعد تصحيحه، ثمّ تُعاد رسالتُه إن لزم. والمرتدّةُ ارتدادًا عابرًا
+                    لا فعلَ لها: Resend يعيد المحاولة وحدَه. */}
+                {m.suppressed ? (
+                  <>
+                    <span className="text-sm text-content-muted">صحّح العنوانَ في ملفّ صاحبه، ثمّ ارفع إيقافَه.</span>
+                    <div>
+                      <Button size="sm" variant="ghost" loading={busy && busyId === m.id} disabled={busy} onClick={() => lift(m)}>
+                        <ArrowCounterClockwise />ارفع الإيقاف
+                      </Button>
+                    </div>
+                  </>
+                ) : canRetry(m) ? (
                   <div>
                     <Button size="sm" variant="ghost" loading={busy && busyId === m.id} disabled={busy} onClick={() => retry(m)}>
                       <ArrowsClockwise />أعد إرسالها
                     </Button>
                   </div>
-                ) : (
+                ) : m.auth && m.status === "dead" ? (
                   <span className="text-sm text-content-muted">رسالةُ مصادقةٍ لا تُعاد: يطلب صاحبُها رمزًا جديدًا.</span>
-                )}
+                ) : null}
               </div>
             ))}
           </div>

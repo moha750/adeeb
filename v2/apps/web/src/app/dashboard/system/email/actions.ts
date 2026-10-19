@@ -67,3 +67,22 @@ export async function sendTestMail(): Promise<MailResult> {
     ? { ok: true, message: `خرجت التجربةُ إلى ${me.email}.` }
     : { ok: true, message: "كُتبت التجربةُ في الصادر، وتخرج في الدقيقة القادمة." };
 }
+
+/**
+ * يرفع إيقافَ عنوانٍ ارتدّ أو شكا (`unsuppress_email`): بعد أن يُصحَّح العنوانُ في ملفّ صاحبه، أو يقول صاحبُه إنّ
+ * صندوقَه عاد يستقبل. ولا يُعيد ما مات من رسائله: تلك تُعاد بزرّها إن لزم.
+ */
+export async function liftSuppression(email: string): Promise<MailResult> {
+  const addr = email?.trim().toLowerCase();
+  if (!addr || !addr.includes("@")) return { ok: false, message: "عنوانٌ غيرُ صالح." };
+  const sb = notificationsDb();
+  if (!sb) return { ok: false, message: NO_KEY };
+  if (!(await manager())) return { ok: false, message: NO_PERM };
+
+  const { data, error } = await sb.rpc("unsuppress_email", { p_email: addr });
+  if (error) return { ok: false, message: "تعذّر رفعُ الإيقاف. حاول بعد قليل." };
+  revalidatePath("/dashboard/system/email");
+  return data === true
+    ? { ok: true, message: "رُفع الإيقاف، ويُراسَل العنوانُ من جديد." }
+    : { ok: true, message: "العنوانُ ليس موقوفًا." };
+}

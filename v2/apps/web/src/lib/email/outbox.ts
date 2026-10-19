@@ -65,7 +65,24 @@ export async function drainEmails(limit = 20): Promise<DrainOutcome> {
   const rows = (data ?? []) as OutboxRow[];
   out.claimed = rows.length;
 
+  // العناوينُ الموقوفة (ارتدّت ارتدادًا دائمًا أو شكا أصحابُها، `email_suppressions`) لا تُراسَل: تموت رسالتُها
+  // هنا بسببها، ولا يطرق المزوّدَ عنوانٌ يعرف أنّه سيرتدّ، فيبقى بريدُ أدِيب نظيفَ السمعة عند Gmail.
+  const suppressed = new Map<string, string>();
+  if (rows.length) {
+    const { data: sup } = await sb
+      .from("email_suppressions")
+      .select("email, reason")
+      .in("email", [...new Set(rows.map((r) => r.to_email.toLowerCase()))]);
+    for (const s of (sup ?? []) as Array<{ email: string; reason: string }>) suppressed.set(s.email, s.reason);
+  }
+
   for (const row of rows) {
+    const stop = suppressed.get(row.to_email.toLowerCase());
+    if (stop) {
+      await fail(sb, row.id, `suppressed: ${stop}`, false, null);
+      out.dead++;
+      continue;
+    }
     const kind = emailKindOf(row.kind);
     let subject: string | null = null;
     try {

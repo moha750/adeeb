@@ -6,7 +6,7 @@
  * مهندسُ المزوّد، فتقوله هذه الدالّةُ جملةً عربيّةً واحدة، ويبقى النصُّ الخامُ في صفحة الرسالة لمن يلاحقه.
  *
  * **ولا تعرف هذه الدالّةُ أنّ عنوانًا غيرُ موجود**: المزوّدُ يقبل الرسالةَ ثمّ يرتدّ بها خادمُ المستلم
- * بعد ثوانٍ، وذلك خبرٌ لا يصل إلّا بخطّاف (webhook) لم يُبنَ بعد. فـ«خرجت» في السجلّ تعني «قبلها المزوّد».
+ * بعد ثوانٍ، وذلك خبرٌ يصل بالخطّاف (`/api/email/webhook`) فيُكتب في `delivery` لا في `last_error`.
  *
  * إطارٌ صرفٌ بلا خادم، فيستورده الخادمُ والمتصفّحُ والاختبار.
  */
@@ -17,6 +17,8 @@ export function explainEmailError(raw: string | null | undefined): string | null
   const last = e.split(" ؛ ").pop()!.trim();
 
   if (/^expired$/i.test(last)) return "فات أجلُها قبل أن تخرج";
+  if (/^suppressed: complained/.test(last)) return "لم تُرسَل: صاحبُ العنوان عدّ بريدَنا مزعجًا";
+  if (/^suppressed/.test(last)) return "لم تُرسَل: العنوانُ موقوفٌ لأنّه ارتدّ";
   if (/RESEND_API_KEY/.test(last)) return "مفتاحُ المزوّد غيرُ مضبوطٍ في الخادم";
   if (/^render:/.test(last)) return "تعذّر رسمُها من قالبها";
   if (/^network:/.test(last)) return "انقطع الاتّصالُ بالمزوّد";
@@ -30,4 +32,19 @@ export function explainEmailError(raw: string | null | undefined): string | null
   if (status === 422 && /\bto\b|recipient|email address/.test(body)) return "عنوانُ المستلم غيرُ صالح";
   if (status) return `ردّها المزوّدُ (${status})`;
   return "ردّها المزوّدُ بخطأٍ غير معروف";
+}
+
+export type Delivery = "delivered" | "delayed" | "bounced" | "complained";
+
+/**
+ * ما جرى للرسالة بعد خروجها، بالعربيّة (`delivery` من خطّاف Resend). و«موقوف» يقول إنّ العنوانَ لن يُراسَل
+ * بعدها: الارتدادُ الدائمُ والشكوى يوقفانه، والعابرُ لا.
+ */
+export function explainDelivery(d: Delivery | null | undefined, suppressed: boolean): string | null {
+  switch (d) {
+    case "delayed": return "تتأخّر عند خادم المستلم";
+    case "bounced": return suppressed ? "ارتدّت: العنوانُ لا يستقبل البريد، فأُوقف" : "ارتدّت ارتدادًا عابرًا";
+    case "complained": return suppressed ? "عدّها صاحبُها مزعجة، فأُوقف العنوان" : "عدّها صاحبُها مزعجة";
+    default: return null;
+  }
 }
