@@ -82,6 +82,14 @@ target.
   Internal keys stay: `account` in app code, `visitor` in `account_type`.
   **«زائر» now means only someone browsing with no account** (analytics, anonymous Deebo, guest
   news comments). Never use it, or «صاحب حساب», as the name of an account holder's standing.
+- **The club account «أَدِيب» (`adeeb_admin`) is an institution, not a person** (owner, 2026-10-18).
+  It holds only three faces: **mirror** (read-only oversight/stats: `oversee_*`, `view_site_stats`,
+  `view_watchtower`), **steward** (inherits and tends assets that outlive their makers: surveys, QR),
+  and **address** (what is sent to Adeeb lands there, what Adeeb says goes out from it: `manage_contact`,
+  `manage_newsletter`). Never give it authority over people (appoint, assign, warn, gift, end) or a
+  seat's daily content — those belong to seats by the constitution. Oversight rooms live in this account
+  only. Anything addressed to Adeeb that needs action: the account receives it, a seat acts from its
+  own account, and the reply goes out signed «نادي أدِيب» only (contact replies: الإدارة التنفيذية — `executive_council_president` + `exec_admin_member`).
 
 ### Database security rules (owner-approved hardening, 2026-10-10)
 

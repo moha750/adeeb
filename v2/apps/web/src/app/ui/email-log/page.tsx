@@ -21,7 +21,7 @@ import { clubDayKey } from "@/lib/dates";
 
 const IT = "قسم نظم المعلومات";
 const HR = "إدارة الموارد البشرية";
-const OUT = "قسم التواصل المجتمعي";
+const OUT = "الإدارة التنفيذية";
 
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 const M = (

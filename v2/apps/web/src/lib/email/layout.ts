@@ -73,7 +73,14 @@ export type EmailContent = {
    * الصلاحية. و`ltr` لقيمةٍ لاتينيّة (بريدٌ، رابط) تُعزَل باتّجاهها.
    */
   facts?: Fact[] | null;
+  /**
+   * **الردُّ نفسُه** (ردّ التواصل): فِقَرُه تحت عنوانٍ صغير «ردُّنا»، **أوّلًا**، ثمّ فاصل، ثمّ رسالةُ المُرسِل
+   * (`quote`) فقاعةً (قرار ٢٠٢٦-١٠-١٩): الأهمُّ أوّلًا كما يفعل كلُّ بريدٍ يردّ، وأوّلُ ما في الرسالة يظهر في
+   * معاينة الوارد قبل فتحها، فيرى المُرسِلُ الجوابَ لا سؤالَه.
+   */
+  answer?: string[] | null;
 };
+
 
 /**
  * **اسمُ المُرسِل الجهةُ لا النادي** (قرار محمد ٢٠٢٦-١٠-١٨): «إدارة الموارد البشرية، نادي أدِيب»، و«قسم نظم
@@ -132,7 +139,7 @@ const HEAD_STYLE = `<style>
 :root{color-scheme:light only;supported-color-schemes:light only;}
 @font-face{font-family:'Lyon Arabic';font-weight:400 600;src:url(${SITE}/fonts/lyon-arabic-medium.woff2) format('woff2');}
 @font-face{font-family:'Lyon Arabic';font-weight:700 900;src:url(${SITE}/fonts/lyon-arabic-bold.woff2) format('woff2');}
-@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.wrap{padding:12px 6px!important}.hero-t{font-size:19px!important}.deebo{width:116px!important;height:116px!important}.deebo-td{width:116px!important}.hero{padding:16px 8px 0 12px!important}.bub{padding:14px 16px!important}.code{font-size:30px!important;letter-spacing:7px!important;padding:14px 22px!important}}
+@media (max-width:480px){.px{padding-left:20px!important;padding-right:20px!important}.wrap{padding:12px 6px!important}.hero-t{font-size:19px!important}.deebo{width:116px!important;height:116px!important}.deebo-td{width:116px!important}.hero{padding:16px 8px 0 12px!important}.bub{padding:14px 16px!important}.dg{width:38px!important;margin:0 2px!important;padding:10px 0!important;font-size:24px!important}}
 </style>`;
 
 /** سطرٌ في النصّ يبقى سطرًا في الرسالة. */
@@ -155,16 +162,51 @@ function factTiles(facts: Fact[]): string {
   return `<tr><td class="px" style="padding:18px ${P - 5}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.join("")}</table></td></tr>`;
 }
 
-/** الرمزُ خاناتٌ كحليّة بأرقامٍ بيضاء: يُقرأ رقمًا رقمًا، ويبقى نصًّا يُنسخ. */
 /**
- * **الرمزُ رقمٌ واحدٌ متّصل** في لوحٍ كحليّ (طلب محمد ٢٠٢٦-١٠-١٨: «أليس الأفضل زرُّ نسخٍ بدل أن يُكتب رقمًا
- * رقمًا؟»). البريدُ لا يُجري نصوصًا، فلا زرَّ نسخٍ يعمل فيه. لكنّ الرقمَ المتّصل يُحدَّد كلُّه بلمسةٍ مطوّلة
- * (`user-select:all`) ويُنسخ نظيفًا، والآيفون يقرؤه من بريد أبل فيقترحه فوق لوحة المفاتيح بلا نسخ. وكانت
- * خاناتٍ منفصلة، فكان النسخُ يحمل فراغاتٍ بين الأرقام ولا يقرؤه الاقتراح.
+ * **الرمزُ خاناتٌ منفصلة** (طلب محمد ٢٠٢٦-١٠-١٩: «الأرقامُ مقطّعة لا في كونتينر واحد»). وكانت خاناتٍ في
+ * خلايا جدول فحمل النسخُ فراغاتٍ بين الأرقام ولم يقرأه اقتراحُ الآيفون، فصار رقمًا متّصلًا (٢٠٢٦-١٠-١٨).
+ * والحلّ هنا: كلُّ رقمٍ `span` في خليّةٍ واحدة **بلا فراغٍ بينها**، فتُرسَم خاناتٍ ويبقى النصُّ «305805»
+ * متّصلًا يُحدَّد كلُّه بلمسة (`user-select:all`) ويقرؤه الاقتراح. وOutlook لا يرسم الخانات فيُظهر الرقمَ
+ * متّصلًا، وهذا سقوطٌ سليم. وتحقّق ٢٠٢٦-١٠-١٩: تحديدُ الخانات في المتصفّح يعطي «305805» بلا فراغ.
+ * والخاناتُ كحليّة (اختارها محمد من كحليّة وفاتحة بإطار).
+ *
+ * **ولا زرَّ نسخ** (فوّض محمد القرارَ ٢٠٢٦-١٠-١٩ على أن يُبنى على حقيقةٍ لا ذوق): برامجُ البريد تمنع كلَّ
+ * برمجةٍ فلا زرَّ ينسخ داخل الرسالة. وبديلُه زرٌّ يفتح صفحةً في الموقع تنسخ، وهذا يُضيف خطوةً ويفتح المتصفّح،
+ * ويجعل رسالةَ الرمز «اضغط الرابط» وهو نمطُ التصيّد الذي نعلّم الناسَ ألّا يثقوا به، وفاحصاتُ الروابط في
+ * بريد المؤسّسات تفتح الروابطَ قبل صاحبها. والرمزُ نصًّا يُنسخ بلمسةٍ مطوّلة، والآيفون يقترحه من بريد أبل
+ * فوق لوحة المفاتيح بلا نسخ.
  */
 function codeBlock(code: string): string {
-  return `<tr><td class="px" align="center" style="padding:24px 16px 4px;"><table role="presentation" cellpadding="0" cellspacing="0" dir="ltr"><tr><td class="code" align="center" style="background:${C.navy800};background-image:linear-gradient(160deg,${C.navy500},${C.navy900});border-radius:16px;padding:16px 30px;${LATIN}font-size:38px;font-weight:bold;letter-spacing:10px;color:${C.white};-webkit-user-select:all;user-select:all;">${esc(code)}</td></tr></table></td></tr>`;
+  const box = `background:${C.navy800};background-image:linear-gradient(160deg,${C.navy500},${C.navy900});color:${C.white};`;
+  const digits = [...code]
+    .map((d) => `<span class="dg" style="display:inline-block;width:46px;margin:0 3px;padding:12px 0;border-radius:12px;${box}text-align:center;">${esc(d)}</span>`)
+    .join("");
+  return `<tr><td class="px" align="center" style="padding:24px 12px 4px;"><table role="presentation" cellpadding="0" cellspacing="0" dir="ltr"><tr><td align="center" dir="ltr" style="${LATIN}font-size:30px;font-weight:bold;line-height:1.2;white-space:nowrap;-webkit-user-select:all;user-select:all;">${digits}</td></tr></table></td></tr>`;
 }
+
+/**
+ * **رسالةُ المُرسِل فقاعةُ محادثة** (اعتمدها محمد ٢٠٢٦-١٠-١٩ من ثلاثة: الورقة والفقاعة والبلاطة). كانت لوحًا
+ * فولاذيًّا بخطٍّ ملوّنٍ على حافّته («غيرُ جميل»). الفقاعةُ بقدر نصّها، زاويتُها اليمنى العليا حادّة كفقاعة ديبو
+ * في الرأس، ووضوحُها من البلاطة: عنوانٌ فولاذيٌّ ثقيل، ونصٌّ كحليٌّ أكبر، وإطارٌ رفيع.
+ */
+const sectionLabel = (t: string) =>
+  `<tr><td dir="rtl" style="${FONT}text-align:right;padding:0 4px 8px;color:${C.steel600};font-size:12px;font-weight:bold;line-height:1.6;">${esc(t)}</td></tr>`;
+
+function quoteBlock(q: { label: string; text: string }): string {
+  return `<tr><td class="px" dir="rtl" style="padding:0 ${P}px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${sectionLabel(q.label)}<tr><td dir="rtl" align="right"><table role="presentation" align="right" cellpadding="0" cellspacing="0"><tr><td dir="rtl" style="background:${C.steel50};border:1px solid ${C.steel100};border-radius:20px 4px 20px 20px;padding:14px 20px;${FONT}text-align:right;color:${C.navy900};font-size:16px;line-height:1.85;">${lines(q.text)}</td></tr></table></td></tr></table></td></tr>`;
+}
+
+/** الردُّ قسمًا: عنوانُه «ردُّنا» بأسلوب عنوان الفقاعة، وفِقَرُه أكبرُ وأغمقُ من الجسد: هو صلبُ الرسالة. */
+function answerBlock(paras: string[]): string {
+  const body = paras
+    .filter((p) => p.trim())
+    .map((p, k) => `<tr><td dir="rtl" style="${FONT}text-align:right;padding:${k ? 8 : 0}px 4px 0;color:${C.navy900};font-size:17px;line-height:1.95;">${lines(p)}</td></tr>`)
+    .join("");
+  return `<tr><td class="px" dir="rtl" style="padding:0 ${P}px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${sectionLabel("ردُّنا")}${body}</table></td></tr>`;
+}
+
+/** الفاصلُ بين القسمين: خطٌّ رفيعٌ بعرض الجسد، وهواءٌ فوقه وتحته. */
+const divider = `<tr><td class="px" style="padding:22px ${P}px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid ${C.tileLine};font-size:0;line-height:0;height:1px;">&nbsp;</td></tr></table></td></tr>`;
 
 function body(c: EmailContent, unit: string): string {
   const [first, ...rest] = c.paragraphs.filter((p) => p.trim());
@@ -172,9 +214,11 @@ function body(c: EmailContent, unit: string): string {
   const greet = first ? cell(lines(first), `32px ${P}px 0`, `color:${C.navy900};font-size:18px;font-weight:bold;line-height:1.7;`) : "";
   const paras = rest.map((p) => cell(lines(p), `8px ${P}px 0`, `color:${C.n700};font-size:16px;line-height:1.95;`)).join("");
 
-  const quote = c.quote
-    ? `<tr><td class="px" dir="rtl" style="padding:20px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td dir="rtl" style="background:${C.steel50};border-right:3px solid ${C.steel400};border-radius:14px;padding:16px 20px;${FONT}text-align:right;"><div style="color:${C.steel600};font-size:12px;font-weight:bold;margin-bottom:6px;">${esc(c.quote.label)}</div><div style="color:${C.n600};font-size:15px;line-height:1.85;">${lines(c.quote.text)}</div></td></tr></table></td></tr>`
-    : "";
+  // الردُّ أوّلًا ثمّ رسالةُ المُرسِل، قسمان بينهما فاصل.
+  const msg = c.quote ? quoteBlock(c.quote) : "";
+  const ans = c.answer?.length ? answerBlock(c.answer) : "";
+  const gap = `<tr><td style="height:24px;font-size:0;line-height:0;">&nbsp;</td></tr>`;
+  const quote = msg || ans ? `${gap}${ans}${msg && ans ? divider : ""}${msg}` : "";
 
   const button = c.cta
     ? `<tr><td class="px" style="padding:26px ${P}px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:${C.navy700};background-image:linear-gradient(135deg,${C.steel400},${C.navy800});border-radius:14px;"><a href="${esc(absoluteUrl(c.cta.href))}" style="display:block;padding:17px 20px;${FONT}font-size:17px;font-weight:bold;color:${C.white};text-decoration:none;text-align:center;">${esc(c.cta.label)}</a></td></tr></table></td></tr>`
@@ -245,6 +289,7 @@ ${card}
     "",
     ...c.paragraphs.filter((p) => p.trim()),
     ...(c.facts ?? []).map((f) => `${f.label}: ${f.value}`),
+    c.answer?.length ? `\nردُّنا:\n${c.answer.join("\n\n")}\n` : "",
     c.quote ? `\n${c.quote.label}:\n${c.quote.text}\n` : "",
     c.code ? `\n${c.code}\n` : "",
     c.cta ? `${c.cta.label}: ${absoluteUrl(c.cta.href)}` : "",

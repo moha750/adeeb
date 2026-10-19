@@ -41,7 +41,9 @@ describe("دليل البريد", () => {
   it("رسائلُ المصادقة: الرمزُ بارز، ورابطُ التأكيد نقطةُ verify ببصمته ونوعه ووجهته", () => {
     const code = renderLayout(emailKindOf("auth.code")!.render({ name: "سارة", gender: "female", type: "magiclink", hash: null, token: "305805", redirect: null, site: null }));
     // الرمزُ رقمٌ واحدٌ متّصلٌ يُحدَّد بلمسةٍ ويُنسخ نظيفًا، في الرسالة ونصّها البديل.
-    expect(code.html).toContain(">305805<");
+    // خاناتٌ منفصلة بلا فراغٍ بينها: يُرى رقمًا رقمًا، ونصُّه المتّصل «305805» هو ما يُنسخ.
+    expect(code.html.match(/<span class="dg"[^>]*>\d<\/span>/g)).toHaveLength(6);
+    expect(code.html.replace(/<span class="dg"[^>]*>(\d)<\/span>/g, "$1")).toContain(">305805<");
     expect(code.text).toContain("305805");
     expect(code.html).toContain("أدِيبتنا سارة");
     const rec = emailKindOf("auth.recovery")!.render({ name: null, gender: null, type: "recovery", hash: "pkce_abc", token: "1", redirect: "https://adeeb.club/reset-password", site: null });

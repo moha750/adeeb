@@ -81,7 +81,8 @@ const AUTH_SAMPLE: AuthData = {
 /** الجهاتُ كما تُكتب في الرسائل. أسماؤها أسماءُ وحداتها في الهيكلة. */
 const IT = "قسم نظم المعلومات";
 const HR = "إدارة الموارد البشرية";
-const OUTREACH = "قسم التواصل المجتمعي";
+// يدُ رسائل التواصل (قرار المالك ٢٠٢٦-١٠-١٩): الإدارةُ التنفيذيّة، فهي جهةُ ردّ التواصل.
+const EXEC = "الإدارة التنفيذية";
 
 const UNASKED = "إن لم تطلب هذا فتجاهل الرسالة، ولن يتغيّر شيء في حسابك.";
 
@@ -131,10 +132,11 @@ export const EMAIL_KINDS = {
 
   /**
    * **ردُّ نادي أدِيب على رسالة تواصل** — يكتبه صاحبُ `manage_contact` في غرفة التواصل، وتُطلقه
-   * `reply_contact_message` في القاعدة مع تسجيل الردّ (معاملةٌ واحدة). و«ردَّ على هذا البريد» يصل
-   * الرادَّ نفسَه (`reply_to`). ونصُّ الردّ يبقى بأسطره كما كتبه.
+   * `reply_contact_message` في القاعدة مع تسجيل الردّ (معاملةٌ واحدة). والردُّ باسم النادي وحده (قرار
+   * المالك ٢٠٢٦-١٠-١٨): لا اسمَ للرادّ، و«ردَّ على هذا البريد» يصل بريدَ النادي (`reply_to`). ونصُّ الردّ
+   * يبقى بأسطره كما كتبه.
    */
-  "contact.reply": defineEmail<{ name: string; reply: string; original: string; subject: string | null; sentAt: string | null; responder: string | null }>({
+  "contact.reply": defineEmail<{ name: string; reply: string; original: string; subject: string | null; sentAt: string | null }>({
     when: "ردّ أحدُ أهل اللوحة على رسالةٍ وصلت من نموذج التواصل",
     sample: {
       name: "ريم",
@@ -142,21 +144,21 @@ export const EMAIL_KINDS = {
       original: "متى يفتح باب التسجيل في النادي؟",
       subject: "التسجيل",
       sentAt: "2026-10-15T09:10:05Z",
-      responder: "محمد إسماعيل المطر",
     },
     render: (d) => ({
-      unit: OUTREACH,
+      unit: EXEC,
       mood: "writing",
       subject: d.subject?.trim() ? `ردُّ نادي أدِيب: ${d.subject.trim()}` : "ردُّ نادي أدِيب على رسالتك",
       title: "ردُّنا على رسالتك",
-      paragraphs: [`أهلًا ${d.name}،`, "شكرًا لتواصلك مع نادي أدِيب. وهذا ردُّنا على رسالتك:", ...d.reply.split(/\n{2,}/)],
+      paragraphs: [`أهلًا ${d.name}،`, "شكرًا لتواصلك مع نادي أدِيب."],
+      answer: d.reply.split(/\n{2,}/),
       quote: {
         label: ["رسالتك", d.subject?.trim() ? `«${d.subject.trim()}»` : null, d.sentAt ? fmtDate(d.sentAt) : null]
           .filter(Boolean).join("، "),
         text: d.original,
       },
       note: "إن بقي لديك سؤال فردَّ على هذا البريد مباشرةً، وسيصلنا.",
-      signature: `مع التحيّة،\n${d.responder ? `${d.responder}، نادي أدِيب` : "نادي أدِيب"}`,
+      signature: "مع التحيّة،\nنادي أدِيب",
     }),
   }),
 

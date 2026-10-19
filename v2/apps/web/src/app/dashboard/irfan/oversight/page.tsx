@@ -6,7 +6,7 @@ import { OversightView } from "./OversightView";
 export const metadata = { title: "إشراف عِرفان، بوّابة أدِيب" };
 
 /**
- * **إشرافُ عِرفان** — لرئيس أدِيب (`oversee_irfan`). أرقامُ الموسم ورسائلُه كلُّها بنصوصها. والحارسُ هنا قبل
+ * **إشرافُ عِرفان** — لحساب أدِيب المؤسسيّ وحده (`oversee_irfan`، وجهُ «المرآة»). أرقامُ الموسم ورسائلُه كلُّها بنصوصها. والحارسُ هنا قبل
  * القراءة: `getIrfanOversight` يقرأ بمفتاح الخدمة، فلا يُنادى إلّا بعد أن يُفتح البابُ لصاحبه.
  */
 export default async function IrfanOversightPage() {
