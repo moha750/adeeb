@@ -34,6 +34,7 @@ export const SECTIONS = {
   system: { label: "النظام", icon: "gear", unit: "قسم نظم المعلومات" },
   news: { label: "الأخبار", icon: "news", unit: null },
   irfan: { label: "عِرفان", icon: "irfan", unit: null },
+  contact: { label: "التواصل", icon: "inbox", unit: "الإدارة التنفيذية" },
   positions: { label: "المناصب", icon: "assign", unit: "إدارة الموارد البشرية" },
 } as const satisfies Record<string, { label: string; icon: IconKey; unit: string | null }>;
 
@@ -167,6 +168,28 @@ export const CATALOG = {
         to: () => [{ capability: "manage_news" }],
         text: (f) => ({ title: `تعليقٌ جديد على «${f.newsTitle}»`, body: `${f.who}: ${f.excerpt}` }),
         href: (f) => `/news/${encodeURIComponent(f.slug)}#art-comments`,
+      },
+    ],
+  }),
+  /**
+   * **رسالةٌ إلى أدِيب** (٢٠٢٦-١٠-١٩) — كتب زائرٌ في «تواصل معنا»، أو ردَّ مُرسِلٌ على ردّنا (`followUp`).
+   * - **المستلم**: كلُّ من يملك `manage_contact`: الإدارةُ التنفيذيّة يدُ الصندوق، وحسابُ أدِيب عنوانُه.
+   * - **الدرجة**: مهمّ، فرسالةٌ تنتظر جوابًا. **الوجهة**: غرفةُ رسائل التواصل.
+   */
+  "contact.received": defineKind<{ name: string; subject: string | null; excerpt: string; followUp: boolean }>({
+    section: "contact",
+    when: "وصلت رسالةُ تواصل، أو ردَّ مُرسِلٌ على ردّنا",
+    sample: { name: "ريم", subject: "التسجيل", excerpt: "شكرًا لكم، وهل يشمل التسجيلُ طلابَ الدراسات العليا؟", followUp: true },
+    audiences: [
+      {
+        key: "inbox",
+        level: "important",
+        to: () => [{ capability: "manage_contact" }],
+        text: (f) => ({
+          title: f.followUp ? `ردَّ ${f.name} على ردّنا` : `رسالةٌ جديدة من ${f.name}`,
+          body: f.subject?.trim() ? `«${f.subject.trim()}»: ${f.excerpt}` : f.excerpt,
+        }),
+        href: () => "/dashboard/contact",
       },
     ],
   }),

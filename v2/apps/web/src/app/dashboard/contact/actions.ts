@@ -4,7 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
 import { SECTION_CAP } from "@/lib/capabilities";
-import { CLUB_EMAIL } from "@/lib/clubContact";
+import { replyAddressFor } from "@/lib/contact/inbound";
 import type { ContactStatus } from "@/lib/contact/vocab";
 
 export type ContactResult = { ok: boolean; message: string };
@@ -73,8 +73,8 @@ export async function saveContactNotes(id: string, notes: string): Promise<Conta
  * فعلٌ واحدٌ في القاعدة (`reply_contact_message`): يُسجَّل الردُّ وتُكتب رسالتُه في صادر البريد معًا،
  * والمُرسِلُ الواحدُ يرسلها في ثوانٍ بإعاداته وسجلّه (`v2/EMAIL-SYSTEM.md`). ووجهةُ البريد تُقرأ من
  * الصفّ نفسه فلا يُمرَّر عنوانٌ من هنا. والردُّ **باسم النادي وحده** (قرار المالك ٢٠٢٦-١٠-١٨): لا اسمَ
- * للرادّ في البريد، و«ردَّ على هذا البريد» يصل بريدَ النادي (`CLUB_EMAIL`) لا بريدَ الرادّ، فتبقى المحادثةُ
- * للنادي. ومن ردَّ يبقى أثرًا داخليًّا في الصفّ (`replied_by`).
+ * للرادّ في البريد، و«ردَّ على هذا البريد» عنوانُ هذه الرسالة في نطاق الاستقبال (`replyAddressFor`)، فيعود
+ * ردُّ المُرسِل إلى محادثتها هنا (٢٠٢٦-١٠-١٩)، وقبل ضبط النطاق بريدُ النادي. ومن ردَّ دورٌ داخليٌّ في المحادثة.
  * وسلطةُ الإنسان فُحصت قبله في `authorized()`، والدالّةُ لمفتاح الخدمة وحده.
  */
 export async function sendContactReply(id: string, reply: string): Promise<ContactResult> {
@@ -91,7 +91,7 @@ export async function sendContactReply(id: string, reply: string): Promise<Conta
     p_actor: admin.id,
     p_id: id,
     p_reply: body,
-    p_reply_to: CLUB_EMAIL,
+    p_reply_to: replyAddressFor(id),
   });
   if (error) return { ok: false, message: `تعذّر حفظ الردّ: ${error.message}` };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Alert, Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Badge, Button, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   ChatCircleText, Copy, Envelope, EnvelopeOpen, EnvelopeSimpleOpen, NotePencil, PaperPlaneTilt } from "@phosphor-icons/react";
 import { Eye, MagnifyingGlass } from "@/app/_components/glyphs";
@@ -79,7 +79,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
   /** فتحُ الرسالة — وقراءتُها تُثبَّت في القاعدة إن كانت ما تزال «جديدة». */
   const open = (r: ContactRow) => {
     setOpenId(r.id);
-    setReply(r.replyMessage ?? "");
+    setReply("");
     setNotes(r.notes ?? "");
     if (r.status === "new") start(async () => { await setContactStatus(r.id, "read"); });
   };
@@ -241,7 +241,7 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
                 disabled={reply.trim().length < 2}
                 onClick={submitReply}
               >
-                <PaperPlaneTilt aria-hidden /> {detail.replyMessage ? "إرسال ردٍّ جديد" : "إرسال الردّ"}
+                <PaperPlaneTilt aria-hidden /> {detail.turns.some((t) => t.direction === "out") ? "إرسال ردٍّ جديد" : "إرسال الردّ"}
               </Button>
               <Button variant="ghost" size="md" onClick={() => setOpenId(null)} disabled={pending}>إغلاق</Button>
             </>
@@ -256,18 +256,25 @@ export function ContactView({ rows }: { rows: ContactRow[] }) {
               </Badge>
             </div>
 
-            <Alert tone="info" title="نصّ الرسالة">
-              <span style={{ whiteSpace: "pre-wrap" }}>{detail.message}</span>
-            </Alert>
-
-            {detail.replyMessage ? (
-              <Alert
-                tone="success"
-                title={`رُدّ عليها${detail.repliedBy ? `، ${detail.repliedBy}` : ""}${detail.repliedAt ? `، ${fmtDate(detail.repliedAt)}` : ""}`}
-              >
-                <span style={{ whiteSpace: "pre-wrap" }}>{detail.replyMessage}</span>
-              </Alert>
-            ) : null}
+            {/* المحادثةُ كما جرت (٢٠٢٦-١٠-١٩): رسالتُه الأولى، ثمّ كلُّ ردٍّ منّا وكلُّ ردٍّ منه، الأقدمُ أوّلًا.
+                رسائلُه فقاعاتٌ في جهة البدء وردودُنا في الجهة الأخرى، كما في بريده. */}
+            <div className="ct-thread">
+              <article className="ct-turn is-in">
+                <header><b>{detail.name}</b><span>{fmtDate(detail.createdAt)}</span></header>
+                <p>{detail.message}</p>
+              </article>
+              {detail.turns.map((t) => (
+                <article key={t.id} className={`ct-turn is-${t.direction}`}>
+                  <header>
+                    <b>{t.direction === "out" ? "ردُّنا" : detail.name}</b>
+                    {t.by ? <span>{t.by}</span> : null}
+                    <span>{fmtDate(t.at)}</span>
+                    {t.otherEmail ? <bdi className="lat" dir="ltr">{t.otherEmail}</bdi> : null}
+                  </header>
+                  <p>{t.body}</p>
+                </article>
+              ))}
+            </div>
 
             <Textarea
               label="الردّ"

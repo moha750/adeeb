@@ -3,6 +3,7 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { EMAIL_HINT, isEmail } from "@/lib/fieldFormats";
+import { emit } from "@/lib/notifications/emit";
 
 export type ContactResult = { ok: boolean; message: string };
 
@@ -54,6 +55,9 @@ export async function sendContactMessage(input: {
     message,
   });
   if (error) return { ok: false, message: "تعذّر إرسال الرسالة، حاول لاحقًا." };
+
+  // أهلُ الصندوق يعلمون لحظتَها (٢٠٢٦-١٠-١٩). وفشلُ الإشعار لا يُفشل الرسالة: وصلت، وهو يُسجَّل في الخادم.
+  await emit("contact.received", { name, subject: subject || null, excerpt: message.slice(0, 80), followUp: false });
 
   return { ok: true, message: "وصلتْنا رسالتك." };
 }

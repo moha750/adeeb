@@ -17596,3 +17596,16 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .bnk-foot { margin-top: 44px; text-align: center; font-size: 13px; color: var(--bnk-muted); }
 .bnk-foot a { color: var(--bnk-gold-hi); }
 @media (prefers-reduced-motion: reduce) { .bnk-go { transition: none; } }
+
+/* **محادثةُ رسالة التواصل** (`.ct-thread`، ٢٠٢٦-١٠-١٩): رسائلُ المُرسِل فقاعاتٌ في جهة البدء بزاويةٍ حادّةٍ
+   نحو الاسم، كفقاعة البريد الذي وصله؛ وردودُنا في الجهة الأخرى بلون الهويّة الأهدأ. ولا خطَّ على حافّة. */
+.ct-thread { display: flex; flex-direction: column; gap: 14px; }
+.ct-turn { max-width: 88%; display: flex; flex-direction: column; gap: 6px; }
+.ct-turn.is-in { align-self: flex-start; }
+.ct-turn.is-out { align-self: flex-end; }
+.ct-turn > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding-inline: 4px; font-size: 12px; color: var(--color-text-muted); }
+.ct-turn > header b { color: var(--steel-600); font-weight: 700; }
+.ct-turn.is-out > header { justify-content: flex-end; }
+.ct-turn > p { margin: 0; padding: 12px 16px; white-space: pre-wrap; line-height: 1.85; color: var(--navy-900); font-size: 15px; }
+.ct-turn.is-in > p { background: var(--steel-50); border: 1px solid var(--steel-100); border-radius: 18px 4px 18px 18px; }
+.ct-turn.is-out > p { background: var(--navy-50); border: 1px solid var(--navy-100); border-radius: 4px 18px 18px 18px; }
