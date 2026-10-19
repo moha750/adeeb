@@ -20,7 +20,11 @@
  *     بعُشر وزن PNG. والمقاسُ 384px يكفي أكبرَ استعمالٍ عندنا (شخصيّةُ الترحيب ~176px
  *     على شاشةٍ مضاعفة الكثافة) فلا يُشحن ما لا يُرى.
  *
- * التشغيل:  node scripts/deebo-art.mjs [--src "مسار المجلّد"] [--dry]
+ * **ومجموعةُ البطل** (المالك ٢٠٢٦-١٠-١٨، بابا الحساب): ديبو فيهما بطولِ الشاشة، و384px تتشوّش
+ *     بهذا الحجم. فتُصنع منها نسخٌ بـ1024px في `public/deebo/hero/` للتفاعلات التي يلبسها البابان
+ *     وحدها (`--hero`)، ولا تُكبَّر المجموعةُ كلُّها: ما لا يُرى كبيرًا لا يُشحن كبيرًا.
+ *
+ * التشغيل:  node scripts/deebo-art.mjs [--src "مسار المجلّد"] [--hero] [--dry]
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -29,24 +33,32 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const V2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = path.join(V2, "apps/web/public/deebo");
+/** تفاعلاتُ البابين (`app/_door/DeeboFace.tsx`) — تُصنع بمقاس البطل مع `--hero`. */
+const HERO = [
+  "waving", "good-morning", "listening-carefully", "meditating", "thinking", "waiting", "sorry",
+  "unsure", "celebrating", "welcome", "writing", "congratulations", "idea", "thumbs-up",
+];
 
 /** مجلّدُ المالك كما سلّمه. يُنقَض بـ`--src`. */
 const DEFAULT_SRC = path.join(os.homedir(), "Downloads", "تفاعلات ديبو الي بنحب دبديبو");
 
 const CANVAS = 1254; // مربّعُ الأغلبيّة: إليه يُلاءم الشاذّ لا العكس
-const SIZE = 384;
-const QUALITY = 82;
 
 const argv = process.argv.slice(2);
 const dry = argv.includes("--dry");
+const hero = argv.includes("--hero");
+const OUT = path.join(V2, hero ? "apps/web/public/deebo/hero" : "apps/web/public/deebo");
+const SIZE = hero ? 1024 : 384;
+const QUALITY = hero ? 80 : 82;
 const srcIdx = argv.indexOf("--src");
 const SRC = srcIdx >= 0 ? argv[srcIdx + 1] : DEFAULT_SRC;
 
 /** `Calm_Down.png` ⟵ `calm-down` — أسماءُ الملفّات في الويب صغيرةٌ بشرطة. */
 const slug = (file) => path.basename(file, path.extname(file)).toLowerCase().replace(/_/g, "-");
 
-const files = (await fs.readdir(SRC).catch(() => null))?.filter((f) => /\.png$/i.test(f))?.sort();
+const files = (await fs.readdir(SRC).catch(() => null))
+  ?.filter((f) => /\.png$/i.test(f) && (!hero || HERO.includes(slug(f))))
+  ?.sort();
 if (!files) {
   console.error(`✖ لا مجلّدَ في: ${SRC}\n  مرّر مساره بـ--src "…"`);
   process.exit(1);

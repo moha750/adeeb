@@ -1,30 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, Button, Field, Select, Textarea } from "@adeeb/design-system";
-import {
-  At, Envelope, Hash, IdentificationBadge, Key, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
+import { Hash, IdentificationBadge, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
 import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
-import { logSignin } from "@/lib/signinEvents";
-import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
-import {
-  EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, emailError, isEmail, isPhone, phoneError,
-} from "@/lib/fieldFormats";
+import { PHONE_HINT, PHONE_LEN, PHONE_PREFIX, isPhone, phoneError } from "@/lib/fieldFormats";
 import { arabicNameError } from "@/lib/personName";
-import { CAPTCHA_PENDING } from "@/lib/authErrors";
-
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
-type Step = "loading" | "email" | "otp" | "profile" | "ready" | "booked" | "unavailable";
+/**
+ * **ولا يُنشأ حسابٌ ههنا** (قرار المالك ٢٠٢٦-١٠-١٨): كان الصندوقُ يفتح حسابًا ببريدٍ ورمز، فصار
+ * لإنشاء الحساب بابٌ واحد (`/signup`) وللدخول بابٌ واحد (`/login`). ومن لا جلسةَ له يرى زرّين
+ * إليهما، ويعود بعدهما إلى هذه الفعاليّة **وصندوقُ الحجز أمامه** (`#book`)، فيُكمل بياناته
+ * ويحجز. ورأى المالكُ الانتقالَ مألوفًا؛ وشرطُه أن يُقاس: الحجوزاتُ قبله وبعده.
+ */
+type Step = "loading" | "auth" | "profile" | "ready" | "booked" | "unavailable";
 
 type Booked = { id: string; gender: "male" | "female"; whatsappConfirmed: boolean };
 
 // رموز أخطاء book/cancel (RAISE EXCEPTION) → عربيّة — تُلتقَط بالاحتواء.
 const BOOK_ERRORS: Record<string, string> = {
-  NOT_AUTHENTICATED: "انتهت الجلسة. أعد إدخال بريدك.",
+  NOT_AUTHENTICATED: "انتهت الجلسة. ادخل من بوّابة أدِيب من جديد.",
   ACTIVITY_NOT_FOUND: "لم نعثر على الفعاليّة.",
   ACTIVITY_NOT_PUBLISHED: "الفعاليّة غير متاحة للحجز.",
   ACTIVITY_CANCELLED: "أُلغيت هذه الفعاليّة.",
@@ -47,23 +45,14 @@ const bookError = (raw: string | null | undefined): string => {
   const code = Object.keys(BOOK_ERRORS).find((c) => (raw ?? "").includes(c));
   return code ? BOOK_ERRORS[code] : "تعذّر إتمام العمليّة. حاول مجدّدًا.";
 };
-const authError = (raw: string): string => {
-  const m = raw.toLowerCase();
-  if (m.includes("captcha")) return CAPTCHA_PENDING;
-  if (m.includes("rate") || m.includes("too many")) return "محاولات كثيرة. انتظر قليلًا ثمّ أعِد المحاولة.";
-  if (m.includes("expired") || m.includes("invalid")) return "الرمز غير صحيح أو انتهت صلاحيّته. اطلب رمزًا جديدًا.";
-  return "تعذّرت العمليّة. حاول مجدّدًا.";
-};
 
 export function BookingWidget({ activityId, unlimited, splitByGender, targetGender, totalRemaining, maleRemaining, femaleRemaining }: { activityId: string; unlimited: boolean; splitByGender: boolean; targetGender: "male" | "female" | null; totalRemaining: number; maleRemaining: number | null; femaleRemaining: number | null }) {
   const [sb] = useState(() => createClient());
   const [step, setStep] = useState<Step>("loading");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  // يعود من البابين إلى الصفحة نفسها عند صندوق الحجز
+  const back = encodeURIComponent(`${usePathname()}#book`);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -71,13 +60,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const [reason, setReason] = useState("");
   const [showCancel, setShowCancel] = useState(false);
   const [booked, setBooked] = useState<Booked | null>(null);
-  // درعُ إرسال الرمز — هذا أوسعُ أبواب البريد في الموقع (يُرسل لأيّ عنوانٍ يُكتب)، فلا يُترك
-  // بلا حارس. والرمزُ يُستهلك مرّةً، فيُعاد ضبطُ الودجة بعد كلّ إرسال.
-  const [tsToken, setTsToken] = useState<string | null>(null);
-  const [tsReset, setTsReset] = useState(0);
-  const waitToken = useTurnstileWait(tsToken, !!TURNSTILE_SITE_KEY);
   /** رايتا الصيغة تُرفعان عند مغادرة الحقل أو عند الإرسال — لا والزائر يكتب أوّلَ محرف. */
-  const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [nameTouched, setNameTouched] = useState(false);
 
@@ -93,8 +76,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const route = async () => {
     try {
       const { data: { user } } = await sb.auth.getUser();
-      if (!user) { setStep("email"); return; }
-      setEmail(user.email ?? "");
+      if (!user) { setStep("auth"); return; }
 
       const { data: resv } = await sb
         .from("activity_reservations")
@@ -122,7 +104,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
         setStep(bothFull ? "unavailable" : "profile");
       }
     } catch {
-      setStep("email");
+      setStep("auth");
     }
   };
 
@@ -133,40 +115,6 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     void route();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const sendOtp = async () => {
-    setErr(null);
-    if (!email.trim()) { setErr("أدخل بريدك الإلكترونيّ."); return; }
-    // بريدٌ مكسورُ الصيغة يُرسَل إلى العدم: الرمزُ يذهب ولا يصل، فينتظره الزائرُ ولا يجيء
-    if (!isEmail(email)) { setEmailTouched(true); setErr(`${EMAIL_HINT}.`); return; }
-    setBusy(true);
-    // الزرُّ يدور ريثما يجيء رمزُ الدرع — لا يُرسَل طلبٌ بلا رمزٍ فيُردّ (انظر `useTurnstileWait`)
-    const captchaToken = await waitToken();
-    if (TURNSTILE_SITE_KEY && !captchaToken) { setBusy(false); setErr(CAPTCHA_PENDING); return; }
-    const { error } = await sb.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true, captchaToken },
-    });
-    setBusy(false);
-    setTsReset((n) => n + 1);
-    if (error) { logSignin(sb, "code", "fail", "booking", error.message); setErr(authError(error.message)); return; }
-    logSignin(sb, "code", "code_sent", "booking");
-    setNotice("أرسلنا رمزًا إلى بريدك. أدخِله أدناه.");
-    setStep("otp");
-  };
-
-  const verify = async () => {
-    setErr(null);
-    if (otp.trim().length < 6) { setErr("أدخل الرمز المكوّن من ٦ أرقام."); return; }
-    setBusy(true);
-    const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: "email" });
-    if (error) { logSignin(sb, "code", "fail", "booking", error.message); setBusy(false); setErr(authError(error.message)); return; }
-    logSignin(sb, "code", "success", "booking");
-    setNotice(null);
-    setStep("loading");
-    await route();
-    setBusy(false);
-  };
 
   const book = async () => {
     setErr(null);
@@ -187,7 +135,7 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     if (!gender) { setErr("اختر فئتك."); return; }
     setBusy(true);
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) { setBusy(false); setStep("email"); return; }
+    if (!user) { setBusy(false); setStep("auth"); return; }
     // بابُ صديق أدِيب إلى صفِّه: دالّةٌ مفوَّضة تكتب `joined_date` فارغًا — فيملك حسابًا ولا
     // يملك أن يجعل نفسه عضوًا (الإدراجُ المباشر في `profiles` صار على قدرةٍ إداريّة).
     const { error } = await sb.rpc("create_my_account_profile", {
@@ -257,30 +205,14 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
   return (
     <div className="flex flex-col gap-3">
-      {notice ? <Alert tone="info">{notice}</Alert> : null}
       {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
 
-      {step === "email" ? (
+      {step === "auth" ? (
         <>
-          <p className="text-sm text-content-muted">أدخل بريدك ليصلك رمز تأكيد، بلا كلمة مرور.</p>
-          <Field label="البريد الإلكترونيّ" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} error={emailError(email, emailTouched)} required />
-          {TURNSTILE_SITE_KEY ? (
-            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
-          ) : null}
-          <Button variant="primary" size="md" loading={busy} onClick={sendOtp}>إرسال الرمز</Button>
-        </>
-      ) : null}
-
-      {step === "otp" ? (
-        <>
-          <Field label="رمز التأكيد" charset="digits" icon={<Key />} innerIcon={<Hash />} placeholder="______" inputMode="numeric" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value)} required />
-          {/* الدرعُ باقٍ ههنا لأجل «إعادة الإرسال» — إرسالٌ آخر يحتاج رمزًا آخر. */}
-          {TURNSTILE_SITE_KEY ? (
-            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
-          ) : null}
+          <p className="text-sm text-content-muted">احجز مقعدك بحسابك في أدِيب.</p>
           <div className="btn-row">
-            <Button variant="primary" size="md" loading={busy} onClick={verify}>تأكيد</Button>
-            <Button variant="ghost" size="md" onClick={sendOtp} disabled={busy}>إعادة الإرسال</Button>
+            <Link className="abtn abtn-primary abtn-md" href={`/signup?next=${back}`}>أنشئ حسابًا</Link>
+            <Link className="abtn abtn-ghost abtn-md" href={`/login?next=${back}`}>بوّابة أدِيب</Link>
           </div>
         </>
       ) : null}

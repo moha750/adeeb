@@ -1,5 +1,5 @@
-import { Alert, Card, CardBody, Container, LandingHeading, Reveal } from "@adeeb/design-system";
-import { SignupForm } from "@/app/signup/SignupForm";
+import Link from "next/link";
+import { Alert, Container, LandingHeading, Reveal } from "@adeeb/design-system";
 import type { CommitteeOption } from "./data";
 import { JoinCommittees, JoinPath, JoinPerks } from "./JoinStory";
 import { JoinForm } from "./JoinForm";
@@ -122,12 +122,12 @@ export function JoinView({
             <LandingHeading eyebrow={heading.eyebrow} title={heading.title} deck={heading.deck} align="center" />
 
             {step === "account" ? (
-              <Card>
-                <CardBody className="p-6">
-                  {/* ووجهتُه بعد الحساب هذه الصفحةُ نفسُها: يعود إليها وقد صارت خطوتُه الثانية */}
-                  <SignupForm next="/join" />
-                </CardBody>
-              </Card>
+              /* **زرّان إلى البابين لا نموذجٌ مضمَّن** (قرار المالك ٢٠٢٦-١٠-١٨): لإنشاء الحساب بابٌ
+                 واحد. ووجهتُه بعدهما هذه الخطوةُ نفسُها: يعود إليها وقد صارت خطوتُه الثانية. */
+              <div className="btn-row mx-auto max-w-md">
+                <Link className="abtn abtn-primary abtn-lg" href={`/signup?next=${encodeURIComponent("/join#step")}`}>أنشئ حسابَك</Link>
+                <Link className="abtn abtn-ghost abtn-lg" href={`/login?next=${encodeURIComponent("/join#step")}`}>بوّابة أدِيب</Link>
+              </div>
             ) : noCommittees ? (
               <Alert tone="warning" title="لا لجانَ متاحةً الآن">لم تُفتح لجانٌ لترتيب الرغبات بعد. تابِعنا.</Alert>
             ) : (

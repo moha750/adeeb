@@ -9,6 +9,7 @@ import { CheckCircle } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { isSessionGone, toArabicAuthError } from "@/lib/authErrors";
 import { RESET_WINDOW_SEC, clearResetSent, resetSecondsLeft } from "@/lib/resetWindow";
+import { setDeeboMood } from "@/lib/deeboMood";
 
 /** أقلُّ طولٍ نقبله — أعلى من حدّ Supabase الافتراضيّ (٦)، فالأشدُّ هو الحاكم. */
 const MIN = 8;
@@ -48,6 +49,15 @@ export function ResetForm() {
    */
   const [left, setLeft] = useState(RESET_WINDOW_SEC);
   const [pending, start] = useTransition();
+
+  // ديبو يعيش اللحظة: يُغمض عينيه والكلمةُ تُكتب، ويفكّر وهي تُحفظ، ويرفع إبهامه حين تُحفظ
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    setDeeboMood(
+      phase === "done" ? "success" : pending || phase === "checking" ? "busy"
+        : phase === "invalid" || err ? "error" : typing ? "password" : "idle",
+    );
+  }, [phase, pending, err, typing]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -218,7 +228,7 @@ export function ResetForm() {
       <div className="aauth-form">
         <Alert tone="success" title="تغيّرت كلمة المرور">ادخل الآن بكلمتك الجديدة.</Alert>
         <Button variant="primary" size="lg" className="aauth-submit" onClick={() => { router.replace("/login"); router.refresh(); }}>
-          تسجيل الدخول
+          ادخل إلى بوّابة أدِيب
         </Button>
       </div>
     );
@@ -230,7 +240,7 @@ export function ResetForm() {
         <Alert tone="success" title="تغيّرت كلمة المرور في نافذةٍ أخرى">
           أُتِمّ التعيين في نافذةٍ أخرى من هذا المتصفّح، فلا حاجة لإعادته هنا.
         </Alert>
-        <Link href="/login" className="abtn abtn-ghost abtn-md aauth-back">تسجيل الدخول</Link>
+        <Link href="/login" className="abtn abtn-ghost abtn-md aauth-back">بوّابة أدِيب</Link>
       </div>
     );
   }
@@ -282,6 +292,8 @@ export function ResetForm() {
         autoComplete="new-password"
         value={pw}
         onChange={(e) => setPw(e.target.value)}
+        onFocus={() => setTyping(true)}
+        onBlur={() => setTyping(false)}
         error={tooShort ? `الحدّ الأدنى ${MIN} محارف.` : undefined}
         required
       />
@@ -295,6 +307,8 @@ export function ResetForm() {
         autoComplete="new-password"
         value={pw2}
         onChange={(e) => setPw2(e.target.value)}
+        onFocus={() => setTyping(true)}
+        onBlur={() => setTyping(false)}
         error={mismatch ? "الكلمتان غير متطابقتين." : undefined}
         required
       />

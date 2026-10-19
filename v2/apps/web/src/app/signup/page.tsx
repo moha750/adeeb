@@ -1,49 +1,39 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { ICON_WEIGHT_EXCEPTION } from "@/lib/iconWeight";
-import { AuthShell } from "@adeeb/design-system";
 import { getSessionAdmin } from "@/lib/auth";
 import { safeNext } from "@/lib/safeNext";
-import { SignupForm } from "./SignupForm";
+import { SignupFlow } from "./SignupFlow";
+import { DoorShell } from "@/app/_door/DoorShell";
 
 export const metadata: Metadata = {
   title: "إنشاء حساب، نادي أدِيب",
 };
 
 /**
- * **بابُ الحساب** — أوّلُ محطّةٍ في طريق العضويّة.
+ * **بابُ الحساب — الوحيد** (قرار المالك ٢٠٢٦-١٠-١٨): منفصلٌ عن بوّابة أدِيب شكلًا وعملًا. لا
+ * يُنشأ حسابٌ في غيره: البوّابةُ تُدخل من له حساب، والحجزُ وصفحةُ التطوّع يقودان إلى البابين
+ * ويعودان. ويبدأ بسؤال القادم عمّا جاء له (`SignupFlow`).
  *
- * ولم يكن له بابٌ قبل اليوم: الحسابُ كان يُفتح ضِمنًا (رمزٌ إلى البريد عند حجز فعاليّة، أو
- * دخولٌ بقوقل) فلا يبلغه إلّا من حجز صدفةً. وطريقُ العضويّة يبدأ بحسابٍ، فلزمه بابٌ يُقصد.
+ * ولم يكن له بابٌ قبل أغسطس: الحسابُ كان يُفتح ضِمنًا (رمزٌ إلى البريد عند حجز فعاليّة، أو
+ * دخولٌ بقوقل) فلا يبلغه إلّا من حجز صدفةً.
  *
- * ومن جاءها وله جلسةٌ قائمة لا يُعرَض عليه إنشاءُ ما يملك: يُساق إلى وجهته (`/join` غالبًا،
- * وهي بدورها تعرف صاحبَها فتسوقه إلى منزلته).
+ * **ووجهتُه بوّابةُ أدِيب لا بابُ التطوّع** (المالك ٢٠٢٦-١٠-١٨): كانت `/join` على افتراض أنّ
+ * فاتحَ الحساب جاء ليصير عضوًا، فوجد من فتحه ليحجز نفسَه في طلب تطوّع. وكلُّ حسابٍ صديقُ أدِيب
+ * (٢٠٢٦-١٠-٠٩)، وبيتُه البوّابة (٢٠٢٦-١٠-١١)، وفيها دعوةُ التطوّع لمن أرادها. ومن قصد التطوّعَ
+ * فبابُه `/join` نفسُه، وهو يمرّر وجهتَه صراحةً فيبقى فيه.
+ *
+ * ومن جاءها وله جلسةٌ قائمة لا يُعرَض عليه إنشاءُ ما يملك: يُساق إلى وجهته.
  */
 export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  // ووجهتُه الافتراضيّة `/join` لا اللوحة: من فتح حسابًا الآن ليس عضوًا، وإنّما جاء ليصير
-  const next = safeNext((await searchParams).next ?? "/join");
+  const given = (await searchParams).next;
+  // بلا وجهةٍ ← `/dashboard` (افتراضُ `safeNext`) — ويسأله الباب «لماذا جئت؟» فيختار وجهتَه بنفسه
+  const next = safeNext(given);
   const me = await getSessionAdmin();
   if (me) redirect(next);
 
   return (
-    <main>
-      <AuthShell
-        title="إنشاء حساب"
-        subtitle="حسابُك أوّلُ الطريق: منه تحجز برامجنا، ومنه تتقدّم للتطوّع ثمّ العضويّة."
-        slogan="نادي أدِيب، حسابُك أوّلُ الطريق إلينا"
-      >
-        <Suspense fallback={<div className="aauth-form" aria-hidden />}>
-          <SignupForm next={next} />
-        </Suspense>
-
-        <Link href="/" className="abtn abtn-ghost abtn-md aauth-back">
-          <ArrowRight size={18} weight={ICON_WEIGHT_EXCEPTION} />
-          العودة إلى الموقع
-        </Link>
-      </AuthShell>
-    </main>
+    <DoorShell door="signup">
+      <SignupFlow next={next} askWhy={!given} />
+    </DoorShell>
   );
 }

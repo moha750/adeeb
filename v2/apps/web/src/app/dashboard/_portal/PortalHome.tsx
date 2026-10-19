@@ -11,18 +11,13 @@ import { useToast } from "../_components/ToastProvider";
 import { AdeebCard } from "./AdeebCard";
 import { CaretAct, EDIT, Row } from "./Row";
 import type { HomeView } from "./home";
+import { greetNow } from "@/lib/timeGreeting";
 
 /**
  * **رئيسيّةُ البوّابة** لصديق أدِيب والمتطوّع — المعتمَدُ في المختبر (المالك ٢٠٢٦-١٠-١٣):
  * صدرٌ فيه التحيّةُ والخلاصةُ عنوانًا وكروتُ الإحصاء (`Stat`) والبطاقة، وتحته عمودا الغرف: «ينتظرك»
  * عريضًا، وما تستكشفه ضيّقًا («فرصٌ تناسب رغباتك» للمتطوّع، و«تطوّع في أدِيب» للصديق).
  */
-
-/** تحيّةُ الساعة — صباحًا من الرابعة إلى الظهر، وما سواه مساء. ساعةُ الجهاز لا الخادم. */
-function greetNow(): string {
-  const h = new Date().getHours();
-  return h >= 4 && h < 12 ? "صباح الخير" : "مساء الخير";
-}
 
 const FIG_ICON = { hours: Clock, joined: HandHeart, certs: Certificate, bookings: Ticket, attended: CheckCircle } as const;
 

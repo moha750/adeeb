@@ -1,25 +1,24 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-// مدخلُ ssr خادميٌّ لا يقرأ سياقَ الأيقونات ولا يمرّ بقائمة المستثنَين (وهي عميليّة)،
-// فيُمرَّر وزنُ السهم — وهو إشارةُ اتّجاه — من مصدره الواحد صراحةً.
-import { ICON_WEIGHT_EXCEPTION } from "@/lib/iconWeight";
-import { AuthShell } from "@adeeb/design-system";
 import { getSessionAdmin } from "@/lib/auth";
 import { safeNext } from "@/lib/safeNext";
-import { LoginForm } from "./LoginForm";
+import { PortalFlow } from "./PortalFlow";
+import { DoorShell } from "@/app/_door/DoorShell";
 
 export const metadata: Metadata = {
-  title: "تسجيل الدخول، بوّابة أدِيب",
+  title: "بوّابة أدِيب",
 };
 
 /**
+ * **بوّابة أدِيب — بابُ من له حساب** (قرار المالك ٢٠٢٦-١٠-١٨): اسمُها اسمُ زرّ الرأس الذي يقود
+ * إليها واسمُ ما وراءها (`/dashboard`)، لا «تسجيل الدخول». وهي منفصلةٌ عن إنشاء الحساب شكلًا
+ * وعملًا: لا تفتح حسابًا (`PortalFlow`)،
+ *
  * ومن جاءها **وله جلسةٌ قائمة** لا يُعرَض عليه نموذجُ دخولٍ دخله: يُساق إلى وجهته.
  *
  * وهذا هو ما يجعل «بوّابة أَدِيب» في رأس الموقع بابًا واحدًا يفهم صاحبَه — يسوق العضوَ إلى
- * لوحته وصاحبَ الحساب إلى بيته `/me`، بلا أن يعرف الرأسُ الجلسةَ (وهو مكوّنٌ عميليّ في صفحاتٍ
+ * لوحته وصاحبَ الحساب إلى غرفه فيها، بلا أن يعرف الرأسُ الجلسةَ (وهو مكوّنٌ عميليّ في صفحاتٍ
  * ساكنة، فلو سُئل عن الجلسة لَصارت كلُّ صفحةٍ عامّةٍ ديناميّة).
  *
  * والقرارُ يقع مرّةً واحدة: `/dashboard` مفترقُ الطرق (`safeNext`).
@@ -30,32 +29,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (me) redirect(safeNext(next));
 
   return (
-    <main>
-      <AuthShell
-        title="تسجيل الدخول"
-        subtitle="ادخل بحسابك في أدِيب، ويسوقك البابُ إلى منزلتك."
-        slogan="بوابة أدِيب، من هُنا يُدار نادي أدِيب"
-      >
-        <Suspense fallback={<div className="aauth-form" aria-hidden />}>
-          <LoginForm />
-        </Suspense>
-
-        {/* بابُ من لا حساب له — فُتح مع طريق العضويّة (١٥ أغسطس ٢٠٢٦) */}
-        <p className="text-content-muted text-center text-sm">
-          ليس لك حساب؟{" "}
-          {/* الوجهةُ تعبر إلى التسجيل: من جاء من «دربك خضر» ليحفظ تقدّمه يعود إليها بعد إنشاء
-              حسابه، لا إلى `/join` (وجهةِ التسجيل الافتراضيّة). */}
-          <Link className="font-bold underline" href={next ? `/signup?next=${encodeURIComponent(safeNext(next))}` : "/signup"}>
-            أنشئ حسابًا
-          </Link>
-        </p>
-
-        {/* المخرج: عودةٌ إلى الموقع لمن حطّ هنا بلا حساب — نمطُ زرّ‑الرابط المتّبع في اللوحة */}
-        <Link href="/" className="abtn abtn-ghost abtn-md aauth-back">
-          <ArrowRight size={18} weight={ICON_WEIGHT_EXCEPTION} />
-          العودة إلى الموقع
-        </Link>
-      </AuthShell>
-    </main>
+    <DoorShell door="login">
+      <Suspense fallback={null}>
+        <PortalFlow />
+      </Suspense>
+    </DoorShell>
   );
 }

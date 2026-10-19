@@ -113,8 +113,8 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
     if (!user) {
       return (
         <StateScreen title="هذا الاستبيان لأعضاء أدِيب" tone="info">
-          سجّل دخولك ثمّ عد إلى هذه الصفحة.{" "}
-          <Link className="font-bold underline" href={`/login?next=/surveys/${surveyId}`}>تسجيل الدخول</Link>
+          ادخل من بوّابة أدِيب، وتعود إلى الاستبيان بعدها.
+          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=/surveys/${surveyId}`}>بوّابة أدِيب</Link>
         </StateScreen>
       );
     }

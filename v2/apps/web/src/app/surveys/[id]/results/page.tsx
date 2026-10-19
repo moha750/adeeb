@@ -48,8 +48,8 @@ export default async function PublicSurveyResultsPage({ params }: { params: Prom
     if (!user) {
       return (
         <StateScreen title="نتائج هذا الاستبيان لأعضاء أدِيب">
-          سجّل دخولك بعضويّة نشطة.{" "}
-          <Link className="font-bold underline" href={`/login?next=/surveys/${surveyId}/results`}>تسجيل الدخول</Link>
+          ادخل من بوّابة أدِيب بعضويّةٍ نشطة، وتعود إلى النتائج بعدها.
+          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=/surveys/${surveyId}/results`}>بوّابة أدِيب</Link>
         </StateScreen>
       );
     }

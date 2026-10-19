@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
+import { AltLink } from "@/app/_door/parts";
 import { Alert, Button, Field } from "@adeeb/design-system";
 import { At, Envelope } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
@@ -9,6 +9,7 @@ import { logSignin } from "@/lib/signinEvents";
 import { CAPTCHA_PENDING, toArabicAuthError, waitSeconds } from "@/lib/authErrors";
 import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
 import { markResetSent } from "@/lib/resetWindow";
+import { setDeeboMood } from "@/lib/deeboMood";
 import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -37,6 +38,11 @@ export function ForgotForm() {
   const waitToken = useTurnstileWait(tsToken, !!TURNSTILE_SITE_KEY);
   /** رايةُ الصيغة تُرفع عند مغادرة الحقل أو عند الإرسال — لا وهو يكتب أوّلَ محرف. */
   const [emailTouched, setEmailTouched] = useState(false);
+
+  // ديبو يعيش اللحظة: يفكّر وأنت تنتظر، ويعتذر حين يتعثّر شيء، ويرفع إبهامه حين يُرسَل الرابط
+  useEffect(() => {
+    setDeeboMood(sent ? "success" : pending ? "busy" : err ? "error" : "idle");
+  }, [sent, pending, err]);
 
   /** العدّاد يمنع الطلبَ قبل أوانه بدل أن يُرسله فيُردّ بخطأ حدّ الوتيرة. */
   useEffect(() => {
@@ -95,10 +101,13 @@ export function ForgotForm() {
           الحسابات — ويكشف الخطأ المطبعيّ فورًا. هذا علاجُ «كتب بريده خطأً فظلّ ينتظر»
           دون التخلّي عن الردّ المحايد.
         */}
-        <Alert tone="success" title="أُرسل الرابط إن كان البريد مسجّلًا">
-          أرسلناه إلى <b className="font-latin" dir="ltr">{email.trim()}</b>. افتح بريدك واضغط الرابط
-          لتعيين كلمة مرورٍ جديدة. الرابط صالح {LINK_TTL_MIN} دقائق ولمرّةٍ واحدة. لم تجده؟ تحقّق من
-          مجلّد المهملات، أو راجع البريد أعلاه.
+        {/* **الشرطُ في الرأس لا في ذيل الجملة** (المالك ٢٠٢٦-١٠-١٩: جرّب بريدًا وهميًّا فقرأها «أُرسل
+            إلى الوهميّ»). والردُّ يبقى محايدًا: لا يُعرف من هنا أَلِلبريد حسابٌ أم لا — فالاستعادةُ لا
+            تمرّ بالدرع كما يمرّ الرمز، وسؤالٌ عن الحساب بلا درعٍ بابُ تعدادٍ لكلّ من شاء. */}
+        <Alert tone="info" title="إن كان لهذا البريد حسابٌ في أدِيب، فقد وصله الرابط">
+          تفقّد <b className="font-latin" dir="ltr">{email.trim()}</b> واضغط الرابط لتعيين كلمة مرورٍ
+          جديدة. صالحٌ {LINK_TTL_MIN} دقائق ولمرّةٍ واحدة. لم يصلك؟ تحقّق من مجلّد المهملات، أو من
+          كتابة البريد — أو لعلّه ليس لك حسابٌ بعدُ.
         </Alert>
 
         {/* الدرعُ يبقى بعد الإرسال: إعادةُ الإرسال بريدٌ آخر، فتحتاج رمزًا آخر. */}
@@ -128,7 +137,7 @@ export function ForgotForm() {
           البريد خاطئ؟ عدّله
         </Button>
 
-        <Link href="/login" className="abtn abtn-ghost abtn-md aauth-back">العودة إلى تسجيل الدخول</Link>
+        <AltLink lead="ليس لك حسابٌ بعد؟" href="/signup">أنشئ حسابًا</AltLink>
       </div>
     );
   }
@@ -168,7 +177,7 @@ export function ForgotForm() {
         {waiting && left > 0 ? `أعِد المحاولة بعد ${left} ثانية` : "أرسل رابط الاستعادة"}
       </Button>
 
-      <Link href="/login" className="abtn abtn-ghost abtn-md aauth-back">العودة إلى تسجيل الدخول</Link>
+      <AltLink lead="تذكّرتَها؟" href="/login">بوّابة أدِيب</AltLink>
     </form>
   );
 }

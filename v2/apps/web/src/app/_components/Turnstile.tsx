@@ -83,7 +83,15 @@ export function TurnstileWidget({
       window.setTimeout(() => window.clearInterval(poll), 15000);
     }
 
-    return () => { cancelled = true; window.clearInterval(poll); };
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+      // تُزال الودجةُ مع صاحبها: ودجةٌ يتيمةٌ (حاويتُها هُدمت) تبقى في سجلّ كلاودفلير وتشوّش التالية
+      if (widgetIdRef.current && window.turnstile) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch { /* هُدمت قبلنا */ }
+      }
+      widgetIdRef.current = null;
+    };
   }, [siteKey]);
 
   // إعادة الضبط بعد فشلٍ — رمزٌ جديد للمحاولة التالية

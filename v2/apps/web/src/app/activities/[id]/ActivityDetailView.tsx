@@ -42,7 +42,8 @@ export function ActivityDetailView({ a }: { a: PublicActivity }) {
         )}
       </div>
 
-      <Card>
+      {/* `#book`: من أنشأ حسابه أو دخل ليحجز يعود إلى هنا لا إلى أعلى الصفحة */}
+      <Card id="book" className="scroll-mt-24">
         <CardBody>
           <BookingWidget activityId={a.id} unlimited={a.unlimited} splitByGender={a.splitByGender} targetGender={a.targetGender} totalRemaining={a.totalRemaining ?? 0} maleRemaining={a.maleRemaining} femaleRemaining={a.femaleRemaining} />
         </CardBody>

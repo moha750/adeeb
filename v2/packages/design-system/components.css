@@ -6099,8 +6099,192 @@ button[class*="dm-tone-"]:hover, button[class*="dm-tone-"][aria-expanded="true"]
   .aauth-side img { width: 108px; }
 }
 
-/* إطارُ المعرض وحده: `contain: paint` يجعل الشفقَ `fixed` ينحصر في الإطار لا النافذة */
-.aauth-demo { position: relative; contain: paint; overflow: hidden; border-radius: var(--radius); border: var(--card-stroke-w) solid var(--card-stroke); }
+/* ══════════════════════════════════════════════════════════════════════
+   بابا الحساب · «القسمان» · بادئة .door  (اعتمده المالك ٢٠٢٦-١٠-١٨)
+   ══════════════════════════════════════════════════════════════════════
+   لوحُ الهويّة في جهة البدء — تدرّجُها، ونقشُها واحدٌ يغطّيه قائمًا، والعنوان، وديبو بطلًا —
+   والنموذجُ على أرضٍ بيضاء في جهة النهاية. واللوحُ أضيقُ من النصف (المالك). وفي الشاشة الضيّقة
+   يصير اللوحُ رأسًا قصيرًا وديبو في جهة البدء منه، والنموذجُ صفحةٌ بيضاء تعلوه. */
+.door {
+  /* `clip` لا `hidden`: المخفيُّ حاويةُ تمريرٍ يزيحها المتصفّحُ عند تركيز حقل */
+  position: relative; min-height: 100dvh; overflow: clip;
+  display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  /* شفّافةٌ لتظهر تحتها أرضُ الموقع المشبّكة (`Ambient`، ثابتةٌ خلف الصفحة) */
+  background: transparent;
+}
+
+/* ── اللوح ── */
+.door-side {
+  position: sticky; top: 12px; height: calc(100dvh - 24px); margin: 12px; overflow: clip;
+  display: flex; flex-direction: column; border-radius: 32px; color: #fff;
+  background:
+    radial-gradient(70% 50% at 50% 100%, rgba(146, 170, 195, .45), transparent 70%),
+    var(--grad-primary);
+  /* أبعادُ اللوح لنقشه (`cqw`/`cqh`) */
+  container-type: size;
+}
+/* نقشُ الهويّة **واحدٌ يغطّي اللوحَ كلَّه** (المالك): الشريطُ عريضٌ (1920×287) واللوحُ طويل،
+   فيُدار قائمًا ويُمدّ بطول اللوح وعرضه — لا بلاطٌ مكرّر */
+.door-side::before {
+  content: ""; position: absolute; top: 50%; left: 50%; pointer-events: none;
+  width: 100cqh; height: 100cqw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  background: url("/brand/pattern-white.svg") no-repeat center / cover; opacity: .05;
+}
+.door-side-say { position: relative; z-index: 1; padding: 52px 48px 0; }
+.door-side-big { font-family: var(--font-display); font-size: clamp(32px, 3.2vw, 46px); font-weight: 900; line-height: 1.2; text-wrap: balance; }
+.door-side-small { margin-top: 12px; font-size: 16.5px; line-height: 1.7; color: rgba(255, 255, 255, .8); text-wrap: balance; }
+
+/* ديبو: بمقاس ما بقي من اللوح تحت العنوان — طولًا وعرضًا — فلا يعلو العنوانَ في الشاشة القصيرة */
+.door-hero { position: relative; flex: 1; min-height: 0; container-type: size; }
+.door-deebo { position: absolute; inset: 0; --hero: min(100cqw, 100cqh, 640px); }
+.door-deebo img {
+  position: absolute; bottom: 0; left: 50%; margin-left: calc(var(--hero) / -2);
+  width: var(--hero); height: var(--hero); max-width: none;
+  object-fit: contain; object-position: 50% 100%;
+  opacity: 0; transform: translateY(18px) scale(.97); transform-origin: 50% 100%;
+  transition: opacity .26s ease, transform .5s cubic-bezier(.2, 1.4, .4, 1);
+  filter: drop-shadow(0 30px 40px rgba(10, 20, 35, .3));
+}
+.door-deebo img.is-on { opacity: 1; transform: none; }
+/* كلمتُه في فقاعةٍ فوق رأسه، ذيلُها إليه */
+.door-react {
+  position: absolute; z-index: 2; bottom: calc(var(--hero) * .86); left: calc(50% - var(--hero) * .42);
+  padding: 9px 16px; border-radius: 16px 16px 4px 16px; white-space: nowrap;
+  font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--navy-800); background: #fff;
+  box-shadow: 0 16px 30px -14px rgba(0, 0, 0, .45);
+  animation: door-pop .36s cubic-bezier(.2, 1.5, .4, 1);
+}
+
+/* ── النموذج ── */
+.door-main {
+  position: relative; z-index: 1; min-height: 100dvh;
+  display: grid; align-content: center; justify-items: center; padding: 56px 40px;
+}
+.door-thread { width: 100%; max-width: 400px; }
+.door-step { display: flex; flex-direction: column; gap: 14px; animation: door-in .32s ease both; }
+
+.door-head { margin-bottom: 8px; }
+/* العينُ: كلمةٌ كبيرةٌ تتلاشى إلى الأرض ويخرج منها العنوان */
+.door-kicker {
+  margin-bottom: -.55em; font-family: var(--font-latin); font-size: clamp(44px, 4.6vw, 64px); font-weight: 900; line-height: 1.4;
+  background: linear-gradient(to bottom, var(--steel-300), transparent); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.door-title { position: relative; font-family: var(--font-display); font-size: clamp(32px, 3vw, 42px); font-weight: 900; line-height: 1.35; text-wrap: balance; }
+/* التظليلُ كقلم التحديد تحت كلّ سطر، والحبرُ بتدرّج الهويّة — صندوقُه موسَّعٌ لئلّا يُبتر التشكيلُ والذيول */
+.door-mark {
+  padding-inline: .12em; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--steel-200), var(--steel-100)) no-repeat 0 88% / 100% .4em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.door-ink {
+  padding-block: .35em .3em;
+  background: linear-gradient(135deg, var(--navy-800), var(--steel-400)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.door-sub { margin-top: 8px; font-size: 15.5px; line-height: 1.7; color: var(--color-text-muted); }
+
+/* شارةُ ما اخترتَه أو كتبتَه، وقلمُها يعيدك */
+.door-chip {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 5px 6px 5px 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 800; color: var(--steel-700); background: var(--steel-50); border: 1px solid var(--steel-100);
+}
+.door-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.door-chip-edit {
+  flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  color: var(--steel-600); background: #fff; cursor: pointer; transition: color var(--dur);
+}
+.door-chip-edit:hover { color: var(--navy-800); }
+.door-back {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-inline-start: -10px;
+  padding: 5px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--steel-600); cursor: pointer;
+  transition: color var(--dur), background var(--dur);
+}
+.door-back:hover { color: var(--navy-800); background: var(--steel-50); }
+
+/* الأزرارُ العريضة: أزرارُ الهويّة (`.abtn-lg`) بعرض الخطوة — لا أزرارٌ مصنوعةٌ للباب (المالك سأل:
+   «أزرار الهويّة أم من عندك؟» وكانت من عندي، فقبُحت على الأرض المشبّكة) */
+.door-ways { display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+/* الزرُّ وشارتُه **جسمٌ واحد**: نموُّ المرور (`.abtn:hover` يكبّر الزرَّ وحده من مركزه، فكانت الشارةُ
+   تبقى مكانها وحافّتُه تنزاح تحتها — رآه المالك) يُنقل إلى الغلاف فيكبران معًا */
+.door-way-wrap { position: relative; transition: transform .2s ease; }
+.door-way-wrap:has(.door-way:hover:not(:disabled)) { transform: scale(1.011); }
+.door-way:hover:not(:disabled) { transform: none; }
+.door-way { width: 100%; min-height: 54px; gap: 10px; }
+.door-way:disabled { cursor: default; opacity: .65; }
+.abtn-ghost.door-way { background: rgba(255, 255, 255, .7); }
+.abtn-ghost.door-way svg { color: var(--steel-500); }
+/* «آخر دخول» على حافّة الزرّ العليا — **قطعةٌ من الزرّ**: خطُّها خطُّه (2px بلون إطار الهويّة)،
+   ويتبعه عند المرور لونًا، ونموًّا بالغلاف (المالك: كان خطُّها أرفعَ وتبقى جامدةً والزرُّ يتحرّك) */
+.door-last {
+  position: absolute; z-index: 1; top: -11px; inset-inline-start: 16px; pointer-events: none;
+  padding: 0 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; line-height: 20px;
+  color: var(--btn-ghost-fg); background: #fff; border: 2px solid var(--btn-ghost-border);
+  transition: border-color .2s ease, background .2s ease, color .2s ease;
+}
+.door-way-wrap:has(.door-way:hover:not(:disabled)) .door-last {
+  border-color: color-mix(in oklab, var(--btn-ghost-fg) 72%, transparent);
+  background: color-mix(in oklab, var(--btn-ghost-fg) 9%, #fff);
+}
+/* على زرّ التدرّج: لونُه لونُ الزرّ وخطُّه أبيض، كأنّها خرجت منه */
+.door-way-wrap:has(.abtn-primary) .door-last { color: #fff; background: var(--navy-800); border-color: #fff; }
+.door-way-wrap:has(.abtn-primary:hover:not(:disabled)) .door-last { background: var(--navy-700); border-color: #fff; }
+
+.door-spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: door-spin .7s linear infinite; }
+
+.door-fields { display: flex; flex-direction: column; gap: 14px; }
+.door-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.door-forgot { align-self: flex-start; margin-top: -6px; font-size: 13px; font-weight: 700; color: var(--steel-600); }
+.door-forgot:hover { color: var(--color-primary); }
+.door-shield { display: flex; }
+
+/* البابُ الآخر، ثمّ العودةُ إلى الموقع — بلا خطٍّ تحت رابط (المالك)، وبحركةٍ تدلّ على الضغط */
+.door-alt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px;
+  padding: 10px 10px 10px 18px; padding-inline: 18px 10px; border-radius: 16px;
+  background: var(--steel-50); border: 1px solid var(--steel-100);
+  font-size: 14.5px; font-weight: 700; color: var(--steel-700);
+}
+/* زرُّ الهويّة الصغير بإطاره (كالعودة إلى الموقع) — خطُّه خطُّ أزرار الباب كلّها */
+.door-alt-go { flex: none; background: #fff; }
+.door-alt-go svg { transition: transform .25s cubic-bezier(.2, 1.4, .4, 1); }
+.door-alt-go:hover svg, .door-alt-go:focus-visible svg { transform: translateX(-4px); }
+
+/* العودةُ إلى الموقع: زرُّ الهويّة الصغير بإطاره، في الوسط */
+.door-out { display: flex; width: max-content; margin: 18px auto 0; }
+
+@keyframes door-pop { from { opacity: 0; transform: translateY(8px) scale(.94); } }
+@keyframes door-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes door-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .door-react, .door-step { animation: none; }
+  .door-deebo img, .door-alt-go svg { transition: none; }
+}
+
+/* ── الشاشةُ الضيّقة: اللوحُ رأسٌ قصيرٌ — ديبو في جهة البدء والعنوانُ بجانبه — والنموذجُ صفحةٌ بيضاء تعلوه ── */
+@media (max-width: 899.98px) {
+  .door { display: flex; flex-direction: column; }
+  .door-side { --side-h: clamp(270px, 38vw, 350px); position: relative; top: 0; height: var(--side-h); margin: 0; border-radius: 0; flex-direction: row; }
+  /* اللوحُ هنا عريضٌ قصير: الشريطُ بعرضه كما هو، بلا إدارة */
+  .door-side::before { width: 100cqw; height: 100cqh; transform: translate(-50%, -50%); }
+  /* العنوانُ وسطرُه معًا في الشاشة الصغيرة (المالك: حذفُ السطر وتصغيرُ العنوان «قبح») — يتوسّطان
+     ما فوق حافّة الصفحة البيضاء بجانب ديبو */
+  .door-side-say { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px 44px; }
+  .door-side-big { font-size: clamp(28px, 7.4vw, 44px); line-height: 1.2; }
+  .door-side-small { display: block; margin-top: 8px; font-size: clamp(14.5px, 3.6vw, 18px); line-height: 1.6; }
+  /* ديبو في جهة البدء (المالك)، وبمقاسٍ من ارتفاع اللوح لا من عرضه: كان يتضخّم في اللوح العريض */
+  .door-hero { order: -1; --pose: calc(var(--side-h) - 52px); flex: 0 0 min(46%, var(--pose)); container-type: normal; }
+  .door-deebo { --hero: var(--pose); }
+  .door-deebo img { bottom: 26px; }
+  .door-react { bottom: auto; top: 18px; left: auto; right: 6px; font-size: 13px; padding: 6px 11px; border-radius: 14px 14px 14px 4px; }
+  .door-main { min-height: 0; margin-top: -28px; padding: 30px 20px 48px; border-radius: 28px 28px 0 0; background: var(--color-bg); }
+  .door-title { font-size: 28px; }
+}
+/* اللوحُ القائم (٦٠٠–٩٠٠): النموذجُ في وسط ما بقي لا ملتصقًا بالرأس وتحته فراغ */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  .door-main { flex: 1; align-content: center; }
+}
 
 /* ============================================================
    شاشة التحميل (LogoLoader) — **الحبرُ الصاعد**: الشعارُ هو المؤشّر لا دائرةٌ تدور.

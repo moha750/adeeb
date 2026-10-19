@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safeNext";
 import { logSignin } from "@/lib/signinEvents";
+import { createAdeebServiceClient } from "@adeeb/core";
+import { LOGIN_OAUTH_COOKIE, NO_ACCOUNT } from "@/lib/oauthIntent";
 
 /**
  * **بابُ العودة من قوقل/أبل** — يبدّل الرمزَ المؤقّت بجلسةٍ ثمّ يسوق العضوَ إلى وجهته.
@@ -12,6 +14,13 @@ import { logSignin } from "@/lib/signinEvents";
  * **ولا يُعرَض هنا نصٌّ قادمٌ من الرابط**: المزوّد (والخطّاف من ورائه) يردّ رسالتَه في
  * `error_description`، ولو مُرِّرت إلى الشاشة لصار الرابطُ يكتب فيها ما يشاء. فتُترجَم إلى
  * **رمزٍ من قائمةٍ مغلقة** وتُقرأ عبارتُه من `lib/authErrors.ts` — مصدرِ نصوص المصادقة الواحد.
+ *
+ * **وبوّابةُ أدِيب لا تفتح حسابًا** (قرار المالك ٢٠٢٦-١٠-١٨): من ضغط قوقل أو أبل في `/login`
+ * وليس له حساب، أنشأ له المزوّدُ حسابًا قبل أن نعرف (لا خطّافَ يرى من أيّ بابٍ جاء). فيُعرَف
+ * هنا: رحلةٌ نيّتُها `login`، وميلادُ الحساب بعد علامة الضغط (`markLoginOAuth`) — فيُخرَج
+ * ويُمحى الحسابُ الوليد، ويعود إلى البوّابة بـ«لا حسابَ لك» وزرٍّ يُكمل الإنشاءَ بضغطة.
+ * **ومن لا علامةَ له لا يُمحى حسابُه** (كوكي محجوب، أو رحلةٌ بدأت قبل هذا القرار): الخطأُ
+ * في هذا الاتّجاه حسابٌ زائد، وفي الاتّجاه الآخر حسابٌ حقيقيٌّ ضائع.
  */
 
 /** رمزٌ من قائمةٍ مغلقة، أو `null` إن لم يكن في الرابط رفضٌ أصلًا. */
@@ -48,7 +57,28 @@ export async function GET(request: NextRequest) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return back("oauth_failed");
+  const next = safeNext(searchParams.get("next"));
+  const marked = Number(request.cookies.get(LOGIN_OAUTH_COOKIE)?.value);
+  const done = (res: NextResponse) => {
+    res.cookies.set(LOGIN_OAUTH_COOKIE, "", { path: "/auth", maxAge: 0 });
+    return res;
+  };
+
+  if (searchParams.get("intent") === "login" && Number.isFinite(marked) && marked > 0) {
+    const { data: { user } } = await supabase.auth.getUser();
+    // ثوانٍ خمسٌ سماحةٌ لفارق ساعتَي الخادمين (Vercel وقاعدة Supabase)
+    if (user && Date.parse(user.created_at) >= marked - 5000) {
+      await supabase.auth.signOut();
+      if (via) logSignin(supabase, via, "fail", "oauth", NO_ACCOUNT);
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
+      if (url && key) await createAdeebServiceClient(url, key).auth.admin.deleteUser(user.id);
+      const p = via ? `&p=${via}` : "";
+      return done(NextResponse.redirect(`${base}/login?e=${NO_ACCOUNT}${p}&next=${encodeURIComponent(next)}`));
+    }
+  }
+
   if (via) logSignin(supabase, via, "success", "oauth");
 
-  return NextResponse.redirect(`${base}${safeNext(searchParams.get("next"))}`);
+  return done(NextResponse.redirect(`${base}${next}`));
 }

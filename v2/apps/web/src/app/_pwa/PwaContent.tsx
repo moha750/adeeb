@@ -89,7 +89,7 @@ export function PwaContent({ pwa, signedIn = true }: { pwa: Pwa; signedIn?: bool
               </Button>
             ) : (
               <a href="/login?next=/app" className="abtn abtn-primary abtn-md">
-                <SignIn /> سجّل الدخول
+                <SignIn /> بوّابة أدِيب
               </a>
             )}
             {pwa.canInstall ? (

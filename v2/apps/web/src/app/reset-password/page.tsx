@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { AuthShell } from "@adeeb/design-system";
+import { DoorHead, DoorShell } from "@/app/_door/DoorShell";
+import { Fields } from "@/app/_door/parts";
 import { ResetForm } from "./ResetForm";
 
 export const metadata: Metadata = {
@@ -8,14 +9,13 @@ export const metadata: Metadata = {
 
 export default function ResetPasswordPage() {
   return (
-    <main>
-      <AuthShell
-        title="تعيين كلمة مرور جديدة"
-        subtitle="اختر كلمةً جديدة لحسابك، ثمّ ادخل بها إلى البوّابة."
-        slogan="اختر كلمةً تُشبهك، ويصعُب على غيرك"
-      >
-        <ResetForm />
-      </AuthShell>
-    </main>
+    <DoorShell door="reset">
+      <section className="door-step">
+        <DoorHead title="كلمةُ مرورٍ جديدة" />
+        <Fields>
+          <ResetForm />
+        </Fields>
+      </section>
+    </DoorShell>
   );
 }
