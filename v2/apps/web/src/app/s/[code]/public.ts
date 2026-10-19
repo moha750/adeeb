@@ -7,6 +7,7 @@ import type { PublicSurvey, PublicQuestion } from "./SurveyRespond";
 /** أعمدة الاستبيان اللازمة للعرض العلنيّ (مجموعة جزئيّة من صفّ surveys). */
 type SurveyRow = {
   id: number;
+  code: string;
   title: string;
   description: string | null;
   welcome_message: string | null;
@@ -29,6 +30,7 @@ type QuestionRow = {
 export function toPublicSurvey(s: SurveyRow): PublicSurvey {
   return {
     id: s.id,
+    code: s.code,
     title: s.title,
     description: s.description ?? null,
     welcome: s.welcome_message ?? null,

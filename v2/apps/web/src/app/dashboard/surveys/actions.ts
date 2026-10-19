@@ -8,8 +8,8 @@ import {
   canEditSurvey, canSurvey, hasChoices, hasScale, isShareLevel, shareErrorMessage,
   type AccessType, type Choice, type QuestionType, type ShareLevel, type StatusOp, type SurveyStatus,
 } from "./vocab";
-import { toPublicSurvey, toPublicQuestions } from "@/app/surveys/[id]/public";
-import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import { toPublicSurvey, toPublicQuestions } from "@/app/s/[code]/public";
+import type { PublicSurvey, PublicQuestion } from "@/app/s/[code]/SurveyRespond";
 import { getSurveySharing, type SurveyShareCandidate, type SurveyShareRow } from "./data";
 
 export type SurveyResult = { ok: boolean; message: string; id?: number };
@@ -366,7 +366,7 @@ export async function getSurveyPreview(surveyId: number): Promise<
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const [sRes, qRes] = await Promise.all([
-    sb.from("surveys").select("id, title, description, welcome_message, thank_you_message, show_progress_bar, show_results_to_participants, end_date").eq("id", surveyId).maybeSingle(),
+    sb.from("surveys").select("id, code, title, description, welcome_message, thank_you_message, show_progress_bar, show_results_to_participants, end_date").eq("id", surveyId).maybeSingle(),
     sb.from("survey_questions").select("id, question_text, question_description, question_type, is_required, options").eq("survey_id", surveyId).order("question_order", { ascending: true }),
   ]);
   if (sRes.error) return { ok: false, message: `تعذّر جلب الاستبيان: ${sRes.error.message}` };

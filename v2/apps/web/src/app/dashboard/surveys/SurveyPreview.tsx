@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@adeeb/design-system";
 import { Eye } from "@/app/_components/glyphs";
 import { X } from "@/app/_components/glyphs";
-import { SurveyRespond, type PublicSurvey, type PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import { SurveyRespond, type PublicSurvey, type PublicQuestion } from "@/app/s/[code]/SurveyRespond";
 
 /**
  * طبقةُ معاينةٍ ملء الشاشة تُعيد استعمال **صفحة الاستبيان الحقيقيّة** (`SurveyRespond`) في وضع `preview`

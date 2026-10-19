@@ -18,6 +18,8 @@ function service() {
 
 export type SurveyRow = {
   id: number;
+  /** رمزُ الرابط القصير — منه يُنسخ رابطُ الاستبيان (`lib/surveys/code`). */
+  code: string;
   title: string;
   description: string | null;
   status: SurveyStatus;
@@ -57,7 +59,7 @@ export async function getSurveys(userId: string): Promise<{ surveys: SurveyRow[]
   if (!ids.length) return { surveys: [], error: null };
 
   const [sRes, qRes, rRes] = await Promise.all([
-    sb.from("surveys").select("id, title, description, status, access_type, start_date, end_date, archived_at, deleted_at, total_views, created_at, created_by").in("id", ids).order("created_at", { ascending: false }),
+    sb.from("surveys").select("id, code, title, description, status, access_type, start_date, end_date, archived_at, deleted_at, total_views, created_at, created_by").in("id", ids).order("created_at", { ascending: false }),
     sb.from("survey_questions").select("survey_id").in("survey_id", ids),
     sb.from("survey_responses").select("survey_id").in("survey_id", ids).eq("status", "completed"),
   ]);
@@ -81,6 +83,7 @@ export async function getSurveys(userId: string): Promise<{ surveys: SurveyRow[]
   const now = Date.now();
   const surveys: SurveyRow[] = (sRes.data ?? []).map((s) => ({
     id: s.id,
+    code: s.code,
     title: s.title,
     description: s.description ?? null,
     status: s.status as SurveyStatus,

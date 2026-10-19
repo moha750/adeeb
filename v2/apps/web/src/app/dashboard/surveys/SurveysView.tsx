@@ -27,11 +27,12 @@ import { deleteSurveyPermanently, getSurveyPreview, setSurveyStatus } from "./ac
 import { StatusBadge } from "./StatusBadge";
 import { ScheduleLine } from "./ScheduleLine";
 import { SurveyPreview } from "./SurveyPreview";
-import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import type { PublicSurvey, PublicQuestion } from "@/app/s/[code]/SurveyRespond";
 import { SurveyCard } from "./SurveyCard";
 import { SurveyShareModal, useSurveyShareOpener } from "./SurveyShares";
 import { PageHeader } from "../_components/PageHeader";
 import { copyText } from "@/lib/clipboard";
+import { surveyPath } from "@/lib/surveys/code";
 
 // نغمة سطح الصفّ من الحالة المخزّنة — المتوقّف أصفر. النشط لا يُدرَج هنا لأنّ خضرته مشروطة
 // بكونه حيًّا الآن (لا مجدولًا ولا منتهيًا) لا بحالته المخزّنة وحدها — تُحسب في isLiveActive.
@@ -111,7 +112,7 @@ export function SurveysView({ surveys }: { surveys: SurveyRow[] }) {
 
   const copyLink = async (s: SurveyRow) => {
     try {
-      await copyText(`${window.location.origin}/surveys/${s.id}`);
+      await copyText(`${window.location.origin}${surveyPath(s.code)}`);
       toast.success("نُسخ رابط الاستبيان.");
     } catch { toast.error("تعذّر النسخ."); }
   };

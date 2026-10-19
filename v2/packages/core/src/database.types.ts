@@ -4738,6 +4738,7 @@ export type Database = {
           archived_by: string | null
           closed_at: string | null
           closed_message: string | null
+          code: string
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -4764,6 +4765,7 @@ export type Database = {
           archived_by?: string | null
           closed_at?: string | null
           closed_message?: string | null
+          code?: string
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -4790,6 +4792,7 @@ export type Database = {
           archived_by?: string | null
           closed_at?: string | null
           closed_message?: string | null
+          code?: string
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null

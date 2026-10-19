@@ -5,6 +5,8 @@ import { Alert, Badge, Card, CardBody } from "@adeeb/design-system";
 import { createClient } from "@/lib/supabase/server";
 import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { QUESTION_TYPE_LABEL } from "@/app/dashboard/surveys/vocab";
+import { surveyResultsPath } from "@/lib/surveys/code";
+import { surveyIdByCode } from "@/lib/surveys/codeLookup";
 
 export const metadata: Metadata = { title: "نتائج الاستبيان، نادي أدِيب" };
 
@@ -24,10 +26,10 @@ function StateScreen({ title, children }: { title: string; children: React.React
  * إجماليّات مجرّدة بلا هويّات ولا إجابات نصيّة فرديّة (النصوص آراء أصحابها —
  * تبقى للوحة وحدها؛ العموم يرى عدّها فقط).
  */
-export default async function PublicSurveyResultsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const surveyId = Number(id);
-  if (!Number.isInteger(surveyId) || surveyId <= 0) notFound();
+export default async function PublicSurveyResultsPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  const surveyId = await surveyIdByCode(code);
+  if (!surveyId) notFound();
 
   const { agg, error } = await getSurveyAggregates(surveyId);
   if (error) {
@@ -49,7 +51,7 @@ export default async function PublicSurveyResultsPage({ params }: { params: Prom
       return (
         <StateScreen title="نتائج هذا الاستبيان لأعضاء أدِيب">
           ادخل من بوّابة أدِيب بعضويّةٍ نشطة، وتعود إلى النتائج بعدها.
-          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=/surveys/${surveyId}/results`}>بوّابة أدِيب</Link>
+          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=${surveyResultsPath(code)}`}>بوّابة أدِيب</Link>
         </StateScreen>
       );
     }

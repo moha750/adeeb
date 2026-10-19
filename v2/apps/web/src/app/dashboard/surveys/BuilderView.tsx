@@ -19,7 +19,7 @@ import {
 } from "./vocab";
 import { createSurvey, updateSurvey, type QuestionInput, type SurveyInput } from "./actions";
 import { SurveyPreview } from "./SurveyPreview";
-import type { PublicSurvey, PublicQuestion } from "@/app/surveys/[id]/SurveyRespond";
+import type { PublicSurvey, PublicQuestion } from "@/app/s/[code]/SurveyRespond";
 import { PageHeader } from "../_components/PageHeader";
 
 /** سؤال قيد التحرير — مفتاح React ثابت مستقلّ عن id القاعدة (الجديد بلا id بعد). */
@@ -111,6 +111,7 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
   // معاينة حيّة تُعيد استعمال صفحة الاستبيان الحقيقيّة — تُغذّى من الحالة الحاليّة بلا حفظ (ترقيمٌ مؤقّت للأسئلة غير المحفوظة)
   const previewSurvey: PublicSurvey = {
     id: survey?.id ?? 0,
+    code: "", // المعاينةُ لا تعرض رابطًا (زرُّ النتائج مخفيٌّ فيها) — ولاستبيانٍ جديدٍ لا رمزَ بعدُ أصلًا
     title: title.trim() || "استبيان بلا عنوان",
     description: description.trim() || null,
     welcome: welcome.trim() || null,

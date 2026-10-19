@@ -8,6 +8,7 @@ import {
 import { PencilSimple, Question, Star } from "@/app/_components/glyphs";
 import type { QuestionType } from "@/app/dashboard/surveys/vocab";
 import { submitSurveyResponse } from "./actions";
+import { surveyResultsPath } from "@/lib/surveys/code";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
 import { EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, EMAIL_RE, PHONE_RE } from "@/lib/fieldFormats";
 
@@ -16,6 +17,8 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export type PublicSurvey = {
   id: number;
+  /** رمزُ الرابط القصير (`lib/surveys/code`) — للروابط وحدها؛ والرقمُ للإرسال والمسودّة. */
+  code: string;
   title: string;
   description: string | null;
   welcome: string | null;
@@ -198,7 +201,7 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
             <p className="mt-2 text-content-muted">{survey.thankYou ?? "وصلتنا إجابتك."}</p>
             {survey.showResults && !preview ? (
               <div className="mt-5 flex justify-center">
-                <Link href={`/surveys/${survey.id}/results`} className="abtn abtn-primary abtn-md">عرض النتائج</Link>
+                <Link href={surveyResultsPath(survey.code)} className="abtn abtn-primary abtn-md">عرض النتائج</Link>
               </div>
             ) : null}
           </CardBody>

@@ -6,6 +6,7 @@ import { Alert, Card, CardBody } from "@adeeb/design-system";
 import { createClient } from "@/lib/supabase/server";
 import { SurveyRespond } from "./SurveyRespond";
 import { toPublicSurvey, toPublicQuestions } from "./public";
+import { isSurveyCode, surveyPath, surveyResultsPath } from "@/lib/surveys/code";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -21,26 +22,26 @@ const fmtDT = (iso: string): string => {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}، ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const surveyId = Number(id);
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
+  const { code } = await params;
   const sb = service();
-  if (!sb || !Number.isInteger(surveyId)) return { title: "نظام استبيانات أدِيب" };
-  // العنوان يُكشف لمعاينات الروابط للنشط العامّ وحده — عنوان مسودّةٍ أو استبيانِ
-  // أعضاءٍ ليس لعابر يحمل الرابط (نفس حدود قراءة anon في RLS)
+  if (!sb || !isSurveyCode(code)) return { title: "نظام استبيانات أدِيب" };
+  // **العنوانُ والوصفُ في معاينة الرابط لكلّ استبيانٍ منشور** (قرار المالك ٢٠٢٦-١٠-١٩): كان
+  // يُحجب عن استبيان الأعضاء فيخرج رابطُه في القروب «نظام استبيانات أدِيب» بوصف النادي العامّ،
+  // ورابطٌ لا يقول ما وراءه لا يُضغط. وعناوينُها ليست أسرارًا، والدخولُ نفسُه باقٍ بحارسه أدناه.
+  // والمحجوبُ ما لم يُنشر بعد أو أُخفي: المسودّةُ والمؤرشفُ والمحذوف (حدودُ صفحة النتائج نفسُها).
   const { data } = await sb
     .from("surveys")
     .select("title, description")
-    .eq("id", surveyId)
-    .eq("status", "active")
-    .eq("access_type", "public")
+    .eq("code", code)
+    .neq("status", "draft")
     .is("archived_at", null)
     .is("deleted_at", null)
     .maybeSingle();
   if (!data) return { title: "نظام استبيانات أدِيب" };
   return {
     title: data.title,
-    description: data.description ?? "شارك برأيك في استبيان نادي أدِيب.",
+    description: data.description?.trim() || "شارك برأيك في استبيان نادي أدِيب.",
   };
 }
 
@@ -57,26 +58,31 @@ function StateScreen({ title, tone, children }: { title: string; tone: "info" | 
   );
 }
 
-export default async function PublicSurveyPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const surveyId = Number(id);
-  if (!Number.isInteger(surveyId) || surveyId <= 0) notFound();
+export default async function PublicSurveyPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  if (!isSurveyCode(code)) notFound();
 
   const sb = service();
   if (!sb) {
     return <StateScreen title="الخدمة غير مهيّأة" tone="warning">تعذّر تجهيز الصفحة. حاول لاحقًا.</StateScreen>;
   }
 
-  const [sRes, qRes, session] = await Promise.all([
-    sb.from("surveys").select("*").eq("id", surveyId).maybeSingle(),
-    sb.from("survey_questions").select("id, question_text, question_description, question_type, question_order, is_required, options").eq("survey_id", surveyId).order("question_order", { ascending: true }),
+  // الاستبيانُ بالرمز أوّلًا (فرقمُه الداخليّ مفتاحُ أسئلته)، ثمّ الأسئلةُ والجلسةُ معًا
+  const [sRes, session] = await Promise.all([
+    sb.from("surveys").select("*").eq("code", code).maybeSingle(),
     createClient(),
   ]);
-  if (sRes.error || qRes.error) {
+  if (sRes.error) {
     return <StateScreen title="تعذّر التحميل" tone="warning">حدث خطأ أثناء جلب الاستبيان. حاول مجدّدًا.</StateScreen>;
   }
   const survey = sRes.data;
   if (!survey) notFound();
+  const surveyId: number = survey.id;
+
+  const qRes = await sb.from("survey_questions").select("id, question_text, question_description, question_type, question_order, is_required, options").eq("survey_id", surveyId).order("question_order", { ascending: true });
+  if (qRes.error) {
+    return <StateScreen title="تعذّر التحميل" tone="warning">حدث خطأ أثناء جلب الاستبيان. حاول مجدّدًا.</StateScreen>;
+  }
 
   const { data: { user } } = await session.auth.getUser();
   // مكوّنٌ **خادميّ** غيرُ متزامن: يجري مرّةً لكلّ طلبٍ ولا يُعاد رسمُه، فلا معنى لقاعدة
@@ -114,7 +120,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
       return (
         <StateScreen title="هذا الاستبيان لأعضاء أدِيب" tone="info">
           ادخل من بوّابة أدِيب، وتعود إلى الاستبيان بعدها.
-          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=/surveys/${surveyId}`}>بوّابة أدِيب</Link>
+          <Link className="abtn abtn-sm abtn-primary mt-4 flex w-max" href={`/login?next=${surveyPath(code)}`}>بوّابة أدِيب</Link>
         </StateScreen>
       );
     }
@@ -147,7 +153,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ i
           {survey.show_results_to_participants ? (
             <>
               {" "}
-              <Link className="font-bold underline" href={`/surveys/${surveyId}/results`}>عرض النتائج</Link>
+              <Link className="font-bold underline" href={surveyResultsPath(code)}>عرض النتائج</Link>
             </>
           ) : null}
         </StateScreen>
