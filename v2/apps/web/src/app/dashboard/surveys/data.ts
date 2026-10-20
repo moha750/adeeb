@@ -118,7 +118,6 @@ export type SurveyDetail = {
   allowMultiple: boolean;
   allowAnonymous: boolean;
   showProgress: boolean;
-  showResults: boolean;
   startDate: string | null; // ISO كما في القاعدة
   endDate: string | null;
   welcome: string | null;
@@ -176,7 +175,6 @@ export async function getSurveyDetail(id: number): Promise<{ survey: SurveyDetai
     allowMultiple: !!s.allow_multiple_responses,
     allowAnonymous: !!s.allow_anonymous,
     showProgress: !!s.show_progress_bar,
-    showResults: !!s.show_results_to_participants,
     startDate: s.start_date ?? null,
     endDate: s.end_date ?? null,
     welcome: s.welcome_message ?? null,

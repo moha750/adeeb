@@ -1,5 +1,4 @@
-// تجميع نتائج الاستبيان — مصدر واحد لقارئين: شاشة النتائج في اللوحة،
-// وصفحة النتائج العامّة للمشاركين (حين يفعّل المالك «إظهار النتائج»).
+// تجميع نتائج الاستبيان لشاشة النتائج في اللوحة (لا نتائجَ علنيّة للمشاركين — أُلغيت 2026-10-20).
 // خادميّ حصرًا (مفتاح الخدمة)، ولا يحمل هويّات المجيبين — الهويّات تُجلب
 // في طبقة اللوحة وحدها (dashboard/surveys/results-data.ts).
 import "server-only";
@@ -34,10 +33,6 @@ export type SurveyAggregates = {
   title: string;
   description: string | null;
   status: string;
-  access: string; // access_type — لبوّابة النتائج العلنيّة (للأعضاء فقط)
-  archived: boolean;
-  deleted: boolean;
-  showResults: boolean;
   totals: {
     responses: number;
     views: number;
@@ -60,14 +55,12 @@ type AnswerRow = {
 };
 
 /** يجمع نتائج استبيان — المشاركات المكتملة وحدها (الصفوف التاريخيّة غير المكتملة تُستثنى). */
-export async function getSurveyAggregates(surveyId: number, opts?: { includeText?: boolean }): Promise<{ agg: SurveyAggregates | null; error: string | null }> {
-  // النصوص الحرّة الفرديّة (آراءٌ = PII) للوحة وحدها؛ المسار العلنيّ لا يتلقّاها أصلًا (دفاعٌ في العمق)
-  const includeText = opts?.includeText ?? false;
+export async function getSurveyAggregates(surveyId: number): Promise<{ agg: SurveyAggregates | null; error: string | null }> {
   const sb = service();
   if (!sb) return { agg: null, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
   const [sRes, qRes, rRes] = await Promise.all([
-    sb.from("surveys").select("id, title, description, status, access_type, archived_at, deleted_at, show_results_to_participants, total_views").eq("id", surveyId).maybeSingle(),
+    sb.from("surveys").select("id, title, description, status, total_views").eq("id", surveyId).maybeSingle(),
     sb.from("survey_questions").select("id, question_text, question_type, question_order, is_required, options").eq("survey_id", surveyId).order("question_order", { ascending: true }),
     sb.from("survey_responses").select("id, completed_at, time_spent_seconds").eq("survey_id", surveyId).eq("status", "completed"),
   ]);
@@ -155,12 +148,10 @@ export async function getSurveyAggregates(surveyId: number, opts?: { includeText
       };
     }
 
-    // النصوص والقيم (بريد/جوّال/رابط/تاريخ/وقت) — للوحة وحدها؛ العلنيّ يأخذ العدّ بلا أيّ نصّ فرديّ
-    const samples = includeText
-      ? rows
-          .map((a) => a.answer_text ?? a.answer_date ?? a.answer_time ?? (a.answer_datetime ? String(a.answer_datetime) : null))
-          .filter((v): v is string => v != null && v !== "")
-      : [];
+    // النصوص والقيم (بريد/جوّال/رابط/تاريخ/وقت) — اللوحةُ وحدها تقرأ هذا التجميع
+    const samples = rows
+      .map((a) => a.answer_text ?? a.answer_date ?? a.answer_time ?? (a.answer_datetime ? String(a.answer_datetime) : null))
+      .filter((v): v is string => v != null && v !== "");
     return { ...base, kind: "text", samples };
   });
 
@@ -173,10 +164,6 @@ export async function getSurveyAggregates(surveyId: number, opts?: { includeText
       title: sRes.data.title,
       description: sRes.data.description ?? null,
       status: sRes.data.status,
-      access: sRes.data.access_type,
-      archived: sRes.data.archived_at != null,
-      deleted: sRes.data.deleted_at != null,
-      showResults: !!sRes.data.show_results_to_participants,
       totals: {
         responses: responses.length,
         views: sRes.data.total_views ?? 0,

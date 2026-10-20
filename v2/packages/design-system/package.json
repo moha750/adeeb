@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./search": "./src/lib/search.ts",
+    "./charset": "./src/lib/charset.ts",
     "./tokens.css": "./tokens.css",
     "./fonts.css": "./fonts.css",
     "./components.css": "./components.css",

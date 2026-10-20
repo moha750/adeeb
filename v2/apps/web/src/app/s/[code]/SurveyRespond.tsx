@@ -1,16 +1,32 @@
 "use client";
 
+/**
+ * **صفحةُ الاستبيان: «مسار»** — صفحةٌ واحدةٌ تبدأ بغلافٍ كحليٍّ يحدّه نقشُ أدِيب، وتخرج منه ورقةٌ بيضاء
+ * تحمل الأسئلة على **خطّ طريقٍ** عموديّ: لكلّ سؤالٍ عقدةٌ برقمه تصير علامةً حين يُجاب، ويمتلئ الخطُّ
+ * تحتها. فالتقدّمُ ليس شريطًا فوق الصفحة، بل الطريقُ نفسُه. وفي آخر الطريق لوحةُ الإرسال بما بقي،
+ * والإرسالُ الناقصُ يعيدك إلى أوّل سؤالٍ بقي، والسؤالُ الناقصُ كلُّه بنغمة الخطأ وتحته تنبيهُ الهويّة.
+ *
+ * **اعتُمد سلوكًا** (المالك ٢٠٢٦-١٠-١٩) بعد مراجعة الدراسات: الصفحةُ الواحدة تساوي سؤالًا في كلّ صفحةٍ
+ * في نسبة الإكمال، وتفوقه على الجوّال وقتًا ورضًا (Mavletova & Couper 2014). وأُخذ من الآخر أنفعُ ما
+ * فيه: ما يُجاب بلمسةٍ يُنزل الصفحةَ وحده إلى السؤال التالي إن كان فارغًا. **واعتُمد تصميمًا** ٢٠٢٦-١٠-٢٠.
+ *
+ * وتبقى من الصفحة السابقة أمانتُها: مسوّدةُ المتصفّح أسبوعًا، ودرعُ Turnstile، والمعاينةُ التي تفرض
+ * التحقّقَ كالحقيقيّة ولا تُرسل.
+ */
+
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { Alert, Button, Card, CardBody, Checkbox, Field, FieldMark, Radio, Select, Textarea } from "@adeeb/design-system";
-import {
-  At, CalendarBlank, ChatText, CheckSquare, Clock, Envelope, Globe, Hash, LinkSimple, ListBullets, NumberCircleOne, Phone, TextT } from "@phosphor-icons/react";
-import { PencilSimple, Question, Star } from "@/app/_components/glyphs";
+import { Alert, FieldMark } from "@adeeb/design-system";
+import { CalendarBlank, Detective, Lightbulb, ListNumbers, PaperPlaneTilt, Timer } from "@phosphor-icons/react";
+import { ArrowLeft, Check } from "@/app/_components/glyphs";
 import type { QuestionType } from "@/app/dashboard/surveys/vocab";
-import { submitSurveyResponse } from "./actions";
-import { surveyResultsPath } from "@/lib/surveys/code";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
-import { EMAIL_HINT, PHONE_HINT, PHONE_LEN, PHONE_PREFIX, EMAIL_RE, PHONE_RE } from "@/lib/fieldFormats";
+import { fmtStamp } from "@/lib/dates";
+import { submitSurveyResponse } from "./actions";
+import { Answer } from "./Answer";
+import { Done } from "./Done";
+import { ONE_TAP, isAnswered, leftWord, minutesFor, minutesWord, questionError, questionsWord, setAnswer, type AnswerValue, type Answers } from "./logic";
 
 // مفتاح Turnstile العامّ — يُدمَج وقت البناء (NEXT_PUBLIC). غيابه (تجربةٌ محليّة بلا إعداد) يُسقط الدرع بلا كسر.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -24,8 +40,11 @@ export type PublicSurvey = {
   welcome: string | null;
   thankYou: string | null;
   showProgress: boolean;
-  showResults: boolean;
   endDate: string | null;
+  /** لا تُسجَّل هويّةُ المجيب (`allow_anonymous`) — يقولها الغلاف. */
+  anonymous: boolean;
+  /** يقبل أكثرَ من إجابة (`allow_multiple_responses`) — فيظهر «إجابةٌ أخرى» في الإيصال. */
+  allowMultiple: boolean;
 };
 
 export type PublicQuestion = {
@@ -38,21 +57,6 @@ export type PublicQuestion = {
   scale: { min: number; max: number } | null;
 };
 
-type AnswerValue = string | number | boolean | string[];
-
-/** أيقونتا كلّ نوع (تسمية + داخليّة) — نظام الحقل المقدّس يلزم كليهما. */
-const TYPE_ICONS: Record<string, { icon: React.ReactNode; inner: React.ReactNode; placeholder: string }> = {
-  short_text: { icon: <TextT />, inner: <PencilSimple />, placeholder: "اكتب إجابتك" },
-  long_text: { icon: <ChatText />, inner: <PencilSimple />, placeholder: "اكتب إجابتك…" },
-  number: { icon: <NumberCircleOne />, inner: <Hash />, placeholder: "أدخل رقمًا" },
-  email: { icon: <Envelope />, inner: <At />, placeholder: "you@example.com" },
-  phone: { icon: <Phone />, inner: <Hash />, placeholder: "05xxxxxxxx" },
-  url: { icon: <Globe />, inner: <LinkSimple />, placeholder: "https://…" },
-  date: { icon: <CalendarBlank />, inner: <Clock />, placeholder: "اختر التاريخ" },
-  time: { icon: <Clock />, inner: <Clock />, placeholder: "اختر الوقت" },
-  datetime: { icon: <CalendarBlank />, inner: <Clock />, placeholder: "اختر التاريخ والوقت" },
-};
-
 const DRAFT_TTL = 7 * 24 * 60 * 60 * 1000;
 const draftKey = (id: number) => `svy-draft-${id}`;
 
@@ -62,7 +66,7 @@ const readRawDraft = (id: number): string | null => {
 };
 
 /** إجاباتُها إن كانت حيّةً، و`null` إن غابت أو شاخت (أسبوع) أو عطبت. */
-function draftAnswers(raw: string | null): Record<number, AnswerValue> | null {
+function draftAnswers(raw: string | null): Answers | null {
   if (!raw) return null;
   try {
     const d = JSON.parse(raw) as { answers?: Record<number, AnswerValue>; savedAt?: number };
@@ -79,13 +83,19 @@ const deviceType = (): string => {
 };
 
 export function SurveyRespond({ survey, questions, preview = false }: { survey: PublicSurvey; questions: PublicQuestion[]; preview?: boolean }) {
-  const [answers, setAnswers] = useState<Record<number, AnswerValue>>({});
-  const [errors, setErrors] = useState<Record<number, string>>({});
+  // زرُّ الإرسال **الحلّ الوسط** (المالك ٢٠٢٦-١٠-٢٠): زرُّ الهويّة المعكوس على لوحة الإرسال الداكنة، بارتفاعٍ وسهمٍ متقدّم
+  const primary = "abtn abtn-inverse abtn-lg spt-btn";
+  const [answers, setAnswers] = useState<Answers>({});
+  const [tried, setTried] = useState(false);
+  // لحظةُ الإرسال تُحفظ معه: الإيصالُ يقولها
+  const [done, setDone] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
   const [submitting, startSubmit] = useTransition();
+  const [pastHero, setPastHero] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+  const timer = useRef<number | null>(null);
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current); }, []);
   // ساعةُ البدء تُضبَط بعد التركيب لا في الرسم: قراءةُ الساعة أثناء الرسم غيرُ نقيّة
-  // (رسمةٌ ثانيةٌ تعطي رقمًا آخر)، وأوّلُ لحظةٍ يراها المجيب هي لحظةُ التركيب لا غير.
   const startedAt = useRef(0);
   useEffect(() => { startedAt.current = Date.now(); }, []);
   // درع Turnstile — الرمز الحيّ وإشارة إعادة الضبط (الرمز يُستهلك مرّة، فيُجدَّد بعد فشل)
@@ -94,11 +104,9 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
   const shieldOn = !preview && !!TURNSTILE_SITE_KEY;
 
   // مسوّدة المتصفّح — تعود لصاحبها إن غادر وعاد خلال أسبوع، وتُمحى عند الإرسال.
-  // **المخزنُ يُقرأ بـ`useSyncExternalStore` لا يُنسَخ في أثر** (سابقةُ `lib/useDraft`):
-  // الخادمُ لا مخزنَ له فلقطتُه `null` (فلا يختلف المرسَلُ عن المرسوم)، ثمّ تُبذَر إجاباتُها
-  // في الحالة **مرّةً واحدةً** بعد الترطيب. والبذرُ في الرسم لا في أثر: الأثرُ كان يرسم
-  // النموذجَ فارغًا رسمةً كاملةً ثمّ يملؤه، فيرى صاحبُ المسوّدة نموذجَه خاليًا لحظةً.
-  // (والمعاينة لا تقرأ مسوّدةً ولا تكتبها — لا id حقيقيّ لها.)
+  // **المخزنُ يُقرأ بـ`useSyncExternalStore` لا يُنسَخ في أثر** (سابقةُ `lib/useDraft`): الخادمُ لا مخزنَ
+  // له فلقطتُه `null`، ثمّ تُبذَر إجاباتُها في الحالة **مرّةً واحدةً** بعد الترطيب، في الرسم لا في أثر
+  // (الأثرُ كان يرسم النموذجَ فارغًا ثمّ يملؤه). والمعاينة لا تقرأ مسوّدةً ولا تكتبها.
   const rawDraft = useSyncExternalStore(
     () => () => {},
     () => (preview ? null : readRawDraft(survey.id)),
@@ -123,66 +131,64 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
     return () => window.clearTimeout(t);
   }, [answers, done, survey.id, preview]);
 
-  const set = (qid: number, value: AnswerValue | undefined) => {
-    setAnswers((a) => {
-      const next = { ...a };
-      if (value === undefined || value === "" || (Array.isArray(value) && !value.length)) delete next[qid];
-      else next[qid] = value;
-      return next;
-    });
-    setErrors((e) => {
-      if (!e[qid]) return e;
-      const next = { ...e };
-      delete next[qid];
-      return next;
-    });
-  };
+  // الشريطُ اللاصقُ يظهر حين يغادر الغلافُ الشاشة — فوق الغلاف لا حاجة إليه
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([en]) => setPastHero(!en.isIntersecting), { rootMargin: "-80px 0px 0px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [done]);
 
-  const answeredCount = useMemo(
-    () => questions.filter((q) => answers[q.id] !== undefined).length,
-    [questions, answers],
-  );
+  const total = questions.length;
+  const answered = questions.filter((q) => isAnswered(answers[q.id])).length;
+  const errors = useMemo(() => {
+    const out: Record<number, string> = {};
+    for (const q of questions) {
+      const e = questionError(q, answers[q.id]);
+      if (e) out[q.id] = e;
+    }
+    return out;
+  }, [questions, answers]);
+  const missing = questions.filter((q) => q.required && !isAnswered(answers[q.id]));
+  // جاهزٌ حين لا يبقى إلزاميّ **وفيه إجابةٌ واحدةٌ على الأقلّ**: استبيانٌ اختياريٌّ كلُّه لا يُرسَل فارغًا
+  const ready = !missing.length && answered > 0;
+
+  const finish = () => { setDone(new Date().toISOString()); window.scrollTo({ top: 0 }); };
 
   const submit = () => {
-    const missing: Record<number, string> = {};
-    let blank = 0;
-    for (const q of questions) {
-      if (q.required && answers[q.id] === undefined) { missing[q.id] = "هذا السؤال إلزاميّ."; blank++; continue; }
-      // صيغةُ البريد والجوّال تُفحص كما تُفحص في بقيّة أبواب الموقع — والمصدر واحد.
-      // (الطقم يمنع المحرف لا الصيغة، وقاعدةُ البيانات تخزّن الثلاثة نصًّا واحدًا بلا تمييز.)
-      const v = answers[q.id];
-      if (typeof v !== "string" || !v.trim()) continue;
-      if (q.type === "email" && !EMAIL_RE.test(v.trim())) missing[q.id] = EMAIL_HINT;
-      if (q.type === "phone" && !PHONE_RE.test(v.trim())) missing[q.id] = PHONE_HINT;
+    // نزولٌ تلقائيٌّ معلّقٌ من آخر لمسة لا يسبق الإرسالَ إلى غير السؤال الناقص
+    if (timer.current) window.clearTimeout(timer.current);
+    setTried(true);
+    const first = questions.find((q) => errors[q.id]);
+    if (first) {
+      setFormError(null);
+      document.getElementById(`pq-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
     }
-    setErrors(missing);
-    if (Object.keys(missing).length) {
-      setFormError(blank
-        ? `بقي ${blank} سؤال إلزاميّ بلا إجابة.`
-        : "راجع الأسئلة المميّزة بالأحمر.");
+    if (!answered) {
+      setFormError("أجب عن سؤالٍ واحدٍ على الأقلّ قبل الإرسال.");
       return;
     }
     setFormError(null);
-    // المعاينة أمينة: تفرض التحقّق (الإلزاميّ وأخطاءه) كالحقيقيّة تمامًا، لكن عند النجاح تُظهر الشكر بلا إرسالٍ فعليّ — لا حفظ في القاعدة
-    if (preview) { setDone(true); return; }
+    // المعاينة أمينة: تفرض التحقّق كالحقيقيّة تمامًا، لكن عند النجاح تُظهر الإيصال بلا إرسالٍ فعليّ
+    if (preview) { finish(); return; }
     // درع Turnstile: لا نُرسل بلا رمزٍ صالح (غالبًا يجهز خفيةً في ثوانٍ)
     if (shieldOn && !tsToken) {
       setFormError("جارٍ التأكّد أنّك لست روبوتًا، انتظر لحظةً ثمّ أعد الإرسال.");
       return;
     }
     startSubmit(async () => {
-      const payload: Record<string, unknown> = {};
-      for (const [qid, v] of Object.entries(answers)) payload[qid] = v;
       const r = await submitSurveyResponse({
         surveyId: survey.id,
-        answers: payload,
+        answers: { ...answers },
         seconds: Math.round((Date.now() - startedAt.current) / 1000),
         device: deviceType(),
         turnstileToken: tsToken ?? undefined,
       });
       if (r.ok) {
         try { localStorage.removeItem(draftKey(survey.id)); } catch { /* لا شيء */ }
-        setDone(true);
+        finish();
       } else {
         setFormError(r.message);
         // الرمز يُستهلك بالمحاولة — جدّده للمحاولة التالية
@@ -194,206 +200,125 @@ export function SurveyRespond({ survey, questions, preview = false }: { survey: 
 
   if (done) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-4 px-4 py-10">
-        <Card>
-          <CardBody className="p-8 text-center">
-            <p className="font-display text-2xl font-bold text-content">شكرًا لمشاركتك</p>
-            <p className="mt-2 text-content-muted">{survey.thankYou ?? "وصلتنا إجابتك."}</p>
-            {survey.showResults && !preview ? (
-              <div className="mt-5 flex justify-center">
-                <Link href={surveyResultsPath(survey.code)} className="abtn abtn-primary abtn-md">عرض النتائج</Link>
-              </div>
-            ) : null}
-          </CardBody>
-        </Card>
-      </main>
+      <Done
+        survey={survey}
+        answered={answered}
+        total={total}
+        sentAt={done}
+        onAgain={() => { setAnswers({}); setTried(false); setDone(null); setFormError(null); startedAt.current = Date.now(); window.scrollTo({ top: 0 }); }}
+      />
     );
   }
 
-  return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-10">
-      <header className="mb-6 text-center">
-        <p className="font-display text-sm font-bold text-steel-600">نادي أدِيب</p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-content">{survey.title}</h1>
-        {survey.description ? <p className="mt-2 text-content-muted">{survey.description}</p> : null}
-      </header>
+  const pct = total ? Math.round((answered / total) * 100) : 0;
 
-      {survey.welcome ? (
-        <div className="mb-6">
-          <Alert tone="info" title="أهلًا بك">{survey.welcome}</Alert>
+  /** اللمسةُ الواحدةُ تنزل إلى السؤال التالي — إن كان فارغًا وحده: من يعدّل إجابةً قديمةً لا يُختطَف */
+  const answer = (q: PublicQuestion, i: number, v: AnswerValue | undefined) => {
+    setAnswers((a) => setAnswer(a, q.id, v));
+    const nextQ = questions[i + 1];
+    if (!ONE_TAP.has(q.type) || !isAnswered(v) || isAnswered(answers[q.id])) return;
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      const el = document.getElementById(nextQ && !isAnswered(answers[nextQ.id]) ? `pq-${nextQ.id}` : "pq-end");
+      const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el?.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+    }, 380);
+  };
+
+  return (
+    <div className="spt">
+      {/* الشريطُ اللاصق للصفحة وحدها: في المعاينة شريطُها هي فوق الصفحة، وما لا يُظهر التقدّمَ لا شريطَ له */}
+      {survey.showProgress && !preview ? (
+        <div className="spt-bar" data-on={pastHero ? "" : undefined} aria-hidden={!pastHero}>
+          <div className="spt-bar-in">
+            {/* eslint-disable-next-line @next/next/no-img-element -- شعارٌ متّجهٌ صغير */}
+            <img src="/brand/logo-horizontal.svg" alt="" />
+            <div className="spt-bar-track"><span style={{ "--p": `${pct}%` } as CSSProperties} /></div>
+            <span className="spt-bar-n"><b>{answered}</b> من {total}</span>
+          </div>
         </div>
       ) : null}
 
-      <form
-        className="flex flex-col gap-5"
-        onSubmit={(e) => { e.preventDefault(); submit(); }}
-        noValidate
-      >
-        {questions.map((q, i) => (
-          <Card key={q.id}>
-            <CardBody className="flex flex-col gap-3 p-5">
-              <QuestionField q={q} index={i} value={answers[q.id]} error={errors[q.id]} onChange={(v) => set(q.id, v)} />
-            </CardBody>
-          </Card>
-        ))}
-
-        {shieldOn ? (
-          <TurnstileWidget siteKey={TURNSTILE_SITE_KEY!} onToken={setTsToken} resetSignal={tsReset} />
-        ) : null}
-
-        {formError ? <Alert tone="danger" title="لم تُرسل الإجابات">{formError}</Alert> : null}
-
-        <div className="flex items-center justify-between gap-4">
-          {survey.showProgress ? (
-            <span className="text-sm text-content-muted">
-              أجبت <b className="num">{answeredCount}</b> من <b className="num">{questions.length}</b>
-            </span>
-          ) : <span />}
-          <Button type="submit" size="lg" loading={submitting}>إرسال الإجابات</Button>
+      <header className="spt-hero" ref={heroRef}>
+        <div className="spt-hero-in">
+          <Link href="/" className="spt-logo" aria-label="موقع أدِيب">
+            {/* eslint-disable-next-line @next/next/no-img-element -- شعارٌ متّجهٌ صغير */}
+            <img src="/brand/logo-horizontal-white.svg" alt="" />
+          </Link>
+          <h1 className="spt-title">{survey.title}</h1>
+          {survey.description ? <p className="spt-desc">{survey.description}</p> : null}
+          {survey.welcome ? <p className="spt-desc">{survey.welcome}</p> : null}
+          <ul className="spt-facts">
+            <li><span className="spt-fi" aria-hidden><ListNumbers /></span>{questionsWord(total)}</li>
+            <li><span className="spt-fi" aria-hidden><Timer /></span>نحو {minutesWord(minutesFor(questions))}</li>
+            {survey.endDate ? <li><span className="spt-fi" aria-hidden><CalendarBlank /></span>يُغلق {fmtStamp(survey.endDate)}</li> : null}
+            {survey.anonymous ? <li><span className="spt-fi" aria-hidden><Detective /></span>إجابتك بلا اسم</li> : null}
+          </ul>
         </div>
-      </form>
-    </main>
-  );
-}
+      </header>
 
-function QuestionField({
-  q, index, value, error, onChange,
-}: {
-  q: PublicQuestion;
-  index: number;
-  value: AnswerValue | undefined;
-  error?: string;
-  onChange: (v: AnswerValue | undefined) => void;
-}) {
-  const label = `${index + 1}. ${q.text}`;
-  const mark = <FieldMark required={q.required} optional={!q.required} />;
-
-  // الاختيارات والتقييم: عنوان + مجموعة بطاقات اختيار من المكتبة كما هي
-  if (q.type === "single_choice" || q.type === "yes_no" || q.type === "rating_stars" || q.type === "linear_scale") {
-    const opts =
-      q.type === "single_choice"
-        ? q.choices.map((c) => ({ key: c.id, label: c.label, value: c.id as AnswerValue }))
-        : q.type === "yes_no"
-          ? [{ key: "yes", label: "نعم", value: true as AnswerValue }, { key: "no", label: "لا", value: false as AnswerValue }]
-          : Array.from(
-              { length: (q.scale?.max ?? 5) - (q.scale?.min ?? 1) + 1 },
-              (_, i) => {
-                const n = (q.scale?.min ?? 1) + i;
-                return { key: String(n), label: q.type === "rating_stars" ? `${n} ★` : String(n), value: n as AnswerValue };
-              },
+      <main className="spt-paper">
+        <form className="spt-path" noValidate onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          {questions.map((q, i) => {
+            const err = tried ? errors[q.id] ?? null : null;
+            const state = err ? "err" : isAnswered(answers[q.id]) && !errors[q.id] ? "done" : "idle";
+            const hid = `pqh-${q.id}`;
+            return (
+              <section key={q.id} id={`pq-${q.id}`} className="spt-q" data-state={state}>
+                <span className="spt-node" aria-hidden>{state === "done" ? <Check /> : i + 1}</span>
+                <h2 id={hid} className="spt-qt">
+                  {q.text}
+                  <FieldMark required={q.required} optional={!q.required} />
+                </h2>
+                {/* الوصفُ **ملاحظةٌ** بأيقونةٍ في مربّعها بين العنوان والإجابة: يُقرأ قبل الجواب */}
+                {q.description ? (
+                  <p className="spt-qd"><span className="spt-qd-ic" aria-hidden><Lightbulb /></span><span>{q.description}</span></p>
+                ) : null}
+                <div className="spt-ans">
+                  <Answer p="spt" q={q} value={answers[q.id]} error={err} onChange={(v) => answer(q, i, v)} labelledBy={hid} />
+                </div>
+                {/* الخطأُ **تنبيهُ الهويّة** نفسُه (المالك: «تنبيهاتُ الهويّة أفضل») */}
+                {err ? <div className="spt-err" role="alert"><Alert tone="danger" compact>{err}</Alert></div> : null}
+              </section>
             );
-    const horizontal = q.type !== "single_choice";
-    return (
-      <fieldset className="flex flex-col gap-3">
-        <legend className="flex items-center gap-2 font-bold text-content">
-          <span className="inline-flex text-steel-600" aria-hidden>{q.type === "rating_stars" ? <Star /> : q.type === "yes_no" ? <CheckSquare /> : <ListBullets />}</span>
-          {label}
-          {mark}
-        </legend>
-        {q.description ? <p className="text-sm text-content-muted">{q.description}</p> : null}
-        <div className={horizontal ? "flex flex-wrap gap-2" : "flex flex-col gap-2"}>
-          {opts.map((o) => (
-            <Radio
-              key={o.key}
-              card
-              name={`q${q.id}`}
-              label={o.label}
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-            />
-          ))}
-        </div>
-        {error ? <p className="text-sm font-bold text-danger">{error}</p> : null}
-      </fieldset>
-    );
-  }
+          })}
 
-  if (q.type === "multiple_choice") {
-    const selected = Array.isArray(value) ? value : [];
-    const toggle = (id: string) =>
-      onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
-    return (
-      <fieldset className="flex flex-col gap-3">
-        <legend className="flex items-center gap-2 font-bold text-content">
-          <span className="inline-flex text-steel-600" aria-hidden><ListBullets /></span>
-          {label}
-          {mark}
-        </legend>
-        {q.description ? <p className="text-sm text-content-muted">{q.description}</p> : null}
-        <div className="flex flex-col gap-2">
-          {q.choices.map((c) => (
-            <Checkbox key={c.id} card label={c.label} checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
-          ))}
-        </div>
-        {error ? <p className="text-sm font-bold text-danger">{error}</p> : null}
-      </fieldset>
-    );
-  }
-
-  if (q.type === "dropdown") {
-    return (
-      <Select
-        label={label}
-        icon={<ListBullets />}
-        options={q.choices.map((c) => ({ value: c.id, label: c.label }))}
-        value={typeof value === "string" ? value : ""}
-        onValueChange={(v) => onChange(v)}
-        error={error}
-        helper={q.description ?? undefined}
-        {...(q.required ? { required: true } : { optional: true })}
-      />
-    );
-  }
-
-  if (q.type === "long_text") {
-    const t = TYPE_ICONS.long_text;
-    return (
-      <Textarea
-        label={label}
-        icon={t.icon}
-        innerIcon={t.inner}
-        placeholder={t.placeholder}
-        rows={4}
-        value={typeof value === "string" ? value : ""}
-        onChange={(e) => onChange(e.target.value)}
-        error={error}
-        helper={q.description ?? undefined}
-        {...(q.required ? { required: true } : { optional: true })}
-      />
-    );
-  }
-
-  // بقيّة الأنواع حقول مفردة — النوع والطقم بحسب المحتوى
-  const t = TYPE_ICONS[q.type] ?? TYPE_ICONS.short_text;
-  const inputType =
-    q.type === "number" ? "number"
-      : q.type === "email" ? "email"
-        : q.type === "phone" ? "tel"
-          : q.type === "url" ? "url"
-            : q.type === "date" ? "date"
-              : q.type === "time" ? "time"
-                : q.type === "datetime" ? "datetime-local"
-                  : "text";
-  const charset = q.type === "email" || q.type === "url" ? ("latin" as const) : q.type === "phone" ? ("digits" as const) : undefined;
-
-  return (
-    <Field
-      label={label}
-      icon={t.icon ?? <Question />}
-      innerIcon={t.inner}
-      placeholder={t.placeholder}
-      type={inputType}
-      charset={charset}
-      {...(q.type === "phone" ? { maxLength: PHONE_LEN, prefix: PHONE_PREFIX } : {})}
-      value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
-      onChange={(e) => {
-        const raw = e.target.value;
-        if (q.type === "number") onChange(raw === "" ? undefined : Number(raw));
-        else onChange(raw);
-      }}
-      error={error}
-      helper={q.description ?? undefined}
-      {...(q.required ? { required: true } : { optional: true })}
-    />
+          <section id="pq-end" className="spt-q spt-end" data-state={ready ? "done" : "idle"}>
+            <span className="spt-node" aria-hidden><PaperPlaneTilt /></span>
+            <div className="spt-send-card" data-ready={ready ? "" : undefined}>
+              <div className="spt-send-head">
+                <span className="spt-ring" style={{ "--p": pct } as CSSProperties} aria-hidden>
+                  <svg className="spt-ring-svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" /><circle className="on" cx="32" cy="32" r="28" pathLength={100} /></svg>
+                  {ready ? <Check /> : <span className="spt-ring-n"><b>{answered}</b><small>/</small><small>{total}</small></span>}
+                </span>
+                <div className="spt-send-tx">
+                  <b>{ready ? "إجاباتك جاهزةٌ للإرسال" : answered ? `أجبت ${answered} من ${total}` : "لم تُجب عن شيءٍ بعد"}</b>
+                  <span className={tried && missing.length ? "bad" : undefined}>{missing.length ? leftWord(missing.length) : answered ? `أجبت ${answered} من ${total}` : "الأسئلةُ كلُّها اختياريّة"}</span>
+                </div>
+              </div>
+              {missing.length ? (
+                <div className="spt-miss" aria-label="الأسئلة الإلزاميّة الباقية">
+                  {missing.map((q) => (
+                    <button key={q.id} type="button" className="spt-miss-n" aria-label={`انتقل إلى السؤال ${questions.indexOf(q) + 1}`} onClick={() => document.getElementById(`pq-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                      {questions.indexOf(q) + 1}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <button type="submit" className={`${primary} spt-go`} disabled={submitting} aria-busy={submitting || undefined}>
+                {submitting ? "جارٍ الإرسال…" : "إرسال الإجابات"}
+                <ArrowLeft aria-hidden />
+              </button>
+              {formError ? <div className="spt-send-alert" role="alert"><Alert tone="danger" compact title="لم تُرسل الإجابات">{formError}</Alert></div> : null}
+            </div>
+            {shieldOn ? (
+              <div className="spt-shield">
+                <TurnstileWidget siteKey={TURNSTILE_SITE_KEY!} onToken={setTsToken} resetSignal={tsReset} />
+              </div>
+            ) : null}
+          </section>
+        </form>
+      </main>
+    </div>
   );
 }

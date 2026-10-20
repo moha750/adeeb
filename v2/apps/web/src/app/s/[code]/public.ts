@@ -13,7 +13,8 @@ type SurveyRow = {
   welcome_message: string | null;
   thank_you_message: string | null;
   show_progress_bar: boolean | null;
-  show_results_to_participants: boolean | null;
+  allow_anonymous: boolean | null;
+  allow_multiple_responses: boolean | null;
   end_date: string | null;
 };
 
@@ -36,8 +37,9 @@ export function toPublicSurvey(s: SurveyRow): PublicSurvey {
     welcome: s.welcome_message ?? null,
     thankYou: s.thank_you_message ?? null,
     showProgress: !!s.show_progress_bar,
-    showResults: !!s.show_results_to_participants,
     endDate: s.end_date ?? null,
+    anonymous: !!s.allow_anonymous,
+    allowMultiple: !!s.allow_multiple_responses,
   };
 }
 

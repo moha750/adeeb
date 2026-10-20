@@ -17597,6 +17597,224 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .bnk-foot a { color: var(--bnk-gold-hi); }
 @media (prefers-reduced-motion: reduce) { .bnk-go { transition: none; } }
 
+/* ============================================================
+   صفحةُ الاستبيان — مقترحا ‎/ui/survey-respond‎ (الجولة الثانية، ٢٠٢٦-١٠-١٩)
+   ============================================================
+   رُدّت الأولى: «نظيفةٌ جدًّا لكنّها كجمالٍ بصريٍّ سيّئة، أخذتَ القديمَ ونظّفته». وسقط «سديم»
+   (سؤالٌ في كلّ صفحة) بعد مراجعة الدراسات، فبقي ‎.spt‎ «مسار»: ورقةٌ على خطّ طريق، وشاشةُ الشكر ‎.sv-‎.
+   كلُّ تعبئةٍ بتدرّج الهويّة الواحد (ق١ب)، والذهبيُّ للنجوم وحدها (المالك).
+   البيضُ الشفّافةُ تُمزَج من ‎--color-surface‎ (لا لونَ خارج الرموز). */
+
+/* ── المشترك ─────────────────────────────────────────────── */
+/* علامةُ الصحّ تُرسم مرّةً واحدة — ولا دائرةَ نقشٍ تدور حولها (المالك ٢٠٢٦-١٠-٢٠: «حركتُها غيرُ جميلة») */
+.spt-drawn { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; animation: sv-draw .6s .25s cubic-bezier(.6,0,.2,1) forwards; }
+@keyframes sv-draw { to { stroke-dashoffset: 0; } }
+
+/* ── «مسار» ──────────────────────────────────────────────── */
+.spt { min-height: 100dvh; background: var(--color-bg); color: var(--color-text); }
+.spt-hero {
+  --w80: color-mix(in oklab, var(--color-surface) 92%, transparent);
+  position: relative; overflow: hidden; padding-bottom: 154px; color: var(--color-surface);
+  background: var(--grad-primary);
+}
+/* النقشُ شريطٌ واحدٌ عريض تُقرأ حروفُه، يبدأ تحت الحقائق بقليل ويمتدّ إلى آخر الغلاف، والورقةُ تخرج
+   من تحته (المالك: «نحيفٌ وغيرُ واضح»، ثمّ «ينزل إلى آخر القسم الأوّل»، ثمّ «قريبٌ من المعلومات بلا
+   ملامسة»، وبلا تدرّج شفافيّةٍ على طرفيه) */
+.spt-hero::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 132px; background: url("/brand/pattern-white.svg") repeat-x center / auto 132px; opacity: .16; pointer-events: none; }
+.spt-hero-in { position: relative; max-width: 860px; margin-inline: auto; padding: 26px 56px 0; }
+.spt-logo img { display: block; height: 46px; width: auto; }
+.spt-title { margin-top: 64px; max-width: 18ch; font-family: var(--font-display); font-weight: 900; font-size: clamp(38px, 7vw, 74px); line-height: 1.22; text-wrap: balance; }
+.spt-desc { margin-top: 22px; max-width: 48ch; font-size: clamp(16.5px, 2.2vw, 19.5px); font-weight: 400; line-height: 1.95; color: var(--w80); }
+.spt-facts { margin-top: 34px; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 12px 30px; font-size: 15px; color: var(--w80); }
+.spt-facts li { display: inline-flex; align-items: center; gap: 10px; }
+.spt-fi { flex: none; width: 34px; height: 34px; display: inline-grid; place-items: center; border: var(--card-stroke-w) solid color-mix(in oklab, var(--color-surface) 22%, transparent); border-radius: var(--radius-sm); background: linear-gradient(135deg, color-mix(in oklab, var(--color-surface) 22%, transparent), color-mix(in oklab, var(--color-surface) 4%, transparent)); color: var(--color-surface); }
+.spt-fi svg { width: 19px; height: 19px; }
+
+/* الورقةُ تخرج من الغلاف: سطحٌ أبيض بلا حدّ، والظلُّ من السلّم */
+.spt-paper { position: relative; z-index: 1; max-width: 860px; margin: -84px auto 0; padding: 60px 56px 80px; border-radius: var(--radius) var(--radius) 0 0; background: var(--color-surface); box-shadow: var(--shadow-lg); }
+
+.spt-bar { position: fixed; z-index: 30; inset-inline: 0; top: 0; transform: translateY(-110%); transition: transform .35s var(--ease-standard); background: color-mix(in oklab, var(--color-surface) 88%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); box-shadow: var(--shadow-sm); }
+.spt-bar[data-on] { transform: none; }
+.spt-bar-in { max-width: 860px; margin-inline: auto; padding: 12px 56px; display: flex; align-items: center; gap: 18px; }
+.spt-bar-in img { height: 32px; width: auto; }
+.spt-bar-track { flex: 1; height: 5px; border-radius: var(--radius-full); background: var(--steel-100); overflow: hidden; }
+.spt-bar-track span { display: block; height: 100%; inline-size: var(--p, 0%); border-radius: inherit; background: var(--grad-primary); transition: inline-size .5s var(--ease-standard); }
+.spt-bar-n { font-size: 14px; color: var(--color-text-muted); white-space: nowrap; }
+.spt-bar-n b { font-weight: 800; color: var(--color-text); }
+
+.spt-path { display: flex; flex-direction: column; }
+.spt-q { position: relative; padding-inline-start: 78px; padding-bottom: 68px; scroll-margin-top: 110px; }
+.spt-q::before { content: ""; position: absolute; inset-inline-start: 22px; top: 54px; bottom: 8px; width: 2px; border-radius: var(--radius-full); background: var(--steel-100); transition: background .4s ease; }
+.spt-q[data-state="done"]::before { background: var(--grad-primary); }
+.spt-end::before { display: none; }
+.spt-node { position: absolute; inset-inline-start: 0; top: 0; width: 46px; height: 46px; display: grid; place-items: center; border: 2px solid var(--steel-200); border-radius: 50%; background: var(--color-surface); font-family: var(--font-latin); font-size: 17px; font-weight: 700; color: var(--steel-600); transition: background .3s ease, border-color .3s ease, color .3s ease, box-shadow .3s ease; }
+.spt-node svg { width: 21px; height: 21px; }
+.spt-q:focus-within .spt-node { border-color: var(--steel-500); box-shadow: var(--ring-strong); }
+.spt-q[data-state="done"] .spt-node { border-color: transparent; background: var(--grad-primary) border-box; color: var(--color-surface); }
+.spt-q[data-state="err"] .spt-node { border-color: var(--danger-500); background: var(--danger-50); color: var(--danger-600); }
+.spt-qt { padding-top: 6px; font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 25px); line-height: 1.6; color: var(--color-text); }
+/* وسمُ الإلزام والاختيار من الهويّة نفسِها (`FieldMark`، ق٣): نجمةٌ حمراء أو «(اختياريّ)» */
+.spt-qt .fld-req, .spt-qt .fld-opt { margin-inline-start: 8px; vertical-align: middle; }
+/* وصفُ السؤال ملاحظةٌ بأيقونةٍ في مربّعها، كحقائق الغلاف بنسختها على الورقة (المالك ٢٠٢٦-١٠-٢٠) */
+.spt-qd { margin-top: 10px; display: flex; align-items: flex-start; gap: 10px; font-size: 15.5px; line-height: 1.85; color: var(--color-text-muted); }
+.spt-qd-ic { flex: none; width: 28px; height: 28px; margin-top: 1px; display: inline-grid; place-items: center; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--steel-100), var(--steel-50)); color: var(--steel-600); }
+.spt-qd-ic svg { width: 17px; height: 17px; }
+.spt-ans { margin-top: 22px; }
+/* خطأُ السؤال **تنبيهُ الهويّة** نفسُه (‎Alert compact‎ بنغمة الخطر) — جُرّب تنبيهٌ مصنوعٌ للصفحة فقال المالك «تنبيهاتُ الهويّة
+   أفضل» (٢٠٢٦-١٠-٢٠). الغلافُ يملك مسافتَه ودخولَه وحدهما */
+.spt-err { margin-top: 14px; animation: spt-err-in .3s var(--ease-standard) both; }
+@keyframes spt-err-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.spt-opts { display: flex; flex-direction: column; gap: 10px; }
+.spt-opts.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.spt-opt {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 60px; padding: 10px 12px;
+  border: var(--card-stroke-w) solid var(--card-stroke); border-radius: var(--radius); background: var(--color-surface);
+  font-family: inherit; font-size: 16.5px; font-weight: 600; color: var(--color-text); text-align: start; cursor: pointer;
+  transition: border-color .2s ease, background .2s ease, color .2s ease, transform .15s ease;
+}
+.spt-opt:hover { border-color: var(--card-stroke-active); }
+.spt-opt:active { transform: scale(.985); }
+.spt-opt:focus-visible, .spt-star:focus-visible, .spt-mt:focus-visible { outline: none; box-shadow: var(--ring-strong); }
+/* المختارُ بطاقةُ الاختيار في الهويّة (‎.ach-card‎ المختارة: حدٌّ أعمق وشفقٌ فولاذيّ)، ومفتاحُه يمتلئ بتدرّجها */
+.spt-opt.on { border-color: var(--card-stroke-active); background: linear-gradient(135deg, color-mix(in oklab, var(--steel-600) 9%, var(--color-surface)), var(--color-surface) 70%); }
+.spt-key { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--steel-50); font-size: 16px; font-weight: 700; color: var(--steel-600); transition: background .2s ease, color .2s ease; }
+.spt-key svg { width: 18px; height: 18px; }
+.spt-opt.on .spt-key { background: var(--grad-primary); color: var(--color-surface); }
+.spt-ol { flex: 1; min-width: 0; }
+
+.spt-stars { display: flex; gap: 4px; }
+.spt-star { width: 58px; height: 58px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; cursor: pointer; }
+.spt-star svg { width: 46px; height: 46px; fill: var(--steel-50); stroke: var(--steel-300); stroke-width: 1.1; stroke-linejoin: round; transition: fill .2s ease, stroke .2s ease, transform .3s cubic-bezier(.3,1.6,.5,1); }
+.spt-star:hover svg { transform: scale(1.12); }
+.spt-star.on svg { fill: var(--warning-400); stroke: var(--warning-500); }
+.spt-star.pick svg { animation: sv-pop .45s cubic-bezier(.3,1.6,.5,1); }
+
+.spt-meter { display: grid; grid-template-columns: repeat(var(--m-n, 10), minmax(0, 1fr)); gap: 6px; align-items: end; }
+.spt-mt { position: relative; height: 104px; padding: 0 0 4px; border: 0; background: none; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-family: var(--font-latin); font-size: 15px; font-weight: 600; color: var(--steel-600); transition: color .2s ease; }
+.spt-mt::before { content: ""; position: absolute; inset-inline: 0; bottom: 28px; height: calc(12px + var(--m-i) / (var(--m-n) - 1) * 60px); border-radius: var(--radius-xs); background: var(--steel-100); transition: background .25s ease; transition-delay: calc(var(--m-i) * 22ms); }
+.spt-mt:hover::before { background: var(--steel-200); }
+.spt-mt.fill { color: var(--navy-700); }
+.spt-mt.fill::before { background: var(--grad-primary); }
+.spt-mt.pick { font-weight: 800; color: var(--navy-700); }
+
+/* حقولُ الكتابة: **الحلّ الوسط** (المالك ٢٠٢٦-١٠-٢٠، بعد أن رأى حقولَ الهويّة أقلَّ جمالًا وحقولَ الصفحة «شاطحةً
+   عن الهويّة»): بئرُ الهويّة بشفقه (‎.fld-in‎) وحدّه وحلقته، أعلى وأرحب، بلا أيقونة لأنّ رأسَ السؤال تسميتُه،
+   ويقوى شفقُه ما دام ممتلئًا؛ والنصُّ الطويلُ ينمو. وحارسُ الطقم وهمستُه من الهويّة (‎useCharsetGuard‎) */
+.spt-in, .spt-ta {
+  display: block; width: 100%; padding: 15px 18px; border: 1px solid var(--color-border); border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--steel-50), transparent 33%), var(--color-surface); outline: none;
+  font-family: inherit; font-size: 17px; line-height: 1.7; color: var(--color-text);
+  resize: none; overflow: hidden; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.spt-in { height: 56px; }
+.spt-ta { min-height: 128px; }
+.spt-in:not(:placeholder-shown), .spt-ta:not(:placeholder-shown) { background: linear-gradient(135deg, var(--steel-100), transparent 45%), var(--color-surface); }
+.spt-in::placeholder, .spt-ta::placeholder { color: var(--color-text-muted); }
+.spt-in:focus, .spt-ta:focus { border-color: var(--steel-600); box-shadow: var(--ring); }
+.spt-in[dir="ltr"] { font-family: var(--font-latin); text-align: right; }
+
+/* السؤالُ الناقصُ كلُّه بنغمة الخطأ (المالك ٢٠٢٦-١٠-٢٠، بعد مقارنته بالترقيم وحده): عقدتُه وعنوانُه وحدودُ
+   خياراته ومفاتيحُها ونجومُه وأعمدةُ مقياسه وبئرُه — نغمةٌ واحدةٌ لا حدٌّ يحمرّ هنا ونجمةٌ تسكت هناك. ولا
+   تظهر إلّا بعد محاولة الإرسال، وتذهب عن كلّ سؤالٍ لحظةَ يُجاب. */
+.spt-q[data-state="err"] .spt-qt { color: var(--danger-700); }
+.spt-q[data-state="err"] .spt-opt { border-color: var(--danger-300); }
+.spt-q[data-state="err"] .spt-key { background: var(--danger-50); color: var(--danger-600); }
+.spt-q[data-state="err"] .spt-star svg { fill: var(--danger-50); stroke: var(--danger-300); }
+.spt-q[data-state="err"] .spt-mt::before { background: var(--danger-100); }
+.spt-q[data-state="err"] .spt-mt { color: var(--danger-600); }
+.spt-q[data-state="err"] .spt-in, .spt-q[data-state="err"] .spt-ta { border-color: var(--danger-500); background: linear-gradient(135deg, var(--danger-50), transparent 33%), var(--color-surface); }
+
+/* الأزرار: زرُّ الهويّة المعكوس (‎abtn-inverse‎، زاويةُ ‎--radius‎ وظلُّ السلّم) أعلى قليلًا، وسهمُه يتقدّم عند المرور */
+.spt-btn { height: 56px; gap: 10px; }
+.spt-btn svg { width: 19px; height: 19px; transition: transform .25s var(--ease-standard); }
+.spt-btn:hover svg { transform: translateX(-4px); }
+
+/* آخرُ الطريق: لوحةُ الإرسال بلون الغلاف، فتنتهي الصفحةُ كما بدأت */
+.spt-end { padding-bottom: 0; }
+.spt-end .spt-node { border-color: transparent; background: var(--grad-primary) border-box; color: var(--color-surface); }
+.spt-send-card {
+  --w80: color-mix(in oklab, var(--color-surface) 86%, transparent);
+  --w20: color-mix(in oklab, var(--color-surface) 20%, transparent);
+  position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px 24px; padding: 26px 28px;
+  border-radius: var(--radius); color: var(--color-surface); background: var(--grad-primary); box-shadow: var(--shadow-md);
+}
+.spt-send-head { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.spt-ring { position: relative; flex: none; width: 64px; height: 64px; display: grid; place-items: center; }
+.spt-ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
+.spt-ring > svg:not(.spt-ring-svg) { position: relative; width: 26px; height: 26px; }
+.spt-ring circle { fill: none; stroke: var(--w20); stroke-width: 5; }
+.spt-ring circle.on { stroke: var(--color-surface); stroke-linecap: round; stroke-dasharray: var(--p, 0) 100; transition: stroke-dasharray .5s var(--ease-standard); }
+.spt-ring-n { position: relative; display: inline-flex; align-items: baseline; gap: 1px; direction: rtl; font-family: var(--font-latin); line-height: 1; }
+.spt-ring-n b { font-size: 19px; font-weight: 700; }
+.spt-ring-n small { font-size: 12px; font-weight: 600; color: var(--w80); }
+.spt-miss { grid-column: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.spt-miss-n { width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: var(--card-stroke-w) solid color-mix(in oklab, var(--color-surface) 40%, transparent); border-radius: var(--radius-sm); background: color-mix(in oklab, var(--color-surface) 10%, transparent); font-family: var(--font-latin); font-size: 15px; font-weight: 700; color: var(--color-surface); cursor: pointer; transition: background .2s ease, color .2s ease; }
+.spt-miss-n:hover { background: var(--color-surface); color: var(--navy-700); }
+.spt-miss-n:focus-visible { outline: 2px solid var(--color-surface); outline-offset: 2px; }
+.spt-send-card .spt-go { grid-column: 2; grid-row: 1 / span 2; align-self: end; }
+/* ما يردّ به الخادمُ (الدرعُ لم يجهز، أو رُفض الإرسال) سطرٌ كاملٌ تحت الزرّ بتنبيه الهويّة، والدرعُ تحت اللوحة */
+.spt-send-alert { grid-column: 1 / -1; }
+.spt-shield { margin-top: 14px; display: flex; justify-content: center; }
+.spt-send-tx { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.spt-send-tx b { font-family: var(--font-display); font-size: 21px; font-weight: 800; line-height: 1.5; }
+.spt-send-tx span { font-size: 14.5px; color: var(--w80); }
+.spt-send-tx .bad { font-weight: 700; color: var(--color-surface); }
+
+/* ── شاشةُ الشكر: إيصال (‎Done.tsx‎) ── */
+/* «إيصال»: بطاقةٌ بيضاء وسطَ الغلاف كإيصال استلام: علامةٌ وعنوانٌ ثمّ أسطرُ الإيصال فالأزرار */
+.spt-fin { min-height: 100dvh; padding-bottom: 0; display: flex; align-items: center; }
+.spt-fin .spt-hero-in { width: 100%; padding: 40px 28px 170px; display: flex; flex-direction: column; align-items: center; }
+.spt-fin .spt-logo { align-self: stretch; }
+.spt-ticket { --shadow-tone: var(--shadow-tone-brand); margin-top: 36px; width: min(100%, 480px); padding: 34px 30px 28px; border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-lg); text-align: center; }
+.spt-ticket-mark { margin-inline: auto; width: 60px; height: 60px; display: grid; place-items: center; border-radius: var(--radius); background: var(--grad-primary); color: var(--color-surface); }
+.spt-ticket-mark svg { width: 32px; height: 32px; }
+.spt-ticket-t { margin-top: 18px; font-family: var(--font-display); font-size: 30px; font-weight: 900; line-height: 1.35; }
+.spt-ticket-p { margin-top: 8px; font-size: 16px; line-height: 1.85; color: var(--color-text-muted); }
+/* أسطرُ الإيصال تحت خطٍّ متقطّع — الإيصالُ يُقرأ هكذا: ما جرى، سطرًا سطرًا */
+.spt-ticket-rows { margin: 24px 0 0; padding-top: 18px; border-top: var(--card-stroke-w) dashed var(--card-stroke); display: flex; flex-direction: column; gap: 10px; text-align: start; }
+.spt-ticket-rows > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.spt-ticket-rows dt { flex: none; font-size: 14px; color: var(--color-text-muted); }
+.spt-ticket-rows dd { margin: 0; min-width: 0; font-size: 15px; font-weight: 700; color: var(--color-text); text-align: end; }
+.spt-ticket-acts { margin-top: 24px; display: grid; gap: 10px; }
+.spt-ticket-acts .abtn { width: 100%; }
+
+@media (max-width: 640px) {
+  .spt-hero { padding-bottom: 166px; }
+  .spt-hero::after { bottom: 64px; height: 84px; background-size: auto 84px; }
+  .spt-hero-in { padding: 20px 20px 0; }
+  /* عمودان يقتسمان العرض، والحقيقةُ الطويلة (وقتُ الإرسال) تلتفّ سطرين ولا تدفع الصفحةَ عرضًا */
+  .spt-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+  .spt-facts li { align-items: flex-start; line-height: 1.6; }
+  .spt-q { scroll-margin-top: 76px; }
+  .spt-logo img { height: 40px; }
+  .spt-title { margin-top: 52px; }
+  .spt-paper { margin-top: -64px; padding: 40px 20px 56px; }
+  .spt-bar-in { padding: 10px 20px; gap: 14px; }
+  .spt-fin .spt-hero-in { padding: 24px 20px 130px; }
+  .spt-ticket { padding: 28px 20px 22px; }
+  /* النقشُ إلى آخر الصفحة على الجوّال كما على اللوح والحاسوب: لا ورقةَ هنا يقف فوق حافّتها */
+  .spt-fin::after { bottom: 0; }
+  .spt-bar-in img { height: 28px; }
+  .spt-q { padding-inline-start: 50px; padding-bottom: 54px; }
+  .spt-q::before { inset-inline-start: 16px; top: 42px; }
+  .spt-node { width: 34px; height: 34px; font-size: 15px; }
+  .spt-node svg { width: 17px; height: 17px; }
+  .spt-qt { padding-top: 2px; }
+  .spt-star { width: 50px; height: 50px; }
+  .spt-star svg { width: 40px; height: 40px; }
+  .spt-meter { gap: 4px; }
+  .spt-mt { font-size: 13.5px; }
+  .spt-send-card { grid-template-columns: 1fr; padding: 24px 20px; }
+  .spt-send-card .spt-go { grid-column: 1; grid-row: auto; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spt-star.pick svg, .spt-err { animation: none; }
+  .spt-drawn { animation: none; stroke-dashoffset: 0; }
+}
+
+
 /* **محادثةُ رسالة التواصل** (`.ct-thread`، ٢٠٢٦-١٠-١٩): رسائلُ المُرسِل فقاعاتٌ في جهة البدء بزاويةٍ حادّةٍ
    نحو الاسم، كفقاعة البريد الذي وصله؛ وردودُنا في الجهة الأخرى بلون الهويّة الأهدأ. ولا خطَّ على حافّة. */
 .ct-thread { display: flex; flex-direction: column; gap: 14px; }

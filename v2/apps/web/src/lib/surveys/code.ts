@@ -17,5 +17,3 @@ export const isSurveyCode = (code: string): boolean => SURVEY_CODE_SHAPE.test(co
 /** مسارُ صفحة التعبئة. */
 export const surveyPath = (code: string): string => `/s/${code}`;
 
-/** مسارُ النتائج العلنيّة. */
-export const surveyResultsPath = (code: string): string => `/s/${code}/results`;

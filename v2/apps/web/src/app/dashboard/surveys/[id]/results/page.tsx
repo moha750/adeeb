@@ -21,7 +21,7 @@ export default async function SurveyResultsPage({ params }: { params: Promise<{ 
   if (!grant.ok) notFound();
 
   const [aggRes, respRes] = await Promise.all([
-    getSurveyAggregates(surveyId, { includeText: true }), // اللوحة (المدير) ترى النصوص الحرّة؛ العلنيّ لا
+    getSurveyAggregates(surveyId),
     getSurveyResponses(surveyId),
   ]);
 

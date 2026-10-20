@@ -4748,7 +4748,6 @@ export type Database = {
           id: number
           published_at: string | null
           show_progress_bar: boolean
-          show_results_to_participants: boolean
           start_date: string | null
           status: string
           thank_you_message: string | null
@@ -4775,7 +4774,6 @@ export type Database = {
           id?: number
           published_at?: string | null
           show_progress_bar?: boolean
-          show_results_to_participants?: boolean
           start_date?: string | null
           status?: string
           thank_you_message?: string | null
@@ -4802,7 +4800,6 @@ export type Database = {
           id?: number
           published_at?: string | null
           show_progress_bar?: boolean
-          show_results_to_participants?: boolean
           start_date?: string | null
           status?: string
           thank_you_message?: string | null

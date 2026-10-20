@@ -93,7 +93,6 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
   const [allowMultiple, setAllowMultiple] = useState(survey?.allowMultiple ?? false);
   const [allowAnonymous, setAllowAnonymous] = useState(survey?.allowAnonymous ?? false);
   const [showProgress, setShowProgress] = useState(survey?.showProgress ?? true);
-  const [showResults, setShowResults] = useState(survey?.showResults ?? false);
   const [startDate, setStartDate] = useState(toLocalInput(survey?.startDate ?? null));
   const [endDate, setEndDate] = useState(toLocalInput(survey?.endDate ?? null));
   const [welcome, setWelcome] = useState(survey?.welcome ?? "");
@@ -111,14 +110,15 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
   // معاينة حيّة تُعيد استعمال صفحة الاستبيان الحقيقيّة — تُغذّى من الحالة الحاليّة بلا حفظ (ترقيمٌ مؤقّت للأسئلة غير المحفوظة)
   const previewSurvey: PublicSurvey = {
     id: survey?.id ?? 0,
-    code: "", // المعاينةُ لا تعرض رابطًا (زرُّ النتائج مخفيٌّ فيها) — ولاستبيانٍ جديدٍ لا رمزَ بعدُ أصلًا
+    code: "", // المعاينةُ لا تعرض رابطًا — ولاستبيانٍ جديدٍ لا رمزَ بعدُ أصلًا
     title: title.trim() || "استبيان بلا عنوان",
     description: description.trim() || null,
     welcome: welcome.trim() || null,
     thankYou: thankYou.trim() || null,
     showProgress,
-    showResults,
     endDate: toIso(endDate),
+    anonymous: allowAnonymous,
+    allowMultiple,
   };
   const previewQuestions: PublicQuestion[] = useMemo(
     () => questions.filter((q) => q.text.trim()).map((q, i) => ({
@@ -171,7 +171,6 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
     allowMultiple,
     allowAnonymous,
     showProgress,
-    showResults,
     startDate: toIso(startDate),
     endDate: toIso(endDate),
     welcome,
@@ -248,7 +247,6 @@ export function BuilderView({ survey }: { survey: SurveyDetail | null }) {
             <Switch row label="السماح بأكثر من مشاركة" description="العضو نفسه يستطيع الإجابة أكثر من مرّة" checked={allowMultiple} onChange={(e) => setAllowMultiple(e.target.checked)} />
             <Switch row label="مشاركات مجهولة الهويّة" description="لا تُسجَّل هويّة المجيب حتى لو كان مسجَّل الدخول" checked={allowAnonymous} onChange={(e) => setAllowAnonymous(e.target.checked)} />
             <Switch row label="شريط التقدّم" description="يظهر للمجيب كم أنجز من الأسئلة" checked={showProgress} onChange={(e) => setShowProgress(e.target.checked)} />
-            <Switch row label="إظهار النتائج للمشاركين" description="بعد الإرسال يستطيع المجيب رؤية النتائج الإجماليّة" checked={showResults} onChange={(e) => setShowResults(e.target.checked)} />
           </div>
         </SectionCard>
 

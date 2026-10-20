@@ -47,7 +47,6 @@ export type SurveyInput = {
   allowMultiple: boolean;
   allowAnonymous: boolean;
   showProgress: boolean;
-  showResults: boolean;
   startDate?: string | null; // ISO أو null
   endDate?: string | null;
   welcome?: string;
@@ -91,7 +90,6 @@ function surveyColumns(input: SurveyInput) {
     allow_multiple_responses: input.allowMultiple,
     allow_anonymous: input.allowAnonymous,
     show_progress_bar: input.showProgress,
-    show_results_to_participants: input.showResults,
     start_date: input.startDate || null,
     end_date: input.endDate || null,
     welcome_message: clean(input.welcome),
@@ -366,7 +364,7 @@ export async function getSurveyPreview(surveyId: number): Promise<
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const [sRes, qRes] = await Promise.all([
-    sb.from("surveys").select("id, code, title, description, welcome_message, thank_you_message, show_progress_bar, show_results_to_participants, end_date").eq("id", surveyId).maybeSingle(),
+    sb.from("surveys").select("id, code, title, description, welcome_message, thank_you_message, show_progress_bar, allow_anonymous, allow_multiple_responses, end_date").eq("id", surveyId).maybeSingle(),
     sb.from("survey_questions").select("id, question_text, question_description, question_type, is_required, options").eq("survey_id", surveyId).order("question_order", { ascending: true }),
   ]);
   if (sRes.error) return { ok: false, message: `تعذّر جلب الاستبيان: ${sRes.error.message}` };
