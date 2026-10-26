@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import {
   Aperture,
@@ -23,34 +23,66 @@ import {
   SpeakerSlash,
   VideoCamera,
 } from "@phosphor-icons/react";
-import { fmtDigits, markStorySeen, SESSION_KEY, STORY_ASSETS, STORY_CONFIG, storySeen, TIME_MONTHS, WALL_SHOTS } from "./config";
-import { degradeStory, markStoryReady, onStoryReady, storyIsReady } from "./ready";
+import { fmtDigits, markStorySeen, STORY_ASSETS, STORY_CONFIG, storySeen, WALL_SHOTS } from "./config";
+import { markStoryReady, onStoryReady, skipStory, storyIsReady, storyWasSkipped } from "./ready";
 import "./story.css";
 
-/* بوابة ما قبل الرسم: تُقرَّر قبل أي paint (سكربت inline) فلا وميض للقصة عند التخطي.
-   ?story=skip أو رابط عميق (#قسم) ← تخطٍّ · ?story=force ← يتجاهل sessionStorage.
+/* بوابةُ ما قبل الرسم (`STORY_GATE_SCRIPT`) في `config.ts`، ويُنفّذها سكربتُ التخطيط
+   قبل شاشة البدء — انظر هناك. */
 
-   وحيث تعمل القصّةُ يُعطَّل استردادُ التمرير: المتصفّح يعيد الزائرَ إلى موضعه
-   السابق عند التحديث، فيستيقظ في منتصف قصّةٍ تبدأ من أوّلها — مشهدٌ لا يُفهَم.
-   والاستردادُ يُردّ إلى «auto» بعد الجاهزيّة (في التأثير أدناه) فلا يُسلَب بقيّةَ
-   الجلسة. */
-const GATE_SCRIPT = `(function(){try{
-var q=new URLSearchParams(location.search),f=q.get("story"),h=location.hash;
-var skip=f==="skip"||(!!h&&h.length>1);
-if(!skip&&${STORY_CONFIG.showOncePerSession}&&f!=="force"&&sessionStorage.getItem("${SESSION_KEY}"))skip=true;
-if(skip)document.documentElement.setAttribute("data-adeeb-story","skip");
-else if("scrollRestoration" in history){history.scrollRestoration="manual";window.scrollTo(0,0);}
-}catch(e){}})();`;
+/* طلبُ حزمة الحركة **مع تقييم هذه الوحدة** لا بعد الترطيب (٢٠٢٦-١٠-٢٦): قيس على
+   الإنتاج أنّ طلبَها كان يبدأ بعد اكتمال جافاسكربت الصفحة كلِّه، فيضيف رحلةً كاملةً
+   إلى سباقٍ سقفُه ٣ث. ولا تُطلب لمن قرّر سكربتُ البوابة تخطّيه (رُئيت · رابطٌ عميق). */
+const storyModule =
+  typeof window !== "undefined" && document.documentElement.getAttribute("data-adeeb-story") !== "skip"
+    ? import("./story")
+    : null;
+/* إن لم تُستعمل (تخطٍّ بعد الطلب) فلا يُترك رفضُها بلا معالج — والمعالجُ الحقيقيُّ في التأثير */
+storyModule?.catch(() => {});
 
-/* سقفُ انتظار القصّة: بعده تسقط إلى نسختها الساكنة فلا يبقى الزائرُ محجوبًا.
+/* سقفُ انتظار القصّة: بعده يُفتح الموقعُ مباشرةً (`skipStory`) فلا يبقى الزائرُ محجوبًا.
 
    ويُقاس **من لحظة الإقلاع** لا من بدء التنقّل — وهذا فرقٌ قيس لا يُخمَّن: على
    اتّصال 4G عاديّ استغرق الترطيبُ وحدَه ٣٫٦ث، فسقفٌ مطلقٌ قصيرٌ كان يُعدم القصّةَ
-   قبل أن تنزل حزمتُها ويعرض النسخةَ الساكنة على من كان يسعه انتظارُ ثانيةٍ أخرى.
+   قبل أن تنزل حزمتُها ويتخطّاها عن زائرٍ كان يسعه انتظارُ ثانيةٍ أخرى.
    **وفي الهبوط ليس هو الحاكم** (٢٠٢٦-١٠-٠٣): سقفُ شاشة البدء (`STORY_MAX_MS`، ٣ث
    من بدء التنقّل) يسبقه فيُسقط القصّةَ بنفسه قبل أن تنزاح. وهذا السقفُ باقٍ لمن لا
    تنتظر الشاشةُ قصّتَه (صفحةُ المعاينة `force`). */
-const READY_CAP_MS = 6000;
+const READY_CAP_MS = process.env.NODE_ENV === "development" ? 20_000 : 6_000;
+
+/* سقفُ المشهد الافتتاحيّ — يُقاس **من بدء التنقّل** (فالمشهدُ ظاهرٌ منذ أوّل رسم)،
+   وبعده ينشقّ المشهدُ عن الموقع. قيس (٢٠٢٦-١٠-٢٧، محاكاةُ جوّالٍ على 4G) أنّ القصّةَ
+   تجهز هناك عند ~٦–٧ث إذا تُركت، فالسبعُ تسعها في الغالب. وفي التطوير يطول (الترجمةُ
+   عند الطلب وحدَها أبطأ من ذلك). */
+const OPENING_CAP_MS = process.env.NODE_ENV === "development" ? 20_000 : 7_000;
+
+/* سطرُ الافتتاح — يُكتب مرّةً هنا ويقرؤه المشهدُ الافتتاحيّ والقصّةُ الحيّة معًا،
+   فلا يختلفان حرفًا ساعةَ يتسلّم أحدُهما من الآخر. */
+const INTRO_L1 = "كـل حكايةٍ عظيمة تبدأ بحرف!";
+
+/**
+ * ختامُ المشهد الافتتاحيّ — يُنادى عند الجاهزيّة من أيّ باب.
+ * - جهزت القصّة: يذوب المشهدُ عن مشهدها الأوّل وهو مطابقٌ له (السطرُ نفسُه في موضعه).
+ * - تُخطّيت (لم تجهز في وقتها، أو تعثّرت): ينشقّ عند خطّه الذهبيّ، يصعد نصفُه بالسطر
+ *   ويهبط نصفُه، فينكشف الموقعُ تحته.
+ */
+function endOpening() {
+  const html = document.documentElement;
+  if (html.getAttribute("data-story-opening") !== "on") return;
+  (window as Window & { __stUnblock?: () => void }).__stUnblock?.();
+  const el = document.querySelector<HTMLElement>(".st-opening");
+  if (!el || !storyWasSkipped()) {
+    html.setAttribute("data-story-opening", "fade");
+    setTimeout(() => html.setAttribute("data-story-opening", "done"), 700);
+    return;
+  }
+  const rule = el.querySelector(".st-op-rule");
+  const y = rule ? rule.getBoundingClientRect().bottom : window.innerHeight / 2;
+  el.style.setProperty("--y", `${Math.round(y)}px`);
+  void el.offsetHeight; /* يُثبَّت موضعُ الشقّ قبل أن يبدأ الانشقاق */
+  html.setAttribute("data-story-opening", "split");
+  setTimeout(() => html.setAttribute("data-story-opening", "done"), 1600);
+}
 
 /* حروف الفصل الأول المتناثرة — بينها أحرف «أدِيب» بنغمة ذهبية */
 const LETTERS: Array<{ ch: string; x: string; y: string; r: string; d: number; accent?: boolean }> = [
@@ -103,27 +135,10 @@ const SHOT_ICONS: Array<typeof PenNib> = [
   Sparkle,
 ];
 
-/* التاريخ الساكن لنسخة تقليل الحركة/بلا JS — ميلاديّ العرض دومًا
-   (العرض الهجري حكر على المسار الحي حيث يشتقه Intl في story.ts) */
-function staticDate(date: string): string {
-  if (date === "live") return "";
-  const [y, m, d] = date.split("-").map(Number);
-  const month = TIME_MONTHS.gregorian[(m || 1) - 1];
-  return d ? `${fmtDigits(d)} ${month} ${fmtDigits(y)}` : `${month} ${fmtDigits(y)}`;
-}
-
-/* محطة زمن بين فصلين: مقطع تثبيت فارغ يقوده بطل الوقت في المسار الحي،
-   ومضمونها الساكن (kicker + تاريخ) يظهر في نسخة تقليل الحركة/بلا JS فقط */
+/* محطة زمن بين فصلين: مقطع تثبيت فارغ يقوده بطل الوقت (#time-hero) في story.ts */
 function StationBreak({ i }: { i: number }) {
   const s = STORY_CONFIG.timeHero.stations[i];
-  return (
-    <section className="st-scene st-station" aria-label={s.kicker}>
-      <div className="st-station-static">
-        <p className="st-kicker">{s.kicker}</p>
-        <p className="st-station-date">{staticDate(s.date)}</p>
-      </div>
-    </section>
-  );
+  return <section className="st-scene st-station" aria-label={s.kicker} />;
 }
 
 /* force: صفحة المعاينة وحدها — القصة هناك موضوعُ الصفحة لا افتتاحيّةُ زيارة،
@@ -135,6 +150,11 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
     const root = rootRef.current;
     if (!root) return;
     const html = document.documentElement;
+    /* المشهدُ الافتتاحيّ يُختم مع الجاهزيّة من أيّ بابٍ جاءت — ولو قرّر هذا الأثرُ التخطّي */
+    const offOpening = html.getAttribute("data-story-opening") === "on" ? onStoryReady(endOpening) : undefined;
+    /* معاينةُ الانشقاق في التطوير وحده (`/?story=force&split`): القصّةُ لا تُبنى، والمشهدُ
+       ينشقّ بعد ٤٫٥ث — كما يراه زائرٌ لم تجهز قصّتُه في وقتها. */
+    const demoSplit = process.env.NODE_ENV === "development" && new URLSearchParams(location.search).has("split");
 
     /* للهبوط مدخلان، والبوابة تُقرأ في كليهما: التحميل الكامل يقرّره سكربت ما
        قبل الرسم أعلاه، والتنقّل داخل الموقع (رجوعٌ إلى الهبوط من صفحةٍ أخرى)
@@ -142,17 +162,20 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
        على الصفحة. والشرط هنا صدى شرطِ السكربت (رُئيت · رابطٌ عميق)، وباراميتر
        ?story= يُترك لصاحبه: لا يصل إلا في تحميلٍ كامل قد قرّره السكربت. */
     if (force) html.removeAttribute("data-adeeb-story");
-    else if (!new URLSearchParams(location.search).get("story") && (storySeen() || location.hash.length > 1))
+    else if (
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      (!new URLSearchParams(location.search).get("story") && (storySeen() || location.hash.length > 1))
+    )
       html.setAttribute("data-adeeb-story", "skip");
 
     if (html.getAttribute("data-adeeb-story") === "skip") {
       /* تُخطَّت: فالموقعُ جاهزٌ من جهتها، ولا تُبقِ شاشةَ البدء منتظرةً شيئًا. */
       markStoryReady();
-      return;
+      return () => offOpening?.();
     }
 
     let destroyed = false;
-    /* جهزت أو سقطت إلى الساكنة — أيّهما أوّلًا يُغلق البابَ على الآخر */
+    /* جهزت أو تُخطّيت — أيّهما أوّلًا يُغلق البابَ على الآخر */
     let settled = false;
     let destroy: (() => void) | undefined;
 
@@ -161,7 +184,8 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
        إقلاعٌ ولا ملكيّةُ عجلةٍ لقصّةٍ لن تُبنى — وإلّا بقي الهبوطُ بلا منعِّم الموقع. */
     if (storyIsReady()) {
       if ("scrollRestoration" in history) history.scrollRestoration = "auto";
-      if (!force) markStorySeen();
+      /* تخطّيها لأنّها لم تجهز في وقتها ليس رؤيةً لها */
+      if (!force && !storyWasSkipped()) markStorySeen();
       return;
     }
 
@@ -178,19 +202,22 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
        **وتُعلَن ههنا لا عند إنشاء الطبقة**: بينهما استيرادٌ غيرُ متزامن، ولو
        انتُظر لعمل المنعِّمان معًا لحظةً.
        **وتُنزَع من بابين اثنين لا غير**: تنظيفُ هذا الأثر (خروجٌ من الصفحة)،
-       و`degradeStory` (سقوطٌ إلى الساكنة من أيّ سبب). فإن سقطت القصّةُ ولم
+       و`skipStory` (تخطٍّ من أيّ سبب). فإن تُخطّيت القصّةُ ولم
        تُنشئ طبقتَها رجعت العجلةُ إلى منعِّم الموقع ولم يبقَ الهبوطُ خامًا. */
     html.setAttribute("data-scroll-owner", "story");
 
-    /* سقفُ الانتظار: بعده تُعرَض النسخةُ الساكنةُ المقروءة — فلا تنزاح شاشةُ
+    /* سقفُ الانتظار: بعده يُفتح الموقعُ مباشرةً — فلا تنزاح شاشةُ
        البدء يومًا عن سوادٍ لا نصَّ فيه، مهما تعطّلت الشبكةُ أو الحزمة. */
-    const capTimer = setTimeout(() => {
-      if (!destroyed) degradeStory();
-    }, READY_CAP_MS);
+    const capTimer = setTimeout(
+      () => {
+        if (!destroyed) skipStory();
+      },
+      offOpening ? Math.max(0, (demoSplit ? 4_500 : OPENING_CAP_MS) - performance.now()) : READY_CAP_MS,
+    );
 
-    /* الجاهزيّةُ من أيّ بابٍ جاءت (القصّةُ نفسُها · السقوطُ الآمن · سقفُ شاشة
+    /* الجاهزيّةُ من أيّ بابٍ جاءت (القصّةُ نفسُها · التخطّي الآمن · سقفُ شاشة
        البدء): هنا تُختم — تُرفع المهلةُ، ويُردّ استردادُ التمرير، وتُكتب
-       «رُئيت». وكتابتُها هنا لا عند الخاتمة هي إصلاحُ عطلٍ ثانٍ: من حدّث الصفحةَ
+       «رُئيت» (إلّا إن تُخطّيت لأنّها لم تجهز). وكتابتُها هنا لا عند الخاتمة هي إصلاحُ عطلٍ ثانٍ: من حدّث الصفحةَ
        في وسط القصّة كانت تُعاد عليه من أوّلها في كلّ مرّة. */
     const offReady = onStoryReady(() => {
       settled = true;
@@ -198,7 +225,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
       if ("scrollRestoration" in history) history.scrollRestoration = "auto";
       /* وصفحةُ المعاينة (`force`) ليست زيارةً: عرضُ القصّة فيها موضوعُ الصفحة، فلا
          يُحسَب رؤيةً تحرم الزائرَ منها في هبوطه. */
-      if (!force) markStorySeen();
+      if (!force && !storyWasSkipped()) markStorySeen();
     });
 
     /* الحزمةُ تُطلَب وتُهيَّأ مع الترطيب، ولا تُعلَّق على `load` كما كانت.
@@ -211,20 +238,21 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
 
        أمّا الحجّةُ القديمة («لا تنافس المحتوى الحرج») فقد انقلبت: في صفحة الهبوط
        القصّةُ **هي** المحتوى الحرج — أوّلُ ما يراه الزائر، وكلُّ ما سواها تحتها. */
-    void import("./story")
+    void (storyModule ?? import("./story"))
       .then(async (m) => {
-        if (destroyed || settled) return;
+        if (destroyed || settled || demoSplit) return;
         destroy = await m.initStory(root);
         // احتمال سباق: أُلغي التركيب أثناء انتظار الخطوط/الصور داخل initStory
         if (destroyed) destroy?.();
       })
       .catch(() => {
-        if (!destroyed) degradeStory();
+        if (!destroyed) skipStory();
       });
 
     return () => {
       destroyed = true;
       offReady();
+      offOpening?.();
       clearTimeout(capTimer);
       destroy?.();
       html.removeAttribute("data-scroll-owner");
@@ -233,9 +261,30 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
 
   return (
     <>
-      {!force && <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />}
-      {/* suppressHydrationWarning: `degradeStory` قد يضيف `st-static` قبل الترطيب (سقفُ شاشة
-          البدء يسبق ترطيبًا بطيئًا) — اختلافٌ مقصود في صنف هذا العنصر وحده لا في شجرته. */}
+      {/* المشهدُ الافتتاحيّ — شاشةُ البدء في هذه الصفحة: السطرُ الأوّل يصعد كلمةً كلمة،
+          ثمّ يُخطّ تحته خطٌّ ذهبيّ بعرض الشاشة. يظهر مع أوّل بايت (CSS وحده)، ولا يُعرض
+          إلّا بـ`data-story-opening` على <html> (بوابةُ ما قبل الرسم في `config.ts`). وخارج جذر القصّة
+          عمدًا: إن تُخطّيت القصّةُ أُخفي جذرُها، والمشهدُ باقٍ لينشقّ عن الموقع. */}
+      {!force && (
+        <div className="st-opening" aria-hidden="true">
+          <div className="st-op-bot" />
+          <div className="st-op-top">
+            <p className="st-op-line">
+              {INTRO_L1.split(" ").map((w, k) => (
+                <Fragment key={k}>
+                  {k > 0 && " "}
+                  <span className="st-op-w" style={{ "--k": k } as CSSProperties}>
+                    {w}
+                  </span>
+                </Fragment>
+              ))}
+              <i className="st-op-rule" />
+            </p>
+          </div>
+        </div>
+      )}
+      {/* suppressHydrationWarning: صنفُ هذا العنصر تكتبه الحركةُ بعد الترطيب
+          (st-live) — اختلافٌ مقصود في صنفه وحده لا في شجرته. */}
       <div id="adeeb-story" ref={rootRef} data-cursor-ink suppressHydrationWarning>
         {/* الطبقات الثابتة */}
         <div className="st-bg" aria-hidden="true" />
@@ -245,7 +294,7 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
         {/* ---------- المشهد 0 — الافتتاح ---------- */}
         <section className="st-scene st-intro" aria-label="افتتاح القصة">
           <div className="st-intro-stack">
-            <p className="st-line st-intro-l1">كـل حكايةٍ عظيمة تبدأ بحرف!</p>
+            <p className="st-line st-intro-l1">{INTRO_L1}</p>
             <p className="st-line st-intro-l2">
               وهذه حكـاية <em>أدِيب</em>
             </p>
@@ -406,9 +455,6 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
                       </span>
                     </span>
                   </figure>
-                  {/* تعليق النسخة الساكنة وحده (تحت الصورة) — المسار الحيّ يستعمل
-                      .st-wall-cap الواحد المتموضع في الفراغ المقابل */}
-                  <p className="st-shot-cap">{s.cap}</p>
                 </div>
               );
             })}

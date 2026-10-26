@@ -133,3 +133,35 @@ export const markStorySeen = (): void => {
     /* تخزين محظور — لا شيء يعتمد عليه */
   }
 };
+
+/* بوابة ما قبل الرسم: تُقرَّر قبل أي paint — يُنفّذها سكربتُ التخطيط (`app/layout.tsx`)
+   قبل شاشة البدء، فلا تومض الشاشةُ ولا القصّةُ قبل أن يُعرف أيُّهما يُعرض. وكانت في
+   مكوّن القصّة، فتُقرأ بعد أن رُسمت شاشةُ البدء (٢٠٢٦-١٠-٢٧). تعمل في الهبوط (`/`) وحده.
+   ?story=skip أو رابط عميق (#قسم) أو تفضيلُ تقليل الحركة ← تخطٍّ · ?story=force ← يتجاهل sessionStorage.
+   (تقليلُ الحركة كانت له نسخةٌ ساكنة، وأُلغيت ٢٠٢٦-١٠-٢٦: القصّةُ حركةٌ، ومن لا يريد
+   الحركة يُفتح له الموقعُ نفسُه.)
+
+   وحيث تعمل القصّةُ يُعطَّل استردادُ التمرير: المتصفّح يعيد الزائرَ إلى موضعه
+   السابق عند التحديث، فيستيقظ في منتصف قصّةٍ تبدأ من أوّلها — مشهدٌ لا يُفهَم.
+   والاستردادُ يُردّ إلى «auto» بعد الجاهزيّة (في أثر `StoryOpening`) فلا يُسلَب بقيّةَ
+   الجلسة.
+
+   **وحيث تعمل القصّةُ يُفتح المشهدُ الافتتاحيّ** (`data-story-opening="on"`، ٢٠٢٦-١٠-٢٧):
+   طبقةٌ ثابتةٌ مرسومةٌ من الخادم بلا جافاسكربت، هي شاشةُ البدء على هذه الصفحة بدل
+   الشعار. ويُمنع التمريرُ ما دامت قائمةً بمستمعاتٍ من هذا السكربت نفسِه (يعمل قبل
+   الترطيب) لا بـ`overflow: hidden` الذي ينزع شريطَ التمرير فيقفز المشهدُ أفقيًّا عند
+   رفعه. تُرفع المستمعاتُ في `endOpening`. */
+export const STORY_GATE_SCRIPT = `(function(){try{
+if(location.pathname!=="/")return;
+var q=new URLSearchParams(location.search),f=q.get("story"),h=location.hash;
+var skip=f==="skip"||(!!h&&h.length>1)||matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(!skip&&${STORY_CONFIG.showOncePerSession}&&f!=="force"&&sessionStorage.getItem("${SESSION_KEY}"))skip=true;
+if(skip)document.documentElement.setAttribute("data-adeeb-story","skip");
+else{
+var d=document.documentElement;d.setAttribute("data-story-opening","on");
+if("scrollRestoration" in history){history.scrollRestoration="manual";window.scrollTo(0,0);}
+var b=function(e){e.preventDefault()},K=[" ","ArrowDown","ArrowUp","PageDown","PageUp","Home","End"],k=function(e){if(K.indexOf(e.key)>-1)e.preventDefault()};
+addEventListener("wheel",b,{passive:false});addEventListener("touchmove",b,{passive:false});addEventListener("keydown",k);
+window.__stUnblock=function(){removeEventListener("wheel",b);removeEventListener("touchmove",b);removeEventListener("keydown",k)};
+}
+}catch(e){}})();`;

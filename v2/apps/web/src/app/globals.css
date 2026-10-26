@@ -329,7 +329,9 @@
   *::-webkit-scrollbar { display: none; }
 }
 
-
-
-
-
+/* المشهدُ الافتتاحيّ لقصّة أدِيب (`_story/story.css`) هو شاشةُ البدء في الهبوط: شاشةُ الشعار
+   لا تُعرض معه، والصفحةُ سوداءُ من أوّل رسمٍ فلا يومض لونُ الموقع قبل وصول المشهد.
+   هنا لا في ورقة القصّة: هذه تُحمَّل مع التخطيط، وتلك قد تتأخّر عن أوّل رسم. */
+html[data-story-opening] .ldr-boot { display: none; }
+html[data-story-opening="on"],
+html[data-story-opening="on"] body { background: #0b0b0d; }

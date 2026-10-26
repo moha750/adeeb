@@ -9,6 +9,101 @@
 /* بوابة التخطي قبل الرسم: يضبطها سكربت inline (باراميتر/رابط عميق/جلسة)،
    ويعيد StoryOpening قراءتها عند التنقّل داخل الموقع (رجوعٌ إلى الهبوط) */
 html[data-adeeb-story="skip"] #adeeb-story { display: none; }
+/* **ولا نسخةَ ساكنة لها** (٢٠٢٦-١٠-٢٦): بلا جافاسكربت لا قصّة، والموقعُ نفسُه يُعرض.
+   وكانت لها نسخةٌ ساكنة (فصولٌ متراكمة وبطاقاتٌ بلا صور) هي ما رآه أكثرُ الزوّار. */
+html:not(.js) #adeeb-story { display: none; }
+
+/* ============================================================
+   المشهد الافتتاحيّ — شاشةُ البدء في صفحة القصّة (٢٠٢٦-١٠-٢٧)
+   يحلّ محلّ شعار التحميل: السطرُ الأوّل يصعد كلمةً كلمة، ثمّ يُخطّ تحته خطٌّ ذهبيّ
+   بعرض الشاشة، ثمّ يسري فيه بريقٌ هادئ ما دامت القصّةُ تُجهَّز.
+   - جهزت ← `fade`: يذوب عن المشهد الأوّل الحيّ، وهو مطابقٌ له خطًّا ومقاسًا وموضعًا.
+   - لم تجهز ← `split`: ينشقّ عند الخطّ؛ يصعد النصفُ الأعلى بالسطر ويهبط الأسفل.
+   الحالاتُ في `data-story-opening` على <html> (on · fade · split · done)، يكتبها سكربتُ
+   البوابة و`endOpening` في StoryOpening.tsx. وقيمُ الخطّ نسخةُ `.st-line` حرفًا.
+   ============================================================ */
+.st-opening { display: none; }
+html.js[data-story-opening]:not([data-story-opening="done"]) .st-opening {
+  --st-bg: #0b0b0d;
+  --st-ink: #efeade;
+  --st-accent: #c49a3c;
+  display: block;
+  position: fixed; inset: 0; z-index: var(--z-boot, 1600);
+  direction: rtl;
+  color: var(--st-ink);
+  font-family: "Lyon Arabic", serif;
+  font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1;
+  touch-action: none;
+  /* حارسُ التعطّل: إن لم يصل الترطيبُ قطّ (فلا أحدَ يختم المشهد) يذوب وحدَه بعد ١٤ث.
+     ويُوقَف حين يعلن مكوّنُ القصّة إقلاعَه — من هناك الختامُ بيده. */
+  animation: st-op-failsafe 0.6s ease 14s forwards;
+}
+html.js[data-story-opening][data-story-booting] .st-opening { animation: none; }
+@keyframes st-op-failsafe { to { opacity: 0; visibility: hidden; } }
+/* (شاشةُ الشعار تُخفى معه، والخلفيّةُ تسودّ قبل وصوله — في `globals.css`: تُقرأ قبل هذه الورقة) */
+
+.st-op-top, .st-op-bot { position: absolute; inset: 0; background: var(--st-bg); }
+.st-op-top { display: grid; place-items: center; padding: 0 6vw; text-align: center; }
+.st-op-line {
+  position: relative; margin: 0;
+  font-weight: 500; font-size: clamp(2.5rem, 7.5vw, 6rem); line-height: 1.35;
+}
+.st-op-w {
+  display: inline-block; white-space: pre;
+  opacity: 0; transform: translateY(40px);
+  animation: st-op-rise 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+  animation-delay: calc(0.15s + var(--k) * 0.06s);
+}
+@keyframes st-op-rise { to { opacity: 1; transform: none; } }
+
+/* الخطّ: يُخطّ من المركز إلى الحافّتين، أطرافُه تذوب في السواد */
+.st-op-rule {
+  position: absolute; top: calc(100% + 0.22em); left: 50%;
+  width: 100vw; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--st-accent) 22%, var(--st-accent) 78%, transparent);
+  transform: translateX(-50%) scaleX(0);
+  opacity: 0.75;
+  animation: st-op-draw 1.5s cubic-bezier(0.65, 0, 0.35, 1) 1.05s forwards;
+}
+@keyframes st-op-draw { to { transform: translateX(-50%) scaleX(1); } }
+/* البريق: يعبر الخطَّ من اليمين إلى اليسار — اتّجاهُ القراءة — ما دام المشهدُ ينتظر */
+.st-op-rule::after {
+  content: ""; position: absolute; top: -1px; bottom: -1px; left: 0;
+  width: 18vw;
+  background: linear-gradient(90deg, transparent, #f2d892, transparent);
+  opacity: 0;
+  animation: st-op-glint 2.8s ease-in-out 2.7s infinite;
+}
+@keyframes st-op-glint {
+  0% { transform: translateX(100vw); opacity: 0; }
+  12%, 80% { opacity: 1; }
+  100% { transform: translateX(-18vw); opacity: 0; }
+}
+
+/* جهزت القصّة: ذوبانٌ عن مشهدها الأوّل */
+html[data-story-opening="fade"] .st-opening {
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+/* لم تجهز: الانشقاقُ عند الخطّ (`--y` يقيسه `endOpening`). الأعلى يُقصّ عند الخطّ
+   فيبقى الخطُّ حافّتَه، والأسفلُ يبدأ من الخطّ وله حافّةٌ ذهبيّةٌ تقابلها. */
+.st-op-bot { top: var(--y, 50%); }
+.st-op-bot::before {
+  content: ""; position: absolute; top: 0; inset-inline: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--st-accent) 22%, var(--st-accent) 78%, transparent);
+  opacity: 0.75;
+}
+html[data-story-opening="split"] .st-opening { pointer-events: none; }
+html[data-story-opening="split"] .st-op-top {
+  clip-path: inset(0 0 calc(100% - var(--y, 50%)) 0);
+  transform: translateY(calc(-1 * var(--y, 50%)));
+  transition: transform 1.15s cubic-bezier(0.76, 0, 0.24, 1) 0.1s;
+}
+html[data-story-opening="split"] .st-op-bot {
+  transform: translateY(100%);
+  transition: transform 1.15s cubic-bezier(0.76, 0, 0.24, 1) 0.1s;
+}
+html[data-story-opening="split"] .st-op-rule::after { animation: none; opacity: 0; }
 
 #adeeb-story {
   /* اللوحة المحلية — قيم الافتتاح؛ تتدرّج بين الفصول عبر GSAP */
@@ -30,8 +125,8 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
      يُوقَّت أصلًا، بل يُشتقَّ من الشيء الذي يتحوّل. */
   --cur-ink: var(--st-accent);
   /* مقاس الشعار: في المسار الحيّ يضبط story.ts المتغيّر --st-logo-w من دالّةٍ
-     واحدة (centerLogoW) فيتساوى القديم في الفصلين والجديد في المركز؛ وحيث لا
-     JS (النسخة الساكنة) يسقط الجميع إلى هذا المقاس الساكن — لا رقم مكرّر */
+     واحدة (centerLogoW) فيتساوى القديم في الفصلين والجديد في المركز؛ وقبل أن يضبطه
+     يسقط الجميع إلى هذا المقاس الساكن — لا رقم مكرّر */
   --st-logo-static-w: clamp(220px, 30vw, 360px);
 
   position: relative;
@@ -514,9 +609,6 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 }
 .st-shot-ph svg { width: 18%; height: auto; }
 .st-shot[data-loaded] .st-shot-ph { display: none; }
-/* تعليق النسخة الساكنة — لا وجود له في المسار الحيّ */
-.st-shot-cap { display: none; }
-
 /* ---------- التعليق الحيّ: في الفراغ المقابل للصورة، محاذيًا منتصفها ----------
    الصورة تستقرّ على ‎±١٣vw‎ من المركز وعرضها الأقصى ‎٤٠vw‎، فحافّتها الداخلية
    عند ‎±٨vw‎ والخارجية عند ‎±٣٣vw‎ — والنطاق أدناه (‎٥vw..٣٨vw‎) خارجها لزامًا
@@ -567,7 +659,6 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
    لا translate في CSS كي لا يتصارع الكاتبان.
    ============================================================ */
 .st-station { background: transparent; }
-.st-station-static { display: none; }
 
 .st-time {
   position: fixed; left: 50%; top: 50%; z-index: 5;
@@ -698,7 +789,7 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
 
 /* ============================================================
    الحالات الأولية للعناصر المتحركة — فقط حين تعمل القصة الحركية
-   (html.js موجودة قبل الرسم؛ النسخة الساكنة st-static تُستثنى)
+   (html.js موجودة قبل الرسم)
 
    وشرطُ `[data-story-booting]` ليس زينةً: هذه الأصنافُ تُخفي نصوصَ القصّة كلَّها
    انتظارًا لحركةٍ تكشفها، فإن لم تصل الحركةُ أصلًا (تعطّل الترطيب · حزمةٌ لم تنزل)
@@ -709,103 +800,15 @@ html[data-adeeb-story="skip"] #adeeb-story { display: none; }
    لتُخفي، وتقرؤه `components.css` لتمنع مهلةَ شاشة البدء الاحتياطيّة من كشف
    مشهدٍ يُجهَّز. فالحقيقةُ واحدةٌ («القصّةُ في إقلاعها») ومكتوبةٌ مرّةً واحدة.
    ============================================================ */
-/* لا تسري حالات الإخفاء على مفضّلي تقليل الحركة — نسختهم الساكنة مقروءة من أول paint */
-@media (prefers-reduced-motion: no-preference) {
-  html.js[data-story-booting] #adeeb-story:not(.st-static) :is(
-    .st-line,
-    .st-oldlogo, .st-ch1-copy,
-    .st-ch2-head, .st-track,
-    .st-shield, .st-crown-title, .st-crown-sub, .st-crown-tail,
-    .st-oldlogo2, .st-ch4-copy,
-    .st-wall-kicker, .st-frame, .st-wall-tribute, .st-wall-tail
-  ) { opacity: 0; }
-  html.js[data-story-booting] #adeeb-story:not(.st-static) .st-ltr { opacity: 0; }
-}
-
-/* ============================================================
-   النسخة الساكنة — prefers-reduced-motion أو بلا JS:
-   فصول متتالية عادية مقروءة، بلا تثبيت ولا جسيمات ولا HUD
-   ============================================================ */
-#adeeb-story.st-static { pointer-events: auto; }
-#adeeb-story.st-static .st-scene,
-html:not(.js) #adeeb-story .st-scene {
-  height: auto; min-height: 0;
-  overflow: visible;
-  padding: 14vh 6vw;
-}
-#adeeb-story.st-static :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash, .st-grain, .st-bg),
-html:not(.js) #adeeb-story :is(.st-letters, .st-rays, .st-canvas, .st-sweep, .st-cue, .st-hud, .st-logo-layer, .st-flash) { display: none; }
-/* جدار الذكريات ساكنًا: لا حجاب ولا عدّاد ولا تعليقٌ طائر — الصور شبكةٌ هادئة */
-#adeeb-story.st-static :is(.st-wall-veil, .st-wall-veil-b, .st-wall-cap),
-html:not(.js) #adeeb-story :is(.st-wall-veil, .st-wall-veil-b, .st-wall-cap) { display: none; }
-#adeeb-story.st-static .st-newlogo-static { display: block; margin-inline: auto; }
-/* الشعاران في النسخة الساكنة يقرأان معًا (قديمٌ فوق جديد) لا متراكبين في
-   خليّةٍ واحدة كما في المسار الحيّ حيث يتحوّل أحدهما إلى الآخر */
-#adeeb-story.st-static .st-ch4-logos > *,
-html:not(.js) #adeeb-story .st-ch4-logos > * { grid-area: auto; }
-#adeeb-story.st-static .st-ch4-logos,
-html:not(.js) #adeeb-story .st-ch4-logos { gap: 4vh; }
-/* محطات الزمن ساكنةً: kicker + تاريخ ثابتان، بتلاشٍ لطيف عند بلوغهما (IO في story.ts) — بلا دوران */
-#adeeb-story.st-static .st-station-static,
-html:not(.js) #adeeb-story .st-station-static { display: grid; gap: 1.4vh; justify-items: center; }
-#adeeb-story.st-static .st-station { padding: 9vh 6vw; }
-#adeeb-story.st-static .st-station-static { opacity: 0; transition: opacity 0.9s ease; }
-#adeeb-story.st-static .st-station-static.st-in { opacity: 1; }
-.st-station-date {
-  font-size: clamp(1.9rem, 5vw, 3.2rem);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-#adeeb-story.st-static .st-intro-stack { display: grid; gap: 3vh; }
-#adeeb-story.st-static .st-intro-stack > * { grid-area: auto; }
-#adeeb-story.st-static .st-trackwrap { position: static; overflow: visible; }
-#adeeb-story.st-static .st-track { flex-wrap: wrap; justify-content: center; padding: 4vh 0 0; }
-#adeeb-story.st-static .st-card { width: clamp(220px, 40vw, 300px); }
-#adeeb-story.st-static .st-ch3-inner { position: static; padding: 0; gap: 4vh; }
-#adeeb-story.st-static .st-shield { height: min(40vh, 380px); }
-#adeeb-story.st-static .st-ch2-head { position: static; margin-bottom: 3vh; }
-/* جدار الذكريات ساكنًا: الصور الثمان في شبكةٍ هادئة غير متراكبة بتلاشٍ
-   متتابع (IO في story.ts)، وتعليقُ كلٍّ تحتها، والنصّان تحت الشبكة لا فوقها
-   — بلا تأرجحٍ ولا تراجع كاميرا */
-#adeeb-story.st-static :is(.st-wall-kicker, .st-wall-tribute, .st-wall-tail),
-html:not(.js) #adeeb-story :is(.st-wall-kicker, .st-wall-tribute, .st-wall-tail) {
-  position: static; transform: none; padding: 0; text-align: center;
-  width: auto; height: auto; opacity: 1;
-}
-#adeeb-story.st-static .st-wall-scene,
-html:not(.js) #adeeb-story .st-wall-scene { display: grid; justify-items: center; gap: 3vh; }
-#adeeb-story.st-static .st-wall,
-html:not(.js) #adeeb-story .st-wall {
-  position: static;
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(14px, 2.5vw, 28px);
-  width: 100%; max-width: 760px;
-  margin-block: 2vh;
-  opacity: 1;
-}
-#adeeb-story.st-static .st-shot,
-html:not(.js) #adeeb-story .st-shot {
-  position: static;
-  display: grid; justify-items: center; gap: 1.2vh;
-}
-#adeeb-story.st-static .st-frame,
-html:not(.js) #adeeb-story .st-frame { transform: none; opacity: 1; width: 100%; }
-/* بلا حدَّي المسار الحيّ: الصورة تملأ عرض خانتها بنسبتها */
-#adeeb-story.st-static .st-shot-img img,
-html:not(.js) #adeeb-story .st-shot-img img { width: 100%; max-width: none; max-height: none; }
-#adeeb-story.st-static .st-shot-ph,
-html:not(.js) #adeeb-story .st-shot-ph { width: 100%; height: auto; max-width: none; }
-#adeeb-story.st-static .st-shot-cap,
-html:not(.js) #adeeb-story .st-shot-cap {
-  display: block; text-align: center;
-  color: var(--st-dim);
-  font-size: 0.95rem; font-weight: 500;
-}
-#adeeb-story.st-static .st-shot {
-  opacity: 0; transition: opacity 0.9s ease;
-  transition-delay: calc(var(--i) * 90ms);
-}
-#adeeb-story.st-static .st-shot.st-in { opacity: 1; }
+html.js[data-story-booting] #adeeb-story :is(
+  .st-line,
+  .st-oldlogo, .st-ch1-copy,
+  .st-ch2-head, .st-track,
+  .st-shield, .st-crown-title, .st-crown-sub, .st-crown-tail,
+  .st-oldlogo2, .st-ch4-copy,
+  .st-wall-kicker, .st-frame, .st-wall-tribute, .st-wall-tail
+) { opacity: 0; }
+html.js[data-story-booting] #adeeb-story .st-ltr { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .st-cue svg { animation: none; }

@@ -12,6 +12,7 @@ import { VisitTracker } from "./_components/VisitTracker";
 import { SiteCursor } from "./_components/SiteCursor";
 import { SmoothScroll } from "./_components/SmoothScroll";
 import { PwaRegister } from "./_pwa/PwaRegister";
+import { STORY_GATE_SCRIPT } from "./_story/config";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
 // روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
@@ -57,7 +58,9 @@ export default function RootLayout({
               // عرضُ التثبيت (كروم · إيدج) يُطلَق مرّةً عند التحميل وقد يسبق ترطيبَ React، فيُلتقط
               // ههنا أوّلًا ويقرؤه `app/_pwa/installPrompt.ts` بعدُ.
               "window.addEventListener('beforeinstallprompt',function(e){window.__adeebInstall=e});" +
-              "window.addEventListener('appinstalled',function(){window.__adeebInstall=null});",
+              "window.addEventListener('appinstalled',function(){window.__adeebInstall=null});" +
+              // بوابةُ القصّة الافتتاحيّة: تُقرَّر هنا قبل شاشة البدء (انظر `_story/config.ts`)
+              STORY_GATE_SCRIPT,
           }}
         />
         {/* شاشةُ البدء **قبل** المحتوى: تُرسَم خادميًّا فتظهر مع أوّل بايت، وتنزاح حين

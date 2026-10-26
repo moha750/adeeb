@@ -237,33 +237,6 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector(sel) as T | null;
   const $$ = <T extends Element = HTMLElement>(sel: string) => Array.from(root.querySelectorAll(sel)) as T[];
 
-  /* نسخة ساكنة كاملة لمن يفضّل تقليل الحركة: فصول متتالية مقروءة بلا تثبيت */
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    root.classList.add("st-static");
-    const fig = $(".st-oldlogo");
-    if (fig?.dataset.src && !fig.firstChild) {
-      const img = new Image();
-      img.src = fig.dataset.src;
-      img.alt = "الشعار القديم";
-      fig.appendChild(img);
-    }
-    /* الصور المرقّمة تُعرض كما هي في النسخة الساكنة (والغائبة تبقى placeholder) */
-    void mountNumbered($$(".st-card"), STORY_ASSETS.cardsDir, null, "st-card-img");
-    void mountNumbered($$(".st-shot"), STORY_ASSETS.shotsDir, ".st-shot-img");
-    /* محطات الزمن وصور الجدار: تظهر بتلاشٍ لطيف عند بلوغها — بلا تأرجح ولا تراجع كاميرا */
-    const io = new IntersectionObserver(
-      (es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("st-in")),
-      { threshold: 0.35 }
-    );
-    $$(".st-station-static, .st-shot").forEach((b) => io.observe(b));
-    /* النسخةُ الساكنة مقروءةٌ من أوّل رسم — فالموقعُ جاهزٌ الآن، وتنزاح شاشةُ البدء */
-    markStoryReady();
-    return () => {
-      io.disconnect();
-      root.classList.remove("st-static");
-    };
-  }
-
   const header = document.querySelector<HTMLElement>("header");
   const headerLogo = header?.querySelector<HTMLElement>("img") ?? null;
 
@@ -279,7 +252,7 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
 
   /* **سقطت القصّةُ أثناء الانتظار؟** فلا تُبنى الحيّةُ فوق الساكنة. سقفُ شاشة البدء
      (`STORY_MAX_MS`) قد يُعلن السقوطَ والتهيئةُ هنا في منتصف انتظار الخطوط والصور،
-     وبلا هذا الحارس كان الجذرُ يحمل `st-static` و`st-live` معًا (قيس في الإنتاج
+     وبلا هذا الحارس كانت الحيّةُ تُبنى فوق قصّةٍ أُعلن تخطّيها (قيس في الإنتاج
      ٢٠٢٦-١٠-٠٣). والجاهزيّةُ لا تُعلَن قبل هذا السطر إلّا بالسقوط. */
   if (storyIsReady()) return () => {};
 
@@ -312,6 +285,10 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   /* ---------- Lenis — الربط المنصوص عليه (النداء مغلَّف بسهم كي لا يصل وسيط
      حدث Lenis إلى ScrollTrigger.update بوصفه راية reset) ---------- */
   const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+  /* المشهدُ الافتتاحيّ قائمٌ فوق القصّة حتى تجهز: لا تمريرَ تحته — وإلّا ذاب عن
+     موضعٍ في وسط الحكاية لا عن أوّلها. يُستأنف قبيل إعلان الجاهزيّة (أسفل). */
+  const underOpening = document.documentElement.getAttribute("data-story-opening") === "on";
+  if (underOpening) lenis.stop();
   lenis.on("scroll", () => ScrollTrigger.update());
   const tickerFn = (time: number) => lenis.raf(time * 1000);
   gsap.ticker.add(tickerFn);
@@ -387,13 +364,17 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     const l2 = $(".st-intro-l2")!;
     const cue = $(".st-cue")!;
 
-    /* one-shot التحميل: دخول السطر الأول — ومن رجع إلى الصفر وجده ظاهرًا كما دخل */
+    /* one-shot التحميل: دخول السطر الأول — ومن رجع إلى الصفر وجده ظاهرًا كما دخل.
+       وإن سبقه المشهدُ الافتتاحيّ فقد أدّى الدخولَ نفسَه (الحركةُ ذاتُها في CSS)، فيُرى
+       السطرُ في موضعه ساعةَ يذوب المشهدُ عنه، لا داخلًا من جديد. */
     gsap.set(l1, { autoAlpha: 1 });
-    gsap.fromTo(
-      l1w,
-      { y: 40, autoAlpha: 0 },
-      { y: 0, autoAlpha: 1, duration: 0.9, stagger: 0.06, ease: "power3.out", delay: 0.15 }
-    );
+    if (underOpening) gsap.set(l1w, { y: 0, autoAlpha: 1 });
+    else
+      gsap.fromTo(
+        l1w,
+        { y: 40, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.9, stagger: 0.06, ease: "power3.out", delay: 0.15 }
+      );
 
     const tlIntro = gsap.timeline({
       defaults: { ease: "none" },
@@ -1842,6 +1823,10 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   /* الآن وحدَه يُقال «جاهزة»: المشاهدُ مبنيّةٌ والمقاساتُ نهائيّةٌ والسطرُ الأوّل
      في أوّل إطارٍ من دخوله. وقبل هذا السطر كانت شاشةُ البدء تنزاح على `load`
      فتكشف سوادًا لا نصَّ فيه — انظر `ready.ts`. */
+  if (underOpening) {
+    lenis.scrollTo(0, { immediate: true, force: true });
+    lenis.start();
+  }
   markStoryReady();
 
   return destroy;
