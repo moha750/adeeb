@@ -243,6 +243,9 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
   /* انتظار الخطوط والصور الحرجة قبل أي كشف — لا وميض */
   const fly = $(".st-newlogo") as HTMLImageElement;
   const shield = $(".st-shield") as HTMLImageElement;
+  /* الدرعُ كسولٌ في الشجرة كي لا يُنزَّل لقصّةٍ تُخطّت؛ وهنا القصّةُ تعمل فيُطلب الآن، وإلّا بقي
+     `decode()` معلّقًا على صورةٍ لم يبدأ تحميلُها حتى يبلغها التمرير. */
+  shield.loading = "eager";
   /* الانتظاران متوازيان لا متتاليان: جلبُ الشعار القديم رحلةُ شبكةٍ مستقلّةٌ عن
      الخطوط والصور، وتسلسلُهما كان يضيف رحلةً كاملةً إلى زمنِ حجبِ شاشة البدء. */
   const [oldLogo] = await Promise.all([

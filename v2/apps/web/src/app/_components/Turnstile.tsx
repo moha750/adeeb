@@ -66,9 +66,9 @@ export function TurnstileWidget({
       });
     };
 
-    if (window.turnstile) {
-      render();
-    } else {
+    const start = () => {
+      if (cancelled) return;
+      if (window.turnstile) return render();
       if (!document.querySelector(`script[src="${SCRIPT_SRC}"]`)) {
         const script = document.createElement("script");
         script.src = SCRIPT_SRC;
@@ -81,10 +81,33 @@ export function TurnstileWidget({
         if (window.turnstile) { window.clearInterval(poll); render(); }
       }, 200);
       window.setTimeout(() => window.clearInterval(poll), 15000);
+    };
+
+    /* **لا يُحمَّل الدرعُ قبل أن يقترب نموذجُه** (٢٠٢٦-١٠-٢٧). في الرئيسية نموذجُ التواصل في
+       أسفلها، وكان سكربتُ كلاودفلير وتحدّيه (~٥٨٠KB) ينزلان مع أوّل الصفحة فيزاحمان كودَها
+       على شبكة الجوّال (قياس Lighthouse). فالحاويةُ تُراقَب، ويبدأ التحميلُ حين يبعد النموذجُ
+       عن الشاشة شاشةً ونصفًا أو أقلّ — والرمزُ يجهز في ثوانٍ قبل أن يبلغه أحد. وصفحاتُ الدخول
+       نموذجُها في الشاشة الأولى فيبدأ فيها فورًا كما كان. والحاويةُ نفسُها مخفيّةٌ (`hidden`)
+       فلا تُرصَد، فيُرصَد أبوها. */
+    const anchor = containerRef.current?.parentElement;
+    let io: IntersectionObserver | undefined;
+    if (window.turnstile || !anchor || typeof IntersectionObserver === "undefined") start();
+    else {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io?.disconnect();
+            start();
+          }
+        },
+        { rootMargin: "150% 0px" },
+      );
+      io.observe(anchor);
     }
 
     return () => {
       cancelled = true;
+      io?.disconnect();
       window.clearInterval(poll);
       // تُزال الودجةُ مع صاحبها: ودجةٌ يتيمةٌ (حاويتُها هُدمت) تبقى في سجلّ كلاودفلير وتشوّش التالية
       if (widgetIdRef.current && window.turnstile) {

@@ -9,7 +9,7 @@
 // ما يلبسه رأسُ اللوحة ورأسُ الموقع. والعيّناتُ وقائعُ من أدِيب لا نصوصٌ معتمدة: النصوصُ تُقرَّر في
 // التبويبات وتُرى في `/ui/notifications`.
 import { useState } from "react";
-import { Container, Header, Segmented } from "@adeeb/design-system";
+import { Button, Container, Header, Segmented } from "@adeeb/design-system";
 import type { InboxFilter, InboxItem } from "@/lib/notifications/types";
 import { Avatar } from "../../dashboard/_components/Avatar";
 import { BellButton } from "../../_notifications/BellButton";
@@ -121,6 +121,28 @@ function PortalFrame() {
   );
 }
 
+/**
+ * **الرنّة** (٢٠٢٦-١٠-٢٧) — عُرض هنا وجهان: رنّةٌ واحدةٌ ثمّ سكون، ورنّةٌ تتكرّر. فاختار محمد التكرار
+ * وجعله كلَّ ثلاث ثوانٍ، وأُعدمت الواحدة. والمدّةُ في `BellButton` نفسِه، فهذا الجرسُ هو جرسُ الموقع.
+ */
+function RingDemo() {
+  const [count, setCount] = useState(2);
+  const [visit, setVisit] = useState(0);
+  return (
+    <div className="mt-6 rounded border border-line bg-surface p-6">
+      <div className="flex justify-center">
+        <BellButton key={visit} count={count} open={false} onClick={() => setCount(0)} />
+      </div>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <Button size="sm" variant="primary" onClick={() => setCount((c) => c + 1)}>إشعارٌ جديد</Button>
+        <Button size="sm" variant="ghost" onClick={() => { setCount((c) => c || 2); setVisit((v) => v + 1); }}>
+          فتحُ الصفحة من جديد
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const WHERE: { value: Where; label: string }[] = [
   { value: "dashboard", label: "في اللوحة" },
   { value: "portal", label: "في البوّابة" },
@@ -146,6 +168,12 @@ export default function BellPage() {
         </div>
 
         {where === "dashboard" ? <DashboardFrame key="d" /> : <PortalFrame key="p" />}
+
+        <h2 className="mt-14 font-display text-2xl font-black text-content">الرنّة</h2>
+        <p className="mt-2 max-w-3xl leading-relaxed text-content-muted">
+          يرنّ الجرسُ إذا فُتحت الصفحةُ وفيه ما لم يُقرأ، وإذا وصل إشعارٌ جديد، ثمّ كلَّ ثلاث ثوانٍ ما دام فيه ما لم يُقرأ. اضغط الجرسَ ليُقرأ ما فيه فيسكن.
+        </p>
+        <RingDemo />
 
         <div className="pb-10" />
       </Container>

@@ -28,6 +28,8 @@ export type UploadRule = {
   formats: string;
   /** المرفَقُ اختياريّ: فيُذكر في الرفض أنّ له أن يتابع بلا مرفَق. */
   optional?: boolean;
+  /** أطولُ ضلعٍ للصورة بعد التصغير في المتصفّح قبل رفعها (`shrinkImage`) — للصور المعروضة في الموقع. */
+  maxSide?: number;
 };
 
 const MB = 1024 * 1024;
@@ -48,6 +50,7 @@ export const UPLOAD_RULES = {
     mimes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
     accept: "image/jpeg,image/png,image/webp,image/gif",
     formats: "JPG أو PNG أو WEBP أو GIF",
+    maxSide: 1600,
   },
   /** صورُ الأخبار (غلافًا ومعرضًا). */
   newsImage: {
@@ -55,6 +58,7 @@ export const UPLOAD_RULES = {
     mimes: ["image/webp", "image/jpeg", "image/jpg", "image/png"],
     accept: "image/webp,image/jpeg,image/png",
     formats: "WEBP أو JPG أو PNG",
+    maxSide: 1600,
   },
   /** صفحاتُ كتابٍ في المكتبة (دلو library). */
   libraryPage: {
@@ -190,4 +194,47 @@ export function checkFile(file: File, rule: UploadRule): string | null {
     return `الصيغةُ غير مدعومة، المدعوم ${rule.formats}`;
   }
   return null;
+}
+
+/**
+ * **تصغيرُ الصورة في المتصفّح قبل رفعها** (٢٠٢٦-١٠-٢٧) — للمتصفّح وحده (يستعمل canvas).
+ *
+ * كانت الصورُ تُرفع بمقاس الكاميرا (حتى ٣٨٤٠ بكسل و٣ ميغابايت) وتُعرض أصغرَ بكثير، فبلغت
+ * الرئيسيّةُ ‎٨٫٦‎ ميغابايت على الجوّال وتأخّر كودُها خلفها (قياس Lighthouse). فصُغِّر ما في
+ * التخزين مرّةً (‏‎٤١٫٧ ← ١٢٫٦‎ ميغابايت، والأصولُ محفوظةٌ في `Claude outputs/storage-backup-2026-10-27`)،
+ * وهذا يمنع عودتها: يُحدّ أطولُ ضلعٍ بـ`rule.maxSide`، وتُكتب WEBP حيث يكتبها المتصفّح.
+ *
+ * - **لا يكسر شيئًا إن عجز:** صيغةٌ أخرى (GIF متحرّك) أو فكٌّ فاشل أو ناتجٌ أكبر ⇒ يُعاد الأصلُ كما هو.
+ * - **سفاري لا يكتب WEBP** من canvas (يرجع PNG بصمت): يُفحص نوعُ الناتج، فيُكتب JPEG بدلها
+ *   لمصدرٍ لا شفافيّة فيه، ويُترك الأصلُ لما فيه شفافيّة.
+ * - **امتدادُ الاسم يتبع النوع:** المسارُ في الخادم يُشتقّ من النوع (`EXT_BY_MIME`/`IMAGE_EXT`)، والاسمُ
+ *   يُصحَّح ليقول ما يقوله النوع.
+ */
+export async function shrinkImage(file: File, rule: UploadRule, quality = 0.82): Promise<File> {
+  const max = rule.maxSide;
+  if (!max || !/^image\/(jpeg|png|webp)$/.test(file.type) || typeof document === "undefined") return file;
+  let bmp: ImageBitmap;
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    return file;
+  }
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * k));
+  const h = Math.max(1, Math.round(bmp.height * k));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close();
+  const encode = (type: string) => new Promise<Blob | null>((res) => canvas.toBlob(res, type, quality));
+  let blob = await encode("image/webp");
+  if (!blob || blob.type !== "image/webp") blob = file.type === "image/png" ? null : await encode("image/jpeg");
+  if (!blob || blob.size >= file.size) return file;
+  const ext = blob.type === "image/webp" ? "webp" : "jpg";
+  const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
+  return new File([blob], name, { type: blob.type, lastModified: file.lastModified });
 }

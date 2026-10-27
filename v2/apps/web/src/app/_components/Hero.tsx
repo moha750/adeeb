@@ -107,8 +107,10 @@ export const TICKER = [
   "وما زالت الحكاية تُكتب",
 ];
 
-/** ريشةُ المالك: PNG بخلفيّةٍ شفّافة، سنُّها في أسفل اليسار. */
-const QUILL = "/brand/quill.png";
+/** ريشةُ المالك: بخلفيّةٍ شفّافة، سنُّها في أسفل اليسار. وهي **أكبرُ ما يُرسم في الشاشة
+ *  الأولى** (عنصرُ LCP في قياس Lighthouse ٢٠٢٦-١٠-٢٧)، فصارت WebP: ‏٤٨KB بدل ٢٥٩KB
+ *  بلا فرقٍ يُرى، وتُطلب بأولويّةٍ عالية. */
+const QUILL = "/brand/quill.webp";
 
 /* ══ مقابضُ المعرض ═════════════════════════════════════════════════
    **الصدرُ واحدٌ والمعرضُ يزيد عليه مقابضَه** (قرارُ المالك ٢٠٢٦-٠٩-١٢ بعد أن
@@ -418,7 +420,7 @@ export function Hero({
             style={editing ? { pointerEvents: "auto", cursor: "grab", touchAction: "none" } : undefined}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={QUILL} alt="" draggable={false} />
+            <img src={QUILL} alt="" draggable={false} fetchPriority="high" />
           </span>
           <h1 className={"hro-title" + (lab?.cls ? " " + lab.cls : "")}>
             {drawn.map((l, n) => (

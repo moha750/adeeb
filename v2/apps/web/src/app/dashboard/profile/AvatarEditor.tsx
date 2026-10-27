@@ -210,7 +210,8 @@ export function AvatarEditor({ name, gender, avatar, look = "row" }: { name: str
     out.toBlob((blob) => {
       if (!blob) { toast.error("تعذّر تجهيز الصورة."); return; }
       const fd = new FormData();
-      fd.append("file", new File([blob], "avatar.webp", { type: "image/webp" }));
+      // النوعُ نوعُ الناتج لا ما طُلب: سفاري لا يكتب WEBP من canvas فيرجع PNG بصمت، وكان يُوسَم «webp» كذبًا
+      fd.append("file", new File([blob], blob.type === "image/webp" ? "avatar.webp" : "avatar.png", { type: blob.type || "image/png" }));
       startSave(async () => {
         const r = await uploadMyAvatar(fd);
         if (r.ok) {
@@ -219,7 +220,8 @@ export function AvatarEditor({ name, gender, avatar, look = "row" }: { name: str
           router.refresh();
         } else toast.error(r.message);
       });
-    }, "image/webp", 0.9);
+      /* ‎0.82‎ لا ‎0.9‎ (٢٠٢٦-١٠-٢٧): عند ‎0.9‎ خرج الأفتارُ ‎٢٠٠–٣٧٠‎ كيلوبايت لمربّعٍ ‎512‎، ولا يُرى فرقٌ عند ‎0.82‎. */
+    }, "image/webp", 0.82);
   };
 
   const kill = () => {

@@ -24,7 +24,7 @@ html:not(.js) #adeeb-story { display: none; }
    ============================================================ */
 .st-opening { display: none; }
 html.js[data-story-opening]:not([data-story-opening="done"]) .st-opening {
-  --st-bg: #0b0b0d;
+  --st-bg: var(--story-night);
   --st-ink: #efeade;
   --st-accent: #c49a3c;
   display: block;
@@ -107,7 +107,7 @@ html[data-story-opening="split"] .st-op-rule::after { animation: none; opacity: 
 
 #adeeb-story {
   /* اللوحة المحلية — قيم الافتتاح؛ تتدرّج بين الفصول عبر GSAP */
-  --st-bg: #0b0b0d;
+  --st-bg: var(--story-night);
   --st-ink: #efeade;
   --st-accent: #c49a3c;
   /* مشتقّان يتبعان اللوحة المتحركة تلقائيًّا — لا يُحرَّكان من JS */

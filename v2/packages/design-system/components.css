@@ -16995,10 +16995,36 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   cursor: pointer;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
-.ntf-bell svg { width: 22px; height: 22px; }
+.ntf-bell svg { width: 22px; height: 22px; transform-origin: 50% 10%; }
+/* **الرنّة** — اهتزازةُ جرسٍ معلّقٍ من أعلاه، تتناقص حتى تسكن (‏‎~0.9s‎). يضعها `BellButton` حين يكون
+   فيه ما لم يُقرأ (٢٠٢٦-١٠-٢٧)، ولا تُرى لمن فضّل تقليلَ الحركة: العددُ وحده يكفيه. */
+.ntf-bell svg[data-ring] { animation: ntf-ring 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes ntf-ring {
+  0%, 100% { transform: rotate(0); }
+  10% { transform: rotate(16deg); }
+  22% { transform: rotate(-14deg); }
+  34% { transform: rotate(10deg); }
+  46% { transform: rotate(-7deg); }
+  58% { transform: rotate(4deg); }
+  70% { transform: rotate(-2deg); }
+  82% { transform: rotate(1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ntf-bell svg[data-ring] { animation: none; }
+}
 .ntf-bell:hover, .ntf-bell[aria-expanded="true"] { background: color-mix(in oklab, var(--steel-500) 12%, transparent); color: var(--steel-600); }
 .ntf-bell:active { transform: scale(.96); }
 .ntf-bell:focus-visible { outline: none; box-shadow: var(--ring); }
+/* **وفي رأس الموقع يقرأ حبرَ الرأس** كجارَيه (زرّ القائمة والأفتار) — لا رماديَّه الثابت.
+   كان `--color-text-muted` مكتوبًا عليه، فحين يلبس الرأسُ جلدَه المعكوس فوق سطحٍ ملوّن
+   ابيضّ ما حوله وبقي الجرسُ رماديًّا باهتًا لا يكاد يُرى (المالك ٢٠٢٦-١٠-٢٧). ورأسُ
+   اللوحة خارج `.shdr` فلا يمسّه هذا. */
+.shdr .ntf-bell { color: var(--shdr-ink); }
+.shdr .ntf-bell:hover,
+.shdr .ntf-bell[aria-expanded="true"] {
+  background: color-mix(in oklab, var(--shdr-tint) 12%, transparent);
+  color: var(--shdr-ink-on);
+}
 /* العدد: `CountBadge` المكتبة بعينه، مصغَّرًا في ركن الجرس. والحلقةُ البيضاء بدائيّةٌ بنيويّة
    (ق٥) تفصله عن الأيقونة تحته، لا ظلُّ ارتفاع. */
 .ntf-bell .acount {

@@ -33,7 +33,7 @@ import {
   setCover, setNewsStatus, submitForReview, toggleFeatured,
 } from "../actions";
 import { PageHeader } from "../../_components/PageHeader";
-import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+import { UPLOAD_RULES, checkFile, shrinkImage } from "@/lib/upload";
 import { sectionsToText, textToSections, type Section } from "@/lib/news/blocks";
 import { SectionsEditor } from "./SectionsEditor";
 
@@ -130,7 +130,9 @@ export function NewsEditorView({
   const galleryInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(0);
 
-  const upload = async (file: File, kind: "cover" | "gallery", photographer?: string) => {
+  const upload = async (original: File, kind: "cover" | "gallery", photographer?: string) => {
+    // تُصغَّر إلى مقاس عرضها قبل التذكرة: النوعُ والحجمُ في التذكرة نوعُ المرفوعِ وحجمُه
+    const file = await shrinkImage(original, IMAGE_RULE);
     const ticket = await createImageUploadUrl(row.id, kind, file.type, file.size);
     if (!ticket.ok || !ticket.path || !ticket.token) {
       toast.error(ticket.message ?? "تعذّر تجهيز الرفع.");

@@ -384,7 +384,9 @@ export function StoryOpening({ force = false }: { force?: boolean }) {
           <div className="st-ch3-inner">
             <div className="st-shield-wrap">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="st-shield" src={STORY_ASSETS.shield} alt="درع المركز الأول" />
+              {/* `lazy`: الدرعُ ‎147KB‎ وكان يُنزَّل في كلّ زيارةٍ ولو تُخطّيت القصّة — `display:none`
+                  لا يمنع تحميل الصور، و`lazy` يمنعه. ومتى عملت القصّةُ طلبته `story.ts` فورًا (`eager`). */}
+              <img className="st-shield" src={STORY_ASSETS.shield} alt="درع المركز الأول" loading="lazy" />
               {/* اللمعان طبقتان: الحاضنة مُقنَّعة بصورة الدرع وثابتة لا تتحرّك،
                   والشريط وحده يعبر داخلها — فلا يخرج البريق عن حدود الدرع */}
               <div

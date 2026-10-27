@@ -11,7 +11,7 @@ import type { EventEditData, OrganizerOption } from "./data";
 import { AUDIENCE_OPTIONS, TYPE_OPTIONS, type ActivityType } from "./vocab";
 import { createEvent, updateEvent, uploadEventCover, type EventInput } from "./actions";
 import { PageHeader } from "../_components/PageHeader";
-import { UPLOAD_RULES, attachHint, checkFile } from "@/lib/upload";
+import { UPLOAD_RULES, attachHint, checkFile, shrinkImage } from "@/lib/upload";
 
 // وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
 const IMAGE_RULE = UPLOAD_RULES.siteImage;
@@ -86,7 +86,8 @@ export function EventForm({ event, organizers }: { event?: EventEditData | null;
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      // تُصغَّر إلى مقاس عرضها قبل الرفع (`shrinkImage`): أخفُّ على الزائر، وأبعدُ عن حدّ جسم فعل الخادم
+      fd.append("file", await shrinkImage(file, IMAGE_RULE));
       const r = await uploadEventCover(fd);
       if (r.ok && r.url) { setCover(r.url); toast.success("رُفعت صورة الغلاف."); }
       else toast.error(r.message ?? "تعذّر رفع الصورة.");

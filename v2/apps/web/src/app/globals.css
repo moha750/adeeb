@@ -334,4 +334,4 @@
    هنا لا في ورقة القصّة: هذه تُحمَّل مع التخطيط، وتلك قد تتأخّر عن أوّل رسم. */
 html[data-story-opening] .ldr-boot { display: none; }
 html[data-story-opening="on"],
-html[data-story-opening="on"] body { background: #0b0b0d; }
+html[data-story-opening="on"] body { background: var(--story-night); }
