@@ -61,8 +61,8 @@ const DEMO_MEMBERS: MemberOption[] = [
 
 export default function PositionsPage() {
   const [demo, setDemo] = useState<AssignState | null>(null);
-  const [pick, setPick] = useState("");
-  const openDemo = (s: AssignState) => { setPick(""); setDemo(s); };
+  const [seq, setSeq] = useState(0);
+  const openDemo = (s: AssignState) => { setSeq((n) => n + 1); setDemo(s); };
 
   return (
     <main className="py-16">
@@ -132,7 +132,8 @@ export default function PositionsPage() {
           </section>
         </div>
       </Container>
-      <AssignmentModal state={demo} members={DEMO_MEMBERS} pick={pick} onPick={setPick} busy={false} onClose={() => setDemo(null)} onSubmit={() => setDemo(null)} />
+      <AssignmentModal key={`demo-${seq}`} state={demo} members={DEMO_MEMBERS} positions={demo ? [demo.position] : []} committees={[]} departments={[]}
+        busy={false} onClose={() => setDemo(null)} onAssign={() => setDemo(null)} onRemove={() => setDemo(null)} />
     </main>
   );
 }

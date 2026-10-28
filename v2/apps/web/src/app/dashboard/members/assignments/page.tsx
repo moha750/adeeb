@@ -2,6 +2,7 @@ import { Alert } from "@adeeb/design-system";
 import { getOrgData } from "../structure/orgData";
 import { buildPositions } from "../structure/model";
 import { AssignmentsView } from "./AssignmentsView";
+import { getScheduledBatches } from "./batches";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
 import { isSuggestedIcon } from "@/lib/unitIcons";
@@ -32,6 +33,8 @@ export default async function AssignmentsPage() {
   // (كرتُ «شاغرة»، وعدّادُ كلّ رأس، والمقعدُ المتقطّع)، ونقصُ الإشراف تقوله «إدارتي» حيث يُوزَّع.
 
   // أيقوناتُ الوحدات من خارج المقترحة يرسمها الخادمُ من المكتبة (`lib/unitIconCatalog.ts`)، فلا يحملها المتصفّح
+  const batches = await getScheduledBatches(org, admin?.id ?? null);
+
   const iconNodes = unitIconNodes(
     [...org.departments.map((d) => d.icon), ...org.committees.map((c) => c.icon)].filter((k): k is string => !!k && !isSuggestedIcon(k)),
   );
@@ -40,7 +43,7 @@ export default async function AssignmentsPage() {
     <>
       <Head />
       <AssignmentsView positions={positions} iconNodes={iconNodes} units={{ councils: org.councils, departments: org.departments, committees: org.committees }} members={org.members}
-        canEditUnits={!!admin?.caps.includes("manage_positions")} />
+        canEditUnits={!!admin?.caps.includes("manage_positions")} batches={batches} />
     </>
   );
 }

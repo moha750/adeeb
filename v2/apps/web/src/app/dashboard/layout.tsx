@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// حصّةُ اللوحة من `components.css` (فارغةٌ في التطوير، انظر `loaders/css-sections.cjs`).
+import "@adeeb/design-system/components.dash.css";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "./_shell/DashboardShell";
 import { AccessDenied } from "./_shell/AccessDenied";

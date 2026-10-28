@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { LATER_KEY, LATER_LIMIT, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES, RATE_KEY } from "@adeeb/core";
+import { LATER_KEY, LATER_LIMIT, PLAY_THRESHOLD_SECONDS, PLAYBACK_RATES, RATE_KEY } from "@adeeb/core/radio";
 import { reportPlay } from "@/lib/radio/countPlay";
 import { clearProgress, resumeAt, saveProgress } from "@/lib/radio/progress";
 import { SKIP_SECONDS } from "../../dashboard/radio/vocab";

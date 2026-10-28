@@ -7,6 +7,7 @@ import { kickDispatch } from "@/lib/notifications/emit";
 import { createClient } from "@/lib/supabase/server";
 import { getAppointableMembers, type AppointOption } from "./data";
 import { statementError } from "./vocab";
+import { refreshStructurePage } from "@/lib/structurePage";
 
 export type ElectionResult = { ok: boolean; message: string; id?: string };
 
@@ -255,6 +256,7 @@ export async function appointToSeat(electionId: string, userId: string, reason: 
   revalidatePath("/dashboard/elections", "layout");
   revalidatePath("/dashboard/unit", "layout");
   revalidatePath("/dashboard/members/assignments");
+  refreshStructurePage();
   kickDispatch(); // إشعارُ التكليف وُلد في القاعدة (`assign_acting`)، فيوزَّع بعد الردّ
   return { ok: true, message: "كُلّف العضو، وأُوقف الانتخاب." };
 }
@@ -269,6 +271,7 @@ export async function declareWinner(electionId: string, candidateId: string): Pr
 
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch(); // إشعارُ الإسناد وُلد في القاعدة (`assign_position`)
+  refreshStructurePage();
   return { ok: true, message: "أُعلن الفائز وأُسنِد المنصب." };
 }
 
@@ -285,6 +288,7 @@ export async function resolveDepartmentWinners(departmentId: number): Promise<El
 
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch();
+  refreshStructurePage();
   return { ok: true, message: "أُعلن فائزو القسم وأُسنِدت مناصبهم." };
 }
 

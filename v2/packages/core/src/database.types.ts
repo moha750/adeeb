@@ -3172,6 +3172,77 @@ export type Database = {
           },
         ]
       }
+      position_batches: {
+        Row: {
+          applied_at: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          effective_on: string | null
+          failure: string | null
+          id: number
+          moves: Json
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          applied_at?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_on?: string | null
+          failure?: string | null
+          id?: never
+          moves: Json
+          reason?: string | null
+          status: string
+        }
+        Update: {
+          applied_at?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_on?: string | null
+          failure?: string | null
+          id?: never
+          moves?: Json
+          reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "position_batches_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_batches_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_name_changes: {
         Row: {
           approved: boolean | null
@@ -4483,6 +4554,63 @@ export type Database = {
           },
         ]
       }
+      statements: {
+        Row: {
+          blocks: Json
+          body: string
+          id: number
+          issued_at: string
+          issued_by: string | null
+          pages: number
+          seq: number
+          signer_names: Json
+          signers: string
+          title: string
+          year: number
+        }
+        Insert: {
+          blocks?: Json
+          body: string
+          id?: never
+          issued_at?: string
+          issued_by?: string | null
+          pages?: number
+          seq: number
+          signer_names?: Json
+          signers: string
+          title: string
+          year: number
+        }
+        Update: {
+          blocks?: Json
+          body?: string
+          id?: never
+          issued_at?: string
+          issued_by?: string | null
+          pages?: number
+          seq?: number
+          signer_names?: Json
+          signers?: string
+          title?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statements_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stats: {
         Row: {
           count: number | null
@@ -5029,6 +5157,7 @@ export type Database = {
           acting_until: string | null
           assigned_at: string
           assigned_by: string | null
+          batch_id: number | null
           committee_id: number | null
           department_id: number | null
           ended_at: string | null
@@ -5046,6 +5175,7 @@ export type Database = {
           acting_until?: string | null
           assigned_at?: string
           assigned_by?: string | null
+          batch_id?: number | null
           committee_id?: number | null
           department_id?: number | null
           ended_at?: string | null
@@ -5063,6 +5193,7 @@ export type Database = {
           acting_until?: string | null
           assigned_at?: string
           assigned_by?: string | null
+          batch_id?: number | null
           committee_id?: number | null
           department_id?: number | null
           ended_at?: string | null
@@ -5094,6 +5225,13 @@ export type Database = {
             columns: ["assigned_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "position_batches"
             referencedColumns: ["id"]
           },
           {
@@ -5856,6 +5994,10 @@ export type Database = {
         Returns: undefined
       }
       _finalize_confidence: { Args: { p_election: string }; Returns: boolean }
+      _run_position_batch: {
+        Args: { p_actor: string; p_batch: number; p_moves: Json }
+        Returns: Json
+      }
       _send_election_notification: {
         Args: {
           p_audience: string
@@ -6041,6 +6183,10 @@ export type Database = {
         Returns: string[]
       }
       cancel_my_account_deletion: { Args: never; Returns: Json }
+      cancel_position_batch: {
+        Args: { p_actor: string; p_batch: number }
+        Returns: Json
+      }
       cancel_warning: {
         Args: { p_actor: string; p_reason: string; p_warning: string }
         Returns: Json
@@ -6187,6 +6333,15 @@ export type Database = {
           p_phone: string
         }
         Returns: undefined
+      }
+      create_position_batch: {
+        Args: {
+          p_actor: string
+          p_effective_on?: string
+          p_moves: Json
+          p_reason?: string
+        }
+        Returns: Json
       }
       create_task: {
         Args: {
@@ -6960,6 +7115,18 @@ export type Database = {
         Args: { p_application_id: string }
         Returns: Json
       }
+      issue_statement: {
+        Args: {
+          p_actor: string
+          p_blocks: Json
+          p_body: string
+          p_pages: number
+          p_signer_names: Json
+          p_signers: string
+          p_title: string
+        }
+        Returns: Json
+      }
       issue_warning: {
         Args: {
           p_actor: string
@@ -7297,6 +7464,7 @@ export type Database = {
         }
         Returns: Json
       }
+      run_due_position_batches: { Args: never; Returns: number }
       seat_declared_by_unit: {
         Args: { p_committee: number; p_role_name: string }
         Returns: boolean

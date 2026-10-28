@@ -24,6 +24,7 @@ import { positionLine, rankFor } from "@/lib/positionLabel";
 import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
 import { explainEmailError } from "@/lib/email/errors";
+import { percentText } from "@/lib/evaluation/score";
 
 /**
  * أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة.
@@ -36,6 +37,8 @@ export const SECTIONS = {
   irfan: { label: "عِرفان", icon: "irfan", unit: null },
   contact: { label: "التواصل", icon: "inbox", unit: "الإدارة التنفيذية" },
   positions: { label: "المناصب", icon: "assign", unit: "إدارة الموارد البشرية" },
+  // تقييم القيادات (٢٠٢٦-١٠-٢٠): تتولّى تنفيذَ اللائحة إدارةُ الموارد البشريّة (التمهيد)، فتوقّع بريدَه
+  evaluation: { label: "تقييم القيادات", icon: "evaluation", unit: "إدارة الموارد البشرية" },
 } as const satisfies Record<string, { label: string; icon: IconKey; unit: string | null }>;
 
 export type Section = keyof typeof SECTIONS;
@@ -217,7 +220,7 @@ export const CATALOG = {
    * شاشةُ الهيكلة، والانتخابات، وقبولُ المتطوّع عضوًا. ولا تُطلَق لمن كان في المقعد أصلًا.
    * - **المستلم**: صاحبُ المنصب. **الدرجة**: مهمّ، **وبريد**. **الوجهة**: حسابي.
    */
-  "position.assigned": defineKind<Seat & { userId: string; from: Seat | null }>({
+  "position.assigned": defineKind<Seat & { userId: string; from: Seat | null; down?: boolean }>({
     section: "positions",
     when: "أُسند منصبٌ إلى عضو، أو نُقل من منصبٍ إلى آخر",
     sample: { userId: SAMPLE_USER, rank: "نائب", unit: "لجنة التأليف", from: { rank: "عضو", unit: "لجنة التأليف" } },
@@ -231,9 +234,12 @@ export const CATALOG = {
           title: `أُسند ${fm(g, "إليك", "إليكِ")} منصب «${seat(f, g)}»`,
           body: f.from ? `${fm(g, "ونُقلتَ", "ونُقلتِ")} إليه من «${seat(f.from, g)}».` : undefined,
         }),
+        // والمقعدُ الأدنى ممّا نُقل منه (`down`، ٢٠٢٦-١٠-٢٣) يُبلَّغ بصيغةٍ محايدة لا تهنئة (قرار محمد)
         mail: (f, g) => ({
-          mood: "congratulations",
-          lead: `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بإسناد منصبٍ ${fm(g, "إليك", "إليكِ")} في نادي أدِيب، وهذه تفاصيله:`,
+          mood: f.down ? "announcement" : "congratulations",
+          lead: f.down
+            ? `${fm(g, "نُبلغك", "نُبلغكِ")} بتغيّرٍ في ${fm(g, "منصبك", "منصبكِ")} في نادي أدِيب، وهذه تفاصيله:`
+            : `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بإسناد منصبٍ ${fm(g, "إليك", "إليكِ")} في نادي أدِيب، وهذه تفاصيله:`,
           facts: [
             { label: "المنصب", value: seat(f, g) },
             ...(f.from ? [{ label: fm(g, "منصبك السابق", "منصبكِ السابق"), value: seat(f.from, g) }] : []),
@@ -275,6 +281,35 @@ export const CATALOG = {
           ],
         }),
         href: () => ACCOUNT,
+      },
+    ],
+  }),
+
+  /**
+   * **تعذّر تطبيق دفعةٍ مجدولة** (٢٠٢٦-١٠-٢٣) — تُطلَق داخل `run_due_position_batches` حين يحلّ يومُ الدفعة
+   * وقد تغيّر الهيكلُ بما يُفسدها، فلا يُطبَّق منها شيء.
+   * - **المستلم**: منشئُ الدفعة. **الدرجة**: مهمّ، **وبريد**: قرارٌ لم يسرِ. **الوجهة**: تعيين المناصب.
+   */
+  "position.batch_failed": defineKind<{ batchId: number; userId: string; effectiveOn: string; failure: string }>({
+    section: "positions",
+    when: "حلّ يومُ دفعةِ مناصب مجدولة وتعذّر تطبيقها",
+    sample: { batchId: 1, userId: SAMPLE_USER, effectiveOn: "2026-11-01", failure: "«منسّق قسم التواصل المجتمعي» يشغله عضوٌ ليس في الدفعة." },
+    audiences: [
+      {
+        key: "creator",
+        level: "important",
+        email: true,
+        to: (f) => [{ user: f.userId }],
+        text: () => ({ title: "تعذّر تطبيق تغييرات المناصب المجدولة", body: "تغيّر الهيكلُ قبل يومها، فلم يُطبَّق منها شيء." }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `حلّ يومُ تغييراتٍ في المناصب ${fm(g, "جدولتَها", "جدولتِها")}، وتعذّر تطبيقُها فلم يُطبَّق منها شيء:`,
+          facts: [
+            { label: "يومُ السريان", value: fmtDateOnly(f.effectiveOn) },
+            { label: "السبب", value: f.failure },
+          ],
+        }),
+        href: () => "/dashboard/members/assignments",
       },
     ],
   }),
@@ -478,6 +513,186 @@ export const CATALOG = {
           ],
         }),
         href: () => "/dashboard/committee",
+      },
+    ],
+  }),
+
+  // ══ تقييم القيادات (٢٠٢٦-١٠-٢٠، لائحة تقييم القيادات) ══════════════════════
+  // كلُّها تُطلَق من القاعدة (`notify_event`): المؤقّتُ يفتح ويذكّر، ومنفذُ الحكم يستبعد ويُبلغ،
+  // ودوالُّ التصحيح تُبلغ. والنسبةُ تُرسم من الكسر نفسِه (`percentText`) لا رقمًا محسوبًا هناك.
+
+  /**
+   * **لك تقييمٌ مفتوح** — فتحُ الدورة يومَ 21 (م٢/3). لكلّ من في اللقطة، **وأجلُه الإغلاق**: يغيب بعده.
+   * - **الدرجة**: مهمّ (شاشةُ القفل). **الوجهة**: «قيّم القيادات».
+   */
+  "evaluation.opened": defineKind<{ cycleId: number; closesAt: string; lastDay: string; raters: string[] }>({
+    section: "evaluation",
+    when: "فُتح التقييمُ الربعيّ للقيادات",
+    sample: { cycleId: 1, closesAt: "2027-01-23T21:00:00Z", lastDay: "2027-01-23", raters: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "rater",
+        level: "important",
+        to: (f) => f.raters.map((user) => ({ user })),
+        text: (f, g) => ({ title: `${fm(g, "لك", "لكِ")} تقييمٌ مفتوحٌ للقيادات`, body: `آخر يومٍ ${fmtDateOnly(f.lastDay)}.` }),
+        href: () => "/dashboard/evaluation/rate",
+        expires: (f) => new Date(f.closesAt),
+      },
+    ],
+  }),
+
+  /**
+   * **بقي يومٌ على الإغلاق** — قبل الإغلاق بيوم، لمن بقيت له أوراق (المواصفة ٢-٩). وأجلُه الإغلاق.
+   */
+  "evaluation.reminder": defineKind<{ cycleId: number; closesAt: string; lastDay: string; raters: string[] }>({
+    section: "evaluation",
+    when: "بقي يومٌ على إغلاق التقييم ولم يُكمل المقيِّمُ أوراقه",
+    sample: { cycleId: 1, closesAt: "2027-01-23T21:00:00Z", lastDay: "2027-01-23", raters: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "rater",
+        level: "important",
+        to: (f) => f.raters.map((user) => ({ user })),
+        text: (f, g) => ({ title: "اليومُ آخرُ أيّام تقييم القيادات", body: `${fm(g, "بقي لك", "بقي لكِ")} تقييمٌ لم ${fm(g, "تُرسله", "تُرسليه")}.` }),
+        href: () => "/dashboard/evaluation/rate",
+        expires: (f) => new Date(f.closesAt),
+      },
+    ],
+  }),
+
+  /**
+   * **حلّ الموعدُ والسابقةُ لم تُنفَّذ** (جدول الحالات الحدّيّة): لا تُفتح الدورة، ويُنبَّه قائدُ الموارد.
+   */
+  "evaluation.blocked": defineKind<{ cycleId: number; dueOn: string }>({
+    section: "evaluation",
+    when: "حلّ موعدُ دورةٍ والدورةُ السابقةُ لم تُنفَّذ",
+    sample: { cycleId: 2, dueOn: "2027-04-21" },
+    audiences: [
+      {
+        key: "hr",
+        level: "critical",
+        to: () => [{ seat: "hr_committee_leader" }],
+        text: (f) => ({ title: "لم يُفتح تقييمُ القيادات في موعده", body: `موعدُه ${fmtDateOnly(f.dueOn)}، والدورةُ السابقةُ لم تُنفَّذ بعد.` }),
+        href: () => "/dashboard/evaluation",
+      },
+    ],
+  }),
+
+  /**
+   * **نتيجتك** (م١٠/2) — لكلّ مقيَّمٍ نتيجتُه وحده، باقيًا كان أو بلا نتيجة. والمستبعَدُ خبرُه في الاستبعاد.
+   */
+  "evaluation.result": defineKind<Seat & { userId: string; targetId: number; cycleId: number; verdict: "kept" | "no_result"; final: [number, number] | null }>({
+    section: "evaluation",
+    when: "صدرت نتيجةُ مقيَّمٍ وبقي في منصبه، أو لم تُحسب له نتيجة",
+    sample: { userId: SAMPLE_USER, targetId: 1, cycleId: 1, rank: "نائب", unit: "لجنة التصوير", verdict: "kept", final: [11, 25] },
+    audiences: [
+      {
+        key: "holder",
+        level: "important",
+        to: (f) => [{ user: f.userId }],
+        text: (f, g) =>
+          f.verdict === "kept" && f.final
+            ? { title: `${fm(g, "نتيجتك", "نتيجتكِ")} في تقييم القيادات ${percentText({ num: f.final[0], den: f.final[1] })}%`, body: `${fm(g, "وأنت باقٍ", "وأنتِ باقيةٌ")} في منصب «${seat(f, g)}».` }
+            : { title: `لا نتيجةَ ${fm(g, "لك", "لكِ")} في تقييم القيادات هذه الدورة`, body: "لم يكتمل ما تُحسب به." },
+        href: () => "/dashboard/evaluation/mine",
+      },
+    ],
+  }),
+
+  /**
+   * **الاستبعاد** (م٩) — حكمٌ من اللائحة لا بسلطة شخص، فلا فاعلَ له. للمستبعَد (**وبريد**: تغيّرُ منصب)،
+   * ولمن يدير التقييم وهم مديرو الانتخابات أنفسُهم (الرئيسان وقائدُ الموارد): خلا المقعد، وفتحُ
+   * انتخابه بأيديهم بعد مهلة التصحيح.
+   */
+  "evaluation.removed": defineKind<Seat & { userId: string; name: string; targetId: number; cycleId: number; final: [number, number]; back: Seat | null; holdUntil: string }>({
+    section: "evaluation",
+    when: "استُبعد قائدٌ أو نائبٌ أو منسّقٌ بنتيجة 40% أو أقلّ",
+    sample: { userId: SAMPLE_USER, name: "سلطان فهد الدوسري", targetId: 6, cycleId: 1, rank: "قائد", unit: "لجنة التنظيم", final: [79, 200], back: { rank: "عضو", unit: "لجنة التنظيم" }, holdUntil: "2027-01-31" },
+    audiences: [
+      {
+        key: "holder",
+        level: "important",
+        email: true,
+        to: (f) => [{ user: f.userId }],
+        text: (f, g) => ({
+          title: `${fm(g, "استُبعدتَ", "استُبعدتِ")} من منصب «${seat(f, g)}»`,
+          body: `${fm(g, "نتيجتك", "نتيجتكِ")} ${percentText({ num: f.final[0], den: f.final[1] })}%${f.back ? `، ${fm(g, "وعُدتَ", "وعُدتِ")} إلى «${seat(f.back, g)}»` : ""}.`,
+        }),
+        mail: (f, g) => ({
+          mood: "announcement",
+          lead: `${fm(g, "نُبلغك", "نُبلغكِ")} بنتيجة تقييم القيادات الربعيّ وما ترتّب عليها وفق لائحة تقييم القيادات:`,
+          facts: [
+            { label: "المنصب", value: seat(f, g) },
+            { label: "النتيجة", value: `${percentText({ num: f.final[0], den: f.final[1] })}%` },
+            ...(f.back ? [{ label: fm(g, "منصبك الآن", "منصبكِ الآن"), value: seat(f.back, g) }] : []),
+          ],
+        }),
+        href: () => "/dashboard/evaluation/mine",
+      },
+      {
+        key: "managers",
+        level: "important",
+        to: () => [{ capability: "manage_leader_evaluation" }],
+        text: (f) => ({
+          title: `استُبعد ${f.name} من «${seat(f, null)}»`,
+          body: `خلا المقعد، ولا يُفتح انتخابُه قبل ${fmtDateOnly(f.holdUntil)}.`,
+        }),
+        href: () => "/dashboard/evaluation",
+      },
+    ],
+  }),
+
+  /** **منسّقٌ مستبعَدٌ ينتظر لجنة** (المسألة ٤): يختار له قائدُ الموارد لجنةً فيُنفَّذ. */
+  "evaluation.awaiting_return": defineKind<Seat & { targetId: number; cycleId: number; name: string }>({
+    section: "evaluation",
+    when: "استُبعد منسّقٌ لا لجنةَ سابقةَ له يعود إليها",
+    sample: { targetId: 5, cycleId: 1, name: "فيصل محمد الحمد", rank: "منسّق", unit: "قسم الإنتاج" },
+    audiences: [
+      {
+        key: "managers",
+        level: "critical",
+        to: () => [{ capability: "manage_leader_evaluation" }],
+        text: (f) => ({ title: `استبعادُ ${f.name} ينتظر لجنةً يعود إليها`, body: `من «${seat(f, null)}». اختر اللجنة ليُنفَّذ.` }),
+        href: () => "/dashboard/evaluation",
+      },
+    ],
+  }),
+
+  /** **صُحّحت نتيجتك** (م١٠/3) — وما ترتّب: أُعدتَ، أو استُبعدتَ، أو بقي الحكم. **وبريد**: قد يتغيّر المنصب. */
+  "evaluation.corrected": defineKind<Seat & { userId: string; name: string; targetId: number; from: string; to: string; outcome: string; final: [number, number] | null }>({
+    section: "evaluation",
+    when: "صحّحت إدارةُ الموارد نتيجةَ مقيَّم",
+    sample: { userId: SAMPLE_USER, name: "سلطان فهد الدوسري", targetId: 6, rank: "قائد", unit: "لجنة التنظيم", from: "removed", to: "kept", outcome: "restored", final: [21, 50] },
+    audiences: [
+      {
+        key: "holder",
+        level: "important",
+        email: true,
+        to: (f) => [{ user: f.userId }],
+        text: (f, g) => ({
+          title: `صُحّحت ${fm(g, "نتيجتك", "نتيجتكِ")} في تقييم القيادات${f.final ? ` إلى ${percentText({ num: f.final[0], den: f.final[1] })}%` : ""}`,
+          body:
+            f.outcome === "restored" ? `${fm(g, "وأُعدتَ", "وأُعدتِ")} إلى منصب «${seat(f, g)}».`
+            : f.outcome === "removed" ? `${fm(g, "واستُبعدتَ", "واستُبعدتِ")} من منصب «${seat(f, g)}».`
+            : f.from === "removed" && f.to !== "removed" ? "وتعذّرت الإعادةُ إلى المنصب." : undefined,
+        }),
+        href: () => "/dashboard/evaluation/mine",
+      },
+    ],
+  }),
+
+  /** **نصابٌ سقط دورتين** (م٥/4): يُثبته قائدُ الضمان في تقريره إلى المجلس الإداريّ. */
+  "evaluation.quorum_missed": defineKind<{ unit: string; cycleId: number; dueOn: string }>({
+    section: "evaluation",
+    when: "لم يشارك نصفُ الأعضاء في تقييم وحدةٍ دورتين متتاليتين",
+    sample: { unit: "لجنة الضيافة", cycleId: 2, dueOn: "2027-04-21" },
+    audiences: [
+      {
+        key: "qa",
+        level: "important",
+        to: () => [{ seat: "qa_committee_leader" }],
+        text: (f) => ({ title: `لم يشارك نصفُ الأعضاء في تقييم ${f.unit} دورتين متتاليتين`, body: "يُثبَت في تقرير الضمان إلى المجلس الإداري." }),
+        href: () => "/dashboard/evaluation",
       },
     ],
   }),

@@ -6,6 +6,7 @@ import {
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
   PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving, House, Ticket, Scroll, HandHeart, GameController, PaperPlaneTilt,
+  Exam, ChartPolar, Ranking, SealCheck,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -115,9 +116,17 @@ export const IconIrfan = (p: P) => <HandHeart aria-hidden {...p} />;
 
 /* ألعاب أدِيب — يدُ التحكّم: صالةُ ألعابٍ تُلعب، لا كأسُ مسابقة (٢٠٢٦-١٠-١٧). */
 export const IconGames = (p: P) => <GameController aria-hidden {...p} />;
+// البيانات الرسميّة — الختمُ المُصدَّق: قرارٌ صدر بتوقيعٍ وختم (٢٠٢٦-١٠-٢٣)
+export const IconStatement = (p: P) => <SealCheck aria-hidden {...p} />;
 
 /* سجلُّ البريد — الطائرةُ الورقيّة: رسائلُ خرجت منّا. و`EnvelopeSimpleOpen` مأخوذةٌ لـ«رسائل التواصل» الواردة. */
 export const IconMail = (p: P) => <PaperPlaneTilt aria-hidden {...p} />;
+
+/* **تقييم القيادات** (٢٠٢٦-١٠-٢٠): ورقةُ اختبارٍ لِـ«قيّم القيادات» (ورقةٌ تُملأ)، ومخطّطُ نجمةٍ لِـ«نتيجتي»
+   (نتيجةٌ بأبعادها)، ومنصّةُ ترتيبٍ لغرفة الإدارة. ولا `Gauge`: سقطت من قبل «عدّادَ سيّارة». */
+export const IconRate = (p: P) => <Exam aria-hidden {...p} />;
+export const IconVerdict = (p: P) => <ChartPolar aria-hidden {...p} />;
+export const IconEvaluation = (p: P) => <Ranking aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -131,6 +140,7 @@ export const ICONS = {
   inbox: IconInbox, deebo: IconDeebo,
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
   announce: IconAnnounce, friends: IconFriends,
-  home: IconHome, ticket: IconTicket, regs: IconRegs, irfan: IconIrfan, games: IconGames, mail: IconMail,
+  home: IconHome, ticket: IconTicket, regs: IconRegs, irfan: IconIrfan, games: IconGames, statement: IconStatement, mail: IconMail,
+  rate: IconRate, verdict: IconVerdict, evaluation: IconEvaluation,
 } as const;
 export type IconKey = keyof typeof ICONS;

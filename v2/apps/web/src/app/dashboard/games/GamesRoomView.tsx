@@ -1,34 +1,94 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { SectionCard } from "@adeeb/design-system";
+import { Plus } from "@/app/_components/glyphs";
 import { PageHeader } from "../_components/PageHeader";
-import { LiveContest } from "./LiveContest";
-import { RackRoom } from "./RackRoom";
-import type { ContestPhase, ContestRow, GameRow } from "./vocab";
-import type { GameFacts } from "./data";
+import { useToast } from "../_components/ToastProvider";
+import { WeekPulse } from "./WeekPulse";
+import { ContestsPanel } from "./ContestsPanel";
+import { HallLineup } from "./HallLineup";
+import { ContestEditor, type ContestGame, type ContestTarget } from "./ContestEditor";
+import { moveGame, setGameInHall } from "./actions";
+import type { BoardRow, ContestRow, GameDay, GameRow, GameWeek } from "./vocab";
 
 /**
- * **غرفةُ الألعاب: الرفّ** (اختيارُ المالك في `/ui/games-room`، ٢٠٢٦-١٠-١٧، بعد «طريقةُ العرض بدائيّةٌ جدًّا»).
- * في صدرها المسابقةُ التي يعلنها شريطُ الصالة الآن بعدّادها، ثمّ كلُّ لعبةٍ صفٌّ بشاشتها الحيّة واسمِها
- * بخطّ الصالة وأرقامِها وحالِها. والصفُّ يفتح صفحتَها.
+ * **غرفةُ الألعاب** (الهيكلُ الثاني، المالك ٢٠٢٦-١٠-١٧): كانت فهرسًا جميلًا لا تُدار منه الصالة، فصارت:
+ *  - **آخرُ سبعة أيام:** هل كلُّ لعبةٍ حيّة؟ جولاتُها ولاعبوها بفرقهما عن الأسبوع قبله، وأعمدةُ أيّامها.
+ *  - **المسابقات:** كلُّها في قائمةٍ واحدة، الحاليّةُ بعدّادها ومتصدّرها والسابقةُ بفائزها.
+ *  - **الصالةُ الآن:** الألعابُ بترتيبها في `/games`، والظهورُ والترتيبُ فعلٌ فوريٌّ لا ينتظر «حفظ».
  *
- * **ولا زرَّ «لعبة جديدة»** (المالك ٢٠٢٦-١٠-١٧): اللعبةُ كودٌ يُبنى ويُرفع إلى الموقع، ومن يبنيها
- * يسجّل صفَّها في `games` في الخطوة نفسِها (كما سُجّلت «دربك خضر» و«بنك أدِيب» في `games_01_hall`).
+ * والفعلُ الفوريُّ متفائل: يتبدّل الصفُّ ساعةَ النقر ثمّ يُصدّقه الخادم، فإن رفض عاد كما كان بإشعار.
  */
 export function GamesRoomView({
-  games, facts, contestPhase, live,
+  games: initial, days, weeks, contests, leaders, contestGames, now,
 }: {
   games: GameRow[];
-  facts: Record<string, GameFacts>;
-  contestPhase: Record<string, ContestPhase>;
-  live: ContestRow | null;
+  days: Record<string, GameDay[]>;
+  weeks: Record<string, GameWeek>;
+  contests: ContestRow[];
+  leaders: Record<string, BoardRow | undefined>;
+  /** ما يُتنافس فيه (لعبةٌ لها مقياس). وبلا شيءٍ لا زرَّ «مسابقة جديدة». */
+  contestGames: ContestGame[];
+  now: number;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const [, start] = useTransition();
+  const [games, setGames] = useState(initial);
+  const [seen, setSeen] = useState(initial);
+  // الخادمُ أعاد قراءةً جديدة (`router.refresh`): تُعتمد هي، لا ما بقي من التفاؤل.
+  if (initial !== seen) { setSeen(initial); setGames(initial); }
+  const [busy, setBusy] = useState<string | null>(null);
+  const [target, setTarget] = useState<ContestTarget | null>(null);
+
+  const run = (slug: string, optimistic: GameRow[], act: () => Promise<{ ok: boolean; message: string }>) => {
+    const before = games;
+    setGames(optimistic);
+    setBusy(slug);
+    start(async () => {
+      const r = await act();
+      setBusy(null);
+      if (!r.ok) { setGames(before); toast.error(r.message); return; }
+      router.refresh();
+    });
+  };
+
+  const toggle = (slug: string, inHall: boolean) =>
+    run(slug, games.map((g) => (g.slug === slug ? { ...g, inHall } : g)), () => setGameInHall(slug, inHall));
+
+  const move = (slug: string, dir: -1 | 1) => {
+    const next = [...games];
+    const i = next.findIndex((g) => g.slug === slug);
+    let j = i + dir;
+    while (j >= 0 && j < next.length && !next[j].inHall) j += dir;
+    if (i < 0 || j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    run(slug, next, () => moveGame(slug, dir));
+  };
+
   return (
-    <div className="gmr">
-      <PageHeader title="ألعاب أدِيب" />
-      {live ? <LiveContest contest={live} href={`/dashboard/games/${live.gameSlug}?tab=contests`} /> : null}
-      <RackRoom games={games} facts={facts} phase={contestPhase} onOpen={(slug) => router.push(`/dashboard/games/${slug}`)} />
+    <div className="gmr gmr-cq">
+      <PageHeader
+        title="ألعاب أدِيب"
+        action={contestGames.length ? { label: "مسابقة جديدة", icon: <Plus size={18} />, onClick: () => setTarget({ pick: true }) } : undefined}
+      />
+      <div className="gmr-room">
+        <div className="gmr-room-main">
+          <WeekPulse games={games} days={days} weeks={weeks} />
+          <ContestsPanel
+            contests={contests}
+            leaders={leaders}
+            serverNow={now}
+            hrefFor={(c) => `/dashboard/games/${c.gameSlug}?tab=contests`}
+          />
+        </div>
+        <SectionCard title="الصالة الآن">
+          <HallLineup games={games} busy={busy} onToggle={toggle} onMove={move} />
+        </SectionCard>
+      </div>
+      {target ? <ContestEditor key={JSON.stringify(target)} target={target} games={contestGames} onClose={() => setTarget(null)} /> : null}
     </div>
   );
 }

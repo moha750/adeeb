@@ -116,6 +116,13 @@ export const SECTION_CAP = {
   "/dashboard/elections/run": "run_for_election",     // الترشُّح — لمن يترشّح
   "/dashboard/elections/my": "run_for_election",      // سِجلّ ترشُّحي — لمن له ترشّح
   "/dashboard/elections/vote": "view_own_membership", // التصويت — لكلّ ناخب
+  // **تقييم القيادات** (٢٠٢٦-١٠-٢٠، لائحة تقييم القيادات): الغرفةُ بقفل النتائج، فيدخلها الرئيسان
+  // وقائدا الإدارتين (أحكامٌ عامّة: «يطّلع على النتائج التفصيليّة»). والتصحيحُ قدرةٌ ثانية
+  // (`manage_leader_evaluation`) تُسأل داخلها وفي القاعدة، لا هنا: يحملها الرئيسان وقائدُ الموارد.
+  "/dashboard/evaluation": "view_leader_evaluation_results",
+  // بابا العضو، يظهران حين تصدق إشارتُهما (`scope.evaluation`)، وما خلفهما للجلسة وحدها (`auth.uid()`)
+  "/dashboard/evaluation/rate": "view_own_membership",
+  "/dashboard/evaluation/mine": "view_own_membership",
   "/dashboard/website/works": "manage_works",
   "/dashboard/website/achievements": "manage_achievements",
   "/dashboard/website/sponsors": "manage_sponsors",
@@ -128,6 +135,9 @@ export const SECTION_CAP = {
   // **أنظمة أدِيب** (٢٠٢٦-١٠-١٣): غرفةُ تحرير الدستور والأنظمة، للرئيسين وحدهما (الدستور م٦٨). والقدرةُ
   // تفتح الغرفةَ والتحرير، والنشرُ يشترط فوقها موافقةَ المقعدين معًا (`lib/regulations/authz.ts`).
   "/dashboard/regulations": "manage_regulations",
+  // **البيانات** (٢٠٢٦-١٠-٢٣): البياناتُ الرسميّة على قالب أدِيب (تكليف، تعيين، تعميم…)، للرئيسين وحدهما.
+  // والتوقيعان والختم يصلان من بابٍ بالقفل نفسِه (`/api/statements/asset/*`).
+  "/dashboard/statements": "issue_statements",
   "/dashboard/radio": "manage_radio",
   // **ألعاب أدِيب** (٢٠٢٦-١٠-١٧): صالةُ `/games` ومسابقاتُها وإحصائيّاتُ كلّ لعبة، للرئيسين وحدهما.
   // وصفحةُ كلّ لعبةٍ تحتها (`/dashboard/games/<slug>`) بالقفل نفسِه.

@@ -8,6 +8,7 @@ import { isLiveMembership } from "@/lib/memberRecord";
 import { normalizeName } from "@/lib/personName";
 import { myDataSchema, type MyDataInput, type SaveResult } from "./schema";
 import { EXIT_REASON_MIN } from "./vocab";
+import { refreshStructurePage } from "@/lib/structurePage";
 
 
 
@@ -65,6 +66,7 @@ export async function saveMyData(raw: MyDataInput): Promise<SaveResult> {
 
   revalidatePath("/me");
   revalidatePath("/dashboard", "layout");
+  refreshStructurePage();
   return { ok: true, message: "حُفظت بياناتك." };
 }
 
@@ -171,6 +173,7 @@ export async function endMyMembership(reason: string): Promise<DeletionResult> {
   const res = (data ?? {}) as { ok?: boolean; message?: string };
   revalidatePath("/me");
   revalidatePath("/dashboard", "layout");
+  refreshStructurePage();
   return { ok: res.ok === true, message: res.message ?? "تعذّر إنهاء عضويّتك." };
 }
 

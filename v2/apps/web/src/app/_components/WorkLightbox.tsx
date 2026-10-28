@@ -2,7 +2,7 @@
 
 import { Dialog } from "@adeeb/design-system";
 import { useId, useState } from "react";
-import { toLatinDigits } from "@adeeb/core";
+import { toLatinDigits } from "@adeeb/core/digits";
 import { X } from "@/app/_components/glyphs";
 
 export type Work = {

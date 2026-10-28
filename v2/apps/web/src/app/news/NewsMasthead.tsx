@@ -1,6 +1,8 @@
 "use client";
 
 import { Newspaper, Star } from "@phosphor-icons/react";
+/* glyph-weight: Star — نجمةُ «مميّزة» في عدّاد الترويسة تبقى على وزن الموقع كجارتها Newspaper كما نُشرت؛
+   ودخولُها قائمةَ الاستثناء (bold) يغيّر رسمَها، وذاك قرارُ المالك لا حارسِ الاستيراد. */
 import { Eye } from "@/app/_components/glyphs";
 import { AR_NEWS, AR_VIEW, arCount } from "@/lib/arabicCount";
 

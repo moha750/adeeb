@@ -34,6 +34,8 @@ export type MemberFields = {
   linkedin?: string;
   /** اللون المفضّل `#rrggbb` — يلوّن تهنئة الميلاد. يملكه صاحبُه. */
   favoriteColor?: string;
+  /** تاريخ الميلاد `YYYY-MM-DD` — يملكه صاحبه (قرار المالك ٢٠٢٦-١٠-٢٨). العمود NOT NULL فلا يُفرَّغ. */
+  birthDate?: string;
 };
 
 export type MemberWriteResult = { ok: boolean; message: string };
@@ -55,7 +57,7 @@ const clean = (v: string | undefined): string | null => {
  * (`member_details_academic_fields_check`)؛ والجوّال بصيغته (`profiles_phone_check`)؛
  * ومعرّفات التواصل مجرّدةً (`member_details_social_handle_check`).
  *
- * و`member_details` **يُحدَّث ولا يُنشأ**: عمودا `national_id`/`birth_date` NOT NULL وليسا في
+ * و`member_details` **يُحدَّث ولا يُنشأ**: عمودا `national_id`/`birth_date` NOT NULL، والهويّةُ في
  * أيّ نموذجٍ من النموذجين — فمن لا سجلّ له يُبلَّغ صراحةً بما لم يُحفظ.
  */
 export async function writeMemberData(
@@ -106,6 +108,16 @@ export async function writeMemberData(
     return { ok: false, message: "لون غير صالح. الصيغة: ‎#rrggbb." };
   }
 
+  // تاريخ الميلاد — يومٌ حقيقيّ بصيغة `YYYY-MM-DD`، لا مستقبليّ ولا قبل ١٩٠٠. ولا يُفرَّغ (NOT NULL).
+  const birthDate = clean(fields.birthDate);
+  if (fields.birthDate !== undefined) {
+    if (!birthDate) return { ok: false, message: "تاريخ الميلاد مطلوب." };
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
+    const d = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
+    const real = !!d && d.getUTCFullYear() === +m![1] && d.getUTCMonth() === +m![2] - 1 && d.getUTCDate() === +m![3];
+    if (!real || d!.getTime() > Date.now() || +m![1] < 1900) return { ok: false, message: "تاريخ ميلاد غير صالح." };
+  }
+
   const college = clean(fields.college);
   const major = clean(fields.major);
   const recordNo = clean(fields.recordNo);
@@ -142,6 +154,7 @@ export async function writeMemberData(
   // ٢) التفاصيل — تحديثٌ لا إنشاء. `select()` يكشف عدد الصفوف المتأثّرة، فنعرف يقينًا هل وُجد السجلّ.
   const detailCols: Record<string, unknown> = { ...academic, ...socials, updated_at: new Date().toISOString() };
   if (fields.favoriteColor !== undefined) detailCols.favorite_color = favoriteColor;
+  if (birthDate) detailCols.birth_date = birthDate;
   const { data: touched, error: dErr } = await sb
     .from("member_details")
     .update(detailCols)

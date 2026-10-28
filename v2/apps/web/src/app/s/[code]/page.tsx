@@ -7,6 +7,7 @@ import { StateScreen } from "./StateScreen";
 import { fmtStamp } from "@/lib/dates";
 import { toPublicSurvey, toPublicQuestions } from "./public";
 import { isSurveyCode, surveyPath } from "@/lib/surveys/code";
+import { isAdeebMember } from "@/lib/memberRecord";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -83,7 +84,7 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ c
   if (survey.end_date && new Date(survey.end_date).getTime() < now) {
     return <StateScreen kind="ended" title="انتهت مدّة الاستبيان" text={closedMsg ?? "انتهى استقبال الإجابات على هذا الاستبيان."} />;
   }
-  // ٣) وصول الأعضاء — الدخول ثمّ العضويّة النشطة
+  // ٣) وصول الأعضاء — الدخول ثمّ العضويّة
   if (survey.access_type === "members_only") {
     if (!user) {
       return (
@@ -95,11 +96,11 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ c
         />
       );
     }
-    // `members` لا `profiles`: بعد توحيد الهويّة (م١) صار للزائر صفٌّ في الجدول وحالُه
-    // `active` — فقياسُ الحالِ وحدَه كان سيفتح استبيانَ الأعضاء لكلّ صاحبِ حساب.
-    const { data: profile } = await sb.from("members").select("account_status").eq("id", user.id).maybeSingle();
-    if (profile?.account_status !== "active") {
-      return <StateScreen kind="inactive" title="لعضويّات أدِيب النشطة" text="هذا الاستبيان متاح للأعضاء النشطين فقط." />;
+    // **عضوُ أدِيب هنا هو عضوُ أدِيب في الموقع كلّه** (قرار المالك ٢٠٢٦-١٠-٢٠): انضمّ ولم يُوقَف، من
+    // مصدره الواحد (`isAdeebMember` ← نظيرُ `is_adeeb_member` الذي تقيس به دالّةُ الإرسال). كان يُقاس هنا
+    // بالحال `active` وحدها فيُردّ العضوُ غيرُ النشط، وهو عند الموقع عضو: للعضويّة معنيان.
+    if (!(await isAdeebMember(user.id))) {
+      return <StateScreen kind="inactive" title="لأعضاء أدِيب" text="هذا الاستبيان متاح لأعضاء أدِيب فقط." />;
     }
   }
   // ٤) استجابة واحدة للمسجَّل — تُفحص هنا لعرض شاشة صادقة قبل عناء الإجابة

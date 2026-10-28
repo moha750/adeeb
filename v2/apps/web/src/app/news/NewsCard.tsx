@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { CalendarBlank, Clock, Feather, Newspaper, Star } from "@phosphor-icons/react";
+/* glyph-weight: Star — نجمةُ «تغطية مميّزة» مصمتةٌ (fill) في حبّة الفئة كما نُشرت؛ ووزنُ الاستثناء (bold)
+   يفرّغها خطًّا. فتبقى بوزنها حتى يقرّر المالك غيرَه. */
 import { AR_READ_MIN, arCount } from "@/lib/arabicCount";
 import { newsHref } from "@/lib/news/link";
 import { bylineOf } from "@/lib/news/byline";
@@ -25,11 +27,15 @@ export function NewsCat({ n }: { n: PublicNews }) {
  * تصفّحٍ يختار فيها القارئُ بعينه. (رُدّ قبله كرتُ الهويّة العامّ، ثمّ كرتٌ «كلاسيكيّ».)
  * وأختُه «ختمُ التاريخ» (`SealCard`) في «اقرأ أيضًا» آخرَ الخبر.
  */
-export function NewsCard({ n }: { n: PublicNews }) {
+export function NewsCard({ n, lead = false }: { n: PublicNews; lead?: boolean }) {
   const by = bylineOf(n.authors);
   return (
     <Link href={newsHref(n)} className="gcard">
-      {n.cover ? <img src={n.cover} alt="" loading="lazy" /> : <span className="gcard-ph" aria-hidden><Newspaper size={40} /></span>}
+      {/* **غلافُ الكرت الأوّل لا يُؤجَّل** (٢٠٢٦-١٠-٢٧): هو أكبرُ ما في الشاشة الأولى على الجوّال،
+          وكان `lazy` فلا يُطلب حتى يُحسب التخطيط (~4.9ث انتظارٌ على 4G). فيُطلب فورًا وبأولويّةٍ عالية. */}
+      {n.cover ? (
+        <img src={n.cover} alt="" loading={lead ? "eager" : "lazy"} fetchPriority={lead ? "high" : undefined} />
+      ) : <span className="gcard-ph" aria-hidden><Newspaper size={40} /></span>}
       <NewsCat n={n} />
       <span className="gcard-panel">
         <span className="gcard-facts">

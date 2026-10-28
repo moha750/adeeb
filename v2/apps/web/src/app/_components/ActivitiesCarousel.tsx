@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Badge, CarouselNav, useInView } from "@adeeb/design-system";
+import { Badge, CarouselNav, useInView, useNearView } from "@adeeb/design-system";
 import { Clock, MapPin } from "@phosphor-icons/react";
 import { ArrowLeft } from "@/app/_components/glyphs";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
@@ -28,6 +28,8 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
   // يُعاد بناءُ المستمعين والتوسيط كلّما دخل القسمُ أو خرج.
   const inView = useInView(peekRef);
   const inViewRef = useRef(false);
+  /** صورُ القسم لا تُطلب حتى يقترب (`useNearView`، ٢٠٢٦-١٠-٢٨): كانت تُطلب مع الصفحة فتزاحم الصدر على الجوّال. */
+  const near = useNearView(peekRef);
   /** يُسمَع ولا يُقرأ مرّةً: من أعلن تقليلَ الحركة وهو في الصفحة يقف الشريطُ عنده */
   const still = useMediaFlag(REDUCE_MOTION);
   useEffect(() => { inViewRef.current = inView; }, [inView]);
@@ -103,7 +105,7 @@ export function ActivitiesCarousel({ items }: { items: ActCard[] }) {
         {copies.map((c) =>
           items.map((a) => (
             <article className="act-card" key={`${a.id}-${c}`} aria-hidden={c !== 1}>
-              <div className="act-cov" style={a.cover ? { backgroundImage: `url(${a.cover})` } : undefined}>
+              <div className="act-cov" style={a.cover && near ? { backgroundImage: `url(${a.cover})` } : undefined}>
                 <div className="act-date">
                   <div className="act-d">{a.day}</div>
                   <div className="act-m">{a.month}</div>

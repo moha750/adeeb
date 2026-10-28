@@ -207,11 +207,41 @@ export function Hero({
           : "account");
   const sp = SPEECH[standing];
 
+  /* **صورُ الشرائح تُطلب واحدةً بعد واحدة** (٢٠٢٦-١٠-٢٧، قياسُ جوّالٍ على 4G): كانت الستُّ
+     تُطلب كلُّها مع أوّل بايت (~640KB) والظاهرةُ واحدة، فزاحمت ورقةَ التنسيق والكودَ حتى تأخّر
+     أوّلُ رسمٍ إلى ~7ث. فالخادمُ يرسم صورةَ الأولى وحدها، وبعد الترطيب تُطلب التاليةُ للعرض
+     القادم فقط. ولا ينتقل العارضُ إلى شريحةٍ لم تصل صورتُها: ينتظرها فلا تظهر فارغة. */
+  /** أبعدُ شريحةٍ طُلبت صورتُها؛ لا يرجع، فشريحةٌ تتلاشى عند الدوران إلى الأولى لا تفقد صورتَها. */
+  const [reach, setReach] = useState(0);
+  /** الحدُّ المرسوم: الأولى في الخادم، والتاليةُ معها بعد الترطيب. */
+  const far = Math.max(reach, hydrated ? 1 : 0);
+  const loaded = useRef(new Set<number>([0]));
+  const waitFor = useRef<number | null>(null);
+  /** الانتقالُ إلى شريحة يطلب صورةَ التي بعدها، لتكون جاهزةً حين يحين دورُها. */
+  const go = (n: number) => {
+    setI(n);
+    setReach((r) => Math.max(r, Math.min(n + 1, slides.length - 1)));
+  };
+  const onShot = (n: number) => {
+    loaded.current.add(n);
+    if (waitFor.current === n) {
+      waitFor.current = null;
+      go(n);
+    }
+  };
+
   /* العارضُ يمشي وحدَه، ونقرةُ نقطةٍ تُعيد المهلةَ من أوّلها (المفتاحُ `i`). */
   useEffect(() => {
     if (slides.length < 2) return;
-    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), 5200);
+    waitFor.current = null;
+    const t = setTimeout(() => {
+      const next = (i + 1) % slides.length;
+      if (loaded.current.has(next)) go(next);
+      else waitFor.current = next;
+    }, 5200);
     return () => clearTimeout(t);
+    // `go` يتجدّد كلَّ رسمٍ ولا يحمل حالًا يتقادم: يضبط بدوالّ التحديث وحدها.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, slides.length]);
 
   /* ══ تفاعلُ الريشة مع المؤشّر ══════════════════════════════════════
@@ -385,7 +415,15 @@ export function Hero({
           {slides.map((sl, n) => (
             <div key={sl.title} className={"hro-slide" + (n === i ? " on" : "")} aria-hidden={n !== i}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={sl.img} alt="" />
+              <img
+                src={n <= far || n === i ? sl.img : undefined}
+                alt=""
+                ref={(el) => {
+                  if (el?.complete && el.naturalWidth) onShot(n);
+                }}
+                onLoad={() => onShot(n)}
+                onError={() => onShot(n)}
+              />
             </div>
           ))}
         </div>
@@ -403,7 +441,7 @@ export function Hero({
                 type="button"
                 aria-current={n === i}
                 aria-label={`الشريحة ${n + 1}`}
-                onClick={() => setI(n)}
+                onClick={() => go(n)}
               />
             ))}
           </div>

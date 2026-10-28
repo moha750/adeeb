@@ -7,6 +7,7 @@ import { getVolunteeringManager, service } from "@/lib/volunteering";
 import { AR_CERTIFICATE, arCount } from "@/lib/arabicCount";
 import { clubNow, periodEnded, periodStarted, type ClubNow } from "@/lib/volunteerPeriods";
 import { listVolunteers, type VolunteerRow } from "./data";
+import { STRUCTURE_PATH } from "@/lib/structurePage";
 
 export type Result = { ok: boolean; message: string; id?: string };
 
@@ -492,6 +493,6 @@ export async function grantMembership(userId: string, committeeId: number): Prom
   return callRpc(
     "grant_membership_to_volunteer",
     { p_user: userId, p_committee_id: committeeId },
-    ["/dashboard/volunteering/volunteers", "/dashboard/members/active"],
+    ["/dashboard/volunteering/volunteers", "/dashboard/members/active", STRUCTURE_PATH],
   );
 }

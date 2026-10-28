@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { loadClient } from "@/lib/supabase/lazy";
 import type { InboxFilter, InboxItem } from "@/lib/notifications/types";
 import { loadInboxPage, loadInboxSummary, readAllNotes, readNotes } from "./actions";
 import { BellButton } from "./BellButton";
-import { InboxDrawer } from "./InboxDrawer";
+
+/**
+ * **اللوحُ يُحمَّل بعد الجرس لا معه** (٢٠٢٦-١٠-٢٧، قياسُ جوّالٍ على 4G). اللوحُ يجرّ خريطةَ أيقونات
+ * اللوحة كلّها (`_shell/icons`، ٤٧ أيقونة) ومعها الحوارُ والمقسّم، وكان ذلك يُنزَّل لكلّ زائرٍ في
+ * كلّ صفحةٍ عامّة وهو لا يُفتح إلّا لصاحب جلسة. فيُطلب حين يُعرف صاحبُ الجلسة (في وقت فراغ
+ * المتصفّح) أو حين يُفتح، أيُّهما سبق.
+ */
+const loadDrawer = () => import("./InboxDrawer");
+const InboxDrawer = lazy(() => loadDrawer().then((m) => ({ default: m.InboxDrawer })));
 
 /**
  * **جرسُ صاحب الجلسة** — في رأس اللوحة (`DashboardShell`) ورأس الموقع (`SiteHeader`)، جرسٌ واحدٌ
@@ -27,6 +35,8 @@ import { InboxDrawer } from "./InboxDrawer";
 
 const SETTLE_MS = 400;
 
+type Client = Awaited<ReturnType<typeof loadClient>>;
+
 export function NotificationsBell() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
@@ -37,6 +47,8 @@ export function NotificationsBell() {
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [more, setMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  /** رُكِّب اللوحُ؟ مرّةً تكفي: يبقى مركَّبًا مغلقًا كما كان قبل التأجيل، فيفتح بحركته المعتادة. */
+  const [armed, setArmed] = useState(false);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshCount = useCallback(() => {
@@ -92,24 +104,44 @@ export function NotificationsBell() {
     }, SETTLE_MS);
   });
 
+  /* صاحبُ الجلسة معروف ⇒ يُجهَّز اللوحُ في وقت الفراغ، فلا ينتظر أوّلُ فتحٍ تنزيلَه. */
   useEffect(() => {
     if (!userId) return;
-    const sb = createClient();
+    const arm = () => {
+      loadDrawer()
+        .then(() => setArmed(true))
+        .catch(() => {});
+    };
+    if ("requestIdleCallback" in window) {
+      const h = window.requestIdleCallback(arm, { timeout: 4000 });
+      return () => window.cancelIdleCallback(h);
+    }
+    const t = setTimeout(arm, 1500);
+    return () => clearTimeout(t);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
     let alive = true;
-    let channel: ReturnType<typeof sb.channel> | null = null;
+    let sb = null as Client | null;
+    let channel = null as ReturnType<Client["channel"]> | null;
     // **الرمزُ يُسلَّم صراحةً قبل الاشتراك** (٢٠٢٦-١٠-١١، من التجربة الحيّة): كان الجرسُ يشترك ويقول
     // «SUBSCRIBED» ولا يصله شيء، لأنّ القناةَ انضمّت بمفتاح الزائر قبل أن يُقرأ رمزُ الجلسة من
     // الكوكيز، فحجبت سياسةُ «صاحب الصفّ وحده» كلَّ صفّ. وعميلٌ سلّم رمزَه قبل الانضمام وصله الإدراج
     // فورًا. والتجديدُ بعده تتولّاه المكتبة (`TOKEN_REFRESHED` يسلّم الرمزَ الجديد).
-    void sb.auth.getSession().then(async ({ data }) => {
+    // المكتبةُ تُنزَّل هنا أوّلَ مرّة (`lib/supabase/lazy`): الجرسُ لا يُركَّب إلّا لصاحب جلسة.
+    void loadClient().then(async (client) => {
+      if (!alive) return;
+      sb = client;
+      const { data } = await client.auth.getSession();
       const token = data.session?.access_token;
       if (!alive || !token) return;
-      await sb.realtime.setAuth(token);
+      await client.realtime.setAuth(token);
       if (!alive) return;
       // موضوعٌ فريدٌ لكلّ تركيب: المكتبةُ تعيد القناةَ نفسَها بموضوعها، فلو رُكّب الجرسُ والقديمةُ لم
       // تُغادَر بعد (تنقّلٌ بين صفحتين عامّتين) لَما اشتركت الجديدة (من المراجعة المستقلّة).
       const topic = `inbox-${userId}-${Math.random().toString(36).slice(2)}`;
-      channel = sb
+      channel = client
         .channel(topic)
         .on(
           "postgres_changes",
@@ -117,11 +149,11 @@ export function NotificationsBell() {
           (payload) => onInboxChange(payload.eventType === "INSERT"),
         )
         .subscribe();
-    });
+    }).catch(() => {});
     return () => {
       alive = false;
       if (settle.current) clearTimeout(settle.current);
-      if (channel) void sb.removeChannel(channel);
+      if (sb && channel) void sb.removeChannel(channel);
     };
   }, [userId]);
 
@@ -133,6 +165,7 @@ export function NotificationsBell() {
   const close = useCallback(() => setOpen(false), []);
 
   const show = () => {
+    setArmed(true);
     setOpen(true);
     loadFirst(tab);
   };
@@ -178,19 +211,23 @@ export function NotificationsBell() {
   return (
     <>
       <BellButton count={unread} open={open} onClick={open ? close : show} />
-      <InboxDrawer
-        open={open}
-        unread={unread}
-        tab={tab}
-        onTab={onTab}
-        items={items}
-        more={more}
-        loadingMore={loadingMore}
-        onMore={onMore}
-        onOpen={onOpen}
-        onReadAll={onReadAll}
-        onClose={close}
-      />
+      {armed ? (
+        <Suspense fallback={null}>
+          <InboxDrawer
+            open={open}
+            unread={unread}
+            tab={tab}
+            onTab={onTab}
+            items={items}
+            more={more}
+            loadingMore={loadingMore}
+            onMore={onMore}
+            onOpen={onOpen}
+            onReadAll={onReadAll}
+            onClose={close}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }

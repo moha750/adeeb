@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
 import { writeMemberData } from "@/lib/memberData";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+import { refreshStructurePage } from "@/lib/structurePage";
 
 export type ProfileResult = { ok: boolean; message: string };
 
@@ -20,7 +21,8 @@ const NO_SESSION = "جلستك غير صالحة.";
 const NO_KEY = "إعداد الخادم ناقص (مفتاح الخدمة).";
 
 /** الصورة تُعرَض في الشريط الجانبيّ وفي كلّ شاشةٍ تذكر صاحبها، فالإنعاش على اللوحة كلّها. */
-const revalidateMe = () => revalidatePath("/dashboard", "layout");
+// والهيكلةُ العلنيّة تعرض الصورةَ نفسَها
+const revalidateMe = () => { revalidatePath("/dashboard", "layout"); refreshStructurePage(); };
 
 export type MyProfileInput = {
   phone?: string;
@@ -33,6 +35,8 @@ export type MyProfileInput = {
   tiktok?: string;
   linkedin?: string;
   favoriteColor?: string;
+  /** `YYYY-MM-DD` — يملكه صاحبه (قرار المالك ٢٠٢٦-١٠-٢٨). */
+  birthDate?: string;
 };
 
 /**
@@ -42,7 +46,7 @@ export type MyProfileInput = {
  * هنا لتحرير غيره. والحَكَم مع ذلك يُسأل كما يُسأل في مسار الإدارة — بندُ «لكلٍّ بياناتُ نفسه»
  * في `can_edit_member_data` هو ما يُجيز هذه الشاشة أصلًا، فلا يُفترَض بل يُستفتى.
  *
- * والاسم والبريد ورقم الهويّة وتاريخ الميلاد والجنس **ليست هنا**: هويّةٌ تملكها الإدارة
+ * والاسم والبريد ورقم الهويّة والجنس **ليست هنا**: هويّةٌ تملكها الإدارة
  * (والبريد `credentials/` لأنّه هويّة مصادقة تُزامَن مع auth.users) — تُعرَض في الشاشة ولا تُمرَّر.
  * والكتابة نفسها في `lib/memberData` — مصدرٌ واحد يشاركه مسار الإدارة، فالقيود واحدة.
  */
@@ -64,6 +68,7 @@ export async function updateMyProfile(input: MyProfileInput): Promise<ProfileRes
     tiktok: input.tiktok,
     linkedin: input.linkedin,
     favoriteColor: input.favoriteColor ?? "",
+    birthDate: input.birthDate,
   });
 
   revalidateMe();

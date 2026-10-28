@@ -4,7 +4,7 @@
 import { matchesSearch } from "@adeeb/design-system/search";
 import type { IconKey } from "./icons";
 import { canOpen, type NavHref } from "@/lib/capabilities";
-import type { ElectionSignal, MyScope, SeatKind } from "@/lib/myScope";
+import type { ElectionSignal, EvaluationSignal, MyScope, SeatKind } from "@/lib/myScope";
 
 export type NavLeaf = { label: string; href: NavHref; badge?: string };
 export type NavItem = {
@@ -17,6 +17,8 @@ export type NavItem = {
   seat?: SeatKind;
   /** بابُ انتخابٍ لا يُعرض إلّا حين تصدق إشارتُه — القفلُ وحده لا يكفي (`scope.elections`). */
   election?: ElectionSignal;
+  /** بابُ تقييمٍ لا يُعرض إلّا حين تصدق إشارتُه (`scope.evaluation`)، كأبواب الانتخابات. */
+  evaluation?: EvaluationSignal;
 };
 export type NavGroup = { head?: string; items: NavItem[] };
 
@@ -69,6 +71,17 @@ export const NAV: NavGroup[] = [
       { label: "صوّت الآن", icon: "ballot", href: "/dashboard/elections/vote", election: "canVote" },
       // غرفةُ الإدارة والاطّلاع — قفلُها `view_election_candidates`، ويتفرّع داخلها المديرُ عن المطّلِع.
       { label: "إدارة الانتخابات", icon: "vote", href: "/dashboard/elections" },
+    ],
+  },
+  {
+    // **تقييم القيادات** (٢٠٢٦-١٠-٢٠): رأسٌ قائمٌ بنفسه بعد الانتخابات وللعلّة نفسِها: «قيّم القيادات» بابٌ
+    // موقوتٌ ثلاثةَ أيّامٍ كلَّ ربع، فلا يُدفَن. والغرفةُ آخرًا لأهلها (الرئيسان وقائدا الإدارتين).
+    head: "تقييم القيادات",
+    items: [
+      // «القيادات» لا «قادتك» (محمد ٢٠٢٦-١٠-٢٧): المجلسُ والمنسّقُ والقائدُ يقيّمون من تحتهم، فلا يصدق «قادتك» إلّا على العضو
+      { label: "قيّم القيادات", icon: "rate", href: "/dashboard/evaluation/rate", evaluation: "canRate" },
+      { label: "نتيجتي", icon: "verdict", href: "/dashboard/evaluation/mine", evaluation: "hasResults" },
+      { label: "إدارة التقييم", icon: "evaluation", href: "/dashboard/evaluation" },
     ],
   },
   {
@@ -137,6 +150,8 @@ export const NAV: NavGroup[] = [
       { label: "الأخبار", icon: "news", href: "/dashboard/news" },
       { label: "المكتبة", icon: "book", href: "/dashboard/library" },
       { label: "أنظمة أدِيب", icon: "regs", href: "/dashboard/regulations" },
+      // **البيانات** جارُ «أنظمة أدِيب»: كلاهما صوتُ النادي الرسميّ، هذا قانونُه وذاك قراراتُه (٢٠٢٦-١٠-٢٣).
+      { label: "البيانات", icon: "statement", href: "/dashboard/statements" },
       // «إذاعة أدِيب» باسمها كاملًا بأمر المالك (٢٠٢٦-٠٨-١٨) — كما يقول عنوانُ غرفتها.
       { label: "إذاعة أدِيب", icon: "mic", href: "/dashboard/radio" },
       { label: "ألعاب أدِيب", icon: "games", href: "/dashboard/games" },
@@ -175,7 +190,11 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
   // إدارةً وتعيينُهما يبلغ الإدارتين، فلو سُئل عن مقعدٍ لسقط البندُ عنهما وهما أهلُه.
   const seated = (it: NavItem) =>
     !it.seat || (it.seat === "unit" ? scope.units.length > 0 : scope[it.seat] !== null);
-  const has = (it: NavItem) => seated(it) && (!it.election || scope.elections[it.election]);
+  const has = (it: NavItem) =>
+    seated(it) && (!it.election || scope.elections[it.election]) && (!it.evaluation || !!scope.evaluation?.[it.evaluation]);
+  // شارةُ «قيّم القيادات»: عددُ ما بقي من أوراق، فيعرف صاحبُها أنّ عليه شيئًا قبل أن يفتح
+  const badged = (it: NavItem): NavItem =>
+    it.evaluation === "canRate" && (scope.evaluation?.pending ?? 0) > 0 ? { ...it, badge: String(scope.evaluation!.pending) } : it;
   // والاسمُ يتبع الحقيقة: «إدارتي» لمن له فيها مقعد، و«الإدارات» لمن يبلغها ولا يجلس فيها.
   const named = (it: NavItem): NavItem =>
     it.seat === "unit" && !scope.unit ? { ...it, label: "الإدارات" } : it.href === "/dashboard" && !caps.includes("view_own_membership")
@@ -189,7 +208,7 @@ export function navFor(caps: readonly string[], scope: MyScope): NavGroup[] {
         const children = it.children.filter((c) => canOpen(caps, c.href));
         return children.length ? [{ ...it, children }] : [];
       }
-      return it.href && canOpen(caps, it.href) && has(it) ? [named(it)] : [];
+      return it.href && canOpen(caps, it.href) && has(it) ? [badged(named(it))] : [];
     }),
   })).filter((g) => g.items.length > 0);
 }

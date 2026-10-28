@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Badge, useInView } from "@adeeb/design-system";
+import { Badge, useInView, useNearView } from "@adeeb/design-system";
 import { CalendarBlank, User } from "@phosphor-icons/react";
 import { Eye, ArrowLeft } from "@/app/_components/glyphs";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
@@ -88,18 +88,28 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
     if (manual) bump();
   };
 
-  // تهيئة الطبقة الأولى وشريط التقدّم عند التركيب
+  /** صورُ القسم لا تُطلب حتى يقترب (`useNearView`، ٢٠٢٦-١٠-٢٨): كانت تُطلب مع الصفحة فتزاحم الصدر على الجوّال.
+      والتبديلُ لا يجري قبل الظهور (`useInView` أدناه)، فلا تُكتب صورةٌ قبل اقتراب القسم. */
+  const near = useNearView(rootRef);
+
+  // تهيئة الطبقة الأولى وشريط التقدّم عند التركيب (والحركةُ تبدأ هنا كما كانت، فلا يتغيّر توقيتُها)
   useEffect(() => {
     const el = l0.current;
     if (el) {
-      el.style.backgroundImage = items[0]?.cover ? `url("${items[0].cover}")` : "";
       el.style.animation = "ns-kb 7s ease-out forwards";
       el.style.opacity = "1";
     }
     active.current = 0;
     restartProg();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // وصورتُها حين يقترب القسم. (`go` قبلها يكتب صورتَه بنفسه، فلا تُكتب الأولى فوقه.)
+  useEffect(() => {
+    const el = l0.current;
+    if (!near || !el || active.current !== 0 || el.style.backgroundImage) return;
+    el.style.backgroundImage = items[0]?.cover ? `url("${items[0].cover}")` : "";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [near]);
 
   // لا يبدّل الخبرَ إلّا والقسمُ في الشاشة (المصدر الواحد لكلّ الأشرطة)
   const inView = useInView(rootRef);
@@ -186,7 +196,7 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
         <div className="ns-list">
           {items.map((m, i) => (
             <button type="button" key={m.id} className={"ns-li" + (i === cur ? " ns-on" : "")} onClick={() => go(i, true)}>
-              <span className="ns-th" style={m.cover ? { backgroundImage: `url("${m.cover}")` } : undefined} />
+              <span className="ns-th" style={m.cover && near ? { backgroundImage: `url("${m.cover}")` } : undefined} />
               <span className="ns-st">
                 <span className="ns-h4">{m.title}</span>
                 <span className="ns-lidate">{m.dateStr}</span>
@@ -203,7 +213,7 @@ export function NewsShowcase({ items }: { items: NewsCard[] }) {
             className={"ns-rt" + (i === cur ? " ns-on" : "")}
             onClick={() => { if (rmoved.current) { rmoved.current = false; return; } go(i, true); }}
             aria-label={m.title}
-            style={m.cover ? { backgroundImage: `url("${m.cover}")` } : undefined}
+            style={m.cover && near ? { backgroundImage: `url("${m.cover}")` } : undefined}
           />
         ))}
       </div>

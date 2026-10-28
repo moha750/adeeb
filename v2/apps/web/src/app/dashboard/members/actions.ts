@@ -2,6 +2,7 @@
 
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
+import { refreshStructurePage } from "@/lib/structurePage";
 import { getCurrentAdmin } from "@/lib/auth";
 import { writeMemberData } from "@/lib/memberData";
 
@@ -68,6 +69,7 @@ export async function updateMember(input: MemberInput): Promise<MemberResult> {
   // الإنعاش على الشقّ الناجح كذلك: الرسالةُ الجزئيّة (بلا سجلّ تفاصيل) تُبلِّغ عن نقصٍ بعد أن
   // كُتب الاسم والجوّال فعلًا — فالشاشة يجب أن تُظهرهما.
   revalidatePath("/dashboard/members", "layout");
+  refreshStructurePage();
 
   return res.ok ? { ok: true, message: "حُفظت بيانات العضو بنجاح." } : res;
 }
@@ -99,7 +101,7 @@ export async function endMembership(input: { userId: string; reason: string; kin
   if (error) return { ok: false, message: `تعذّر إنهاء العضوية: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string };
-  if (r.ok) revalidatePath("/dashboard/members", "layout");
+  if (r.ok) { revalidatePath("/dashboard/members", "layout"); refreshStructurePage(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُنهيت العضوية." : "تعذّر إنهاء العضوية.") };
 }
 
@@ -126,6 +128,7 @@ export async function moveToVolunteers(input: { userId: string; reason: string; 
   if (r.ok) {
     revalidatePath("/dashboard/members", "layout");
     revalidatePath("/dashboard/volunteering", "layout");
+    refreshStructurePage();
   }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "صار متطوّعًا." : "تعذّر نقله إلى المتطوّعين.") };
 }
@@ -141,6 +144,6 @@ export async function restoreMembership(input: { userId: string }): Promise<Memb
   if (error) return { ok: false, message: `تعذّرت إعادة العضوية: ${error.message}` };
 
   const r = (data ?? {}) as { ok?: boolean; message?: string };
-  if (r.ok) revalidatePath("/dashboard/members", "layout");
+  if (r.ok) { revalidatePath("/dashboard/members", "layout"); refreshStructurePage(); }
   return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُعيدت العضوية." : "تعذّرت إعادة العضوية.") };
 }

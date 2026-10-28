@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { toLatinDigits } from "@adeeb/core";
+import { toLatinDigits } from "@adeeb/core/digits";
 import { WorkLightbox, type Work } from "../_components/WorkLightbox";
 
 /** تصفّح كامل للأعمال مع فلترة بالتصنيف — شبكة ثابتة للتصفّح المتأنّي والنقر المريح. */

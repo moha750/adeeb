@@ -4,6 +4,7 @@ export { type FieldCharset } from "./lib/charset";
 export { CharsetWhisper, KeyboardGlyph, type CharsetWhisperProps } from "./components/CharsetWhisper";
 export { foldSearch, matchesSearch } from "./lib/search";
 export { useInView } from "./lib/useInView";
+export { useNearView } from "./lib/useNearView";
 export { Container } from "./components/Container";
 export { Button, type ButtonProps } from "./components/Button";
 export { IconButton, type IconButtonProps } from "./components/IconButton";

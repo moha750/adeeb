@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Card, CardHeader, ColorField, Field, Select } from "@adeeb/design-system";
 import {
-  At, BookOpen, Books, Buildings, CalendarBlank, Certificate, GenderFemale, GenderMale, GraduationCap, Hash, IdentificationCard,
+  At, BookOpen, Books, Buildings, Cake, CalendarBlank, Certificate, GenderFemale, GenderMale, GraduationCap, Hash, IdentificationCard,
   InstagramLogo, LinkedinLogo, Palette, Phone, ShareNetwork, TiktokLogo, User, UserList, XLogo,
 } from "@phosphor-icons/react";
 import { color } from "@adeeb/design-system/tokens";
@@ -28,12 +28,18 @@ import { EditRow, Row, type Ico } from "./Row";
 
 const SOCIAL: Record<SocialKey, Ico> = { twitter: XLogo, instagram: InstagramLogo, tiktok: TiktokLogo, linkedin: LinkedinLogo };
 const degreeLabel = (v: string) => DEGREES.find((d) => d.value === v)?.label ?? "";
+/** تاريخُ ميلادٍ فارغٌ أو في المستقبل مرفوض. خارجَ المكوّن لأنّ الساعةَ تُقرأ عند الحفظ لا عند الرسم. */
+const badBirthDate = (v: string) => {
+  const t = v ? new Date(v).getTime() : NaN;
+  return Number.isNaN(t) || t > Date.now() ? "تاريخ ميلاد غير صالح." : null;
+};
 
 /** القيمُ المحفوظة بصيغة الفعل — أساسُ كلّ حفظ. */
 const saved = (p: MyProfile): Required<MyProfileInput> => ({
   phone: p.phone, degree: p.degree, college: p.college, major: p.major, recordNo: p.recordNo,
   twitter: p.socials.twitter, instagram: p.socials.instagram, tiktok: p.socials.tiktok, linkedin: p.socials.linkedin,
   favoriteColor: p.favoriteColor ?? "",
+  birthDate: p.birthDateRaw,
 });
 
 export const MEMBER_SECTIONS = [
@@ -78,7 +84,6 @@ export function MemberSections({ profile }: { profile: MyProfile }) {
           {profile.tripleName && profile.tripleName !== profile.name ? <Row Icon={User} k="الاسم الثلاثيّ" v={profile.tripleName} /> : null}
           {profile.nationalId ? <Row Icon={IdentificationCard} k="رقم الهويّة" v={profile.nationalId} ltr /> : null}
           <Row Icon={female ? GenderFemale : GenderMale} k="الجنس" v={profile.gender ? (female ? "أنثى" : "ذكر") : "لم يُحدَّد"} />
-          {profile.birthDate ? <Row Icon={CalendarBlank} k="تاريخ الميلاد" v={profile.birthDate} /> : null}
           {profile.joined ? <Row Icon={CalendarBlank} k="عضوٌ منذ" v={profile.joined} /> : null}
         </Card>
       </section>
@@ -95,6 +100,10 @@ export function MemberSections({ profile }: { profile: MyProfile }) {
               value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} required />} />
           {profile.hasDetails ? (
             <>
+              <EditRow Icon={Cake} k="تاريخ الميلاد" v={profile.birthDate ?? ""} empty="لم تُضِفه بعد" onOpen={open} busy={busy} error={err}
+                onSave={save(() => badBirthDate(draft.birthDate))}
+                field={<Field label="تاريخ الميلاد" type="date" icon={<Cake />} innerIcon={<CalendarBlank />} placeholder="سنة/شهر/يوم" required
+                  value={draft.birthDate} onChange={(e) => setDraft({ ...draft, birthDate: e.target.value })} />} />
               <EditRow Icon={GraduationCap} k="دراستك" v={study} empty="لم تُحدَّد بعد" onOpen={open} busy={busy} error={err}
                 onSave={save(() => {
                   if (!DEGREE_VALUES.includes(draft.degree)) return "الدرجة العلميّة مطلوبة.";

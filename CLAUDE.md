@@ -265,11 +265,12 @@ it before any visual work.
   required because an inline script adds `class="js"` (and possibly `data-flags`) before hydration.
 - **Fonts** (`packages/design-system/fonts.css`, self-hosted, no Google Fonts):
   - `Lyon Arabic` (woff2, weights 300/400/500/700/900) — display and body. `--font-display`, `--font-body`.
-  - `ITC Eras` (ttf, 300/500/600/700) — Latin. `--font-latin: "Eras", "Lyon Arabic", sans-serif`,
+  - `ITC Eras` (woff2 since 2026-10-27, 300/500/600/700) — Latin. `--font-latin: "Eras", "Lyon Arabic", sans-serif`,
     ordered so glyphs Eras lacks (Arabic letters, Arabic-Indic digits, `٪`) fall back to Lyon, never
     to a browser font.
   - Western digits `U+0030-0039` are re-declared **inside the `Lyon Arabic` family** pointing at
-    Eras files, so numbers render in Eras while surrounding Arabic stays Lyon. Those `@font-face`
+    digit-only Eras subsets (`eras-*-digits.woff2`, ~3 KB each), so numbers render in Eras while
+    surrounding Arabic stays Lyon. Those `@font-face`
     rules must stay **after** the Lyon faces. Do not use `unicode-range` on the Lyon faces
     themselves — it breaks Lyon loading.
   - `Twemoji Country Flags` (76 KB subset, `U+1F1E6-1F1FF`) applied only via the `.cflag` class.

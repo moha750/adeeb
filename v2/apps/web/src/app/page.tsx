@@ -12,6 +12,7 @@ import { SiteHeader } from "./_components/SiteHeader";
 import { Hero } from "./_components/Hero";
 import { getHeroSlides } from "./_components/heroSlides";
 import { getHeroTicker } from "./_components/heroTicker";
+import { STRUCTURE_PATH } from "@/lib/structurePage";
 
 // يُعاد توليد الصفحة كل 60 ثانية بأحدث البيانات من Supabase (ISR)
 export const revalidate = 60;
@@ -56,6 +57,12 @@ export default async function Home() {
             <Reveal>
               <LandingHeading eyebrow="فريق" title="أهل الدفّة" deck="المجلس الذي يقود النادي ويرعى مسيرته." align="center" />
               <BoardMembers />
+              {/* بابُ الهيكلة كاملةً (المالك ٢٠٢٦-١٠-١٨): المجلسُ هنا، والشجرةُ كلُّها هناك */}
+              <div className="mt-10 flex justify-center">
+                <Link href={STRUCTURE_PATH} className="abtn abtn-ghost abtn-lg">
+                  الهيكلة كاملة
+                </Link>
+              </div>
             </Reveal>
           </Container>
         </section>

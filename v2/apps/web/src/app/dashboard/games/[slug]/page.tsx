@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { PageHeader } from "../../_components/PageHeader";
-import { getBoards, getContests, getGames, getGameStats, getMetrics, heroFacts } from "../data";
+import { getBankStats, getBoards, getContests, getDarbLeaders, getDays, getGames, getMetrics } from "../data";
 import { GameView } from "../GameView";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +19,14 @@ export default async function GamePage({
 
   const { slug } = await params;
   const { tab } = await searchParams;
-  const [{ games, error }, { contests, now }, { stats, error: statsError }, metrics] = await Promise.all([
+  const [{ games, error }, { contests, now }, d, metrics, bank, leaders] = await Promise.all([
     getGames(),
     getContests(slug),
-    getGameStats(slug),
+    getDays(),
     getMetrics(slug),
+    slug === "bank-adeeb" ? getBankStats() : null,
+    slug === "darbak-khadar" ? getDarbLeaders() : null,
   ]);
-  const boards = await getBoards(contests, now);
   if (error) {
     return (
       <>
@@ -36,19 +37,20 @@ export default async function GamePage({
   }
   const game = games.find((g) => g.slug === slug);
   if (!game) notFound();
+  const boards = await getBoards(contests, now);
 
   return (
     <GameView
       game={game}
-      facts={heroFacts(stats)}
-      initialTab={tab === "contests" || tab === "data" ? tab : undefined}
-      position={games.indexOf(game) + 1}
-      positions={games.length}
+      initialTab={tab === "contests" || tab === "settings" ? tab : undefined}
       contests={contests}
       metrics={metrics[slug] ?? []}
       boards={boards}
-      stats={stats}
-      statsError={statsError}
+      days={d.days[slug] ?? []}
+      week={d.weeks[slug]}
+      bank={bank?.data ?? null}
+      leaders={leaders}
+      statsError={d.error ?? bank?.error ?? null}
       now={now}
     />
   );

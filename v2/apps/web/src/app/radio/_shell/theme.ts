@@ -29,11 +29,23 @@ const EVENT = "adeeb-radio-theme";
 /**
  * يجري قبل أوّل رسم (سكربتٌ في تخطيط القسم) فلا يومض الفاتحُ في وجه من اختار
  * الداكن. وهو نصٌّ لا دالّة لأنّه يُحقَن كما هو.
+ *
+ * **مصفوفةٌ تُضمّ لا قوالبُ تُجمَع** (٢٠٢٦-١٠-٢٧): كان ثلاثةَ قوالب (`…${X}…`) موصولةً بـ`+`،
+ * فطواها البناءُ طيًّا خاطئًا: أسقط ما بعد كلّ إدراجٍ إلى آخر قالبه (`'),t=c;`
+ * و`').matches?…}`)، فخرج السكربتُ في الموقع الحيّ معطوبًا («missing ) after argument list»)
+ * ولم يُطبَّق الثيمُ المحفوظ قبل الرسم قطّ. والضمُّ وقتَ التشغيل لا يُطوى.
  */
-export const THEME_BOOT =
-  `try{var d=document.documentElement,c=localStorage.getItem('${THEME_KEY}'),t=c;` +
-  `if(c!=='light'&&c!=='dark'){c='system';t=matchMedia('${DARK_QUERY}').matches?'dark':'light'}` +
-  `d.setAttribute('${THEME_ATTR}',t);d.setAttribute('${CHOICE_ATTR}',c)}catch(e){}`;
+export const THEME_BOOT = [
+  "try{var d=document.documentElement,c=localStorage.getItem(",
+  JSON.stringify(THEME_KEY),
+  "),t=c;if(c!=='light'&&c!=='dark'){c='system';t=matchMedia(",
+  JSON.stringify(DARK_QUERY),
+  ").matches?'dark':'light'}d.setAttribute(",
+  JSON.stringify(THEME_ATTR),
+  ",t);d.setAttribute(",
+  JSON.stringify(CHOICE_ATTR),
+  ",c)}catch(e){}",
+].join("");
 
 function stored(): RadioTheme | null {
   try {

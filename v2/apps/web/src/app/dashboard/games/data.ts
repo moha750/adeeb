@@ -1,8 +1,6 @@
 import "server-only";
 import { gamesService } from "@/lib/games/authz";
-import { getDarbStats, type DarbStats } from "./darbStats";
-import type { BankStats } from "./BankStatsView";
-import { GAME_TONES, type BoardRow, type ContestRow, type GameMetric, type GameRow, type GameTone, type MetricUnit } from "./vocab";
+import { GAME_TONES, type BankStats, type BoardRow, type DarbLeaders, type GameDay, type GameWeek, type ContestRow, type GameMetric, type GameRow, type GameTone, type MetricUnit } from "./vocab";
 
 /**
  * **قراءاتُ غرفة الألعاب** — بمفتاح الخدمة بعد حارس الصفحة (`denyUnless`)، كسائر الغرف.
@@ -120,59 +118,38 @@ export async function getBankStats(): Promise<{ data: BankStats | null; error: s
 }
 
 /**
- * **من له إحصائيّات** — الأرقامُ دالّةٌ في القاعدة تكتبها كلُّ لعبةٍ لنفسها (`darb_stats` و`bank_stats`)،
- * فلعبةٌ جديدةٌ بلا دالّةٍ لا تبويبَ إحصائيّاتٍ لها حتى تُكتب دالّتُها ويُضاف سطرُها هنا.
+ * **أيّامُ الألعاب** — ثلاثون يومًا لكلّ لعبةٍ بتوقيت الرياض (`game_days`)، منها الجولاتُ في «آخر سبعة أيام»
+ * ورسمُ الشهر. واللاعبون والزوّارُ الفريدون في الأسبوعين من `game_weeks`: جمعُ الأيّام يعدّ العائدَ مرّات. ولعبةٌ بلا فرعٍ في الدالّة لا أيّامَ لها، فتقول الغرفةُ «لا أرقام لها بعد».
  */
-export type GameStats = { kind: "darb"; data: DarbStats } | { kind: "bank"; data: BankStats };
-export const HAS_STATS = new Set(["darbak-khadar", "bank-adeeb"]);
-
-export async function getGameStats(slug: string): Promise<{ stats: GameStats | null; error: string | null }> {
-  if (slug === "darbak-khadar") {
-    const { data, error } = await getDarbStats();
-    return { stats: data ? { kind: "darb", data } : null, error };
+export async function getDays(): Promise<{ days: Record<string, GameDay[]>; weeks: Record<string, GameWeek>; error: string | null }> {
+  const sb = gamesService();
+  if (!sb) return { days: {}, weeks: {}, error: NO_KEY };
+  const [d, w] = await Promise.all([sb.rpc("game_days", { p_days: 30 }), sb.rpc("game_weeks")]);
+  const error = d.error ?? w.error;
+  if (error) return { days: {}, weeks: {}, error: error.message };
+  const days: Record<string, GameDay[]> = {};
+  for (const r of (d.data ?? []) as (GameDay & { game_slug: string })[]) {
+    (days[r.game_slug] ??= []).push({
+      day: r.day, runs: r.runs, players: r.players, visitors: r.visitors, score: r.score, hits: r.hits, answered: r.answered,
+    });
   }
-  if (slug === "bank-adeeb") {
-    const { data, error } = await getBankStats();
-    return { stats: data ? { kind: "bank", data } : null, error };
+  const weeks: Record<string, GameWeek> = {};
+  for (const r of (w.data ?? []) as { game_slug: string; wk: number; players: number; visitors: number }[]) {
+    const x = (weeks[r.game_slug] ??= { players: [0, 0], visitors: [0, 0] });
+    x.players[r.wk === 0 ? 0 : 1] = r.players;
+    x.visitors[r.wk === 0 ? 0 : 1] = r.visitors;
   }
-  return { stats: null, error: null };
+  return { days, weeks, error: null };
 }
 
-/**
- * **رقمٌ يُعرف به حالُ اللعبة** — العددُ كبيرًا ثمّ تمييزُه (اسمُ المعدود بصيغته: «209 لاعبًا»، «3 لاعبين»،
- * «1 لاعب»)، وللنسبة لاحقتُها. يقرؤه صفُّ اللعبة في الغرفة وصدرُ صفحتها.
- */
-export type Noun = { one: string; few: string; many: string };
-export type GameFact = { value: number; noun: Noun; suffix?: string };
-export type GameFacts = GameFact[];
-
-const PLAYER: Noun = { one: "لاعب", few: "لاعبين", many: "لاعبًا" };
-const RUN: Noun = { one: "جولة", few: "جولات", many: "جولةً" };
-const NAME: Noun = { one: "اسم", few: "أسماء", many: "اسمًا" };
-const DATE: Noun = { one: "تمرة", few: "تمرات", many: "تمرةً" };
-const HIT: Noun = { one: "أصابوا الجواب", few: "أصابوا الجواب", many: "أصابوا الجواب" };
-
-/** أرقامُ الصفّ في الغرفة: اثنان. */
-export function roomFacts(stats: GameStats | null): GameFacts {
-  if (!stats) return [];
-  if (stats.kind === "darb") return [{ value: stats.data.players, noun: PLAYER }, { value: stats.data.runs, noun: RUN }];
-  return [{ value: stats.data.players, noun: NAME }, { value: stats.data.plays, noun: RUN }];
-}
-
-/** أرقامُ صدر صفحة اللعبة: ثلاثة، والتفصيلُ في تبويب الإحصائيّات. */
-export function heroFacts(stats: GameStats | null): GameFacts {
-  if (!stats) return [];
-  if (stats.kind === "darb") return [...roomFacts(stats), { value: stats.data.tamr, noun: DATE }];
-  const r = stats.data.results;
-  const answered = (r.correct ?? 0) + (r.wrong ?? 0) + (r.timeout ?? 0);
-  const hit = answered ? Math.round(((r.correct ?? 0) / answered) * 100) : 0;
-  return [...roomFacts(stats), { value: hit, noun: HIT, suffix: "%" }];
-}
-
-export async function getRoomFacts(): Promise<Record<string, GameFacts>> {
-  const [darb, bank] = await Promise.all([getDarbStats(), getBankStats()]);
-  const out: Record<string, GameFacts> = {};
-  if (darb.data) out["darbak-khadar"] = roomFacts({ kind: "darb", data: darb.data });
-  if (bank.data) out["bank-adeeb"] = roomFacts({ kind: "bank", data: bank.data });
-  return out;
+/** أوائلُ «دربك خضر» منذ إطلاقها، خمسةً خمسة: من `darb_board` نفسِها التي تقرؤها صفحةُ الصدارة والصالة. */
+export async function getDarbLeaders(): Promise<DarbLeaders> {
+  const sb = gamesService();
+  if (!sb) return { tamr: [], dist: [] };
+  const [t, d] = await Promise.all([
+    sb.rpc("darb_board", { p_kind: "tamr", p_limit: 5 }),
+    sb.rpc("darb_board", { p_kind: "dist", p_limit: 5 }),
+  ]);
+  const rows = (x: { data: unknown }) => ((x.data ?? []) as { nickname: string; value: number }[]).map((r) => ({ nickname: r.nickname, value: r.value }));
+  return { tamr: rows(t), dist: rows(d) };
 }

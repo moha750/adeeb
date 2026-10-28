@@ -75,3 +75,56 @@ export const PHASE_META: Record<ContestPhase, { label: string; tone: "success" |
   soon: { label: "قادمة", tone: "warning" },
   over: { label: "انتهت", tone: "neutral" },
 };
+
+/** اسمُ المعدود بصيغه الثلاث (`countNoun` أدناه يختار بينها). */
+export type Noun = { one: string; few: string; many: string };
+export const NOUNS = {
+  PLAYER: { one: "لاعب", few: "لاعبين", many: "لاعبًا" },
+  RUN: { one: "جولة", few: "جولات", many: "جولةً" },
+  NAME: { one: "اسم", few: "أسماء", many: "اسمًا" },
+  DATE: { one: "تمرة", few: "تمرات", many: "تمرةً" },
+  VISITOR: { one: "زائر", few: "زوّار", many: "زائرًا" },
+} as const satisfies Record<string, Noun>;
+
+/** تمييزُ العدد: الواحدُ مفرد، ومن ٣ إلى ١٠ جمع، وما فوقها مفردٌ منصوب (والاثنان جمعٌ هنا تجوّزًا). */
+export function countNoun(k: number, n: Noun): string {
+  if (k === 1) return n.one;
+  const t = k % 100;
+  return k === 2 || (t >= 3 && t <= 10) ? n.few : n.many;
+}
+
+/** مسودّةُ «الإعداد»: ما يُحفظ بزرّ «حفظ». والظهورُ في الصالة وترتيبُها فعلان فوريّان خارجها. */
+export type GameDraft = Pick<GameRow, "name" | "line" | "tone" | "playPath" | "boardPath" | "attractVideo" | "attractPoster">;
+export type GameDraftErrors = Partial<Record<keyof GameDraft, string>>;
+
+/**
+ * **يومٌ من أيّام لعبة** (`game_days`، الترحيل `games_06_days`) بتوقيت الرياض. `score` تمرُ دربك خضر،
+ * و`hits`/`answered` إصاباتُ البنك ومن بلغ سؤالَه، و`null` حيث لا معنى له.
+ */
+export type GameDay = {
+  day: string;
+  runs: number;
+  players: number;
+  visitors: number;
+  score: number | null;
+  hits: number | null;
+  answered: number | null;
+};
+
+/** ما تعيده `bank_stats()` (الترحيل `games_01_hall`): منذ أوّل عمليّةٍ في المعرض. */
+export type BankStats = {
+  plays: number;
+  players: number;
+  first: string | null;
+  last: string | null;
+  results: Partial<Record<"correct" | "wrong" | "timeout" | "abandoned", number>>;
+  levels: Partial<Record<"easy" | "medium" | "hard" | "none", number>>;
+  langs: Partial<Record<"ar" | "en", number>>;
+  days: { day: string; plays: number }[];
+};
+
+/** أوائلُ «دربك خضر» منذ إطلاقها: أكثرُ تمرٍ وأبعدُ مسافة (`darb_players` بلا المخفيّين). */
+export type DarbLeaders = { tamr: { nickname: string; value: number }[]; dist: { nickname: string; value: number }[] };
+
+/** فرائدُ الأسبوع (`game_weeks`): `[آخر سبعة أيام، السبعة قبلها]`. */
+export type GameWeek = { players: [number, number]; visitors: [number, number] };

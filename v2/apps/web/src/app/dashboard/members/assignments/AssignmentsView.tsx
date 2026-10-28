@@ -12,14 +12,16 @@ import { StatsScope, scopeLabels } from "../../_components/StatsScope";
 import { Toolbar, type FilterDef } from "../../_components/Toolbar";
 import { EmptyState } from "../../_components/EmptyState";
 import { useToast } from "../../_components/ToastProvider";
-import { assignActing, assignPosition, endActing, extendActing, loadActingCandidates, removePosition, createOrgUnit, updateOrgUnit, type ActingCandidate } from "../structure/actions";
+import { applyPositionBatch, assignActing, assignPosition, cancelPositionBatch, endActing, extendActing, loadActingCandidates, removePosition, createOrgUnit, updateOrgUnit, type ActingCandidate } from "../structure/actions";
 import type { Holder, Position, RawCommittee, RawCouncil, RawDept } from "../structure/model";
 import { SeatBoard, buildSeatBoard, type SeatActions } from "./SeatBoard";
-import { AssignmentModal, type AssignState, type MemberOption } from "./AssignmentModal";
+import { AssignmentModal, type AssignState, type AssignSubmit, type MemberOption } from "./AssignmentModal";
+import { ScheduledBatches } from "./ScheduledBatches";
+import type { ScheduledBatch } from "./batches";
 import { ActingModal, type ActingSeat, type ActingValues } from "./ActingModal";
 import { UnitEditModal, type EditableUnit, type UnitValues } from "./UnitEditModal";
 
-export function AssignmentsView({ positions, units, members, canEditUnits, iconNodes = {} }: {
+export function AssignmentsView({ positions, units, members, canEditUnits, iconNodes = {}, batches = [] }: {
   positions: Position[];
   /** الأقسامُ واللجان بترتيبها: منها تُبنى لوحةُ المقاعد (المجلس، ثمّ كلُّ قسمٍ ولجانُه). */
   units: { councils: RawCouncil[]; departments: RawDept[]; committees: RawCommittee[] };
@@ -28,13 +30,17 @@ export function AssignmentsView({ positions, units, members, canEditUnits, iconN
   canEditUnits: boolean;
   /** رسومُ أيقونات الوحدات من خارج المقترحة (رسمها الخادمُ من المكتبة). */
   iconNodes?: Record<string, React.ReactNode>;
+  /** دفعاتُ المناصب المجدولة (٢٠٢٦-١٠-٢٣): تُعرض فوق اللوحة بأيّامها، وتُلغى من هنا. */
+  batches?: ScheduledBatch[];
 }) {
   const router = useRouter();
   const toast = useToast();
   const [search, setSearch] = useState("");
   const [fv, setFv] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<AssignState | null>(null);
-  const [pick, setPick] = useState("");
+  // كلُّ فتحٍ للمحرّر نافذةٌ جديدة بحالتها (الاختيار والنقلات والتاريخ والسبب): مفتاحُها يتجدّد
+  const [modalSeq, setModalSeq] = useState(0);
+  const [cancelFor, setCancelFor] = useState<ScheduledBatch | null>(null);
   const [busy, start] = useTransition();
   // التكليف (20261010): المقعدُ المفتوح للتكليف وبِركتُه (تُجلب عند الفتح لأنّها تتبع الدور)،
   // والشاغلُ المكلَّف الذي يُعدَّل آخرُ يومه أو يُنهى تكليفه.
@@ -82,11 +88,11 @@ export function AssignmentsView({ positions, units, members, canEditUnits, iconN
 
   // تُهيَّأ الحالة عند الفتح لا في أثرٍ بعده — فلا رسمَ متتالٍ (cascading render).
   const openAssign = (pos: Position, replace: boolean) => {
-    setPick("");
+    setModalSeq((n) => n + 1);
     setModal({ kind: "assign", position: pos, replace });
   };
   const openRemove = (pos: Position, holder: Holder) => {
-    setPick("");
+    setModalSeq((n) => n + 1);
     setModal({ kind: "remove", position: pos, holder });
   };
 
@@ -138,23 +144,33 @@ export function AssignmentsView({ positions, units, members, canEditUnits, iconN
     });
   };
 
-  // إرسالٌ واحد يخدم الأوضاع الثلاثة (المحرّر يملك الشكل، والمنطق هنا).
-  const submit = () => {
-    if (!modal) return;
-    if (modal.kind === "assign") {
-      if (!pick) return;
-      const pos = modal.position;
-      start(async () => {
-        const r = await assignPosition({ userId: pick, roleName: pos.roleName, committeeId: pos.committeeId, departmentId: pos.departmentId, replace: modal.replace });
-        if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
-      });
-    } else {
-      const h = modal.holder;
-      start(async () => {
-        const r = await removePosition({ userId: h.userId, roleName: h.roleName, committeeId: h.committeeId });
-        if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
-      });
-    }
+  // الإسناد: نقلةٌ واحدةٌ بسيطة تمرّ بـ`assign_position` كما كانت، وما سواها دفعةٌ (`create_position_batch`):
+  // نقلاتٌ معًا، أو تاريخُ سريان، أو سبب. والمحرّرُ يملك الشكل، والمنطقُ هنا.
+  const submitAssign = (v: AssignSubmit) => {
+    if (!modal || modal.kind !== "assign") return;
+    start(async () => {
+      const m = v.moves[0];
+      const r = v.simple
+        ? await assignPosition({ userId: m.userId, roleName: m.roleName, committeeId: m.committeeId, departmentId: m.departmentId, replace: modal.replace })
+        : await applyPositionBatch({ moves: v.moves, effectiveOn: v.effectiveOn, reason: v.reason });
+      if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+  const submitRemove = () => {
+    if (!modal || modal.kind !== "remove") return;
+    const h = modal.holder;
+    start(async () => {
+      const r = await removePosition({ userId: h.userId, roleName: h.roleName, committeeId: h.committeeId });
+      if (r.ok) { toast.success(r.message); setModal(null); router.refresh(); } else toast.error(r.message);
+    });
+  };
+  const submitCancelBatch = () => {
+    const b = cancelFor;
+    if (!b) return;
+    start(async () => {
+      const r = await cancelPositionBatch({ id: b.id });
+      if (r.ok) { toast.success(r.message); setCancelFor(null); router.refresh(); } else toast.error(r.message);
+    });
   };
 
   // أبوابُ المقعد في لوحة المقاعد: الأفعالُ نفسُها، والمكوّنُ يرسم أزرارَها ظاهرةً لا في قائمة.
@@ -198,16 +214,34 @@ export function AssignmentsView({ positions, units, members, canEditUnits, iconN
         onReset={() => setFv({})}
       />
 
+      <ScheduledBatches batches={batches} busy={busy} onCancel={setCancelFor} />
+
       {anyVisible ? <SeatBoard model={board} actions={seatActions} visible={visible} /> : empty}
 
       <AssignmentModal
+        key={`asg-${modalSeq}`}
         state={modal}
         members={members}
-        pick={pick}
-        onPick={setPick}
+        positions={positions}
+        committees={units.committees}
+        departments={units.departments}
         busy={busy}
         onClose={() => setModal(null)}
-        onSubmit={submit}
+        onAssign={submitAssign}
+        onRemove={submitRemove}
+      />
+
+      <ConfirmDialog
+        open={cancelFor !== null}
+        onClose={() => setCancelFor(null)}
+        tone="danger"
+        icon={<CalendarX />}
+        title="إلغاء التغييرات المجدولة؟"
+        text={cancelFor ? `لن تُطبَّق نقلاتها (${cancelFor.moves.length}) في يومها.` : undefined}
+        confirmLabel="إلغاء الدفعة"
+        cancelLabel="إبقاؤها"
+        onConfirm={submitCancelBatch}
+        loading={busy}
       />
 
       <ActingModal

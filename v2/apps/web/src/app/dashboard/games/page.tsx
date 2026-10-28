@@ -1,21 +1,22 @@
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { PageHeader } from "../_components/PageHeader";
-import { getContests, getGames, getRoomFacts } from "./data";
+import { getBoards, getContests, getDays, getGames, getMetrics } from "./data";
 import { GamesRoomView } from "./GamesRoomView";
-import { contestPhase, type ContestPhase } from "./vocab";
 
 export const dynamic = "force-dynamic";
 
 /**
  * **غرفةُ الألعاب** (المالك ٢٠٢٦-١٠-١٧) — تدير صالةَ «ألعاب أدِيبيّة» (`/games`): أيُّ لعبةٍ فيها وبأيّ
- * هيئة، ومسابقاتُ كلّ لعبة، وإحصائيّاتُها. للرئيسين وحدهما (`manage_games`، الترحيل `games_01_hall`).
+ * ترتيب، ونبضُ كلّ لعبةٍ في أسبوعها، ومسابقاتُ الألعاب كلُّها. للرئيسين وحدهما (`manage_games`).
  */
 export default async function GamesPage() {
   const denied = await denyUnless("/dashboard/games");
   if (denied) return denied;
 
-  const [{ games, error }, facts, { contests, now }] = await Promise.all([getGames(), getRoomFacts(), getContests()]);
+  const [{ games, error }, { days, weeks }, { contests, now }, metrics] = await Promise.all([
+    getGames(), getDays(), getContests(), getMetrics(),
+  ]);
   if (error) {
     return (
       <>
@@ -24,20 +25,21 @@ export default async function GamesPage() {
       </>
     );
   }
+  const boards = await getBoards(contests, now, 1);
+  const leaders = Object.fromEntries(Object.entries(boards).map(([id, rows]) => [id, rows[0]]));
+  const contestGames = games
+    .filter((g) => (metrics[g.slug] ?? []).length)
+    .map((g) => ({ slug: g.slug, name: g.name, metrics: metrics[g.slug] }));
 
-  // أقربُ طورٍ لكلّ لعبة: الجاريةُ تغلب القادمة، وما انتهى لا يُذكر على الكرت.
-  const phase: Record<string, ContestPhase> = {};
-  for (const c of contests) {
-    const p = contestPhase(c, now);
-    if (p === "live" || (p === "soon" && phase[c.gameSlug] !== "live")) phase[c.gameSlug] = p;
-  }
-
-  // المسابقةُ التي يعلنها شريطُ الصالة: أقربُ ما لم ينتهِ من مسابقات ألعابها (كـ`lib/games/hall.ts`).
-  const inHall = new Set(games.filter((g) => g.inHall).map((g) => g.slug));
-  const live =
-    contests
-      .filter((c) => inHall.has(c.gameSlug) && Date.parse(c.endsAt) > now)
-      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))[0] ?? null;
-
-  return <GamesRoomView games={games} facts={facts} contestPhase={phase} live={live} />;
+  return (
+    <GamesRoomView
+      games={games}
+      days={days}
+      weeks={weeks}
+      contests={contests}
+      leaders={leaders}
+      contestGames={contestGames}
+      now={now}
+    />
+  );
 }

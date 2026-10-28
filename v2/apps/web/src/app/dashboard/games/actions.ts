@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { getGamesManager, gamesService } from "@/lib/games/authz";
 import { UPLOAD_RULES, limitText } from "@/lib/upload";
-import { GAME_TONES, LIMITS } from "./vocab";
-import type { GameDraft, GameDraftErrors } from "./GameEditor";
+import { GAME_TONES, LIMITS, type GameDraft, type GameDraftErrors } from "./vocab";
 
 /**
  * **أفعالُ غرفة الألعاب** — تفحص القدرةَ من الجلسة (`manage_games`) ثمّ تكتب بمفتاح الخدمة: الجدولان
@@ -57,7 +56,6 @@ function validate(slug: string, d: GameDraft): GameDraftErrors {
   if (!PATH_RE.test(play) || play.length > 120) e.playPath = "رابطٌ داخل الموقع يبدأ بشرطة، مثل /games/darbak-khadar/play";
   const board = clean(d.boardPath);
   if (board && (!PATH_RE.test(board) || board.length > 120)) e.boardPath = "رابطٌ داخل الموقع يبدأ بشرطة، أو اتركه فارغًا.";
-  if (!Number.isInteger(d.position) || d.position < 1) e.position = "اختر الترتيبَ من القائمة.";
   const v = d.attractVideo, p = d.attractPoster;
   if (!!v !== !!p || (v && p && (!isOurMedia(v, slug) || !isOurMedia(p, slug)))) {
     e.attractVideo = "ارفع المقطعَ من هنا من جديد.";
@@ -73,21 +71,9 @@ const columns = (d: GameDraft) => ({
   board_path: clean(d.boardPath) || null,
   attract_video: d.attractVideo,
   attract_poster: d.attractPoster,
-  in_hall: d.inHall,
 });
 
 type Sb = NonNullable<ReturnType<typeof gamesService>>;
-
-/** يضع اللعبةَ في موضعها (١ أوّلًا) ويعيد ترقيمَ البقيّة بلا ثغرات. */
-async function place(sb: Sb, slug: string, position: number) {
-  const { data } = await sb.from("games").select("slug, sort_order").order("sort_order").order("name");
-  const order = ((data ?? []) as { slug: string; sort_order: number }[]).map((r) => r.slug).filter((s) => s !== slug);
-  order.splice(Math.max(0, Math.min(order.length, position - 1)), 0, slug);
-  const current = new Map(((data ?? []) as { slug: string; sort_order: number }[]).map((r) => [r.slug, r.sort_order]));
-  await Promise.all(
-    order.map((s, i) => (current.get(s) === i ? null : sb.from("games").update({ sort_order: i }).eq("slug", s))),
-  );
-}
 
 /** يمحو من الدلو ما لم يعد صفُّ اللعبة يشير إليه (مقطعٌ استُبدل أو أُزيل). */
 async function dropReplaced(sb: Sb, before: (string | null)[], after: (string | null)[]) {
@@ -110,7 +96,6 @@ export async function updateGame(slug: string, draft: GameDraft): Promise<GameRe
 
   const { error } = await sb.from("games").update({ ...columns(draft), updated_by: mgr.userId }).eq("slug", slug);
   if (error) return { ok: false, message: `تعذّر الحفظ: ${error.message}` };
-  await place(sb, slug, draft.position);
   await dropReplaced(sb, [before.attract_video, before.attract_poster], [draft.attractVideo, draft.attractPoster]);
   revalidateGames(slug);
   return { ok: true, message: "حُفظت بياناتُ اللعبة." };
@@ -125,6 +110,34 @@ export async function setGameInHall(slug: string, inHall: boolean): Promise<Game
   if (error) return { ok: false, message: `تعذّر الحفظ: ${error.message}` };
   revalidateGames(slug);
   return { ok: true, message: inHall ? "دخلت اللعبةُ الصالة." : "خرجت اللعبةُ من الصالة." };
+}
+
+/**
+ * **تقديمُ لعبةٍ أو تأخيرُها في الصالة** — تتبادل موضعَها مع أقرب لعبةٍ ظاهرةٍ في الاتّجاه نفسه، فالمخفيّةُ
+ * لا تُحسب (لا موضعَ لها في الصالة). ثمّ يُعاد الترقيمُ كلُّه بلا ثغرات.
+ */
+export async function moveGame(slug: string, dir: -1 | 1): Promise<GameResult> {
+  const mgr = await getGamesManager();
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = gamesService();
+  if (!sb) return { ok: false, message: NO_KEY };
+  if (dir !== -1 && dir !== 1) return { ok: false, message: "اتّجاهٌ غير معروف." };
+  const { data, error: readErr } = await sb.from("games").select("slug, sort_order, in_hall").order("sort_order").order("name");
+  if (readErr) return { ok: false, message: `تعذّر الحفظ: ${readErr.message}` };
+  const rows = (data ?? []) as { slug: string; sort_order: number; in_hall: boolean }[];
+  const i = rows.findIndex((r) => r.slug === slug);
+  if (i < 0) return { ok: false, message: "اللعبةُ غير موجودة." };
+  let j = i + dir;
+  while (j >= 0 && j < rows.length && !rows[j].in_hall) j += dir;
+  if (j < 0 || j >= rows.length) return { ok: true, message: "هي في طرف الصالة." };
+  [rows[i], rows[j]] = [rows[j], rows[i]];
+  const writes = await Promise.all(
+    rows.map((r, k) => (r.sort_order === k ? null : sb.from("games").update({ sort_order: k, updated_by: mgr.userId }).eq("slug", r.slug))),
+  );
+  const failed = writes.find((w) => w?.error);
+  if (failed?.error) return { ok: false, message: `تعذّر الحفظ: ${failed.error.message}` };
+  revalidateGames(slug);
+  return { ok: true, message: "تغيّر ترتيبُ الصالة." };
 }
 
 /* ══ مقطعُ الشاشة: تذكرتا رفعٍ موقَّعتان، والمتصفّحُ يرفع إلى الدلو مباشرةً ══ */

@@ -19,6 +19,8 @@ export type MyProfile = {
   joined: string;
   nationalId: string | null;
   birthDate: string | null;
+  /** تاريخ الميلاد خامًا `YYYY-MM-DD` — قيمةُ حقل التعديل (يملكه صاحبه، قرار المالك ٢٠٢٦-١٠-٢٨). */
+  birthDateRaw: string;
   /** هل له سجلّ `member_details`؟ الأكاديميّ والتواصل واللون لا تُحفظ لمن لا سجلّ له. */
   hasDetails: boolean;
   phone: string;
@@ -74,6 +76,7 @@ export async function getMyProfile(): Promise<{ profile: MyProfile | null; error
       joined: fmtDateOnly(p.joined_date),
       nationalId: d?.national_id ?? null,
       birthDate: d?.birth_date ? fmtDateOnly(d.birth_date) : null,
+      birthDateRaw: d?.birth_date ? String(d.birth_date).slice(0, 10) : "",
       hasDetails: !!d,
       phone: p.phone ?? "",
       degree: d?.academic_degree ?? "",

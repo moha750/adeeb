@@ -7,6 +7,34 @@ const nextConfig: NextConfig = {
   // جذر مساحة العمل = v2 (يمنع Next من التقاط جذر المستودع القديم بسبب lockfile قديم)
   turbopack: {
     root: path.resolve(__dirname, "../.."),
+    rules: {
+      /**
+       * **أوزانُ Phosphor التي لا تُرسم لا تصل المتصفّح** (٢٠٢٦-١٠-٢٧، بموافقة المالك). كلُّ أيقونةٍ
+       * تحمل رسومَها الستّة والموقعُ يرسم أغلبها duotone وحده؛ فالمُحمِّلُ يمسح الكودَ ويُبقي لكلّ
+       * أيقونةٍ ما تُرسم به فقط، وما لا يُحسم يبقى كاملًا. انظر `loaders/phosphor-weights.cjs`.
+       * للمتصفّح وفي الإنتاج وحدهما: التطويرُ يرى الأوزانَ كلَّها فلا تختفي أيقونةٌ قبل إعادة المسح.
+       */
+      "*": {
+        condition: {
+          all: ["browser", "production", { path: /@phosphor-icons\/react\/dist\/defs\/[^/]+\.es\.js$/ }],
+        },
+        loaders: [path.resolve(__dirname, "loaders/phosphor-weights.cjs")],
+        as: "*.js",
+      },
+      /**
+       * **ورقةُ المكوّنات مقسومةٌ على الأقسام** (٢٠٢٦-١٠-٢٧، بموافقة المالك). `components.css` يبقى
+       * المصدرَ الواحد، والملفّاتُ الوسيطة `components.{base,dash,radio,games,ui}.css` تُملأ هنا بحصّة كلٍّ
+       * منها، فلا تُنزّل الصفحةُ العامّة قواعدَ اللوحة والإذاعة والألعاب. للإنتاج وحده: التطويرُ يستورد
+       * الأصلَ كاملًا. انظر `loaders/css-sections.cjs`.
+       */
+      "*.css": {
+        condition: {
+          all: ["production", { path: /packages\/design-system\/components\.(base|dash|radio|games|ui)\.css$/ }],
+        },
+        loaders: [path.resolve(__dirname, "loaders/css-sections.cjs")],
+        as: "*.css",
+      },
+    },
   },
   // فتحُ التطوير لأجهزة الشبكة المحلّيّة (جوّالٌ حقيقيّ لقياس اللمس و375px).
   // بدونه تصل الأنماط ويُحجب الجافاسكربت، فتبقى الأزرار معطّلةً كما رُسمت أوّلًا.

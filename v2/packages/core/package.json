@@ -10,6 +10,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./digits": "./src/digits.ts",
     "./activities": "./src/activities.ts",
     "./org-unit": "./src/orgUnit.ts",
     "./radio": "./src/radio.ts",

@@ -5,10 +5,10 @@ import { attachHint, fileMeta, UPLOAD_RULES } from "@/lib/upload";
 import { useToast } from "../_components/ToastProvider";
 import { uploadGameMedia } from "./media";
 import { discardGameMedia } from "./actions";
-import type { GameDraft } from "./GameEditor";
+import type { GameDraft } from "./vocab";
 
 /**
- * **زرُّ مقطع الشاشة** — مشتركٌ بين نافذة «لعبة جديدة» وتبويب «بيانات اللعبة». يرفع ساعةَ الاختيار
+ * **زرُّ مقطع الشاشة** — في تبويب «الإعداد». يرفع ساعةَ الاختيار
  * ويضع الرابطين في المسودّة، والحفظُ بعدها يكتبهما في الصفّ. والرفضُ والقبولُ إشعاران (القاعدة ١٤).
  */
 export function useVideoSlot(slug: string, draft: GameDraft, patch: (p: Partial<GameDraft>) => void) {

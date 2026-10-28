@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { FIRST_HEARTBEAT_MS, HEARTBEAT_MS, SESSION_AT_KEY, SESSION_IDLE_MS, SESSION_KEY, TRACK_FN, TRACK_MAX_SECONDS, VISITOR_KEY, randomUuid } from "@adeeb/core/tracking";
-import { createClient } from "@/lib/supabase/client";
+import { hasSessionCookie, loadClient } from "@/lib/supabase/lazy";
 
 /**
  * **تتبّعُ الزيارات في V2** — كان السكربتُ في V1 وحده (`adeeb/visit-tracker.js`)، فلمّا حلّ V2 محلَّه
@@ -109,8 +109,11 @@ export function VisitTracker() {
     const begin = async () => {
       let userId: string | null = null;
       try {
-        const { data } = await createClient().auth.getUser();
-        userId = data.user?.id ?? null;
+        // بلا كوكيِّ جلسةٍ لا مستخدمَ يُسأل عنه، فلا تُنزَّل مكتبةُ Supabase للزائر (`lib/supabase/lazy`).
+        if (hasSessionCookie()) {
+          const { data } = await (await loadClient()).auth.getUser();
+          userId = data.user?.id ?? null;
+        }
       } catch {
         userId = null;
       }

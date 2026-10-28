@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "نظام تصميم نادي أدِيب: رموز + خطوط + أصول العلامة + مكوّنات React",
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./search": "./src/lib/search.ts",
@@ -10,6 +13,11 @@
     "./tokens.css": "./tokens.css",
     "./fonts.css": "./fonts.css",
     "./components.css": "./components.css",
+    "./components.base.css": "./components.base.css",
+    "./components.dash.css": "./components.dash.css",
+    "./components.radio.css": "./components.radio.css",
+    "./components.games.css": "./components.games.css",
+    "./components.ui.css": "./components.ui.css",
     "./tailwind.preset": "./tailwind.preset.js",
     "./tokens": "./tokens.ts",
     "./brand/*": "./brand/*",

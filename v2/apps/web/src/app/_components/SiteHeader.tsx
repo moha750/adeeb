@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@adeeb/design-system";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
-import { createClient } from "@/lib/supabase/client";
+import { hasSessionCookie, loadClient } from "@/lib/supabase/lazy";
 import type { MeBrief } from "@/app/api/me/brief/route";
 import { standingName } from "@/lib/standing";
 import { NotificationsBell } from "@/app/_notifications/NotificationsBell";
@@ -72,8 +72,26 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
     };
   }, []);
 
+  /**
+   * **ورقةُ اللوحة تُجلَب قبل أن تُطلَب** (٢٠٢٦-١٠-٢٧). صارت قواعدُ اللوحة في ملفٍّ يحمله تخطيطُها
+   * (`loaders/css-sections.cjs`) فلا تُنزّلها الصفحةُ العامّة؛ فمن له بوّابةٌ تُجلَب له في وقت فراغ
+   * المتصفّح، فيجدها دخولُه الأوّلُ إلى البوّابة في الذاكرة ولا ينتظرها. والجلبُ تمهيدٌ لا يُطبَّق
+   * على الصفحة الحاضرة (`preload`)، والشرطُ شرطُ زرّ البوّابة نفسِه في `Header`.
+   */
+  const hasPortal = !!viewer && (viewer.hasPortal ?? viewer.isMember);
+  useEffect(() => {
+    if (!hasPortal) return;
+    const warm = () => router.prefetch("/dashboard");
+    if ("requestIdleCallback" in window) {
+      const h = window.requestIdleCallback(warm, { timeout: 5000 });
+      return () => window.cancelIdleCallback(h);
+    }
+    const t = setTimeout(warm, 2000);
+    return () => clearTimeout(t);
+  }, [hasPortal, router]);
+
   const signOut = async () => {
-    await createClient().auth.signOut();
+    await (await loadClient()).auth.signOut();
     setViewer(null);
     // تحديثُ الخادم بعده: صفحاتٌ ساكنةٌ لا تتبدّل بالخروج، لكنّ اللوحةَ لو كان تحتها تُردّ.
     router.refresh();
@@ -110,15 +128,6 @@ export function SiteHeader(props: Omit<React.ComponentProps<typeof Header>, "cta
       onSignOut={signOut}
     />
   );
-}
-
-/**
- * أثرُ جلسةٍ في الكوكيز — `sb-<ref>-auth-token` (وقد تُشظّى إلى `.0`/`.1` حين تطول).
- * ولا يُقرأ محتواها ولا يُصدَّق: وجودُ الاسم وحدَه هو الحدس.
- */
-function hasSessionCookie() {
-  if (typeof document === "undefined") return false;
-  return /(?:^|;\s*)sb-[^=;]+-auth-token/.test(document.cookie);
 }
 
 /** لا حدثَ للكوكيز يُشترَك فيه: اللقطةُ تُقرأ مرّةً عند الترطيب ولا تتبدّل بعدها. */

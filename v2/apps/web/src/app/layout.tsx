@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { shareOg } from "@/lib/share";
 // خطوط ورموز علامة أدِيب (المصدر الوحيد) ثم أنماط التطبيق ثمّ مكتبة المكوّنات المشتركة.
 // components.css يُحمَّل أخيرًا ليكون هو المصدر الفائز لأصناف المكوّنات (يظلّل نسخ globals القديمة).
+// ويُحمَّل بحصّته العامّة (`components.base.css`): الأصلُ نفسُه في التطوير، وفي الإنتاج ما قد يُرسَم
+// في صفحةٍ عامّة وحده، وحصصُ الأقسام في تخطيطاتها (`loaders/css-sections.cjs`، ٢٠٢٦-١٠-٢٧).
 import "@adeeb/design-system/fonts.css";
 import "@adeeb/design-system/tokens.css";
 import "./globals.css";
-import "@adeeb/design-system/components.css";
+import "@adeeb/design-system/components.base.css";
 import { BootSplash } from "./_components/BootSplash";
 import { IconDefaults } from "./_components/IconDefaults";
 import { VisitTracker } from "./_components/VisitTracker";

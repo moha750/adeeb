@@ -2,6 +2,7 @@
 
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
+import { refreshStructurePage } from "@/lib/structurePage";
 import { kickDispatch } from "@/lib/notifications/emit";
 import { getCurrentAdmin } from "@/lib/auth";
 import { describeCandidates, type ActingCandidate } from "@/lib/actingCandidates";
@@ -28,7 +29,8 @@ const TOUCHED = [
   // وكشوفُ الأعضاء معها: صفُّ العضو يحمل دورَه ولجنتَه، فالإسناد (والنقلُ من قائمته) يغيّر ما تعرضه.
   "/dashboard/members/active", "/dashboard/members/suspended",
 ];
-const revalidateAll = () => TOUCHED.forEach((p) => revalidatePath(p));
+// والصفحةُ العلنيّة معها: تعرض المقاعدَ نفسَها (`lib/structurePage.ts`).
+const revalidateAll = () => { TOUCHED.forEach((p) => revalidatePath(p)); refreshStructurePage(); };
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -282,6 +284,7 @@ export async function updateOrgUnit(input: {
 
   revalidatePath("/dashboard/members/structure");
   revalidatePath("/dashboard/members/assignments");
+  refreshStructurePage();
   return { ok: true, message: "حُفظت البيانات." };
 }
 
@@ -335,4 +338,51 @@ export async function createOrgUnit(input: {
 
   revalidateAll();
   return { ok: true, message: input.kind === "department" ? "أُضيف القسم." : "أُضيفت اللجنة." };
+}
+
+/* ══ دفعاتُ المناصب (٢٠٢٦-١٠-٢٣) ══════════════════════════════════════════════════════════
+ * عدّةُ نقلاتٍ تُطبَّق معًا أو لا يُطبَّق منها شيء — `create_position_batch`، والقاعدةُ هي الحَكَم: كلُّ نقلةٍ تمرّ
+ * بـ`assign_position` نفسِها، وتُفحص الدفعةُ كاملةً قبل التنفيذ. «يسري في» يجعلها مجدولة، والسببُ سجلٌّ داخليّ. */
+
+export type BatchMoveInput = { userId: string; roleName: string; committeeId: number | null; departmentId: number | null };
+
+export async function applyPositionBatch(input: {
+  moves: BatchMoveInput[];
+  effectiveOn: string | null;
+  reason: string;
+}): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+  if (!input.moves.length) return { ok: false, message: "لا نقلات في الدفعة." };
+  if (input.effectiveOn && !/^\d{4}-\d{2}-\d{2}$/.test(input.effectiveOn)) return { ok: false, message: "تاريخ السريان غير صالح." };
+
+  const { data, error } = await sb.rpc("create_position_batch", {
+    p_actor: admin.id,
+    p_moves: input.moves,
+    p_reason: input.reason.trim() || undefined,
+    p_effective_on: input.effectiveOn ?? undefined,
+  });
+  if (error) return { ok: false, message: `تعذّر التطبيق: ${error.message}` };
+
+  const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string; status?: string; changed?: number };
+  if (!r.ok) return { ok: false, message: r.message ?? "تعذّر التطبيق.", code: r.code };
+  revalidateAll();
+  if (r.status === "scheduled") return { ok: true, message: "جُدولت النقلات، وتُطبَّق في يومها." };
+  kickDispatch();
+  return { ok: true, message: input.moves.length > 1 ? "طُبّقت النقلات كلُّها." : "تمّ الإسناد بنجاح." };
+}
+
+/** إلغاءُ دفعةٍ مجدولة — منشئُها والرئيسان (`cancel_position_batch`). */
+export async function cancelPositionBatch(input: { id: number }): Promise<ActionResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
+  const sb = service();
+  if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+  const { data, error } = await sb.rpc("cancel_position_batch", { p_actor: admin.id, p_batch: input.id });
+  if (error) return { ok: false, message: `تعذّر الإلغاء: ${error.message}` };
+  const r = (data ?? {}) as { ok?: boolean; message?: string; code?: string };
+  if (r.ok) revalidatePath("/dashboard/members/assignments");
+  return { ok: !!r.ok, message: r.message ?? (r.ok ? "أُلغيت الدفعة." : "تعذّر الإلغاء."), code: r.code };
 }

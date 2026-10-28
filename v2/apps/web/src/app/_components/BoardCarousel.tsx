@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { XLogo, LinkedinLogo, User } from "@phosphor-icons/react";
-import { CarouselNav, useInView } from "@adeeb/design-system";
-import { toLatinDigits } from "@adeeb/core";
+import { CarouselNav, useInView, useNearView } from "@adeeb/design-system";
+import { toLatinDigits } from "@adeeb/core/digits";
 import { actingLine, positionLine } from "@/lib/positionLabel";
 import { avatarFace } from "@/lib/avatarFace";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
@@ -108,6 +108,8 @@ export function BoardCarousel({ members }: { members: Member[] }) {
   // الزائرُ بطاقةً في وسط الدورة لا أوّلَ المجلس. وعودةُ القسم تُعيد المؤقّت من أوّله،
   // فتُمهَل البطاقةُ الحاضرةُ مدّتَها كاملة.
   const inView = useInView(stageRef);
+  /** صورُ القسم لا تُطلب حتى يقترب (`useNearView`، ٢٠٢٦-١٠-٢٨): كانت تُطلب مع الصفحة فتزاحم الصدر على الجوّال. */
+  const near = useNearView(stageRef);
   useEffect(() => {
     if (!inView || hover || cooldown || dragging || !motion || n <= 1) return;
     const id = setInterval(() => setCurrent((c) => (c + 1) % n), 3200);
@@ -227,9 +229,9 @@ export function BoardCarousel({ members }: { members: Member[] }) {
               >
                 <div className="bc-card" style={{ width: CARD }}>
                   {face.kind === "photo" ? (
-                    <div className="bc-bg" style={{ backgroundImage: `url(${face.url})` }} />
+                    <div className="bc-bg" style={near ? { backgroundImage: `url(${face.url})` } : undefined} />
                   ) : face.kind === "figure" ? (
-                    <div className="bc-fig" style={{ backgroundImage: `url(${face.url})` }} />
+                    <div className="bc-fig" style={near ? { backgroundImage: `url(${face.url})` } : undefined} />
                   ) : (
                     <div className="bc-mono" style={{ fontSize: monoSize }}><User /></div>
                   )}

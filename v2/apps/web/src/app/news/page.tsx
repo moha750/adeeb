@@ -46,8 +46,8 @@ export default async function NewsPage() {
                 </p>
               ) : (
                 <div className="card-grid news-mast-grid">
-                  {items.map((n) => (
-                    <NewsCard key={n.id} n={n} />
+                  {items.map((n, k) => (
+                    <NewsCard key={n.id} n={n} lead={k === 0} />
                   ))}
                 </div>
               )}

@@ -5,6 +5,7 @@ import { getSessionAdmin } from "@/lib/auth";
 import { hasAcademicFields, socialHandle, SOCIAL_KEYS } from "@/lib/membershipFields";
 import { normalizeName } from "@/lib/personName";
 import { completeSchema, type CompleteInput } from "./vocab";
+import { refreshStructurePage } from "@/lib/structurePage";
 
 export type CompleteResult = { ok: boolean; message: string; fieldErrors?: Partial<Record<keyof CompleteInput, string>> };
 
@@ -90,5 +91,7 @@ export async function completeMyRecord(raw: CompleteInput): Promise<CompleteResu
     details: { via: "v2_complete" },
   });
 
+  // الجنسُ يرسم هيئةَ من لا صورة له في الهيكلة العلنيّة
+  refreshStructurePage();
   return { ok: true, message: "اكتمل سجلُّك." };
 }

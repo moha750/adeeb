@@ -35,6 +35,15 @@ export type ElectionSignals = {
   canVote: boolean;
 };
 
+/**
+ * إشاراتُ بابَي تقييم القيادات (٢٠٢٦-١٠-٢٠، `evaluation_signals_for`): «قيّم» يظهر ما دامت له أوراقٌ قائمةٌ
+ * في دورةٍ مفتوحة، و«نتيجتي» لمن قُيّم في دورةٍ منتهية. و`pending` عددُ ما لم يُرسله بعد (شارةُ البند).
+ */
+export type EvaluationSignals = { canRate: boolean; pending: number; hasResults: boolean };
+export const NO_EVALUATION: EvaluationSignals = { canRate: false, pending: 0, hasResults: false };
+/** بابُ تقييمٍ يُقرأ من `scope.evaluation` (`canRate` أو `hasResults`). */
+export type EvaluationSignal = "canRate" | "hasResults";
+
 export type MyScope = {
   /** إدارةٌ إداريّة يقودها — «إدارتي»: يضمّ أعضاءها ويوزّع إشرافهم. */
   unit: MySeat | null;
@@ -55,6 +64,10 @@ export type MyScope = {
   committee: MySeat | null;
   /** أبواب الانتخابات: تظهر حين يصير فعلُها متاحًا (كالمقاعد: لا بابَ بلا غرفة). */
   elections: ElectionSignals;
+  /**
+   * بابا تقييم القيادات. **اختياريٌّ عمدًا**: نطاقاتُ المعارض (`/ui`) تُكتب يدويًّا، وغيابُه = لا باب.
+   */
+  evaluation?: EvaluationSignals;
 };
 
 export const NO_ELECTIONS: ElectionSignals = { canRun: false, hasCandidacy: false, canVote: false };
@@ -65,6 +78,11 @@ export type SeatKind = "unit" | "department" | "committee";
 /** إشارةُ بابِ انتخابٍ — تُقرأ من `scope.elections`. */
 export type ElectionSignal = keyof ElectionSignals;
 
+function readEvaluation(v: unknown): EvaluationSignals {
+  const o = (v ?? {}) as { canRate?: unknown; pending?: unknown; hasResults?: unknown };
+  return { canRate: o.canRate === true, pending: Number(o.pending) || 0, hasResults: o.hasResults === true };
+}
+
 export const getMyScope = cache(async function getMyScope(userId: string): Promise<MyScope> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
@@ -74,7 +92,7 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
 
   // أربعة استعلامات صغيرة: صفوفُ صاحب الجلسة وحده، وثلاثة كتالوجات بأحد عشر صفًّا.
   // (هذا يُقرأ في **كل** صفحة من اللوحة لأنّ القائمة تحتاجه — فلا يجلب الهيكلة كلّها.)
-  const [seatsRes, comRes, deptRes, roleRes, sigRes, unitsRes] = await Promise.all([
+  const [seatsRes, comRes, deptRes, roleRes, sigRes, unitsRes, evalRes] = await Promise.all([
     // الأصيلُ قبل التكليف (20261010): من جمعهما من نوعٍ واحد فغرفتُه غرفةُ أصيله، ومن جُمِّد أصيلُه فغرفتُه تكليفُه
     sb.from("user_roles").select("role_name, committee_id, department_id").eq("user_id", userId).eq("is_active", true).order("is_acting", { ascending: true }),
     sb.from("committees").select("id, committee_name_ar, council_id, leader_role_name").eq("is_active", true),
@@ -84,6 +102,8 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
     sb.rpc("get_member_election_signals", { p_user: userId }),
     // الإداراتُ التي يبلُغها تعيينُه — من `can_assign_role` نفسِها (لا اسمَ دورٍ محفورٌ هنا)
     sb.rpc("admin_units_i_may_staff", { p_actor: userId }),
+    // إشاراتُ تقييم القيادات — للخدمة وحدها، بمعرّف صاحب الجلسة (كإشارات الانتخابات)
+    sb.rpc("evaluation_signals_for", { p_user: userId }),
   ]);
   if (seatsRes.error || comRes.error || deptRes.error || roleRes.error) return NO_SCOPE;
 
@@ -98,6 +118,8 @@ export const getMyScope = cache(async function getMyScope(userId: string): Promi
   const scope: MyScope = {
     unit: null, units: [], department: null, committee: null,
     elections: { canRun: !!sig?.can_run, hasCandidacy: !!sig?.has_candidacy, canVote: !!sig?.can_vote },
+    // وتعثّرُها (الترحيلُ لم يُطبَّق بعد مثلًا) لا يُسقط النطاق: يبقى البابان مخفيَّين
+    evaluation: evalRes.error ? NO_EVALUATION : readEvaluation(evalRes.data),
   };
 
   // الصفّ الواحد قد يحمل الوجهين (قسمًا ولجنة) — فيُقرأ الوجهان، ولا يُقصي أحدُهما الآخر

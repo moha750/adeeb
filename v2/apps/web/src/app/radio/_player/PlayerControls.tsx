@@ -6,7 +6,7 @@ import {
   SpeakerHigh, SpeakerSlash, Moon, FastForward,
 } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowClockwise } from "@/app/_components/glyphs";
-import { SLEEP_STOPS } from "@adeeb/core";
+import { SLEEP_STOPS } from "@adeeb/core/radio";
 import { useWaveBars } from "@/lib/radio/useWaveBars";
 import { useSavedPosition } from "@/lib/radio/progress";
 import { formatDuration, SKIP_SECONDS } from "../../dashboard/radio/vocab";

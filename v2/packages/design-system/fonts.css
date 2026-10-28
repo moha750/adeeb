@@ -9,19 +9,22 @@
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-bold.woff2") format("woff2");    font-weight:700; font-style:normal; font-display:swap; }
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/lyon-arabic-black.woff2") format("woff2");   font-weight:900; font-style:normal; font-display:swap; }
 
-/* ===== ITC Eras (لاتيني) ===== */
-@font-face{ font-family:"Eras"; src:url("./fonts/eras-light.ttf") format("truetype");  font-weight:300; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Eras"; src:url("./fonts/eras-medium.ttf") format("truetype"); font-weight:500; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Eras"; src:url("./fonts/eras-demi.ttf") format("truetype");   font-weight:600; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Eras"; src:url("./fonts/eras-bold.ttf") format("truetype");   font-weight:700; font-style:normal; font-display:swap; }
+/* ===== ITC Eras (لاتيني) — woff2 (٢٠٢٦-١٠-٢٧): الخطُّ نفسُه بلا تغيير، أخفُّ ~45% من ttf ===== */
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-light.woff2") format("woff2");  font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-medium.woff2") format("woff2"); font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-demi.woff2") format("woff2");   font-weight:600; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Eras"; src:url("./fonts/eras-bold.woff2") format("woff2");   font-weight:700; font-style:normal; font-display:swap; }
 
 /* ===== الأرقام اللاتينية بخط Eras — أوزان مطابقة تمامًا لأوزان Lyon (لا نطاقات، تفاديًا لكسر تحميل Lyon) =====
-   مُعلَنة بعد وجوه Lyon فتفوز على الأرقام فقط (U+0030-0039)، ويبقى بقية النص Lyon. */
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light.ttf") format("truetype");  unicode-range:U+0030-0039; font-weight:300; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium.ttf") format("truetype"); unicode-range:U+0030-0039; font-weight:400; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium.ttf") format("truetype"); unicode-range:U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold.ttf") format("truetype");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
+   مُعلَنة بعد وجوه Lyon فتفوز على الأرقام فقط (U+0030-0039)، ويبقى بقية النص Lyon.
+   **ملفّاتُها أرقامٌ وحدها** (٢٠٢٦-١٠-٢٧، قياسُ جوّالٍ على 4G): كانت تشير إلى خطوط Eras كاملةً (~43KB
+   مضغوطةً للوزن)، فكانت كلُّ صفحةٍ فيها رقمٌ تُنزّل ثلاثةً منها بأولويّةٍ عليا لعشرة رموز. والآن
+   `eras-*-digits.woff2` (~3KB للوزن): رسومُ الأرقام العشرة نفسُها وخصائصُها، مقتطعةً من الأصل بـpyftsubset. */
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light-digits.woff2") format("woff2");  unicode-range:U+0030-0039; font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0030-0039; font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
 
 /* ===== أعلام الدول (Twemoji Country Flags) — رسمُ العلم لا يأتي من النظام =====
    ويندوز (Segoe UI Emoji) **لا يحمل رسوم الأعلام أصلًا** فيعرض حرفَي رمز الدولة، وهو ما يقع على

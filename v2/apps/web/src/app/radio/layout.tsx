@@ -1,3 +1,5 @@
+// حصّةُ الإذاعة من `components.css` (فارغةٌ في التطوير، انظر `loaders/css-sections.cjs`).
+import "@adeeb/design-system/components.radio.css";
 import { getPublicStation } from "./data";
 import { RadioPlayerProvider } from "./_player/PlayerProvider";
 import { StationDoors, StationSide } from "./_shell/StationChrome";

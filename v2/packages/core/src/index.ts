@@ -36,13 +36,8 @@ export function createAdeebServiceClient(url: string, serviceKey: string): Supab
   });
 }
 
-/** يحوّل الأرقام العربية-الهندية (٠-٩) والفارسية إلى لاتينية (0-9) لتُعرض بخط Eras. */
-export function toLatinDigits(input: string | null | undefined): string {
-  if (!input) return '';
-  return input
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
-}
+// `toLatinDigits` في `./digits` (انظر سببَ فصله هناك)، ويبقى مُصدَّرًا من هنا لمن يستورده من الجذر.
+export { toLatinDigits } from './digits';
 
 export type { User, Session, SupabaseClient } from '@supabase/supabase-js';
 

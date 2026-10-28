@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { toLatinDigits } from "@adeeb/core";
+import { toLatinDigits } from "@adeeb/core/digits";
 import { ArrowUpRight } from "@/app/_components/glyphs";
 import { WorkLightbox, type Work } from "./WorkLightbox";
 

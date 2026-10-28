@@ -1,0 +1,10 @@
+/*
+ * **حصّةُ الصفحات العامّة من `components.css`** (٢٠٢٦-١٠-٢٧). الجذرُ (`app/layout.tsx`) يحمل هذا الملفّ.
+ *
+ * في التطوير يستورد الأصلَ كاملًا فيبقى كما كان. وفي بناء الإنتاج يستبدل مُحمِّلُ
+ * `apps/web/loaders/css-sections.cjs` محتواه بما قد يُرسَم في صفحةٍ عامّة، وتذهب قواعدُ
+ * اللوحة والإذاعة والألعاب إلى `components.dash.css` و`components.radio.css` و`components.games.css`.
+ *
+ * لا يُكتب هنا شيء: الأصناف تُكتب في `components.css` وحده (القاعدة ١).
+ */
+@import "./components.css";

@@ -20,7 +20,7 @@
  * **وخالصةُ المنطق** (`readIds`/`toggleIn`) تُختبَر بلا متصفّح.
  */
 import { useSyncExternalStore } from "react";
-import { LATER_KEY, LATER_LIMIT } from "@adeeb/core";
+import { LATER_KEY, LATER_LIMIT } from "@adeeb/core/radio";
 
 /** أحدثُ ما أُجّل أوّلًا. */
 export function toggleIn(ids: string[], id: string, limit = LATER_LIMIT): string[] {
