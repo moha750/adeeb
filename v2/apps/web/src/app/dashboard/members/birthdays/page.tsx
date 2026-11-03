@@ -1,14 +1,15 @@
-import { Alert } from "@adeeb/design-system";
 import { getBirthdays } from "./data";
-import { BirthdaysView } from "./BirthdaysView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getSupervisedUserIds } from "@/lib/mySupervision";
-import { PageHeader } from "../../_components/PageHeader";
+import { BirthdaysRoom } from "@/app/_ad/rooms/BirthdaysRoom";
+import { AdRoomError } from "@/app/_ad/states";
+import { BIRTHDAYS_ROOM } from "@/app/_ad/rooms/birthdays.meta";
+import { roomView } from "@/app/_ad/view-server";
+import { requestNow } from "@/app/_ad/now";
+import { roomMetadata } from "@/app/_ad/metadata";
 
-const Head = () => (
-  <PageHeader title="أعياد الميلاد" />
-);
+export const metadata = roomMetadata(BIRTHDAYS_ROOM);
 
 /**
  * **القفل يفتح، والسجلّ يقسم.** `view_birthdays` تفتح الباب لأربعة، ووراءه نطاقان لا واحد:
@@ -17,6 +18,8 @@ const Head = () => (
  *
  * والقسمة بقدرةٍ لا باسم دور: التبويب لا يوسّع رؤية الأعيان وراء ما يعطيه سجلّ الأعضاء نفسه،
  * فأيّ دورٍ يُمنح `view_birthdays` غدًا يقع في نطاقه الصحيح بلا سطرٍ يُضاف هنا.
+ *
+ * على قالب «قائمة السجلّات» (٢٠٢٦-١١-٠٢). ولا مساراتٍ أبناءَ للمجلّد، فحالتا التحميل والخطأ بجانب الصفحة.
  */
 export default async function BirthdaysPage() {
   const denied = await denyUnless("/dashboard/members/birthdays");
@@ -30,19 +33,20 @@ export default async function BirthdaysPage() {
   const reach = seesAll ? null : await getSupervisedUserIds(me.id);
 
   const { rows, error } = reach?.error ? { rows: [], error: reach.error } : await getBirthdays(reach?.ids ?? null);
-  if (error) {
-    return (
-      <>
-        <Head />
-        <Alert tone="warning" title="تعذّر جلب المواليد">{error}</Alert>
-      </>
-    );
-  }
+  if (error) return <AdRoomError {...BIRTHDAYS_ROOM} message={error} />;
   // «اليوم» يُحسب في الخادم بتوقيت الرياض (جمهور النادي) — لا في العميل: فيتّفق رسمُ الخادم وأوّلُ
   // رسمِ العميل على تاريخٍ واحد (لا عدمُ تطابقٍ عند الإماهة)، ويكون العدّ التنازليّ صحيحًا للجمهور.
   // en-CA يعطي yyyy-mm-dd. الصفحة ديناميّة (اللوحة محروسة بالكوكيز) فيُحسب لكلّ طلب.
   const todayIso = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit",
   }).format(new Date());
-  return <BirthdaysView members={rows} todayIso={todayIso} scope={seesAll ? "all" : "supervised"} />;
+  return (
+    <BirthdaysRoom
+      members={rows}
+      todayIso={todayIso}
+      scope={seesAll ? "all" : "supervised"}
+      serverNow={await requestNow()}
+      view={await roomView(BIRTHDAYS_ROOM.viewKey, BIRTHDAYS_ROOM.defaultView)}
+    />
+  );
 }

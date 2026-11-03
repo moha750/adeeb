@@ -91,6 +91,7 @@ export function Screen() {
           log={toLogEvents(world, detail.id)}
           votes={canManage ? toVoteDetail(world, detail.id) : []}
           readOnly={!canManage}
+          serverNow={world.now}
         />
       );
     }

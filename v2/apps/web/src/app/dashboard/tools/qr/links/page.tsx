@@ -2,7 +2,12 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getSessionAdmin } from "@/lib/auth";
 import { getMyQrLinks } from "../data";
 import { getMyQrCampaignBriefs } from "../campaigns/data";
-import { SavedLinksView } from "../SavedLinksView";
+import { QrLinksRoom } from "@/app/_ad/rooms/QrLinksRoom";
+import { AdRoomError } from "@/app/_ad/states";
+import { QR_LINKS_ROOM } from "@/app/_ad/rooms/qr-links.meta";
+import { roomView } from "@/app/_ad/view-server";
+import { requestNow } from "@/app/_ad/now";
+import { roomMetadata } from "@/app/_ad/metadata";
 
 /**
  * **باركودات مفردة** — البابُ الأوّل في غرفة الباركود، وجارُه «الحملات» (`../campaigns`).
@@ -19,8 +24,10 @@ import { SavedLinksView } from "../SavedLinksView";
  *
  * والقراءةُ بعميل الجلسة (`data.ts`) لا بمفتاح الخدمة: المدى «كلٌّ يرى رموزَه هو»
  * تحكمه سياسةُ own-row في القاعدة، لا سطرُ `where` في التطبيق.
+ *
+ * وعلى قالب «قائمة السجلّات» (٢٠٢٦-١١-٠٢)، ولا مساراتٍ أبناءَ للمجلّد فحالتا التحميل والخطأ بجانب الصفحة.
  */
-export const metadata = { title: "باركوداتي، بوّابة أدِيب" };
+export const metadata = roomMetadata(QR_LINKS_ROOM);
 
 export default async function QrLinksPage() {
   const denied = await denyUnless("/dashboard/tools/qr");
@@ -32,5 +39,15 @@ export default async function QrLinksPage() {
     getMyQrCampaignBriefs(),
   ]);
 
-  return <SavedLinksView rows={rows} error={error} meId={me?.id ?? null} campaigns={campaigns} />;
+  if (error) return <AdRoomError {...QR_LINKS_ROOM} message={error} />;
+
+  return (
+    <QrLinksRoom
+      rows={rows}
+      meId={me?.id ?? null}
+      campaigns={campaigns}
+      serverNow={await requestNow()}
+      view={await roomView(QR_LINKS_ROOM.viewKey, QR_LINKS_ROOM.defaultView)}
+    />
+  );
 }

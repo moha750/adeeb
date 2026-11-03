@@ -2,7 +2,12 @@ import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getQrShareCandidates } from "../../shares";
 import { getMyQrCampaignBriefs, getQrCampaign, getQrCampaignShares } from "../data";
-import { CampaignRoomView } from "./CampaignRoomView";
+import { QrCampaignRoom } from "@/app/_ad/rooms/QrCampaignRoom";
+import { AdRoomError } from "@/app/_ad/states";
+import { QR_CAMPAIGN_ROOM } from "@/app/_ad/rooms/qr-campaign.meta";
+import { roomView } from "@/app/_ad/view-server";
+import { requestNow } from "@/app/_ad/now";
+import { roomMetadata } from "@/app/_ad/metadata";
 
 /**
  * **غرفةُ حملةٍ بعينها.** القفلُ قفلُ الغرفة نفسِه، والمدى تحكمه سياسةُ own-row: من طلب
@@ -11,8 +16,11 @@ import { CampaignRoomView } from "./CampaignRoomView";
  *
  * **ومرشّحو الشِّركة يُقرَؤون للمالك وحدَه**: هم قائمةُ اختيارٍ في نافذةٍ لا يفتحها غيرُه،
  * وقراءتُها لكلّ ناظرٍ نداءٌ بلا مستعمِل.
+ *
+ * وعلى قالب «قائمة السجلّات» (٢٠٢٦-١١-٠٢)، ولا مساراتٍ أبناءَ للمجلّد فحالتا التحميل والخطأ بجانب الصفحة. **و«لم يُعثر»
+ * ليس خطأَ جلب**: يبقى تنبيهَه كما كان، فلا يُقال «تعذّر جلب الحملة» عن حملةٍ معدومةٍ أو ليست لك.
  */
-export const metadata = { title: "حملة باركود، بوّابة أدِيب" };
+export const metadata = roomMetadata(QR_CAMPAIGN_ROOM);
 
 export default async function QrCampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/tools/qr");
@@ -24,7 +32,7 @@ export default async function QrCampaignPage({ params }: { params: Promise<{ id:
     getQrCampaignShares(id),
   ]);
 
-  if (error) return <Alert tone="warning" title="تعذّرت قراءة الحملة">{error}</Alert>;
+  if (error) return <AdRoomError {...QR_CAMPAIGN_ROOM} message={error} />;
   if (!campaign) return <Alert tone="warning" title="لم يُعثر على الحملة">قد تكون حُذفت، أو ليست لك.</Alert>;
 
   // **وحملاتُه تُقرأ للمالك وحدَه**: هي وجهاتُ النقل في نافذةٍ لا يفتحها غيرُه.
@@ -34,12 +42,14 @@ export default async function QrCampaignPage({ params }: { params: Promise<{ id:
   ]);
 
   return (
-    <CampaignRoomView
+    <QrCampaignRoom
       campaign={campaign}
       links={links}
       shares={shares.rows}
       candidates={candidates}
       campaigns={campaigns}
+      serverNow={await requestNow()}
+      view={await roomView(QR_CAMPAIGN_ROOM.viewKey, QR_CAMPAIGN_ROOM.defaultView)}
     />
   );
 }

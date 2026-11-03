@@ -6,7 +6,7 @@ import {
   TreeStructure, UserGear, UsersFour, SquaresFour, Layout, Key, ShieldWarning, Certificate, QrCode,
   EnvelopeSimpleOpen, UserCircle, SlidersHorizontal, ListChecks,
   PenNib, ClockCounterClockwise, Robot, Megaphone, HandWaving, House, Ticket, Scroll, HandHeart, GameController, PaperPlaneTilt,
-  Exam, ChartPolar, Ranking, SealCheck,
+  Exam, ChartPolar, Ranking, SealCheck, MoonStars,
 } from "@phosphor-icons/react";
 import { CaretDown, CaretRight, CaretDoubleRight, Checks, Plus, Prohibit, Question, SignOut } from "@/app/_components/glyphs";
 
@@ -127,6 +127,8 @@ export const IconMail = (p: P) => <PaperPlaneTilt aria-hidden {...p} />;
 export const IconRate = (p: P) => <Exam aria-hidden {...p} />;
 export const IconVerdict = (p: P) => <ChartPolar aria-hidden {...p} />;
 export const IconEvaluation = (p: P) => <Ranking aria-hidden {...p} />;
+/* **متابعة الرؤية** (٢٠٢٦-١١-٠٣) — الهلالُ بنجومه: شعارُ «رؤية الهلال» نفسُه هلالٌ يكتمل بما يتحقّق. */
+export const IconVision = (p: P) => <MoonStars aria-hidden {...p} />;
 
 export const ICONS = {
   me: IconMe, profile: IconProfile, settings: IconSettings, users: IconUsers, clip: IconClip, doc: IconDoc,
@@ -141,6 +143,6 @@ export const ICONS = {
   candidacy: IconCandidacy, myruns: IconMyRuns, ballot: IconBallot,
   announce: IconAnnounce, friends: IconFriends,
   home: IconHome, ticket: IconTicket, regs: IconRegs, irfan: IconIrfan, games: IconGames, statement: IconStatement, mail: IconMail,
-  rate: IconRate, verdict: IconVerdict, evaluation: IconEvaluation,
+  rate: IconRate, verdict: IconVerdict, evaluation: IconEvaluation, vision: IconVision,
 } as const;
 export type IconKey = keyof typeof ICONS;

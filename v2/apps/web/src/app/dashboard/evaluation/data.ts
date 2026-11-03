@@ -99,7 +99,17 @@ export async function getTargets(cycleId: number, withResults: boolean): Promise
 }
 
 /** `supervisor`: في شقّ المجلس لأنّه يشرف على اللجنة (م٤/1) لا لأنّه من المجلس الإداريّ، فيُوسَم «مشرف». */
-export type ElectorRow = { rater_id: string | null; full_name: string | null; part: Part; added_by_correction: boolean; removed: boolean; supervisor?: boolean };
+export type ElectorRow = {
+  rater_id: string | null;
+  full_name: string | null;
+  part: Part;
+  added_by_correction: boolean;
+  removed: boolean;
+  supervisor?: boolean;
+  /** منصبُه الحاضر بمسمّى المنصّة (`position_title_of`)، يُؤنَّث بجنسه في الواجهة (`rankFor`). */
+  seat_title?: string | null;
+  gender?: "male" | "female" | null;
+};
 
 /** مقيِّمو مقيَّمٍ واحد لباب التصحيح: أسماؤهم وشقُّهم، ولا شيءَ عن مشاركتهم. */
 export async function getElectorate(targetId: number): Promise<Read<ElectorRow[]>> {

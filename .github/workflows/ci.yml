@@ -60,7 +60,7 @@ jobs:
       - name: تنصيبُ الاعتماديّات
         run: pnpm install --frozen-lockfile
 
-      - name: الحرّاسُ الأربعة (pnpm check)
+      - name: حرّاسُ V2 (pnpm check)
         run: pnpm check
 
       - name: لِنت (pnpm lint)

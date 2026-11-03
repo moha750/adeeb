@@ -60,6 +60,9 @@ function WorkTile({ w, onOpen }: { w: Work; onOpen: () => void }) {
           src={w.image_url}
           alt={w.title}
           loading="lazy"
+          // صورُ «قوقل درايف» (`lh3.googleusercontent.com/d/…`) تُردّ إن حملت رابطَ صفحتنا مرجعًا — فثلاثٌ من الأعمال كانت
+          // خاناتٍ فارغةً في الصفحة الرئيسيّة (٢٠٢٦-١١-٠٢). بلا مرجعٍ تُحمَّل
+          referrerPolicy="no-referrer"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
       ) : (

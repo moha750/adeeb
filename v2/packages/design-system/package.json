@@ -13,12 +13,12 @@
     "./tokens.css": "./tokens.css",
     "./fonts.css": "./fonts.css",
     "./components.css": "./components.css",
+    "./ad.css": "./ad.css",
     "./components.base.css": "./components.base.css",
     "./components.dash.css": "./components.dash.css",
     "./components.radio.css": "./components.radio.css",
     "./components.games.css": "./components.games.css",
     "./components.ui.css": "./components.ui.css",
-    "./tailwind.preset": "./tailwind.preset.js",
     "./tokens": "./tokens.ts",
     "./brand/*": "./brand/*",
     "./fonts/*": "./fonts/*"

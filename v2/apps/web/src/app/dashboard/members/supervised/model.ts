@@ -128,14 +128,15 @@ export function myCommittees(
         dept: c.department_id != null ? deptName.get(c.department_id) ?? null : null,
         desc: c.description ?? null,
         link: c.group_link ?? null,
-        leader: leaderRow ? holderOf(leaderRow.user_id, leaderRow.role_name, c.id) : null,
-        deputy: deputyRow ? holderOf(deputyRow.user_id, deputyRow.role_name, c.id) : null,
+        // ومنذ متى في المقعد (`since`) — «منذ…» في صفّ القيادة (٢٠٢٦-١١-٠٣)
+        leader: leaderRow ? { ...holderOf(leaderRow.user_id, leaderRow.role_name, c.id), since: leaderRow.assigned_at ?? null } : null,
+        deputy: deputyRow ? { ...holderOf(deputyRow.user_id, deputyRow.role_name, c.id), since: deputyRow.assigned_at ?? null } : null,
         peer:
           otherUnitId == null
             ? null
             : {
                 unitName: unitName.get(otherUnitId) ?? `وحدة #${otherUnitId}`,
-                holder: peerRow ? holderOf(peerRow.supervisor_id, unitOwnerRole(comById.get(otherUnitId)), c.id) : null,
+                holder: peerRow ? { ...holderOf(peerRow.supervisor_id, unitOwnerRole(comById.get(otherUnitId)), c.id), since: peerRow.assigned_at ?? null } : null,
               },
         members: inside
           .filter((ur) => ur.role_name === c.member_role_name && serving.has(ur.user_id))

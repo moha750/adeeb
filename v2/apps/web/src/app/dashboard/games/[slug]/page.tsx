@@ -47,7 +47,7 @@ export default async function GamePage({
       metrics={metrics[slug] ?? []}
       boards={boards}
       days={d.days[slug] ?? []}
-      week={d.weeks[slug]}
+      period={d.periods[slug]}
       bank={bank?.data ?? null}
       leaders={leaders}
       statsError={d.error ?? bank?.error ?? null}

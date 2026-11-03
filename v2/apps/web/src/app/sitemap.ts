@@ -4,6 +4,7 @@ import { getRadioSitemapEntries } from "./radio/data";
 import { newsHref } from "@/lib/news/link";
 import { docs } from "@/lib/regulations/data";
 import { STRUCTURE_PATH } from "@/lib/structurePage";
+import { VISION_PATH } from "@/lib/vision/page";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
 
@@ -37,6 +38,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/regulations`, changeFrequency: "monthly", priority: 0.7 },
     // «هيكلة أدِيب» (٢٠٢٦-١٠-١٨): علنيّةٌ منذ اعتمد المالك تصميمها، وتتبدّل بالتعيينات فتردُّدها أسبوعيّ.
     { url: `${SITE}${STRUCTURE_PATH}`, changeFrequency: "weekly", priority: 0.7 },
+    // «رؤية أدِيب» (٢٠٢٦-١١-٠٣): الرؤيةُ السارية بأهدافها وما تحقّق منها، تتبدّل بالمتابعة فتردُّدها أسبوعيّ.
+    { url: `${SITE}${VISION_PATH}`, changeFrequency: "weekly", priority: 0.7 },
     ...(await docs().catch(() => [])).map((d) => ({ url: `${SITE}/regulations/${d.slug}`, changeFrequency: "monthly" as const, priority: 0.6 })),
   ];
 

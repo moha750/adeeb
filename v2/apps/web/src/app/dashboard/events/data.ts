@@ -52,6 +52,8 @@ export type EventRow = {
   date: string;          // activity_date "YYYY-MM-DD" (خام، للفرز)
   dateLabel: string;     // عربيّ مختصر
   timeLabel: string;     // "10:00–12:00" أو "10:00"
+  startTime: string | null;    // "10:00" خام — لمن يصوغ الوقتَ بصباحٍ ومساء (`fmtTimeRange`)
+  endTime: string | null;
   totalSeats: number | null;   // null = غير محدود
   coverImageUrl: string | null;
   isPublished: boolean;
@@ -110,6 +112,8 @@ export async function getEvents(): Promise<{ events: EventRow[]; error: string |
       date: a.activity_date,
       dateLabel: fmtDate(a.activity_date),
       timeLabel: a.end_time ? `${hm(a.start_time)}–${hm(a.end_time)}` : hm(a.start_time),
+      startTime: a.start_time ? hm(a.start_time) : null,
+      endTime: a.end_time ? hm(a.end_time) : null,
       totalSeats: a.total_seats ?? null,
       coverImageUrl: a.cover_image_url ?? null,
       isPublished: a.is_published,

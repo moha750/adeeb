@@ -30,8 +30,6 @@ export type RoomProps = {
   people: { id: string; name: string }[];
   committees: { id: number; name: string; department_id?: number | null }[];
   actions: DetailActions;
-  /** الأوجهُ قيد الاختيار (المعرض وحده يسمّيها). */
-  look?: Partial<RoomLook>;
   /** يُفتح تفصيلُ هذا المقيَّم عند الرسم (المعرض). */
   initialOpen?: number;
 };
@@ -43,17 +41,6 @@ export function addDays(dateOnly: string, n: number): string {
   const [y, m, d] = dateOnly.slice(0, 10).split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
-
-/**
- * **أوجهُ الغرفة قيد الاختيار** (جولة ملاحظات المحاكي، ٢٠٢٦-١٠-٢٧). لكلّ مسألةٍ وجهان في `/ui/evaluation`، ويُعدَم
- * المرفوضُ بعد اختيار محمد. وما لم يُسمَّ يأخذ الوجهَ الأوّل.
- * (صفُّ المستبعَد حُسم: «صبغة» مستويةٌ بلا تدرّج وأشرطةٌ محايدة، اختيارُ محمد ٢٠٢٦-١٠-٢٨، وأُعدمت «الحافّة».)
- * (علامةُ النصاب حُسمت: خطٌّ مسمًّى «النصف» على شريط الأعضاء، اختيارُ محمد ٢٠٢٦-١٠-٢٨، وأُعدمت «الجملة».)
- * - `excluded`: المستثنى: «صفّ» في مكانه من لجنته بسببه، أو «كرت» مستقلّ «خارج هذه الدورة».
- * - `detail`: نافذةُ التفصيل: «ملفّ» بنمط نافذة الشخص في المنصّة، أو «تبويبات».
- */
-export type RoomLook = { excluded: "row" | "card"; detail: "profile" | "tabs" };
-export const DEFAULT_LOOK: RoomLook = { excluded: "row", detail: "profile" };
 
 /**
  * شريطُ مشاركةِ شقٍّ: الممتلئُ أوراقُه، والنصابُ (للأعضاء وحدهم، م٥/1) خطٌّ عند منتصفه اسمُه **«النصف»** لا «النصاب»:
@@ -102,7 +89,8 @@ export function RoomHead({ cycles, cycle, onCycle, targets, canManage, canViewRe
       {cycles.length > 1 ? (
         <Segmented
           className="eva-cycles"
-          items={cycles.map((c) => ({ value: String(c.id), label: cycleShort(c.due_on) }))}
+          // بترتيب الزمن (محمد ٢٠٢٦-١٠-٢٩): الأقدمُ أوّلًا حيث تبدأ العين، لا ترتيبُ القاعدة الأحدثُ أوّلًا
+          items={[...cycles].sort((a, b) => a.due_on.localeCompare(b.due_on)).map((c) => ({ value: String(c.id), label: cycleShort(c.due_on) }))}
           value={String(cycle.id)}
           onValueChange={(v) => onCycle(Number(v))}
         />

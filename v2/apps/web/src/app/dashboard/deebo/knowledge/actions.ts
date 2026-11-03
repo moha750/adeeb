@@ -144,6 +144,32 @@ export async function deleteFact(id: string): Promise<FactResult> {
 }
 
 /** تحريك واقعةٍ خطوةً — يبادل قيمة `sort` مع جارتها في الاتّجاه المطلوب. */
+/**
+ * يحفظ ترتيبَ الوقائع كاملًا بعد سحبٍ أو سهمٍ في القائمة (القالب، `_ad/reorder.tsx`) — على مثال `reorderFaqs`:
+ * المعرّفاتُ بترتيبها الجديد، فتأخذ كلُّ واقعةٍ موضعَها (`sort` من صفر كما يبدأ `createFact`). وإن تغيّرت القائمةُ منذ فُتحت
+ * (أُضيفت واقعةٌ أو حُذفت من نافذةٍ أخرى) رُفض الحفظُ ولم يُكتب شيء، فلا يُرتَّب نصفُ القائمة على صورةٍ قديمة.
+ */
+export async function reorderFacts(ids: string[]): Promise<FactResult> {
+  const mgr = await getDeeboManager();
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const { data: rows, error } = await sb.from("deebo_knowledge").select("id");
+  if (error) return { ok: false, message: error.message };
+  const now = new Set((rows ?? []).map((r) => r.id as string));
+  if (ids.length !== now.size || new Set(ids).size !== ids.length || !ids.every((id) => now.has(id))) {
+    return { ok: false, message: "تغيّرت القائمةُ منذ فُتحت. حدّث الصفحة ثمّ رتّبها من جديد." };
+  }
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("deebo_knowledge").update({ sort: i }).eq("id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateFacts();
+  return { ok: true, message: "حُفظ الترتيب." };
+}
+
 export async function moveFact(id: string, dir: "up" | "down"): Promise<FactResult> {
   const mgr = await getDeeboManager();
   if (!mgr) return { ok: false, message: NO_PERM };

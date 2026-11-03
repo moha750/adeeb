@@ -2,31 +2,33 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { SectionCard } from "@adeeb/design-system";
+import { SectionCard, Stat } from "@adeeb/design-system";
+import { GameController, Monitor, Trophy, Users } from "@phosphor-icons/react";
 import { Plus } from "@/app/_components/glyphs";
 import { PageHeader } from "../_components/PageHeader";
 import { useToast } from "../_components/ToastProvider";
-import { WeekPulse } from "./WeekPulse";
+import { MonthPulse, sumOf } from "./MonthPulse";
+import { Trend } from "./Trend";
 import { ContestsPanel } from "./ContestsPanel";
 import { HallLineup } from "./HallLineup";
 import { ContestEditor, type ContestGame, type ContestTarget } from "./ContestEditor";
 import { moveGame, setGameInHall } from "./actions";
-import type { BoardRow, ContestRow, GameDay, GameRow, GameWeek } from "./vocab";
+import { NOUNS, PERIOD, PERIOD_LABEL, contestPhase, countNoun, type BoardRow, type ContestRow, type GameDay, type GameRow, type GamePeriod } from "./vocab";
 
 /**
  * **غرفةُ الألعاب** (الهيكلُ الثاني، المالك ٢٠٢٦-١٠-١٧): كانت فهرسًا جميلًا لا تُدار منه الصالة، فصارت:
- *  - **آخرُ سبعة أيام:** هل كلُّ لعبةٍ حيّة؟ جولاتُها ولاعبوها بفرقهما عن الأسبوع قبله، وأعمدةُ أيّامها.
+ *  - **آخرُ 30 يومًا** (المالك ٢٠٢٦-١٠-٢٩: «احتسب في شهر»): هل كلُّ لعبةٍ حيّة؟ جولاتُها ولاعبوها بفرقهما عن الثلاثين قبلها.
  *  - **المسابقات:** كلُّها في قائمةٍ واحدة، الحاليّةُ بعدّادها ومتصدّرها والسابقةُ بفائزها.
  *  - **الصالةُ الآن:** الألعابُ بترتيبها في `/games`، والظهورُ والترتيبُ فعلٌ فوريٌّ لا ينتظر «حفظ».
  *
  * والفعلُ الفوريُّ متفائل: يتبدّل الصفُّ ساعةَ النقر ثمّ يُصدّقه الخادم، فإن رفض عاد كما كان بإشعار.
  */
 export function GamesRoomView({
-  games: initial, days, weeks, contests, leaders, contestGames, now,
+  games: initial, days, periods, contests, leaders, contestGames, now,
 }: {
   games: GameRow[];
   days: Record<string, GameDay[]>;
-  weeks: Record<string, GameWeek>;
+  periods: Record<string, GamePeriod>;
   contests: ContestRow[];
   leaders: Record<string, BoardRow | undefined>;
   /** ما يُتنافس فيه (لعبةٌ لها مقياس). وبلا شيءٍ لا زرَّ «مسابقة جديدة». */
@@ -68,15 +70,36 @@ export function GamesRoomView({
     run(slug, next, () => moveGame(slug, dir));
   };
 
+  // كروتُ الرأس كسائر الغرف: الألعابُ كلُّها معًا في النافذة (`PERIOD`)، ثمّ ما يجري وما في الصالة.
+  const all = Object.values(days);
+  const runs = all.reduce((n, d) => n + sumOf(d.slice(-PERIOD), "runs"), 0);
+  const runsB = all.reduce((n, d) => n + sumOf(d.slice(-2 * PERIOD, -PERIOD), "runs"), 0);
+  const players = Object.values(periods).reduce((n, w) => n + w.players[0], 0);
+  const playersB = Object.values(periods).reduce((n, w) => n + w.players[1], 0);
+  const open = contests.filter((c) => contestPhase(c, now) !== "over").length;
+  const shown = games.filter((g) => g.inHall).length;
+  const nf = (n: number) => n.toLocaleString("en-US");
+
   return (
     <div className="gmr gmr-cq">
       <PageHeader
         title="ألعاب أدِيب"
         action={contestGames.length ? { label: "مسابقة جديدة", icon: <Plus size={18} />, onClick: () => setTarget({ pick: true }) } : undefined}
       />
+      <div className="stat-grid" style={{ marginBottom: 18 }}>
+        <Stat icon={<GameController />} value={nf(runs)} label={`${countNoun(runs, NOUNS.RUN)} ${PERIOD_LABEL}`} trend={<Trend now={runs} before={runsB} />} />
+        <Stat icon={<Users />} value={nf(players)} label={`${countNoun(players, NOUNS.PLAYER)} ${PERIOD_LABEL}`} trend={<Trend now={players} before={playersB} />} />
+        <Stat icon={<Trophy />} value={nf(open)} label="مسابقة جارية أو قادمة" />
+        <Stat
+          icon={<Monitor />}
+          value={nf(shown)}
+          label={`${countNoun(shown, NOUNS.GAME)} معروضة في الصالة`}
+          note={games.length > shown ? `و${nf(games.length - shown)} خارجها` : undefined}
+        />
+      </div>
       <div className="gmr-room">
         <div className="gmr-room-main">
-          <WeekPulse games={games} days={days} weeks={weeks} />
+          <MonthPulse games={games} days={days} periods={periods} />
           <ContestsPanel
             contests={contests}
             leaders={leaders}
@@ -84,7 +107,7 @@ export function GamesRoomView({
             hrefFor={(c) => `/dashboard/games/${c.gameSlug}?tab=contests`}
           />
         </div>
-        <SectionCard title="الصالة الآن">
+        <SectionCard title="الصالة الآن" icon={<Monitor />}>
           <HallLineup games={games} busy={busy} onToggle={toggle} onMove={move} />
         </SectionCard>
       </div>

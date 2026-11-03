@@ -6,6 +6,7 @@ import { getCreditPeople } from "@/lib/people";
 import { NewsEditorView } from "./NewsEditorView";
 import { NewsHead, NewsroomDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
+import { requestNow } from "@/app/_ad/now";
 
 export default async function NewsEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/news");
@@ -43,6 +44,7 @@ export default async function NewsEditorPage({ params }: { params: Promise<{ id:
       people={people}
       isChief={actor.isChief}
       meId={actor.userId}
+      serverNow={await requestNow()}
     />
   );
 }

@@ -1,88 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Gear, IdentificationBadge, Note, UserCircle } from "@phosphor-icons/react";
 import { CaretDown } from "@/app/_components/glyphs";
-import { KIND_TONE } from "./log";
+import { AdLog, type AdLogEvent } from "@/app/_ad/log";
+import { AdButton, type AdMeta, type AdTone } from "@/app/_ad/primitives";
+import { arCount, type ArForms } from "@/lib/arabicCount";
+import { KIND_TONE, type LogTone } from "./log";
 import { KIND_ICON } from "./logIcons";
-import { eventToneVars } from "./journeyTone";
 import type { ElectionLogEvent } from "./data";
 
 /**
- * سجلُّ الانتخاب — **مَن فعل ماذا**. القاعدةُ تكتب كلَّ فعلٍ بفاعله، وهذه الشاشةُ تُنطقه:
- * سطرٌ لكلّ حدثٍ بجملته وصاحبِه ولحظته، ومَن وقع عليه الفعلُ يُسمّى برقمه واسمه.
+ * سجلُّ الانتخاب — **مَن فعل ماذا**. القاعدةُ تكتب كلَّ فعلٍ بفاعله، وهذه الشاشةُ تُنطقه على **الخطّ الزمنيّ المشترك**
+ * (`AdLog`، قاعدةُ محمد ٢٠٢٦-١١-٠٢: ما يجيب عن «مَن فعل ماذا ومتى» ويُقرأ ولا يُدار خطٌّ زمنيّ): كعوبُ الأيّام على المحور،
+ * وتحت كلّ يومٍ وقائعُه الأحدثُ أوّلًا بساعتها.
  *
- * **ولغتُه لغةُ «مسيرتي في أدِيب»** (`.mjr` من المكتبة) لا لغةُ «رحلة ترشُّحي» — قرارُ المالك
- * ٢٠٢٦-٠٨-١٤ من معاينةٍ عرضت الاثنتين على بيانٍ واحد: الشاشتان **وقائعُ تُقرأ** فتشتركان في
- * العقدة الـsquircle وخيطِ حدّ الكرت وسطحِ Aurora (وهو أيضًا ما يوافق قانونَ الزوايا: الأيقونات
- * squircle لا دوائر). أمّا الرحلةُ فسردُ شخصٍ في لحظته، تبقى بعقدتها الكبيرة ونبضِها.
+ * والواقعةُ **جملتُها بصوت الإدارة** (`describeEvent` بـ`audience: "admin"` في `getElectionLog` — ورحلةُ العضو تُقرأ
+ * بصوته في `JourneyBody` ولا تمرّ من هنا)، ونوعُها شارةً بنغمة طبيعته (`KIND_TONE`: الاعتمادُ أخضرُ والرفضُ أحمرُ حيثما
+ * وقعا)، وتحتها صاحبُ الفعل ثمّ مَن وقع عليه برقمه واسمه ثمّ ملاحظتُه — والقرارُ يُسأل عنه أحد.
  *
- * والنغمةُ لكلّ سطرٍ من **طبيعة حدثه** (`KIND_TONE`): الاعتمادُ أخضرُ والرفضُ أحمرُ حيثما وقعا
- * في الترتيب، إذ لا «محطّةَ حاليّة» في سجلٍّ كلُّه ماضٍ. و**الأحدثُ أوّلًا** (ترتيبُ
- * `getElectionLog`): آخرُ ما جرى في الرأس، والأقدمُ ينزل.
- *
- * وعقدةُ «عرض بقيّة السجلّ» في **الذيل** (أمرُ المالك ٢٠٢٦-٠٨-١٥): زرٌّ في رأس الشاشة يسبق
- * الخبرَ إلى العين، فأُنزل تحت السطور. والترتيبُ يوافقه: المطويُّ أقدمُ ممّا فوقه، فينزل عند
- * فتحه **تحت العقدة** في موضعه الزمنيّ، فلا يهبط سطرٌ قُرئ ولا ينقلب العرض بضغطة.
+ * و«عرض بقيّة السجلّ» في **الذيل** (أمرُ المالك ٢٠٢٦-٠٨-١٥): المعروضُ أحدثُ `initial` حدثًا (ترتيبُ `getElectionLog`)،
+ * والمطويُّ أقدمُ منه، فينزل عند فتحه تحت ما قُرئ في موضعه الزمنيّ، فلا يهبط سطرٌ ولا ينقلب العرض بضغطة.
  */
 type Props = {
   events: ElectionLogEvent[];
+  /** ساعةُ الطلب (`requestNow`) — «اليوم» و«أمس» على الخطّ بساعة الخادم لا الجهاز. */
+  now: number;
+  /** رأسُ القسم حين يكون السجلُّ قسمًا في الصفحة؛ ونافذةُ المرشّح تعنونه بعنوانها فلا رأسَ له فيها. */
+  title?: string;
+  icon?: ReactNode;
   /** اسمُ من وقع عليه الفعل من معرّف مرشّحه — تصوغه الشاشةُ الأمّ من صفوفها. */
   subjectOf?: (candidateId: string) => string | null;
-  /** كم سطرًا يُعرَض قبل «عرض السجلّ كاملًا» — و`0` يعرضه كلَّه بلا زرّ. */
+  /** كم حدثًا يُعرَض قبل «عرض بقيّة السجلّ» — و`0` يعرضه كلَّه بلا زرّ. */
   initial?: number;
 };
 
 /** فاعلٌ لا اسمَ له = الكنّاسة: الفعلُ وقع بحكم الموعد لا بقرار أحد، فلا يُنسَب إلى أحد. */
 const SYSTEM = "النظام";
 
-/** عدُّ الأحداث بعربيّةٍ سليمة: مفردٌ ومثنًّى، ثمّ جمعُ قلّةٍ إلى العشرة، ثمّ تمييزٌ مفرد منصوب. */
-const eventsCount = (n: number): string =>
-  n === 1 ? "حدثٌ واحد" : n === 2 ? "حدثان" : n <= 10 ? `${n} أحداث` : `${n} حدثًا`;
+/** عدُّ الأحداث بعربيّةٍ سليمة («حدثٌ واحد»، «حدثان»، «5 أحداث»، «12 حدثًا») */
+const AR_EVENT: ArForms = ["حدثٌ واحد", "حدثان", "أحداث", "حدثًا"];
 
-export function ElectionLog({ events, subjectOf, initial = 0 }: Props) {
+/** نغمةُ المعجم (`LogTone`) بأسماء الأساس الجديد */
+const TONE: Record<LogTone, AdTone> = { success: "ok", warning: "warn", danger: "bad", info: "info", neutral: "neutral" };
+
+/**
+ * **يُطوى المتكرّرُ المتتالي** (`same`): الجملةُ نفسُها على المرشّح نفسِه بيد الفاعل نفسِه وبلا ملاحظة — تمديدُ المهلة
+ * تلقائيًّا مرّاتٍ، أو بيانٌ يُحفظ مرّاتٍ في دقيقة. وما له ملاحظةٌ أو جملةٌ غيرُ أختها يبقى وحده.
+ */
+const same = (a: ElectionLogEvent, b: ElectionLogEvent) =>
+  a.kind === b.kind && a.label === b.label && a.candidateId === b.candidateId && a.actor === b.actor && !a.note && !b.note;
+
+export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0 }: Props) {
   const [all, setAll] = useState(false);
-  if (!events.length) return <p className="txt">لا أحداث في هذا الانتخاب بعد.</p>;
-
   const capped = initial > 0 && !all && events.length > initial;
-  // الأحدثُ أوّلًا، والمعروضُ رأسُ القائمة: يُقتطع ذيلُها (وهو **أقدمُ** ما جرى) فيُفتح بعقدةٍ
-  // تحته. فالفتحُ زيادةٌ في الأسفل لا إزاحةٌ من الأعلى.
+  // الأحدثُ أوّلًا، والمعروضُ رأسُ القائمة: يُقتطع ذيلُها (وهو **أقدمُ** ما جرى) فيُفتح بزرٍّ تحته.
   const shown = capped ? events.slice(0, initial) : events;
 
-  return (
-    <>
-      <ol className="mjr">
-        {shown.map((e) => {
-          const subject = e.candidateId ? subjectOf?.(e.candidateId) ?? null : null;
-          return (
-            <li key={e.id} className="mjr-i ev" style={eventToneVars(KIND_TONE[e.kind])}>
-              <span className="mjr-dot">{KIND_ICON[e.kind]}</span>
-              <div className="mjr-c">
-                <div className="mjr-h"><b className="mjr-t">{e.label}</b><span className="mjr-d">{e.date}</span></div>
-                {/* سطرُ النسبة: صاحبُ الفعل أوّلًا، ثمّ من وقع عليه — والقرارُ يُسأل عنه أحد */}
-                <span className="mjr-by">
-                  بواسطة <b>{e.actor ?? SYSTEM}</b>
-                  {subject ? <span className="mjr-sub">{subject}</span> : null}
-                </span>
-                {e.note ? <div className="mjr-note">{e.note}</div> : null}
-              </div>
-            </li>
-          );
-        })}
+  const event = (e: ElectionLogEvent): AdLogEvent => {
+    const subject = e.candidateId ? subjectOf?.(e.candidateId) ?? null : null;
+    const meta: AdMeta[] = [
+      { icon: e.actor ? <UserCircle /> : <Gear />, text: `بيد ${e.actor ?? SYSTEM}` },
+      ...(subject ? [{ icon: <IdentificationBadge />, text: subject }] : []),
+      ...(e.note ? [{ icon: <Note />, text: e.note }] : []),
+    ];
+    // بلا شارة نوع: الجملةُ نفسُها تقوله («تمّ اعتماد الترشّح»)، ورمزُ النقطة ونغمتُها يقولانه بلمحة
+    return { icon: KIND_ICON[e.kind], tone: TONE[KIND_TONE[e.kind]], title: e.label, meta };
+  };
 
-        {/* عقدةُ الطلب آخرَ عنصرٍ في القائمة، فيقطع خيطَها `.mjr-i:last-child::before` فلا يتدلّى
-            تحتها خيطٌ إلى لا شيء. وما تفتحه أقدمُ ممّا فوقها، فيُقال في عدّه «أقدم». */}
-        {capped ? (
-          <li className="mjr-i mjr-more">
-            <button type="button" className="mjr-more-btn" onClick={() => setAll(true)}>
-              <span className="mjr-dot"><CaretDown aria-hidden /></span>
-              <span className="mjr-more-tx">
-                <b className="mjr-more-t">عرض بقيّة السجلّ</b>
-                <span className="mjr-more-n">{eventsCount(events.length - initial)} أقدم</span>
-              </span>
-            </button>
-          </li>
-        ) : null}
-      </ol>
-    </>
+  return (
+    <AdLog<ElectionLogEvent>
+        title={title}
+        icon={icon}
+        // نافذةُ المرشّح تعنونه بعنوانها: هناك بلا رأسٍ ولا إطار (`bare`)، فلا يكون إطارًا في إطار النافذة
+        bare={!title}
+        total={events.length}
+        items={shown}
+        at={(e) => e.at}
+        idOf={(e) => String(e.id)}
+        event={event}
+        same={same}
+        noun={AR_EVENT}
+        now={now}
+        empty={{ title: "لا أحداث في هذا الانتخاب بعد", text: "كلُّ فعلٍ فيه يُقيَّد هنا بفاعله ولحظته." }}
+        more={capped ? (
+          <AdButton variant="soft" icon={<CaretDown />} onClick={() => setAll(true)}>
+            {`عرض بقيّة السجلّ، ${arCount(events.length - initial, AR_EVENT)} أقدم`}
+          </AdButton>
+        ) : undefined}
+      />
   );
 }

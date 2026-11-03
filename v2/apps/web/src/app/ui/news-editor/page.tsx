@@ -5,6 +5,7 @@ import { textToSections } from "@/lib/news/blocks";
 import type { NewsDetail } from "@/app/dashboard/news/data";
 import { NewsEditorView } from "@/app/dashboard/news/[id]/NewsEditorView";
 import { ToastProvider } from "@/app/dashboard/_components/ToastProvider";
+import { requestNow } from "@/app/_ad/now";
 
 /**
  * **غرفةُ التحرير تحت المجهر.**
@@ -119,6 +120,7 @@ export default async function NewsEditorLabPage() {
             people={people}
             isChief
             meId="u1"
+            serverNow={await requestNow()}
           />
         </ToastProvider>
       </div>

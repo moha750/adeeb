@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, IconButton, SaveBar, SectionCard, Switch, Textarea } from "@adeeb/design-system";
-import { ChatText, ClockCounterClockwise, Gauge, TextT } from "@phosphor-icons/react";
+import { Alert, Button, Field, IconButton, SaveBar, SectionCard, Switch, Textarea } from "@adeeb/design-system";
+import { ChatText, ClockCounterClockwise, FloppyDisk, Gauge, TextT, UserCircle } from "@phosphor-icons/react";
 import { PaperPlaneRight, SmileyWink } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowDown, ArrowUp, Plus, Prohibit, Question, Trash } from "@/app/_components/glyphs";
 import { fmtStamp } from "@/lib/dates";
@@ -16,6 +16,10 @@ import type { BoundaryRule } from "@/lib/deebo/persona";
 import type { PersonaForm, PersonaVersion } from "./data";
 import { PROMPT_BUDGET, PROMPT_FIELDS } from "./limits";
 import { probePersona, probeSuite, restorePersona, savePersona, type SuiteAnswer } from "./actions";
+import { AdLog, type AdLogEvent } from "@/app/_ad/log";
+import type { ArForms } from "@/lib/arabicCount";
+
+const AR_VERSION: ArForms = ["نسخةٌ واحدة", "نسختان", "نسخ", "نسخةً"];
 
 /** الرقمُ في طبعه يُسقط حارسَ الأرقام، فيُمنَع الحفظُ لا يُنبَّه عليه. */
 const DIGITS = /[0-9٠-٩۰-۹]/;
@@ -33,10 +37,13 @@ export function PersonaView({
   persona,
   history,
   historyReady,
+  serverNow,
 }: {
   persona: PersonaForm;
   history: PersonaVersion[];
   historyReady: boolean;
+  /** ساعةُ الطلب (`requestNow`) — يقرؤها خطُّ النسخ الزمنيّ («اليوم»، «أمس») فلا يختلف الخادمُ والمتصفّح. */
+  serverNow: number;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -147,6 +154,21 @@ export function PersonaView({
       } else toast.error(r.message);
     });
   };
+
+  /**
+   * **النسخةُ واقعةٌ على الخطّ الزمنيّ** (`AdLog`): لحظتُها لحظةُ حفظها (`at` في اللقطة وقتُ آخرِ تعديلٍ للنسخة المحفوظة)،
+   * وعنوانُها أوّلُ سطرٍ من نبرتها — علامتُها بين أخواتها كما كانت — ومَن حفظها تحتها، وفعلُها الوحيدُ الرجعةُ إليها بتأكيدها.
+   * ونغمتُها `warn` بقاعدة السجلّ: كلُّ حفظٍ غيّر ما يقوله ديبو للناس في لحظته. ولا تُطوى نسختان متتاليتان: لكلٍّ رجعتُها.
+   */
+  const versionEvent = (v: PersonaVersion): AdLogEvent => ({
+    icon: <FloppyDisk />,
+    tone: "warn",
+    // بلا شارة نوع: كلُّها «حفظ»، فالشارةُ على كلّ سطرٍ تكرارٌ لا يميّز نسخةً من أختها
+    // نبرةٌ أوّلُ سطرها فارغ: تُسمّى بلحظتها كما كان عنوانُ كرتها
+    title: v.gist || fmtStamp(v.at),
+    meta: v.byName ? [{ icon: <UserCircle />, text: `بيد ${v.byName}` }] : undefined,
+    open: { label: "أعِد هذه", icon: <ArrowCounterClockwise />, onClick: () => setToRestore(v) },
+  });
 
   const probe = () => {
     startProbe(async () => {
@@ -388,43 +410,31 @@ export function PersonaView({
         </SectionCard>
 
         {/* **نسخُه السابقة** — لقطةٌ تُؤخذ في القاعدة عند كلّ حفظ (مُطلِقُ `deebo_09`)، فلا
-            تعتمد على أن يتذكّرها التطبيق. والرجعةُ حفظٌ عاديّ، فيُرجَع عنها كما رُجع بها. */}
-        <SectionCard headerVariant="chip" icon={<ClockCounterClockwise />} title="نسخُه السابقة">
-          <div className="form-grid">
-            {!historyReady ? (
+            تعتمد على أن يتذكّرها التطبيق. والرجعةُ حفظٌ عاديّ، فيُرجَع عنها كما رُجع بها.
+            وهي سجلٌّ يُقرأ، فعلى الخطّ الزمنيّ المشترك (`AdLog`) برأسه؛ وما دام الجدولُ غائبًا فلا سجلَّ يُرسم،
+            بل كرتُ القسم بتنبيهه كما كان. */}
+        {!historyReady ? (
+          <SectionCard headerVariant="chip" icon={<ClockCounterClockwise />} title="نسخُه السابقة">
+            <div className="form-grid">
               <Alert className="form-full" tone="warning" title="الرجعةُ لم تُفتح بعد">
                 سجلُّ النسخ ينتظر تطبيقَ ترحيل <span className="font-latin">deebo_09</span>.
                 والتحريرُ يعمل كما هو، غير أنّ تعديلَ اليوم يمحو سابقَه بلا رجعة.
               </Alert>
-            ) : history.length === 0 ? (
-              <p className="form-full text-sm leading-7 text-content-muted">
-                لا نسخةَ بعد: تُؤخذ اللقطةُ الأولى عند أوّل حفظٍ من الآن.
-              </p>
-            ) : (
-              <div className="form-full flex flex-col gap-2">
-                {history.map((v) => (
-                  <div key={v.id} className="acard dcard dcard-v-compact">
-                    <div className="dcard-head">
-                      <span className="dcard-id">
-                        <span className="dcard-title">{fmtStamp(v.at)}</span>
-                        <span className="dcard-sub">{v.gist}</span>
-                      </span>
-                    </div>
-                    <div className="dcard-act">
-                      {v.byName ? <Badge tone="neutral" size="sm">{v.byName}</Badge> : null}
-                      <span className="dcard-act-end">
-                        <Button variant="ghost" size="sm" onClick={() => setToRestore(v)}>
-                          أعِد هذه
-                          <ArrowCounterClockwise aria-hidden />
-                        </Button>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </SectionCard>
+            </div>
+          </SectionCard>
+        ) : (
+          <AdLog<PersonaVersion>
+            title="نسخُه السابقة"
+            icon={<ClockCounterClockwise />}
+            items={history}
+            at={(v) => v.at}
+            idOf={(v) => String(v.id)}
+            event={versionEvent}
+            noun={AR_VERSION}
+            now={serverNow}
+            empty={{ title: "لا نسخةَ بعد", text: "تُؤخذ اللقطةُ الأولى عند أوّل حفظٍ من الآن." }}
+          />
+        )}
       </div>
 
       <ConfirmDialog

@@ -3,6 +3,7 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getPersona, getPersonaHistory } from "./data";
 import { PersonaView } from "./PersonaView";
 import { PageHeader } from "../../_components/PageHeader";
+import { requestNow } from "@/app/_ad/now";
 
 /**
  * **طبعُ ديبو** — تتمّةُ غرفة معرفته: تلك تقول ما يعرف، وهذه تقول من هو.
@@ -28,5 +29,5 @@ export default async function DeeboPersonaPage() {
     );
   }
 
-  return <PersonaView persona={persona} history={history.versions} historyReady={history.ready} />;
+  return <PersonaView persona={persona} history={history.versions} historyReady={history.ready} serverNow={await requestNow()} />;
 }

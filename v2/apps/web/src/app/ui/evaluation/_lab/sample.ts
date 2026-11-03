@@ -96,17 +96,17 @@ export const TARGETS_OPEN: TargetRow[] = TARGETS_DONE.map((t, i) => ({
 export const CYCLE_OPEN: CycleRow = { ...CYCLES[1], status: "open", executed_at: null, ballots: 121, kept: 0, removed: 0, no_result: 0 };
 
 export const ELECTORATE: ElectorRow[] = [
-  { rater_id: "a", full_name: "محمد إسماعيل المطر", part: "council", added_by_correction: false, removed: false },
-  { rater_id: "b", full_name: "بشائر الحداد", part: "council", added_by_correction: false, removed: false },
-  { rater_id: "c", full_name: "سارة يوسف الراشد", part: "council", added_by_correction: false, removed: false },
-  { rater_id: "d", full_name: "مشاعل حسن البلوي", part: "council", added_by_correction: false, removed: false },
-  { rater_id: "s", full_name: "نوف عبد الله الدوسري", part: "council", added_by_correction: false, removed: false, supervisor: true },
-  { rater_id: "e", full_name: "ريم سعد العتيبي", part: "members", added_by_correction: false, removed: false },
-  { rater_id: "f", full_name: "فيصل محمد الحمد", part: "members", added_by_correction: false, removed: false },
-  { rater_id: "g", full_name: "عبير ناصر القرني", part: "members", added_by_correction: false, removed: false },
-  { rater_id: "h", full_name: "أحمد صالح الجهني", part: "members", added_by_correction: false, removed: true },
-  { rater_id: "i", full_name: "لين عادل المطيري", part: "members", added_by_correction: true, removed: false },
-  { rater_id: "j", full_name: "مازن طلال الشهري", part: "members", added_by_correction: false, removed: false },
+  { rater_id: "a", full_name: "محمد إسماعيل المطر", part: "council", added_by_correction: false, removed: false, seat_title: "رئيس أدِيب", gender: "male" },
+  { rater_id: "b", full_name: "بشائر الحداد", part: "council", added_by_correction: false, removed: false, seat_title: "الرئيس التنفيذي", gender: "female" },
+  { rater_id: "c", full_name: "سارة يوسف الراشد", part: "council", added_by_correction: false, removed: false, seat_title: "قائد إدارة الموارد البشرية", gender: "female" },
+  { rater_id: "d", full_name: "مشاعل حسن البلوي", part: "council", added_by_correction: false, removed: false, seat_title: "قائد إدارة الضمان والجودة", gender: "female" },
+  { rater_id: "s", full_name: "نوف عبد الله الدوسري", part: "council", added_by_correction: false, removed: false, supervisor: true, seat_title: "عضو إدارة الموارد البشرية", gender: "female" },
+  { rater_id: "e", full_name: "ريم سعد العتيبي", part: "members", added_by_correction: false, removed: false, seat_title: "نائب لجنة التصوير", gender: "female" },
+  { rater_id: "f", full_name: "فيصل محمد الحمد", part: "members", added_by_correction: false, removed: false, seat_title: "منسّق قسم الإنتاج", gender: "male" },
+  { rater_id: "g", full_name: "عبير ناصر القرني", part: "members", added_by_correction: false, removed: false, seat_title: "عضو لجنة التصوير", gender: "female" },
+  { rater_id: "h", full_name: "أحمد صالح الجهني", part: "members", added_by_correction: false, removed: true, seat_title: "عضو لجنة التصوير", gender: "male" },
+  { rater_id: "i", full_name: "لين عادل المطيري", part: "members", added_by_correction: true, removed: false, seat_title: "عضو لجنة التصوير", gender: "female" },
+  { rater_id: "j", full_name: "مازن طلال الشهري", part: "members", added_by_correction: false, removed: false, seat_title: "عضو لجنة التصوير", gender: "male" },
 ];
 
 export const LOG: LogRow[] = [

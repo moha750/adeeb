@@ -27,7 +27,7 @@ export function HallLineup({
   const row = (g: GameRow, pos: number | null) => {
     const locked = busy === g.slug;
     return (
-      <li key={g.slug} className="gmr-lu-row" data-tone={g.tone} data-off={pos == null || undefined}>
+      <li key={g.slug} className="gmr-lu-row" data-off={pos == null || undefined}>
         <span className="gmr-lu-pos">{pos ?? ""}</span>
         <GameScreen game={g} width={40} />
         <span className="gmr-lu-name">{g.name}</span>

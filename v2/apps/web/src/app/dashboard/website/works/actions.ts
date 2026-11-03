@@ -177,3 +177,29 @@ export async function uploadWorkImage(formData: FormData): Promise<UploadResult>
   const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
   return { ok: true, url: data.publicUrl };
 }
+
+/**
+ * **حفظُ الترتيب كاملًا** (٢٠٢٦-١١-٠١، «وضعُ الترتيب» في قالب الغرف: سحبٌ وإفلاتٌ ثمّ حفظٌ واحد، بدل «تحريك خطوة» مرّةً بعد مرّة).
+ * يأخذ المعرّفاتِ بترتيبها الجديد، فيكتب `order` لكلٍّ منها (1، 2، 3…). ويرفض إن تغيّرت القائمةُ في الخادم منذ فُتحت —
+ * سجلٌّ أُضيف أو حُذف — فلا يُكتب ترتيبٌ ناقص.
+ */
+export async function reorderWorks(ids: string[]): Promise<WorkResult> {
+  const mgr = await getWebsiteManager("works");
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const { data: rows, error } = await sb.from("works").select("id");
+  if (error) return { ok: false, message: error.message };
+  const now = new Set((rows ?? []).map((r) => r.id as string));
+  if (ids.length !== now.size || new Set(ids).size !== ids.length || !ids.every((id) => now.has(id))) {
+    return { ok: false, message: "تغيّرت القائمةُ منذ فُتحت. حدّث الصفحة ثمّ رتّبها من جديد." };
+  }
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("works").update({ order: i + 1 }).eq("id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateWorks();
+  return { ok: true, message: "حُفظ الترتيب." };
+}

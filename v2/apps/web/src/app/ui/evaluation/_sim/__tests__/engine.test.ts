@@ -19,7 +19,7 @@ describe("محاكي تقييم القيادات", () => {
     const abeer = viewFor(st, "abeer");
     // عبير في لجنة التصوير: تقيّم قائدَها ونائبتَها ومنسّقَ قسمها
     expect(abeer.sheets.map((s) => s.full_name).sort()).toEqual(["ريم سعد العتيبي", "عبد الرحمن خالد الشيخ", "فيصل محمد الحمد"].sort());
-    expect(abeer.notes[0].title).toContain("تقييمٌ مفتوح");
+    expect(abeer.notes[0].title).toBe("بدأ التقييم الربعي للقيادات");
   });
 
   it("من تُقمِّص يقيّم بيده، وورقتُه تُحسب", () => {

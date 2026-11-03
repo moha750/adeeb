@@ -63,6 +63,7 @@ function WorkGridCard({ w, onOpen }: { w: Work; onOpen: () => void }) {
             src={w.image_url}
             alt={w.title}
             loading="lazy"
+            referrerPolicy="no-referrer"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (

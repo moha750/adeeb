@@ -143,3 +143,32 @@ export async function moveAchievement(id: string, dir: "up" | "down"): Promise<A
   revalidateAchievements();
   return { ok: true, message: dir === "up" ? "حُرّكت لأعلى." : "حُرّكت لأسفل." };
 }
+
+/**
+ * **حفظُ الترتيب كاملًا** (٢٠٢٦-١١-٠٢، غرفةُ الإحصاءات على قالب «قائمة السجلّات»: سحبٌ وإفلاتٌ في القائمة نفسِها بدل «تحريك خطوة»)،
+ * على عُرف `reorderFaqs`: يأخذ المعرّفاتِ بترتيبها الجديد فيكتب `order` لكلٍّ منها (1، 2، 3…)، ويرفض إن تغيّرت القائمةُ في الخادم
+ * منذ فُتحت — إحصائيّةٌ أُضيفت أو حُذفت — فلا يُكتب ترتيبٌ ناقص. و`moveAchievement` أعلاه باقيةٌ لـ`AchievementsView` القديمة.
+ */
+export async function reorderAchievements(ids: string[]): Promise<AchievementResult> {
+  const mgr = await getWebsiteManager("achievements");
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const STALE = "تغيّرت القائمةُ منذ فُتحت. حدّث الصفحة ثمّ رتّبها من جديد.";
+  if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string")) return { ok: false, message: STALE };
+
+  const { data: rows, error } = await sb.from("achievements").select("id");
+  if (error) return { ok: false, message: error.message };
+  const now = new Set((rows ?? []).map((r) => r.id as string));
+  if (ids.length !== now.size || new Set(ids).size !== ids.length || !ids.every((id) => now.has(id))) {
+    return { ok: false, message: STALE };
+  }
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("achievements").update({ order: i + 1 }).eq("id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateAchievements();
+  return { ok: true, message: "حُفظ الترتيب." };
+}

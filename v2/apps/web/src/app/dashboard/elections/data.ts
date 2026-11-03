@@ -462,7 +462,8 @@ export type ElectionLogEvent = {
   actor: string | null;
   /** المرشّحُ الذي وقع عليه الفعل — تسمّيه الشاشةُ من صفوفها (رقمًا واسمًا). */
   candidateId: string | null;
-  date: string;
+  /** لحظةُ الحدث (ISO) — يضعه الخطُّ الزمنيّ (`AdLog`) في يومه وساعته بتوقيت النادي. */
+  at: string;
 };
 
 /**
@@ -507,7 +508,7 @@ export async function getElectionLog(id: string): Promise<{ events: ElectionLogE
       note: f.note,
       actor: r.actor_name,
       candidateId: f.candidateId,
-      date: fmtStamp(r.created_at),
+      at: r.created_at,
     });
   }
   return { events, error: null };

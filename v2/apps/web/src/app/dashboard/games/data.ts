@@ -1,6 +1,6 @@
 import "server-only";
 import { gamesService } from "@/lib/games/authz";
-import { GAME_TONES, type BankStats, type BoardRow, type DarbLeaders, type GameDay, type GameWeek, type ContestRow, type GameMetric, type GameRow, type GameTone, type MetricUnit } from "./vocab";
+import { GAME_TONES, PERIOD, type BankStats, type BoardRow, type DarbLeaders, type GameDay, type GamePeriod, type ContestRow, type GameMetric, type GameRow, type GameTone, type MetricUnit } from "./vocab";
 
 /**
  * **قراءاتُ غرفة الألعاب** — بمفتاح الخدمة بعد حارس الصفحة (`denyUnless`)، كسائر الغرف.
@@ -118,28 +118,28 @@ export async function getBankStats(): Promise<{ data: BankStats | null; error: s
 }
 
 /**
- * **أيّامُ الألعاب** — ثلاثون يومًا لكلّ لعبةٍ بتوقيت الرياض (`game_days`)، منها الجولاتُ في «آخر سبعة أيام»
- * ورسمُ الشهر. واللاعبون والزوّارُ الفريدون في الأسبوعين من `game_weeks`: جمعُ الأيّام يعدّ العائدَ مرّات. ولعبةٌ بلا فرعٍ في الدالّة لا أيّامَ لها، فتقول الغرفةُ «لا أرقام لها بعد».
+ * **أيّامُ الألعاب** — ضعفُ النافذة (`PERIOD`) لكلّ لعبةٍ بتوقيت الرياض (`game_days`): الجولاتُ في النافذة والتي
+ * قبلها للمقارنة، ورسمُ النافذة. واللاعبون والزوّارُ الفريدون في المدّتين من `game_periods`: جمعُ الأيّام يعدّ العائدَ مرّات. ولعبةٌ بلا فرعٍ في الدالّة لا أيّامَ لها، فتقول الغرفةُ «لا أرقام لها بعد».
  */
-export async function getDays(): Promise<{ days: Record<string, GameDay[]>; weeks: Record<string, GameWeek>; error: string | null }> {
+export async function getDays(): Promise<{ days: Record<string, GameDay[]>; periods: Record<string, GamePeriod>; error: string | null }> {
   const sb = gamesService();
-  if (!sb) return { days: {}, weeks: {}, error: NO_KEY };
-  const [d, w] = await Promise.all([sb.rpc("game_days", { p_days: 30 }), sb.rpc("game_weeks")]);
+  if (!sb) return { days: {}, periods: {}, error: NO_KEY };
+  const [d, w] = await Promise.all([sb.rpc("game_days", { p_days: PERIOD * 2 }), sb.rpc("game_periods", { p_days: PERIOD })]);
   const error = d.error ?? w.error;
-  if (error) return { days: {}, weeks: {}, error: error.message };
+  if (error) return { days: {}, periods: {}, error: error.message };
   const days: Record<string, GameDay[]> = {};
   for (const r of (d.data ?? []) as (GameDay & { game_slug: string })[]) {
     (days[r.game_slug] ??= []).push({
       day: r.day, runs: r.runs, players: r.players, visitors: r.visitors, score: r.score, hits: r.hits, answered: r.answered,
     });
   }
-  const weeks: Record<string, GameWeek> = {};
+  const periods: Record<string, GamePeriod> = {};
   for (const r of (w.data ?? []) as { game_slug: string; wk: number; players: number; visitors: number }[]) {
-    const x = (weeks[r.game_slug] ??= { players: [0, 0], visitors: [0, 0] });
+    const x = (periods[r.game_slug] ??= { players: [0, 0], visitors: [0, 0] });
     x.players[r.wk === 0 ? 0 : 1] = r.players;
     x.visitors[r.wk === 0 ? 0 : 1] = r.visitors;
   }
-  return { days, weeks, error: null };
+  return { days, periods, error: null };
 }
 
 /** أوائلُ «دربك خضر» منذ إطلاقها، خمسةً خمسة: من `darb_board` نفسِها التي تقرؤها صفحةُ الصدارة والصالة. */

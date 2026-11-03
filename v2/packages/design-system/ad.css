@@ -1,0 +1,2004 @@
+/* ══════════════════════════════════════════════════════════════════════
+   أدِيب — الطبقاتُ ٢ و٣ و٤ من الأساس الجديد (٢٠٢٦-١٠-٣٠)
+   البصماتُ (اللوح)، واللبنات (الزرّ، الشارة، التبويب، الأدوات، الكرت، السطر، الفراغ)،
+   وقالبُ «قائمة السجلّات». القانونُ في `v2/DESIGN.md`، والمنهجيّةُ في مستند المشروع
+   `identity-method.md`.
+
+   **لا قيمةَ خامٍ هنا:** الخطّ من `--ad-t-*`، والمسافة من `--space-*`، واللون من `--ad-*`،
+   والزاوية من `--ad-r-*`. والسقّاطةُ تفحص هذا الملفّ بلا خطّ أساس: صفرٌ أو يسقط.
+   (الحدّ 1px والنسبُ المئويّة والكسور ليست «قيمًا» بهذا المعنى.)
+
+   **نقطتا تحوّل لا ثلاث وعشرون:** الغرفةُ حاويةٌ (`container-type`)، فتتكيّف بعرضها هي لا
+   بعرض النافذة (الشريطُ الجانبيّ يأكل منها)، عند 40rem و64rem وحدهما.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ═══ الوضعُ الداكن للموقع كلّه ═══
+   السمةُ على `<html>` (`lib/theme.ts`)، فيتبعها كلُّ شيء: الهيكلُ والمكوّناتُ القديمة بجسر الرموز
+   في `tokens.css`، والأساسُ الجديد بأدواره. وما يلي هو ما لا يبلغه الجسر في الهيكل وحده.
+
+   **الشريطُ الجانبيّ لوحٌ كاللوح:** نهارًا تدرّجُ الهويّة، وليلًا مادّةُ لوح الغرفة الداكنة نفسُها
+   (كحليّ 700 ← 900)، فلا يسطع عمودٌ فاتحٌ بجانب ليلٍ كحليّ. والنقشُ أخفّ كما في اللوح.
+   (والورقةُ الصاعدة على الجوّال `.mnsh` تحمل `.ash-side` نفسَه، فتتبعه.) */
+[data-theme="dark"] .ash-side { background: var(--ad-plate); box-shadow: var(--ad-lift), inset 0 0 0 1px var(--ad-plate-edge); }
+[data-theme="dark"] .ash-naqsh { opacity: var(--ad-plate-naqsh); }
+
+/* **والمكوّناتُ القديمة المشتركة التي تفتحها الغرفُ الجديدة** (نافذةُ التأكيد وأزرارُها): تكتب درجاتِ
+   السلّم مباشرةً (أحمرُ 700 للعنوان، و500 لزرّ الإلغاء)، فلا يبلغها جسرُ الرموز، وتغرق في الليل.
+   فتُردّ إلى أدوار الحالة الداكنة هنا — وتخرج هذه الأسطرُ حين تنتقل النافذةُ إلى الأساس الجديد. */
+[data-theme="dark"] .mdl-tone-danger { --mdl-tx: var(--ad-bad); --fld-tint: var(--ad-bad-soft); --fld-tint-2: var(--ad-bad-edge); --fld-accent: var(--ad-bad); }
+[data-theme="dark"] .mdl-tone-warning { --mdl-tx: var(--ad-warn); --fld-tint: var(--ad-warn-soft); --fld-tint-2: var(--ad-warn-edge); --fld-accent: var(--ad-warn); }
+[data-theme="dark"] .mdl-tone-success { --mdl-tx: var(--ad-ok); --fld-tint: var(--ad-ok-soft); --fld-tint-2: var(--ad-ok-edge); --fld-accent: var(--ad-ok); }
+[data-theme="dark"] .mdl-tone-neutral { --mdl-tx: var(--ad-ink-head); --fld-tint: var(--ad-tint); --fld-tint-2: var(--ad-tint-2); --fld-accent: var(--ad-ink-2); }
+[data-theme="dark"] .abtn-ghost-danger { color: var(--ad-bad); border-color: var(--ad-bad-edge); }
+[data-theme="dark"] .abtn-ghost-success { color: var(--ad-ok); border-color: var(--ad-ok-edge); }
+[data-theme="dark"] .abtn-ghost-warning { color: var(--ad-warn); border-color: var(--ad-warn-edge); }
+
+/* **صفحةُ الاستبيان العامّة** (تُفتح معاينةً من الغرفة، `.spt-*`): تكتب `--color-surface` بمعنى «الأبيض»
+   فوق تدرّج الهويّة — والجسرُ يجعله كحليًّا ليلًا، فيصير العنوانُ كحليًّا على كحليّ. فيُردّ داخل
+   مساحتَي التدرّج (الغلاف وبطاقة الإرسال) أبيضَ، ويُردّ الإيصالُ داخل الغلاف ورقةً داكنة. */
+[data-theme="dark"] :is(.spt-hero, .spt-send-card) { --color-surface: var(--ad-white); }
+[data-theme="dark"] .spt-hero .spt-ticket { --color-surface: var(--ad-sheet); }
+[data-theme="dark"] .spt-node { border-color: var(--ad-edge-ctl); color: var(--ad-brand); }
+[data-theme="dark"] .spt-key { background: var(--ad-tint-2); color: var(--ad-brand); }
+[data-theme="dark"] :is(.spt-q[data-state="done"] .spt-node, .spt-opt.on .spt-key, .spt-end .spt-node, .spt-ticket-mark) { color: var(--ad-white); }
+[data-theme="dark"] :is(.spt-in, .spt-ta):not(:placeholder-shown) { background: linear-gradient(135deg, var(--ad-tint), transparent 45%), var(--ad-sheet); }
+[data-theme="dark"] .spt-q[data-state="err"] :is(.spt-in, .spt-ta) { background: linear-gradient(135deg, var(--ad-bad-soft), transparent 33%), var(--ad-sheet); }
+
+/* ═══ الهيكلُ بقاعدة الهويّة الواحدة (`tokens.css` §٧) ═══
+   الغرفةُ لا تُبنى وحدها: ما حولها في الشاشة نفسِها يتكلّم اللغةَ نفسَها. والرأسُ صفحةٌ بيضاء، فجرسُه
+   مربّعٌ من طبقتها بحدٍّ رفيع — **علامةُ الشريط (`.ash-mark`) مقلوبةً على الورقة**، في الركن المقابل لها.
+   والقائمةُ المنسدلة صفحةٌ عائمة بحدّ الورقة لا سطحٌ ثالثٌ منغَّم. (أسطرٌ مؤقّتة: تخرج حين ينتقل
+   الجرسُ والقائمةُ إلى الأساس الجديد.) */
+.ash-top .ntf-bell { background: var(--ad-veil); box-shadow: inset 0 0 0 1px var(--ad-hair); color: var(--ad-ink-2); }
+.ash-top .ntf-bell:hover, .ash-top .ntf-bell[aria-expanded="true"] { background: var(--ad-veil-2); box-shadow: inset 0 0 0 1px var(--ad-hair-2); color: var(--ad-ink-head); }
+body:has(.ash-content) .dm-menu { background: var(--ad-float); border-color: var(--ad-edge); box-shadow: var(--ad-lift); }
+[data-theme="dark"] :is(.dm-item.dg, .dm-item.dg .dm-ic, .dm-hd.dg) { color: var(--ad-bad); }
+
+/* ═══ الغرفة ═══ */
+.ash-content:has(.ad-room) { background: var(--ad-ground); }
+.ad-room {
+  container: ad-room / inline-size;
+  max-inline-size: var(--ad-page-max);
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--ad-t-body);
+  line-height: var(--ad-lh-ui);
+  color: var(--ad-ink);
+  -webkit-font-smoothing: antialiased;
+}
+.ad-room :where(h1, h2, h3, p, ul, ol, figure, dl, dd) { margin: 0; }
+.ad-room :where(ul, ol) { padding: 0; list-style: none; }
+.ad-room :where(button, input, select) { font: inherit; color: inherit; }
+.ad-room :where(a) { color: inherit; text-decoration: none; }
+.ad-room :where(svg) { flex: none; }
+.ad-room :focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-room ::selection { background: var(--ad-tint-2); color: var(--ad-ink-head); }
+.ad-num { font-variant-numeric: tabular-nums; }
+/* اللاتينيُّ في الغرفة بوزن الأرقام نفسِه (محمد ٢٠٢٦-١١-٠٢: «الرقمُ المرجعيّ أكبرُ من الفترة… اختلافاتٌ غريبة»): `.lat` يطلب خطَّ
+   Eras باسمه، فيأخذ العريضُ منه ملفَّه العريض (Bold)، والأرقامُ في النصّ العربيّ تأتي من Eras بأوزانٍ مطابقةٍ لأوزان Lyon (العريضُ
+   منها Demi، `fonts.css`) — فكان «ADEEB-EXP-2026» أثقلَ من «2026» في السطر تحته بالمقاس نفسِه. وقد صارت الحروفُ اللاتينيّة
+   والأرقامُ كلُّها من Eras داخل عائلة Lyon نفسِها، فالرمزُ اللاتينيّ يبقى في عائلة السطر ويأخذ وزنَ جيرانه. */
+.ad-room .lat { font-family: inherit; }
+
+/* ═══ البصمة: اللوح — مادّةُ الشريط الجانبيّ ═══
+   تدرّجُ الهويّة، وشبكةٌ كامنة تقع حيث يفتح التدرّج، والنقشُ مُقصوصًا، وحجابٌ يهدّئ
+   موضعَ النصّ. هو رأسُ الغرفة وعنوانُ «هذا أدِيب» فيها؛ لا شريطَ عنوانٍ رماديّ. */
+.ad-plate {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--ad-r-plate);
+  border: 1px solid var(--ad-plate-edge);
+  background: var(--ad-plate);
+  color: var(--ad-plate-ink);
+  box-shadow: var(--ad-lift);
+}
+.ad-plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background-image:
+    linear-gradient(to bottom, var(--ad-plate-mesh) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--ad-plate-mesh) 0 1px, transparent 1px);
+  background-size: var(--ad-mesh) var(--ad-mesh);
+  -webkit-mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+  mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+}
+.ad-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background: url("/brand/pattern-white.svg") no-repeat center top / var(--ad-plate-naqsh-size) auto;
+  opacity: var(--ad-plate-naqsh);
+}
+/* اللوحُ الأصغر — شكلُ (ب) الذي اختاره محمد (٢٠٢٦-١٠-٣٠): اللوحُ يقول «أين أنت» وحدَه، والمواضعُ
+   خرجت منه إلى المبدّل تحته. فقصُر حشوُه وصغُر الاسمُ درجةً (22 لا 28)، فيعلو المحتوى في الصفحة. */
+/* **والفعلُ الأساسيّ في الطرف المقابل للاسم** (محمد ٢٠٢٦-١٠-٣٠: «أحسّ موضعه غبي»): كان ملاصقًا للاسم،
+   فمكانُه يتبع طولَ الاسم ويقف معلّقًا في وسط اللوح، ولا يستقرّ في موضعٍ تتعلّمه العين. فصار عمودًا
+   ثانيًا على الحافّة، في منتصف ارتفاع المسار والاسم، وفي مكانه نفسه في كلّ غرفة وكلّ مقاس؛ وإن طال
+   الاسمُ نزل سطرين وبقي الزرّ. (وسطرُ الحقيقة الذي كان تحتهما حُذف ٢٠٢٦-١٠-٣١: لا حالَ في الرأس.)
+   **وعلى الجوّال ينزل الزرّ آخرَ اللوح بعرضه وباسمه كاملًا** (اختيارُ محمد ٢٠٢٦-١٠-٣٠): علامةُ «+» وحدها
+   قد لا يُفهم فعلُها، والتلميحُ يحتاج مؤشّرًا لا يملكه اللمس. وقيس قبلها: بجانب الزرّ على عرض 320 لا تتّسع
+   كلمةُ «الاستبيانات» (89 مقابل 79)، وأيُّ اسم زرٍّ أطول يضيّق أكثر. فالزرُّ تحت كلّ شيء لا يزاحم شيئًا.
+   (الترتيبُ في الشجرة ترتيبُ الجوّال: الهويّة ثمّ الفعل؛ والمكتبُ يرفع الفعلَ إلى عمود الهويّة.) */
+.ad-plate-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-5) var(--space-8);
+  background: var(--ad-plate-shade); /* حجابُ الشريط فوق النقش والشبكة (هما تحت المتن في سياق اللوح) */
+}
+.ad-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--ad-t-meta);
+  font-weight: var(--ad-w-medium);
+  color: var(--ad-plate-ink-3);
+}
+.ad-crumb-step { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ad-crumb a:hover { color: var(--ad-plate-ink); }
+.ad-crumb svg { inline-size: var(--space-3); block-size: var(--space-3); opacity: .7; }
+.ad-plate-id { display: grid; gap: var(--space-2); min-inline-size: 0; }
+.ad-plate-act { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.ad-plate-title {
+  font-family: var(--font-display);
+  font-size: var(--ad-t-section);
+  font-weight: var(--ad-w-black);
+  line-height: var(--ad-lh-tight);
+  color: var(--ad-plate-ink);
+  text-wrap: balance;
+}
+/* ═══ اللبنة: المبدّل — مواضعُ الغرفة (اتّفاق محمد ٢٠٢٦-١٠-٣٠؛ القواعدُ في `AdSwitch`) ═══
+   مسارٌ بئرٌ وفيه أجزاءٌ متساوية العرض، **يمتدّ بعرض الغرفة** كاللوح فوقه وشريط الأدوات تحته، فتقف
+   الثلاثةُ على حافّتين واحدتين في كلّ مقاس. (كان بعرضٍ ثابت 10rem للجزء فيقف في نصف الصفحة على
+   المكتب؛ سأل محمد: «لماذا المبدّل لا يمتدّ مثله مثل رأس التبويب والفلاتر؟» — فامتدّ.)
+   والمختارُ بتدرّج الهويّة، وما سواه نصٌّ بعدده. وعلى الجوّال ينزل العددُ تحت الاسم داخل الجزء،
+   فلا يزيد المبدّلُ سطرًا مهما طال اسمٌ. */
+.ad-room-head { display: grid; gap: var(--space-4); }
+.ad-switch {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+}
+.ad-switch-seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  min-block-size: var(--ad-ctl);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: transparent;
+  color: var(--ad-ink-2);
+  font: inherit;
+  font-size: var(--ad-t-ui);
+  font-weight: var(--ad-w-bold);
+  line-height: var(--ad-lh-tight);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ad-dur) var(--ad-ease-out), color var(--ad-dur) var(--ad-ease-out);
+}
+/* الاسمُ الطويلُ يُحذف بنقاطٍ ولا يدخل في جاره (المراجعة المستقلّة: «تنتظر المراجعة 12» بين 40 و64 rem)، والعددُ يبقى كاملًا */
+.ad-switch-l { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
+.ad-switch-seg:hover { background: var(--ad-veil); color: var(--ad-ink-head); }
+.ad-switch-seg:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+/* المختارُ قطعةٌ من اللوح: ما يضيء في الشريط يتلوّن هنا (القاعدةُ في `tokens.css` §٧)، وعدّادُه شارةُ الشريط بعينها */
+.ad-switch-seg[aria-pressed="true"], .ad-switch-seg.is-on { background: var(--ad-pick); color: var(--ad-on-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
+.ad-switch-more { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ad-switch-more svg { inline-size: var(--space-3); block-size: var(--space-3); }
+.ad-switch-n {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--space-6);
+  block-size: var(--space-5);
+  padding-inline: var(--space-1);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-veil-2);
+  color: var(--ad-ink-2);
+  font-size: var(--ad-t-badge);
+  font-weight: var(--ad-w-bold);
+  font-variant-numeric: tabular-nums;
+}
+.ad-switch-seg[aria-pressed="true"] .ad-switch-n, .ad-switch-seg.is-on .ad-switch-n { background: var(--ad-pick-veil); color: var(--ad-on-pick); }
+
+/* ═══ اللبنة: الزرّ ═══ */
+.ad-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--ad-ctl);
+  padding-inline: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ad-r-ctl);
+  background: transparent;
+  font: inherit;   /* الخطُّ من الصفحة لا من المتصفّح: الزرُّ في النافذة واللوحة المنبثقة خارجَ `.ad-room` */
+  font-size: var(--ad-t-body);
+  font-weight: var(--ad-w-bold);
+  line-height: var(--ad-lh-tight);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--ad-dur-press) var(--ad-ease-out), border-color var(--ad-dur-press) var(--ad-ease-out),
+    color var(--ad-dur-press) var(--ad-ease-out), transform var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-btn svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-btn:active { transform: scale(.97); }
+.ad-btn:disabled, .ad-btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; transform: none; }
+.ad-btn-sm { min-block-size: var(--ad-ctl-sm); padding-inline: var(--space-3); border-radius: var(--ad-r-sm); font-size: var(--ad-t-ui); }
+.ad-btn-sm svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* ── الزرُّ بقاعدة الهويّة الواحدة (`tokens.css` §٧) ──
+   الأساسيُّ قطعةٌ من اللوح (وشعاعُ الضوء من زرّ البوّابة المعتمد عند المرور). والثانويُّ أداةٌ خطوةً عن أرضها
+   بحدٍّ رفيعٍ من الداخل، وحبرُه كحليّ — **ومربّعُ أيقونته قطعةٌ من اللوح**: علامةُ الشريط (`.ash-mark`) مقلوبةً
+   على الورقة. ولا يتلوّن الزرُّ كلُّه إلّا الأساسيّ. وعلى اللوح كبند الشريط النشط. */
+.ad-btn-fill { position: relative; isolation: isolate; overflow: hidden; background: var(--ad-pick); color: var(--ad-on-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
+.ad-btn-fill:hover { background: var(--ad-fill-hover); }
+:is(.ad-btn-fill, .ad-btn-danger-fill)::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -80%;
+  z-index: var(--ad-z-under);
+  inline-size: 60%;
+  background: linear-gradient(115deg, transparent, color-mix(in oklab, var(--ad-white) 22%, transparent) 45% 55%, transparent);
+  transform: skewX(-16deg);
+  transition: inset-inline-start var(--ad-dur-sheen) var(--ad-ease-out);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) { :is(.ad-btn-fill, .ad-btn-danger-fill):hover::after { inset-inline-start: 120%; } }
+/* على اللوح: بندُ الشريط النشط بعينه */
+.ad-btn-inverse { background: var(--ad-plate-veil-2); color: var(--ad-plate-ink); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--steel-50) 26%, transparent); }
+.ad-btn-inverse:hover { background: color-mix(in oklab, var(--steel-50) 26%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--steel-50) 38%, transparent); }
+/* الثاني على اللوح: زرٌّ كأخيه الزجاجيّ بحدّه وحبره — بلا صبغته، فيبقى الإنشاءُ أوّلَ ما يُرى (محمد ٢٠٢٦-١١-٠١: «لماذا لا يكون مثلَ
+   زرّ الإصدار؟» — كان نصًّا بلا صندوق) */
+/* (و«الحدُّ ضعيفٌ يكاد لا يُرى»: كان حدَّ الزجاجيّ نفسَه، وحدُّه يُرى لأنّ صبغتَه تحته — فالثاني بلا صبغةٍ يحتاج حدًّا أشدّ) */
+.ad-btn-inverse-quiet { color: var(--ad-plate-ink); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--steel-50) 55%, transparent); }
+.ad-btn-inverse-quiet:hover { background: var(--ad-plate-veil-2); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--steel-50) 70%, transparent); }
+/* على الورقة: «المحدَّد» و«اللطيف» زرٌّ ثانويٌّ واحد */
+.ad-btn-line, .ad-btn-soft { background: var(--ad-field); color: var(--ad-ink-head); box-shadow: inset 0 0 0 1px var(--ad-hair); }
+.ad-btn-line:hover, .ad-btn-soft:hover { background: var(--ad-field-2); box-shadow: inset 0 0 0 1px var(--ad-hair-2); }
+/* الهادئ: نصٌّ بلا صندوق بحبرٍ ثانٍ، يشتدّ عند المرور («مسح الكلّ» في رأس لوحة التصفية) */
+.ad-btn-quiet { color: var(--ad-ink-2); }
+.ad-btn-quiet:hover { color: var(--ad-ink-head); }
+/* الخطِرُ بين أفعال: **صندوقٌ كإخوته، وختمُه قطعةٌ من رأس نافذة الحذف** (أحمرُها المصمتُ بضوئه)، **وصبغتُه بدرجة صبغتهم مائلةً إلى
+   الأحمر** (محمد ٢٠٢٦-١٠-٣١: الختمُ الأحمرُ على صبغةٍ كحليّة لا يشبه نفسَه) — فالختمُ وأرضُه من عائلةٍ واحدة كإخوته. **والكلمةُ
+   حمراءُ كختمها وحدّها** (محمد ٢٠٢٦-١١-٠١: الكلمةُ الكحليّةُ بين صبغةٍ حمراءَ وختمٍ أحمر «غيرُ جميلٍ ولا متّسق»)، والمرورُ يشتدّ
+   بالصبغة والحدّ قبيل النقر. (كان أوّلَ الأمر أحمرَ في كلّ شيءٍ بأحمرٍ غامقٍ لا يشبه النافذة، ثمّ كحليَّ الكلمة.) */
+.ad-btn-danger { background: var(--ad-bad-veil); color: var(--ad-bad); box-shadow: inset 0 0 0 1px var(--ad-bad-hair); }
+.ad-btn-danger:hover { background: var(--ad-bad-soft); box-shadow: inset 0 0 0 1px var(--ad-bad-edge); }
+/* ═══ مربّعُ الأيقونة — ختمُ الهويّة على **الزرّ الهادئ وحده** (محمد ٢٠٢٦-١٠-٣٠) ═══
+   الزرُّ الهادئ على الورقة لا لونَ فيه، فيحمل ختمًا من اللوح في مربّع أيقونته. والزرُّ الذي **هو نفسُه**
+   قطعةٌ من المادّة (الملوّن، والزجاجيّ على اللوح) لا يحتاج ختمًا، فأيقونتُه مجرّدةٌ بجانب اسمه.
+   جُرّب فيه مربّعان وسقطا: زجاجٌ في زجاج («ليس جميلًا»)، ثمّ أبيض — مقبولٌ على المكتب، وعلى الجوّال يمتدّ
+   الزرُّ بعرضه والاسمُ في وسطه، فيصير المربّعُ «نقطةً بيضاء منحرفةً قليلًا» بعد أن كان في الطرف. والحلُّ
+   في القاعدة لا في مقاسٍ يُبدِّل شكلَ الأداة (نمطٌ مرفوض في `DESIGN.md`). والمربّعُ متراكزٌ مع الزرّ. */
+.ad-btn:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: var(--space-1) var(--space-4); }
+.ad-btn:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger) > svg {
+  box-sizing: content-box;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  padding: calc(var(--space-2) - 1px);
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: var(--ad-pick);
+  color: var(--ad-on-pick);
+}
+.ad-btn.ad-btn-danger > svg { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
+.ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: calc(var(--space-1) * .75) var(--space-3); }
+.ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger) > svg { padding: calc(var(--space-1) * 1.25); border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75); }
+/* الرمزُ بعد الاسم: الحشوُ ينقلب معه */
+.ad-btn-end:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: var(--space-4) var(--space-1); }
+.ad-btn-sm.ad-btn-end:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: var(--space-3) calc(var(--space-1) * .75); }
+/* الأحمرُ الأساسيّ مادّةٌ كاللوح بضوئه (رأسُ نافذة الحذف نفسُه) — كان طلاءً مسطّحًا «مزعجًا للعين» */
+.ad-btn-danger-fill { position: relative; isolation: isolate; overflow: hidden; background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
+.ad-btn-danger-fill:hover { background: var(--ad-bad-solid-hover); }
+.ad-btn[data-done] { border-color: var(--ad-ok-edge); color: var(--ad-ok); }
+/* «تمّ» (نُسخ…) في الصندوق المختوم: **الزرُّ كلُّه يتبدّل أخضر** — الختمُ قطعةٌ خضراءُ بضوئها، والصبغةُ والحدُّ والكلمةُ معه. (كان الحدُّ
+   والكلمةُ أخضرين والختمُ كحليًّا — «قبيح»: لونان في زرٍّ واحد.) */
+.ad-btn:is(.ad-btn-line, .ad-btn-soft)[data-done] { background: var(--ad-ok-veil); box-shadow: inset 0 0 0 1px var(--ad-ok-hair); }
+.ad-btn:is(.ad-btn-line, .ad-btn-soft)[data-done] > svg { background: var(--ad-dlg-light), var(--ad-ok-solid); color: var(--ad-on-fill); }
+
+/* زرُّ الأيقونة ظاهرٌ دائمًا (لا قائمةَ ⋮ تخفي الأفعال)، واسمُه تلميحٌ عند المرور والتركيز */
+.ad-ibtn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--ad-ctl-sm);
+  block-size: var(--ad-ctl-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  color: var(--ad-ink-2);
+  cursor: pointer;
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out), box-shadow var(--ad-dur-press) var(--ad-ease-out), transform var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-ibtn svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-ibtn:hover { background: var(--ad-field-2); box-shadow: inset 0 0 0 1px var(--ad-hair-2); color: var(--ad-ink-head); }
+.ad-ibtn:active { transform: scale(.94); }
+.ad-ibtn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.ad-ibtn[data-done] { color: var(--ad-ok); }
+.ad-ibtn-danger { color: var(--ad-ink-2); }
+.ad-ibtn-danger:hover { background: var(--ad-bad-soft); box-shadow: inset 0 0 0 1px var(--ad-bad-edge); color: var(--ad-bad); }
+.ad-ibtn::before { content: ""; position: absolute; inset: calc(var(--space-1) * -1.5); }
+.ad-ibtn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  inset-block-end: calc(100% + var(--space-2));
+  inset-inline-end: 0;
+  z-index: var(--z-dropdown);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-ink);
+  color: var(--ad-sheet);
+  font-size: var(--ad-t-meta);
+  font-weight: var(--ad-w-medium);
+  white-space: nowrap;
+  opacity: 0;
+  translate: 0 var(--space-1);
+  pointer-events: none;
+  transition: opacity var(--ad-dur-press) var(--ad-ease-out), translate var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-ibtn[data-tip]:hover::after, .ad-ibtn[data-tip]:focus-visible::after { opacity: 1; translate: 0 0; }
+
+/* هدفُ اللمس 44 **لا يكبّر شكلَ الزرّ** (محمد ٢٠٢٦-١٠-٣١: «على الجوّال يتضخّم، حتى المزيد مزعج»): الزرُّ بمقاسه نفسِه
+   على كلّ شاشة، ومساحةُ اللمس تمتدّ حوله فوقًا وتحتًا بلا أن تُرى (لا يمينًا ويسارًا: تتداخل مع جاره) */
+@media (pointer: coarse) {
+  .ad-btn { position: relative; }
+  .ad-btn::before { content: ""; position: absolute; inset-block: calc((var(--ad-ctl-touch) - var(--ad-ctl-sm)) / -2); inset-inline: 0; }
+  :is(.ad-btn-fill, .ad-btn-danger-fill) { overflow: visible; }
+  :is(.ad-btn-fill, .ad-btn-danger-fill)::after { display: none; } /* شعاعُ المرور: لا مرورَ على اللمس، وبلا قصٍّ يخرج من الزرّ */
+  .ad-ibtn { inline-size: var(--ad-ctl-touch); block-size: var(--ad-ctl-touch); }
+  .ad-page { position: relative; }
+  .ad-page::before { content: ""; position: absolute; inset-block: calc((var(--ad-ctl-touch) - var(--ad-ctl-sm)) / -2); inset-inline: 0; }
+}
+
+/* ═══ اللبنة: الشارة — لا تظهر إلّا حيث تخالف موضعها ═══ */
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--space-6);
+  padding-inline: var(--space-2);
+  border-radius: var(--ad-r-full);
+  border: 1px solid var(--ad-hair);
+  background: var(--ad-veil);
+  color: var(--ad-ink-2);
+  font-size: var(--ad-t-meta);
+  font-weight: var(--ad-w-bold);
+  line-height: var(--ad-lh-tight);
+  white-space: nowrap;
+}
+.ad-badges { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); }
+.ad-badge svg { inline-size: var(--space-3); block-size: var(--space-3); }
+.ad-badge[data-tone="ok"] { border-color: var(--ad-ok-edge); background: var(--ad-ok-soft); color: var(--ad-ok); }
+.ad-badge[data-tone="warn"] { border-color: var(--ad-warn-edge); background: var(--ad-warn-soft); color: var(--ad-warn); }
+.ad-badge[data-tone="bad"] { border-color: var(--ad-bad-edge); background: var(--ad-bad-soft); color: var(--ad-bad); }
+.ad-badge[data-tone="info"] { border-color: var(--ad-info-edge); background: var(--ad-info-soft); color: var(--ad-info); }
+
+/* ═══ اللبنة: شريطُ الأدوات — مسارٌ واحدٌ بلغة المبدّل (القرارُ وأسبابُه في `AdTools`) ═══
+   أبيضُ على الأرض بحدٍّ رفيع، وبارتفاع المبدّل وزواياه المتراكزة؛ البحثُ مفتوحٌ فيه، وما بعده أجزاءٌ مصبوغة،
+   والمُفعَّلُ قطعةٌ من اللوح. وعلى الجوّال سطران داخل المسار نفسِه: البحث، ثمّ الأجزاءُ متساوية كأجزاء المبدّل. */
+.ad-tools {
+  position: relative;
+  scroll-margin-block-start: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  transition: box-shadow var(--ad-dur-press) var(--ad-ease-out);
+}
+/* الأداةُ خطوةٌ عن أرضها: المسارُ أبيضُ على الأرض، فأجزاؤه مصبوغة (كأدوات الكرت) */
+.ad-tools > * { --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
+/* التركيزُ كبحث الشريط: يشتدّ حدُّ المسار كلِّه (إلى حدّ الأداة 3:1) ومعه هالةٌ من الطبقة، لا حلقةٌ بلونٍ آخر */
+.ad-tools:has(.ad-search-input:focus-visible) { box-shadow: inset 0 0 0 1px var(--ad-edge-ctl), 0 0 0 var(--space-1) var(--ad-veil-2); }
+.ad-search {
+  position: relative;
+  flex: 1 1 16rem;
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+}
+.ad-search > svg {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  color: var(--ad-ink-3);
+  pointer-events: none;
+}
+.ad-search input {
+  inline-size: 100%;
+  min-block-size: var(--ad-ctl);
+  padding-inline: var(--space-10);
+  border: 0;
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: transparent;
+  font-size: var(--ad-t-body);
+  color: var(--ad-ink);
+}
+.ad-search input::placeholder { color: var(--ad-ink-3); }
+.ad-search input:focus-visible { outline: none; }
+/* ✕ المتصفّح الأزرق يُطفأ، ومكانَه زرُّنا: حبّةُ ✕ المرشّح المُفعَّل نفسُها، بطبقة الورقة بدل طبقة اللوح */
+.ad-search input::-webkit-search-cancel-button,
+.ad-search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.ad-search-x {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: transparent;
+  color: var(--ad-ink-2);
+  cursor: pointer;
+}
+.ad-search-x svg {
+  box-sizing: content-box;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  padding: var(--space-1);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-veil-2);
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-search-x:hover svg { background: var(--ad-hair-2); color: var(--ad-ink-head); }
+.ad-search-x:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: -2px; }
+.ad-tools-set { position: relative; display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; margin-inline-start: var(--space-1); }
+/* خيطٌ رفيع يفصل البحثَ عمّا بعده (اختيارُ محمد ٢٠٢٦-١٠-٣٠ من ثلاثة: البحثُ بلا سطحٍ يبقى خفيفًا، فكانت ✕ مسحه تقع
+   لاصقةً بجزء «التصفية» ولا يُعرف لمن هي؛ والسطحُ «يشوّهه»). ثابتٌ دائمًا لا مع الكتابة، فلا يقفز شيء.
+   **وفي المنتصف بين ✕ والجزء** (كان في فجوة 4px فلصق بالجزء — محمد): ✕ على 8 من حافّة البحث، والجزءُ على 8 بعدها
+   (الفجوةُ 4 وهامشُ المجموعة 4)، والخيطُ على الحافّة نفسِها. */
+.ad-tools-set::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: calc(var(--space-2) * -1);
+  inline-size: 1px;
+  background: var(--ad-hair-2);
+}
+/* المرشّح: جزءٌ مصبوغ فيه زرّان متجاوران (يفتح، و✕ يرفع حين يُفعَّل). اسمُه خافتٌ وقيمتُه بحبر العنوان،
+   والمُفعَّلُ قطعةٌ من اللوح كالموضع المختار. و«التصفية» الجزءُ نفسُه بعدد المُفعَّل. */
+.ad-filter {
+  display: inline-flex;
+  align-items: stretch;
+  min-inline-size: 0;
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: var(--ad-field);
+  color: var(--ad-ink-head);
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-filter:has(> .ad-filter-btn:hover), .ad-filter:has(> .ad-filter-btn[aria-expanded="true"]) { background: var(--ad-field-2); }
+.ad-filter-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  min-block-size: var(--ad-ctl);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ad-t-ui);
+  line-height: var(--ad-lh-tight);
+  white-space: nowrap;
+  cursor: pointer;
+}
+:is(.ad-filter-btn, .ad-filter-x):focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-filter-l { font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
+.ad-filter-v { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; font-weight: var(--ad-w-bold); }
+.ad-filter-btn svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-ink-3); }
+/* السهمُ سهمُ «المزيد» في المبدّل بعينه: صغيرٌ لاصقٌ بقيمته بلون حبرها، لا رمزٌ ثالثٌ بمسافةٍ مستقلّة */
+.ad-filter-btn .ad-caret { inline-size: var(--space-3); block-size: var(--space-3); margin-inline-start: calc(var(--space-1) - var(--space-2)); color: inherit; }
+.ad-filter-n {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--space-5);
+  block-size: var(--space-5);
+  padding-inline: var(--space-1);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-pick-veil);
+  font-size: var(--ad-t-badge);
+  font-weight: var(--ad-w-bold);
+}
+/* ✕ **حبّةُ عدّاد المبدّل نفسُها** (طبقةٌ فاتحة على قطعة اللوح) لا رمزٌ عارٍ — اختيارُ محمد (أ) ٢٠٢٦-١٠-٣٠: كان رمزًا
+   مجرّدًا بلا سطح، أثقلَ من القيمة، يُقرأ «خطأً» لا «ارفع»، ويحلّ محلّ السهم فيبدّل شكلَ الجزء. فصار المرشّحُ
+   المُفعَّل «النوع ورشة ⊗» كالموضع المختار «منتهية ②» فوقه: الشكلُ نفسُه في الموضع نفسِه. والهدفُ بارتفاع الجزء. */
+.ad-filter-x {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  padding-inline: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.ad-filter-x svg {
+  box-sizing: content-box;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  padding: var(--space-1);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-pick-veil);
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-filter-x:hover svg { background: color-mix(in oklab, var(--ad-on-pick) 30%, transparent); }
+.ad-filter.is-on, .ad-filter.is-on:has(> .ad-filter-btn:hover) { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
+.ad-filter.is-on :is(.ad-filter-l, .ad-filter-btn svg) { color: color-mix(in oklab, var(--ad-on-pick) 80%, transparent); }
+/* الحشوُ يسقط من جهة ✕ وحدها (حبّتُه تحمل فراغَها)؛ وحبّةُ العدد في «التصفية» تبقى على بُعدها من الحافّة */
+.ad-filter.is-on:has(> .ad-filter-x) .ad-filter-btn { padding-inline-end: 0; }
+/* لوحةُ «التصفية»: صفحةٌ عائمة بحدّ الورقة (كالقائمة)، فيها لكلّ مرشّحٍ رأسٌ بخيطٍ يبلغ الحافّة — **رأسُ مجموعة
+   الشريط (`.ash-nav-head`) بعينه** — ثمّ خياراتُه أزرارًا مصبوغة، والمختارُ قطعةٌ من اللوح. لا منسدلٌ داخل لوحة. */
+.ad-fpanel {
+  /* عرضُها بقدر محتواها (محمد ٢٠٢٦-١٠-٣١: «ليش هناك مساحة على اليسار؟»): كان ثابتًا 26rem لأطول غرفة، فيبقى ثلثُه
+     فارغًا حيث الخياراتُ قليلة. والأطولُ يلتفّ عند الحدّ الأعلى، والأدنى يحفظ رأسَها */
+  inline-size: max-content;
+  min-inline-size: min(16rem, calc(100vw - var(--space-8)));
+  max-inline-size: min(26rem, calc(100vw - var(--space-8)));
+  max-block-size: 70vh;
+  overflow: auto;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--ad-edge);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-float);
+  box-shadow: var(--ad-lift);
+  color: var(--ad-ink);
+  font-family: var(--font-body);
+  outline: none;
+  --ad-field: var(--ad-veil);
+  --ad-field-2: var(--ad-veil-2);
+}
+.ad-fpanel-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-block-size: var(--ad-ctl-sm); }
+.ad-fpanel-t { margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+/* «مسح الكلّ» قطعةُ الفعل الثانويّ نفسُها (صندوقٌ وختمٌ ✕) مصغّرةً إلى سطر عنوان لوحته (محمد ٢٠٢٦-١٠-٣١: «حجمه كبير
+   مقارنةً بالتصفية»؛ ورُفضت الحبّةُ المصبوغة: لغةٌ أخرى). وهدفُ اللمس يمتدّ حوله بلا أن يكبر شكلُه */
+.ad-fpanel-top .ad-btn.ad-btn-sm {
+  position: relative;
+  min-block-size: auto;
+  gap: var(--space-1);
+  padding-block: calc(var(--space-1) / 2);
+  padding-inline: calc(var(--space-1) / 2) var(--space-2);
+  font-size: var(--ad-t-meta);
+}
+.ad-fpanel-top .ad-btn.ad-btn-sm::before { content: ""; position: absolute; inset: calc(var(--space-2) * -1); }
+.ad-fpanel-top .ad-btn.ad-btn-sm > svg { inline-size: var(--space-3); block-size: var(--space-3); padding: var(--space-1); border-radius: calc(var(--ad-r-sm) - var(--space-1) / 2); }
+.ad-fpanel-row { display: grid; gap: var(--space-2); }
+.ad-fpanel-h {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--ad-t-meta);
+  font-weight: var(--ad-w-bold);
+  color: var(--ad-ink-2);
+}
+.ad-fpanel-h::after { content: ""; flex: 1; block-size: 1px; background: var(--ad-rule); }
+.ad-fpanel-opts { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+/* المرشّحُ الطويل في اللوحة زرُّ الشريط نفسُه: أداةٌ مصبوغةٌ على الصفحة البيضاء، بعرض اسمه لا بعرض اللوحة */
+/* الطويلُ في اللوحة حقلٌ بعرض صفّه (محمد ٢٠٢٦-١٠-٣١): قيمتُه في أوّله، وسهمُه أو ✕ في آخره */
+.ad-fpanel .ad-filter { justify-self: stretch; --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
+.ad-fpanel .ad-filter-btn { justify-content: space-between; }
+.ad-fpanel .ad-filter:not(.is-on) .ad-filter-v { font-weight: var(--ad-w-medium); }
+/* والمختارُ فيه قطعةُ لوحٍ كالمرشّح المُفعَّل في الشريط وكالحبّة المختارة فوقه (محمد ٢٠٢٦-١٠-٣١: «لا يشبه»؛ كان قيمةً على
+   حقلٍ مصبوغ فاختلف المختاران في لوحةٍ واحدة). وارتفاعُه وزاويتُه ارتفاعُ الحبّات وزاويتُها، فلا يكون أثقلَ منها إلّا بعرضه */
+.ad-fpanel .ad-filter { border-radius: var(--ad-r-sm); }
+.ad-fpanel .ad-filter-btn { min-block-size: var(--ad-ctl-sm); }
+.ad-fpanel-grp { display: contents; }
+.ad-fpanel-g { flex-basis: 100%; margin-block-start: var(--space-1); font-size: var(--ad-t-badge); color: var(--ad-ink-3); }
+/* **قائمةُ الاختيار هي قائمةُ «المزيد» نفسُها** (محمد ٢٠٢٦-١٠-٣١: «الأجملُ ما كان في المزيد»): صفحتُها وصفوفُها ومرورُها أصنافُ
+   `.dm-menu`/`.dm-item` بعينها لا تقليدٌ لها، ولا يزيد المختارُ إلّا علامةً ✓ في آخر الصفّ (كمنسدل الهويّة) وخطًّا أعرضَ بحبر العنوان. وهنا ما تحتاجه وحدها: البحثُ في رأسها
+   حين تطول، والتمريرُ في جسمها لا في الصفحة كلّها، والعددُ في كبسولة المبدّل. */
+.dm-menu.ad-flist { display: flex; flex-direction: column; gap: var(--space-1); max-block-size: min(60vh, 26rem); overflow: hidden; }
+.ad-flist-search { position: relative; display: flex; align-items: center; flex: none; }
+.ad-flist-search svg { position: absolute; inset-inline-start: var(--space-3); inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-ink-3); pointer-events: none; }
+.ad-flist-search input {
+  inline-size: 100%;
+  block-size: var(--ad-ctl-sm);
+  padding-inline: var(--space-8) var(--space-3);
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-veil);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  color: var(--ad-ink);
+  font: inherit;
+  font-size: var(--ad-t-ui);
+  outline: none;
+}
+.ad-flist-search input:focus-visible { box-shadow: inset 0 0 0 1px var(--ad-edge-ctl), 0 0 0 3px var(--ad-veil-2); }
+.ad-flist-search input::placeholder { color: var(--ad-ink-3); }
+.ad-flist-body { min-block-size: 0; overflow: auto; outline: none; }
+.ad-flist-body .dm-item { user-select: none; }
+/* المختارُ يُعرف بنظرة: صفُّه مُنارٌ بنغمة المرور نفسِها أخفَّ منها (لا قطعةُ لوح)، واسمُه وعلامتُه بحبر العنوان — كمنسدل الهويّة `.asel-sel` */
+/* بنغمة المرور نفسِها أخفّ — والنغمةُ من دور الهويّة لا من ظلٍّ قديمٍ بلا قيمةٍ داكنة (كان يختفي في الداكن: تباينُه 1.06) */
+.ad-flist-body .dm-item[aria-selected="true"] { font-weight: var(--ad-w-bold); color: var(--ad-ink-head); background: var(--ad-tint); }
+.ad-flist-body .dm-item[aria-selected="true"]:hover { background: var(--ad-tint-2); }
+.ad-flist-l { flex: 1; min-inline-size: 0; }
+.ad-flist-ck { flex: none; inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-ink-head); visibility: hidden; }
+.ad-flist-body .dm-item[aria-selected="true"] .ad-flist-ck { visibility: visible; }
+.ad-flist-none { margin: 0; padding: var(--space-3); font-size: var(--ad-t-ui); color: var(--ad-ink-3); text-align: center; }
+/* `.ad-line`: رمزٌ خطٌّ وحده. الغرفةُ منطقةُ duotone (`AdRoom`)، وطبقةُ ✓ و✕ الخافتةُ مربّعٌ يملأ الإطار فتُقرأ مربّعَ اختيارٍ (⊠) */
+.ad-line [opacity] { display: none; }
+/* السهمُ ينقلب حين تُفتح القائمة — في المرشّح و«المزيد» في المبدّل */
+:is(.ad-filter-btn, .ad-switch-seg) .ad-caret { transition: rotate var(--ad-dur) var(--ad-ease-out); }
+:is(.ad-filter-btn, .ad-switch-seg)[aria-expanded="true"] .ad-caret { rotate: 180deg; }
+
+.ad-fopt {
+  min-block-size: var(--ad-ctl-sm);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-field);
+  color: var(--ad-ink-head);
+  font: inherit;
+  font-size: var(--ad-t-ui);
+  font-weight: var(--ad-w-bold);
+  cursor: pointer;
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-fopt:hover { background: var(--ad-field-2); }
+.ad-fopt[aria-pressed="true"] { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
+.ad-fopt:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+@media (pointer: coarse) { .ad-fopt { min-block-size: var(--ad-ctl); } }
+/* طريقةُ العرض: جزءٌ مصبوغٌ فيه زرّان، والمختارُ قطعةٌ من اللوح */
+.ad-seg {
+  display: inline-flex;
+  flex: none;
+  padding: var(--space-1);
+  gap: var(--space-1);
+  border-radius: calc(var(--ad-r-ctl) - var(--space-1));
+  background: var(--ad-field);
+}
+.ad-seg .ad-ibtn {
+  inline-size: calc(var(--ad-ctl) - var(--space-2));
+  block-size: calc(var(--ad-ctl) - var(--space-2));
+  border-radius: calc(var(--ad-r-ctl) - var(--space-2));
+  background: transparent;
+  box-shadow: none;
+}
+.ad-seg .ad-ibtn:hover { background: var(--ad-field-2); box-shadow: none; }
+.ad-seg .ad-ibtn[aria-pressed="true"] { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
+/* لقارئ الشاشة وحده (عددُ النتائج يُعلَن ولا يُرى: المبدّلُ يقوله) */
+.ad-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ═══ اللبنة: كرتُ السجلّ — «التذكرة» (اختيارُ محمد ٢٠٢٦-١٠-٣٠ من ثلاثة توجّهات) ═══
+   كعبٌ من مادّة اللوح على جهة البداية يحمل **أهمَّ معلومةٍ في السجلّ** بخطٍّ كبير (تاريخُ الفعاليّة والخبر،
+   مشاركاتُ الاستبيان): فاللوحُ على الورق يتكلّم ولا يزيّن، وعمودُ الكعوب يُقرأ بنظرة. وغلافُ السجلّ يملأ الكعبَ
+   **بلون اللوح** (ضوءُ الصورة على تدرّجه)، فالكعوبُ إيقاعٌ كحليٌّ واحد، ويعود لونُها الحقيقيّ عند المرور. وثلمتان
+   تقصّان الكرتَ على خطّ القطع. ثمّ ورقةٌ بيضاء: رقاقاتُ النوع، والعنوان، وسطورُ المعلومات، والأرقامُ صفٌّ بفواصل،
+   والقاعُ للأفعال. والقناعُ الذي يقصّ الثلمتين يقصّ الظلَّ أيضًا، فالكرتُ يُرسم بحدّه الخفيف وحده.
+   (رُفض: «وجهُ اللوح» — تسعُ لوحاتٍ تنافس لوحَ الغرفة، والعنوانُ يغطّي الملصق؛ و«الورقةُ المكثّفة» — مربّعٌ برمزٍ
+   واحدٍ زينةٌ مكرّرة؛ وفي الصورة: الممتدّةُ بألوانها، والكاملةُ فوق ضبابها، ومزيجُ الكاملة بالكحليّ.) */
+.ad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
+  gap: var(--space-4);
+}
+/* الغلاف: يحمل مقاساتِ التذكرة (الكعب، والثلمة، وموضعَي القطع) للكرت ولظلّه معًا */
+.ad-card-wrap {
+  --ad-stub: calc(var(--space-24) + var(--space-4));
+  --ad-notch: var(--space-3);
+  --ad-cut-a: calc(100% - var(--ad-stub)) 0;
+  --ad-cut-b: calc(100% - var(--ad-stub)) 100%;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-inline-size: 0;
+}
+.ad-card-wrap > .ad-card { flex: 1; min-inline-size: 0; }
+.ad-card {
+  --ad-card-pad: var(--space-5);
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--ad-edge);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-sheet);
+}
+.ad-card, .ad-card-shade > span {
+  -webkit-mask:
+    radial-gradient(circle at var(--ad-cut-a), transparent var(--ad-notch), black calc(var(--ad-notch) + 1px)),
+    radial-gradient(circle at var(--ad-cut-b), transparent var(--ad-notch), black calc(var(--ad-notch) + 1px));
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle at var(--ad-cut-a), transparent var(--ad-notch), black calc(var(--ad-notch) + 1px)),
+    radial-gradient(circle at var(--ad-cut-b), transparent var(--ad-notch), black calc(var(--ad-notch) + 1px));
+  mask-composite: intersect;
+}
+.ad-card, .ad-table { --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
+/* **علامةُ المرور: الكرتُ يرتفع بظلّه** (محمد ٢٠٢٦-١٠-٣٠: «إذا لم يكن هناك طريقةٌ أفضل من أن يرتفع قليلًا فهي العلامة»)،
+   وبصورةٍ يعود لونُها أيضًا — **حركةٌ واحدة بزمنٍ واحد** (`--ad-dur-lift`).
+   والظلُّ **قطعةٌ مستقلّة خلف الكرت** (`.ad-card-shade`): صورةٌ ظلّيّةٌ للتذكرة بقناعها نفسِه، عليها `drop-shadow` ثابت
+   يُرسم مرّةً، ولا يتحرّك منه إلّا شفافيّتُه. (كان الظلُّ `filter` يتحرّك على الغلاف، فيُعاد رسمُ الكرت كلِّه بصورته المدموجة
+   في كلّ إطار — «غير سلس». والقناعُ على الكرت يقصّ أيَّ ظلٍّ عليه، فلا ظلَّ على الكرت نفسِه.)
+   (رُفض: اشتدادُ الحدّ — لا يُرى على الكعب فيحيط بالورقة وحدها؛ وصحوُ الكعب بطبقةٍ فاتحة — «ضعيفةٌ وغير واضحة»؛
+   والارتفاعُ بلا ظلّ — قفزةٌ لا ارتفاع.) */
+.ad-card-shade { position: absolute; inset: 0; z-index: var(--ad-z-under); opacity: 0; filter: var(--ad-lift-drop); pointer-events: none; }
+.ad-card-shade > span { position: absolute; inset: 0; border-radius: var(--ad-r-plate); background: var(--ad-sheet); }
+@media (hover: hover) and (pointer: fine) {
+  .ad-card-wrap { transition: translate var(--ad-dur-lift) var(--ad-ease-out); will-change: translate; }
+  .ad-card-shade { transition: opacity var(--ad-dur-lift) var(--ad-ease-out); will-change: opacity; }
+  .ad-card-wrap:hover { translate: 0 calc(var(--space-1) * -.5); }
+  .ad-card-wrap:hover .ad-card-shade { opacity: 1; }
+  .ad-card-stub-media img { transition: scale var(--ad-dur-lift) var(--ad-ease-out), opacity var(--ad-dur-lift) var(--ad-ease-out); }
+  .ad-card:hover .ad-card-stub-media img { scale: 1.04; }
+}
+
+/* الكعب: قماشُ الشريط بعينه — التدرّجُ، والنقشُ بمقاسه وموضعه (يُقصّ من موضعٍ يخصّ السجلّ)، والشبكةُ بخليّتها */
+.ad-card-stub {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  inline-size: var(--ad-stub);
+  overflow: hidden;
+  background: var(--ad-plate);
+  color: var(--ad-plate-ink);
+}
+.ad-card-stub::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background: url("/brand/pattern-white.svg") no-repeat center top / var(--ad-plate-naqsh-size) auto;
+  opacity: var(--ad-plate-naqsh);
+}
+.ad-card-stub[data-cut="1"]::before { background-position: 18% 22%; }
+.ad-card-stub[data-cut="2"]::before { background-position: 82% 8%; }
+.ad-card-stub[data-cut="3"]::before { background-position: 35% 55%; }
+.ad-card-stub[data-cut="4"]::before { background-position: 68% 40%; }
+.ad-card-stub[data-cut="5"]::before { background-position: 5% 70%; }
+.ad-card-stub::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background-image:
+    linear-gradient(to bottom, var(--ad-plate-mesh) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--ad-plate-mesh) 0 1px, transparent 1px);
+  background-size: var(--ad-mesh) var(--ad-mesh);
+  -webkit-mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+  mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+}
+.ad-card-stub-fact {
+  position: relative;
+  z-index: var(--ad-z-over);
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-2);
+  text-align: center;
+}
+.ad-card-stub-fact b {
+  font-family: var(--font-display);
+  font-size: calc(var(--ad-t-room) * 1.25);
+  font-weight: var(--ad-w-black);
+  line-height: var(--ad-lh-tight);
+  color: var(--ad-plate-ink);
+}
+.ad-card-stub-fact span { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); color: var(--ad-plate-ink-2); }
+/* حقيقةٌ رمزًا مكانَ الرقم (`AdStub.icon`: المرنةُ لانهاية) — بارتفاع الرقم الكبير، ولونِه */
+.ad-stub-icon { display: inline-grid; place-items: center; color: var(--ad-plate-ink); }
+.ad-card-stub-fact > .ad-stub-icon > svg { inline-size: calc(var(--ad-t-room) * 1.25); block-size: calc(var(--ad-t-room) * 1.25); }
+.ad-td-stub > .ad-stub-icon { position: relative; }
+.ad-td-stub > .ad-stub-icon > svg { inline-size: var(--ad-t-section); block-size: var(--ad-t-section); }
+/* بغلاف: الصورةُ تملأ الكعبَ، والمعلومةُ فوقها على حجابٍ من لون اللوح ينحلّ نحو الصورة — قطعةٌ واحدة لا قطعتان */
+.ad-card-stub:has(.ad-card-stub-media) .ad-card-stub-fact {
+  flex: none;
+  padding-block-end: var(--space-16);
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--navy-900) 94%, transparent), color-mix(in oklab, var(--navy-900) 82%, transparent) 50%, transparent);
+}
+.ad-card-stub-media { position: absolute; inset: 0; display: block; overflow: hidden; }
+.ad-card-stub-media img { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
+/* بلون اللوح: ضوءُ الصورة على تدرّجه (`luminosity`)، ونسختُها الملوّنةُ فوقها تظهر عند المرور */
+.ad-card-stub-img { mix-blend-mode: luminosity; opacity: .9; }
+.ad-card-stub-color { opacity: 0; }
+.ad-card:hover .ad-card-stub-color { opacity: 1; }
+.ad-card-main { flex: 1; display: flex; flex-direction: column; min-inline-size: 0; }
+
+/* ═══ كرتُ الشخص (`AdCard.face`، ٢٠٢٦-١١-٠٢): التذكرةُ واقفة ═══
+   الكعبُ شريطٌ أعلاها بقماشه ونقشه — كما تصير كلُّ تذكرةٍ في الضيّق، والثلمتان على جانبيه — ووجهُ صاحبها على حدّه بحلقة الورقة،
+   واسمُه وسطورُه تحته في وسطها. والشبكةُ أضيقُ أعمدةً (ثلاثةٌ أو أربعة): الإنسانُ يُعرف بوجهه واسمه، لا بسطرٍ طويل */
+.ad-card-wrap[data-face] { --ad-stub-h: var(--space-16); --ad-cut-a: 0 var(--ad-stub-h); --ad-cut-b: 100% var(--ad-stub-h); }
+.ad-card-wrap[data-face] > .ad-card { flex-direction: column; }
+.ad-card-wrap[data-face] .ad-card-stub { flex: none; flex-direction: row; inline-size: auto; block-size: var(--ad-stub-h); }
+.ad-card-face { position: relative; z-index: var(--ad-z-over); display: flex; justify-content: center; margin-block-start: calc(var(--space-8) * -1 - var(--space-1)); }
+.ad-card-face > .av { box-shadow: 0 0 0 var(--space-1) var(--ad-sheet), var(--ad-rest); }
+/* شارةٌ على حدّ الوجه السفليّ في وسطه — على أرضٍ بيضاء بحلقة الوجه نفسِها، فتنفصل عن الصورة كما ينفصل الوجهُ عن الشريط */
+.ad-card-face-mark {
+  position: absolute;
+  inset-block-end: 0;
+  left: 50%;
+  translate: -50% 50%;
+  border-radius: var(--ad-r-full);
+  background: var(--ad-sheet);
+  box-shadow: 0 0 0 var(--space-1) var(--ad-sheet);
+}
+/* والشارةُ مصمتةٌ بكحليّ اللوح وأبيضِه (محمد ٢٠٢٦-١١-٠٣: «هل يكون مصمتًا؟») — على الوجه تُقرأ بلا تردّد، وكانت فاتحةً باهتةً كالمعطَّل */
+.ad-card-face-mark > .ad-badge { border-color: transparent; background: var(--ad-plate); color: var(--ad-plate-ink); }
+.ad-card-wrap[data-face] .ad-card-body { justify-items: center; padding-block-start: var(--space-3); text-align: center; }
+.ad-card-wrap[data-face] .ad-chips { justify-content: center; }
+/* الاسمُ ثمّ موقعُه شارةً تحته (كما في الكرت القديم)، ثمّ السطورُ **كتلةً واحدةً في الوسط بحدٍّ مستقيمٍ من البداية**: لا موسَّطةً كلٌّ
+   بطوله (محمد ٢٠٢٦-١١-٠٢: «متفاوتة، ليست في خطّ مستقيم»)، ولا ملتصقةً باليمين تحت رأسٍ موسَّط فيتنازع الكرتَ محوران */
+.ad-card-wrap[data-face] .ad-card-title { order: -1; }
+.ad-card-wrap[data-face] .ad-meta { justify-self: center; justify-items: start; text-align: start; max-inline-size: 100%; grid-template-columns: minmax(0, max-content); }
+/* والسطرُ الطويل (عنوانُ فعاليّةٍ حضرها) يُقصّ بنقاطه داخل الكرت ولا يخرج منه: الكتلةُ بعرض أطول سطورها ما لم يتجاوز الكرت */
+.ad-card-wrap[data-face] .ad-meta-line { max-inline-size: 100%; }
+/* **كعبُ العضو السابق كحليٌّ كالحاضر** (محمد ٢٠٢٦-١١-٠٣): جُرّب الأحمرُ المصمت («للخطر والحذف»)، والرماديُّ المحايد (لونٌ من
+   نظامٍ آخر بين كحليّ الوجه والأزرار)، والكحليُّ الباهت — فلم يُقبَل شيء. الموضعُ «سابقون» يقولها، وسطرُ «عضويّةٌ منتهية». */
+/* أرقامُ كرت الشخص تواريخُ غالبًا («بداية التطوّع»، «الانضمام») بجانب أعدادٍ قصيرة: يأخذ كلٌّ عرضَ قيمته فيبقى التاريخُ سطرًا واحدًا
+   (كان يُقسَم بالتساوي فانكسر «27 أكتوبر / 2026» بجانب صفرين) */
+.ad-card-wrap[data-face] .ad-figure { flex: 1 1 auto; }
+.ad-card-wrap[data-face] .ad-figure dd { white-space: nowrap; }
+.ad-grid:has(> .ad-card-wrap[data-face]) { grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+/* وفي الجدول وجهُه في موضع الكعب المصغّر */
+.ad-td-face { display: grid; place-items: center; inline-size: calc(var(--ad-tile) * 1.2); }
+
+/* شاراتُ الكرت (`AdBadge`، قطعةُ السطر نفسُها): الحالُ معبّأةٌ بلونها، والنوعُ والعلامةُ محايدان برمزهما */
+.ad-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); min-inline-size: 0; }
+.ad-card-body {
+  container: ad-card / inline-size;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* عمودُه يضيق معه: صفُّ أرقامٍ أعرضُ من الكرت كان يمدّه فيخرج العنوانُ معه من الكرت */
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--ad-card-pad) var(--ad-card-pad) var(--space-4);
+}
+.ad-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--ad-t-title);
+  font-weight: var(--ad-w-black);
+  line-height: var(--ad-lh-tight);
+  color: var(--ad-ink-head);
+  text-wrap: balance;
+}
+.ad-card-title :is(a, .ad-open)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ad-card-title :is(a, .ad-open):focus-visible { outline: none; }
+/* عنوانٌ يفتح السجلَّ في مكانه (`onOpen`): زرٌّ بشكل الرابط نفسِه، يمتدّ على الكرت أو السطر */
+.ad-open { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: inherit; cursor: pointer; }
+/* الحلقةُ على الغلاف لا على الكرت: قناعُ الثلمتين على الكرت يقصّ كلَّ ما خرج من حدّه (المراجعة المستقلّة) */
+.ad-card-wrap:has(.ad-card-title :is(a, .ad-open):focus-visible) { border-radius: var(--ad-r-plate); outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-meta { display: grid; gap: var(--space-1); font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-meta-line { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; }
+.ad-meta-line > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-meta-line svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* سطرُ الحال بلون حاله (رمزًا ونصًّا) — نغماتُ الحال نفسُها في الشارة والسطر الصادق */
+:is(.ad-meta-line, .ad-row-info)[data-tone="ok"] { color: var(--ad-ok); font-weight: var(--ad-w-medium); }
+:is(.ad-meta-line, .ad-row-info)[data-tone="warn"] { color: var(--ad-warn); font-weight: var(--ad-w-medium); }
+:is(.ad-meta-line, .ad-row-info)[data-tone="bad"] { color: var(--ad-bad); font-weight: var(--ad-w-medium); }
+/* و«الخافت» لما لم يُسجَّل («من أنهى العضويّة غير مسجّل»، «سبب الإنهاء غير مذكور»): يُقال ولا يزاحم ما سُجّل */
+:is(.ad-meta-line, .ad-row-info)[data-tone="muted"] { color: var(--ad-ink-3); }
+.ad-figures {
+  display: flex;
+  margin: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--ad-rule);
+}
+.ad-figure { flex: 1; display: grid; gap: 0; padding-inline: var(--space-3); border-inline-start: 1px solid var(--ad-rule); }
+.ad-figure:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.ad-figure dt { display: flex; align-items: center; gap: var(--space-1); font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-figure dt svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); }
+/* رمزُ المعلومة في الكرت على مربّعٍ مصبوغٍ بلون سطره (اختيارُ محمد ٢٠٢٦-١٠-٣٠ بعينه، بين المصبوغ وقطعةِ اللوح):
+   فالرموزُ عمودٌ مرتّب، وسطرُ الحال علامةٌ ملوّنة تُرى قبل أن تُقرأ. بمقاس مربّع الزرّ الصغير؛ ومن مادّة الورقة لا اللوح،
+   فلا يُقرأ زرًّا ولا ينافس الكعبَ ولا مربّعَ الفعل الأساسيّ. */
+.ad-card :is(.ad-meta-line, .ad-figure dt) > svg {
+  box-sizing: content-box;
+  flex: none;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  padding: calc(var(--space-1) * 1.25);
+  border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+/* النسبةُ في طرف سطر الرقم مقابلَه، والشريطُ تحتهما بعرض العمود (اقتراحُ محمد ٢٠٢٦-١٠-٣٠): «63%» تُقرأ بلا حساب، والشريطُ
+   يبدأ وينتهي حيث يبدأ الرقمُ وتنتهي النسبة. **والشريطُ كحليٌّ في كلّ حال** (محمد ٢٠٢٦-١٠-٣١: «لماذا يتغيّر لونُه؟»):
+   الحالُ كلمةٌ مكانَ النسبة — «مكتمل» بحبر العنوان (الامتلاءُ نجاحٌ لا تنبيه، فلا كهرمانيّ)، و«لم يبدأ» خافتةٌ فوق شريطٍ فارغ.
+   والشريطُ 6px ليُرى زوجًا مع جاره لا خيطًا. */
+.ad-figure-v { display: flex; align-items: baseline; gap: var(--space-2); }
+.ad-meter-pct { margin-inline-start: auto; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-2); }
+.ad-meter-pct[data-word="full"] { color: var(--ad-ink-head); }
+.ad-meter-pct[data-word="note"] { font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
+.ad-meter-row { display: flex; margin: 0; margin-block-start: var(--space-2); }
+.ad-meter {
+  --ad-meter-h: calc(var(--space-1) * 1.5);
+  display: block;
+  flex: 1;
+  min-inline-size: 0;
+  block-size: var(--ad-meter-h);
+  margin: 0;
+  border: 0;
+  border-radius: var(--ad-r-full);
+  background: var(--ad-veil-2);
+  overflow: hidden;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ad-meter::-webkit-meter-inner-element { display: block; }
+.ad-meter::-webkit-meter-bar { block-size: var(--ad-meter-h); border: 0; border-radius: var(--ad-r-full); background: var(--ad-veil-2); }
+.ad-meter::-webkit-meter-optimum-value, .ad-meter::-webkit-meter-suboptimum-value, .ad-meter::-webkit-meter-even-less-good-value { border-radius: var(--ad-r-full); background: var(--ad-pick); }
+.ad-meter::-moz-meter-bar { border-radius: var(--ad-r-full); background: var(--ad-pick); }
+.ad-figure dd {
+  margin: 0;
+  font-size: var(--ad-t-title);
+  font-weight: var(--ad-w-bold);
+  line-height: var(--ad-lh-ui);
+  color: var(--ad-ink-head);
+}
+/* رمزٌ لاتينيٌّ طويل (الرقمُ المرجعيّ) في كرتٍ ضيّق: درجةٌ أصغر فيبقى سطرًا واحدًا — كان ينكسر عند شَرطته فيصير نصفين («…-0004-» ثمّ
+   «22AAC1») لا يُقرآن رمزًا واحدًا ولا يُنسخان */
+@container ad-card (max-width: 24rem) { .ad-figure-v > .lat { font-size: var(--ad-t-body); } }
+/* **أربعةُ أرقامٍ في كرتٍ ضيّق صفّان من اثنين** (الفرص التطوّعيّة: الطلبات والقبول والإنجاز والشهادات، ٢٠٢٦-١١-٠٢): في صفٍّ
+   واحدٍ احتاجت 403 بكسل، فخرج رابعُها من الكرت على الجوّال وفي عمودَي الحاسب. والخيطُ بين الرقمين في كلّ صفّ كما هو */
+@container ad-card (max-width: 26rem) {
+  .ad-figures:has(> .ad-figure:nth-child(4)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--space-3); }
+  .ad-figures:has(> .ad-figure:nth-child(4)) > .ad-figure:nth-child(odd) { padding-inline-start: 0; border-inline-start: 0; }
+}
+.ad-card-foot {
+  position: relative;
+  z-index: var(--ad-z-over);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--ad-card-pad);
+  border-block-start: 1px solid var(--ad-rule);
+  background: var(--ad-veil);
+  /* القاعُ شريطٌ مصبوغ، فأدواتُه بيضاء عليه — الأداةُ خطوةٌ عن أرضها */
+  --ad-field: var(--ad-field-up);
+  --ad-field-2: var(--ad-field-up-2);
+}
+.ad-card-foot .ad-btn:first-child { margin-inline-end: auto; }
+/* (كان القاعُ يُضمر اسمَ الفعل الثاني في الضيّق لئلّا يُقصّ الأساسيّ بين ثلاثة أفعال؛ ولم يبقَ في القاع إلّا فعلان — الأساسيُّ
+   ووحيدٌ أو «المزيد» — فلا ضمور: كلُّ فعلٍ باسمه، ٢٠٢٦-١١-٠٢) */
+/* «المزيد» في أفعال السجلّ (`AdActs`) **بشكل الفعل الثانوي نفسِه**: صندوقٌ بختم رمزه — اقتراحُ محمد (٢٠٢٦-١١-٠٢). والرمزُ سهمُ القائمة (▾) لا النقاطُ الثلاث: النقاطُ الصغيرةُ على الختم الكحليّ خافتةٌ دون رموز إخوته، والسهمُ يقول «تنفتح قائمة» بوزنهم. في الخانة الثانية
+   بعد الأساسيّ يقف فعلٌ واحدٌ أو «المزيد»، لا يجتمعان، فبشكلٍ واحدٍ يستوي عمودُ الأفعال في الجدول سطرًا بعد سطر. (كان صندوقًا بسهمٍ
+   بلا ختم كـ«المزيد» في المبدّل: «السهمُ إشارةٌ لا فعل» — فاختلف شكلُ الخانة الثانية بين سطرٍ وسطر.) */
+
+/* ═══ الترتيبُ بالسحب (`_ad/reorder.tsx`، محمد ٢٠٢٦-١١-٠١: «الأغلبُ يضع تغييرَ الترتيب في الجدول نفسِه») ═══
+   **المقبضُ رمزُ السحب المعروف قطعةً قائمة** بحبر الصفحة: أوّلَ السطر في عمودٍ له (كمربّع التحديد)، وفي زاوية الكرت العليا
+   مقابلَ الشارات. (كان المقبضُ الكعبَ ورمزُه داخله فذاب في زخرفته، ثمّ أُضيف فوق القائمة سطرُ تعليمات — «لم يزد التوضيحَ إلّا
+   قبحًا»: ما يحتاج شرحًا لم تُحسن علامتُه.) والمؤشّرُ يدٌ فوقه، والممسوكُ يرتفع بظلّ المرور ويعلو ما حوله */
+.ad-table[data-grip] { --ad-tc-grip: max-content; }
+.ad-td-grip { position: relative; z-index: var(--ad-z-over); display: flex; align-items: center; }
+.ad-grip {
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: none;
+  color: var(--ad-ink-2);
+  cursor: grab;
+  touch-action: none; /* اللمسُ يسحب ولا يمرّر الصفحة من المقبض */
+}
+.ad-grip svg { inline-size: var(--space-5); block-size: var(--space-5); }
+button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); color: var(--ad-ink-head); }
+[data-dragging] .ad-grip { cursor: grabbing; }
+/* المحرّك: سهمان حول المقبض (▲ ⠿ ▼ في الجدول، ← ⠿ → في الكرت) — حبرٌ هادئٌ كالمقبض، والطرفُ الذي لا جارَ له يخفت */
+.ad-mover { position: relative; z-index: var(--ad-z-over); display: inline-flex; align-items: center; }
+.ad-mover[data-axis="y"] { flex-direction: column; }
+.ad-mover[data-axis="y"] > .ad-step { block-size: var(--space-5); } /* ▲ ⠿ ▼ بطول الكعب المصغّر تقريبًا: السطرُ لا يطول */
+.ad-mover[data-axis="y"] > .ad-grip { block-size: var(--space-6); }
+.ad-step {
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: none;
+  color: var(--ad-ink-2);
+  cursor: pointer;
+}
+.ad-step svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.ad-step:hover:not(:disabled) { background: var(--ad-veil-2); color: var(--ad-ink-head); }
+.ad-step:disabled { opacity: .3; cursor: default; }
+.ad-mover[data-off] { opacity: .35; }
+.ad-mover[data-off] > * { opacity: 1; cursor: default; }
+.ad-card-top { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; }
+.ad-card-top > .ad-chips { flex: 1; }
+.ad-card-top > .ad-mover { margin-inline-start: auto; margin-block: calc(var(--space-1) * -1); }
+.ad-card-wrap[data-dragging] { z-index: var(--ad-z-head); }
+.ad-card-wrap[data-dragging] .ad-card-shade { opacity: 1; }
+.ad-tr[data-dragging] { z-index: var(--ad-z-head); border-radius: var(--ad-r-sm); background: linear-gradient(var(--ad-veil), var(--ad-veil)), var(--ad-sheet); box-shadow: var(--ad-lift); }
+
+/* ═══ المجموعات: سجلّاتٌ تحت أصحابها (`CollectionRoom.group`، `AdGroupHead`؛ محمد ٢٠٢٦-١١-٠٢ في الإنذارات) ═══
+   الغرفةُ المجمّعةُ قائمةٌ وحدها، ورأسُ المجموعة فيها شريطٌ بعرض الجدول كلِّه لا جزيرةٌ فيه: يصبغه الحجابُ، ويفصله عمّا قبله
+   حدُّ الورقة، وفيه صاحبُ المجموعة بصورته واسمِه بخطّ العنوان وسطورِه تحته، ودرجاتُ حدّه في طرفه */
+.ad-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-5);
+  border-block-start: 1px solid var(--ad-edge);
+  background: linear-gradient(var(--ad-veil), var(--ad-veil)), var(--ad-sheet);
+}
+.ad-group-who { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 0; flex: 1 1 14rem; }
+.ad-group-main { display: grid; gap: var(--space-1); min-inline-size: 0; }
+/* درجاتُ الحدّ: قطعٌ بعدد الحدّ تمتلئ من البداية بنغمة القرب منه، وكلمتُها تحتها بالنغمة نفسِها */
+.ad-steps { display: grid; justify-items: end; gap: var(--space-2); flex: none; }
+.ad-steps-bar { display: flex; gap: var(--space-1); }
+.ad-steps-bar > i { inline-size: var(--space-6); block-size: var(--space-2); border-radius: var(--ad-r-full); background: var(--ad-veil-2); box-shadow: inset 0 0 0 1px var(--ad-rule); }
+.ad-steps[data-tone="warn"] .ad-steps-bar > i[data-on] { background: var(--ad-warn-solid); box-shadow: none; }
+.ad-steps[data-tone="bad"] .ad-steps-bar > i[data-on] { background: var(--ad-bad-solid); box-shadow: none; }
+.ad-steps-l { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); }
+.ad-steps[data-tone="warn"] .ad-steps-l { color: var(--ad-warn); }
+.ad-steps[data-tone="bad"] .ad-steps-l { color: var(--ad-bad); }
+.ad-group-title { font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-group-fig { display: grid; gap: var(--space-1); min-inline-size: calc(var(--space-16) * 2.5); }
+.ad-group-fig-l { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-group-fig-l > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.ad-group-fig .ad-figure-v { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+/* سطرُ المجموعة في الجدول: آخرَ الملفّ ليغلب قواعدَ السطر وطيَّه الضيّق */
+
+/* مراجعةُ العرضين (`?f=pair`، في التطوير وحده): الكرتُ ثمّ سطرُه تحته لكلّ سجلّ، كلٌّ بعرضه الحقيقيّ — الكرتُ نصفُ الغرفة
+   كما في شبكته، والسطرُ عرضُها كما في جدوله (جنبًا إلى جنب كان السطرُ يضيق فيتكسّر عنوانه) — أداةُ نقل الغرف إلى القالب */
+.ad-pairs { display: grid; gap: var(--space-8); }
+.ad-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
+.ad-pair > .ad-tbl { grid-column: 1 / -1; }
+@container ad-room (max-width: 56rem) { .ad-pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* ═══ اللبنة: الجدول — العرضُ الجدوليّ للقائمة نفسها (٢٠٢٦-١٠-٣١) ═══
+   رأسٌ واحدٌ يسمّي الأعمدةَ برموزها، والسطورُ أجزاءُ شبكةٍ واحدة (`subgrid`) فتصطفّ أعمدتُها عبرها كلِّها: عمودُ السجلّ يمتدّ،
+   والبقيّةُ بقدر أعرض ما فيها. وحقيقةُ الكعب (التاريخ، الموعد) عمودٌ أوّل، والشريطُ تحت رقمه كما في التذكرة. */
+/* **غلافُ الجدول حاويةُ قياسه** (محمد ٢٠٢٦-١١-٠١، «جرّبه بمقاساتٍ مختلفة»): كان الجدولُ يتحوّل إلى سطور الضيّق بعرض الغرفة
+   وحده (56rem) أيًّا كانت أعمدتُه — فجدولُ الشهادات بثلاثة أعمدةٍ نصّيّة (رقمٌ مرجعيّ، وفترة، ومُصدِر) عصر عمودَ العضو في الحاسب
+   المحمول (1280) حتى صار عرضُه صفرًا واختفى الاسم. والعمودُ النصّيُّ أعرضُ من عمود الرقم ولا يلتفّ، فكلُّ عمودٍ نصّيٍّ بعد
+   الأوّل (`AdColumn.text` ← `data-load`) يُبكّر التحوّلَ 10rem — والأوّلُ يتّسع له الحدُّ الأصليّ (قيس على التواصل والاستبيانات):
+   الغلافُ أضيقُ من الغرفة بقدر حِمله، والجدولُ داخله يعود إلى عرضها كاملًا، وقواعدُ الضيّق تسأل الغلاف. فالجدولُ الخفيفُ يبقى
+   جدولًا حيث كان، والثقيلُ يصير سطورًا قبل أن يُعصر عنوانُه. */
+.ad-tbl { --ad-tbl-load: 0rem; container: ad-tbl / inline-size; margin-inline-end: var(--ad-tbl-load); }
+.ad-tbl[data-load="2"] { --ad-tbl-load: 10rem; }
+.ad-tbl[data-load="3"] { --ad-tbl-load: 14rem; } /* الفرصُ التطوّعيّة (ثلاثةُ أشرطة): جدولٌ على 1471 بعنوانٍ 300 بكسل، وسطورٌ تحت 70rem */
+.ad-tbl[data-load="4"] { --ad-tbl-load: 20rem; }
+.ad-tbl > .ad-table { margin-inline-end: calc(var(--ad-tbl-load) * -1); }
+.ad-table {
+  display: grid;
+  column-gap: var(--space-6);
+  border: 1px solid var(--ad-edge);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-sheet);
+  box-shadow: var(--ad-rest);
+  overflow: clip; /* لا `hidden`: ذاك يصنع حاويةَ تمريرٍ فيبطل ثباتُ الرأس */
+  /* الأعمدةُ: [التحديد] [الكعب المصغّر] السجلّ، ثمّ الأرقامُ بعددها، ثمّ الأفعال — والاختياريّان يغيبان بقيمتهما الفارغة */
+  grid-template-columns: var(--ad-tc-pick,) var(--ad-tc-grip,) var(--ad-tc-stub,) minmax(0, 1fr) repeat(var(--ad-cols, 1), max-content) max-content;
+}
+/* بلا أعمدة أرقام (الأسئلة الشائعة: الكعبُ والسجلُّ والأفعالُ وحدها) — `repeat` لا يقبل صفرًا */
+.ad-table[data-cols="0"] { grid-template-columns: var(--ad-tc-pick,) var(--ad-tc-grip,) var(--ad-tc-stub,) minmax(0, 1fr) max-content; }
+.ad-td-wrap:empty { display: none; }
+.ad-table[data-cols="1"] { --ad-cols: 1; }
+.ad-table[data-cols="2"] { --ad-cols: 2; }
+.ad-table[data-cols="3"] { --ad-cols: 3; }
+.ad-table[data-cols="4"] { --ad-cols: 4; }
+.ad-table[data-cols="5"] { --ad-cols: 5; }
+.ad-table[data-cols="6"] { --ad-cols: 6; }
+.ad-table[data-sel] { --ad-tc-pick: max-content; } /* التحديد: عمودٌ أوّلُ لمربّع الاختيار */
+.ad-table[data-stub] { --ad-tc-stub: max-content; }
+
+/* ═══ الكعبُ المصغّر في السطر (محمد ٢٠٢٦-١١-٠١: «منبهرٌ من الكارد، والجدولُ عادي — هل هناك أفضل؟») ═══
+   حقيقةُ الكعب (التاريخ، المشاركات) كانت نصًّا في عمودٍ أوّل؛ فصارت **قطعةً من قماش الكعب بعينه**: التدرّجُ، والنقشُ من موضع
+   قصٍّ يخصّ السجلّ، والغلافُ بضوئه على التدرّج يتلوّن بالمرور على السطر، والرقمُ الكبيرُ وتحته الشهر — فكلُّ سطرٍ تذكرةٌ مطويّة.
+   والجدولُ يبقى أهدأ من الكرت: هذا توقيعُه الوحيد، وبقيّتُه للمسح والمقارنة */
+.ad-td-stub {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  inline-size: calc(var(--ad-tile) * 1.2); /* أعرضُ من طوله كالكعب: «أبريل 2026» تحت الرقم بلا مسٍّ للحافّة */
+  block-size: var(--ad-tile);
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-plate);
+  color: var(--ad-plate-ink);
+  text-align: center;
+  box-shadow: var(--ad-rest);
+}
+.ad-td-stub::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background: url("/brand/pattern-white.svg") no-repeat center top / var(--ad-plate-naqsh-size) auto;
+  opacity: var(--ad-plate-naqsh);
+}
+.ad-td-stub[data-cut="1"]::before { background-position: 18% 22%; }
+.ad-td-stub[data-cut="2"]::before { background-position: 82% 8%; }
+.ad-td-stub[data-cut="3"]::before { background-position: 35% 55%; }
+.ad-td-stub[data-cut="4"]::before { background-position: 68% 40%; }
+.ad-td-stub[data-cut="5"]::before { background-position: 5% 70%; }
+.ad-td-stub > b {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: var(--ad-t-section);
+  font-weight: var(--ad-w-black);
+  line-height: var(--ad-lh-tight);
+  color: var(--ad-plate-ink);
+}
+.ad-td-stub > span:not(.ad-td-stub-media) { position: relative; font-size: calc(var(--ad-t-meta) * .85); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink-2); white-space: nowrap; }
+/* بغلاف: الصورةُ تملأ القطعةَ بضوئها على التدرّج (كالكعب)، وحجابٌ من لون اللوح يُبقي الرقمَ مقروءًا، ونسختُها الملوّنةُ عند المرور */
+/* بلا `z-index`: طبقةٌ مستقلّةٌ كانت تعزل الصورةَ عن تدرّج القطعة، فلا يجد مزجُ الضوء (`luminosity`) ما يمتزج به فتظهر بألوانها */
+.ad-td-stub-media { position: absolute; inset: 0; display: block; overflow: hidden; }
+.ad-td-stub-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, color-mix(in oklab, var(--navy-900) 30%, transparent), color-mix(in oklab, var(--navy-900) 70%, transparent)); } /* حجابٌ يشتدّ نحو الشهر تحت الرقم */
+.ad-td-stub-media img { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
+.ad-td-stub:has(.ad-td-stub-media)::before { display: none; }
+.ad-tr:hover .ad-td-stub .ad-card-stub-color { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .ad-td-stub-media img { transition: opacity var(--ad-dur-lift) var(--ad-ease-out); }
+}
+.ad-tr {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  border-block-start: 1px solid var(--ad-rule);
+}
+.ad-tr:not(.ad-thead):hover { background: var(--ad-veil); }
+/* الرأسُ شريطٌ مصبوغ كقاع التذكرة، **ويثبت أعلى الغرفة** حين تطول القائمة (خمسون سطرًا في الدفعة) فلا يضيع اسمُ العمود */
+.ad-thead { position: sticky; inset-block-start: calc(var(--ad-shell-pad) * -1); z-index: var(--ad-z-head); padding-block: var(--space-2); border-block-start: 0; border-block-end: 1px solid var(--ad-rule); background: linear-gradient(var(--ad-veil), var(--ad-veil)), var(--ad-sheet); } /* معتمٌ: الصبغةُ فوق الورقة، فلا تظهر السطورُ من تحته */
+.ad-thead + .ad-tr { border-block-start: 0; }
+.ad-th { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ink-3); white-space: nowrap; }
+/* رأسُ العمود المرتَّب زرٌّ بشكل الرأس نفسِه (كان في `DataTable` القديم): يشتدّ حبرُه بالمرور والترتيب، والسهمُ يقول الحال */
+.ad-th-sort { display: inline-flex; align-items: center; gap: var(--space-1); margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
+/* (محمد ٢٠٢٦-١١-٠١: «عند الضغط يصير لونه أسود») كان حبرَ المتن الأسودَ تقريبًا. فالمرتَّبُ **يلبس المختار** كما في القالب
+   كلِّه (المبدّل، وطريقة العرض، والصفحة الحاليّة): قطعةٌ من اللوح، وحاشيتُها السالبة تُبقي الرأسَ في مكانه فلا يقفز */
+.ad-th-sort:hover { color: var(--ad-ink-2); }
+.ad-th-sort[data-on] {
+  margin-block: calc(var(--space-1) * -1);
+  margin-inline: calc(var(--space-2) * -1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-pick);
+  color: var(--ad-on-pick);
+  box-shadow: inset 0 0 0 1px var(--ad-pick-hair);
+}
+.ad-th-caret { flex: none; inline-size: var(--space-3); block-size: var(--space-3); opacity: .45; }
+.ad-th-sort:hover .ad-th-caret, .ad-th-sort[data-on] .ad-th-caret { opacity: 1; }
+.ad-row-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1); min-inline-size: 0; } /* عمودُه الداخليّ يضيق معه: بلا ذلك كان سطرُ الرسالة المقصوصُ يمدّه بطوله كلِّه فيخرج من السطر (التواصل في الجوّال) */
+.ad-row-chips { margin-block-end: calc(var(--space-1) / 2); }
+.ad-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ad-t-body);
+  font-weight: var(--ad-w-bold);
+  color: var(--ad-ink-head);
+}
+.ad-row-title :is(a, .ad-open)::before { content: ""; position: absolute; inset: 0; }
+/* السطرُ كلُّه رابط (`::before`)، والعنوانُ مقصوصٌ للحذف فتنقطع حلقتُه: فالحلقةُ على السطر من داخله */
+.ad-row-title :is(a, .ad-open):focus-visible { outline: none; }
+.ad-tr:has(.ad-row-title :is(a, .ad-open):focus-visible) { outline: 2px solid var(--ad-ring); outline-offset: -2px; }
+.ad-row-sub { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-row-info { display: inline-flex; align-items: center; gap: var(--space-1); min-inline-size: 0; max-inline-size: 100%; text-wrap: pretty; }
+.ad-row-info[data-clip] > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* نصُّ رسالة: سطرٌ واحد، وكاملُه في التلميح */ /* لا تيتيم: «11 ص» لا تنكسر فتبقى «ص» وحدها في سطرها */
+/* مربّعُ رمز المعلومة في الجدول (رأسُه وسطرُ كلّ سجلّ) — **مربّعُ التذكرة نفسُه مصغّرًا إلى سطره** (محمد ٢٠٢٦-١٠-٣١: «هل تريد
+   خلفيّةً كما في الكارد؟»). قلتُ «لا: ضجيجٌ في الكثافة» قبل أن أراه، فبنيتُه فرأيتُه بمقاس سطره لا يضجّ ويصل الجدولَ بالتذكرة */
+/* (على المعلومة وحدها: الشارةُ قطعةٌ قائمةٌ برمزها، لا مربّعَ داخلها) */
+:is(.ad-row-info, .ad-th, .ad-td-i) > svg, .ad-th-sort > svg:not(.ad-th-caret) {
+  box-sizing: content-box;
+  flex: none;
+  inline-size: calc(var(--space-4) - var(--space-1) / 2);
+  block-size: calc(var(--space-4) - var(--space-1) / 2);
+  padding: calc(var(--space-1) * .75);
+  border-radius: calc(var(--ad-r-sm) - var(--space-1));
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+.ad-td { display: grid; justify-items: center; gap: var(--space-1); min-inline-size: 0; text-align: center; }
+/* (محمد ٢٠٢٦-١١-٠١) الأرقامُ والتواريخُ في وسط أعمدتها ورؤوسُها فوقها في الوسط، والكعبُ المصغّرُ تحت رأسه كذلك — والسجلُّ وحده من أوّله */
+.ad-th[data-kind] { justify-self: center; }
+.ad-tr > .ad-td-stub { justify-self: center; }
+.ad-td-i, .ad-td-l { display: none; } /* للضيّق وحده: الرأسُ هنا يقولهما */
+.ad-td-wrap { display: contents; }
+.ad-td-v { display: flex; align-items: baseline; gap: var(--space-3); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); white-space: nowrap; }
+.ad-td[data-text] .ad-td-v { font-size: var(--ad-t-ui); }
+.ad-td-sub { font-size: var(--ad-t-meta); color: var(--ad-ink-3); white-space: nowrap; }
+.ad-td[data-tone="muted"] .ad-td-v { font-weight: var(--ad-w-regular); color: var(--ad-ink-3); }
+.ad-td[data-tone="ok"] .ad-td-v { color: var(--ad-ok); }
+.ad-td[data-tone="warn"] .ad-td-v { color: var(--ad-warn); }
+.ad-td[data-tone="bad"] .ad-td-v { color: var(--ad-bad); }
+.ad-td .ad-meter { inline-size: 100%; min-inline-size: calc(var(--space-16) + var(--space-8)); }
+.ad-row-acts { position: relative; z-index: var(--ad-z-over); display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
+/* خيطٌ يفصل البيانَ عن الأفعال (محمد ٢٠٢٦-١٠-٣١: «خطٌّ بين العنوان والأزرار»): في العريض عمودٌ قائمٌ قبل عمود الأفعال يمتدّ
+   بطول الجدول (رأسُه معه)، وفي الضيّق خطٌّ فوق سطر الأفعال كقاع التذكرة */
+.ad-thead > .ad-th:last-child { position: relative; }
+:is(.ad-thead > .ad-th:last-child, .ad-tr:not(.ad-thead):not(.ad-tfoot) > .ad-row-acts)::before {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--space-3) * -1);
+  inset-inline-start: calc(var(--space-6) / -2);
+  border-inline-start: 1px solid var(--ad-rule);
+}
+.ad-thead > .ad-th:last-child::before { inset-block: calc(var(--space-2) * -1); }
+
+/* ═══ اللبنة: التحديدُ الجماعيّ (٢٠٢٦-١٠-٣١) — في الجدول وحده ═══
+   مربّعُ اختيار الهويّة (`.ach`) في أوّل السطر، فوق رابطه الممتدّ، والسطرُ المحدَّدُ مُنارٌ بنغمة الهويّة (كالخيار المختار في
+   القائمة). وشريطُ الأدوات يتبدّل محتواه في مكانه (لا قطعةُ لوحٍ تحلّ محلَّه: «لا يستبدل بل يكبر… مو حلو») */
+.ad-pick { gap: 0; }
+/* «الصفحة كلُّها» حين يُحدَّد بعضُها: شَرطةٌ بيضاء على القطعة نفسِها (المربّعُ لا يرسم إلّا التحديدَ الكامل) */
+.ad-pick:has(input:indeterminate) .ach-box { background: var(--ad-pick); border-color: transparent; }
+.ad-pick:has(input:indeterminate) .ach-box::after {
+  content: "";
+  inline-size: calc(var(--space-2) + var(--space-1) / 2);
+  block-size: calc(var(--space-1) / 2);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-on-pick);
+}
+.ad-pick:has(input:indeterminate) .ach-chk { display: none; }
+.ad-td-pick { position: relative; z-index: var(--ad-z-over); display: flex; align-items: center; }
+/* المحدَّدُ أوضحُ من المرور في الوضعين (كان في الداكن أخفتَ منه)، و`data-picked` لا `aria-selected`: الصفُّ في `role=table` لا يُحدَّد،
+   ومربّعُ الاختيار يقول حالَه لقارئ الشاشة */
+.ad-tr[data-picked] { background: var(--ad-tint); }
+.ad-tr[data-picked]:hover { background: var(--ad-tint-2); }
+/* شريطُ المحدَّد: شريطُ الأدوات نفسُه، العددُ مكانَ البحث والأفعالُ مكانَ المرشّحات ثمّ «إلغاء التحديد» */
+.ad-sel-n { display: flex; flex: 1 1 auto; align-items: center; min-block-size: var(--ad-ctl); margin: 0; padding-inline: var(--space-3); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+.ad-tools-sel .ad-sel-acts { order: 2; }
+.ad-tools-sel .ad-sel-x { order: 3; display: flex; }
+
+/* ═══ اللبنة: نافذةُ التأكيد (٢٠٢٦-١٠-٣١، اعتمدها محمد بعد عشرة توجّهات) ═══
+   **رأسُها لوحٌ مصمتٌ بلون معناها** (الحذفُ أحمر، والتحذيرُ كهرمانيّ، والنجاحُ أخضر) بمادّة اللوح كلِّها — التدرّجِ 135°
+   والنقشِ مقصوصًا والشبكة — فهي لغةُ الشريط ورأسِ الغرفة وكعبِ التذكرة نفسُها؛ والسؤالُ والختمُ عليه، والشرحُ والزرّان على الورقة.
+   **لونٌ مشبعٌ واحدٌ في السطح الواحد:** لا كحليَّ في النافذة (الكحليُّ مع الأحمر «شرطة»، ومع الكهرمانيّ لونان يهتزّ حدُّهما)؛
+   فالختمُ زجاجٌ، والأساسيُّ المادّةُ نفسُها، والإلغاءُ صندوقٌ محايد، وحلقةُ التركيز بلونها، وورقتُها في الداكن سوداءُ محايدة.
+   **والدافئُ مساحةً بدرجةٍ واحدة:** أعمقُ من الصافي («فاقعٌ بزيادة») وفي لونه لا يُطفأ («ماءٌ عليه طين»)، وضوءٌ من الأعلى في
+   جهة البداية يجعله مادّةً مضاءة لا طلاءً، والنقشُ أخفتُ فيبقى ملمسًا. والتركيزُ عند الفتح على «إلغاء» إلّا في النجاح.
+   (رُفض: الورقةُ البيضاء بختمٍ أحمر — «نظيفٌ مش إبداعيّ»؛ ورأسُ اللوح الكحليّ والتذكرةُ واللوحُ كاملًا بختمٍ أحمر — «شرطة»؛
+   والأحمرُ حبرًا وحده — خطرٌ خافت؛ والعنّابيُّ والبرونزيّ — «ماءٌ عليه طين»؛ والصافي — «فاقع»؛ والرأسُ المصبوغُ الفاتح — جميلٌ
+   لكنّه لغةُ الأنظمة العامّة لا «أدِيب».) */
+.mdl.ad-dlg {
+  --ad-tone: var(--ad-bad-solid);
+  --ad-tone-ink: var(--ad-white);   /* الأبيضُ الصريح لا فولاذيُّ اللوح: هامشُ تباينٍ على الأحمر والأخضر */
+  overflow: hidden;
+  border: 1px solid var(--ad-edge);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-dlg-paper);
+  box-shadow: var(--ad-lift);
+  color: var(--ad-ink);
+  font-family: var(--font-body);
+}
+.mdl.ad-dlg.ad-dlg-tone-danger { --ad-ring: var(--ad-bad-ring); }
+.mdl.ad-dlg.ad-dlg-tone-warning { --ad-tone: var(--ad-warn-solid); --ad-tone-ink: var(--ad-warn-ink); --ad-ring: var(--ad-warn-ring); }
+.mdl.ad-dlg.ad-dlg-tone-success { --ad-tone: var(--ad-ok-solid); --ad-ring: var(--ad-ok-ring); }
+.ad-dlg :focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-dlg-head {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  overflow: hidden;
+  background: var(--ad-dlg-light), var(--ad-tone);
+  color: var(--ad-tone-ink);
+  text-align: center;
+}
+.ad-dlg-head::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background: url("/brand/pattern-white.svg") no-repeat 18% 22% / var(--ad-plate-naqsh-size) auto;
+  opacity: calc(var(--ad-plate-naqsh) * .6);
+}
+.ad-dlg-head::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--ad-z-under);
+  background-image:
+    linear-gradient(to bottom, var(--ad-plate-mesh) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--ad-plate-mesh) 0 1px, transparent 1px);
+  background-size: var(--ad-mesh) var(--ad-mesh);
+  -webkit-mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+  mask-image: linear-gradient(135deg, black 0%, color-mix(in oklab, black 40%, transparent) 45%, transparent 80%);
+}
+.ad-dlg-mark {
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-12);
+  block-size: var(--space-12);
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-plate-veil-2);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--steel-50) 26%, transparent);
+  color: var(--ad-tone-ink);
+}
+.ad-dlg-mark svg { inline-size: var(--space-6); block-size: var(--space-6); }
+.ad-dlg-t { margin: 0; font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-tone-ink); text-wrap: balance; }
+.ad-dlg-main { display: grid; gap: var(--space-5); padding: var(--space-5) var(--space-6) var(--space-6); }
+.ad-dlg-x { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-align: center; text-wrap: pretty; }
+.ad-dlg-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--space-2); }
+.ad-dlg-foot .ad-btn { inline-size: 100%; }
+/* الأساسيُّ هو المادّةُ نفسُها بضوئها (الخطِرُ `danger-fill`، والتحذيرُ والنجاحُ يلبسان `fill` لونَ رأسهما) */
+.ad-dlg-foot :is(.ad-btn-fill, .ad-btn-danger-fill) { background: var(--ad-dlg-light), var(--ad-tone); color: var(--ad-tone-ink); }
+.mdl.ad-dlg.ad-dlg-tone-danger .ad-dlg-foot .ad-btn-danger-fill:hover { background: var(--ad-bad-solid-hover); }
+.mdl.ad-dlg.ad-dlg-tone-warning .ad-dlg-foot .ad-btn-fill:hover { background: var(--ad-warn-solid-hover); }
+.mdl.ad-dlg.ad-dlg-tone-success .ad-dlg-foot .ad-btn-fill:hover { background: var(--ad-ok-solid-hover); }
+/* مختبر: النافذةُ ساكنةٌ في لوح المعاينة (`/dashboard/ad/dialogs`) — يُحذف معه */
+.mdl.ad-dlg.ad-dlg-still { position: relative; top: auto; left: auto; z-index: var(--ad-z-over); inline-size: 100%; transform: none; }
+
+/* ═══ حالتا الغرفة قبل بياناتها: التحميلُ والخطأ (٢٠٢٦-١٠-٣١) ═══
+   **التحميلُ هيكلُ الغرفة نفسُه ينبض** (كان شعارًا وسط فراغٍ ثمّ تقفز الغرفةُ كلُّها): اللوحُ بالاسم والمسار حاضر، والمبدّلُ والأدواتُ
+   والقائمةُ أشكالٌ مصبوغةٌ من الورقة بلا محتوى، والكروتُ بكعوبها، والجدولُ بأعمدته — بالعرض الذي اختاره العضو.
+   **والخطأُ «القطعة» نفسُها** برمز السحابة المنقطعة وفعلٍ واحد، والنصُّ التقنيّ تحتها خافتًا لمن يُبلِغ. */
+/* **صورةٌ تُعاين قبل تنزيلها** (بطاقة التهنئة ١٠٨٠×١٩٢٠): بنسبتها في وسط النافذة، وطولُها ما تتركه الشاشةُ بعد رأس النافذة
+   وذيلها (في الجوّال يتراكب زرّاه) فتُرى كاملةً بلا تمرير، ونبضُ الانتظار بمقاسها فلا تقفز النافذةُ حين تصل */
+.ad-shot { display: grid; place-items: center; }
+.ad-shot > :is(img, .ad-skel) {
+  display: block;
+  block-size: clamp(16rem, calc(100dvh - 22rem), 36rem);
+  inline-size: auto;
+  max-inline-size: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: var(--ad-r-sm);
+  box-shadow: var(--ad-rest);
+  object-fit: contain;
+}
+.ad-skel {
+  display: block;
+  inline-size: 8rem;
+  max-inline-size: 100%;
+  block-size: var(--space-3);
+  border-radius: var(--ad-r-full);
+  background: var(--ad-veil-2);
+  animation: ad-pulse 1.6s var(--ad-ease-io) infinite;
+}
+.ad-skel[data-w="s"] { inline-size: 4rem; }
+.ad-skel[data-w="m"] { inline-size: 8rem; }
+.ad-skel[data-w="l"] { inline-size: 70%; }
+.ad-skel[data-w="xl"] { inline-size: 92%; }
+@keyframes ad-pulse { 50% { opacity: .5; } }
+.ad-switch-seg > .ad-skel { inline-size: 5rem; }
+.ad-skel-tools { align-items: center; }
+.ad-skel-tools > .ad-skel { block-size: var(--ad-ctl); border-radius: var(--ad-r-ctl); }
+.ad-skel-tools > .ad-skel[data-w="xl"] { flex: 1 1 0; inline-size: auto; }
+.ad-skel-tools > .ad-skel[data-w="s"] { inline-size: 7rem; }
+.ad-skel-body { display: grid; align-content: start; gap: var(--space-3); }
+.ad-skel-body > .ad-skel[data-w="s"] { block-size: var(--space-5); inline-size: 5rem; }
+.ad-skel-body > .ad-skel[data-w="xl"] { block-size: var(--space-4); }
+.ad-skel-body { padding-block-end: var(--space-5); }
+.ad-skel-figs { display: flex; justify-content: space-between; gap: var(--space-4); margin-block-start: var(--space-4); padding-block-start: var(--space-4); border-block-start: 1px solid var(--ad-hair); }
+.ad-skel-figs > .ad-skel { block-size: var(--space-8); border-radius: var(--ad-r-sm); }
+.ad-skel-foot > .ad-skel:first-child { margin-inline-end: auto; }
+.ad-skel-foot > .ad-skel { block-size: var(--ad-ctl-sm); border-radius: var(--ad-r-ctl); }
+.ad-skel-foot > .ad-skel[data-w="m"] { inline-size: 7rem; }
+.ad-skel-foot > .ad-skel[data-w="s"] { inline-size: 5rem; }
+.ad-skel-table .ad-row-main { display: grid; gap: var(--space-2); }
+.ad-skel-table .ad-row-main > .ad-skel[data-w="s"] { block-size: var(--space-5); inline-size: 6rem; }
+.ad-skel-table .ad-td > .ad-skel { inline-size: 3rem; }
+.ad-skel-table .ad-row-acts > .ad-skel { inline-size: 9rem; block-size: var(--ad-ctl-sm); border-radius: var(--ad-r-ctl); }
+/* صندوقُ نصّ الخطأ: النصُّ كما هو في صدره (من اليسار، بخطٍّ ثابت العرض)، وتحته قاعٌ مصبوغٌ كقاع الكرت فيه «نسخ نصّ الخطأ» */
+.ad-empty-detail {
+  display: grid;
+  inline-size: min(100%, 34rem);
+  margin-block-start: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-sheet);          /* الأداةُ خطوةٌ عن أرضها: القطعةُ مصبوغة، فالصندوقُ أبيض */
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+}
+.ad-empty-detail code { display: block; padding: var(--space-3) var(--space-4); font-family: var(--font-mono); font-size: var(--ad-t-meta); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-align: start; overflow-wrap: anywhere; }
+.ad-empty-detail-foot { display: flex; justify-content: center; padding: var(--space-2); border-block-start: 1px solid var(--ad-hair); background: var(--ad-veil); }
+/* الفعلُ يجري: دوّارةٌ بلون الزرّ مكانَ رمزه */
+.ad-spin {
+  box-sizing: border-box;
+  flex: none;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: ad-spin .7s linear infinite;
+}
+@keyframes ad-spin { to { rotate: 1turn; } }
+.ad-btn[aria-busy="true"] { cursor: progress; opacity: 1; } /* يعمل لا معطَّل: يبقى بلونه، والدوّارةُ تقول ما يجري */
+@media (prefers-reduced-motion: reduce) { .ad-skel { animation: none; } }
+
+/* ═══ رسائلُ التنبيه — موضعُها ═══
+   كانت في جهة البداية — حيث الشريطُ الجانبيّ في البوّابة — فتغطّي أسفلَه («مركز المساعدة»). فصارت في جهة النهاية فوق
+   المحتوى، وفي الجوّال بعرض الشاشة فوق جزيرة التنقّل لا عليها. وشكلُها باقٍ: ختمٌ بنغمتها على صفحةٍ بحدّ الورقة */
+/* محصورٌ في البوّابة (`:has(.ash-content)`): هذا الملفُّ يبقى في المستند بعد التنقّل إلى صفحاتٍ عامّة، ولا جزيرةَ هناك.
+   و860 حدُّ الجزيرة نفسُه في `components.css` (`.ash-content`)، والمتغيّرُ لا يُقرأ في استعلام الوسائط */
+body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end: var(--space-6); }
+@media (max-width: 860px) {
+  body:has(.ash-content) .toast-stack { inset-inline: var(--space-4); inline-size: auto; bottom: calc(var(--ad-island) + env(safe-area-inset-bottom)); }
+}
+
+/* ═══ اللبنة: ترقيمُ الصفحات — ذيلٌ ملتصقٌ بالقائمة (٢٠٢٦-١٠-٣١) ═══
+   في الجدول قاعُه المصبوغُ كرأسه (جدولٌ له رأسٌ وقاعٌ من مادّةٍ واحدة)، وفي الكروت شريطٌ كشريط الأدوات. «1–50 من 120»
+   على جهة البداية، والسابقُ والأرقامُ والتالي على الأخرى. الأرقامُ حبّاتٌ مصبوغة كحبّات التصفية، والحاليّةُ قطعةٌ من اللوح */
+.ad-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.ad-tfoot { padding-block: var(--space-2); background: var(--ad-veil); --ad-field: var(--ad-field-up); --ad-field-2: var(--ad-field-up-2); }
+.ad-tfoot .ad-pager { grid-column: 1 / -1; }
+/* شريطُ الكروت كشريط الأدوات: أبيضُ على الأرض، وأدواتُه مصبوغةٌ فيه (الأداةُ خطوةٌ عن أرضها) */
+.ad-pager-bar {
+  padding: var(--space-1);
+  padding-inline-start: var(--space-4);
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-sheet);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  --ad-field: var(--ad-veil);
+  --ad-field-2: var(--ad-veil-2);
+}
+.ad-pager-t { margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-medium); color: var(--ad-ink-2); }
+.ad-pager-nav { display: flex; align-items: center; gap: var(--space-1); }
+.ad-pager-nums { display: flex; align-items: center; gap: var(--space-1); }
+.ad-page {
+  min-inline-size: var(--ad-ctl-sm);
+  min-block-size: var(--ad-ctl-sm);
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--ad-r-sm);
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  color: var(--ad-ink-head);
+  font: inherit;
+  font-size: var(--ad-t-ui);
+  font-weight: var(--ad-w-bold);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-page:hover { background: var(--ad-field-2); }
+.ad-page[aria-current="page"] { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); cursor: default; }
+.ad-page:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-pager-gap { min-inline-size: var(--space-4); text-align: center; color: var(--ad-ink-3); }
+
+/* ═══ اللبنة: الفراغ — واحدٌ لكلّ الغرف: «القطعة» (اختيارُ محمد ٢٠٢٦-١٠-٣٠، بدل ديبو) ═══
+   صفحةٌ بيضاء على الأرض، في وسطها مربّعٌ من اللوح برمز الغرفة (رمزُ الشريط نفسُه، من خريطته)، ثمّ عنوانٌ يقول
+   الحقيقة، ثمّ فعلٌ إن كان له فعل. «لا شيء بعد» غيرُ «لا شيء يطابق»: الثاني رمزُه العدسة ويعرض مسحَ البحث. */
+.ad-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-block-size: 15rem;
+  padding: var(--space-10) var(--space-8);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-field);
+  box-shadow: inset 0 0 0 1px var(--ad-hair);
+  text-align: center;
+}
+.ad-empty-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-16);
+  block-size: var(--space-16);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-pick);
+  box-shadow: inset 0 0 0 1px var(--ad-pick-hair);
+  color: var(--ad-on-pick);
+}
+.ad-empty-ic svg { inline-size: var(--space-8); block-size: var(--space-8); }
+.ad-empty-text { display: grid; justify-items: center; gap: var(--space-2); max-inline-size: 30rem; }
+.ad-empty-title { font-family: var(--font-display); font-size: var(--ad-t-section); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); text-wrap: balance; }
+.ad-empty-desc { font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+.ad-empty-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-block-start: var(--space-2); }
+
+/* ═══ اللبنة: السطرُ الصادق — خطأُ جلبٍ لا يتنكّر صمتًا ═══ */
+/* **صفُّ القيادة** (`AdSeats`، محمد ٢٠٢٦-١١-٠٣): **كلُّ مقعدٍ كرتُ شخصٍ واقف** (`AdCard` بوجهه) — الكعبُ شريطٌ أعلاه فيه المنصبُ برمزه،
+   والوجهُ على حدّه، والاسمُ وسطورُه تحته، و«التواصل» في قاعه. فالمقاعدُ والكروتُ تحتها قطعةٌ واحدةٌ بالحجم والزاوية والثلمة والظلّ،
+   ولا تزيد المقاعدُ إلّا المنصبَ في كعبها. والصفُّ على الأرض كالكروت، لا كروتٌ في صندوق. (رُدّت قبله تذكرةٌ أفقيّةٌ عريضةٌ قصيرة بزاويةٍ
+   وثلمةٍ أصغر — «التطبيقُ قبيح» — ومربّعاتٌ فاتحة، وتذكرةٌ كعبُها رمزٌ وحده.) */
+.ad-seats {
+  container: ad-seats / inline-size;
+  display: grid;
+  gap: var(--space-3);
+}
+.ad-seats-title { margin: 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); color: var(--ad-ink-3); }
+/* **التوزيعُ متوازن**: أربعةٌ صفٌّ واحد، فإن ضاق فصفّان متساويان (٢ و٢) لا ٣ وواحد، وفي الهاتف واحدٌ تحت آخر كالكروت؛
+   ومقعدٌ وحده (منسّقُ القسم) بعرض كرتٍ لا بعرض الصفّ */
+.ad-seats-row {
+  display: grid;
+  grid-template-columns: repeat(var(--ad-seats-n, 4), minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ad-seats-row[data-n="1"] { grid-template-columns: minmax(0, 17rem); }
+.ad-seats-row[data-n="2"] { --ad-seats-n: 2; }
+.ad-seats-row[data-n="3"] { --ad-seats-n: 3; }
+@container ad-seats (max-width: 52rem) {
+  .ad-seats-row:is([data-n="4"], [data-n="3"]) { --ad-seats-n: 2; }
+}
+@container ad-seats (max-width: 30rem) {
+  .ad-seats .ad-seats-row:not([data-n="1"]) { --ad-seats-n: 1; }
+  .ad-seats-row[data-n="1"] { grid-template-columns: minmax(0, 1fr); }
+}
+.ad-seat-cell { display: grid; min-inline-size: 0; }
+/* الكعبُ أطولُ قليلًا من كعب الكرت ليتّسع للمنصب فوق الوجه */
+.ad-seat-cell > .ad-card-wrap[data-face] { --ad-stub-h: var(--space-20); }
+.ad-seat-cell .ad-card-stub-fact {
+  grid-auto-flow: column;
+  align-items: center;
+  align-content: start;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) 0;
+}
+/* بين الوجه والاسم متّسعٌ لشارة «أنت» على حدّه — في المقاعد كلّها، فلا ينزل اسمُك وحدك */
+.ad-seat-cell .ad-card-wrap[data-face] .ad-card-body { padding-block-start: var(--space-5); }
+.ad-seat-cell .ad-card-stub-fact > .ad-stub-icon > svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-seat-cell .ad-card-stub-fact span:not(.ad-stub-icon) { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-plate-ink); }
+/* **الشاغرُ لغةُ الهيكلة نفسُها** (صفحةُ الهيكلة `.sx-f.is-vacant`، ولوحُ الإسناد `.seat.is-vacant`): مكانُ الوجه بمقاسه (`av-xl`)
+   متقطّعٌ على أرضٍ فاتحة بلا رسم، و«شاغر» بحبرٍ هادئ، والكرتُ كرتٌ كأخواته. لا برتقاليّ: لونُ التحذير للتنبيه («ينقص…» في «الأعضاء»
+   و«القيادات»)، والمقعدُ الشاغر حالٌ لا خطأ (محمد ٢٠٢٦-١١-٠٣: «هل هذا سيقوّي الهويّة؟» — كان الكرتُ متقطّعًا والوجهُ برتقاليًّا) */
+.ad-seat-cell[data-vacant] .ad-card-title { color: var(--ad-ink-3); }
+.ad-card-face > .ad-card-face-empty {
+  border: 1.5px dashed var(--ad-edge-ctl);
+  background: var(--ad-veil);
+  box-shadow: 0 0 0 var(--space-1) var(--ad-sheet);
+}
+/* ما ينقص اللجانَ سطرٌ في الصفّ نفسِه بلون التحذير — لا صندوقٌ أحمرُ ثانٍ */
+.ad-seats-gaps { margin: 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-warn); }
+
+.ad-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--ad-warn-edge);
+  border-radius: var(--ad-r-ctl);
+  background: var(--ad-warn-soft);
+  color: var(--ad-warn);
+  font-size: var(--ad-t-ui);
+  font-weight: var(--ad-w-medium);
+}
+.ad-note[data-tone="bad"] { border-color: var(--ad-bad-edge); background: var(--ad-bad-soft); color: var(--ad-bad); }
+.ad-note[data-tone="info"] { border-color: var(--ad-hair); background: var(--ad-sheet); color: var(--ad-ink-2); font-weight: var(--ad-w-regular); }
+.ad-note[data-tone="info"] b { color: var(--ad-ink-head); }
+
+/* ═══ التكيّف بعرض الغرفة لا بعرض النافذة ═══ */
+@container ad-room (max-width: 64rem) {
+  .ad-plate-body { padding-inline: var(--space-6); }
+}
+/* الجدولُ في الضيّق: كلُّ سطرٍ بطاقةٌ صغيرة — الرأسُ يختفي، وكلُّ خليّةٍ تحمل اسمَ عمودها فوق قيمتها، والأفعالُ آخرَها.
+   (يسأل غلافَ الجدول لا الغرفة: `.ad-tbl` أعلاه) */
+@container ad-tbl (max-width: 56rem) {
+  .ad-table { display: block; }
+  .ad-tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding-inline: var(--space-4); }
+  .ad-tr.ad-thead { display: none; }
+  .ad-tfoot { display: block; }
+  /* الكعبُ المصغّر بجانب العنوان وسطره، كما يقف الكعبُ بجانب متن التذكرة؛ والأرقامُ والأفعالُ تحتهما بعرض السطر */
+  .ad-table[data-stub] .ad-tr:not(.ad-tfoot) { grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--space-3); }
+  .ad-table[data-stub] .ad-tr > .ad-td-stub { grid-column: 1; grid-row: 1; align-self: start; }
+  .ad-table[data-stub] .ad-tr > .ad-row-main { grid-column: 2; grid-row: 1; align-self: center; }
+  .ad-table[data-stub] .ad-tr > :is(.ad-td-wrap, .ad-row-acts) { grid-column: 1 / -1; }
+  .ad-table[data-sel][data-stub] .ad-tr:not(.ad-tfoot) { grid-template-columns: max-content max-content minmax(0, 1fr); }
+  .ad-table[data-sel][data-stub] .ad-tr > .ad-td-stub { grid-column: 2; }
+  .ad-table[data-sel][data-stub] .ad-tr > .ad-row-main { grid-column: 3; }
+  .ad-table[data-sel][data-stub] .ad-tr > :is(.ad-td-wrap, .ad-row-acts) { grid-column: 2 / -1; }
+  /* العنوانُ يلتفّ سطرين ولا يُقصّ، ثمّ سطرُ المعلومات، ثمّ صفُّ الأرقام، ثمّ الأفعالُ كقاع التذكرة */
+  .ad-row-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
+  .ad-table[data-sel] .ad-tr:not(.ad-tfoot) { grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--space-3); }
+  .ad-table[data-sel] .ad-tr > :not(.ad-td-pick) { grid-column: 2; }
+  .ad-td-pick { grid-column: 1; grid-row: 1 / span 4; align-self: start; }
+  /* المقبضُ في الضيّق عمودٌ أوّلُ بجانب الكعب، كمربّع التحديد */
+  .ad-table[data-grip][data-stub] .ad-tr:not(.ad-tfoot) { grid-template-columns: max-content max-content minmax(0, 1fr); }
+  .ad-table[data-grip][data-stub] .ad-tr > .ad-td-grip { grid-column: 1; grid-row: 1; align-self: center; }
+  .ad-table[data-grip][data-stub] .ad-tr > .ad-td-stub { grid-column: 2; }
+  .ad-table[data-grip][data-stub] .ad-tr > .ad-row-main { grid-column: 3; }
+  .ad-table[data-grip][data-stub] .ad-tr > :is(.ad-td-wrap, .ad-row-acts) { grid-column: 2 / -1; }
+  /* **صفُّ الأرقام في الضيّق صفُّ أرقام التذكرة نفسُه** (محمد ٢٠٢٦-١١-٠١: «الأيقوناتُ على اليمين — إمّا أن تملأ أو تكون في
+     المنتصف»، ثمّ «هل تنصح بالنصّ التوضيحيّ؟ وبخطٍّ فاصلٍ فوقها؟»): خطٌّ يفصله عن سطور المعلومات فوقه كما في الكرت، وكلُّ رقمٍ
+     في حصّته يملأ العرض بخيطٍ بين الحصص، واسمُه برمزه فوقه، ونسبتُه في طرفه والشريطُ تحته. والاسمُ يعود هنا وحده: الرأسُ الذي
+     يسمّي الأعمدةَ في العريض يختفي في الضيّق، فلا تكرارَ فيه */
+  .ad-td-wrap { display: flex; padding-block-start: var(--space-3); border-block-start: 1px solid var(--ad-rule); }
+  .ad-td {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: var(--space-1);
+    padding-inline: var(--space-3);
+    border-inline-start: 1px solid var(--ad-rule);
+    text-align: start;
+  }
+  .ad-td:first-child { padding-inline-start: 0; border-inline-start: 0; }
+  /* (محمد ٢٠٢٦-١١-٠١) القيمةُ النصّيّة لا تلتفّ ولا تنضغط: حصّتُها بقدرها، وما لا يتّسع له السطرُ ينزل إلى سطرٍ بعده — كانت
+     الحصصُ تنضغط تحت قيمها فتراكبت حروفُ الرقم المرجعيّ والفترة والمُصدِر على الجوّال */
+  .ad-td-wrap { flex-wrap: wrap; row-gap: var(--space-3); }
+  .ad-td[data-text] { min-inline-size: auto; }
+  .ad-td-i { display: inline-flex; grid-column: 1; grid-row: 1; color: var(--ad-ink-3); }
+  .ad-td-l { display: block; grid-column: 2; grid-row: 1; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+  .ad-td-v { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
+  .ad-td-sub { grid-column: 1 / -1; }
+  .ad-td .ad-meter { grid-column: 1 / -1; inline-size: 100%; min-inline-size: 0; }
+  /* «فتح المحرّر» باقٍ باسمه (محمد: «ليس الجميعُ سيفهم أنّ الضغطَ على العنوان يفتحه»): الأساسيُّ في البداية والبقيّةُ في الطرف */
+  .ad-row-acts { justify-content: flex-start; padding-block-start: var(--space-3); border-block-start: 1px solid var(--ad-rule); }
+  .ad-tr:not(.ad-thead):not(.ad-tfoot) > .ad-row-acts::before { display: none; }
+  .ad-row-acts > .ad-btn:first-child { margin-inline-end: auto; }
+}
+/* **وفي الأضيق: الخليّةُ النصّيّة سطرٌ كاملٌ لا حصّة** — رمزُها واسمُها في أوّله، وقيمتُها في طرفه، وإن ضاق نزلت القيمةُ إلى سطرٍ
+   تحته في الطرف نفسِه، كسطور المعلومات في التذكرة. والأرقامُ بعدها حصصُها كما هي */
+@container ad-tbl (max-width: 36rem) {
+  .ad-td-wrap { row-gap: var(--space-2); }
+  .ad-td[data-text] { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-1); min-inline-size: 0; padding-inline: 0; border-inline-start: 0; }
+  .ad-td[data-text] .ad-td-l { max-inline-size: none; }
+  .ad-td[data-text] .ad-td-v { margin-inline-start: auto; max-inline-size: 100%; white-space: normal; overflow-wrap: break-word; text-align: end; }
+  .ad-td[data-text] .ad-td-sub { flex-basis: 100%; }
+  .ad-td[data-text] + .ad-td:not([data-text]) { padding-inline-start: 0; border-inline-start: 0; }
+}
+/* الترقيمُ في الضيّق: العدُّ سطرٌ، ثمّ السابقُ والحاليّةُ والتالي — الأرقامُ الأخرى تُبلغ بالسهمين */
+@container ad-room (max-width: 40rem) {
+  .ad-pager-t { flex-basis: 100%; text-align: center; }
+  .ad-pager-nav { flex: 1 1 100%; justify-content: space-between; }
+  .ad-page:not([data-near]), .ad-pager-gap { display: none; }
+}
+@container ad-room (max-width: 40rem) {
+  .ad-room { gap: var(--space-4); }
+  .ad-plate-body { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+  .ad-plate-act { grid-column: 1; grid-row: auto; }
+  .ad-plate-act > .ad-btn { flex: 1 1 100%; justify-content: center; }
+  .ad-plate-act > .ad-btn-inverse-quiet { order: 1; } /* في الضيّق: الإنشاءُ أوّلًا بعرض اللوح، والهادئُ تحته */
+  .ad-search { flex-basis: 100%; }
+  .ad-skel-tools > .ad-skel[data-w="xl"] { flex-basis: 100%; }
+  .ad-skel-tools > .ad-skel[data-w="s"] { flex: 1 1 0; }
+  .ad-tools-set { flex: 1 1 100%; }
+  .ad-tools-set { margin-inline-start: 0; }
+  .ad-tools-set::before { display: none; } /* البحثُ وحده في سطره، فلا شيء يُفصل */
+  .ad-tools-set > .ad-filter { flex: 1 1 0; }
+  .ad-sel-n { flex: 1 1 0; }
+  .ad-tools-sel .ad-sel-x { order: 1; }
+  .ad-sel-acts > .ad-btn { flex: 1 1 0; }
+  .ad-filter-btn { justify-content: center; }
+  .ad-switch-seg { flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-1); font-size: var(--ad-t-meta); white-space: normal; text-align: center; }
+  .ad-card { --ad-card-pad: var(--space-4); }
+  .ad-empty { padding: var(--space-8) var(--space-5); }
+  /* التذكرةُ في الضيّق: الكعبُ شريطٌ أعلاها، والثلمتان على جانبيها */
+  .ad-card-wrap {
+    --ad-stub-h: calc(var(--space-16) + var(--space-4));
+    --ad-cut-a: 0 var(--ad-stub-h);
+    --ad-cut-b: 100% var(--ad-stub-h);
+  }
+  .ad-card { flex-direction: column; }
+  .ad-card-stub { flex-direction: row; inline-size: auto; block-size: var(--ad-stub-h); }
+  .ad-card-stub-fact { grid-auto-flow: column; align-items: baseline; justify-content: start; gap: var(--space-2); padding: var(--space-3) var(--space-5); }
+  .ad-card-stub:has(.ad-card-stub-media) .ad-card-stub-fact {
+    padding-block-end: var(--space-3);
+    padding-inline-end: var(--space-12);
+    background: linear-gradient(to left, color-mix(in oklab, var(--navy-900) 82%, transparent), color-mix(in oklab, var(--navy-900) 45%, transparent) 60%, transparent);
+  }
+}
+
+/* ═══ الحركة: لا شيء يتحرّك لمن طلب السكون ═══ */
+@media (prefers-reduced-motion: reduce) {
+  /* والمنبثقُ خارج الغرفة (النافذة، ولوحة التصفية، والقوائم) يسكن معها */
+  :is(.ad-room, .ad-dlg, .ad-fpanel, .ad-flist) :is(*, *::before, *::after) { transition-duration: 0s !important; }
+  .ad-btn:active, .ad-ibtn:active { transform: none; }
+}
+
+/* ═══ لوحُ المقارنة — مؤقّت، يُحذف بعد الحكم ═══
+   الإطارُ بعرض جهازه الحقيقيّ ثمّ يُصغَّر (`zoom`) ليسع عمودَه، فما يُرى هو ما يُرسم فعلًا
+   بذلك العرض لا تقريبًا له. */
+.ad-board { display: grid; gap: var(--space-4); font-family: var(--font-body); color: var(--color-text); }
+.ad-board-bar { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.ad-seg-links { display: inline-flex; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); }
+.ad-seg-links a { padding: var(--space-2) var(--space-3); border-radius: var(--ad-r-sm); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-2); text-decoration: none; }
+.ad-seg-links a[aria-current="page"] { background: var(--ad-tint-2); color: var(--ad-brand); }
+.ad-board-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.ad-board-cell { margin: 0; display: grid; gap: var(--space-2); }
+.ad-board-cell figcaption { display: flex; justify-content: space-between; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-2); }
+.ad-board-cell figcaption a { color: var(--ad-brand); }
+.ad-board-viewport { overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); }
+.ad-lab-sec { display: grid; gap: var(--space-3); }
+.ad-lab-h { margin: 0; font-size: var(--ad-t-title); font-weight: var(--ad-w-black); color: var(--ad-ink-head); }
+.ad-lab-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--space-4); }
+.ad-lab-stage { display: grid; place-items: center; block-size: 100%; padding: var(--space-6) var(--space-4); border-radius: var(--ad-r-ctl); background: linear-gradient(var(--ad-scrim), var(--ad-scrim)), var(--ad-ground); }
+.ad-frame { display: block; border: 0; }
+.ad-frame[data-d="desktop"] { width: 1440px; height: 2400px; zoom: .25; }
+.ad-frame[data-d="tablet"] { width: 834px; height: 2200px; zoom: .43; }
+.ad-frame[data-d="mobile"] { width: 390px; height: 2000px; zoom: .9; }
+
+/* ═══ سطرُ المجموعة في الجدول (آخرَ الملفّ عمدًا: يغلب حشوَ `.ad-tr` وحدَّه وتمريرَه وأعمدةَ طيّه الضيّق) ═══
+   شريطٌ بعرض الجدول كلِّه لا جزيرةٌ فيه: يصبغه الحجابُ، ويفصله عمّا قبله حدُّ الورقة، ولا يتلوّن بالتمرير فليس سجلًّا */
+.ad-tr.ad-tgroup { display: block; padding: 0; border-block-start: 0; }
+.ad-tr.ad-tgroup:hover { background: none; }
+.ad-table .ad-tr.ad-tgroup > .ad-tgroup-cell { padding: 0; }
+.ad-thead + .ad-tgroup > .ad-tgroup-cell > .ad-group-head { border-block-start: 0; }
+/* ضيّقًا: درجاتُ الحدّ تنزل في عمود الاسم تحت منصبه وكلمتُها بجانبها — لا في الطرف المقابل تحت الصورة (محمد ٢٠٢٦-١١-٠٢:
+   «مكانها غير جميل») — فتُقرأ مع صاحبها سطرًا ثالثًا: اسمُه، ومنصبُه، وما بقي له */
+@container ad-tbl (max-width: 36rem) {
+  .ad-group-head { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2); }
+  .ad-group-head > .ad-steps { display: flex; align-items: center; gap: var(--space-2); padding-inline-start: calc(var(--space-10) + var(--space-1) + var(--space-3)); }
+}
+
+/* ═══ سجلُّ الأحداث (`_ad/log.tsx`؛ محمد ٢٠٢٦-١١-٠٢) ═══
+   خطٌّ زمنيٌّ واحد يمرّ في محورٍ بعرض الكعب المصغّر: كعوبُ الأيّام عليه (قطعةُ الجدول نفسُها)، ونقاطُ الوقائع تحت كلّ يوم.
+   الساعةُ قبل المحور، وما جرى بعده في عمودٍ واحد. ورقتُه ورقةُ الغرفة، ورأسُه كرأس مجموعة. */
+.ad-log {
+  --ad-log-time: calc(var(--space-16) + var(--space-2));
+  --ad-log-axis: calc(var(--ad-tile) * 1.2);
+  --ad-log-dot: var(--space-8);
+  --ad-log-line: calc(var(--space-1) / 2);
+  container: ad-log / inline-size;
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  border: 1px solid var(--ad-edge);
+  border-radius: var(--ad-r-plate);
+  background: var(--ad-sheet);
+}
+/* داخل إطارٍ آخر (بندُ درج، نافذة): لا ورقةَ ولا إطار — الخطُّ وحده */
+.ad-log[data-bare] { padding: 0; border: 0; background: none; }
+.ad-log-more { display: flex; justify-content: center; padding-block-start: var(--space-4); border-block-start: 1px solid var(--ad-rule); }
+.ad-log-head { display: flex; align-items: center; gap: var(--space-3); padding-block-end: var(--space-4); border-block-end: 1px solid var(--ad-rule); }
+.ad-log-head-icon { display: grid; place-items: center; inline-size: var(--space-10); block-size: var(--space-10); border-radius: var(--ad-r-ctl); background: var(--ad-plate); color: var(--ad-plate-ink); box-shadow: var(--ad-lift); }
+.ad-log-head-icon > svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-log-title { margin: 0; font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-log-count { margin-inline-start: auto; font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-log-flow { display: grid; }
+.ad-log-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.ad-log-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--ad-log-time) var(--ad-log-axis) minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: start;
+  margin: 0;
+  padding-block: var(--space-3);
+}
+/* الخطُّ في مركز المحور، متّصلٌ من كعب أوّل يومٍ إلى نقطة آخر واقعة */
+.ad-log-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--ad-log-time) + var(--space-3) + var(--ad-log-axis) / 2 - var(--ad-log-line) / 2);
+  inline-size: var(--ad-log-line);
+  background: var(--ad-rule);
+}
+.ad-log-flow > .ad-log-day:first-child::before { inset-block-start: 50%; }
+.ad-log-flow > .ad-log-list:last-child > .ad-log-item:last-child::before { inset-block-end: calc(100% - var(--space-3) - var(--ad-log-dot) / 2); }
+.ad-log-axis { position: relative; grid-column: 2; display: grid; justify-items: center; }
+/* اليوم: كعبُه على المحور، واسمُه بجانبه */
+.ad-log-day { align-items: center; padding-block: var(--space-4) var(--space-2); }
+.ad-log-flow > .ad-log-day:first-child { padding-block-start: 0; }
+.ad-log-day .ad-td-stub { box-shadow: var(--ad-rest), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-day-l { grid-column: 3; display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--ad-t-body); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-log-day-n { font-size: var(--ad-t-meta); font-weight: var(--ad-w-regular); color: var(--ad-ink-3); }
+/* الواقعة */
+.ad-log-time { grid-column: 1; padding-block-start: var(--space-2); font-size: var(--ad-t-meta); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); text-align: end; white-space: nowrap; }
+.ad-log-dot { display: grid; place-items: center; inline-size: var(--ad-log-dot); block-size: var(--ad-log-dot); border-radius: var(--ad-r-full); background: var(--ad-sheet); color: var(--ad-ink-2); box-shadow: inset 0 0 0 1px var(--ad-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-dot > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.ad-log-item[data-tone="warn"] .ad-log-dot { background: var(--ad-warn-soft); color: var(--ad-warn); box-shadow: inset 0 0 0 1px var(--ad-warn-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-item[data-tone="bad"] .ad-log-dot { background: var(--ad-bad-soft); color: var(--ad-bad); box-shadow: inset 0 0 0 1px var(--ad-bad-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-item[data-tone="info"] .ad-log-dot { background: var(--ad-info-soft); color: var(--ad-info); box-shadow: inset 0 0 0 1px var(--ad-info-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-item[data-tone="ok"] .ad-log-dot { background: var(--ad-ok-soft); color: var(--ad-ok); box-shadow: inset 0 0 0 1px var(--ad-ok-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
+.ad-log-body { grid-column: 3; display: grid; gap: var(--space-2); min-inline-size: 0; padding-block-start: var(--space-1); }
+.ad-log-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.ad-log-obj { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-log-times { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); color: var(--ad-ink-3); }
+.ad-log-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-block-start: var(--space-1); }
+.ad-log-empty { display: grid; gap: var(--space-1); padding: var(--space-6); border-radius: var(--ad-r-ctl); background: var(--ad-veil); text-align: center; font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-log-empty > strong { font-size: var(--ad-t-body); color: var(--ad-ink-head); }
+/* ضيّقًا: الساعةُ تصعد فوق ما وقعت عليه، والمحورُ أوّلًا */
+@container ad-log (max-width: 34rem) {
+  .ad-log-row { grid-template-columns: var(--ad-log-axis) minmax(0, 1fr); }
+  .ad-log-row::before { inset-inline-start: calc(var(--ad-log-axis) / 2 - var(--ad-log-line) / 2); }
+  .ad-log-axis { grid-column: 1; grid-row: 1 / span 2; }
+  .ad-log-day-l { grid-column: 2; }
+  .ad-log-time { grid-column: 2; grid-row: 1; padding-block-start: var(--space-1); text-align: start; }
+  .ad-log-item .ad-log-body { grid-column: 2; grid-row: 2; padding-block-start: 0; }
+}
+
+/* ═══ صفحةُ الرؤية العامّة (`/vision`، `app/vision/_parts/VisionView.tsx`) ═══
+   أقرّها محمد ٢٠٢٦-١١-٠٣ («نفّذ مقترحك»): الهلالُ حيًّا في رأسها — قطعةٌ لكلّ هدفٍ تُضاء حين يتحقّق —
+   ثمّ فكرةُ الشعار، فالمساراتُ بأهدافها وحالها، ففريقُ الرؤية، فسياسةُ «رؤى أدِيب». وكلُّ قيمةٍ هنا رمزٌ من رموز الهويّة.
+
+   **الهلال** (`VisionMark`): على اللوح حبرُه الأبيض والباهتُ حجابُ اللوح، وعلى الورقة (`data-paper`) حبرُ الهويّة
+   والباهتُ صبغتُها. و`data-off` لطبقات المسارات الأخرى حين تُرى طبقةُ مسارٍ واحد. */
+.vz-mark { display: block; inline-size: 100%; block-size: auto; overflow: visible; }
+.vz-tile { fill: var(--ad-plate-veil-2); transition: fill var(--ad-dur) var(--ad-ease-out), opacity var(--ad-dur) var(--ad-ease-out); }
+.vz-tile[data-on] { fill: var(--ad-plate-ink); }
+.vz-mark[data-paper] .vz-tile { fill: var(--ad-tint-2); }
+.vz-mark[data-paper] .vz-tile[data-on] { fill: var(--ad-brand); }
+.vz-mark[data-focus] .vz-tile:not([data-on], [data-off]) { fill: color-mix(in oklab, var(--ad-brand) 30%, transparent); }
+.vz-tile[data-off] { opacity: .3; }
+/* القطعةُ رابطٌ إلى بطاقة هدفها (`hrefs`): باللمس على الجوّال، وبالنقر على الحاسب، وبالمفاتيح بحلقةٍ حول القطعة */
+.vz-mark a { cursor: pointer; outline: none; }
+.vz-mark a:focus-visible .vz-tile { stroke: var(--ad-plate-ink); stroke-width: 1.4; }
+@media (hover: hover) and (pointer: fine) {
+  .vz-hero-mark .vz-tile:not([data-on]):hover { fill: var(--ad-plate-ink-3); }
+  .vz-hero-mark .vz-tile[data-on]:hover { fill: var(--ad-plate-ink-2); }
+}
+
+/* العمودُ بعرض الحاوية لا بأعرض ما فيه: كلمةُ رأس القسم الكبيرة (`LandingHeading`) لا تلتفّ، فكانت تمدّ الصفحةَ على الجوّال */
+.vz-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-16); padding-block: var(--space-8) var(--space-20); }
+.vz-sec { scroll-margin-block-start: var(--space-24); }
+
+/* الرأس: لوحٌ بعرض الصفحة، الاسمُ والمدّةُ والأرقامُ في جهة والهلالُ في الأخرى */
+/* والنقشُ أخفُّ من لوح الغرفة، وحجابُ اللوح فوقه: في رأسٍ بهذا الارتفاع تقع حروفُه الكبيرة على الهلال فتنافسه */
+.vz-hero-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 27rem); align-items: center; gap: var(--space-8) var(--space-10); padding: var(--space-10) var(--space-12); background: var(--ad-plate-shade); }
+:is(.vz-hero, .vz-idea-art)::after { opacity: calc(var(--ad-plate-naqsh) * .55); }
+.vz-hero-id { display: grid; align-content: center; gap: var(--space-4); min-inline-size: 0; }
+.vz-eyebrow { margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink-3); }
+.vz-title { margin: 0; font-family: var(--font-display); font-size: var(--ad-t-display); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink); text-wrap: balance; }
+.vz-period { margin: 0; font-size: var(--ad-t-section); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink); text-wrap: balance; }
+.vz-lead { margin: 0; max-inline-size: 34rem; font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-plate-ink-2); text-wrap: pretty; }
+/* العدُّ التنازليّ: أربعُ خاناتٍ بأرقامٍ ثابتة العرض فلا يهتزّ السطرُ كلَّ ثانية */
+.vz-countdown { display: grid; gap: var(--space-2); margin-block-start: var(--space-2); padding-block-start: var(--space-5); border-block-start: 1px solid var(--ad-plate-hair); }
+.vz-count-l { margin: 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink-3); }
+.vz-count { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); max-inline-size: 30rem; }
+.vz-count-cell { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-3) var(--space-2); border: 1px solid var(--ad-plate-hair); border-radius: var(--ad-r-sm); background: var(--ad-plate-veil); }
+.vz-count-n { font-size: var(--ad-t-room); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink); font-variant-numeric: tabular-nums; }
+.vz-count-u { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink-2); }
+.vz-count-note { margin: 0; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-3); }
+/* الوقتُ مقابل الإنجاز: شريطان بعرضٍ واحد، فيُرى أيُّهما يسبق — بحبر اللوح لا بصبغة الورقة */
+.vz-pace { display: grid; gap: var(--space-3); margin: 0; max-inline-size: 30rem; }
+.vz-pace-row { display: grid; grid-template-columns: 4rem minmax(0, 1fr); align-items: center; gap: var(--space-3); }
+.vz-pace-row dt { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink); }
+.vz-pace-row dd { display: grid; gap: var(--space-1); margin: 0; }
+.vz-pace-v { font-size: var(--ad-t-meta); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink-2); }
+.vz-pace .ad-meter { inline-size: 100%; }
+.vz-pace .ad-meter, .vz-pace .ad-meter::-webkit-meter-bar { background: var(--ad-plate-veil-2); }
+.vz-pace .ad-meter::-webkit-meter-optimum-value, .vz-pace .ad-meter::-webkit-meter-suboptimum-value, .vz-pace .ad-meter::-webkit-meter-even-less-good-value { background: var(--ad-plate-ink); }
+.vz-pace .ad-meter::-moz-meter-bar { background: var(--ad-plate-ink); }
+.vz-hero-mark { justify-self: center; max-inline-size: 27rem; }
+
+/* فكرةُ الشعار: ثلاثُ بطاقاتٍ متساوية، في رأس كلٍّ قطعةُ لوحٍ بهلالٍ يقول ما يقوله نصُّها */
+.vz-ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.vz-idea { display: grid; grid-template-rows: auto 1fr; overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.vz-idea-art { display: grid; place-items: center; aspect-ratio: 16 / 9; border: 0; border-radius: 0; box-shadow: none; }
+.vz-idea-art .vz-mark { inline-size: 46%; }
+.vz-idea-b { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-5) var(--space-6) var(--space-6); }
+.vz-idea-t { margin: 0; font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-idea-x { margin: 0; font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+
+/* المسار: رأسُه طبقتُه من الهلال واسمُه وغايتُه وما تحقّق، وتحته أهدافُه في عناقيدها */
+.vz-tracks { display: grid; gap: var(--space-12); }
+.vz-track { display: grid; gap: var(--space-6); }
+.vz-track-head { display: grid; grid-template-columns: var(--space-24) minmax(0, 1fr) minmax(0, 15rem); align-items: center; gap: var(--space-4) var(--space-8); padding-block-end: var(--space-6); border-block-end: 1px solid var(--ad-rule); }
+.vz-track-id { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.vz-track-ord { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); }
+.vz-track-ord svg { flex: none; inline-size: var(--space-5); block-size: var(--space-5); color: var(--ad-brand); }
+.vz-track-name { margin: 0; font-family: var(--font-display); font-size: var(--ad-t-room); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-track-sum { margin: 0; max-inline-size: 44rem; font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+.vz-track-prog { display: grid; gap: var(--space-2); }
+.vz-track-prog-l { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); }
+.vz-track-prog-l b { font-size: var(--ad-t-section); font-weight: var(--ad-w-black); color: var(--ad-ink-head); }
+.vz-clusters { display: grid; gap: var(--space-6); }
+.vz-cluster { display: grid; gap: var(--space-3); }
+.vz-cluster-t { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-2); }
+.vz-cluster-t::after { content: ""; flex: 1; block-size: 1px; background: var(--ad-rule); }
+.vz-goals { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+
+/* الهدف: رقمُه قطعتُه (تمتلئ حين يتحقّق)، وحالُه، ثمّ ما هو، ثمّ المستهدفُ والمسؤولُ والموعد */
+.vz-goal { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) var(--space-5) var(--space-5); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.vz-goal[data-status="done"] { border-color: var(--ad-ok-edge); }
+/* البطاقةُ التي فُتحت من قطعتها في الهلال: تقف تحت رأس الموقع وتومض بصبغة الهويّة لحظةً فتُعرف */
+.vz-goal { scroll-margin-block: var(--space-24); }
+.vz-goal:target { border-color: var(--ad-brand); box-shadow: 0 0 0 2px var(--ad-brand), var(--ad-rest); animation: vz-found 1.8s var(--ad-ease-out); }
+@keyframes vz-found { from { background: var(--ad-tint-2); } to { background: var(--ad-sheet); } }
+html:has(.vz-page) { scroll-behavior: smooth; }
+.vz-goal-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-block-end: var(--space-1); }
+.vz-goal-n { display: grid; place-items: center; inline-size: var(--space-8); block-size: var(--space-8); border-radius: var(--ad-r-sm); background: var(--ad-tint-2); color: var(--ad-brand); font-size: var(--ad-t-ui); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); }
+.vz-goal-n[data-on] { background: var(--ad-brand); color: var(--ad-sheet); }
+.vz-goal-t { margin: 0; font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); text-wrap: pretty; }
+.vz-goal-d { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+.vz-goal-meta { display: grid; gap: var(--space-1); margin: 0; margin-block-start: auto; padding-block-start: var(--space-3); border-block-start: 1px solid var(--ad-rule); }
+.vz-goal-meta > div { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); gap: var(--space-2); }
+.vz-goal-meta dt { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.vz-goal-meta dd { margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-ink); }
+
+/* فريقُ الرؤية الخاصّ: المشرفُ العامّ والقائدُ جنبًا إلى جنب، وتحتهما قائدٌ لكلّ مسار — ثمّ خطُّ المتابعة */
+.vz-core { display: grid; gap: var(--space-4); }
+.vz-core-heads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.vz-head { align-content: start; gap: var(--space-3); }
+.vz-core-tracks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.vz-tlead { gap: var(--space-3); padding: var(--space-5); }
+.vz-tlead-t { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-brand); }
+.vz-tlead-t svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); }
+.vz-sub { display: flex; align-items: center; gap: var(--space-3); margin: 0; margin-block: var(--space-10) var(--space-4); font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-sub::after { content: ""; flex: 1; block-size: 1px; background: var(--ad-rule); }
+/* بطاقةُ مقعدٍ في الفريق: فعلُه بلون الهويّة، ثمّ صاحبُه */
+.vz-crew { display: grid; gap: var(--space-4); padding: var(--space-6); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+/* خطُّ المتابعة: الجهاتُ الثلاث بأسمائها وأفعالها متّصلةً بخيط، بلا أشخاص (محمد ٢٠٢٦-١١-٠٣) */
+.vz-line { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
+.vz-line-step { position: relative; display: grid; gap: var(--space-1); padding: var(--space-5) var(--space-6); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.vz-line-step + .vz-line-step::before { content: ""; position: absolute; inset-inline-end: 100%; inset-block-start: 50%; inline-size: var(--space-6); block-size: 1px; background: var(--ad-edge-ctl); }
+.vz-line-n { font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-crew-verb { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-brand); }
+/* مقعدُ القيادة الشاغر يُذكر (كما في الهيكل): مكانُ الوجه إطارٌ متقطّع */
+.vz-person[data-vacant] .vz-vacant { flex: none; inline-size: calc(var(--space-8) + var(--space-1)); block-size: calc(var(--space-8) + var(--space-1)); border: 1px dashed var(--ad-edge-ctl); border-radius: var(--ad-r-sm); }
+.vz-person[data-vacant] .vz-person-n { color: var(--ad-ink-3); }
+.vz-person { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2); border-radius: var(--ad-r-sm); color: inherit; text-decoration: none; }
+a.vz-person { transition: background-color var(--ad-dur) var(--ad-ease-out); }
+a.vz-person:hover { background: var(--ad-veil); }
+a.vz-person:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.vz-person-tx { display: grid; min-inline-size: 0; }
+.vz-person-n { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+.vz-person-r { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+
+/* رؤى أدِيب: السياسةُ في جهة، والرؤى كلُّها بما تحقّق منها في الأخرى */
+.vz-policy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: var(--space-8) var(--space-12); }
+.vz-policy-x { margin: 0; font-size: var(--ad-t-title); line-height: var(--ad-lh-read); color: var(--ad-ink-2); text-wrap: pretty; }
+.vz-arch { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.vz-arch-row { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); box-shadow: var(--ad-rest); color: inherit; text-decoration: none; }
+.vz-arch-row[aria-current] { border-color: var(--ad-info-edge); }
+a.vz-arch-row:hover { border-color: var(--ad-edge-ctl); }
+.vz-arch-row > svg { flex: none; inline-size: var(--space-5); block-size: var(--space-5); color: var(--ad-ink-3); }
+.vz-arch-tx { display: grid; flex: 1; gap: var(--space-1); min-inline-size: 0; }
+.vz-arch-n { font-size: var(--ad-t-body); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-arch-p { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.vz-arch-c { display: grid; justify-items: end; gap: var(--space-1); }
+.vz-arch-k { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-ink-2); white-space: nowrap; }
+
+/* **غرفةُ «متابعة الرؤية»** (`VisionRoom`): الهلالُ كلُّه في شريطٍ فوق القائمة، وطبقةُ كلّ مسارٍ في رأس مجموعته */
+.vz-room-note { display: flex; align-items: center; gap: var(--space-5); padding: var(--space-4) var(--space-6); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.vz-room-mark { flex: none; inline-size: var(--space-20); }
+.vz-room-tx { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.vz-room-name { font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.vz-room-line { font-size: var(--ad-t-ui); line-height: var(--ad-lh-ui); color: var(--ad-ink-2); }
+.vz-group-mark { flex: none; inline-size: var(--space-12); }
+
+@media (max-width: 980px) {
+  .vz-ideas { grid-template-columns: minmax(0, 1fr); }
+  .vz-core-tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vz-policy { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .vz-page { gap: var(--space-12); padding-block: var(--space-6) var(--space-16); }
+  .vz-hero-in { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); padding: var(--space-8) var(--space-6); }
+  .vz-hero-mark { order: -1; max-inline-size: 16rem; }
+  .vz-track-head { grid-template-columns: var(--space-16) minmax(0, 1fr); align-items: start; }
+  .vz-track-prog { grid-column: 1 / -1; }
+  .vz-tracks { gap: var(--space-12); }
+}
+@media (max-width: 480px) {
+  .vz-core-heads, .vz-core-tracks { grid-template-columns: minmax(0, 1fr); }
+  .vz-line { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .vz-line-step + .vz-line-step::before { inset-inline: auto; inset-inline-start: 50%; inset-block: auto 100%; inline-size: 1px; block-size: var(--space-4); }
+  .vz-count-n { font-size: var(--ad-t-section); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vz-tile, a.vz-person { transition: none; }
+  .vz-goal:target { animation: none; }
+  html:has(.vz-page) { scroll-behavior: auto; }
+}

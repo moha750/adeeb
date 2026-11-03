@@ -24,7 +24,9 @@ function dashboardPages(dir = DASHBOARD_DIR, route = "/dashboard"): { route: str
     if (entry.isDirectory()) {
       // المجلّدات الخاصّة (`_shell` · `_components` · `__tests__`) ليست مقاطعَ مسار
       if (entry.name.startsWith("_")) continue;
-      out.push(...dashboardPages(join(dir, entry.name), `${route}/${entry.name}`));
+      // ومجموعةُ المسار (`(room)`: صفحةُ الغرفة وحالاتُها في مجلّدٍ يحميها من حالات جيرانها) ليست مقطعًا في العنوان
+      const group = /^\(.+\)$/.test(entry.name);
+      out.push(...dashboardPages(join(dir, entry.name), group ? route : `${route}/${entry.name}`));
     } else if (entry.name === "page.tsx") {
       out.push({ route, source: readFileSync(join(dir, entry.name), "utf8") });
     }

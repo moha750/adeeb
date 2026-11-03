@@ -1,10 +1,12 @@
-import { Alert } from "@adeeb/design-system";
 import { getAnnouncements } from "../data";
-import { AnnouncementsView } from "../AnnouncementsView";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../../_components/PageHeader";
+import { TickerRoom } from "@/app/_ad/rooms/TickerRoom";
+import { AdRoomError } from "@/app/_ad/states";
+import { TICKER_ROOM } from "@/app/_ad/rooms/ticker.meta";
+import { roomView } from "@/app/_ad/view-server";
+import { roomMetadata } from "@/app/_ad/metadata";
 
 /**
  * **شريط الإعلانات** — كلماتُ الشريط الجاري في صدر الهبوط (٢٠٢٦-٠٩-١٨)، البابُ الأوّل
@@ -18,8 +20,10 @@ import { PageHeader } from "../../../_components/PageHeader";
  * تحت بند الخريطة، أمّا على البند نفسِه فالورقةُ تحلّ محلَّ اسمه (`crumbFor`)، فيسقط
  * «اللوحة الإعلانية» من الفتات. فصار البابان كلاهما تحت البند، وتماثلت فتاتُهما.
  * والجذرُ يحوّل إلى هنا، فلا ينكسر رابطٌ محفوظ.
+ *
+ * **وعلى قالب «قائمة السجلّات»** (٢٠٢٦-١١-٠٢): الغرفةُ `TickerRoom`، وجارُها فعلٌ ثانٍ على لوحها بدل المبدّل القديم.
  */
-export const metadata = { title: "شريط الإعلانات" };
+export const metadata = roomMetadata(TICKER_ROOM);
 
 export default async function TickerPage() {
   const denied = await denyUnless("/dashboard/website/announcements");
@@ -30,15 +34,7 @@ export default async function TickerPage() {
   }
 
   const { announcements, error } = await getAnnouncements();
+  if (error) return <AdRoomError {...TICKER_ROOM} message={error} />;
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="اللوحة الإعلانية" crumbLeaf="شريط الإعلانات" />
-        <Alert tone="warning" title="تعذّر جلب الإعلانات">{error}</Alert>
-      </>
-    );
-  }
-
-  return <AnnouncementsView announcements={announcements} />;
+  return <TickerRoom announcements={announcements} view={await roomView(TICKER_ROOM.viewKey, TICKER_ROOM.defaultView)} />;
 }

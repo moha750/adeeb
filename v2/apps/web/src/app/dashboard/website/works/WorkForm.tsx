@@ -99,7 +99,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
           <div className="flex flex-col gap-3 items-start">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt="صورة العمل" className="w-full max-h-56 object-cover rounded" />
+              <img src={image} alt="صورة العمل" referrerPolicy="no-referrer" className="w-full max-h-56 object-cover rounded" />
             ) : (
               <div className="text-sm text-content-muted">{`لا صورة بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). الصورة هي وجه العمل في المعرض.`}</div>
             )}

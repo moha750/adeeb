@@ -21,6 +21,8 @@ const GUARDS = [
   { file: "modal-spacing.mjs", name: "فجوة النوافذ" },
   { file: "no-separators.mjs", name: "الفواصل المرسومة" },
   { file: "glyph-weights.mjs", name: "أوزان الأيقونات" },
+  // سقّاطة الهويّة (٢٠٢٦-١٠-٣٠): عدّاداتُ ما يُكتب خارج نظام الهويّة لا تصعد — identity-ratchet.mjs
+  { file: "identity-ratchet.mjs", name: "سقّاطة الهويّة" },
 ];
 
 const fallen = [];
@@ -35,4 +37,4 @@ if (fallen.length) {
   console.error(`✖ سقط من الحرّاس ${fallen.length} من ${GUARDS.length}: ${fallen.join("، ")}`);
   process.exit(1);
 }
-console.log(`✔ الحرّاسُ الأربعةُ نجحوا: ${GUARDS.map((g) => g.name).join("، ")}`);
+console.log(`✔ الحرّاسُ ${GUARDS.length} نجحوا: ${GUARDS.map((g) => g.name).join("، ")}`);

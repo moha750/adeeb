@@ -1,17 +1,16 @@
-import { Alert } from "@adeeb/design-system";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getMyScope } from "@/lib/myScope";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getOrgData } from "../members/structure/orgData";
-import { buildRoster, buildSeats, adminUnit } from "./model";
-import { UnitView } from "./UnitView";
-import { UnitSwitcher } from "./UnitSwitcher";
-import { PageHeader } from "../_components/PageHeader";
+import { buildRoster, buildSeats, adminUnit, type Unit } from "./model";
+import { UnitRoom } from "@/app/_ad/rooms/UnitRoom";
+import { AdRoomError } from "@/app/_ad/states";
+import { UNIT_ROOM } from "@/app/_ad/rooms/unit.meta";
+import { roomView } from "@/app/_ad/view-server";
+import { requestNow } from "@/app/_ad/now";
+import { roomMetadata } from "@/app/_ad/metadata";
 
-// العنوان اسمُ الإدارة نفسها — فيعرف الداخلُ أيّها يدير بلا سطرٍ ثالثٍ يشرح.
-const Head = ({ unit }: { unit?: string }) => (
-  <PageHeader title={unit ?? "الإدارات"} crumbLeaf={unit} />
-);
+export const metadata = roomMetadata(UNIT_ROOM);
 
 /**
  * غرفةُ الإدارات الإداريّة — **تعيينُ أعضائها وتوزيعُ إشرافهم**.
@@ -23,6 +22,9 @@ const Head = ({ unit }: { unit?: string }) => (
  *
  * والقائمةُ من `scope.units` (وأصلُها `can_assign_role`) — الحَكَمُ نفسُه الذي يردّ الكتابة،
  * فلا شاشةَ تعرض ما لا تسمح به القاعدة.
+ *
+ * على قالب «قائمة السجلّات» (٢٠٢٦-١١-٠٣): الإداراتُ مواضعُ الغرفة (كانت مبدّلًا بروابط `?u=`)، فتُبنى كلُّها من الهيكلة
+ * المجلوبة مرّةً — والرابطُ القديم `?u=` يبقى يفتح على إدارته. ولا مساراتٍ أبناءَ للمجلّد، فحالتا التحميل والخطأ بجانب الصفحة.
  */
 export default async function UnitPage({ searchParams }: { searchParams: Promise<{ u?: string }> }) {
   const denied = await denyUnless("/dashboard/unit");
@@ -35,13 +37,13 @@ export default async function UnitPage({ searchParams }: { searchParams: Promise
   const scope = await getMyScope(admin.id);
   if (scope.units.length === 0) {
     return (
-      <>
-        <Head />
-        <Alert tone="warning" title="لا إدارة تبلغها">
-          هذه الشاشة لمن يعيّن الأعضاء الإداريّين: يضمّهم إلى إداراتهم ويوزّع إشرافهم على لجان
-          المجلس التشغيليّ. وقائدُ اللجنة غرفتُه «لجنتي»، ومنسّقُ القسم «قسمي».
-        </Alert>
-      </>
+      <UnitRoom
+        units={[]}
+        members={[]}
+        initial={null}
+        serverNow={await requestNow()}
+        view={await roomView(UNIT_ROOM.viewKey, UNIT_ROOM.defaultView)}
+      />
     );
   }
 
@@ -53,38 +55,31 @@ export default async function UnitPage({ searchParams }: { searchParams: Promise
     scope.units[0];
 
   const org = await getOrgData();
-  if (org.error) {
-    return (
-      <>
-        <Head unit={current.name} />
-        <Alert tone="warning" title="تعذّر جلب الهيكلة">{org.error}</Alert>
-      </>
-    );
-  }
+  if (org.error) return <AdRoomError {...UNIT_ROOM} message={org.error} />;
 
   const unit = adminUnit(current.id, org.committees, org.roles);
   if (!unit) {
-    return (
-      <>
-        <Head unit={current.name} />
-        <Alert tone="warning" title="إدارةٌ لا تُصرّح بدور عضوها">
-          لا يُعرف من يُعدّ عضوًا في {current.name}: `member_role_name` فارغ في القاعدة.
-        </Alert>
-      </>
-    );
+    return <AdRoomError {...UNIT_ROOM} message={`لا يُعرف من يُعدّ عضوًا في ${current.name}: \`member_role_name\` فارغ في القاعدة.`} />;
   }
 
+  // **كلُّ إدارةٍ يبلغها موضعٌ في الغرفة**، من الهيكلة نفسِها (لا جلبَ زائد). وما لا تُصرّح بدور عضوها لا موضعَ لها:
+  // لا يُعرف من يُعدّ عضوًا فيها (وإن طُلبت بالرابط قيل ذلك أعلاه).
+  const units = scope.units
+    .map((s) => (s.id === unit.id ? unit : adminUnit(s.id, org.committees, org.roles)))
+    .filter((u): u is Unit => u !== null)
+    .map((u) => ({
+      unit: u,
+      seats: u.supervises ? buildSeats(u, org.committees, org.supervision, org.profiles) : [],
+      roster: buildRoster(u, org.committees, org.userRoles, org.supervision, org.profiles),
+    }));
+
   return (
-    <>
-      <Head unit={unit.name} />
-      {/* المبدّل لمن يبلغ أكثرَ من إدارة — ومن يبلغ واحدةً لا يرى اختيارًا بلا خيار */}
-      {scope.units.length > 1 ? <UnitSwitcher units={scope.units} current={unit.id} /> : null}
-      <UnitView
-        unit={unit}
-        seats={unit.supervises ? buildSeats(unit, org.committees, org.supervision, org.profiles) : []}
-        roster={buildRoster(unit, org.committees, org.userRoles, org.supervision, org.profiles)}
-        members={org.members}
-      />
-    </>
+    <UnitRoom
+      units={units}
+      members={org.members}
+      initial={unit.id}
+      serverNow={await requestNow()}
+      view={await roomView(UNIT_ROOM.viewKey, UNIT_ROOM.defaultView)}
+    />
   );
 }

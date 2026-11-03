@@ -37,6 +37,7 @@ export function WorkLightbox({ work, onClose }: { work: Work | null; onClose: ()
             <img
               src={w.image_url}
               alt={w.title}
+              referrerPolicy="no-referrer"
               className="max-h-[70vh] w-full bg-navy-950 object-contain"
             />
           ) : null}

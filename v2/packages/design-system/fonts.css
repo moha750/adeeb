@@ -26,6 +26,18 @@
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
 @font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
 
+/* ===== والحروفُ اللاتينيّة كذلك بخطّ Eras (محمد ٢٠٢٦-١١-٠١) — بالطريقة نفسِها =====
+   كان «Lyon Arabic» يرسم الحروفَ اللاتينيّة بلاتينيّته المذيّلة، والأرقامُ فوقها من Eras، فاجتمع خطّان في كلمةٍ واحدة:
+   «ADEEB-EXP-2026-0004» حروفُه مذيّلةٌ وأرقامُه Eras، و«تنزيل PDF». فصارت الحروفُ (A–Z وa–z) تأتي من Eras أينما وقعت في
+   الموقع بلا صنفٍ يُنسى. وعلامات الترقيم والمسافات تبقى من Lyon: هي أيضًا في النصّ العربيّ، فلا يتغيّر شكلُه.
+   **ملفّاتُها حروفٌ وحدها** (`eras-*-latin.woff2`، ~10KB للوزن، مقتطعةً بـpyftsubset مع تقنيناتها)، ولا يُنزّلها المتصفّح إلّا
+   في صفحةٍ فيها حرفٌ لاتينيّ. وأوزانُها مطابقةٌ لأوزان الأرقام أعلاه. */
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light-latin.woff2") format("woff2");  unicode-range:U+0041-005A,U+0061-007A; font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-latin.woff2") format("woff2"); unicode-range:U+0041-005A,U+0061-007A; font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-latin.woff2") format("woff2"); unicode-range:U+0041-005A,U+0061-007A; font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi-latin.woff2") format("woff2");   unicode-range:U+0041-005A,U+0061-007A; font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold-latin.woff2") format("woff2");   unicode-range:U+0041-005A,U+0061-007A; font-weight:900; font-style:normal; font-display:swap; }
+
 /* ===== أعلام الدول (Twemoji Country Flags) — رسمُ العلم لا يأتي من النظام =====
    ويندوز (Segoe UI Emoji) **لا يحمل رسوم الأعلام أصلًا** فيعرض حرفَي رمز الدولة، وهو ما يقع على
    نحو ٩٪ من زيارات الموقع. فنستضيف خطًّا مُجزَّأً للأعلام وحدها (٧٦ كيلوبايت) ونُسنده إلى بلاطة

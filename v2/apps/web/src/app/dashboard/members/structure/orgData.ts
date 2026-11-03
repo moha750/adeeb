@@ -45,7 +45,7 @@ export async function getOrgData(): Promise<OrgData> {
     sb.from("members").select("id, full_name, avatar_url, gender, account_status"),
     // الإشراف جدولُه — لا صفوفُ المناصب. عضو الإدارة مُسنَدٌ إلى إدارته، وإشرافُه على
     // لجان التنفيذيّ علاقةٌ أخرى (20260731).
-    sb.from("committee_supervision").select("committee_id, unit_id, supervisor_id"),
+    sb.from("committee_supervision").select("committee_id, unit_id, supervisor_id, assigned_at"),
     me ? sb.rpc("assignable_members", { p_actor: me.id }) : Promise.resolve({ data: [] as string[], error: null }),
   ]);
 

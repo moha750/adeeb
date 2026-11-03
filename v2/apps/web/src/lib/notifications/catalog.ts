@@ -19,7 +19,7 @@
  * (`Kind<unknown>`) بلا `any`، ويبقى كلُّ مدخلٍ مضبوطَ الحقائق عند كتابته وعند إطلاقه.
  */
 import type { IconKey } from "@/app/dashboard/_shell/icons";
-import { fmtDateOnly } from "@/lib/dates";
+import { fmtDateOnly, fmtStamp } from "@/lib/dates";
 import { positionLine, rankFor } from "@/lib/positionLabel";
 import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
@@ -144,6 +144,44 @@ export const CATALOG = {
         to: () => [{ capability: "manage_website" }],
         text: () => ({ title: "عاد البريدُ يخرج", body: "الصادرُ سليم، والرسائلُ تُرسَل كالمعتاد." }),
         href: () => "/dashboard/system/email",
+      },
+    ],
+  }),
+
+  /**
+   * **بلاغُ خطأٍ من عضو** (٢٠٢٦-١٠-٣١) — يطلقه زرُّ «أبلغ الدعم الفني» في حالة خطأ الغرفة (`AdRoomError`):
+   * العضوُ لا يعرف قناةَ قسم نظم المعلومات، فالموقعُ يوصل البلاغَ بنفسه، بسياقه كاملًا، بضغطةٍ واحدة.
+   * - **المستلم**: من يملك `manage_website` — قسمُ نظم المعلومات هو الدعمُ الفنيّ نفسُه (قرار محمد ٢٠٢٦-١٠-٣١).
+   *   والمُبلِغُ لا يُشعَر ببلاغه. والغرفةُ ومسارُها من سجلّ الغرف لا من المتصفّح، وبلاغٌ واحدٌ عن الغرفة في ربع ساعة
+   *   وثلاثةٌ للعضو (`app/_ad/report.ts`).
+   * - **الدرجة**: مهمّ (الجرسُ وشاشةُ القفل): عضوٌ متعطّلٌ الآن. **وبريدًا**: يُحفظ فيُرجَع إليه حين يُتتبَّع.
+   * - **الوجهة**: الغرفةُ التي انكسرت، فيراها القسمُ حيث رآها العضو.
+   */
+  "system.error_report": defineKind<{ room: string; path: string; error: string; who: string; female: boolean; at: string }>({
+    section: "system",
+    when: "أبلغ عضوٌ الدعمَ الفنيّ عن خطأٍ واجهه في غرفةٍ من اللوحة",
+    sample: { room: "غرفة تحرير أدِيب", path: "/dashboard/news", error: "TypeError: fetch failed (getaddrinfo ENOTFOUND db.supabase.co)", who: "محمد إسماعيل المطر", female: false, at: "2026-10-31T19:00:00Z" },
+    audiences: [
+      {
+        key: "support",
+        level: "important",
+        email: true,
+        to: () => [{ capability: "manage_website" }],
+        text: (f) => ({
+          title: `بلاغُ خطأ: ${f.room}`,
+          body: `${f.female ? "أبلغت" : "أبلغ"} ${f.who} أنّ «${f.room}» لم ${f.female ? "تُفتح لها" : "تُفتح له"}. الخطأ: ${f.error}`,
+        }),
+        mail: (f, g) => ({
+          mood: "customer-support",
+          lead: `${f.female ? "واجهت" : "واجه"} ${f.who} خطأً في اللوحة ${f.female ? "فأبلغت" : "فأبلغ"} الدعمَ الفنيّ. ${fm(g, "تتبّعه", "تتبّعيه")} بهذه التفاصيل:`,
+          facts: [
+            { label: "الغرفة", value: f.room },
+            { label: "المسار", value: f.path, ltr: true },
+            { label: "الوقت", value: fmtStamp(f.at) },
+            { label: "الخطأ", value: f.error, ltr: true },
+          ],
+        }),
+        href: (f) => f.path,
       },
     ],
   }),
@@ -534,7 +572,8 @@ export const CATALOG = {
         key: "rater",
         level: "important",
         to: (f) => f.raters.map((user) => ({ user })),
-        text: (f, g) => ({ title: `${fm(g, "لك", "لكِ")} تقييمٌ مفتوحٌ للقيادات`, body: `آخر يومٍ ${fmtDateOnly(f.lastDay)}.` }),
+        // نصُّ «أ» (محمد ٢٠٢٦-١٠-٢٩): الحدثُ باسمه، والمطلوبُ وموعدُه، والطمأنة. كان «لك تقييمٌ مفتوحٌ للقيادات» فلم يُفهم
+        text: (f, g) => ({ title: "بدأ التقييم الربعي للقيادات", body: `${fm(g, "قيّم", "قيّمي")} من تشملهم ورقتك قبل نهاية ${fmtDateOnly(f.lastDay)}. تقييمك سرّي.` }),
         href: () => "/dashboard/evaluation/rate",
         expires: (f) => new Date(f.closesAt),
       },
@@ -553,7 +592,7 @@ export const CATALOG = {
         key: "rater",
         level: "important",
         to: (f) => f.raters.map((user) => ({ user })),
-        text: (f, g) => ({ title: "اليومُ آخرُ أيّام تقييم القيادات", body: `${fm(g, "بقي لك", "بقي لكِ")} تقييمٌ لم ${fm(g, "تُرسله", "تُرسليه")}.` }),
+        text: (f, g) => ({ title: "اليوم آخر أيام التقييم الربعي للقيادات", body: `${fm(g, "بقي لك", "بقي لكِ")} تقييمٌ لم ${fm(g, "تُرسله", "تُرسليه")}، ويُغلق التقييم الليلة. تقييمك سرّي.` }),
         href: () => "/dashboard/evaluation/rate",
         expires: (f) => new Date(f.closesAt),
       },

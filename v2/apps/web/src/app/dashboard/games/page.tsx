@@ -14,7 +14,7 @@ export default async function GamesPage() {
   const denied = await denyUnless("/dashboard/games");
   if (denied) return denied;
 
-  const [{ games, error }, { days, weeks }, { contests, now }, metrics] = await Promise.all([
+  const [{ games, error }, { days, periods }, { contests, now }, metrics] = await Promise.all([
     getGames(), getDays(), getContests(), getMetrics(),
   ]);
   if (error) {
@@ -35,7 +35,7 @@ export default async function GamesPage() {
     <GamesRoomView
       games={games}
       days={days}
-      weeks={weeks}
+      periods={periods}
       contests={contests}
       leaders={leaders}
       contestGames={contestGames}

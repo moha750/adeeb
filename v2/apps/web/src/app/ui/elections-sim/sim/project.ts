@@ -176,7 +176,7 @@ export function toLogEvents(w: SimWorld, electionId: string): ElectionLogEvent[]
       note: f.note,
       actor: r.actorId ? memberIn(w, r.actorId)?.name ?? null : null,
       candidateId: f.candidateId,
-      date: fmtStamp(iso(r.at)),
+      at: new Date(r.at).toISOString(),
     });
   }
   return events;

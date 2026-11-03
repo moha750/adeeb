@@ -8,7 +8,7 @@ import {
 } from "./sample";
 import { RateA } from "../../../dashboard/evaluation/_views/RateA";
 import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
-import type { RoomLook, RoomProps } from "../../../dashboard/evaluation/_views/RoomHead";
+import type { RoomProps } from "../../../dashboard/evaluation/_views/RoomHead";
 import { MineA } from "../../../dashboard/evaluation/_views/MineA";
 import type { MyScope } from "@/lib/myScope";
 
@@ -34,13 +34,13 @@ const PEOPLE = ELECTORATE.map((e) => ({ id: e.rater_id ?? "", name: e.full_name 
   { id: "x2", name: "عمر ياسر الخالدي" },
 ]);
 
-/** `look`: «quorum=text,excluded=card» يسمّي أوجهَ جولة الملاحظات، و`open` يفتح تفصيلَ مقيَّمٍ عند الرسم. */
+/** `look`: إلى أين يُمرَّر الإطار («rows» الصفوف، «excluded» كرتُ المستثنى)، و`open` يفتح تفصيلَ مقيَّمٍ عند الرسم. */
 export function LabFrame({ screen, state, look, open: openId }: { screen: Screen; option: Option; state: string; look?: string; open?: number }) {
   const [cycleId, setCycleId] = useState(state === "open" ? 1 : 1);
   // المعرضُ يمرّر الإطارَ إلى ما يُقارَن فيه: الصفوفُ تحت الرأس، والمستثنى في آخرها
   useEffect(() => {
     if (!look || openId) return;
-    const sel = look.includes("excluded=card") ? ".evs-ex-card" : look.includes("excluded") ? ".evs-row.is-ex" : ".evs";
+    const sel = look === "excluded" ? ".evs-ex-card" : ".evs";
     // يُمرَّر الإطارُ وحده: `scrollIntoView` يمرّر الصفحةَ الأمَّ معه فيسحب المعرضَ كلَّه
     const t = window.setTimeout(() => {
       const el = document.querySelector(sel);
@@ -77,7 +77,6 @@ export function LabFrame({ screen, state, look, open: openId }: { screen: Screen
       loadElectorate: async () => ELECTORATE,
       people: PEOPLE,
       committees: RETURN_COMMITTEES,
-      look: Object.fromEntries((look ?? "").split(",").filter(Boolean).map((kv) => kv.split("="))) as Partial<RoomLook>,
       initialOpen: openId,
       actions: {
         correctRater: ok("صُحّحت الأهليّة."),

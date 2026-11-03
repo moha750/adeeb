@@ -6,7 +6,7 @@
    ============================================================ */
 
 :root{
-  color-scheme: light;   /* الموقع فاتحٌ وحدَه — لا وضع داكن ولا انقلاب مع تفضيل النظام */
+  color-scheme: light;   /* الأصلُ فاتح؛ والداكنُ يُعلَن على `<html data-theme="dark">` — القسم (٧) آخرَ الملفّ */
 
   /* ---------- لونُ المحطّة عند الجذر ----------
      لوحةُ الإذاعة تعيش في `.stn` (هويّةٌ منعزلةٌ بقرار المالك، القاعدة ١).
@@ -235,5 +235,254 @@
   --ring-strong: 0 0 0 3px rgba(var(--shadow-tone), .28);       /* حلقة أبرز — عناصر الاختيار */
 }
 
-/* الوضع الداكن أُزيل جذريًّا (2026-08-01 · بقرار المالك): لا كتلة `prefers-color-scheme`
-   ولا تجاوز `data-theme`. الرموز الدلاليّة أعلاه هي القيم النهائيّة الوحيدة. */
+/* الوضعُ الداكن أُزيل جذريًّا (٢٠٢٦-٠٨-٠١) ثمّ عاد بقرار محمد (٢٠٢٦-١٠-٣٠) على أساسٍ جديد: قيمُه
+   كلُّها في القسم (٧) أدناه، ومنها جسرٌ يعطي الرموزَ الدلاليّة أعلاه قيمَها الداكنة. */
+
+/* ══════════════════════════════════════════════════════════════════════
+   (٧) أساسُ أدِيب الجديد — `--ad-*` (٢٠٢٦-١٠-٣٠، المنهجيّة المعتمدة)
+
+   الطبقةُ الأولى من خمس (`v2/DESIGN.md`): أدوارٌ لا أرقام. كلُّ ما في `.ad-*` يقرأ من
+   هنا وحده، ولا قيمةَ خامٍ فيه (والسقّاطةُ تفحص ذلك). وتعيش بجانب الرموز القديمة حتى
+   تنتقل الغرف كلُّها، ثمّ يخرج القديم.
+
+   **الخطّ — مشتقٌّ من أدوار الشاشات الخمس المرجعيّة** (الشريط، وترويسة الأخبار، ولوح
+   الدستور، وجانب الأنظمة، و«حسابي»)، لا من سلّمٍ منسوخ: كانت فيها نحو ٢٥ قيمة
+   (١٢٫٥ و١٣٫٥ و١٤٫٥…) لثمانية أدوارٍ فقط، فصارت ثمانيَ درجات. والأوزانُ أربعةٌ يملكها
+   Lyon Arabic (٤٠٠ و٥٠٠ و٧٠٠ و٩٠٠)؛ ٨٠٠ و٦٠٠ لا وجود لهما في الخطّ فكانا يُرسمان غيرهما.
+
+   **اللونُ — كلُّ دورٍ بقيمتين** (فاتح وداكن) بقرار محمد ٢٠٢٦-١٠-٣٠: «نريد الهويّة تدعم
+   الوضع الداكن». والداكنُ ليلٌ كحليّ من سلّم العلامة نفسِه، لا رماديٌّ مستعار. ويُفعَّل
+   على الجذر وحدَه: `<html data-theme="dark">`، فيتبعه الموقعُ كلُّه بلا استثناء — الشريطان والغرف
+   والنوافذ (قرار محمد: «الدارك مود على كلّ شيء»). والسمةُ تُكتب قبل الرسم في `lib/theme.ts`، وفيه
+   يُحلّ «حسب الجهاز». وزرُّ الاختيار يظهر للناس حين يصير كلُّ شيءٍ داكنًا سليمًا.
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  /* ---------- الخطّ: ثماني درجات بأدوارها ---------- */
+  --ad-t-badge: .75rem;      /* 12 — شارة، عدّاد (أرضيّةُ الخطّ العربيّ: لا دون 12) */
+  --ad-t-meta: .8125rem;     /* 13 — تسمية، وصف، سطرُ معلومات */
+  --ad-t-ui: .875rem;        /* 14 — تبويب، زرٌّ صغير، بندُ تنقّل */
+  --ad-t-body: 1rem;         /* 16 — متن، قيمة، زرّ */
+  --ad-t-title: 1.125rem;    /* 18 — عنوانُ كرت، متنُ قراءة طويلة */
+  --ad-t-section: 1.375rem;  /* 22 — عنوانُ قسم */
+  --ad-t-room: 1.75rem;      /* 28 — اسمُ الغرفة في لوحها */
+  --ad-t-display: clamp(2.5rem, 1.2rem + 4vw, 4.75rem); /* عنوانُ الصفحة العامّة */
+
+  --ad-lh-tight: 1.25;       /* العناوين */
+  --ad-lh-ui: 1.45;          /* الأدوات والتسميات */
+  --ad-lh-body: 1.75;        /* المتن */
+  --ad-lh-read: 1.9;         /* القراءة الطويلة */
+
+  --ad-w-regular: 400;
+  --ad-w-medium: 500;
+  --ad-w-bold: 700;
+  --ad-w-black: 900;
+
+  /* ---------- المقاسات: أدوات اللمس والزوايا ---------- */
+  --ad-ctl: 2.625rem;        /* 42 — الزرّ والحقل: ارتفاعُ بند الشريط وبحثه (`.ash-i` و`.ash-srch`) */
+  --ad-ctl-sm: 2rem;         /* 32 — الزرّ الصغير وزرّ الأيقونة */
+  --ad-ctl-touch: 2.75rem;   /* 44 — هدفُ اللمس على الشاشات اللمسيّة */
+  --ad-mesh: 2.75rem;        /* 44 — خليّةُ الشبكة الكامنة في كلّ لوح: وحدةُ الشريط (`.ash-canvas`) */
+  --ad-r-plate: var(--radius);                    /* 16 — اللوح والكرت */
+  --ad-r-ctl: var(--radius);                      /* 16 — الأداة والبئر: زاويةُ بنود الشريط وبحثه نفسُها */
+  --ad-r-sm: var(--radius-sm);                    /* 10 — الصغير القائم بذاته */
+  --ad-r-full: var(--radius-full);                /* الكبسولة: الشارة والعدّاد */
+  --ad-page-max: 80rem;                           /* 1280 — عرضُ الغرفة */
+  --ad-white: #ffffff;                            /* الأبيضُ الصريح — في الوضعين (زرُّ اللوح) */
+  --ad-z-under: -1;                               /* طبقاتُ اللوح تحت نصّه — داخل سياقه المعزول وحده */
+  --ad-z-over: 1;                                 /* ما يعلو رابطَ الكرت الممتدّ (أفعالُ القاع) */
+  --ad-z-head: 2;                                 /* رأسُ الجدول الثابت: يعلو أفعالَ السطور حين تمرّ تحته */
+
+  /* ---------- الحركة ---------- */
+  --ad-ease-out: cubic-bezier(.23, 1, .32, 1);    /* الدخولُ والاستجابة */
+  --ad-ease-io: cubic-bezier(.65, 0, .35, 1);     /* ما يتحرّك على الشاشة */
+  --ad-dur-press: 120ms;
+  --ad-dur: 200ms;
+  --ad-dur-lift: 280ms;     /* المرورُ على الكرت: ارتفاعُه وظلُّه وصورتُه معًا، حركةٌ واحدة بزمنٍ واحد */
+  --ad-tile: 3.75rem;       /* 60 — الكعبُ المصغّر في سطر الجدول: رقمُه الكبير وتحته «مايو 2026» بلا قصّ */
+  --ad-island: 5.75rem;     /* 92 — حجزُ جزيرة التنقّل السفليّة في الجوّال (`.ash-content`) — ما يطفو فوقها يبدأ بعدها */
+  --ad-shell-pad: 22px;     /* حشوُ إطار المحتوى (`.ash-content`) — يثبت رأسُ الجدول عند حافّة التمرير لا تحتها بقدره */
+  --ad-dur-sheen: 600ms;    /* شعاعُ الضوء على الزرّ الأساسيّ عند المرور — من زرّ البوّابة المعتمد (كان 1s) */
+
+  /* ---------- اللون: الوضع الفاتح ---------- */
+  --ad-ground: var(--navy-50);                    /* الأرضُ مصبوغةٌ من الكحليّ لا رماديّةٌ محايدة */
+  --ad-sheet: #ffffff;
+  --ad-well: color-mix(in oklab, var(--neutral-100) 60%, #ffffff);
+  --ad-float: #ffffff;
+  --ad-rule: color-mix(in oklab, var(--navy-700) 9%, transparent);
+  --ad-edge: color-mix(in oklab, var(--navy-700) 14%, transparent);
+  --ad-edge-ctl: var(--steel-400);                /* حدُّ الأداة 3:1 (WCAG 1.4.11) */
+  --ad-ink: #182031;
+  --ad-ink-2: var(--navy-600);       /* 7.1 على الأرض — كان رماديًّا محايدًا */
+  --ad-ink-3: var(--navy-500);       /* 5.3 على الأرض — كان رماديًّا عند 4.0، دون العتبة */
+  --ad-ink-head: var(--navy-800);
+  --ad-brand: var(--navy-700);
+  --ad-brand-2: var(--steel-600);
+  --ad-tint: var(--navy-50);
+  --ad-tint-2: var(--navy-100);
+  --ad-soft: var(--navy-50);          /* الزرّ اللطيف: الفعلُ الأساسيّ داخل الكرت */
+  --ad-soft-hover: var(--navy-100);
+  --ad-on-soft: var(--navy-700);
+  --ad-fill: var(--grad-primary);                 /* الفعلُ الأساسيّ: تدرّجُ الهويّة 135° */
+  --ad-fill-hover: linear-gradient(135deg, var(--steel-500), var(--navy-900));
+  --ad-on-fill: #ffffff;
+  --ad-ring: var(--steel-500);
+  --ad-scrim: color-mix(in oklab, var(--navy-950) 46%, transparent);
+  --ad-rest: 0 1px 2px color-mix(in oklab, var(--navy-700) 7%, transparent);
+  --ad-lift: 0 2px 4px color-mix(in oklab, var(--navy-900) 8%, transparent), 0 16px 36px -12px color-mix(in oklab, var(--navy-900) 30%, transparent);
+  /* الرفعُ بظلٍّ يتبع شكلَ القطعة (`filter`) لا صندوقَها: للتذكرة وثلمتيها، والقناعُ يقصّ `box-shadow` */
+  --ad-lift-drop: drop-shadow(0 2px 4px color-mix(in oklab, var(--navy-900) 8%, transparent)) drop-shadow(0 14px 22px color-mix(in oklab, var(--navy-900) 16%, transparent));
+  /* ── هويّةٌ واحدةٌ بمادّتين (محمد ٢٠٢٦-١٠-٣٠: «أريد هويّةً متكاملة… انظر كيف الشريط متكامل») ──
+     **اللوح** (الشريطُ ورأسُ الغرفة وأغلفةُ الكروت) تدرّجُ الهويّة، والمختارُ عليه **ضوء**: طبقةٌ بيضاءُ أوضح
+     بحدٍّ أبيض. و**الورقة** معكوسُه بالحرف: أرضٌ مصبوغةٌ من الكحليّ وحبرٌ من الكحليّ، والمختارُ عليها **قطعةٌ
+     من اللوح** — جزءُ المبدّل المختار، والزرُّ الأساسيّ، ومربّعُ أيقونة الفعل. فما يضيء في الشريط هو ما يتلوّن
+     في الغرفة، ولا مادّةَ ثالثة: لا رماديّ محايد، ولا زجاجٌ داكن.
+     **والأداةُ خطوةٌ عن أرضها** كبنود الشريط وبحثه: على اللوح طبقةٌ أفتح، وعلى الأرض المصبوغة صفحةٌ بيضاء،
+     وداخل الصفحة البيضاء طبقةٌ مصبوغة (`.ad-card` يقلب `--ad-field`) — بحدٍّ رفيعٍ من الداخل وبلا ظلال.
+     (التجربةُ قبلها نقلت طبقات الشريط إلى الورقة كما هي، فبهت كلُّ شيء: على التدرّج تلمع الطبقةُ لأنّ الأرض
+     غنيّة، وعلى الأبيض تصير رماديًّا لا شيء. والذي ينتقل القاعدةُ لا القيم.) */
+  --ad-veil: color-mix(in oklab, var(--navy-700) 5%, transparent);
+  --ad-veil-2: color-mix(in oklab, var(--navy-700) 10%, transparent);
+  --ad-hair: color-mix(in oklab, var(--navy-700) 13%, transparent);
+  --ad-hair-2: color-mix(in oklab, var(--navy-700) 24%, transparent);
+  --ad-field: var(--ad-sheet);                                             /* الأداةُ على الأرض */
+  --ad-field-2: color-mix(in oklab, var(--navy-700) 3%, var(--ad-sheet));  /* مرورُها */
+  --ad-field-up: var(--ad-sheet);                                          /* الأداةُ على شريطٍ مصبوغ داخل صفحة (قاعُ الكرت) */
+  --ad-field-up-2: color-mix(in oklab, var(--navy-700) 3%, var(--ad-sheet));
+  --ad-pick: var(--ad-fill);                                               /* المختارُ على الورقة: قطعةٌ من اللوح */
+  --ad-on-pick: var(--ad-white);
+  --ad-pick-veil: color-mix(in oklab, var(--ad-white) 18%, transparent);   /* عدّادُه ومربّعُ أيقونته — كشارة الشريط */
+  --ad-pick-hair: color-mix(in oklab, var(--ad-white) 16%, transparent);
+
+  /* اللوح — **مادّةُ الشريط الجانبيّ نفسُها، لا شبيهتُها** (محمد ٢٠٢٦-١٠-٣٠: نقشُ الشريط «مريحٌ للعين»
+     ونقشُ رأس الغرفة «واضحٌ بزيادة»). الشفافيّةُ كانت الرقمَ نفسَه (15٪)، والفرقُ في الوصفة: الشريطُ
+     تحت نقشه حجابٌ كحليّ يشتدّ نزولًا، ونقشُه أكبر ومثبّتٌ من أعلى الوسط؛ واللوحُ بلا حجاب وبنقشٍ أصغر.
+     فصارت الوصفةُ واحدة: التدرّجُ نفسُه، والنقشُ بمقاسه وموضعه، والحجابُ بقيمه.
+     (وكان طرفُه الفاتح فولاذيّ 500 لتباين تسميات المواضع الصغيرة فيه؛ والمواضعُ خرجت منه إلى المبدّل.) */
+  --ad-plate: var(--grad-primary);
+  --ad-plate-naqsh-size: 95rem;   /* 1522px — مقاسُ نقش الشريط المعتمد بعين محمد (`.ash-naqsh`) */
+  /* حجابُ الشريط بقيمه (`.ash-canvas::after`): هدأةٌ في الأعلى، ثمّ كحليٌّ يشتدّ نزولًا. ومسافاتُه بطول
+     الشاشة لا بطول اللوح، فيقع على اللوح ما يقع على الشريط في الارتفاع نفسه — قطعةٌ من المادّة لا تكبيرٌ لها. */
+  --ad-plate-shade:
+    linear-gradient(to bottom, color-mix(in oklab, var(--navy-950) 22%, transparent), transparent 13.125rem),
+    linear-gradient(to bottom, transparent, color-mix(in oklab, var(--navy-950) 25%, transparent) 40vh, color-mix(in oklab, var(--navy-950) 60%, transparent) 100vh);
+  --ad-plate-edge: transparent;
+  --ad-plate-ink: var(--steel-50);
+  --ad-plate-ink-2: var(--steel-100);
+  --ad-plate-ink-3: var(--steel-200);
+  --ad-plate-veil: color-mix(in oklab, var(--steel-50) 10%, transparent);
+  --ad-plate-veil-2: color-mix(in oklab, var(--steel-50) 18%, transparent);
+  --ad-plate-hair: color-mix(in oklab, var(--steel-50) 22%, transparent);   /* حدُّ زجاج الشريط (`.ash-mark`) */
+  --ad-plate-hair-2: color-mix(in oklab, var(--steel-50) 34%, transparent); /* وأوضحُه (`.ash-srch:focus-within`) */
+  --ad-plate-naqsh: .15;
+  --ad-plate-mesh: color-mix(in oklab, var(--steel-50) 15%, transparent);
+
+  /* نغماتُ الحالة: نصّ، وأرضٌ باهتة، وحدّ */
+  --ad-ok: var(--success-700);      --ad-ok-soft: var(--success-50);      --ad-ok-edge: var(--success-200);
+  --ad-ok-veil: color-mix(in oklab, var(--success-600) 7%, transparent);   --ad-ok-hair: color-mix(in oklab, var(--success-600) 18%, transparent);
+  --ad-warn: var(--warning-700);    --ad-warn-soft: var(--warning-50);    --ad-warn-edge: var(--warning-200);
+  --ad-bad: var(--danger-700);      --ad-bad-soft: var(--danger-50);      --ad-bad-edge: var(--danger-200);
+  --ad-bad-veil: color-mix(in oklab, var(--danger-600) 6%, transparent);   --ad-bad-hair: color-mix(in oklab, var(--danger-600) 16%, transparent);   /* صبغةُ الأداة ودرجتُها كالكحليّ (`--ad-veil`/`--ad-hair`) بلون الخطر */
+  /* **نافذةُ التأكيد** (٢٠٢٦-١٠-٣١): رأسُها لوحٌ مصمتٌ بلون معناها. الدافئُ مساحةً بدرجةٍ واحدة: أعمقُ من الصافي («فاقع») وفي لونه
+     لا يُطفأ حتى يبنّ («ماءٌ عليه طين») — 500←700 للأحمر والأخضر، و400←600 للكهرمانيّ بحبرٍ من لونه (الأبيضُ لا يُقرأ عليه) */
+  --ad-bad-solid: linear-gradient(135deg, var(--danger-500), var(--danger-700));
+  --ad-bad-solid-hover: linear-gradient(135deg, var(--danger-600), var(--danger-800));
+  --ad-warn-solid: linear-gradient(135deg, var(--warning-400), var(--warning-600));
+  --ad-warn-solid-hover: linear-gradient(135deg, var(--warning-500), var(--warning-700));
+  --ad-warn-ink: color-mix(in oklab, var(--warning-900) 50%, #000000);   /* 4.7 على أعمق الكهرمانيّ (المراجعة المستقلّة: الـ900 وحدَه 3.7) */
+  --ad-ok-solid: linear-gradient(135deg, var(--success-600), var(--success-800));   /* 4.7 للأبيض في أفتحه (500 كان 3.9) */
+  --ad-ok-solid-hover: linear-gradient(135deg, var(--success-700), var(--success-900));
+  --ad-dlg-light: radial-gradient(120% 90% at 85% 0%, color-mix(in oklab, #ffffff 18%, transparent), transparent 62%);   /* ضوءٌ من الأعلى في جهة البداية: مادّةٌ مضاءة لا طلاء */
+  --ad-dlg-paper: #ffffff;
+  --ad-bad-ring: var(--danger-500);   --ad-warn-ring: var(--warning-600);   --ad-ok-ring: var(--success-600);   /* حلقةُ التركيز بلون النافذة */
+  --ad-info: var(--steel-700);      --ad-info-soft: var(--steel-50);      --ad-info-edge: var(--steel-200);
+}
+
+/* ---------- اللون: الوضع الداكن — ليلٌ كحليّ من سلّم العلامة ----------
+   كتلةٌ واحدة: «حسب الجهاز» لا يحتاج نسخةً تحت `prefers-color-scheme`، فهو يُحلّ إلى فاتحٍ أو
+   داكن قبل الرسم (`lib/theme.ts`). والقيمُ هنا وحدها، فلا تُكتب في غيرها. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ad-ground: var(--navy-950);
+  --ad-sheet: var(--navy-900);
+  --ad-well: color-mix(in oklab, var(--navy-950) 55%, var(--navy-900));
+  --ad-float: var(--navy-800);
+  --ad-rule: color-mix(in oklab, var(--steel-50) 7%, transparent);
+  --ad-edge: color-mix(in oklab, var(--steel-50) 12%, transparent);
+  --ad-edge-ctl: var(--steel-400);
+  --ad-ink: var(--steel-50);
+  --ad-ink-2: var(--steel-200);
+  --ad-ink-3: var(--steel-300);
+  --ad-ink-head: #ffffff;
+  --ad-brand: var(--steel-300);
+  --ad-brand-2: var(--steel-200);
+  --ad-tint: color-mix(in oklab, var(--steel-400) 16%, transparent);
+  --ad-tint-2: color-mix(in oklab, var(--steel-400) 26%, transparent);
+  --ad-fill: linear-gradient(135deg, var(--steel-500), var(--navy-700));
+  --ad-fill-hover: linear-gradient(135deg, var(--steel-400), var(--navy-600));
+  --ad-ring: var(--steel-300);
+  --ad-scrim: color-mix(in oklab, #000000 60%, transparent);
+  --ad-rest: 0 0 0 transparent;
+  --ad-lift: 0 2px 4px color-mix(in oklab, #000000 30%, transparent), 0 18px 40px -12px color-mix(in oklab, #000000 62%, transparent);
+  --ad-lift-drop: drop-shadow(0 2px 4px color-mix(in oklab, #000000 30%, transparent)) drop-shadow(0 16px 26px color-mix(in oklab, #000000 50%, transparent));
+  /* ليلًا الورقةُ كحليّة، فتعود الطبقاتُ بيضاءَ شفّافة — قيمُ الشريط الجانبيّ نفسُها */
+  --ad-veil: color-mix(in oklab, var(--steel-50) 6%, transparent);
+  --ad-veil-2: color-mix(in oklab, var(--steel-50) 12%, transparent);
+  --ad-hair: color-mix(in oklab, var(--steel-50) 14%, transparent);
+  --ad-hair-2: color-mix(in oklab, var(--steel-50) 26%, transparent);
+  --ad-field: var(--ad-veil);
+  --ad-field-2: var(--ad-veil-2);
+  --ad-field-up: var(--ad-veil-2);
+  --ad-field-up-2: var(--ad-hair);
+  --ad-plate: linear-gradient(135deg, var(--navy-700), var(--navy-900));
+  --ad-plate-edge: color-mix(in oklab, var(--steel-50) 9%, transparent);
+  --ad-plate-naqsh: .1;
+  --ad-soft: var(--steel-600);
+  --ad-soft-hover: var(--steel-500);
+  --ad-on-soft: var(--ad-white);
+  --ad-ok: var(--success-300);      --ad-ok-soft: color-mix(in oklab, var(--success-500) 15%, transparent);  --ad-ok-edge: color-mix(in oklab, var(--success-400) 32%, transparent);
+  --ad-ok-veil: color-mix(in oklab, var(--success-400) 10%, transparent);   --ad-ok-hair: color-mix(in oklab, var(--success-400) 24%, transparent);
+  --ad-warn: var(--warning-300);    --ad-warn-soft: color-mix(in oklab, var(--warning-500) 15%, transparent); --ad-warn-edge: color-mix(in oklab, var(--warning-400) 32%, transparent);
+  --ad-bad: var(--danger-300);      --ad-bad-soft: color-mix(in oklab, var(--danger-500) 16%, transparent);  --ad-bad-edge: color-mix(in oklab, var(--danger-400) 34%, transparent);
+  --ad-bad-veil: color-mix(in oklab, var(--danger-400) 9%, transparent);   --ad-bad-hair: color-mix(in oklab, var(--danger-400) 20%, transparent);
+  --ad-dlg-paper: #18191c;   /* ورقةُ النافذة في الداكن سوداءُ محايدة: لا كحليّةٌ تجاور لونَها، ولا مصبوغةٌ به فتتعكّر */
+  --ad-bad-ring: var(--danger-300);   --ad-warn-ring: var(--warning-300);   --ad-ok-ring: var(--success-300);
+  --ad-info: var(--steel-200);      --ad-info-soft: color-mix(in oklab, var(--steel-400) 16%, transparent);  --ad-info-edge: color-mix(in oklab, var(--steel-300) 30%, transparent);
+
+  /* ── الجسرُ إلى الرموز القديمة (أعلى الملفّ) ──
+     الهيكلُ (الشريطان، والخلفيّة) والمكوّناتُ المشتركة (النافذة، والتنبيه، وقائمةُ الحساب، والحقول)
+     ما زالت تقرأ `--color-*` القديمة، والغرفُ الجديدة تفتحها. فتأخذ قيمَها الداكنة من الأدوار الجديدة
+     هنا مرّةً واحدة، لا قاعدةً لكلّ مكوّن. ويخرج الجسرُ مع آخر مكوّنٍ قديم.
+     وما لا يبلغه جسر: القيمُ الخامُ في المكوّنات القديمة (`#fff`، ودرجاتُ السلّم المكتوبةُ مباشرة)
+     — تلك تُصلَح حين ينتقل مكوّنُها، والسقّاطةُ تعدّها. */
+  --color-bg: var(--ad-ground);
+  --color-surface: var(--ad-sheet);
+  --color-surface-2: color-mix(in oklab, var(--steel-50) 6%, var(--navy-900));
+  --color-text: var(--ad-ink);
+  --color-text-muted: var(--ad-ink-2);
+  --color-border: var(--ad-edge);
+  /* «الأساسيّ» في القديم توكيدٌ قبل أن يكون لونًا (اسمٌ، عنوان، بندٌ نشط)، فليلًا يعلو المكتومَ لا يدنوه:
+     فولاذيّ 100 فوق 200 — ولو أخذ `--ad-brand` (300) لصار البندُ النشطُ أبهتَ من جيرانه. */
+  --color-primary: var(--steel-100);
+  --color-primary-hover: var(--steel-50);
+  --color-secondary: var(--steel-300);
+  --color-secondary-hover: var(--steel-200);
+  --color-ring: var(--ad-ring);
+  --card-stroke: var(--ad-edge);
+  --grad-primary: var(--ad-fill);
+  --shadow-sm: 0 1px 3px color-mix(in oklab, #000000 35%, transparent);
+  --shadow-md: 0 8px 20px -8px color-mix(in oklab, #000000 55%, transparent);
+  --shadow-lg: var(--ad-lift);
+  --scrim: var(--ad-scrim);
+  --btn-ghost-fg: var(--steel-200);
+  --btn-ghost-border: color-mix(in oklab, var(--steel-300) 36%, transparent);
+  /* أرضُ «الشفق» الملوّنة (فاتحةٌ محفورة أعلاه) — ليلًا: صبغةُ النغمة على السطح الكحليّ */
+  --aurora-brand:   color-mix(in oklab, var(--steel-500) 16%, var(--navy-900));
+  --aurora-neutral: color-mix(in oklab, var(--neutral-500) 12%, var(--navy-900));
+  --aurora-success: color-mix(in oklab, var(--success-500) 16%, var(--navy-900));
+  --aurora-warning: color-mix(in oklab, var(--warning-500) 16%, var(--navy-900));
+  --aurora-danger:  color-mix(in oklab, var(--danger-500) 16%, var(--navy-900));
+  /* الحقول: بديلُها المكتوب في `var(--fld-*, …)` درجةٌ فاتحة، فيُعلَن هنا ليلًا فلا يُبلَغ البديل */
+  --fld-tint: var(--ad-tint);
+  --fld-tint-2: var(--ad-tint-2);
+  --fld-accent: var(--steel-300);
+}

@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Accordion, Alert, Badge, Button, Checkbox, Field, PersonPicker, SaveBar, SectionCard, Segmented, Select, Textarea, Modal } from "@adeeb/design-system";
 import {
   Newspaper, TextAlignLeft, UsersThree, Buildings, ClipboardText, Image as ImageIcon, Images,
   PaperPlaneTilt, Megaphone, Archive, ChatCircleDots, ClockCounterClockwise, Camera, Users,
-  FloppyDisk, LinkSimple, Hash,
+  FloppyDisk, LinkSimple, Hash, Gear, UserCircle,
 } from "@phosphor-icons/react";
 import {
   PencilSimple, UploadSimple, Trash, EyeSlash, ArrowUUpLeft, Star, XCircle,
@@ -21,7 +21,10 @@ import { createClient } from "@/lib/supabase/client";
 import { NEWS_BUCKET } from "@/lib/news/bucket";
 import type { UnitOption } from "@adeeb/core/org-unit";
 import type { CreditPerson } from "@/lib/people";
-import type { NewsDetail, Option } from "../data";
+import type { LogEntry, NewsDetail, Option } from "../data";
+import { AdLog, type AdLogEvent } from "@/app/_ad/log";
+import type { AdTone } from "@/app/_ad/primitives";
+import type { ArForms } from "@/lib/arabicCount";
 import {
   ASSIGNMENT_META, CATEGORY_META, CATEGORY_OPTIONS, DEFAULT_FIELDS, FIELD_META, FIELD_VALUES,
   SUMMARY_MAX, TITLE_MAX, WORKFLOW_META, missingForPublish, readingMinutes, wordCount,
@@ -55,11 +58,47 @@ const ACTION_LABEL: Record<string, string> = {
   restore: "أُعيد من الأرشيف",
 };
 
+/**
+ * **نوعُ الفعل على الخطّ الزمنيّ** (`AdLog`، ٢٠٢٦-١١-٠٢): رمزُه رمزُ فعله في قائمة الخبر (الإعادةُ سهمٌ راجع،
+ * وإلغاءُ النشر عينٌ مغلقة، والأرشفةُ صندوق)، ونغمتُه بقاعدة السجلّ: ما يغيّر ما يراه الناس على الموقع (النشر وإلغاؤه
+ * والأرشفة) `warn`، والإنشاءُ بناءٌ `ok`، والتكليفُ والمراجعةُ والإعادةُ إداريّةٌ `info`.
+ */
+const ACTION_KIND: Record<string, { tone: AdTone; icon: ReactNode }> = {
+  create: { tone: "ok", icon: <Newspaper /> },
+  assign: { tone: "info", icon: <UsersThree /> },
+  submit: { tone: "info", icon: <PaperPlaneTilt /> },
+  return: { tone: "info", icon: <ArrowUUpLeft /> },
+  publish: { tone: "warn", icon: <Megaphone /> },
+  unpublish: { tone: "warn", icon: <EyeSlash /> },
+  archive: { tone: "warn", icon: <Archive /> },
+  restore: { tone: "info", icon: <ArrowUUpLeft /> },
+};
+/** فعلٌ لا يعرفه المعجمُ بعد: يُقال باسمه الخامّ كما كان، بلا نغمة. */
+const UNKNOWN_KIND = { tone: "neutral" as AdTone, icon: <ClockCounterClockwise /> };
+
+const AR_EVENT: ArForms = ["حدثٌ واحد", "حدثان", "أحداث", "حدثًا"];
+
+/**
+ * الواقعةُ جملةٌ على الخطّ: ما جرى للخبر بلسان السجلّ («نُشر»)، ومَن فعله تحته («النظام» لمن لا اسمَ له كما كان). **بلا شارة نوع**:
+ * في سجلّ الشيء الواحد الجملةُ نفسُها نوعُها، فشارةُ «نشر» بجانب «نُشر» تكرار — ورمزُ النقطة ونغمتُها يقولانه بلمحة.
+ */
+const logEvent = (l: LogEntry): AdLogEvent => {
+  const k = ACTION_KIND[l.action] ?? UNKNOWN_KIND;
+  return {
+    icon: k.icon,
+    tone: k.tone,
+    title: ACTION_LABEL[l.action] ?? l.action,
+    meta: [{ icon: l.userName ? <UserCircle /> : <Gear />, text: `بيد ${l.userName ?? "النظام"}` }],
+  };
+};
+
 export function NewsEditorView({
-  detail, members, units, people, isChief, meId,
+  detail, members, units, people, isChief, meId, serverNow,
 }: {
   detail: NewsDetail; members: Option[]; units: UnitOption[]; people: CreditPerson[];
   isChief: boolean; meId: string;
+  /** ساعةُ الطلب (`requestNow`) — يقرؤها خطُّ السجلّ الزمنيّ («اليوم»، «أمس») فلا يختلف الخادمُ والمتصفّح. */
+  serverNow: number;
 }) {
   const { row } = detail;
   const toast = useToast();
@@ -417,21 +456,23 @@ export function NewsEditorView({
       description="ما وصل تعليقٌ على هذا الخبر بعد." />
   );
 
-  /** السجلّ — ما جرى للخبر، يُقرأ ولا يُفكّ. */
-  const history = detail.log.length ? (
-    <div className="nwe-stack-sm">
-      {detail.log.map((l) => (
-        <div key={l.id} className="nwe-row nwe-row-mid">
-          <ClockCounterClockwise size={16} className="text-content-muted" />
-          <b className="nwe-row-main">{ACTION_LABEL[l.action] ?? l.action}</b>
-          <span className="nwe-meta">{l.userName ?? "النظام"}</span>
-          <span className="nwe-meta">{dt(l.createdAt)}</span>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <EmptyState variant="soft" icon={<ClockCounterClockwise />} title="لا سجلّ بعد"
-      description="يُكتب السجلّ عند كلّ تحوّلٍ في حالة الخبر." />
+  /**
+   * السجلّ — ما جرى للخبر، يُقرأ ولا يُفكّ: على الخطّ الزمنيّ المشترك (`AdLog`) بلا رأس، فبندُ الدرج «السجلّ» يسمّيه.
+   * والفعلُ نفسُه بيد الشخص نفسِه متتاليًا (تكليفٌ يُعاد) سطرٌ واحدٌ بعدده: السجلُّ لا يحمل تفصيلَ ما تغيّر فيه.
+   */
+  const history = (
+    <AdLog<LogEntry>
+      // داخل بند الدرج: بلا ورقةٍ ولا إطار، فلا يكون إطارًا في إطار
+      bare
+      items={detail.log}
+      at={(l) => l.createdAt}
+      idOf={(l) => l.id}
+      event={logEvent}
+      same={(a, b) => a.action === b.action && a.userName === b.userName}
+      noun={AR_EVENT}
+      now={serverNow}
+      empty={{ title: "لا سجلّ بعد", text: "يُكتب السجلّ عند كلّ تحوّلٍ في حالة الخبر." }}
+    />
   );
 
   return (

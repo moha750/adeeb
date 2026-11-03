@@ -123,6 +123,9 @@ export const SECTION_CAP = {
   // بابا العضو، يظهران حين تصدق إشارتُهما (`scope.evaluation`)، وما خلفهما للجلسة وحدها (`auth.uid()`)
   "/dashboard/evaluation/rate": "view_own_membership",
   "/dashboard/evaluation/mine": "view_own_membership",
+  // **متابعة الرؤية** (٢٠٢٦-١١-٠٣): حالُ أهداف الرؤية السارية ونصُّها وموعدُها، فتُضاء قطعتُها في هلال صفحة `/vision`.
+  // لقائد الضمان والجودة الذي يتابعها وللرئيسين (`manage_vision`، `20261103153757_visions.sql`).
+  "/dashboard/vision": "manage_vision",
   "/dashboard/website/works": "manage_works",
   "/dashboard/website/achievements": "manage_achievements",
   "/dashboard/website/sponsors": "manage_sponsors",

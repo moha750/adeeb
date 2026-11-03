@@ -6,8 +6,8 @@
  * وتحت كلٍّ قائدُها ونائبُها صفوفًا. ولا سطحَ مؤطَّرٌ داخل آخر (ق١٢): الصفوفُ متنُ الكرت تفصلها شعرة.
  * والصفُّ يقرأ كالجدول (الأعمدةُ تصطفّ في القسم كلِّه) فتُقارَن المشاركةُ بنظرة.
  *
- * وأوجهُ جولة الملاحظات (صفُّ المستبعَد، وعلامةُ النصاب، والمستثنى، ونافذةُ التفصيل) تُختار بـ`look`
- * (انظر `RoomLook` في `RoomHead.tsx`).
+ * وحُسمت جولةُ ملاحظات المحاكي (محمد ٢٠٢٦-١٠-٢٨/٢٩): المستبعَدُ صبغةٌ مستوية، والنصابُ خطٌّ اسمُه «النصف»، والمستثنى
+ * كرتٌ مستقلٌّ «خارج هذه الدورة» في ذيل الغرفة، ونافذةُ التفصيل «تبويباتٌ بغلاف الملفّ».
  */
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Card, CardHeader } from "@adeeb/design-system";
@@ -18,12 +18,12 @@ import { Avatar } from "../../_components/Avatar";
 import type { ElectorRow, TargetRow } from "../data";
 import { RANK, VERDICT_LABEL } from "../vocab";
 import { Pct, excludedWhy, frac, seatLine } from "./parts";
-import { DEFAULT_LOOK, PartMeter, RoomHead, type RoomLook, type RoomProps } from "./RoomHead";
+import { PartMeter, RoomHead, type RoomProps } from "./RoomHead";
 import { TargetDetail, VERDICT_TONE } from "./TargetDetail";
 
-/** المقيَّمون مجموعين بالهيكل: قسمٌ، فمنسّقُه، فلجانُه وفي كلٍّ قائدُها ثمّ نائبُها. والمستثنى معهم إن طُلب. */
-export function byStructure(targets: TargetRow[], departments: Record<number, string>, withExcluded = false) {
-  const live = targets.filter((t) => withExcluded || !t.excluded);
+/** المقيَّمون مجموعين بالهيكل: قسمٌ، فمنسّقُه، فلجانُه وفي كلٍّ قائدُها ثمّ نائبُها. والمستثنى في كرته وحده. */
+export function byStructure(targets: TargetRow[], departments: Record<number, string>) {
+  const live = targets.filter((t) => !t.excluded);
   const ids = [...new Set(live.map((t) => t.department_id ?? 0))];
   return ids.map((d) => {
     const rows = live.filter((t) => (t.department_id ?? 0) === d);
@@ -40,7 +40,7 @@ export function byStructure(targets: TargetRow[], departments: Record<number, st
   });
 }
 
-type RowProps = { t: TargetRow; results: boolean; onOpen: () => void; head?: boolean; look: RoomLook; closed: boolean; dueOn: string };
+type RowProps = { t: TargetRow; results: boolean; onOpen: () => void; head?: boolean; closed: boolean };
 
 function Who({ t, head }: { t: TargetRow; head?: boolean }) {
   return (
@@ -54,19 +54,7 @@ function Who({ t, head }: { t: TargetRow; head?: boolean }) {
   );
 }
 
-function Row({ t, results, onOpen, head, closed, dueOn }: RowProps) {
-  // المستثنى (م١/4) في مكانه من لجنته: لا مشاركةَ ولا نتيجة، فالصفُّ يقول سببَه ومتى يُقيَّم، ولا يُفتح
-  if (t.excluded) {
-    return (
-      <div className={"evs-row is-ex" + (head ? " is-head" : "")}>
-        <Who t={t} head={head} />
-        <span className="evs-ex-why">{excludedWhy(t.gender, dueOn)}</span>
-        <span className="evs-res">
-          <Badge tone="neutral" variant="soft" size="sm">{t.gender === "female" ? "مستثناة" : "مستثنى"}</Badge>
-        </span>
-      </div>
-    );
-  }
+function Row({ t, results, onOpen, head, closed }: RowProps) {
   const f = frac(t.final_num, t.final_den);
   const out = results && t.verdict === "removed";
   return (
@@ -100,7 +88,6 @@ function Row({ t, results, onOpen, head, closed, dueOn }: RowProps) {
 
 export function RoomRows(props: RoomProps) {
   const { cycles, cycleId, onCycle, targets, departments, canManage, canViewResults } = props;
-  const look: RoomLook = { ...DEFAULT_LOOK, ...props.look };
   const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0];
   const [openId, setOpenId] = useState<number | null>(null);
   const [electorate, setElectorate] = useState<ElectorRow[] | null>(null);
@@ -124,10 +111,9 @@ export function RoomRows(props: RoomProps) {
   }, []);
   const results = canViewResults && cycle.status === "executed";
   const closed = cycle.status !== "open";
-  const inRows = look.excluded === "row";
-  const tree = useMemo(() => byStructure(targets, departments, inRows), [targets, departments, inRows]);
+  const tree = useMemo(() => byStructure(targets, departments), [targets, departments]);
   const excluded = targets.filter((t) => t.excluded);
-  const rowProps = { results, look, closed, dueOn: cycle.due_on };
+  const rowProps = { results, closed };
 
   return (
     <>
@@ -149,7 +135,7 @@ export function RoomRows(props: RoomProps) {
           </Card>
         ))}
 
-        {!inRows && excluded.length ? (
+        {excluded.length ? (
           <Card className="evs-dept evs-ex-card">
             <CardHeader variant="soft" icon={<CalendarX />} title="خارج هذه الدورة" />
             {excluded.map((t) => (
@@ -166,7 +152,6 @@ export function RoomRows(props: RoomProps) {
       {open ? (
         <TargetDetail
           target={open}
-          layout={look.detail}
           electorate={electorate}
           people={props.people}
           committees={props.committees}

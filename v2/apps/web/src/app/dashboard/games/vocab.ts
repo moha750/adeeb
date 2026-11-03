@@ -84,6 +84,7 @@ export const NOUNS = {
   NAME: { one: "اسم", few: "أسماء", many: "اسمًا" },
   DATE: { one: "تمرة", few: "تمرات", many: "تمرةً" },
   VISITOR: { one: "زائر", few: "زوّار", many: "زائرًا" },
+  GAME: { one: "لعبة", few: "ألعاب", many: "لعبةً" },
 } as const satisfies Record<string, Noun>;
 
 /** تمييزُ العدد: الواحدُ مفرد، ومن ٣ إلى ١٠ جمع، وما فوقها مفردٌ منصوب (والاثنان جمعٌ هنا تجوّزًا). */
@@ -126,5 +127,12 @@ export type BankStats = {
 /** أوائلُ «دربك خضر» منذ إطلاقها: أكثرُ تمرٍ وأبعدُ مسافة (`darb_players` بلا المخفيّين). */
 export type DarbLeaders = { tamr: { nickname: string; value: number }[]; dist: { nickname: string; value: number }[] };
 
-/** فرائدُ الأسبوع (`game_weeks`): `[آخر سبعة أيام، السبعة قبلها]`. */
-export type GameWeek = { players: [number, number]; visitors: [number, number] };
+/**
+ * **نافذةُ الغرفة: ثلاثون يومًا** (المالك ٢٠٢٦-١٠-٢٩: «احتسب في شهر»)، تُقارَن بالثلاثين قبلها. رقمٌ واحدٌ
+ * تقرؤه الأرقامُ والأعمدةُ والمقارنة، فتغييرُ النافذة سطرٌ هنا (ومعه `p_days` في `getDays`).
+ */
+export const PERIOD = 30;
+export const PERIOD_LABEL = "في آخر 30 يومًا";
+
+/** فرائدُ النافذة (`game_periods`): `[آخر 30 يومًا، الثلاثون قبلها]`. */
+export type GamePeriod = { players: [number, number]; visitors: [number, number] };

@@ -35,7 +35,7 @@ target.
    ├─ packages/core/   @adeeb/core — Supabase client factories + shared helpers (source-only, no build)
    ├─ packages/design-system/  @adeeb/design-system — tokens.css, components.css, fonts, brand SVGs, React components
    ├─ scripts/         Node ESM tooling: dev server, lint guards, Supabase/R2 config-as-code
-   └─ *.md             Living system docs — DESIGN-RULES.md is the design law; read it before UI work
+   └─ *.md             Living system docs — DESIGN.md is the design law (short); read it before UI work
 ```
 
 ### `apps/web/src`
@@ -46,7 +46,7 @@ target.
 | `app/_components/` | Site-wide client/server components (SiteHeader, BootSplash, VisitTracker, Turnstile, `glyphs.tsx`). |
 | `app/_story/` | Scrollytelling landing opener (GSAP + Lenis). |
 | `app/dashboard/_shell/` | Dashboard chrome: `DashboardShell`, `nav.ts`, `guard.tsx`, `Breadcrumb`, `ViewAsBar`. |
-| `app/ui/` | Component showroom — one route per component (`/ui/buttons`, `/ui/inputs`, …). New library component ⇒ new `/ui` page. |
+| `app/ui/` | Component showroom (legacy). A catalog only — **nothing is approved here**; components are judged inside real rooms (see `v2/DESIGN.md`). |
 | `lib/` | Shared logic. Each concern gets **one** module that is the single source (e.g. `fieldFormats.ts`, `personName.ts`, `positionLabel.ts`, `upload.ts`, `capabilities.ts`). |
 | `lib/supabase/` | `client.ts` (browser, cookie storage), `server.ts` (RSC/actions), `session.ts` (proxy session refresh + `/dashboard` gate). |
 | `src/proxy.ts` | Next 16's middleware convention. Exports `proxy()` + `config.matcher`. There is no `middleware.ts`. |
@@ -224,27 +224,40 @@ check. Bypass with `--no-verify`.
   (fail-safe), e.g. `lib/auth.ts`.
 - Auth errors are translated in `lib/authErrors.ts`.
 
-### Styling — the single-source law
-This is the most enforced rule in the repo. `v2/DESIGN-RULES.md` is the authority (15 rules); read
-it before any visual work.
+### Styling — the identity is being rebuilt (2026-10-30)
+`v2/DESIGN.md` is the design law — two pages; read it before any visual work. The old
+`DESIGN-RULES.md` and `PAGE-HEADER.md` were deleted by محمد's decision, and old written identity
+files are **not** binding: the reference is his taste and what was agreed with him. The full
+method and its decision log live in the Claude project doc `identity-method.md`.
 
-- **Two stylesheets, one source each:** `packages/design-system/tokens.css` (design tokens) and
-  `packages/design-system/components.css` (~7.7k lines of component classes).
-  `apps/web/src/app/globals.css` holds only the Preflight replacement, the Tailwind `@theme`
-  binding, and a few page-scoped families (`svy`/`cred`/`form`).
-- Load order in `app/layout.tsx` is deliberate: `fonts.css` → `tokens.css` → `globals.css` →
-  `components.css` (last wins). A selector defined in both sheets is silently shadowed —
-  `scripts/css-single-source.mjs` fails the build/commit if that ever happens again.
-- **No literal `#hex` anywhere**, no ad-hoc/inline CSS, no new class outside the library.
-- When a needed component does not exist and you were not asked to design one, mark the element
-  `data-needs="component name"` and leave it **completely unstyled**. Inventory with
-  `grep -rn data-needs`.
-- Tailwind v4, via `@tailwindcss/postcss` only. **There is no `tailwind.config.*` in `apps/web`** —
-  the theme is bound in `globals.css` with `@theme inline` pointing at the CSS variables.
-  (`packages/design-system/tailwind.preset.js` is a v3-style preset that the web app does not use.)
-- Radius: only `rounded`, `rounded-xs`, `rounded-sm`, `rounded-nested`, `rounded-full` exist.
-  `rounded-md/lg/xl/2xl` emit **nothing** — a silent square corner.
-- Light theme only: `color-scheme: light` in `tokens.css`, no dark mode, no `prefers-color-scheme`.
+- **Layers, built top-down:** foundations (Lyon-derived type scale, 4px spacing, concentric radii,
+  color *roles* with light **and dark** values, prefix `--ad-*`) → brand signatures as components
+  (patterned plate, ghost-word heading, date line, pattern, Deebo states) → primitives (one tab,
+  one empty state, stat tile, toolbar, room header) → templates (portal: collection, form, record,
+  workspace, account, stats; public: persuade, index, read, tool) → rooms. **Rooms hold no styling.**
+- **The identity ratchet** (`scripts/identity-ratchet.mjs`, in `pnpm check` and the pre-commit
+  hook) counts what is written outside the system — raw font-size/padding/gap/line-height, weights
+  outside 400/500/700/900, px radii, raw z-index, `#hex`/`rgb()`, `style={{}}`, Arabic-Indic digit
+  helpers, empty-state classes, Tailwind classes — against `scripts/identity-baseline.json`.
+  **Any count that rises fails.** Never raise the baseline to pass work; that is محمد's call.
+  `--update` only lowers it after a migration.
+- **Tailwind is being removed entirely** (his decision). Add no Tailwind class. Its copied type
+  ladder (`--text-*`) goes when the new scale lands; the package goes when the count hits zero.
+- **Dark mode is a requirement of the new identity, and it is site-wide:** every color is a role
+  with two values, and the mode lives on `<html data-theme>` only, written before first paint by
+  `THEME_SCRIPT` (`lib/theme.ts`, run from `app/layout.tsx`). Never theme one part of a page (his
+  words: dark mode is on everything, the sidebar included). Legacy `--color-*` tokens get their dark
+  values from a bridge at the end of `tokens.css`; legacy rules that write scale steps directly get
+  temporary dark lines in `ad.css` until their component migrates. The public toggle
+  (day / dark / device) ships once everything is dark-safe. Radio keeps its own dark mode (isolated
+  identity), as do the games.
+- **Still enforced:** two stylesheets, one source each — `packages/design-system/tokens.css` and
+  `components.css`; `apps/web/src/app/globals.css` holds only the Preflight replacement, the
+  Tailwind `@theme` binding (until removal) and page-scoped families. Load order in
+  `app/layout.tsx`: `fonts.css` → `tokens.css` → `globals.css` → `components.css` (last wins); a
+  selector in both sheets fails `scripts/css-single-source.mjs`.
+- Radius on legacy Tailwind classes: only `rounded`, `rounded-xs`, `rounded-sm`, `rounded-nested`,
+  `rounded-full` exist; `rounded-md/lg/xl/2xl` emit nothing.
 
 ### Icons
 - `@phosphor-icons/react`, weight **duotone** for the whole site, set once via `IconContext` in
@@ -457,5 +470,6 @@ Two limits that do **not** move:
 
 **And the first round is where a feature is won or lost.** He objected that one feature eats a week
 of revisions. The cause is that a taste decision gets *described* in words instead of *shown*.
-So: build no visual feature from a verbal description. Put two options side by side on a `/ui`
-page, let him look and decide, then build. See `v2/DESIGN-RULES.md`.
+So: build no visual feature from a verbal description. Show it **inside real rooms with their real
+data**, next to the current version, at desktop, tablet and mobile and in light and dark — never a
+lone component on a `/ui` page — let him look and decide, then build. See `v2/DESIGN.md`.

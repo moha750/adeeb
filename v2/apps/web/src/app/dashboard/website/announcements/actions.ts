@@ -172,6 +172,36 @@ export async function moveAnnouncement(
   return { ok: true, message: dir === "up" ? "حُرّك لأعلى." : "حُرّك لأسفل." };
 }
 
+/** المعرّفاتُ كما وصلت من المتصفّح: مصفوفةُ نصوصٍ بلا تكرار، وهي نفسُها ما في الخادم الآن — وإلّا فالقائمةُ تغيّرت منذ فُتحت. */
+const STALE = "تغيّرت القائمةُ منذ فُتحت. حدّث الصفحة ثمّ رتّبها من جديد.";
+function sameSet(ids: unknown, now: Set<string>): ids is string[] {
+  if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string")) return false;
+  return ids.length === now.size && new Set(ids).size === ids.length && ids.every((id) => now.has(id as string));
+}
+
+/**
+ * **حفظُ ترتيب الشريط كاملًا** (٢٠٢٦-١١-٠٢، غرفةُ الشريط على قالب «قائمة السجلّات»: سحبٌ وإفلاتٌ في القائمة نفسِها بدل «تحريك
+ * خطوة»)، على عُرف `reorderFaqs`: يكتب `sort` لكلّ إعلانٍ بترتيبه الجديد (1، 2، 3…) — المُطفَأُ معها، فموضعُه محفوظٌ يومَ يُشعَل —
+ * ويرفض إن تغيّرت القائمةُ في الخادم منذ فُتحت. و`moveAnnouncement` أعلاه باقيةٌ لـ`AnnouncementsView` القديمة.
+ */
+export async function reorderAnnouncements(ids: string[]): Promise<AnnouncementResult> {
+  const mgr = await getWebsiteManager("announcements");
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const { data: rows, error } = await sb.from("announcements").select("id");
+  if (error) return { ok: false, message: error.message };
+  if (!sameSet(ids, new Set((rows ?? []).map((r) => r.id as string)))) return { ok: false, message: STALE };
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("announcements").update({ sort: i + 1 }).eq("id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateAnnouncements();
+  return { ok: true, message: "حُفظ الترتيب." };
+}
+
 /* ══ الأخبار المعروضة في الصدر (`hero_news`) ══════════════════════════
    قسمٌ ثانٍ في الغرفة نفسِها وبقفلها نفسِه. والإزالةُ لا تمسّ الخبر: تُخرجه من
    العارض وحده، فلا تأكيدَ لها ولا «منطقةَ خطر». */
@@ -260,4 +290,26 @@ export async function moveHeroNews(
 
   revalidateAnnouncements();
   return { ok: true, message: dir === "up" ? "حُرّك لأعلى." : "حُرّك لأسفل." };
+}
+
+/**
+ * **حفظُ ترتيب العارض كاملًا** — أختُ `reorderAnnouncements` لجدول `hero_news` (المفتاحُ الخبر): `sort` لكلّ خبرٍ بترتيبه الجديد،
+ * والرفضُ إن تغيّر الاختيارُ منذ فُتح. و`moveHeroNews` أعلاه باقيةٌ لـ`HeroNewsView` القديمة.
+ */
+export async function reorderHeroNews(ids: string[]): Promise<AnnouncementResult> {
+  const mgr = await getWebsiteManager("announcements");
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const { data: rows, error } = await sb.from("hero_news").select("news_id");
+  if (error) return { ok: false, message: error.message };
+  if (!sameSet(ids, new Set((rows ?? []).map((r) => r.news_id as string)))) return { ok: false, message: STALE };
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("hero_news").update({ sort: i + 1 }).eq("news_id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateAnnouncements();
+  return { ok: true, message: "حُفظ الترتيب." };
 }

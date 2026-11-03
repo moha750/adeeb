@@ -107,12 +107,13 @@ export function Dialog({
     };
   }, [mounted]);
 
-  // التركيز المبدئيّ عند الفتح (أوّل عنصر قابل للتركيز، وإلا الصندوق نفسه)
+  // التركيز المبدئيّ عند الفتح: ما عُلِّم `data-autofocus` (المخرجُ الآمن في تأكيد الحذف — فلا يحذف Enter عَجِلٌ)،
+  // وإلا أوّل عنصر قابل للتركيز، وإلا الصندوق نفسه
   useEffect(() => {
     if (!mounted || state !== "open") return;
     const root = contentRef.current;
     if (!root) return;
-    const first = root.querySelector<HTMLElement>(FOCUSABLE);
+    const first = root.querySelector<HTMLElement>("[data-autofocus]:not([disabled])") ?? root.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? root).focus();
   }, [mounted, state]);
 

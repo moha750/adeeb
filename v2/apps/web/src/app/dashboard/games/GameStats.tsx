@@ -1,16 +1,15 @@
 "use client";
 
 import { BarList, Donut, SectionCard } from "@adeeb/design-system";
-import { GameController, Sparkle, Users } from "@phosphor-icons/react";
+import { GameController, Gauge, PersonSimpleRun, Sparkle, Translate, Users } from "@phosphor-icons/react";
 import { CheckCircle, Eye } from "@/app/_components/glyphs";
 import { GameOverview, type OverviewKpi } from "./GameOverview";
-import { sumOf } from "./WeekPulse";
-import { NOUNS, countNoun, type BankStats, type DarbLeaders, type GameDay, type GameWeek, type Noun } from "./vocab";
+import { sumOf } from "./MonthPulse";
+import { NOUNS, PERIOD, PERIOD_LABEL, countNoun, type BankStats, type DarbLeaders, type GameDay, type GamePeriod, type Noun } from "./vocab";
 
 const nf = (n: number) => n.toLocaleString("en-US");
-const WEEK = "في سبعة أيام";
 const kpi = (icon: React.ReactNode, noun: Noun, now: number, before: number): OverviewKpi => ({
-  icon, label: `${countNoun(now, noun)} ${WEEK}`, value: nf(now), now, before,
+  icon, label: `${countNoun(now, noun)} ${PERIOD_LABEL}`, value: nf(now), now, before,
 });
 
 const TAMR = { one: "تمرة", two: "تمرتان", few: "تمرات", many: "تمرةً" };
@@ -21,40 +20,40 @@ const pick = <K extends string>(m: Partial<Record<K, number>>, keys: K[], names:
   keys.filter((k) => (m[k] ?? 0) > 0).map((k) => ({ label: names[k], value: m[k] ?? 0 }));
 
 /**
- * **نظرةُ كلّ لعبة** — أرقامُها الأربعة في سبعة أيّام ثمّ ما يخصّها. والهيكلُ واحد (`GameOverview`)،
- * فلعبةٌ جديدةٌ فرعٌ هنا: أرقامُها من `game_days`/`game_weeks` وما يخصّها من دالّتها.
+ * **نظرةُ كلّ لعبة** — أرقامُها الأربعة في النافذة (`PERIOD`) ثمّ ما يخصّها. والهيكلُ واحد (`GameOverview`)،
+ * فلعبةٌ جديدةٌ فرعٌ هنا: أرقامُها من `game_days`/`game_periods` وما يخصّها من دالّتها.
  */
 export function GameStats({
-  slug, days, week, bank, leaders,
+  slug, days, period, bank, leaders,
 }: {
   slug: string;
   days: GameDay[];
-  week?: GameWeek;
+  period?: GamePeriod;
   bank?: BankStats | null;
   leaders?: DarbLeaders | null;
 }) {
-  const last = days.slice(-7);
-  const prev = days.slice(-14, -7);
+  const last = days.slice(-PERIOD);
+  const prev = days.slice(-2 * PERIOD, -PERIOD);
   const runs = kpi(<GameController />, NOUNS.RUN, sumOf(last, "runs"), sumOf(prev, "runs"));
-  const visitors = kpi(<Eye />, NOUNS.VISITOR, week?.visitors[0] ?? 0, week?.visitors[1] ?? 0);
+  const visitors = kpi(<Eye />, NOUNS.VISITOR, period?.visitors[0] ?? 0, period?.visitors[1] ?? 0);
 
   if (slug === "darbak-khadar") {
     return (
       <GameOverview
-        days={days}
+        days={last}
         kpis={[
           runs,
-          kpi(<Users />, NOUNS.PLAYER, week?.players[0] ?? 0, week?.players[1] ?? 0),
+          kpi(<Users />, NOUNS.PLAYER, period?.players[0] ?? 0, period?.players[1] ?? 0),
           kpi(<Sparkle />, NOUNS.DATE, sumOf(last, "score"), sumOf(prev, "score")),
           visitors,
         ]}
         extra={
           leaders ? (
             <>
-              <SectionCard title="أكثر تمر منذ الإطلاق">
+              <SectionCard title="أكثر تمر منذ الإطلاق" icon={<Sparkle />}>
                 <BarList unit={TAMR} items={leaders.tamr.map((r) => ({ label: r.nickname, value: r.value }))} empty="لا أحد بعد." />
               </SectionCard>
-              <SectionCard title="أبعد مسافة منذ الإطلاق">
+              <SectionCard title="أبعد مسافة منذ الإطلاق" icon={<PersonSimpleRun />}>
                 <BarList formatValue={(n) => `${nf(n)} م`} items={leaders.dist.map((r) => ({ label: r.nickname, value: r.value }))} empty="لا أحد بعد." />
               </SectionCard>
             </>
@@ -73,23 +72,23 @@ export function GameStats({
     const rateB = answeredB ? Math.round((hitsB / answeredB) * 100) : 0;
     return (
       <GameOverview
-        days={days}
+        days={last}
         kpis={[
           runs,
-          kpi(<Users />, NOUNS.NAME, week?.players[0] ?? 0, week?.players[1] ?? 0),
-          { icon: <CheckCircle />, label: `أصابوا الجواب ${WEEK}`, value: `${rate}%`, now: rate, before: rateB, tone: "success" },
+          kpi(<Users />, NOUNS.NAME, period?.players[0] ?? 0, period?.players[1] ?? 0),
+          { icon: <CheckCircle />, label: `أصابوا الجواب ${PERIOD_LABEL}`, value: `${rate}%`, now: rate, before: rateB, tone: "success" },
           visitors,
         ]}
         extra={
           bank ? (
             <>
-              <SectionCard title="النتائج منذ الإطلاق">
+              <SectionCard title="النتائج منذ الإطلاق" icon={<CheckCircle />}>
                 <Donut items={pick(bank.results, ["correct", "wrong", "timeout", "abandoned"], RESULT)} unit={PLAYS} />
               </SectionCard>
-              <SectionCard title="المستوى منذ الإطلاق">
+              <SectionCard title="المستوى منذ الإطلاق" icon={<Gauge />}>
                 <BarList items={pick(bank.levels, ["easy", "medium", "hard", "none"], LEVEL)} unit={PLAYS} />
               </SectionCard>
-              <SectionCard title="اللغة منذ الإطلاق">
+              <SectionCard title="اللغة منذ الإطلاق" icon={<Translate />}>
                 <BarList items={pick(bank.langs, ["ar", "en"], { ar: "العربيّة", en: "الإنجليزيّة" })} unit={PLAYS} />
               </SectionCard>
             </>
@@ -99,5 +98,5 @@ export function GameStats({
     );
   }
 
-  return <GameOverview days={days} kpis={[runs, visitors]} />;
+  return <GameOverview days={last} kpis={[runs, visitors]} />;
 }

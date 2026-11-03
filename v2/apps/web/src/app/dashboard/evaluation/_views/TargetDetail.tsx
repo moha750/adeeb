@@ -1,29 +1,34 @@
 "use client";
 
 /**
- * **تفصيلُ مقيَّمٍ وبابُ تصحيحه** — أُعيد من الأساس بعد جولة ملاحظات المحاكي (محمد ٢٠٢٦-١٠-٢٧: «سيّئةٌ جدًّا
- * وقبيحة»). كان يلبس غلافَ نافذة الشخص ولا يتبع نمطَها، ويضع سطحًا مؤطَّرًا في سطح (ق١٢)، وزرَّ «أخرِج» أحمرَ
- * على كلّ اسم. وله الآن وجهان قيد الاختيار يتقاسمان القطعَ نفسَها:
+ * **تفصيلُ مقيَّمٍ وبابُ تصحيحه** — هيكلُه «تبويباتٌ بغلاف الملفّ» (محمد ٢٠٢٦-١٠-٢٨: «كهيكلٍ وفكرة جميل»)،
+ * ولباسُه لغةُ نوافذ المنصّة نفسُها لا لغةٌ مخترعة (وقال: «كتصميمٍ سيّئ… ولا تشطح عن الهويّة»):
  *
- * - **«ملفّ»**: نمطُ نافذة الشخص في المنصّة بعينه (`pvb-*` غلافٌ وأفتار، ثمّ أقسامٌ بعناوينها `ModalSectionHeading`).
- * - **«تبويبات»**: غلافُ «الملفّ» ورأسُه، ثمّ تبويبٌ لكلّ شأن، **والقرارُ أوّلًا** حين ينتظر منسّقٌ لجنته.
+ * - **الرأسُ رأسُ نافذة الشخص** (`pvb-*`): غلافٌ منقوشٌ وأفتار، والاسمُ والمنصبُ والحالُ في الوسط.
+ * - **التبويباتُ في الوسط** كالنافذة المبوّبة في `/ui/modal`، لا شريطًا ممدودًا.
+ * - **المتنُ أقسامٌ بعناوينها وخلايا** (`ModalSectionHeading` و`pva-cell`) كنافذة الملفّ، والنتيجةُ خليّةٌ
+ *   عريضةٌ عليها مسطرةُ الحدّ.
+ * - **الأفعالُ في التذييل** كنافذة النموذج: زرُّ الفعل وزرُّ الإغلاق نصفين، لا أزرارَ في المتن.
  *
- * وما لا يتغيّر بينهما:
+ * وما لا يتغيّر:
  * - النتيجةُ لمن يملك `view_leader_evaluation_results` وحده (تُنزع من الخادم لغيره أصلًا).
  * - المقيِّمون أسماءٌ وشقّ، **ولا شيءَ عن مشاركتهم** (السرّيّة).
- * - التصحيحُ (م١٠/3) لصاحب `manage_leader_evaluation`: فعلٌ واحدٌ يُختار، ثمّ سببٌ مكتوب، ثمّ زرّ. ولا تظلّم (م١٠/1).
- * - المنسّقُ المستبعَدُ بلا لجنةٍ سابقة: تُختار له لجنةٌ فيُنفَّذ (المسألة ٤).
+ * - التصحيحُ (م١٠/3) لصاحب `manage_leader_evaluation`: فعلٌ يُختار، فسببٌ مكتوب. ولا تظلّم (م١٠/1).
+ * - المنسّقُ المستبعَدُ بلا لجنةٍ سابقة: تُختار له لجنةٌ فيُنفَّذ (المسألة ٤)، **والقرارُ أوّلُ ما يُفتح**.
+ * - الاختيارُ منسدلٌ لا قائمةٌ مبسوطة (أمرُ محمد ٢٠٢٦-٠٩-٢٤ في نافذة الحملات).
  */
 import { useState } from "react";
-import { Alert, Badge, Button, Modal, ModalSectionHeading, OptionList, Segmented, Select, Textarea } from "@adeeb/design-system";
+import { Alert, Badge, Button, Modal, ModalSectionHeading, Segmented, Select, Textarea } from "@adeeb/design-system";
 import { ArrowsClockwise } from "@/app/_components/glyphs";
-import { ChartBar, NotePencil, UserMinus, UserPlus, UserSwitch, UsersThree } from "@phosphor-icons/react";
+import { ChartBar, Gauge, MathOperations, NotePencil, UserMinus, UserPlus, UserSwitch, UsersThree, Wrench } from "@phosphor-icons/react";
+import { rankFor } from "@/lib/positionLabel";
 import { Avatar } from "../../_components/Avatar";
+import { Cell } from "../../_components/Cell";
 import { useToast } from "../../_components/ToastProvider";
 import type { ElectorRow, TargetRow } from "../data";
 import type { EvaluationResult } from "../actions";
 import { PART_WEIGHT, VERDICT_LABEL, partName, type EvaluatedRole, type Part, type Verdict } from "../vocab";
-import { Of, Pct, frac, pctNumber, quorumLine, seatLine } from "./parts";
+import { Pct, frac, pctNumber, quorumLine, seatLine } from "./parts";
 
 export type DetailActions = {
   correctRater: (i: { targetId: number; raterId: string; action: "remove" | "add"; part?: Part; reason: string }) => Promise<EvaluationResult>;
@@ -36,7 +41,6 @@ export const VERDICT_TONE: Record<Verdict, "success" | "danger" | "neutral"> = {
 type Committee = { id: number; name: string; department_id?: number | null };
 type Props = {
   target: TargetRow;
-  layout?: "profile" | "tabs";
   /** `null` ما دام يُجلب. */
   electorate: ElectorRow[] | null;
   people: { id: string; name: string }[];
@@ -51,8 +55,12 @@ type Props = {
   onDone?: () => void;
 };
 
+type Tab = "decide" | "result" | "raters" | "fix";
+type Fix = "remove" | "add" | "recompute";
+
 const fm = (g: TargetRow["gender"], m: string, f: string) => (g === "female" ? f : m);
-const firstName = (n: string) => n.split(" ")[0];
+/** النسبةُ بالخطّ اللاتينيّ واتّجاهِه (CLAUDE.md §5): في خطّ المتن تنقلب «70%» إلى «%70». */
+const P = ({ v }: { v: number | string }) => <span className="font-latin" dir="ltr">{v}%</span>;
 
 /** الشارةُ: الحكمُ، أو «ينتظر لجنة»، أو حالُ الدورة قبل الحكم. */
 function StateBadge({ t }: { t: TargetRow }) {
@@ -62,327 +70,291 @@ function StateBadge({ t }: { t: TargetRow }) {
   return null;
 }
 
-/** كيف حُسبت (م٥): جملةٌ تقول الفرعَ بلسان الناس لا باسمه. */
-function BranchLine({ t }: { t: TargetRow }) {
-  if (t.branch === "both") {
-    return <p className="evx-branch">حُسبت من الشقّين: <span className="font-latin" dir="ltr">70%</span> للأعضاء و<span className="font-latin" dir="ltr">30%</span> للمجلس الإداري.</p>;
-  }
-  if (t.branch === "members_only") return <p className="evx-branch">لم يقيّمه أحدٌ من المجلس الإداري، فحُسبت من الأعضاء وحدهم.</p>;
-  if (t.branch === "council_only") return <p className="evx-branch">لم يشارك نصفُ الأعضاء، فحُسبت من المجلس الإداري وحده.</p>;
-  if (t.branch === "none") return <p className="evx-branch">لم يكتمل ما تُحسب به، فلا نتيجة في هذه الدورة.</p>;
+/** كيف حُسبت (م٥): جملةٌ بلسان الناس لا باسم الفرع. */
+function branchText(t: TargetRow): React.ReactNode {
+  const m = partName("members", t.role_name);
+  if (t.branch === "both") return <>حُسبت من الشقّين: <P v={70} /> ل{m} و<P v={30} /> للمجلس الإداري.</>;
+  if (t.branch === "members_only") return `لم يقيّمه أحدٌ من المجلس الإداري، فحُسبت من ${m} وحدهم.`;
+  if (t.branch === "council_only") return `لم يشارك نصفُ ${m}، فحُسبت من المجلس الإداري وحده.`;
+  if (t.branch === "none") return "لم يكتمل ما تُحسب به، فلا نتيجة في هذه الدورة.";
   return null;
 }
 
-/** النتيجةُ على مسطرةٍ من 0 إلى 100 عليها حدُّ الاستبعاد مسمًّى، ثمّ الشقّان صفّين. */
-function ResultView({ t, closed, bare }: { t: TargetRow; closed: boolean; bare?: boolean }) {
+/** خليّةٌ بلغة `Cell` نفسِها (`pva-cell`) ومتنُها عنصرٌ لا نصّ: نسبةٌ تُعزل، أو جملةٌ فيها نسب. */
+function RichCell({ icon, label, children, full }: { icon: React.ReactNode; label: React.ReactNode; children: React.ReactNode; full?: boolean }) {
+  return (
+    <div className={"pva-cell" + (full ? " full wrap" : "")}>
+      <div className="pva-lbl"><span className="pva-lic">{icon}</span>{label}</div>
+      <div className="pva-val">{children}</div>
+    </div>
+  );
+}
+
+/** المشاركةُ في كلّ شقّ: كم من كم، وللأعضاء حالُ النصف (م٥/1). */
+function Participation({ t, closed }: { t: TargetRow; closed: boolean }) {
+  const q = quorumLine(t.members_ballots, t.members_eligible, closed);
+  return (
+    <section className="pva-sec">
+      <ModalSectionHeading icon={<UsersThree />} title="المشاركة" />
+      <div className="pva-grid">
+        <Cell noCopy label={partName("members", t.role_name)} icon={<UsersThree />} value={`${t.members_ballots} من ${t.members_eligible}، ${q.text}`} />
+        <Cell noCopy label="المجلس الإداري" icon={<UsersThree />} value={`${t.council_ballots} من ${t.council_eligible}`} />
+      </div>
+    </section>
+  );
+}
+
+/** النتيجة: خليّةٌ عريضةٌ بالنسبة ومسطرةِ الحدّ، ثمّ الشقّان، ثمّ طريقةُ الحساب جملة. */
+function Result({ t }: { t: TargetRow }) {
   const f = frac(t.final_num, t.final_den);
   const out = t.verdict === "removed";
+  const why = branchText(t);
   return (
-    <div className="evx-result">
-      {f ? (
-        <div className={"evx-scale" + (out ? " out" : "")}>
-          {/* في «التبويبات» الرقمُ في الرأس فوق التبويب، فلا يُعاد هنا */}
-          {bare ? null : (
-            <div className="evx-scale-top">
-              <Pct f={f} className="evx-scale-n" />
-              <span className="evx-scale-v">{t.verdict ? VERDICT_LABEL[t.verdict] : ""}</span>
+    <section className="pva-sec">
+      <ModalSectionHeading icon={<ChartBar />} title="النتيجة" />
+      <div className="pva-grid">
+        {f ? (
+          <div className={"pva-cell full evx-final" + (out ? " out" : "")}>
+            <div className="pva-lbl"><span className="pva-lic"><Gauge /></span>النتيجة النهائية</div>
+            <div className="evx-final-row">
+              <Pct f={f} className="evx-final-n" />
+              {t.verdict ? <span className="evx-final-v">{VERDICT_LABEL[t.verdict]}</span> : null}
             </div>
-          )}
-          <div className="evx-scale-track" aria-hidden>
-            <span className="evx-scale-fill" style={{ inlineSize: `${pctNumber(f)}%` }} />
-            <span className="evx-scale-cut"><span>حدّ الاستبعاد <span className="font-latin" dir="ltr">40%</span></span></span>
+            <div className="evx-scale" aria-hidden>
+              <span className="evx-scale-fill" style={{ inlineSize: `${pctNumber(f)}%` }} />
+              <span className="evx-scale-cut" />
+            </div>
+            <div className="evx-scale-l" aria-hidden>
+              <span>حدّ الاستبعاد <span className="font-latin" dir="ltr">40%</span></span>
+            </div>
           </div>
-        </div>
-      ) : null}
-      <Parts t={t} closed={closed} results />
-      <BranchLine t={t} />
-    </div>
+        ) : null}
+        {(["members", "council"] as const).map((p) => {
+          const pf = p === "members" ? frac(t.members_num, t.members_den) : frac(t.council_num, t.council_den);
+          return (
+            <RichCell key={p} icon={<UsersThree />} label={<>{partName(p, t.role_name)} <P v={PART_WEIGHT[p]} /></>}>
+              {pf ? <Pct f={pf} /> : "لا يُحتسب"}
+            </RichCell>
+          );
+        })}
+        {why ? <RichCell full icon={<MathOperations />} label="طريقة الحساب">{why}</RichCell> : null}
+      </div>
+    </section>
   );
 }
 
-/** الشقّان: الوزنُ والنسبةُ (لمن يرى النتائج بعد الحكم) والمشاركةُ وحالُ النصاب. */
-function Parts({ t, closed, results }: { t: TargetRow; closed: boolean; results: boolean }) {
-  return (
-    <div className="evx-parts">
-      {(["members", "council"] as const).map((p) => {
-        const f = p === "members" ? frac(t.members_num, t.members_den) : frac(t.council_num, t.council_den);
-        const n = p === "members" ? t.members_ballots : t.council_ballots;
-        const of = p === "members" ? t.members_eligible : t.council_eligible;
-        const q = p === "members" ? quorumLine(n, of, closed) : null;
-        return (
-          <div key={p} className="evx-part">
-            <span className="evx-part-k">
-              {partName(p, t.role_name)}
-              <span className="font-latin" dir="ltr">{PART_WEIGHT[p]}%</span>
-            </span>
-            <span className="evx-part-tx">
-              شارك <Of n={n} of={of} />
-              {q ? <span className={"evx-q" + (q.met ? " met" : "")}>، {q.text}</span> : null}
-            </span>
-            {results ? (f ? <Pct f={f} className="evx-part-n" /> : <span className="evx-part-none">لا يُحتسب</span>) : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** المقيِّمون عمودين بشقّيهما: أسماءٌ فحسب، وما صحّحته الإدارةُ موسوم. */
+/** المقيِّمون بشقّيهما: أفتارٌ واسم، والمشرفان (م٤/1) بعنوانٍ يقول لماذا هم مع المجلس. */
 function Raters({ electorate, role }: { electorate: ElectorRow[] | null; role: EvaluatedRole }) {
-  if (electorate === null) return <p className="evx-hint">يُجلب المقيِّمون…</p>;
-  const row = (e: ElectorRow) => (
-    <div key={e.rater_id ?? e.full_name} className={"evx-rater" + (e.removed ? " is-out" : "")}>
-      <span>{e.full_name ?? "حسابٌ محذوف"}</span>
-      {e.removed ? <em>أُخرج</em> : e.added_by_correction ? <em className="add">أُضيف</em> : null}
+  if (electorate === null) return <p className="mdl-muted">يُجلب المقيِّمون…</p>;
+  const person = (e: ElectorRow) => (
+    <div key={e.rater_id ?? e.full_name} className={"evx-person" + (e.removed ? " is-out" : "")}>
+      <Avatar name={e.full_name ?? ""} gender={e.gender ?? undefined} size="sm" />
+      {/* المنصبُ تحت الاسم (محمد ٢٠٢٦-١٠-٢٩): يقول لماذا هو هنا، لا من قيّم ولا بماذا */}
+      <span className="evx-person-tx">
+        <span className="evx-person-n">{e.full_name ?? "حسابٌ محذوف"}</span>
+        {e.seat_title ? <span className="evx-person-s">{rankFor(e.seat_title, e.gender)}</span> : null}
+      </span>
+      {e.removed ? <Badge tone="neutral" variant="soft" size="sm">أُخرج</Badge> : e.added_by_correction ? <Badge tone="info" variant="soft" size="sm">أُضيف</Badge> : null}
     </div>
   );
+  // ثلاثةُ أقسامٍ بلغةٍ واحدة (محمد ٢٠٢٦-١٠-٢٩): الأعضاء، والمجلسُ الإداريّ، والمشرفون على اللجنة من الإدارتين.
+  // والمشرفون في شقّ المجلس حسابًا (م٤/1)، لكنّهم ليسوا منه، فلهم قسمُهم وعددُهم.
+  const groups = [
+    { key: "members", title: partName("members", role), list: electorate.filter((e) => e.part === "members") },
+    { key: "council", title: "المجلس الإداري", list: electorate.filter((e) => e.part === "council" && !e.supervisor) },
+    { key: "sup", title: "المشرفون على اللجنة من الإدارتين", list: electorate.filter((e) => e.part === "council" && e.supervisor) },
+  ].filter((g) => g.key !== "sup" || g.list.length > 0);
   return (
-    <div className="evx-raters">
-      {(["members", "council"] as const).map((p) => {
-        const list = electorate.filter((e) => e.part === p);
-        return (
-          <div key={p} className="evx-col">
-            <div className="evx-col-h">
-              {partName(p, role)}
-              <span className="font-latin">{list.filter((e) => !e.removed).length}</span>
-            </div>
-            {list.filter((e) => !e.supervisor).map(row)}
-            {/* المشرفان (م٤/1) يقيّمان مع المجلس وليسا منه: عنوانٌ يقول ذلك جملةً لا وسمًا (محمد ٢٠٢٦-١٠-٢٨) */}
-            {list.some((e) => e.supervisor) ? (
-              <>
-                <div className="evx-sub">ومعهم المشرفون على اللجنة من الإدارتين</div>
-                {list.filter((e) => e.supervisor).map(row)}
-              </>
-            ) : null}
-            {list.length === 0 ? <span className="evx-hint">لا أحد.</span> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-type Run = (key: string, fn: () => Promise<EvaluationResult>) => Promise<void>;
-
-/** التصحيح (م١٠/3): فعلٌ واحدٌ يُختار، فحقولُه، فسببُه، فزرُّه. لا أزرارَ حمراءَ على كلّ اسم. */
-function Correction({ t, electorate, people, actions, run, busy }: { t: TargetRow; electorate: ElectorRow[] | null; people: Props["people"]; actions: DetailActions; run: Run; busy: string | null }) {
-  const decided = t.verdict !== null;
-  const [mode, setMode] = useState<"remove" | "add" | "recompute">("remove");
-  const [who, setWho] = useState("");
-  const [part, setPart] = useState<Part>("members");
-  const [reason, setReason] = useState("");
-  const live = (electorate ?? []).filter((e) => !e.removed && e.rater_id);
-  const liveIds = live.map((e) => e.rater_id);
-  const addable = people.filter((p) => !liveIds.includes(p.id) && p.id !== t.user_id);
-  const why = reason.trim();
-  const ready = why.length >= 3 && (mode === "recompute" || !!who);
-  const after = decided ? " ثمّ يُعاد الحساب، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم." : "";
-  const hint = {
-    remove: `من دخل المقيِّمين بالخطأ: يُبطَل ما كتبه إن كان قيّم.${after}`,
-    add: `من سقط من المقيِّمين بالخطأ: يُضاف إليهم${decided ? " ويُحسب في عددهم" : " ويقيّم ما بقيت الدورةُ مفتوحة"}.${after}`,
-    recompute: "يُعاد الحسابُ بالأوراق الحاضرة، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم.",
-  }[mode];
-
-  const submit = () =>
-    run(mode, () =>
-      mode === "recompute"
-        ? actions.recompute(t.id, why)
-        : actions.correctRater({ targetId: t.id, raterId: who, action: mode, part: mode === "add" ? part : undefined, reason: why }),
-    )
-      .then(() => {
-        setWho("");
-        setReason("");
-      })
-      .catch(() => undefined);
-
-  return (
-    <div className="evx-form">
-      <Segmented
-        wide
-        items={[
-          { value: "remove", label: "أخرِج مقيِّمًا" },
-          { value: "add", label: "أدخِل مقيِّمًا" },
-          ...(decided ? [{ value: "recompute", label: "أعِد الحساب" }] : []),
-        ]}
-        value={mode}
-        onValueChange={(v) => {
-          setMode(v as typeof mode);
-          setWho("");
-        }}
-      />
-      <p className="evx-hint">{hint}</p>
-      {mode === "remove" ? (
-        <Select label="من دخل بالخطأ" icon={<UserMinus />} searchable placeholder="اختر من المقيِّمين" value={who} onValueChange={setWho}
-          options={live.map((e) => ({ value: e.rater_id!, label: e.full_name ?? "", hint: partName(e.part, t.role_name) }))} />
-      ) : mode === "add" ? (
-        <div className="form-grid">
-          <Select label="من سقط بالخطأ" icon={<UserPlus />} searchable placeholder="اختر العضو" value={who} onValueChange={setWho}
-            options={addable.map((p) => ({ value: p.id, label: p.name }))} />
-          <Select label="يقيّم من" icon={<UsersThree />} value={part} onValueChange={(v) => setPart(v as Part)}
-            options={(["members", "council"] as const).map((p) => ({ value: p, label: partName(p, t.role_name) }))} />
-        </div>
-      ) : null}
-      <Textarea label="سبب التصحيح" icon={<NotePencil />} innerIcon={<NotePencil />} placeholder="ما الخطأ الذي يُصحَّح؟ يُحفظ في السجلّ." value={reason} onChange={(e) => setReason(e.target.value)} />
-      <div className="btn-row">
-        <Button variant={mode === "remove" ? "danger" : "primary"} disabled={!ready} loading={busy === mode} onClick={submit}>
-          {mode === "remove" ? <UserMinus aria-hidden /> : mode === "add" ? <UserPlus aria-hidden /> : <ArrowsClockwise aria-hidden />}
-          {mode === "remove" ? "أخرِجه" : mode === "add" ? "أدخِله" : "أعِد الحساب"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** اختيارُ لجنة المنسّق المستبعَد (المسألة ٤): قائمةً بأقسامها، ولجانُ قسمه أوّلًا. */
-function ReturnChooser({ t, committees, departments, mode, actions, run, busy }: { t: TargetRow; committees: Committee[]; departments: Record<number, string>; mode: "select" | "list"; actions: DetailActions; run: Run; busy: string | null }) {
-  const [to, setTo] = useState<string>("");
-  const sorted = [...committees].sort((a, b) => Number(b.department_id === t.department_id) - Number(a.department_id === t.department_id) || a.name.localeCompare(b.name, "ar"));
-  const hint = (c: Committee) => (c.department_id === t.department_id ? `من ${fm(t.gender, "قسمه", "قسمها")}` : c.department_id ? departments[c.department_id] : undefined);
-  const go = () => run("return", () => actions.chooseReturn(t.id, Number(to)));
-  const chosen = committees.find((c) => String(c.id) === to);
-  return (
-    <div className="evx-form">
-      <p className="evx-lead">
-        {fm(t.gender, "لا لجنةَ سابقةَ له يعود", "لا لجنةَ سابقةَ لها تعود")} إليها، {fm(t.gender, "فيبقى في منصبه", "فتبقى في منصبها")} حتى تختار.
-        {" "}{fm(t.gender, "ويعود", "وتعود")} عضوًا في اللجنة التي تختارها، {fm(t.gender, "ويُبلَّغ", "وتُبلَّغ")} بالجرس والبريد.
-      </p>
-      {mode === "select" ? (
-        <Select label="اللجنة" icon={<UsersThree />} placeholder="اختر لجنة" value={to} onValueChange={setTo}
-          options={sorted.map((c) => ({ value: String(c.id), label: c.name, hint: hint(c) }))} />
-      ) : (
-        <OptionList aria-label="اللجان" value={to || null} onValueChange={setTo}
-          items={sorted.map((c) => ({ value: String(c.id), label: c.name, hint: hint(c) }))} />
-      )}
-      <div className="btn-row">
-        <Button variant="danger" disabled={!to} loading={busy === "return"} onClick={go}>
-          <UserSwitch aria-hidden />
-          {chosen ? `نفّذ الاستبعاد إلى ${chosen.name}` : "نفّذ الاستبعاد"}
-        </Button>
-      </div>
+    <div className="pva-sections">
+      {groups.map((g) => (
+        <section key={g.key} className="pva-sec">
+          <ModalSectionHeading icon={<UsersThree />} title={`${g.title} (${g.list.filter((e) => !e.removed).length})`} />
+          {g.list.length ? <div className="evx-people">{g.list.map(person)}</div> : <p className="mdl-muted">لا أحد.</p>}
+        </section>
+      ))}
     </div>
   );
 }
 
 export function TargetDetail(props: Props) {
   const { target: t, electorate, canManage, actions, onClose, onDone } = props;
-  const layout = props.layout ?? "profile";
   const closed = props.closed ?? t.verdict !== null;
   const results = (props.canViewResults ?? true) && t.verdict !== null;
   const departments = props.departments ?? {};
-  const toast = useToast();
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const decided = t.verdict !== null;
   const deciding = t.awaiting_return && canManage;
-  const [tab, setTab] = useState<string>(deciding ? "decide" : "result");
+  const toast = useToast();
+  const [tab, setTab] = useState<Tab>(deciding ? "decide" : "result");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // الاختيارُ والتصحيحُ مرفوعان إلى هنا: زرُّهما في التذييل
+  const [to, setTo] = useState("");
+  const [fix, setFix] = useState<Fix>("remove");
+  const [who, setWho] = useState("");
+  const [part, setPart] = useState<Part>("members");
+  const [reason, setReason] = useState("");
 
-  const run: Run = async (key, fn) => {
-    setBusy(key);
+  const run = async (fn: () => Promise<EvaluationResult>, after?: () => void) => {
+    setBusy(true);
     setError(null);
     const r = await fn();
-    setBusy(null);
-    if (!r.ok) {
-      setError(r.message);
-      throw new Error(r.message);
-    }
+    setBusy(false);
+    if (!r.ok) return setError(r.message);
     toast.success(r.message);
+    after?.();
     onDone?.();
   };
-  const safeRun: Run = (key, fn) => run(key, fn).catch(() => undefined);
 
-  const seat = seatLine(t.role_name, t.unit_name, t.gender);
-  const liveCount = (electorate ?? []).filter((e) => !e.removed).length;
-  const close = <Button variant="ghost" onClick={onClose} disabled={busy !== null}>إغلاق</Button>;
-  const chooser = (mode: "select" | "list") => (
-    <ReturnChooser t={t} committees={props.committees} departments={departments} mode={mode} actions={actions} run={safeRun} busy={busy} />
+  const live = (electorate ?? []).filter((e) => !e.removed && e.rater_id);
+  const liveIds = live.map((e) => e.rater_id);
+  const addable = props.people.filter((p) => !liveIds.includes(p.id) && p.id !== t.user_id);
+  const why = reason.trim();
+  const fixReady = why.length >= 3 && (fix === "recompute" || !!who);
+  const membersName = partName("members", t.role_name);
+  const after = decided ? " ثمّ يُعاد الحساب، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم." : "";
+  const fixHint: Record<Fix, string> = {
+    remove: `من دخل المقيِّمين بالخطأ: يُبطَل ما كتبه إن كان قيّم.${after}`,
+    add: `من سقط من المقيِّمين بالخطأ: يُضاف إليهم${decided ? " ويُحسب في عددهم" : " ويقيّم ما بقيت الدورةُ مفتوحة"}.${after}`,
+    recompute: "يُعاد الحسابُ بالأوراق الحاضرة، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم.",
+  };
+  const sorted = [...props.committees].sort(
+    (a, b) => Number(b.department_id === t.department_id) - Number(a.department_id === t.department_id) || a.name.localeCompare(b.name, "ar"),
   );
-  const correction = <Correction t={t} electorate={electorate} people={props.people} actions={actions} run={run} busy={busy} />;
-  const resultOrParts = (bare: boolean) => (results ? <ResultView t={t} closed={closed} bare={bare} /> : <Parts t={t} closed={closed} results={false} />);
+  const chosen = props.committees.find((c) => String(c.id) === to);
 
-  if (layout === "tabs") {
-    const tabs = [
-      ...(deciding ? [{ value: "decide", label: "القرار" }] : []),
-      { value: "result", label: results ? "النتيجة" : "المشاركة" },
-      { value: "raters", label: electorate ? `المقيِّمون ${liveCount}` : "المقيِّمون" },
-      ...(canManage ? [{ value: "fix", label: "التصحيح" }] : []),
-    ];
-    const f = frac(t.final_num, t.final_den);
-    return (
-      // «تبويباتٌ بغلاف الملفّ» (اقتراحُ Claude، وافق محمد ٢٠٢٦-١٠-٢٨ على عرضه): هويّةُ نافذة الشخص من «الملفّ»
-      // (غلافٌ وأفتار، والاسمُ والمنصبُ والحالُ في الوسط)، وترتيبُ العمل من «التبويبات»
-      <Modal
-        open
-        onClose={onClose}
-        size="lg"
-        className="pvb-modal"
-        busy={busy !== null}
-        title={t.full_name}
-        hero={<Avatar name={t.full_name} gender={t.gender} size="2xl" className="pvb-av" />}
-        footer={close}
-      >
-        <div className="pvb-head">
-          <div className="pvb-name">{t.full_name}</div>
-          <div className="pvb-role">{seat}</div>
-          <div className={"pvb-badges evx-sum" + (t.verdict === "removed" ? " out" : "")}>
-            {results && f ? <Pct f={f} className="evx-sum-n" /> : null}
-            <StateBadge t={t} />
-          </div>
-        </div>
-        <Segmented wide items={tabs} value={tab} onValueChange={setTab} />
-        {tab === "decide" ? (
-          <>
-            <h3 className="evx-ask">إلى أيّ لجنةٍ {fm(t.gender, "يعود", "تعود")} {firstName(t.full_name)}؟</h3>
-            {chooser("list")}
-          </>
-        ) : tab === "result" ? (
-          resultOrParts(true)
-        ) : tab === "raters" ? (
-          <Raters electorate={electorate} role={t.role_name} />
-        ) : (
-          correction
-        )}
-        {error ? <Alert tone="danger" compact>{error}</Alert> : null}
-      </Modal>
+  const tabs: { value: Tab; label: string }[] = [
+    ...(deciding ? [{ value: "decide" as const, label: "القرار" }] : []),
+    { value: "result", label: results ? "النتيجة" : "المشاركة" },
+    { value: "raters", label: "المقيِّمون" },
+    ...(canManage ? [{ value: "fix" as const, label: "التصحيح" }] : []),
+  ];
+
+  const close = <Button variant="ghost" size="md" onClick={onClose} disabled={busy}>إغلاق</Button>;
+  const footer =
+    tab === "decide" ? (
+      <>
+        <Button variant="danger" size="md" disabled={!to} loading={busy} onClick={() => run(() => actions.chooseReturn(t.id, Number(to)))}>
+          <UserSwitch aria-hidden />
+          نفّذ الاستبعاد
+        </Button>
+        {close}
+      </>
+    ) : tab === "fix" ? (
+      <>
+        <Button
+          variant={fix === "remove" ? "danger" : "primary"}
+          size="md"
+          disabled={!fixReady}
+          loading={busy}
+          onClick={() =>
+            run(
+              () =>
+                fix === "recompute"
+                  ? actions.recompute(t.id, why)
+                  : actions.correctRater({ targetId: t.id, raterId: who, action: fix, part: fix === "add" ? part : undefined, reason: why }),
+              () => {
+                setWho("");
+                setReason("");
+              },
+            )
+          }
+        >
+          {fix === "remove" ? <UserMinus aria-hidden /> : fix === "add" ? <UserPlus aria-hidden /> : <ArrowsClockwise aria-hidden />}
+          {fix === "remove" ? "أخرِجه" : fix === "add" ? "أدخِله" : "أعِد الحساب"}
+        </Button>
+        {close}
+      </>
+    ) : (
+      close
     );
-  }
 
   return (
     <Modal
       open
       onClose={onClose}
-      size="lg"
+      size="md"
       className="pvb-modal"
-      busy={busy !== null}
+      busy={busy}
       title={t.full_name}
       hero={<Avatar name={t.full_name} gender={t.gender} size="2xl" className="pvb-av" />}
-      footer={close}
+      footer={footer}
     >
       <div className="pvb-head">
         <div className="pvb-name">{t.full_name}</div>
-        <div className="pvb-role">{seat}</div>
+        <div className="pvb-role">{seatLine(t.role_name, t.unit_name, t.gender)}</div>
         <div className="pvb-badges"><StateBadge t={t} /></div>
       </div>
-      <div className="pva-sections">
-        {deciding ? (
+
+      <div className="evx-tabs">
+        <Segmented aria-label="أقسام التقييم" items={tabs} value={tab} onValueChange={(v) => setTab(v as Tab)} />
+      </div>
+
+      {tab === "decide" ? (
+        <div className="pva-sections">
           <section className="pva-sec">
             <ModalSectionHeading tone="danger" icon={<UserSwitch />} title={`إلى أيّ لجنةٍ ${fm(t.gender, "يعود", "تعود")}؟`} />
-            {chooser("select")}
+            <p className="evx-lead">
+              {fm(t.gender, "لا لجنةَ سابقةَ له يعود إليها، فيبقى في منصبه", "لا لجنةَ سابقةَ لها تعود إليها، فتبقى في منصبها")} حتى تختار.
+              {" "}{fm(t.gender, "ويعود", "وتعود")} عضوًا في اللجنة التي تختارها{chosen ? `، ${chosen.name}` : ""}، {fm(t.gender, "ويُبلَّغ", "وتُبلَّغ")} بالجرس والبريد.
+            </p>
+            <Select
+              label="اللجنة"
+              icon={<UsersThree />}
+              placeholder="اختر لجنة"
+              value={to}
+              onValueChange={setTo}
+              options={sorted.map((c) => ({
+                value: String(c.id),
+                label: c.name,
+                hint: c.department_id === t.department_id ? `من ${fm(t.gender, "قسمه", "قسمها")}` : c.department_id ? departments[c.department_id] : undefined,
+              }))}
+            />
           </section>
-        ) : null}
-        <section className="pva-sec">
-          <ModalSectionHeading icon={<ChartBar />} title={results ? "النتيجة" : "المشاركة"} />
-          {resultOrParts(false)}
-        </section>
-        <section className="pva-sec">
-          <ModalSectionHeading icon={<UsersThree />} title="المقيِّمون" />
-          <Raters electorate={electorate} role={t.role_name} />
-        </section>
-        {canManage ? (
-          <section className="pva-sec">
-            <ModalSectionHeading icon={<NotePencil />} title="التصحيح" />
-            {correction}
-          </section>
-        ) : null}
-      </div>
+        </div>
+      ) : tab === "result" ? (
+        <div className="pva-sections">
+          {results ? <Result t={t} /> : null}
+          <Participation t={t} closed={closed} />
+        </div>
+      ) : tab === "raters" ? (
+        <Raters electorate={electorate} role={t.role_name} />
+      ) : (
+        <div className="form-grid">
+          {/* «ماذا تصحّح؟» حقلٌ منسدلٌ لا مبدّل: مبدّلٌ تحت مبدّل التبويبات يُقرأ تبويبًا ثانيًا (محمد ٢٠٢٦-١٠-٢٨) */}
+          <div className="form-full">
+            <Select
+              label="ماذا تصحّح؟"
+              icon={<Wrench />}
+              value={fix}
+              onValueChange={(v) => {
+                setFix(v as Fix);
+                setWho("");
+              }}
+              options={[
+                { value: "remove", label: "أخرِج مقيِّمًا دخل بالخطأ" },
+                { value: "add", label: "أدخِل مقيِّمًا سقط بالخطأ" },
+                ...(decided ? [{ value: "recompute", label: "أعِد الحساب" }] : []),
+              ]}
+            />
+            <p className="evx-hint">{fixHint[fix]}</p>
+          </div>
+          {fix === "remove" ? (
+            <div className="form-full">
+              <Select required label="من دخل بالخطأ" icon={<UserMinus />} searchable placeholder="اختر من المقيِّمين" value={who} onValueChange={setWho}
+                options={live.map((e) => ({ value: e.rater_id!, label: e.full_name ?? "", hint: partName(e.part, t.role_name) }))} />
+            </div>
+          ) : fix === "add" ? (
+            <>
+              <Select required label="من سقط بالخطأ" icon={<UserPlus />} searchable placeholder="اختر العضو" value={who} onValueChange={setWho}
+                options={addable.map((p) => ({ value: p.id, label: p.name }))} />
+              <Select label="يقيّم مع" icon={<UsersThree />} value={part} onValueChange={(v) => setPart(v as Part)}
+                options={[{ value: "members", label: membersName }, { value: "council", label: "المجلس الإداري" }]} />
+            </>
+          ) : null}
+          <Textarea className="form-full" required label="سبب التصحيح" icon={<NotePencil />} innerIcon={<NotePencil />} placeholder="ما الخطأ الذي يُصحَّح؟ يُحفظ في السجلّ." value={reason} onChange={(e) => setReason(e.target.value)} />
+        </div>
+      )}
+
       {error ? <Alert tone="danger" compact>{error}</Alert> : null}
     </Modal>
   );

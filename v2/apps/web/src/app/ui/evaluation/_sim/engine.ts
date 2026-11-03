@@ -671,7 +671,15 @@ export function viewFor(st: SimState, id: string): View {
 export function electorateRows(st: SimState, targetId: number): ElectorRow[] {
   return st.electorate
     .filter((e) => e.target === targetId)
-    .map((e) => ({ rater_id: e.rater, full_name: person(st, e.rater).name, part: e.part, added_by_correction: e.added, removed: e.removed }));
+    .map((e) => {
+      const p = person(st, e.rater);
+      const s = live(p).find((x) => x.role !== "committee_member") ?? live(p)[0];
+      const unit = s ? unitOf(s) : null;
+      return {
+        rater_id: e.rater, full_name: p.name, part: e.part, added_by_correction: e.added, removed: e.removed,
+        seat_title: s ? `${roleWord(s.role, "male")}${unit ? ` ${unit}` : ""}` : null, gender: p.gender,
+      };
+    });
 }
 
 const ROLE_WORD: Record<Role, [string, string]> = {

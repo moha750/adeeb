@@ -36,6 +36,8 @@ export type SurveyRow = {
   views: number;
   /** دورُ المستخدم الحاليّ فيه (من القاعدة): يحكم ما يظهر له من أفعال. */
   role: SurveyRole;
+  /** عددُ شركائه — **لصاحبه وحده** (صفرٌ لغيره): مَن شُورك فيه خصوصيّةُ صاحبه، لا يراها الشريكُ ولا حسابُ النادي. */
+  shareCount?: number;
   /** اسم منشئ الاستبيان — من هويّة الاستبيان لا من نتائجه (يُعرض في كرت الهويّة). */
   createdBy: string | null;
   created: string;
@@ -58,12 +60,13 @@ export async function getSurveys(userId: string): Promise<{ surveys: SurveyRow[]
   const ids = [...roleOf.keys()];
   if (!ids.length) return { surveys: [], error: null };
 
-  const [sRes, qRes, rRes] = await Promise.all([
+  const [sRes, qRes, rRes, shRes] = await Promise.all([
     sb.from("surveys").select("id, code, title, description, status, access_type, start_date, end_date, archived_at, deleted_at, total_views, created_at, created_by").in("id", ids).order("created_at", { ascending: false }),
     sb.from("survey_questions").select("survey_id").in("survey_id", ids),
     sb.from("survey_responses").select("survey_id").in("survey_id", ids).eq("status", "completed"),
+    sb.from("survey_shares").select("survey_id").in("survey_id", ids.filter((id) => roleOf.get(id) === "owner")),
   ]);
-  const firstErr = sRes.error || qRes.error || rRes.error;
+  const firstErr = sRes.error || qRes.error || rRes.error || shRes.error;
   if (firstErr) return { surveys: [], error: firstErr.message };
 
   // أسماء المنشئين — جمعةٌ واحدة بالهُويّات المتمايزة (لا جمعة لكلّ صفّ)
@@ -79,6 +82,8 @@ export async function getSurveys(userId: string): Promise<{ surveys: SurveyRow[]
   for (const q of qRes.data ?? []) qCount.set(q.survey_id, (qCount.get(q.survey_id) ?? 0) + 1);
   const rCount = new Map<number, number>();
   for (const r of rRes.data ?? []) rCount.set(r.survey_id, (rCount.get(r.survey_id) ?? 0) + 1);
+  const shCount = new Map<number, number>();
+  for (const r of shRes.data ?? []) shCount.set(r.survey_id, (shCount.get(r.survey_id) ?? 0) + 1);
 
   const now = Date.now();
   const surveys: SurveyRow[] = (sRes.data ?? []).map((s) => ({
@@ -96,6 +101,7 @@ export async function getSurveys(userId: string): Promise<{ surveys: SurveyRow[]
     responses: rCount.get(s.id) ?? 0,
     views: s.total_views ?? 0,
     role: roleOf.get(s.id) as SurveyRole, // الاستعلام مقصورٌ على مفاتيح الخريطة
+    shareCount: roleOf.get(s.id) === "owner" ? shCount.get(s.id) ?? 0 : 0,
     createdBy: s.created_by ? creatorName.get(s.created_by)?.trim() || null : null,
     created: fmtDateTime(s.created_at),
     createdRaw: s.created_at ?? "",

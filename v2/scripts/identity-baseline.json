@@ -1,0 +1,21 @@
+{
+  "measured": "2026-11-02",
+  "metrics": {
+    "font-size-raw": 1028,
+    "font-size-distinct": 104,
+    "padding-raw": 781,
+    "gap-raw": 1050,
+    "line-height-raw": 351,
+    "font-weight-off-scale": 282,
+    "radius-px": 92,
+    "z-index-raw": 130,
+    "hex-css": 277,
+    "rgb-css": 114,
+    "empty-classes": 23,
+    "inline-style": 368,
+    "hex-tsx": 50,
+    "arabic-digit-helpers": 11,
+    "tailwind-utilities": 6425,
+    "tailwind-text-size": 832
+  }
+}

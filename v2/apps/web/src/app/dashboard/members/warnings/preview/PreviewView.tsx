@@ -61,7 +61,7 @@ export function PreviewView() {
         }
         if (alive) setImages(out);
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : "تعذّر توليد المعاينة.");
+        if (alive) setError(e instanceof Error ? e.message : "تعذّر رسم النموذج.");
       }
     })();
     return () => {
@@ -72,7 +72,7 @@ export function PreviewView() {
 
   return (
     <>
-      <PageHeader title="معاينة الخطاب" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
+      <PageHeader title="نموذج الخطاب" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ بالرسّام نفسه الذي يعمل عند الإصدار، على قالبك، والاسم والسبب عيّنةٌ متخيَّلة.
@@ -87,7 +87,7 @@ export function PreviewView() {
         />
       </div>
 
-      {error ? <Alert tone="danger" title="تعذّرت المعاينة">{error}</Alert> : null}
+      {error ? <Alert tone="danger" title="تعذّر عرض النموذج">{error}</Alert> : null}
 
       <div className="card-grid card-grid-2col">
         {WARNING_CATEGORIES.map((c) => (

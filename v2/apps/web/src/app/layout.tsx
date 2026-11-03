@@ -15,6 +15,7 @@ import { SiteCursor } from "./_components/SiteCursor";
 import { SmoothScroll } from "./_components/SmoothScroll";
 import { PwaRegister } from "./_pwa/PwaRegister";
 import { STORY_GATE_SCRIPT } from "./_story/config";
+import { THEME_SCRIPT } from "@/lib/theme";
 
 // `metadataBase` أصلُ كلّ رابطٍ نسبيّ في الوسوم (OG وcanonical وrobots) — بدونه تُبنى
 // روابط OG نسبيّةً فلا تُقرأ خارج الموقع. والنطاق من البيئة ليبقى صحيحًا في المعاينات.
@@ -48,6 +49,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html:
               "document.documentElement.classList.add('js');" +
+              // وضعُ الموقع (فاتح · داكن) قبل أوّل رسم، على الجذر فيتبعه كلُّ شيء — انظر `lib/theme.ts`
+              THEME_SCRIPT +
               // فحصُ أعلام الدول: أنظمةٌ لا تحمل رسومَها (ويندوز) ترسم زوج المؤشّر الإقليميّ حرفين،
               // فيصير عرضُ العَلَم ضِعفَ عرض المحرف الواحد. عندئذٍ وحدَه يُسنَد خطُّ الأعلام المستضاف
               // (‎[data-flags="off"]‎)، ويبقى نظامُ الجهاز صاحبَ الرسم حيث يُحسنه (أبل · أندرويد).

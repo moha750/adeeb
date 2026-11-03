@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Badge, Button, Field, Segmented, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
+import { Badge, Button, Field, Segmented, Select, Stat, Textarea, matchesSearch, Modal } from "@adeeb/design-system";
 import {
   MicrophoneStage, Playlist, Megaphone, Hash, LinkSimple, TextAlignLeft, User, UsersThree, Palette,
   Archive, Broadcast, Waveform } from "@phosphor-icons/react";
-import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass, UploadSimple } from "@/app/_components/glyphs";
+import { PencilSimple, Plus, Trash, EyeSlash, Star, MagnifyingGlass } from "@/app/_components/glyphs";
 import { DataTable, type Column } from "../_components/DataTable";
 import { Toolbar, type FilterDef } from "../_components/Toolbar";
 import { usePersistentView } from "../_components/usePersistentView";
@@ -19,15 +19,9 @@ import type { MenuGroup } from "../_components/DropdownMenu";
 import { useReactTable, getCoreRowModel, getSortedRowModel, type SortingState, type ColumnDef } from "@tanstack/react-table";
 import type { MemberOption, ShowRow, StationData } from "./data";
 import { SHOW_STATUS_META, TONE_OPTIONS, formatTalkStart, parseTalkStart, slugify, type ShowTone } from "./vocab";
-import {
-  createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow, saveStation,
-  createStationLogoUploadUrl, setStationLogo,
-} from "./actions";
+import { createShow, updateShow, setShowStatus, toggleShowFeatured, deleteShow } from "./actions";
+import { StationForm } from "./StationForm";
 import { PageHeader } from "../_components/PageHeader";
-import { UPLOAD_RULES, checkFile } from "@/lib/upload";
-
-// وصفةُ شعار الإذاعة من قانون المرفقات (`lib/upload`)
-const LOGO_RULE = UPLOAD_RULES.radioLogo;
 
 type FormState = {
   title: string; slug: string; tagline: string; description: string;
@@ -36,8 +30,6 @@ type FormState = {
 const EMPTY_FORM: FormState = {
   title: "", slug: "", tagline: "", description: "", tone: "brand", hostId: "", committeeId: "", talkStart: "",
 };
-
-type StationForm = { name: string; tagline: string; description: string };
 
 export function RadioView({
   shows, members, committees, station,
@@ -66,62 +58,6 @@ export function RadioView({
    * فاختار المالكُ هذا.)
    */
   const [tab, setTab] = useState<"shows" | "station">("shows");
-
-  // نسخةُ المحطّة التي تُحرَّر في تبويبها. تبدأ بما جاء من القاعدة لا فارغةً: التبويبُ
-  // سطحٌ قائمٌ لا نافذةٌ تُفتح، فلا لحظةَ «فتحٍ» تملؤه.
-  const [stForm, setStForm] = useState<StationForm>({
-    name: station?.name ?? "",
-    tagline: station?.tagline ?? "",
-    description: station?.description ?? "",
-  });
-  const [stErr, setStErr] = useState<Partial<Record<keyof StationForm, string>>>({});
-  const stLogoRef = useRef<HTMLInputElement>(null);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-
-  /**
-   * رفعُ شعار المحطّة — نفسُ طريق شعار البرنامج: رابطٌ موقّع يرفع إليه المتصفّح
-   * مباشرةً، ثمّ يُثبَّت المسارُ في القاعدة. ولا يمرّ الملفُّ بخادمنا.
-   */
-  const onStationLogo = async (file: File | undefined) => {
-    if (!file) return;
-    // بوّابةُ قانون المرفقات قبل تذكرة الرفع (`lib/upload`)
-    const why = checkFile(file, LOGO_RULE);
-    if (why) { toast.error(why); return; }
-    setUploadingLogo(true);
-    try {
-      const ticket = await createStationLogoUploadUrl(file.type, file.size);
-      if (!ticket.ok || !ticket.url || !ticket.path) { toast.error(ticket.message ?? "تعذّر الرفع."); return; }
-      let failed: string | null = null;
-      try {
-        const res = await fetch(ticket.url, { method: "PUT", body: file, headers: { "content-type": file.type } });
-        if (!res.ok) failed = `ردّ المخزن ${res.status}. أعِد المحاولة.`;
-      } catch {
-        // فشلُ الشبكة يرمي ولا يردّ `ok: false`، وأشهرُ أسبابه أنّ الدلو لا يأذن لأصلنا.
-        failed = "تعذّر الوصول إلى المخزن. غالبًا أنّ الدلو لا يأذن لهذا الأصل: شغّل «pnpm r2:cors» بتوكن R2 إداريّ.";
-      }
-      if (failed) { toast.error(failed, { duration: 12000 }); return; }
-      const r = await setStationLogo(ticket.path);
-      if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
-
-  const submitStation = () => {
-    const errs: Partial<Record<keyof StationForm, string>> = {};
-    if (!stForm.name.trim()) errs.name = "اسم الإذاعة مطلوب.";
-    setStErr(errs);
-    if (Object.keys(errs).length) return;
-
-    startPending(async () => {
-      const r = await saveStation({
-        name: stForm.name,
-        tagline: stForm.tagline || null,
-        description: stForm.description || null,
-      });
-      if (r.ok) { toast.success(r.message); router.refresh(); } else toast.error(r.message);
-    });
-  };
 
   const filters: FilterDef[] = useMemo(() => [
     { key: "status", label: "الحالة", options: [
@@ -351,52 +287,8 @@ export function RadioView({
           </>
         )}
         </>
-      ) : !station ? (
-        <Alert tone="warning" title="تعذّر جلب إعدادات الإذاعة">
-          أعِد تحميل الصفحة، فإن بقيت فالمفتاحُ الخادميّ ناقصٌ في البيئة.
-        </Alert>
       ) : (
-        <div className="form-grid">
-          {/* شعار الإذاعة — نفسُ صندوق شعار البرنامج في تبويب هويّته، فالسطحان يُقرآن بقاعدةٍ واحدة. */}
-          <div className="form-full">
-            <div
-              onDragOver={(ev) => ev.preventDefault()}
-              onDrop={(ev) => { ev.preventDefault(); void onStationLogo(ev.dataTransfer.files?.[0]); }}
-              className="rounded border-2 border-dashed border-line bg-surface-2 p-8 flex flex-col items-center gap-3 text-center"
-            >
-              {station.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={station.logoUrl} alt="شعار الإذاعة" className="h-28 w-28 rounded object-cover" />
-              ) : (
-                <UploadSimple size={30} className="text-content-muted" />
-              )}
-              <div className="text-content-muted text-sm">
-                شعار الإذاعة: مربّعٌ لا يقلّ عن ١٤٠٠×١٤٠٠. اسحبه هنا أو اختره من جهازك.
-              </div>
-              <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
-                <UploadSimple size={18} />{station.logoUrl ? "استبدال الشعار" : "اختر الشعار"}
-              </Button>
-              <input ref={stLogoRef} type="file" accept={LOGO_RULE.accept} hidden
-                onChange={(ev) => { void onStationLogo(ev.target.files?.[0]); ev.target.value = ""; }} />
-            </div>
-          </div>
-
-          <Field className="form-full" label="اسم الإذاعة" icon={<Broadcast />} innerIcon={<PencilSimple />}
-            placeholder="إذاعة أدِيب" value={stForm.name}
-            onChange={(e) => setStForm((f) => ({ ...f, name: e.target.value }))}
-            error={stErr.name} required />
-          <Field className="form-full" label="الجملة التعريفيّة" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-            placeholder="أصواتُ أدِيب كما تُسمَع" value={stForm.tagline}
-            onChange={(e) => setStForm((f) => ({ ...f, tagline: e.target.value }))} optional />
-          <Textarea className="form-full" label="الوصف" icon={<TextAlignLeft />} innerIcon={<PencilSimple />}
-            placeholder="وصفٌ يظهر في صدر صفحة الإذاعة…" rows={3} value={stForm.description}
-            onChange={(e) => setStForm((f) => ({ ...f, description: e.target.value }))} optional />
-
-          {/* الحفظُ زرٌّ في ذيل النموذج كنظيره في «الهويّة والمنصّات» بصفحة البرنامج. */}
-          <div className="form-full btn-row">
-            <Button variant="primary" size="md" onClick={submitStation} loading={pending}>حفظ بيانات الإذاعة</Button>
-          </div>
-        </div>
+        <StationForm station={station} />
       )}
 
       <Modal

@@ -73,7 +73,7 @@ export function PreviewView() {
         }
         if (alive) setImages(out);
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : "تعذّر توليد المعاينة.");
+        if (alive) setError(e instanceof Error ? e.message : "تعذّر رسم النموذج.");
       }
     })();
     return () => {
@@ -84,7 +84,7 @@ export function PreviewView() {
 
   return (
     <>
-      <PageHeader title="معاينة شهادة الخبرة" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
+      <PageHeader title="نموذج شهادة الخبرة" status={{ label: "عيّنةٌ لا سجلّ", tone: "info", variant: "soft" }} />
 
       <Alert tone="info" title="ما تراه هو ما يُنزَّل">
         كلّ ورقةٍ أدناه مولَّدةٌ على قالبك بالرسّام الذي سيعمل عند الإصدار، والأسماء والأرقام
@@ -93,7 +93,7 @@ export function PreviewView() {
         الاسم يجلس فوق المسطرة، والفترة والدعاء فوق المسطرة الثانية.
       </Alert>
 
-      {error ? <Alert tone="danger" title="تعذّرت المعاينة">{error}</Alert> : null}
+      {error ? <Alert tone="danger" title="تعذّر عرض النموذج">{error}</Alert> : null}
 
       <div className="card-grid card-grid-1col mt-4">
         {SAMPLES.map((s) => (

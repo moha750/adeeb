@@ -5,6 +5,7 @@ import { ElectionDetailView } from "../ElectionDetailView";
 import { getCurrentAdmin } from "@/lib/auth";
 import { AccessDenied } from "../../_shell/AccessDenied";
 import { PageHeader } from "../../_components/PageHeader";
+import { requestNow } from "@/app/_ad/now";
 
 export default async function ElectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // تفصيلُ الانتخاب غرفةُ الإدارة والاطّلاع: يفتحه حاملُ `view_election_candidates`
@@ -41,6 +42,7 @@ export default async function ElectionDetailPage({ params }: { params: Promise<{
       votes={voteRes.rows}
       votesError={voteRes.error}
       readOnly={!canManage}
+      serverNow={await requestNow()}
     />
   );
 }

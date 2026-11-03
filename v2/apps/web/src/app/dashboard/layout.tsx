@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 // حصّةُ اللوحة من `components.css` (فارغةٌ في التطوير، انظر `loaders/css-sections.cjs`).
 import "@adeeb/design-system/components.dash.css";
+// الأساسُ الجديد (`--ad-*` / `.ad-*`، ٢٠٢٦-١٠-٣٠): بصماتٌ ولبناتٌ وقوالب، والغرفُ تنتقل إليها قالبًا قالبًا.
+import "@adeeb/design-system/ad.css";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "./_shell/DashboardShell";
 import { AccessDenied } from "./_shell/AccessDenied";

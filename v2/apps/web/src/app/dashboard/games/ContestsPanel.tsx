@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Badge, SectionCard, Segmented } from "@adeeb/design-system";
+import { Trophy } from "@phosphor-icons/react";
 import { fmtStamp } from "@/lib/dates";
 import { useNow } from "@/app/games/_components/EventStrip";
 import { clock, score } from "@/app/games/_components/hall";
@@ -36,6 +37,7 @@ export function ContestsPanel({
   return (
     <SectionCard
       title="المسابقات"
+      icon={<Trophy />}
       actions={
         <Segmented
           aria-label="أيّ المسابقات"
@@ -57,8 +59,7 @@ export function ContestsPanel({
             const e = Date.parse(c.endsAt);
             return (
               <li key={c.id}>
-                <Link className="gmr-cx-row" href={hrefFor(c)} data-tone={c.tone}>
-                  <span className="gmr-cx-bar" aria-hidden />
+                <Link className="gmr-cx-row" href={hrefFor(c)}>
                   <span className="gmr-cx-main">
                     <b>{c.title}</b>
                     <span>{c.metric ? `${c.gameName}، ${c.metric.label}` : c.gameName}</span>

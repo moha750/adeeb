@@ -54,8 +54,9 @@ type Confirm = { title: string; text: string; confirmLabel: string; tone: "warni
 /**
  * `log` سجلُّ الانتخاب كما تقرؤه القاعدة (بفاعليه) — يُجلَب مع الصفحة مرّةً ويقرؤه سطحان:
  * قسمُ السجلّ في ذيل الصفحة، ونافذةُ المرشّح تنخل منه أحداثَه وحدَه.
+ * و`serverNow` ساعةُ الطلب (`requestNow`): يقرؤها خطُّ السجلّ الزمنيّ («اليوم»، «أمس») فلا يختلف الخادمُ والمتصفّح.
  */
-export function ElectionDetailView({ election, log, logError = null, votes = [], votesError = null, readOnly = false }: { election: ElectionDetail; log: ElectionLogEvent[]; logError?: string | null; votes?: VoteDetailRow[]; votesError?: string | null; readOnly?: boolean }) {
+export function ElectionDetailView({ election, log, logError = null, votes = [], votesError = null, readOnly = false, serverNow }: { election: ElectionDetail; log: ElectionLogEvent[]; logError?: string | null; votes?: VoteDetailRow[]; votesError?: string | null; readOnly?: boolean; serverNow: number }) {
   const toast = useToast();
   const api = useElectionApi();
   const [pending, startPending] = useTransition();
@@ -471,15 +472,20 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
       )}
 
       {/* سجلُّ الانتخاب — ذيلُ الصفحة: القرارُ يُسأل عنه أحد، فما جرى منسوبٌ إلى فاعله بلحظته.
-          كرتٌ برأسٍ منسّم والسجلُّ متنُه (ق١٢: السطحُ المؤطَّر لا يحمل مؤطَّرًا). */}
-      <Card className="mt-4">
-        <CardHeader variant="soft" icon={<ClockCounterClockwise />} title="سجلّ الانتخاب" subtitle="من فعل ماذا، الأقدم أولًا" />
-        <CardBody>
-          {logError
-            ? <Alert tone="warning" title="تعذّر جلب السجلّ">{logError}</Alert>
-            : <ElectionLog events={log} subjectOf={subjectOf} initial={6} />}
-        </CardBody>
-      </Card>
+          على الخطّ الزمنيّ المشترك (`AdLog`) برأسه، وهو سطحٌ مؤطَّرٌ بنفسه فلا كرتَ حوله (ق١٢).
+          وعطبُ قراءته يُقال في كرته كما كان. */}
+      <div className="mt-4">
+        {logError ? (
+          <Card>
+            <CardHeader variant="soft" icon={<ClockCounterClockwise />} title="سجلّ الانتخاب" subtitle="من فعل ماذا، الأقدم أولًا" />
+            <CardBody>
+              <Alert tone="warning" title="تعذّر جلب السجلّ">{logError}</Alert>
+            </CardBody>
+          </Card>
+        ) : (
+          <ElectionLog title="سجلّ الانتخاب" icon={<ClockCounterClockwise />} events={log} now={serverNow} subjectOf={subjectOf} initial={6} />
+        )}
+      </div>
 
       {/* **تفصيلُ الأصوات** — مَن صوّت ولمن، بقرار المالك ٢٠٢٦-٠٨-١٥ وبعد تنبيهه إلى ثمنه.
           لا يظهر إلّا لإدارة الانتخابات (القاعدةُ ترفض غيرَها، والصفحةُ لا تطلبه للمطّلِع)،
@@ -556,7 +562,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
             {eventsOf(detail.id).length ? (
               <>
                 <ModalSectionHeading icon={<ClockCounterClockwise />} title="سجلّ هذا الترشّح" />
-                <ElectionLog events={eventsOf(detail.id)} />
+                <ElectionLog events={eventsOf(detail.id)} now={serverNow} />
               </>
             ) : null}
             {/* المسحوبُ في طور الترشّح: الأثرُ يُقال قبل الضغط، فزرُّ الذيل يقع على علمٍ لا على ظنّ. */}

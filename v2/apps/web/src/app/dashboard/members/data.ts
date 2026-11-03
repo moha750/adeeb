@@ -1,5 +1,6 @@
 // يُستورَد فقط من مكوّنات خادمية (page.tsx). المفتاح بلا بادئة NEXT_PUBLIC فلا يصل المتصفّح.
 import { createAdeebServiceClient } from "@adeeb/core";
+import { positionLine } from "@/lib/positionLabel";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { formatDegree, type TerminationKind } from "./vocab";
@@ -91,6 +92,11 @@ export type MemberRow = {
    * ولو نُقلا من هنا لسقطا عن قيادتهما صامتَين (`assign_position` تُخلي ما قبلها).
    */
   canMove: boolean;
+  /**
+   * **موقعُه الأخير قبل انتهاء عضويّته** — للسابقين وحدهم («عضو لجنة الرواة»)، ليُعرف من أين خرج (محمد ٢٠٢٦-١١-٠٢).
+   * من آخر إسنادٍ أصيلٍ منتهٍ له في `user_roles` (الإنهاءُ يُطفئ الإسنادَ ولا يمحوه)؛ وعند تساوي الختم أعلاها رتبةً.
+   */
+  lastPosition?: string | null;
 };
 
 /** لجنةٌ تُصرّح بمقعد «عضو لجنة» — وجهةُ النقل. تُقرأ من `member_role_name` لا من قائمةٍ محفورة. */
@@ -126,7 +132,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
   // هويّة القارئ — لتُسأل القاعدةُ عمّن تبلغه سلطتُه. بلا هويّة لا مدّ (آمنٌ افتراضًا).
   const me = await getCurrentAdmin();
 
-  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes, endRes, moveRes, mayMoveRes] = await Promise.all([
+  const [pRes, urRes, rRes, dRes, cRes, mdRes, reachRes, warnRes, limitRes, certRes, endRes, moveRes, mayMoveRes, pastRes] = await Promise.all([
     // `members` لا `profiles`: الجدولُ صار بيتَ كلِّ صاحبِ حساب بعد توحيد الهويّة، والعرضُ
     // ينخل من له تاريخُ انضمام. وهذا تبويبُ الحالات الصريح فيأخذ الأعضاء كلَّهم لا السارين.
     sb.from("members").select("id, full_name, email, phone, avatar_url, gender, account_status, joined_date, termination_reason, terminated_at, termination_kind").order("joined_date", { ascending: false }),
@@ -151,9 +157,11 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
     // وأيملك المفتاحَ أصلًا؟ — `committee_member` ليس من `own_unit_roles` لأحد، فالجواب واحدٌ
     // في كلّ اللجان ويُسأل مرّةً بلا نطاق (ومن قُيّد بوحدته غدًا سقط البند عنه، وهو الاتّجاه الآمن).
     me ? sb.rpc("can_assign_role", { p_actor: me.id, p_role_name: "committee_member", p_committee: null }) : Promise.resolve({ data: false, error: null }),
+    // والإسناداتُ المنتهية الأصيلة — منها موقعُ العضو السابق الأخير (`lastPosition`)
+    sb.from("user_roles").select("user_id, role_name, department_id, committee_id, assigned_at, ended_at").eq("is_active", false).eq("is_acting", false),
   ]);
 
-  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error || certRes.error || endRes.error || moveRes.error || mayMoveRes.error;
+  const firstErr = pRes.error || urRes.error || rRes.error || dRes.error || cRes.error || mdRes.error || reachRes.error || warnRes.error || certRes.error || endRes.error || moveRes.error || mayMoveRes.error || pastRes.error;
   if (firstErr) return { members: [], warningLimit: 3, moveTargets: [], error: firstErr.message };
 
   const reach = new Map(
@@ -199,6 +207,26 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       bestRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, rank });
     }
   }
+
+  // آخرُ إسنادٍ منتهٍ لكلّ عضو: الأحدثُ ختمًا (انتهاؤه، وإلّا إسنادُه)، وعند التساوي — إسناداتٌ أُطفئت معًا بالإنهاء — أعلاها رتبةً.
+  const lastRole = new Map<string, { role_name: string; department_id: number | null; committee_id: number | null; at: number; rank: number }>();
+  for (const ur of pastRes.data ?? []) {
+    const at = +new Date(String(ur.ended_at ?? ur.assigned_at ?? 0));
+    const rank = roleRank(ur.role_name);
+    const cur = lastRole.get(ur.user_id);
+    if (!cur || at > cur.at || (at === cur.at && rank < cur.rank)) {
+      lastRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, at, rank });
+    }
+  }
+  const pastLine = (id: string): string | null => {
+    const lr = lastRole.get(id);
+    if (!lr) return null;
+    const r = roleByName.get(lr.role_name);
+    const unit = lr.committee_id != null
+      ? committeeName.get(lr.committee_id) ?? null
+      : lr.department_id != null ? deptById.get(lr.department_id) ?? null : null;
+    return positionLine(r ? (r.role_name_ar ?? r.role_name) : null, unit);
+  };
 
   const members: MemberRow[] = (pRes.data ?? []).map((p) => {
     const br = bestRole.get(p.id);
@@ -252,6 +280,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       committeeId: br?.committee_id ?? null,
       roleName: br?.role_name ?? null,
       canMove: mayMove && br?.role_name === "committee_member" && movable.has(p.id),
+      lastPosition: p.account_status === "suspended" && !br ? pastLine(p.id) : null,
     };
   });
 

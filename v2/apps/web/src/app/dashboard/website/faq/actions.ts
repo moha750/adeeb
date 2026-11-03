@@ -129,3 +129,29 @@ export async function moveFaq(id: string, dir: "up" | "down"): Promise<FaqResult
   revalidateFaqs();
   return { ok: true, message: dir === "up" ? "حُرّك لأعلى." : "حُرّك لأسفل." };
 }
+
+/**
+ * **حفظُ الترتيب كاملًا** (٢٠٢٦-١١-٠١، «وضعُ الترتيب» في قالب الغرف: سحبٌ وإفلاتٌ ثمّ حفظٌ واحد، بدل «تحريك خطوة» مرّةً بعد مرّة).
+ * يأخذ المعرّفاتِ بترتيبها الجديد، فيكتب `order` لكلٍّ منها (1، 2، 3…). ويرفض إن تغيّرت القائمةُ في الخادم منذ فُتحت —
+ * سجلٌّ أُضيف أو حُذف — فلا يُكتب ترتيبٌ ناقص.
+ */
+export async function reorderFaqs(ids: string[]): Promise<FaqResult> {
+  const mgr = await getWebsiteManager("faq");
+  if (!mgr) return { ok: false, message: NO_PERM };
+  const sb = service();
+  if (!sb) return { ok: false, message: NO_KEY };
+
+  const { data: rows, error } = await sb.from("faq").select("id");
+  if (error) return { ok: false, message: error.message };
+  const now = new Set((rows ?? []).map((r) => r.id as string));
+  if (ids.length !== now.size || new Set(ids).size !== ids.length || !ids.every((id) => now.has(id))) {
+    return { ok: false, message: "تغيّرت القائمةُ منذ فُتحت. حدّث الصفحة ثمّ رتّبها من جديد." };
+  }
+
+  const results = await Promise.all(ids.map((id, i) => sb.from("faq").update({ order: i + 1 }).eq("id", id)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, message: `تعذّر حفظ الترتيب: ${failed.error.message}` };
+
+  revalidateFaqs();
+  return { ok: true, message: "حُفظ الترتيب." };
+}

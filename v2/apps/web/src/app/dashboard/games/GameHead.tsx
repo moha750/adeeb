@@ -17,7 +17,7 @@ export function GameHead({
   onToggleHall: (inHall: boolean) => void;
 }) {
   return (
-    <div className="gmr-cq" data-tone={game.tone}>
+    <div className="gmr-cq">
       <Card className="gmr-head">
         <GameScreen game={game} />
         <div className="gmr-head-body">

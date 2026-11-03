@@ -104,7 +104,7 @@ export function SponsorForm({ sponsor }: { sponsor?: SponsorEditData | null }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt="شعار الراعي" className="max-h-32 rounded bg-white/60 object-contain p-2 ring-1 ring-navy-950/5" />
             ) : (
-              <div className="text-sm text-content-muted">{`لا شعار بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). يُفضّل شعارٌ بخلفيّة شفّافة.`}</div>
+              <div className="text-sm text-content-muted">{`لا شعار بعد. ارفع شعارًا مربّعًا بخلفيّة شفّافة، 512 بكسل على الأقلّ (${attachHint(IMAGE_RULE)}).`}</div>
             )}
             <div className="btn-row">
               <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>

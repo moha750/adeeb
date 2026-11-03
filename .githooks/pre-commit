@@ -34,8 +34,8 @@ if git show ":$G" > "$tmp/globals.css" 2>/dev/null &&
 fi
 rm -rf "$tmp"
 
-# ٢-٤) الباقون — على شجرة العمل
-for guard in modal-spacing no-separators glyph-weights; do
+# ٢-٥) الباقون — على شجرة العمل (والخامسُ سقّاطةُ الهويّة، ٢٠٢٦-١٠-٣٠)
+for guard in modal-spacing no-separators glyph-weights identity-ratchet; do
   node "v2/scripts/$guard.mjs" || rc=1
 done
 

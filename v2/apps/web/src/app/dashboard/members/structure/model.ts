@@ -27,7 +27,7 @@ export type RawUserRole = {
 export type RawProfile = { id: string; full_name: string | null; avatar_url: string | null; gender: string | null; account_status: string | null };
 // الإشراف: عضو إدارةٍ إداريّة (`unit_id`) يتابع لجنةً تنفيذيّة (`committee_id`) ليس **فيها**.
 // جدولٌ مستقلّ منذ 20260731 — كان صفَّ منصبٍ يكذب بأنّه عضوٌ في تلك اللجنة.
-export type RawSupervision = { committee_id: number; unit_id: number; supervisor_id: string };
+export type RawSupervision = { committee_id: number; unit_id: number; supervisor_id: string; /** بدءُ الإشراف — «منذ…» في صفّ القيادة */ assigned_at?: string | null };
 
 // وحدة تنظيميّة قابلة لتحرير بياناتها الوصفيّة (وصف + رابط قروب)
 export type UnitMeta = { kind: "council" | "department" | "committee"; id: string | number; name: string; desc: string | null; link: string | null };
@@ -47,6 +47,8 @@ export type Holder = {
   departmentId: number | null;
   /** صفُّ الإسناد في `user_roles`: به يُمدَّد التكليف ويُنهى. */
   rowId?: number | null;
+  /** بدءُ الإسناد (`assigned_at`) — «منذ…» في صفّ القيادة (٢٠٢٦-١١-٠٣). */
+  since?: string | null;
   /** تكليفٌ لا أصيل (20261010): آخرُ يومه، أو صاحبُ المقعد المجمَّد الذي ينتهي التكليف بعودته، وبدؤه (`since`). */
   acting?: { until: string | null; awaits: string | null; since?: string | null } | null;
   /** أصيلٌ مجمَّد: المقعدُ محجوزٌ له وهو مكلَّفٌ في غيره، حتى آخر يوم تكليفه (`until`). */
@@ -176,6 +178,7 @@ function buildHolders(roles: RawRole[], committees: RawCommittee[], userRoles: R
       committeeId: ur.committee_id,
       departmentId: ur.department_id,
       rowId: ur.id ?? null,
+      since: ur.assigned_at ?? null,
       acting: ur.is_acting
         ? {
             until: ur.acting_until ?? null,
@@ -230,6 +233,7 @@ export function committeeNodes(
       unitName: unit.committee_name_ar,
       committeeId: unit.id, // إدارتُه هو — لا اللجنة التي يشرف عليها
       departmentId: null,
+      since: s.assigned_at ?? null,
     });
   }
   const overseerOf = (committeeId: number, memberRoleName: string): Holder | null =>

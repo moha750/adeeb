@@ -16413,16 +16413,10 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 /* ══════════════════════════════════════════════════════════════════════
    غرفةُ الألعاب في اللوحة · بادئة .gmr  (الهيكلُ الثاني، ٢٠٢٦-١٠-١٧)
    ══════════════════════════════════════════════════════════════════════
-   الغرفةُ تُدار منها الصالة: نبضُ الأسبوع والمسابقاتُ والصالةُ الآن بفعلٍ فوريّ. واللعبةُ تُعرَف بشاشتها
-   الحيّة (مقطعُ كابينتها يدور) وباسمها بخطّ الصالة (Rooyin)، والباقي سطحُ اللوحة هادئًا. ونغمةُ كلّ لعبةٍ هنا هي نغمتُها في
-   الصالة (`--agm-*`)، ومعها حبرٌ أعمقُ يُقرأ على السطح الفاتح. */
-.gmr { --gmr-tone: var(--steel-500); --gmr-ink: var(--color-text); }
-.gmr [data-tone="darb"] { --gmr-tone: #7ED06A; --gmr-ink: #2E7A1F; }
-.gmr [data-tone="amber"] { --gmr-tone: #FF8A3D; --gmr-ink: #B4520F; }
-.gmr [data-tone="sky"] { --gmr-tone: #5AB4FF; --gmr-ink: #1D6BAE; }
-.gmr [data-tone="violet"] { --gmr-tone: #B07CFF; --gmr-ink: #6B3DC2; }
-
-/* الشاشة: مقطعُ اللعبة في إطارٍ داكن، تُضيئه نغمتُها كما تُضيء الكابينةُ في الصالة */
+   الغرفةُ تُدار منها الصالة: نبضُ الأسبوع والمسابقاتُ والصالةُ الآن بفعلٍ فوريّ.
+   **وبهويّة اللوحة وحدَها** (المالك ٢٠٢٦-١٠-٢٨: «بعيدٌ تمامًا عن هويّة أدِيب»): لا خطَّ الصالة البكسليّ ولا نغمةَ لكلّ
+   لعبة ولا توهّجَ ولا خطوطَ مسح. هويّةُ الصالة تسكن `/games` (`.agm`)، وفي اللوحة معاينةُ الكابينة وحدَها. */
+/* الشاشة: مقطعُ اللعبة صورةً في إطار اللوحة. بلا توهّجٍ ولا خطوطِ مسح: تلك زينةُ الصالة لا اللوحة */
 .gmr-screen {
   position: relative;
   display: block;
@@ -16432,19 +16426,10 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--navy-950);
-  box-shadow:
-    0 0 0 2px color-mix(in oklab, var(--gmr-tone) 55%, transparent),
-    0 12px 28px -8px color-mix(in oklab, var(--gmr-tone) 55%, transparent);
+  border: 1px solid var(--card-stroke);
 }
 .gmr-screen video, .gmr-screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.gmr-screen::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(to bottom, color-mix(in oklab, var(--navy-950) 22%, transparent) 0 1px, transparent 1px 3px);
-}
-.gmr-screen-off { display: grid; place-items: center; color: var(--steel-300); font-family: "Rooyin", var(--font-body); font-size: 14px; }
+.gmr-screen-off { display: grid; place-items: center; color: var(--steel-300); font-size: 12px; }
 
 .gmr-cq { container-type: inline-size; }
 
@@ -16472,9 +16457,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   border-bottom: 1px solid var(--color-border);
 }
 .gmr-lu li:last-child { border-bottom: 0; }
-.gmr-lu-pos { grid-area: pos; font-family: var(--font-latin); font-weight: 700; font-size: 1.125rem; color: var(--gmr-ink); text-align: center; }
-.gmr-lu-row .gmr-screen { grid-area: screen; border-radius: var(--radius-xs); box-shadow: 0 0 0 2px color-mix(in oklab, var(--gmr-tone) 55%, transparent); }
-.gmr-lu-name { grid-area: name; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: "Rooyin", var(--font-body); font-weight: 700; font-size: 1.0625rem; color: var(--gmr-ink); }
+.gmr-lu-pos { grid-area: pos; font-family: var(--font-latin); font-weight: 700; font-size: 1.125rem; color: var(--color-text-muted); text-align: center; }
+.gmr-lu-row .gmr-screen { grid-area: screen; border-radius: var(--radius-xs); }
+.gmr-lu-name { grid-area: name; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; font-size: .9375rem; color: var(--color-text); }
 .gmr-lu-move { grid-area: move; display: inline-flex; gap: 4px; }
 .gmr-lu-sw { grid-area: sw; }
 .gmr-lu-row[data-off] .gmr-screen, .gmr-lu-row[data-off] .gmr-lu-name { opacity: .45; filter: grayscale(.8); }
@@ -16484,21 +16469,20 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 /* آخرُ سبعة أيّام: عمودٌ لكلّ لعبة، وأعمدةُ أيّامها بنغمتها */
 .gmr-pulse { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
 .gmr-pulse-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; color: inherit; text-decoration: none; border-radius: var(--radius-sm); }
-.gmr-pulse-col:focus-visible { outline: 2px solid var(--gmr-tone); outline-offset: 6px; }
-.gmr-pulse-name { font-family: "Rooyin", var(--font-body); font-weight: 700; font-size: 1.375rem; line-height: 1.3; color: var(--gmr-ink); }
+.gmr-pulse-col:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 6px; }
+.gmr-pulse-name { font-weight: 700; font-size: 1.0625rem; line-height: 1.4; color: var(--color-text); }
 .gmr-pulse-col:hover .gmr-pulse-name { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
 .gmr-pulse-figs { display: flex; flex-wrap: wrap; gap: 6px 22px; }
 .gmr-pulse-fig { display: inline-flex; align-items: center; gap: 6px; font-size: .8125rem; color: var(--color-text-muted); }
 .gmr-pulse-fig b { font-family: var(--font-latin); font-size: 1.5rem; font-weight: 700; color: var(--color-text); }
 .gmr-pulse-none { font-size: .875rem; color: var(--color-text-muted); }
-.gmr-pulse-col .chart-col-bar { background: linear-gradient(to top, color-mix(in oklab, var(--gmr-tone) 70%, var(--color-surface)), var(--gmr-tone)); box-shadow: none; }
 
 /* المسابقات: صفوفٌ لا كروت (سطحٌ مؤطَّرٌ لا يحمل سطحًا مؤطَّرًا، القاعدة ١٢) */
 .gmr-cx { display: grid; margin: 0; padding: 0; list-style: none; container-type: inline-size; }
 .gmr-cx li + li { border-top: 1px solid var(--color-border); }
 .gmr-cx-row {
   display: grid;
-  grid-template-columns: 4px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px 14px;
   align-items: center;
   padding: 12px 4px;
@@ -16507,21 +16491,20 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   border-radius: var(--radius-sm);
   transition: background var(--dur-fast);
 }
-.gmr-cx-row:hover { background: color-mix(in oklab, var(--gmr-tone) 8%, transparent); }
-.gmr-cx-row:focus-visible { outline: 2px solid var(--gmr-tone); outline-offset: 2px; }
-.gmr-cx-bar { align-self: stretch; border-radius: 2px; background: var(--gmr-tone); }
+.gmr-cx-row:hover { background: color-mix(in oklab, var(--steel-500) 7%, transparent); }
+.gmr-cx-row:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .gmr-cx-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .gmr-cx-main > b { font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .gmr-cx-main > span { font-size: .8125rem; color: var(--color-text-muted); }
 .gmr-cx-lead b { color: var(--color-text); }
 .gmr-cx-when { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .gmr-cx-clock { display: inline-flex; align-items: baseline; gap: 6px; font-size: .75rem; color: var(--color-text-muted); }
-.gmr-cx-clock b { font-family: var(--font-latin); font-size: 1.0625rem; font-weight: 700; color: var(--gmr-ink); }
+.gmr-cx-clock b { font-family: var(--font-latin); font-size: 1.0625rem; font-weight: 700; color: var(--color-text); }
 .gmr-cx-date { font-size: .75rem; color: var(--color-text-muted); }
 .gmr-cx-empty { padding: 6px 0; font-size: .875rem; color: var(--color-text-muted); }
 @container (max-width: 420px) {
-  .gmr-cx-row { grid-template-columns: 4px minmax(0, 1fr); }
-  .gmr-cx-when { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; }
+  .gmr-cx-row { grid-template-columns: minmax(0, 1fr); }
+  .gmr-cx-when { flex-direction: row; align-items: center; justify-content: space-between; }
 }
 
 /* صدرُ صفحة اللعبة الجديد: الشاشةُ وسطرُها ومفتاحُ الصالة وبابا اللعبة. والاسمُ في رأس الصفحة وحدَه */
@@ -16531,8 +16514,6 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   gap: 18px;
   padding: 16px;
   margin-bottom: 18px;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--gmr-tone) 22%, var(--color-surface)), var(--color-surface) 62%);
-  border-color: color-mix(in oklab, var(--gmr-tone) 45%, var(--card-stroke));
 }
 .gmr-head .gmr-screen { --gmr-sw: 104px; }
 .gmr-head-body { display: flex; flex-direction: column; justify-content: center; gap: 12px; min-width: 0; }
@@ -18179,46 +18160,33 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   .evr-send .abtn { width: 100%; }
 }
 
-/* ── نافذةُ التفصيل والتصحيح (أُعيدت ٢٠٢٦-١٠-٢٧، ‎.evx-‎) ─────────
-   وجهان: «ملفّ» يلبس نمطَ نافذة الشخص (‎.pvb-‎ و‎.pva-‎) و«تبويبات». ولا سطحَ مؤطَّرٌ في النافذة (ق١٢):
-   صفوفٌ تفصلها شعرة، ومسطرةُ النتيجة عليها حدُّ الاستبعاد مسمًّى. */
-.evx-result, .evx-form { display: flex; flex-direction: column; gap: 14px; }
-.evx-scale-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
-.evx-scale-n { font-size: 40px; font-weight: 700; line-height: 1; color: var(--navy-800); }
-.evx-scale-v { font-size: 15px; font-weight: 800; color: var(--color-text-muted); }
-.evx-scale.out .evx-scale-n, .evx-scale.out .evx-scale-v { color: var(--danger-700); }
-.evx-scale-track { position: relative; height: 10px; margin: 14px 0 30px; border-radius: var(--radius-full); background: var(--steel-100); }
+/* ── نافذةُ التفصيل والتصحيح (‎.evx-‎، أُعيد لباسُها ٢٠٢٦-١٠-٢٨) ──────────
+   «تبويباتٌ بغلاف الملفّ» بلغة نوافذ المنصّة: رأسُ ‎.pvb-‎، وأقسامُ ‎.pva-‎ وخلاياها، والأفعالُ في التذييل.
+   وما هنا إضافاتُها وحدها: التبويبُ في الوسط، وخليّةُ النتيجة بمسطرتها، والمقيِّمون أفتارًا. */
+.evx-tabs { display: flex; justify-content: center; }
+.evx-final .evx-final-row { display: flex; align-items: baseline; gap: 10px; margin-top: 6px; }
+.evx-final-n { font-size: 30px; font-weight: 700; line-height: 1; color: var(--color-primary); }
+.evx-final-v { font-size: 14px; font-weight: 800; color: var(--color-text-muted); }
+.evx-final.out .evx-final-n, .evx-final.out .evx-final-v { color: var(--danger-700); }
+.evx-scale { position: relative; height: 8px; margin-top: 14px; border-radius: var(--radius-full); background: color-mix(in oklab, var(--steel-200) 55%, var(--color-surface)); }
 .evx-scale-fill { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: inherit; background: var(--grad-primary); }
-.evx-scale.out .evx-scale-fill { background: var(--grad-danger); }
-.evx-scale-cut { position: absolute; inset-inline-start: 40%; top: -5px; bottom: -5px; width: 2px; border-radius: var(--radius-full); background: var(--danger-500); }
-.evx-scale-cut > span { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--danger-700); }
-.evx-parts { display: flex; flex-direction: column; }
-.evx-part { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding-block: 12px; border-top: 1px solid var(--color-border); }
-.evx-part:first-child { border-top: 0; }
-.evx-part-k { display: flex; align-items: baseline; gap: 6px; font-size: 14.5px; font-weight: 800; color: var(--color-text); }
-.evx-part-k .font-latin { font-size: 12.5px; font-weight: 700; color: var(--color-text-muted); }
-.evx-part-tx { font-size: 14px; color: var(--color-text-muted); }
-.evx-q.met { color: var(--success-700); }
-.evx-part-n { font-size: 20px; font-weight: 700; color: var(--color-text); }
-.evx-part-none { font-size: 13px; color: var(--color-text-muted); }
-.evx-branch, .evx-hint { font-size: 13.5px; line-height: 1.8; color: var(--color-text-muted); }
-.evx-lead { font-size: 14.5px; line-height: 1.9; color: var(--color-text); }
-.evx-raters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; }
-.evx-col-h { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 2px solid var(--steel-100); font-size: 14px; font-weight: 800; color: var(--steel-700); }
-.evx-col-h .font-latin { color: var(--color-text-muted); }
-.evx-rater { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-block: 9px; border-bottom: 1px solid var(--color-border); font-size: 14.5px; }
-.evx-rater em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--color-text-muted); }
-.evx-rater em.add { color: var(--steel-600); }
-.evx-sub { margin-top: 14px; padding-bottom: 4px; font-size: 12.5px; font-weight: 800; color: var(--steel-600); }
-.evx-rater.is-out span { color: var(--color-text-muted); text-decoration: line-through; }
-.evx-sum { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 14px; }
-.evx-sum-n { font-size: 26px; font-weight: 700; line-height: 1; color: var(--navy-800); }
-.evx-sum.out .evx-sum-n { color: var(--danger-700); }
-.evx-ask { font-family: var(--font-display); font-size: 20px; font-weight: 900; color: var(--color-primary); }
+.evx-final.out .evx-scale-fill { background: var(--grad-danger); }
+.evx-scale-cut { position: absolute; inset-inline-start: 40%; top: -4px; bottom: -4px; width: 2px; border-radius: var(--radius-full); background: var(--danger-500); }
+.evx-scale-l { position: relative; height: 18px; margin-top: 4px; }
+.evx-scale-l > span { position: absolute; inset-inline-start: 40%; transform: translateX(50%); white-space: nowrap; font-size: 11.5px; font-weight: 700; color: var(--danger-700); }
+.evx-scale-l > span:dir(ltr) { transform: translateX(-50%); }
+.evx-people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.evx-person { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--surface-aurora); border: var(--card-stroke-w) solid var(--card-stroke); }
+.evx-person-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.evx-person-n, .evx-person-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.evx-person-n { font-size: 14px; font-weight: 700; color: var(--color-primary); }
+.evx-person-s { font-size: 12px; color: var(--color-text-muted); }
+.evx-person.is-out { opacity: .6; }
+.evx-person.is-out .evx-person-n { text-decoration: line-through; }
+.evx-lead { margin-bottom: 12px; font-size: 14px; line-height: 1.9; color: var(--color-text); }
+.evx-hint { margin-top: 8px; font-size: 13px; line-height: 1.8; color: var(--color-text-muted); }
 @media (max-width: 560px) {
-  .evx-raters { grid-template-columns: 1fr; }
-  .evx-part { grid-template-columns: minmax(0, 1fr) auto; }
-  .evx-part-tx { grid-column: 1 / -1; grid-row: 2; }
+  .evx-people { grid-template-columns: 1fr; }
 }
 
 /* ── رأسُ الغرفة: الدورةُ ومراحلُها وشريطُ المشاركة (من «لوحة الدورة») ── */
@@ -18283,10 +18251,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .evs-row.is-out.is-wait { background: var(--warning-50); }
 .evs-row.is-out .eva-meter-track { background: var(--color-surface); }
 .evs-row.is-out .eva-meter-fill { background: var(--steel-400); }
-/* المستثنى (م١/4): لا يُفتح، وسببُه في موضع المشاركة */
+/* المستثنى (م١/4) في كرت «خارج هذه الدورة» (محمد ٢٠٢٦-١٠-٢٩): لا يُفتح، وسببُه في موضع المشاركة */
 .evs-row.is-ex { grid-template-columns: minmax(220px, 1.25fr) minmax(0, 1fr) auto; cursor: default; }
 .evs-row.is-ex:hover { background: var(--color-surface); }
-.evs-row.is-ex.is-head:hover { background: linear-gradient(to left, var(--steel-50), var(--color-surface) 60%); }
 .evs-row.is-ex .evs-who { opacity: .72; }
 .evs-ex-why { font-size: 13.5px; line-height: 1.7; color: var(--color-text-muted); text-wrap: pretty; }
 .evs-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
