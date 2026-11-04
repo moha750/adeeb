@@ -83,6 +83,10 @@ const nextConfig: NextConfig = {
       // تكتب كلَّ جولةٍ في `bank_plays` عبر `bank_log_play` (الترحيل 20260928034545_bank_01_plays).
       // كان عنوانُها `/bank` قصيرًا لتابلت الركن، وصار `/games/bank-adeeb/play` حين دخلت الصالة (والقديمُ تحويل).
       { source: "/games/bank-adeeb/play", destination: "/games/bank-adeeb/game.html" },
+      // «مدارس الأصول الأهلية»: محاكي ركن «البيت» ثلاثيُّ الأبعاد لمشاركة النادي في معرض القهوة
+      // (٢٠٢٦-١١-١١). صفحةٌ مكتفيةٌ بنفسها في `public/exhibits/osool/`، وعنوانُها القصير هذا هو
+      // ما يُرسَل للمجلس الإداريّ، فلا يُغيَّر بعد نشره.
+      { source: "/osool", destination: "/exhibits/osool/index.html" },
     ];
   },
   /**
