@@ -4528,7 +4528,7 @@ solid(WJAR.x-.6,WJAR.z-.4,X1,Z1);
 PICK.push(wjar);
 
 /* ── الفنجالُ والدلّة ── */
-const CUP_S=1.6; // الفنجالُ مكبَّرٌ قليلًا عن حقيقته ليُقرأ مستواه في شاشة جوّال
+const CUP_S=1.5; // الفنجالُ مكبَّرٌ قليلًا عن حقيقته ليُقرأ مستواه في شاشة جوّال
 const CUP_IN=[[.019,.008],[.027,.03],[.031,.05]];
 function cupInnerR(y){if(y<=CUP_IN[0][1])return CUP_IN[0][0];for(let i=1;i<CUP_IN.length;i++){const a=CUP_IN[i-1],b=CUP_IN[i];if(y<=b[1])return lerp(a[0],b[0],(y-a[1])/(b[1]-a[1]));}return CUP_IN[2][0];}
 const CUP_GEO=new T3.LatheGeometry([[0,0],[.02,0],[.022,.004],[.03,.03],[.034,.05],[.031,.05],[.027,.03],[.019,.008],[0,.008]].map(p=>new T3.Vector2(p[0],p[1])),20);
@@ -4539,7 +4539,10 @@ function makeCup(){
   g.userData.level=0;
   g.userData.set=f=>{g.userData.level=f;const y=.008+clamp(f,0,1)*(.05-.008)-.001;d.visible=f>.01;d.position.y=y;d.scale.setScalar(cupInnerR(y));};
   g.userData.set(0);return g;}
-function makeStack(){const g=new T3.Group();for(let i=0;i<3;i++){const c=new T3.Mesh(CUP_GEO,M.cup);c.position.y=i*.012;g.add(c);}g.scale.setScalar(CUP_S);return g;}
+// الفناجيلُ أربعةٌ متداخلة: فنجالُ الضيف هو أعلاها يُصبّ فيه ويُناوَل، ويعود إليها إذا هزّه، ويسقط أرضًا إذا رُمي.
+// فلا يظهر فنجالٌ من عدم، ويرى اللاعبُ ما رُمي منها على الأرض وما بقي في يده.
+const STACK_N=4;
+function makeStack(){const g=new T3.Group();g.userData.cups=[];for(let i=0;i<STACK_N;i++){const c=new T3.Mesh(CUP_GEO,M.cup);c.position.y=i*.012;g.add(c);g.userData.cups.push(c);}g.scale.setScalar(CUP_S);return g;}
 function makeDallah(){
   const g=new T3.Group();
   const prof=[[0,0],[.07,0],[.066,.02],[.058,.03],[.08,.06],[.085,.09],[.072,.12],[.045,.14],[.038,.17],[.048,.19],[.056,.2],[.05,.225],[.032,.236],[.028,.25],[.012,.26],[.008,.28],[.015,.29],[0,.3]];
@@ -4552,6 +4555,12 @@ function makeDallah(){
   return g;}
 
 const dallah=makeDallah(),stack=makeStack();
+let stackN=STACK_N;
+function stackShow(n){stack.userData.cups.forEach((c,i)=>c.visible=i<n);}
+function stackTop(i,out){return stack.localToWorld((out||new T3.Vector3()).set(0,i*.012,0));}
+const litter=[];
+function dropCup(){const c=new T3.Mesh(CUP_GEO,M.cup);c.scale.setScalar(CUP_S);const f=camera.getWorldDirection(new T3.Vector3()).setY(0).normalize();
+  c.position.set(camera.position.x+f.x*.4+rnd(-.2,.2),.05,camera.position.z+f.z*.4+rnd(-.2,.2));c.rotation.set(Math.PI/2,0,rnd(0,6.28));scene.add(c);litter.push(c);}
 function toTray(){
   scene.add(dallah);dallah.position.set(WJAR.x-.1,.725,WJAR.z-.05);dallah.rotation.set(0,Math.PI,0);dallah.scale.setScalar(1);
   scene.add(stack);stack.position.set(WJAR.x+.14,.725,WJAR.z-.08);stack.rotation.set(0,0,0);stack.scale.setScalar(CUP_S);}
@@ -4569,7 +4578,7 @@ function makeHand(side){
   const slot=new T3.Group();g.add(slot);g.userData.slot=slot;g.userData.side=side;
   camera.add(g);return g;}
 HAND.L=makeHand(-1);HAND.R=makeHand(1);
-const IN_HAND=.7,STACK_IN=1.35;
+const IN_HAND=.7,STACK_IN=1.5;
 function seat(item,hand){
   const s=HAND[hand].userData.side,slot=HAND[hand].userData.slot;
   slot.add(item);item.rotation.set(0,0,0);
@@ -4620,10 +4629,11 @@ function reach(g,t){aim(g.sh,g.arm,g.hand,t);}
 const SEAT=.45;
 const SADR=makeGuest(0,Z0+SEAT+.1,0,"S");
 // يمينُ الصدر: هو يقابل الباب (+z)، فيمينُه جهةُ x السالبة، وهي يسارُ الداخل.
-const R1=makeGuest(X0+SEAT,-2.6,Math.PI/2,"R1"),R2=makeGuest(X0+SEAT,-.6,Math.PI/2,"R2"),R3=makeGuest(X0+SEAT,1.4,Math.PI/2,"R3");
-const L3=makeGuest(X1-SEAT,1.4,-Math.PI/2,"L3"),L2=makeGuest(X1-SEAT,-.6,-Math.PI/2,"L2"),L1=makeGuest(X1-SEAT,-2.6,-Math.PI/2,"L1");
-// الدورُ يدور يمينًا: الصدر، ثمّ جهةُ يمينه من الأقرب إليه حتى الباب، ثمّ الجهةُ الأخرى من الباب صعودًا إلى الصدر.
-const ORDER=[SADR,R1,R2,R3,L3,L2,L1];
+const R1=makeGuest(X0+SEAT,-2.6,Math.PI/2,"R1"),R2=makeGuest(X0+SEAT,-.4,Math.PI/2,"R2");
+const L2=makeGuest(X1-SEAT,-.4,-Math.PI/2,"L2"),L1=makeGuest(X1-SEAT,-2.6,-Math.PI/2,"L1");
+// الدورُ يدور يمينًا: الصدر، ثمّ جهةُ يمينه من الأقرب إليه نزولًا، ثمّ الجهةُ الأخرى صعودًا إلى الصدر.
+// «الأيمنُ بالنسبة إلى الذي شرب أولًا» لا يمينُ المقهوي (ابن جبرين). وخمسةٌ لا سبعة بكلمة المالك (٢٠٢٦-١١-٠٧): السبعةُ أملّت.
+const ORDER=[SADR,R1,R2,L2,L1];
 
 function applyGender(){
   const f=G==="f";
@@ -4667,13 +4677,15 @@ const anchor={x:.16,y:-.22,z:-.5};
 function layoutHands(){
   const d=.5,h=Math.tan(T3.MathUtils.degToRad(camera.fov/2))*d,wd=h*camera.aspect;
   anchor.x=clamp(wd*.62,.08,.27);anchor.y=-h*.64;anchor.z=-d;
-  const s=camera.aspect<1?.72:.86;HAND.L.scale.setScalar(s);HAND.R.scale.setScalar(s);}
+  handWalk=camera.aspect<1?.72:.86;if(mode!=="serve"){HAND.L.scale.setScalar(handWalk);HAND.R.scale.setScalar(handWalk);}}
+let handWalk=.8;
 const handT={L:new T3.Vector3(),R:new T3.Vector3()},handRz={L:0,R:0};
 function restHands(bob){
   handT.L.set(-anchor.x,anchor.y+bob,anchor.z);handT.R.set(anchor.x,anchor.y+bob*.8,anchor.z);handRz.L=-.08;handRz.R=.08;}
 function driveHands(dt){
   const k=1-Math.pow(.0005,dt);
-  ["L","R"].forEach(h=>{HAND[h].position.lerp(handT[h],k);const sl=HAND[h].userData.slot;sl.rotation.z=lerp(sl.rotation.z,handRz[h],k);});}
+  const hsT=mode==="serve"?1:handWalk;
+  ["L","R"].forEach(h=>{HAND[h].position.lerp(handT[h],k);HAND[h].scale.setScalar(lerp(HAND[h].scale.x,hsT,k));const sl=HAND[h].userData.slot;sl.rotation.z=lerp(sl.rotation.z,handRz[h],k);});}
 
 /* ── الواجهة ── */
 const hud=$("#hud"),goalEl=$("#goal"),bubbleEl=$("#bubble"),reasonEl=$("#reason"),hintEl=$("#hint"),shintsEl=$("#shints"),
@@ -4681,7 +4693,7 @@ const hud=$("#hud"),goalEl=$("#goal"),bubbleEl=$("#bubble"),reasonEl=$("#reason"
 const HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.4C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.6.8-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.7 4.2 7.1C19.5 16.4 12 21 12 21z"/></svg>';
 function drawHearts(el,n,hit){el.innerHTML=HEART.repeat(3);[...el.children].forEach((s,i)=>{if(i>=n)s.classList.add("lost");if(hit&&i===n)s.classList.add("hit");});}
 function drawDots(){$("#dots").innerHTML=ORDER.map(()=>"<i></i>").join("");}
-function markDots(){const done=guests.filter(g=>g.done);const d=$("#dots").children;for(let i=0;i<7;i++){d[i].className=i<done.length?(done[i].fault?"bad":"on"):"";}}
+function markDots(){const done=guests.filter(g=>g.done);const d=$("#dots").children;for(let i=0;i<ORDER.length;i++){d[i].className=i<done.length?(done[i].fault?"bad":"on"):"";}}
 let goalTxt="";function setGoal(t){if(t!==goalTxt){goalTxt=t;goalEl.textContent=t;}}
 let bubbleT=0,bubbleAt=null;function say(g,txt,d){bubbleEl.textContent=txt;bubbleEl.hidden=false;bubbleT=d||2.2;bubbleAt=g;}
 let reasonT=0;function why(t){reasonEl.textContent=t;reasonEl.hidden=false;reasonT=3;}
@@ -4735,8 +4747,16 @@ addEventListener("blur",()=>{for(const k in keys)keys[k]=false;pressUp(press.src
 
 document.addEventListener("pointerlockchange",()=>{locked=document.pointerLockElement===cv;});
 document.addEventListener("pointerlockerror",()=>{canLock=false;});
-function lock(){if(canLock&&!locked&&mode==="walk"){try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{canLock=false;});}catch(e){canLock=false;}}}
-document.addEventListener("mousemove",e=>{if(locked&&mode==="walk"){P.yaw-=e.movementX*.0023;P.pitch=clamp(P.pitch-e.movementY*.0023,-1.2,1.2);}});
+function lockNow(){if(!canLock||locked)return;try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{canLock=false;});}catch(e){canLock=false;}}
+function lock(){if(mode==="walk")lockNow();}
+// حيث يُمنع قفلُ المؤشّر (صفحةٌ داخل إطارٍ كمعاينة كلود) لا يُطلب من اللاعب أن يضغط ليلتفت: الفأرةُ عينُه
+// بلا زرّ، وإذا بلغ المؤشّرُ حافّةَ الشاشة استمرّ الالتفاتُ نحوها.
+const mouse={x:-1,in:false};
+document.addEventListener("mousemove",e=>{mouse.x=e.clientX;mouse.in=true;
+  if(mode!=="walk")return;
+  if(locked){P.yaw-=e.movementX*.0023;P.pitch=clamp(P.pitch-e.movementY*.0023,-1.2,1.2);return;}
+  if(!TOUCH&&!canLock&&e.buttons===0){P.yaw-=e.movementX*.0032;P.pitch=clamp(P.pitch-e.movementY*.0032,-1.2,1.2);}});
+document.addEventListener("mouseleave",()=>{mouse.in=false;});
 
 cv.addEventListener("contextmenu",e=>e.preventDefault());
 ["touchstart","touchmove"].forEach(t=>cv.addEventListener(t,e=>e.preventDefault(),{passive:false}));
@@ -4806,7 +4826,7 @@ function drop(o,x){
   const hand=x<innerWidth/2?"L":"R";
   if(HELD[hand]){toTrayOne(o);return;}
   seat(o,hand);
-  if(holding()){pk.done=true;hintT=Math.min(hintT,.6);setTimeout(()=>{
+  if(holding()){pk.done=true;hintT=Math.min(hintT,.6);if(!TOUCH)lockNow();setTimeout(()=>{
     const p={...V};P.x=p.x;P.z=p.z;P.yaw=p.yaw;P.pitch=-.05;
     camTween({x:p.x,y:EYE,z:p.z,yaw:p.yaw,pitch:-.05},.35,()=>{mode="walk";stickEl.hidden=!TOUCH;pk.done=false;});},350);}}
 function toTrayOne(o){if(o===dallah){scene.add(dallah);dallah.position.set(WJAR.x-.1,.725,WJAR.z-.05);dallah.rotation.set(0,Math.PI,0);dallah.scale.setScalar(1);}
@@ -4831,9 +4851,10 @@ function tryServe(g){
 function startServe(g){
   mode="serve";stickEl.hidden=true;press.on=false;hintT=Math.min(hintT,.3);
   const k=guests.filter(x=>x.done).length;
-  const sp=1+.13*k;
-  const seq=[];if(g===SADR)seq.push("more");else{const r=Math.random();const n=r<.3?0:r<.75?1:2;for(let i=0;i<n;i++)seq.push("more");}seq.push("shake");
-  sv={g,phase:"in",t:0,sp,seq,gi:0,wrong:g!==nextGuest(),win:Math.max(1.5,3.4-.3*k),own:"player",from:null,throwFrom:null,refill0:0,spin:new T3.Vector3()};
+  const sp=1+.18*k;
+  // الصدرُ يطلب الزيادةَ مرّةً ثمّ يهزّ، وغيرُه مرّةً أو لا شيء: التكرارُ هو ما أملّ
+  const seq=[];if(g===SADR||Math.random()<.5)seq.push("more");seq.push("shake");
+  sv={g,phase:"in",t:0,sp,seq,gi:0,wrong:g!==nextGuest(),win:Math.max(1.6,3.2-.4*k),own:"player",from:null,throwFrom:null,refill0:0,spin:new T3.Vector3()};
   const c=g.pos.clone().addScaledVector(g.fwd,SERVE_D),l=g.pos.clone().addScaledVector(g.fwd,.1);
   sv.cam=lookPose(c.x,SERVE_EYE,c.z,l.x,.56,l.z);
   cup.userData.set(0);
@@ -4860,11 +4881,12 @@ function pressUp(src){
   if(pourStart()){if(sv.phase==="pour1"||sv.phase==="refill"){cup.userData.set(cup.userData.level+(held-TAP)/POUR_FULL);pourEnd();}}}
 function pourStart(){
   if(sv.phase==="wait1"){phase("pour1");return true;}
-  if(sv.phase==="gest"){if(sv.seq[sv.gi]==="shake"){fail("shake","done");return false;}sv.refill0=cup.userData.level;phase("refill");return true;}
+  if(sv.phase==="gest"){if(sv.seq[sv.gi]==="shake"){phase("badpour");return true;}sv.refill0=cup.userData.level;phase("refill");return true;}
   if(sv.phase==="refill")return true;
   return false;}
 function pourEnd(){
   const f=cup.userData.level;
+  if(sv.phase==="badpour"){fail("shake","done");return;}
   if(sv.phase==="pour1"){if(f<OK_MIN){phase("wait1");return;}phase("give");return;}
   if(sv.phase==="refill"){if(f-sv.refill0<OK_MIN)return;if(f>OK_MAX){fail("full","done");return;}sv.gi++;phase("drink");}}
 function onTap(){
@@ -4874,13 +4896,13 @@ function onTap(){
 // أثرُ الخطأ بعد الرمية: retry يُعاد الصبُّ للضيف نفسِه، وdone ينتهي الضيفُ بخطئه، وleave يُغادَر ولم يُقهوَ بعد
 function fail(kind,how){
   const [line,reason]=WORDS[G].fail[kind];
-  sv.fault={line,reason,how};sv.throwFrom=cup.position.clone();
+  sv.fault={line,reason,how,level:cup.userData.level};sv.throwFrom=cup.position.clone();sv.from=null;
   sv.spin.set(rnd(-9,9),rnd(-9,9),rnd(-9,9));
   press.flow=false;press.stale=true;shintsEl.hidden=true;phase("throw");}
 
 function hitFace(){
-  const f=sv.fault;cup.visible=false;
-  splashStart();shakeT=.45;
+  const f=sv.fault;cup.visible=false;dropCup();
+  splashStart(f.level);shakeT=.45;
   hearts=Math.max(0,hearts-1);drawHearts($("#hearts"),hearts,true);
   say(sv.g,f.line,2.4);why(f.reason);}
 
@@ -4900,25 +4922,27 @@ function serveTick(dt){
   if(!sv||camTw&&sv.phase==="in"){restHands(0);driveHands(dt);return;}
   const g=sv.g;sv.t+=dt;const t=sv.t,sp=sv.sp;
   const dh=dallahHand(),ch=cupHand(),ds=HAND[dh].userData.side;
-  stack.visible=false;
   // اليدُ الحاملةُ للفنجال تحت الفنجال إن كان معها، والأخرى بالدلّة فوق الهدف حين الصبّ
-  const target=new T3.Vector3();let pourTo=null,tilt=.12,flowNow=false;
+  const target=new T3.Vector3();let pourTo=null,tilt=.12,flowNow=false,onStack=false;
   if(press.on&&!press.stale&&!press.flow&&nowS()-press.t0>=TAP){press.flow=pourStart();}
-  flowNow=press.flow&&(sv.phase==="pour1"||sv.phase==="refill");
+  flowNow=press.flow&&(sv.phase==="pour1"||sv.phase==="refill"||sv.phase==="badpour");
   switch(sv.phase){
     case "wait1":case "pour1":{
-      cup.visible=true;P3("mine",cup.position);cup.quaternion.identity();
+      // الفناجيلُ في اليد ترتفع إلى موضع الصبّ، وأعلاها هو فنجالُ الضيف
+      const ml=toLocal(P3("mine",_v)),hs=HAND[ch].scale.x;
+      handT[ch].set(ml.x,ml.y-hs*(.026+(stackN-1)*.012*STACK_IN),ml.z);handRz[ch]=0;onStack=true;
+      cup.visible=true;cup.quaternion.identity();
       reach(g,P3("wait",target));pourTo=cup;
       if(sv.phase==="wait1"&&t<dt*1.5&&!ruleSaid&&!rightWay()){ruleSaid=true;say(g,w("rule"),2.6);swapEl.textContent=w("swap");swapEl.hidden=false;}
       break;}
-    case "give":{const k=sm(t/.35);cup.visible=true;cup.position.lerpVectors(P3("mine",_v),P3("wait",target),k);hold(g);
-      if(t>=.35){if(cup.userData.level>OK_MAX){fail("full","retry");}else phase("drink");}break;}
+    case "give":{if(!sv.from){sv.from=cup.position.clone();stackN--;}const k=sm(t/.35);cup.visible=true;cup.position.lerpVectors(sv.from,P3("wait",target),k);hold(g);
+      if(t>=.35){sv.from=null;if(cup.userData.level>OK_MAX){fail("full","retry");}else phase("drink");}break;}
     case "drink":{const mouth=g.head.clone().addScaledVector(g.fwd,.13);mouth.y-=.05;const lap=g.group.localToWorld(new T3.Vector3(-.2,.36,.3));
-      const k1=sm(t/.35),k3=sm((t-.75)/.3);cup.position.copy(cup.position.lerp(mouth,k1*.6)).lerp(lap,k3);
-      const side=_v.set(g.fwd.z,0,-g.fwd.x);cup.quaternion.setFromAxisAngle(side,-1.1*sm((t-.25)/.25)*(1-k3));
-      if(t>.35&&t<.75)cup.userData.set(cup.userData.level*(1-dt*4));
+      const k1=sm(t/.3),k3=sm((t-.6)/.25);cup.position.copy(cup.position.lerp(mouth,k1*.6)).lerp(lap,k3);
+      const side=_v.set(g.fwd.z,0,-g.fwd.x);cup.quaternion.setFromAxisAngle(side,-1.1*sm((t-.2)/.2)*(1-k3));
+      if(t>.3&&t<.6)cup.userData.set(cup.userData.level*(1-dt*5));
       hold(g);
-      if(t>=1.05){cup.userData.set(0);cup.quaternion.identity();sv.from=cup.position.clone();phase("extend");}break;}
+      if(t>=.85){cup.userData.set(0);cup.quaternion.identity();sv.from=cup.position.clone();phase("extend");}break;}
     case "extend":{const d=.55/sp,k=sm(t/d);cup.position.lerpVectors(sv.from,P3("ext",_v),k);cup.quaternion.identity();hold(g);
       if(t>=d)phase("gest");break;}
     case "gest":{const kind=sv.seq[sv.gi];P3("ext",cup.position);
@@ -4929,33 +4953,39 @@ function serveTick(dt){
       hold(g);
       if(t>=sv.win)fail("late","done");break;}
     case "refill":{P3("ext",cup.position);cup.quaternion.identity();hold(g);pourTo=cup;break;}
-    case "take":{const k=sm(t/.3);cup.position.lerpVectors(P3("ext",target),camPt(HAND[ch].userData.side*anchor.x,anchor.y+.05,anchor.z,_v),k);cup.quaternion.identity();
+    // صبٌّ بعد الهزّة: تنزل القهوةُ لحظةً في فنجالٍ أبى، ثمّ يرميه وفيه ما نزل
+    case "badpour":{P3("ext",cup.position);cup.quaternion.identity();hold(g);pourTo=cup;if(t>=.32)fail("shake","done");break;}
+    case "take":{const k=sm(t/.32);HAND[ch].updateMatrixWorld(true);cup.position.lerpVectors(P3("ext",target),stackTop(stackN,_v),k);cup.quaternion.identity();
       if(t<.12)hold(g);else reach(g,g.rest);
-      if(t>=.3){say(g,w("thanks"),1.6);endServe(false);return;}break;}
-    case "snatch":{const k=sm(t/.28);cup.visible=true;cup.userData.set(0);cup.position.lerpVectors(P3("mine",_v),P3("wait",target),k);hold(g);
+      if(t>=.32){stackN++;cup.visible=false;say(g,w("thanks"),1.6);endServe(false);return;}break;}
+    case "snatch":{if(!sv.from){HAND[ch].updateMatrixWorld(true);sv.from=stackTop(stackN-1);stackN--;}const k=sm(t/.28);cup.visible=true;cup.userData.set(0);cup.quaternion.identity();cup.position.lerpVectors(sv.from,P3("wait",target),k);hold(g);
       if(t>=.36){fail("order","leave");}break;}
     case "throw":{const d=.3,k=t/d;const eye=P3("eye",target);cup.visible=true;cup.position.lerpVectors(sv.throwFrom,eye,k*k);
       cup.rotation.set(sv.spin.x*t,sv.spin.y*t,sv.spin.z*t);
       reach(g,k<.4?_v.copy(cup.position):g.rest);
       if(t>=d){hitFace();phase("after");}break;}
     case "after":{if(t>=1.35){const f=sv.fault;if(f.how!=="retry"||hearts<=0){endServe(true);return;}
-        sv.fault=null;cup.userData.set(0);cup.rotation.set(0,0,0);shintsEl.hidden=false;phase("wait1");}break;}
+        sv.fault=null;cup.userData.set(0);cup.rotation.set(0,0,0);cup.scale.setScalar(CUP_S);shintsEl.hidden=false;phase("wait1");}break;}
   }
-  if(flowNow&&(sv.phase==="pour1"||sv.phase==="refill")){cup.userData.set(cup.userData.level+REAL/POUR_FULL);if(cup.userData.level>=1)fail("full",sv.phase==="refill"?"done":"retry");}
+  if(flowNow&&(sv.phase==="pour1"||sv.phase==="refill"||sv.phase==="badpour")){cup.userData.set(cup.userData.level+REAL/POUR_FULL);
+    // فاض: في يد اللاعب يُناوَل فيُرمى، وفي يد الضيف يُرمى مكانه
+    if(cup.userData.level>=1){if(sv.phase==="pour1"){press.flow=false;press.stale=true;phase("give");}else fail("full","done");}}
   else flowNow=false;
   // الدلّة: فوق الفنجال إن كان أمام اللاعب، وإلّا في موضع الراحة
-  const wantPour=pourTo&&(sv.phase==="wait1"||sv.phase==="pour1"||sv.phase==="refill");
-  restHands(0);
+  const wantPour=pourTo&&(sv.phase==="wait1"||sv.phase==="pour1"||sv.phase==="refill"||sv.phase==="badpour");
+  const keepCh=onStack?handT[ch].clone():null;
+  restHands(0);if(keepCh){handT[ch].copy(keepCh);handRz[ch]=0;}
   if(wantPour){
-    const cl=toLocal(cup.position);
+    const cl=onStack?toLocal(P3("mine",_v)):toLocal(cup.position);
     const pressing=press.on&&!press.stale;
     tilt=flowNow?.95:pressing?.4:.15;handRz[dh]=ds*tilt;
     // تُوضَع اليدُ حيث يقع رأسُ البزّة فوق الفنجال بأيّ ميل: رأسُها من قبضة اليد بمقياس الدلّة في اليد ومقياس اليد
     const hs=HAND[dh].scale.x,rz=HAND[dh].userData.slot.rotation.z,c=Math.cos(rz),sn=Math.sin(rz),tx=-ds*(.118+.215)*IN_HAND*hs,ty=(.278-.15)*IN_HAND*hs;
     handT[dh].set(cl.x+ds*.012-(tx*c-ty*sn),cl.y+.14-(tx*sn+ty*c),cl.z);
   }
-  if(cup.visible&&(sv.phase==="wait1"||sv.phase==="pour1")){const cl=toLocal(cup.position);handT[ch].set(cl.x,cl.y-.035,cl.z+.012);handRz[ch]=0;}
   driveHands(dt);
+  if(onStack){HAND[ch].updateMatrixWorld(true);stackTop(stackN-1,cup.position);cup.scale.setScalar(STACK_IN*HAND[ch].scale.x);}
+  stackShow(onStack?stackN-1:stackN);
   if(flowNow){camera.updateMatrixWorld(true);HAND[dh].updateMatrixWorld(true);const tip=dallah.userData.tip.getWorldPosition(new T3.Vector3());
     const lv=cup.localToWorld(new T3.Vector3(0,.008+cup.userData.level*.042,0));
     const dv=lv.clone().sub(tip);const L=dv.length();stream.visible=L>.005;stream.position.copy(tip);stream.scale.set(1,L,1);
@@ -4965,14 +4995,24 @@ function serveTick(dt){
 /* ── الرشّة: القهوةُ على الشاشة تسودّ ثمّ تنقشع ── */
 const spC=$("#splash"),sx=spC.getContext("2d");let spT=-1,spB=null;
 function sizeSplash(){spC.width=innerWidth;spC.height=innerHeight;}
-function splashStart(){
-  const W=spC.width,H=spC.height,R=Math.max(W*.5,H*.36),cx=W*rnd(.42,.58),cy=H*rnd(.36,.5);
+function splashStart(level){
+  const W=spC.width,H=spC.height;
+  if(!(level>=.06)){
+    // فنجالٌ فارغ: لا قهوةَ فيه تُرشّ، فما يصيب الوجهَ حثلُه: نقاطٌ داكنةٌ تنزلق ثمّ تزول
+    const cx=W*rnd(.4,.6),cy=H*rnd(.34,.48),R=Math.max(W,H)*.34,specks=[],smears=[];
+    for(let i=0;i<280;i++){const a=rnd(0,6.28),d=R*Math.pow(Math.random(),.65);specks.push([cx+Math.cos(a)*d,cy+Math.sin(a)*d*.8,rnd(1.4,6)*(1-.5*d/R)]);}
+    for(let i=0;i<8;i++){const a=rnd(0,6.28),d=R*rnd(0,.45);smears.push([cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*rnd(.04,.1)]);}
+    spB={kind:"grounds",specks,smears};spT=0;return;}
+  const s=.5+.5*clamp(level/.5,0,1),R=Math.max(W*.5,H*.36)*s,cx=W*rnd(.42,.58),cy=H*rnd(.36,.5);
   const blobs=[[cx,cy,R]];for(let i=0;i<16;i++){const a=rnd(0,6.28),d=R*rnd(.5,1.05);blobs.push([cx+Math.cos(a)*d,cy+Math.sin(a)*d*.85,R*rnd(.14,.36)]);}
   const drops=[];for(let i=0;i<46;i++){const a=rnd(0,6.28),d=R*rnd(1.05,1.9);drops.push([cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*rnd(.015,.06)]);}
   const drips=[];for(let i=0;i<12;i++){const x=cx+rnd(-R*.95,R*.95);drips.push([x,cy+Math.sqrt(Math.max(0,R*R-(x-cx)*(x-cx)))*.7,R*rnd(.035,.08),R*rnd(.4,1.3)]);}
-  spB={blobs,drops,drips,cx,cy,R};spT=0;}
+  spB={kind:"liquid",blobs,drops,drips,cx,cy,R};spT=0;}
 function drawSplash(dt){
   if(spT<0)return;spT+=dt;const W=spC.width,H=spC.height;sx.clearRect(0,0,W,H);
+  if(spB.kind==="grounds"){const a=spT<.45?1:1-(spT-.45)/1.2;if(a<=0){spT=-1;return;}const dy=spT*spT*28;
+    sx.fillStyle="#22140a";sx.globalAlpha=a*.55;sx.beginPath();for(const [x,y,r] of spB.smears){sx.moveTo(x+r,y+dy*.6);sx.arc(x,y+dy*.6,r,0,6.2832);}sx.fill();
+    sx.globalAlpha=a;sx.beginPath();for(const [x,y,r] of spB.specks){sx.moveTo(x+r,y+dy);sx.arc(x,y+dy,r,0,6.2832);}sx.fill();sx.globalAlpha=1;return;}
   const a=spT<.6?1:1-(spT-.6)/1.5;if(a<=0){spT=-1;return;}
   const b=spB,g=sx.createRadialGradient(b.cx,b.cy,b.R*.2,b.cx,b.cy,b.R*1.6);g.addColorStop(0,"#1c0f05");g.addColorStop(1,"#3a2210");
   sx.globalAlpha=a;sx.fillStyle=g;sx.beginPath();
@@ -5000,7 +5040,8 @@ function newRound(){
   applyGender();
   hearts=3;ruleSaid=false;walked=0;sv=null;camTw=null;press.on=false;
   guests.forEach(g=>{g.done=false;g.fault=false;reach(g,g.rest);});
-  HELD.L=HELD.R=null;toTray();stack.visible=true;cup.visible=false;stream.visible=false;
+  HELD.L=HELD.R=null;toTray();stack.visible=true;stackN=STACK_N;stackShow(stackN);cup.visible=false;cup.scale.setScalar(CUP_S);stream.visible=false;
+  litter.splice(0).forEach(c=>scene.remove(c));
   ["L","R"].forEach(h=>{HAND[h].position.set(h==="L"?-anchor.x:anchor.x,anchor.y-.3,anchor.z);});
   Object.assign(P,{x:0,z:11.5,yaw:0,pitch:-.05});Object.assign(V,{x:0,y:EYE,z:11.5,yaw:0,pitch:-.05});
   drawHearts($("#hearts"),3);drawDots();markDots();
@@ -5017,6 +5058,7 @@ function walkTick(dt){
   let f=0,s=0;
   if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD)s+=1;if(keys.KeyA)s-=1;
   if(keys.ArrowLeft)P.yaw+=dt*1.9;if(keys.ArrowRight)P.yaw-=dt*1.9;
+  if(!TOUCH&&!canLock&&mouse.in){const ex=mouse.x/innerWidth;if(ex<.05)P.yaw+=dt*1.7*(1-ex/.05);else if(ex>.95)P.yaw-=dt*1.7*((ex-.95)/.05);}
   if(stick.id!==null){f-=stick.y;s+=stick.x;}
   const m=Math.hypot(f,s);if(m>1){f/=m;s/=m;}
   const sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
