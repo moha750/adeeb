@@ -136,9 +136,13 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     declaredAt: election.winnerDeclaredAtRaw,
   });
 
-  /** لفظُ الفعل يتبع صاحبَه: «إعلان الفائزة نورة» لا «الفائز نورة». والمجهولُ يُذكَّر (`byGender`). */
-  const declareLabel = (c: CandidateRow) =>
-    election.confidence ? "إعلان التزكية" : `إعلان ${byGender(c.gender, "الفائز", "الفائزة")}`;
+  /**
+   * لفظُ الفعل يتبع صاحبَه: «إعلان الفائزة نورة» لا «الفائز نورة». والمجهولُ يُذكَّر (`byGender`).
+   * **والصاحبُ قد يغيب** (٢٠٢٦-١١-٠٧): نافذةُ التعادل تُرسَم وهي مغلقة، فتسأل عن `leaders[0]` في
+   * انتخابٍ لا مرشّحَ فيه بعد، فكان `c.gender` يُسقط صفحةَ الانتخاب كلَّها («This page couldn't load»).
+   */
+  const declareLabel = (c?: CandidateRow) =>
+    election.confidence ? "إعلان التزكية" : `إعلان ${byGender(c?.gender, "الفائز", "الفائزة")}`;
 
   /** تأكيدُ الإعلان: الحصيلةُ تُقرأ قبل الضغط، وأثرُ الفعل مكتوبٌ (إسنادٌ وقفلُ دورة). */
   const confirmDeclare = (c: CandidateRow) => setConfirm({
