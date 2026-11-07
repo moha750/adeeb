@@ -4399,7 +4399,7 @@ const WORDS={
      pickHint:"اسحب كل واحد إلى يد",needItems:"خذ الدلّة والفنجال أولًا",closer:"اقترب أكثر",
      chipServe:"صبّ",chipPick:"خذ",served:"تقهويت، تسلم",
      pour:TOUCH?"المس مطوّلًا: صبّ":"اضغط مطوّلًا: صبّ",take:TOUCH?"لمسة: خذ الفنجال":"ضغطة: خذ الفنجال",
-     walk:TOUCH?"إبهامك الأيسر للمشي، واسحب يمينًا للالتفات":"WASD للمشي، والفأرة للالتفات",
+     walk:TOUCH?"إبهامك الأيسر للمشي، واسحب يمينًا للالتفات":"الأسهم للمشي، والفأرة للالتفات",
      rule:"الفنجال باليمين يا الطيّب",thanks:"تسلم يمينك",swap:"بدّل اليدين",
      won:"اجتاز اختبارات مدارس الأصول الأهلية",
      fail:{order:["وش ذا السنع؟","الصدر أولًا، ثم من على يمينه"],
@@ -4411,7 +4411,7 @@ const WORDS={
      pickHint:"اسحبي كل واحد إلى يد",needItems:"خذي الدلّة والفنجال أولًا",closer:"اقتربي أكثر",
      chipServe:"صبّي",chipPick:"خذي",served:"تقهويت، تسلمين",
      pour:TOUCH?"المسي مطوّلًا: صبّي":"اضغطي مطوّلًا: صبّي",take:TOUCH?"لمسة: خذي الفنجال":"ضغطة: خذي الفنجال",
-     walk:TOUCH?"إبهامك الأيسر للمشي، واسحبي يمينًا للالتفات":"WASD للمشي، والفأرة للالتفات",
+     walk:TOUCH?"إبهامك الأيسر للمشي، واسحبي يمينًا للالتفات":"الأسهم للمشي، والفأرة للالتفات",
      rule:"الفنجال باليمين يا الطيّبة",thanks:"تسلم يمينك",swap:"بدّلي اليدين",
      won:"اجتازت اختبارات مدارس الأصول الأهلية",
      fail:{order:["وش ذا السنع؟","الصدر أولًا، ثم من على يمينها"],
@@ -4710,14 +4710,13 @@ const _dir=new T3.Vector3(),_head=new T3.Vector3();
 
 function placeDom(){
   const show=mode==="walk";
-  const dk=TOUCH?"":" (E)";
   for(const g of guests){const c=chipFor(g);let on=false;
     if(show&&!g.done&&dist(g.pos)<=REACH&&inFront(g.head)){_head.copy(g.head).y+=.32;const [x,y]=toScreen(_head);on=true;
-      c.el.textContent=w("chipServe")+dk;c.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;}
+      c.el.textContent=w("chipServe");c.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;}
     c.el.hidden=!on;}
   {const c=chipFor(wjar);let on=false;const p=new T3.Vector3(WJAR.x,1.1,WJAR.z);
     if(show&&!holding()&&Math.hypot(P.x-WJAR.x,P.z-WJAR.z)<=2.2&&inFront(p)){const [x,y]=toScreen(p);on=true;
-      c.el.textContent=w("chipPick")+dk;c.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;}
+      c.el.textContent=w("chipPick");c.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;}
     c.el.hidden=!on;}
   if(!bubbleEl.hidden&&bubbleAt){_head.copy(bubbleAt.head).y+=.26;let [x,y]=toScreen(_head);
     const bw=bubbleEl.offsetWidth,bh=bubbleEl.offsetHeight;
@@ -5056,8 +5055,7 @@ function showWon(){mode="won";hud.hidden=true;if(locked)document.exitPointerLock
 /* ── الحلقة ── */
 function walkTick(dt){
   let f=0,s=0;
-  if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD)s+=1;if(keys.KeyA)s-=1;
-  if(keys.ArrowLeft)P.yaw+=dt*1.9;if(keys.ArrowRight)P.yaw-=dt*1.9;
+  if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD||keys.ArrowRight)s+=1;if(keys.KeyA||keys.ArrowLeft)s-=1;
   if(!TOUCH&&!canLock&&mouse.in){const ex=mouse.x/innerWidth;if(ex<.05)P.yaw+=dt*1.7*(1-ex/.05);else if(ex>.95)P.yaw-=dt*1.7*((ex-.95)/.05);}
   if(stick.id!==null){f-=stick.y;s+=stick.x;}
   const m=Math.hypot(f,s);if(m>1){f/=m;s/=m;}
