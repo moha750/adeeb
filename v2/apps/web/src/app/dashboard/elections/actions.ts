@@ -314,7 +314,7 @@ const fileArgs = (f: CandidacyFile) => ({
   p_file_url: f?.url ?? null, p_file_name: f?.name ?? null, p_file_size_bytes: f?.size ?? null, p_file_mime: f?.mime ?? null,
 });
 
-/** ترشّح العضو ببيانٍ عربيّ (١٠٠–٤٠٠٠) وملفٍّ اختياريّ. التعمية تُذكّر: لا تكتب اسمك. */
+/** ترشّح العضو ببيانٍ عربيّ (١٠٠–٤٠٠٠) وملفٍّ اختياريّ. والمرشّحُ يُعرَض باسمه (٢٠٢٦-١١-٠٧). */
 export async function submitCandidacy(electionId: string, statement: string, file: CandidacyFile = null): Promise<ElectionResult> {
   const s = statement?.trim() ?? "";
   const bad = statementError(s);

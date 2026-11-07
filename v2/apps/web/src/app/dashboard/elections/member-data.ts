@@ -60,15 +60,18 @@ export type CandidacyJourney = {
   trail: JourneyStep[]; canEdit: boolean; canWithdraw: boolean;
 };
 /**
- * مرشّحٌ في بطاقة الاقتراع — **مُعمًّى لا منقوص**: يسقط اسمُه وصورتُه، ويبقى كلُّ ما يُحكَم به
- * عليه. والملفُّ الانتخابيّ منه: القاعدةُ تُخرجه (`get_anonymized_candidates`) والدلو يأذن
- * للناخب بقراءته (`can_voter_read_election_file`)، فحجبُه عن الناخب كان فقدًا في الواجهة.
- *
- * و**اسمُ الملفّ لا يُعرَض للناخب** (يُحمَل هنا لأنّ المراجع يراه): «سيرة محمّد.pdf» تكسر
- * التعميةَ من حيث لا يُحتسب. المعروضُ نوعُه وحجمُه.
+ * مرشّحٌ في بطاقة الاقتراع — **معروفٌ باسمه** (قرار المالك والمجلس الإداري، ٢٠٢٦-١١-٠٧): كانت
+ * البطاقةُ تُعمّيه فيُنتخَب مَن لو عُرف لما صُوِّت له، والبيانُ وحده كلامٌ يُكتب بلا عناء. فصار
+ * اسمُه وجنسُه وصورتُه في البطاقة، و**الصوتُ وحده يبقى سرّيًّا**. والملفُّ الانتخابيّ منه:
+ * القاعدةُ تُخرجه (`get_ballot_candidates`) والدلو يأذن للناخب بقراءته (`can_voter_read_election_file`).
  */
 export type BallotCandidate = {
   id: string; number: number; statement: string;
+  /** اسمُه كما في ملفّه، و`null` لمن لا ملفَّ له (لا يُختلَق له اسم). */
+  name: string | null;
+  /** لجنس الفعل في البطاقة («المرشّحة») ولرسم الوجه حين لا صورة. */
+  gender: string | null;
+  avatarUrl: string | null;
   /** مسارٌ في دلو `election-files` لا رابطًا — يُفتح برابطٍ موقَّعٍ مؤقّت (`candidateFile.ts`). */
   fileUrl: string | null; fileName: string | null;
   fileSize: number | null; fileMime: string | null;
@@ -138,7 +141,7 @@ export type BallotContext = { ok: boolean; error: string | null; election: VoteI
 /**
  * بطاقةُ اقتراعٍ كاملةً لصفحتها — **الأهليّةُ تُقرأ من قائمة المفتوح له لا من ظنّ**: من ليس
  * المقعدُ في قائمته لا يرى بطاقتَه، ومن صوّت يبقى في قائمته بعلامة `hasVoted` فيدخل مطّلِعًا
- * لا مصوّتًا. والقاعدةُ تحرس ما وراء ذلك (`get_anonymized_candidates` ترفض غير المؤهَّل،
+ * لا مصوّتًا. والقاعدةُ تحرس ما وراء ذلك (`get_ballot_candidates` ترفض غير المؤهَّل،
  * و`cast_vote` ترفض الصوتَ الثاني)، فهذه الصفحةُ عرضٌ لا حارسٌ ثانٍ.
  */
 export async function getBallot(userId: string, electionId: string): Promise<BallotContext> {
@@ -148,23 +151,24 @@ export async function getBallot(userId: string, electionId: string): Promise<Bal
   if (!election) return { ok: false, error: "هذا الاقتراع غير مفتوحٍ لك الآن.", election: null, candidates: [], myVote: null };
 
   const session = await createClient();
-  const { data, error: e } = await session.rpc("get_anonymized_candidates", { p_election: electionId });
+  const { data, error: e } = await session.rpc("get_ballot_candidates", { p_election: electionId });
   if (e) return { ok: false, error: e.message, election, candidates: [], myVote: null };
 
   /**
    * **ورقتُك تُعرَف بمن تُعرض له لا بمن يحمل الجلسة**: القاعدةُ تحسب `is_self` من
    * `auth.uid()`، وفي **المعاينة كعضو** (`getCurrentAdmin`) تبقى الجلسةُ للمعايِن فتقول
    * القاعدةُ «ليست ورقتَك» بحقّ. فيُسأل عن صاحب الورقة بمفتاح الخدمة **في الخادم وحدَه**،
-   * ولا يعبر إلى المتصفّح إلّا `isSelf` نعمًا أو لا : التعميةُ باقيةٌ واسمٌ لا يُفشى.
+   * ولا يعبر إلى المتصفّح إلّا `isSelf` نعمًا أو لا.
    * (ولا تُمرَّر هويّةٌ إلى دالّةٍ فتصدّقها : `auth.uid()` يبقى وحدَه حَكَمَ الفعل.)
    */
   const svc = service();
   const mineRes = svc ? await svc.from("election_candidates").select("id").eq("election_id", electionId).eq("user_id", userId).eq("status", "approved").maybeSingle() : null;
   const mineId = (mineRes?.data?.id as string | undefined) ?? null;
 
-  type Row = { candidate_id: string; candidate_number: number; statement_ar: string; file_url: string | null; file_name: string | null; file_size_bytes: number | null; file_mime: string | null; is_self: boolean };
+  type Row = { candidate_id: string; candidate_number: number; full_name: string | null; gender: string | null; avatar_url: string | null; statement_ar: string; file_url: string | null; file_name: string | null; file_size_bytes: number | null; file_mime: string | null; is_self: boolean };
   const candidates: BallotCandidate[] = ((data ?? []) as Row[]).map((c) => ({
     id: c.candidate_id, number: c.candidate_number, statement: c.statement_ar,
+    name: c.full_name ?? null, gender: c.gender ?? null, avatarUrl: c.avatar_url ?? null,
     fileUrl: c.file_url ?? null, fileName: c.file_name ?? null,
     fileSize: c.file_size_bytes ?? null, fileMime: c.file_mime ?? null,
     isSelf: !!c.is_self || c.candidate_id === mineId,

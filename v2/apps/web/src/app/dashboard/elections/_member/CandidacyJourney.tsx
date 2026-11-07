@@ -57,7 +57,7 @@ export function CandidacyJourney({ c, cycle, onEdit, onWithdraw }: { c: CJ; cycl
 
         {/* البيانُ والملفُّ والتحكّم — يسار */}
         <Card>
-          <CardHeader variant="soft" icon={<Note />} title="بيان ترشُّحك وملفّه" subtitle="معمًّى بلا اسمك، هذا ما يراه الناخبون" />
+          <CardHeader variant="soft" icon={<Note />} title="بيان ترشُّحك وملفّه" subtitle="هذا ما يراه الناخبون مع اسمك" />
           <CardBody>
             <p className="cjr-stmt">{c.statement}</p>
             {c.fileName ? (
