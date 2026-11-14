@@ -16276,6 +16276,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
   --agm-void: #000000;
   /* نغماتُ الألعاب: كلُّ كابينةٍ تُضاء بلون لعبتها، لا بلون الصالة */
   --agm-darb: #7ED06A; /* = --drb-suit-lit: بدلةُ خضيران مضاءةً */
+  --agm-dallah: #E2B653; /* ذهبُ دلّة «مدارس الأصول» مضاءًا: اختار المالك لونًا من اللعبة لا من القائمة (٢٠٢٦-١١-١٤) */
   /* ونغماتٌ تختارها غرفةُ الألعاب للعبةٍ بلا لونٍ من علامتها (٢٠٢٦-١٠-١٧)، وكانت نغماتِ المعرض
      التجريبيّة. وكلُّ نغمةٍ هنا قيمةٌ في قيد `games.tone` وفي `dashboard/games/vocab.ts`. */
   --agm-amber: #FF8A3D;
@@ -16401,6 +16402,7 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 .agm [data-tone="amber"] { --agm-tone: var(--agm-amber); }
 .agm [data-tone="sky"] { --agm-tone: var(--agm-sky); }
 .agm [data-tone="violet"] { --agm-tone: var(--agm-violet); }
+.agm [data-tone="dallah"] { --agm-tone: var(--agm-dallah); }
 
 /* الصفحةُ نفسُها (`/games`): الصالةُ تملأ الشاشةَ ولا رأسَ للموقع حولها (القاعدة ١) */
 .agm-page { min-height: 100dvh; display: grid; }
@@ -16537,6 +16539,9 @@ html:has(.stn)::-webkit-scrollbar { display: none; }
 /* اللافتة: أعرضُ من جسم الكابينة، تبرز فوق جانبيه */
 .agm-cab-marquee { margin-inline: -10px; padding: 10px 20px; text-align: center; }
 .agm-cab-name { font-size: 40px; line-height: 60px; font-weight: 700; }
+/* اسمٌ أطولُ من لافتة الجوّال يصغر إلى درجة «اسم الغرفة» (٢٨) فيبقى سطرًا واحدًا، فتتساوى اللافتاتُ وتصطفّ الشاشاتُ تحتها
+   (اختارها المالك لـ«مدارس الأصول» ٢٠٢٦-١١-١٤). ويبقى له أن ينكسر إن طال أكثر، فلا يخرج عن لافتته. */
+.agm-cab-name[data-long] { font-size: var(--ad-t-room); }
 
 /* الشاشة في إطارها: خطوطُ مسحٍ فوق المقطع وعتمةُ أطرافِ الأنبوب */
 .agm-cab-bezel { margin: 20px 20px 0; padding: 20px; background: var(--agm-bezel); border: 4px solid color-mix(in oklab, var(--agm-tone) 25%, var(--agm-bezel)); }
