@@ -1,12 +1,12 @@
 /**
  * **معجمُ غرفة الألعاب** — بلا إطارٍ فيقرؤه الخادمُ والمتصفّح معًا.
  *
- * كلُّ قيمةٍ هنا تطابق قيدًا في القاعدة (قيدُ عمود `tone` في `20261017091345_games_01_hall.sql`)،
+ * كلُّ قيمةٍ هنا تطابق قيدًا في القاعدة (قيدُ عمود `tone`، آخرُه `20261114100005_games_09_tone_dallah.sql`)،
  * وكلُّ نغمةٍ سطرُها في `components.css` (`.agm [data-tone="…"]`). فنغمةٌ جديدةٌ ثلاثةُ مواضع
  * في تغييرٍ واحد: القيدُ، وهذا الملفّ، وسطرُ اللون.
  */
 
-export const GAME_TONES = ["darb", "amber", "sky", "violet"] as const;
+export const GAME_TONES = ["darb", "amber", "sky", "violet", "dallah"] as const;
 export type GameTone = (typeof GAME_TONES)[number];
 
 export const TONE_LABEL: Record<GameTone, string> = {
@@ -14,6 +14,7 @@ export const TONE_LABEL: Record<GameTone, string> = {
   amber: "برتقاليّ",
   sky: "سماويّ",
   violet: "بنفسجيّ",
+  dallah: "ذهبيّ",
 };
 export const TONE_OPTIONS = GAME_TONES.map((v) => ({ value: v, label: TONE_LABEL[v] }));
 
