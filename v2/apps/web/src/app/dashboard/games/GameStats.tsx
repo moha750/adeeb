@@ -1,11 +1,12 @@
 "use client";
 
 import { BarList, Donut, SectionCard } from "@adeeb/design-system";
-import { GameController, Gauge, PersonSimpleRun, Sparkle, Translate, Users } from "@phosphor-icons/react";
-import { CheckCircle, Eye } from "@/app/_components/glyphs";
+import { Certificate, Coffee, GameController, Gauge, PersonSimpleRun, Sparkle, Translate, Users } from "@phosphor-icons/react";
+import { CheckCircle, Eye, WarningCircle } from "@/app/_components/glyphs";
 import { GameOverview, type OverviewKpi } from "./GameOverview";
 import { sumOf } from "./MonthPulse";
-import { NOUNS, PERIOD, PERIOD_LABEL, countNoun, type BankStats, type DarbLeaders, type GameDay, type GamePeriod, type Noun } from "./vocab";
+import { OsoolPlayers } from "./OsoolPlayers";
+import { NOUNS, PERIOD, PERIOD_LABEL, countNoun, type BankStats, type DarbLeaders, type GameDay, type GamePeriod, type Noun, type OsoolPlayer, type OsoolStats } from "./vocab";
 
 const nf = (n: number) => n.toLocaleString("en-US");
 const kpi = (icon: React.ReactNode, noun: Noun, now: number, before: number): OverviewKpi => ({
@@ -16,6 +17,15 @@ const TAMR = { one: "تمرة", two: "تمرتان", few: "تمرات", many: "�
 const PLAYS = { one: "جولة", two: "جولتان", few: "جولات", many: "جولةً" };
 const RESULT: Record<string, string> = { correct: "أصاب", wrong: "أخطأ", timeout: "نفد الوقت", abandoned: "انصرف" };
 const LEVEL: Record<string, string> = { easy: "سهل", medium: "متوسّط", hard: "صعب", none: "بلا مستوى" };
+const CERTS = { one: "شهادة", two: "شهادتان", few: "شهادات", many: "شهادةً" };
+const TIMES = { one: "مرّة", two: "مرّتان", few: "مرّات", many: "مرّةً" };
+const OUTCOME: Record<string, string> = { won: "نال شهادته", lost: "خسر", playing: "لم يُكمل" };
+const MAJLIS: Record<string, string> = { m: "مجلس الرجال", f: "مجلس النساء" };
+const CERT: Record<string, string> = { issued: "صدرت", saved: "حُفظت", shared: "شوركت" };
+/** الأخطاءُ بأسمائها كما تقولها اللعبةُ للّاعب، مرتّبةً باختباراتها الثلاثة. */
+const FAULT: Record<string, string> = {
+  order: "بدأ بغير الصدر", full: "ملأ الفنجال", shake: "صبّ بعد هزّ الفنجال", more: "أخذ الفنجال والضيفُ يريد زيادة", late: "تأخّر على ضيفه",
+};
 const pick = <K extends string>(m: Partial<Record<K, number>>, keys: K[], names: Record<string, string>) =>
   keys.filter((k) => (m[k] ?? 0) > 0).map((k) => ({ label: names[k], value: m[k] ?? 0 }));
 
@@ -24,13 +34,14 @@ const pick = <K extends string>(m: Partial<Record<K, number>>, keys: K[], names:
  * فلعبةٌ جديدةٌ فرعٌ هنا: أرقامُها من `game_days`/`game_periods` وما يخصّها من دالّتها.
  */
 export function GameStats({
-  slug, days, period, bank, leaders,
+  slug, days, period, bank, leaders, osool,
 }: {
   slug: string;
   days: GameDay[];
   period?: GamePeriod;
   bank?: BankStats | null;
   leaders?: DarbLeaders | null;
+  osool?: { stats: OsoolStats; players: OsoolPlayer[] } | null;
 }) {
   const last = days.slice(-PERIOD);
   const prev = days.slice(-2 * PERIOD, -PERIOD);
@@ -91,6 +102,41 @@ export function GameStats({
               <SectionCard title="اللغة منذ الإطلاق" icon={<Translate />}>
                 <BarList items={pick(bank.langs, ["ar", "en"], { ar: "العربيّة", en: "الإنجليزيّة" })} unit={PLAYS} />
               </SectionCard>
+            </>
+          ) : null
+        }
+      />
+    );
+  }
+
+  // «مدارس الأصول»: من فتحها ومن لعب ومن نال شهادته (طلبُ المالك ليلةَ الإطلاق)، ثمّ ما منذ الإطلاق، ثمّ الأسماء
+  if (slug === "osool") {
+    const st = osool?.stats;
+    return (
+      <GameOverview
+        days={last}
+        kpis={[
+          runs,
+          kpi(<Users />, NOUNS.PLAYER, period?.players[0] ?? 0, period?.players[1] ?? 0),
+          kpi(<Certificate />, NOUNS.CERT, sumOf(last, "hits"), sumOf(prev, "hits")),
+          visitors,
+        ]}
+        extra={
+          st ? (
+            <>
+              <SectionCard title="النتائج منذ الإطلاق" icon={<CheckCircle />}>
+                <Donut items={pick(st.outcomes, ["won", "lost", "playing"], OUTCOME)} unit={PLAYS} />
+              </SectionCard>
+              <SectionCard title="الشهادة منذ الإطلاق" icon={<Certificate />}>
+                <BarList items={pick(st.certs, ["issued", "saved", "shared"], CERT)} unit={CERTS} empty="لا شهادة بعد." />
+              </SectionCard>
+              <SectionCard title="المجلس منذ الإطلاق" icon={<Coffee />}>
+                <BarList items={pick(st.majlis, ["m", "f"], MAJLIS)} unit={PLAYS} empty="لا جولة بعد." />
+              </SectionCard>
+              <SectionCard title="الأخطاء منذ الإطلاق" icon={<WarningCircle />}>
+                <BarList items={pick(st.faults, ["order", "full", "shake", "more", "late"], FAULT)} unit={TIMES} empty="لا خطأ بعد." />
+              </SectionCard>
+              <OsoolPlayers players={osool?.players ?? []} />
             </>
           ) : null
         }
