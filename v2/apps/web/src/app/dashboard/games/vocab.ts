@@ -86,6 +86,7 @@ export const NOUNS = {
   DATE: { one: "تمرة", few: "تمرات", many: "تمرةً" },
   VISITOR: { one: "زائر", few: "زوّار", many: "زائرًا" },
   GAME: { one: "لعبة", few: "ألعاب", many: "لعبةً" },
+  CERT: { one: "شهادة", few: "شهادات", many: "شهادةً" },
 } as const satisfies Record<string, Noun>;
 
 /** تمييزُ العدد: الواحدُ مفرد، ومن ٣ إلى ١٠ جمع، وما فوقها مفردٌ منصوب (والاثنان جمعٌ هنا تجوّزًا). */
@@ -123,6 +124,34 @@ export type BankStats = {
   levels: Partial<Record<"easy" | "medium" | "hard" | "none", number>>;
   langs: Partial<Record<"ar" | "en", number>>;
   days: { day: string; plays: number }[];
+};
+
+/**
+ * **«مدارس الأصول» منذ إطلاقها** (`osool_plays`، الترحيل `games_11_osool_plays`): تُحسب في الخادم من الجدول نفسِه
+ * (`getOsool`)، فلا دالّةَ لها في القاعدة. الزائرُ من فتح اللعبة، واللاعبُ من بدأ جولة، كلاهما بمعرّف جهازه.
+ */
+export type OsoolStats = {
+  visitors: number;
+  rounds: number;
+  players: number;
+  accounts: number;
+  outcomes: Partial<Record<"won" | "lost" | "playing", number>>;
+  majlis: Partial<Record<"m" | "f", number>>;
+  certs: { issued: number; saved: number; shared: number };
+  faults: Record<"order" | "full" | "shake" | "more" | "late", number>;
+};
+
+/** جولةٌ في قائمة لاعبي «مدارس الأصول»: الاسمُ الذي كتبه للشهادة، واسمُ حسابه إن كان داخلًا. */
+export type OsoolPlayer = {
+  id: string;
+  at: string;
+  name: string;
+  account: string | null;
+  majlis: "m" | "f" | null;
+  outcome: "won" | "lost" | "playing";
+  grades: number[] | null;
+  saved: boolean;
+  shared: boolean;
 };
 
 /** أوائلُ «دربك خضر» منذ إطلاقها: أكثرُ تمرٍ وأبعدُ مسافة (`darb_players` بلا المخفيّين). */

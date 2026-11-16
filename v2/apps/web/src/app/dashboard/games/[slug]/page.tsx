@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { PageHeader } from "../../_components/PageHeader";
-import { getBankStats, getBoards, getContests, getDarbLeaders, getDays, getGames, getMetrics } from "../data";
+import { getBankStats, getBoards, getContests, getDarbLeaders, getDays, getGames, getMetrics, getOsool } from "../data";
 import { GameView } from "../GameView";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +19,15 @@ export default async function GamePage({
 
   const { slug } = await params;
   const { tab } = await searchParams;
-  const [{ games, error }, { contests, now }, d, metrics, bank, leaders] = await Promise.all([
+  const [{ games, error }, { contests, now }, d, metrics, bank, leaders, osool] = await Promise.all([
     getGames(),
     getContests(slug),
     getDays(),
     getMetrics(slug),
     slug === "bank-adeeb" ? getBankStats() : null,
     slug === "darbak-khadar" ? getDarbLeaders() : null,
+    // «مدارس الأصول» أرقامُها من سجلّها لا من `game_days` (لا فرعَ لها هناك)
+    slug === "osool" ? getOsool() : null,
   ]);
   if (error) {
     return (
@@ -46,11 +48,12 @@ export default async function GamePage({
       contests={contests}
       metrics={metrics[slug] ?? []}
       boards={boards}
-      days={d.days[slug] ?? []}
-      period={d.periods[slug]}
+      days={osool ? osool.days : (d.days[slug] ?? [])}
+      period={osool ? osool.period : d.periods[slug]}
       bank={bank?.data ?? null}
       leaders={leaders}
-      statsError={d.error ?? bank?.error ?? null}
+      osool={osool ? { stats: osool.stats, players: osool.players } : null}
+      statsError={osool ? osool.error : (d.error ?? bank?.error ?? null)}
       now={now}
     />
   );
