@@ -6881,12 +6881,28 @@ $("#turnStay").addEventListener("click",turnClose);
 $("#flip").addEventListener("click",e=>{e.stopPropagation();rotWant=-rotWant||-1;resize();});
 ["pointerdown","pointerup","touchstart"].forEach(t=>$("#flip").addEventListener(t,e=>e.stopPropagation()));
 addEventListener("resize",()=>{if(!turnEl.hidden&&innerWidth>innerHeight)turnClose();});
+// ── السجلّ (٢٠٢٦-١١-١٦، طلبُ المالك ليلةَ الإطلاق: «كم شخص دخل، كم أكمل، كم أُصدرت له شهادة، وما أسماؤهم»).
+//    تُخبر اللعبةُ مسارَ الموقع /api/games/osool بأربعة أحداث: فُتحت، بدأت جولة (الاسم والمجلس)، انتهت (فوزٌ أو خسارة،
+//    والأخطاءُ والقلوب والتقديرات والمدّة)، وحُفظت الشهادةُ أو شوركت. المعرّفاتُ من الجهاز (فلا يتكرّر صفٌّ بإعادة الإرسال)،
+//    واللاعبُ معرّفٌ يبقى في المتصفّح ليُفرَّق بين الأشخاص والجولات. صاحبُ الحساب يعرفه الخادمُ من جلسته لا من هنا.
+//    لا يُرسَل إلا من صفحة اللعبة في الموقع، ولا ينتظر جوابًا ولا يعطّل لعبًا.
+const LOG=(()=>{const ON=location.pathname.indexOf("/games/osool")===0;
+  const uid=()=>{try{if(crypto.randomUUID)return crypto.randomUUID();}catch(e){}const b=new Uint8Array(16);try{crypto.getRandomValues(b);}catch(e){for(let i=0;i<16;i++)b[i]=Math.random()*256|0;}
+    b[6]=b[6]&15|64;b[8]=b[8]&63|128;const h=[...b].map(x=>x.toString(16).padStart(2,"0")).join("");return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;};
+  let player=null;try{player=localStorage.getItem("osool-player");if(!player){player=uid();localStorage.setItem("osool-player",player);}}catch(e){}if(!player)player=uid();
+  const visit=uid();let round=null,t0=0;
+  const send=o=>{if(!ON)return;try{fetch("/api/games/osool",{method:"POST",keepalive:true,headers:{"content-type":"application/json"},body:JSON.stringify(Object.assign({visit,player},o))}).catch(()=>{});}catch(e){}};
+  let ref="";try{ref=new URLSearchParams(location.search).get("ref")||(document.referrer?new URL(document.referrer).hostname:"");}catch(e){}
+  send({t:"open",id:visit,ref});
+  return {round(){round=uid();t0=performance.now();send({t:"round",id:round,name:playerName,majlis:G});},
+    end(outcome){if(!round)return;send({t:"end",id:round,outcome,faults:Object.assign({},FAULTS),hearts,grades:[0,1,2].map(grade),secs:Math.round((performance.now()-t0)/1000)});},
+    cert(k){if(round)send({t:"cert",id:round,[k]:true});}};})();
 function begin(name,g){SND.resume();playerName=name.trim().slice(0,24);G=g;setMajlis(g);warm();nameEl.blur();$("#start").hidden=true;if(TOUCH&&!turnAsked&&innerHeight>innerWidth){turnAsked=true;return turnOpen(()=>begin(name,g));}if(!lessonDone)return lessonOpen();newRound();if(!introDone)startIntro();}
 goEl.addEventListener("click",()=>{if(goEl.disabled)return;begin(nameEl.value,document.querySelector('#majlis [aria-pressed="true"]').dataset.g);});
 $("#again1").addEventListener("click",()=>{$("#over").hidden=true;newRound();});
 $("#again2").addEventListener("click",()=>{$("#won").hidden=true;newRound();});
 
-function newRound(){auto=null;DOORW.a=1;DOORW.to=1;DOORW.pz=null;DOORW.vz=0;doorSet();
+function newRound(){LOG.round();auto=null;DOORW.a=1;DOORW.to=1;DOORW.pz=null;DOORW.vz=0;doorSet();
   hearts=3;ruleSaid=false;walked=0;sv=null;camTw=null;press.on=false;for(const k in FAULTS)FAULTS[k]=0;
   guests.forEach(g=>{g.done=false;g.fault=false;g.pose="rest";});
   HELD.L=HELD.R=null;HRIG.L=HRIG.R=null;RIGS.forEach(r=>{r.rot=0;r.g.rotation.z=0;});refreshRigs();toTray();stackN=STACK_N;stackShow(stackN);cup.visible=false;stream.visible=false;
@@ -6927,7 +6943,7 @@ function endIntro(){if(mode!=="intro")return;introDone=true;guests.forEach(g=>g.
   hud.hidden=false;stickEl.hidden=!TOUCH;mode="walk";hint(w("walk"),7);if(!TOUCH)lock();}
 addEventListener("pointerdown",()=>{if(mode==="intro"&&introT>.8)endIntro();});
 addEventListener("keydown",()=>{if(mode==="intro"&&introT>.8)endIntro();});
-function showOver(){SND.hit(.5);mode="over";hud.hidden=true;if(locked)document.exitPointerLock();$("#over").hidden=false;}
+function showOver(){LOG.end("lost");SND.hit(.5);mode="over";hud.hidden=true;if(locked)document.exitPointerLock();$("#over").hidden=false;}
 function grade(i){const n=TESTS[i].kinds.reduce((s,k)=>s+FAULTS[k],0);return Math.min(n,2);}
 /* ── الشهادة: قالبُ المطبعة (02 الشهادة A4 بالعرض، مقصوصًا على خطّ القصّ، ١٧٥٤×١٢٤٠ = ١٥٠ نقطة في البوصة) ومواضعُ خاناته مقيسةٌ عليه:
    خطُّ الاسم المنقّط، ومربّعاتُ التقدير التسعة (في كلّ اختبار: الأيمنُ ممتاز، فجيد جدًا، فالأيسرُ سيء)، وفراغا اليوم والشهر قبل ١٤٤٨هـ.
@@ -6979,19 +6995,19 @@ const CERT_FILE="شهادة مدارس الأصول الأهلية.png";
 const certBlob=()=>new Promise(r=>$("#certCv").toBlob(r,"image/png"));
 // الحفظ: في صفحة المعاينة على claude.ai لا يمرّ التنزيلُ إلا بقدرة downloads (تسأل الزائرَ قبل الحفظ)، وفي موقع أدِيب رابطُ تنزيلٍ عاديّ
 const certDL=window.claude&&claude.use?claude.use("downloads").catch(()=>null):Promise.resolve(null);
-$("#certSave").addEventListener("click",async()=>{const b=await certBlob();if(!b)return;
+$("#certSave").addEventListener("click",async()=>{LOG.cert("saved");const b=await certBlob();if(!b)return;
   const dl=await Promise.race([certDL,new Promise(r=>setTimeout(()=>r(null),300))]);
   if(dl){try{await dl.save({filename:CERT_FILE,data:b});}catch(e){}return;}
   const u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download=CERT_FILE;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);});
 // المشاركة: الصورةُ نفسُها حيث يقبل المتصفّحُ مشاركةَ الملفّات (الجوّال غالبًا)، وإلا فالرابطُ والنصّ، وإلا فالحفظ. وبلا مشاركةٍ أصلًا يختفي الزرّ.
 if(!navigator.share){$("#certShare").hidden=true;$("#certBtns").classList.add("one");}
-$("#certShare").addEventListener("click",async()=>{const b=await certBlob();if(!b)return;const f=new File([b],CERT_FILE,{type:"image/png"});
+$("#certShare").addEventListener("click",async()=>{LOG.cert("shared");const b=await certBlob();if(!b)return;const f=new File([b],CERT_FILE,{type:"image/png"});
   const url=location.origin+location.pathname,text="شهادةُ تخرّجي من مدارس الأصول الأهلية في أصول صبّ القهوة، من نادي أدِيب.";
   try{if(navigator.canShare&&navigator.canShare({files:[f]}))return await navigator.share({files:[f],title:"شهادة تخرّج",text});
       return await navigator.share({title:"مدارس الأصول الأهلية",text,url});}
   catch(e){if(e&&e.name==="AbortError")return;$("#certSave").click();}});
-function showWon(){SND.clink(.9);SND.clink(.7,.17);mode="won";hud.hidden=true;if(locked)document.exitPointerLock();
+function showWon(){LOG.end("won");SND.clink(.9);SND.clink(.7,.17);mode="won";hud.hidden=true;if(locked)document.exitPointerLock();
   $("#won").hidden=false;fitCert();return drawCert();}
 
 /* ── الحلقة ── */
