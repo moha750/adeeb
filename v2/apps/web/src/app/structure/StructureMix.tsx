@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { countPhrase, type ChartUnit } from "@adeeb/design-system";
 import { User } from "@phosphor-icons/react";
-import { ArrowLeft, CaretDown } from "@/app/_components/glyphs";
+import { ArrowLeft, CaretDown, CaretLeft } from "@/app/_components/glyphs";
 import { avatarFace } from "@/lib/avatarFace";
 import type { PubPerson, PubStructure, PubUnit } from "./data";
 
@@ -21,7 +21,7 @@ import type { PubPerson, PubStructure, PubUnit } from "./data";
  *   أيقونةَ المستخدم (المالك ٢٠٢٦-١٠-١٦) لا حرفَ اسمه.
  * - **الخطوطُ «الوصل»** (اعتمدها المالك ٢٠٢٦-١٠-١٧ من أربعةٍ متجاورة): جسورٌ بزوايا مستديرة، وجذعٌ لا ينقطع
  *   داخل الوحدة من لافتتها إلى فريقها، والنائبُ والفريقُ المفتوح على أرضٍ أعمقَ من الصفحة لا أبيضَ على أبيض.
- * - **شاغرُ القيادة يُعرض** (٢٠٢٦-١٠-١٣) ليتّسق شكلُ الشجرة: مكانُ الوجه دائرةٌ متقطّعة و«شاغر»،
+ * - **فارغُ القيادة يُعرض** (٢٠٢٦-١٠-١٣) ليتّسق شكلُ الشجرة: مكانُ الوجه دائرةٌ متقطّعة و«فارغ»،
  *   بلا زرّ. للقائد والمنسّق، ولنائب اللجنة أيضًا (طلبُ المالك: «ضع حتّى النائب»). والإدارتان
  *   (الموارد، الضمان) لا مقعدَ نائبٍ فيهما فلا يُرسم لهما.
  */
@@ -36,7 +36,7 @@ const href = (p: PubPerson) => (p.slug ? `/m/${encodeURIComponent(p.slug)}` : un
  * - الكلمةُ «صفحته / صفحتها» بجنس صاحبها لا «الملف» (يُقرأ ملفًّا يُنزَّل).
  * - في شبكة الأعضاء سهمٌ وحده أهدأ لونًا: ثلاثَ عشرةَ كلمةً متجاورةً ضجيج، والسهمُ تعلّم معناه من فوقه.
  * - منطقةُ اللمس ٤٤px بطبقةٍ لا تُرى، وتنكمش لحظةَ اللمس فيُحسّ الضغط على الجوّال.
- * - الشاغرُ يأخذ فسحتَها نفسها تحت وجهه، فتتساوى الأسماءُ في الصفّ.
+ * - الفارغُ يأخذ فسحتَها نفسها تحت وجهه، فتتساوى الأسماءُ في الصفّ.
  */
 /**
  * **لغةُ الزرّ** (٢٠٢٦-١٠-١٧): من ثلاثٍ متجاورة اختار المالكُ لغةَ الزرّ الشبحيّ (`.abtn-ghost`) في
@@ -69,7 +69,7 @@ function Face({ p, size, go = true, member }: { p: PubPerson; size: number; go?:
   );
 }
 
-/** مقعدٌ شاغر: مكانُ الوجه بحجمه، دائرةٌ متقطّعة بلا زرّ. */
+/** مقعدٌ فارغ: مكانُ الوجه بحجمه، دائرةٌ متقطّعة بلا زرّ. */
 function Vacant({ size }: { size: number }) {
   return <span className="sx-fw is-vac" style={{ ["--s" as string]: `${size}px` }}><span className="sx-f is-vacant" aria-hidden /></span>;
 }
@@ -84,7 +84,7 @@ function Node({ p, unit, lead, vacant }: { p: PubPerson | null; unit?: string; l
         {cap}
         <Vacant size={80} />
         <span className="sx-tx">
-          <span className="sx-nm">شاغر</span>
+          <span className="sx-nm">فارغ</span>
           <span className="sx-rl">{vacant}</span>
         </span>
       </div>
@@ -104,7 +104,7 @@ function Node({ p, unit, lead, vacant }: { p: PubPerson | null; unit?: string; l
 
 /**
  * الفريق: حبّةٌ بوجوهٍ متراكبة وعدد، تُفتح شبكةً بنقرة. **والخالي يُذكر أيضًا** (٢٠٢٦-١٠-١٧): حبّةٌ
- * متقطّعة «لا أعضاء بعد» بلا نقر — فلكلّ وحدةٍ صفُّ أعضائها، كما لها قائدُها ونائبُها شاغرَين أو مشغولَين.
+ * متقطّعة «لا أعضاء بعد» بلا نقر — فلكلّ وحدةٍ صفُّ أعضائها، كما لها قائدُها ونائبُها فارغَين أو مشغولَين.
  */
 function Team({ people, initiallyOpen }: { people: PubPerson[]; initiallyOpen?: boolean }) {
   const [open, setOpen] = useState(!!initiallyOpen);
@@ -137,11 +137,24 @@ function Team({ people, initiallyOpen }: { people: PubPerson[]; initiallyOpen?: 
   );
 }
 
-/** الوحدة: قائدُها ونائبُه بجواره، وفريقُها في ذيلها يُطوى ويُفتح. `deputySeat` للجنة: لها مقعدُ نائبٍ يُرسم شاغرًا إن خلا. */
-export function Unit({ u, deputySeat, initiallyOpen }: { u: PubUnit; deputySeat?: boolean; initiallyOpen?: boolean }) {
+/**
+ * لافتةُ الوحدة. و**في البوّابة زرٌّ يفتح كشفَها** (`onOpen`، غرفةُ «هيكلة أدِيب» ٢٠٢٦-١١-١٤): القيادةُ والإشرافُ والأعضاء — ما لا يُنشَر
+ * للناس. وفي الصفحة العلنيّة تبقى كتابةً كما كانت.
+ */
+function Cap({ name, onOpen }: { name: string; onOpen?: () => void }) {
+  // الزرُّ غلافٌ شفّافٌ حول اللافتة لا اللافتةُ نفسُها: إعادةُ ضبط أزرار الغرفة (`.ad-room :where(button)`) كانت تمحو خطَّها ولونَها
+  return onOpen ? (
+    <button type="button" className="sx-cap-hit" onClick={onOpen} aria-label={`كشف ${name}`}>
+      <span className="sx-cap">{name}<CaretLeft aria-hidden /></span>
+    </button>
+  ) : <span className="sx-cap">{name}</span>;
+}
+
+/** الوحدة: قائدُها ونائبُه بجواره، وفريقُها في ذيلها يُطوى ويُفتح. `deputySeat` للجنة: لها مقعدُ نائبٍ يُرسم فارغًا إن خلا. */
+export function Unit({ u, deputySeat, initiallyOpen, onOpen }: { u: PubUnit; deputySeat?: boolean; initiallyOpen?: boolean; onOpen?: () => void }) {
   return (
     <div className="sx-unit">
-      <span className="sx-cap">{u.name}</span>
+      <Cap name={u.name} onOpen={onOpen} />
       {u.leader ? (
         <div className="sx-lead">
           <Face p={u.leader} size={76} />
@@ -151,7 +164,7 @@ export function Unit({ u, deputySeat, initiallyOpen }: { u: PubUnit; deputySeat?
       ) : (
         <div className="sx-lead is-vacant">
           <Vacant size={76} />
-          <span className="sx-nm">شاغر</span>
+          <span className="sx-nm">فارغ</span>
           <span className="sx-rl">القائد</span>
         </div>
       )}
@@ -167,7 +180,7 @@ export function Unit({ u, deputySeat, initiallyOpen }: { u: PubUnit; deputySeat?
         <div className="sx-dep is-vacant">
           <Vacant size={44} />
           <span className="sx-tx">
-            <span className="sx-dn">شاغر</span>
+            <span className="sx-dn">فارغ</span>
             <span className="sx-rl">النائب</span>
           </span>
         </div>
@@ -177,7 +190,11 @@ export function Unit({ u, deputySeat, initiallyOpen }: { u: PubUnit; deputySeat?
   );
 }
 
-export function StructureMix({ s }: { s: PubStructure }) {
+export function StructureMix({ s, onUnit }: {
+  s: PubStructure;
+  /** البوّابة: لافتةُ كلّ وحدةٍ زرٌّ يفتح كشفَها بمعرّفها (`committees.id`) */
+  onUnit?: (id: number) => void;
+}) {
   const [pres] = s.administrative.seats;
   const ceo = s.executive.head;
   if (!pres) return null;
@@ -200,13 +217,13 @@ export function StructureMix({ s }: { s: PubStructure }) {
         {row.map((d) => d === "exec" ? (
           <div key="exec" className="sx-col sx-exec">
             <div className="sx-unit">
-              <span className="sx-cap">{execUnit?.name ?? "الإدارة التنفيذية"}</span>
+              <Cap name={execUnit?.name ?? "الإدارة التنفيذية"} onOpen={onUnit && execUnit ? () => onUnit(execUnit.id) : undefined} />
               <Team people={execUnit?.members ?? []} />
             </div>
             <div className="sx-v sx-grow" />
           </div>
         ) : (
-          <div key={d.id} className="sx-col"><Unit u={d} /></div>
+          <div key={d.id} className="sx-col"><Unit u={d} onOpen={onUnit ? () => onUnit(d.id) : undefined} /></div>
         ))}
       </div>
       <div className="sx-council"><span>{s.executive.name}</span></div>
@@ -217,7 +234,7 @@ export function StructureMix({ s }: { s: PubStructure }) {
             {d.units.map((u) => (
               <div key={u.id} className="sx-col sx-w">
                 <div className="sx-v" />
-                <Unit u={u} deputySeat />
+                <Unit u={u} deputySeat onOpen={onUnit ? () => onUnit(u.id) : undefined} />
               </div>
             ))}
           </div>

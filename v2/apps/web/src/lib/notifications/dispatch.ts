@@ -70,7 +70,7 @@ async function dispatchOne(sb: NotificationsDb, ev: EventRow): Promise<number | 
   try {
     const at = new Date(ev.created_at);
     const seen = new Set<string>();
-    const groups: Array<{ audience: Audience<unknown>; users: string[] }> = [];
+    const groups: Array<{ audience: Audience<unknown>; users: string[]; bell: boolean }> = [];
     const rows: Array<{ event_id: number; user_id: string; audience: string; expires_at: string | null }> = [];
 
     for (const audience of kind.audiences) {
@@ -84,9 +84,11 @@ async function dispatchOne(sb: NotificationsDb, ev: EventRow): Promise<number | 
       );
       if (users.length === 0) continue;
       users.forEach((id) => seen.add(id));
+      // مخاطَبٌ لا يصل الجرسَ في هذه الواقعة (`bell`): لا صفَّ له ولا شاشةَ قفل، ويصله بريدُه وحده.
+      const bell = audience.bell?.(ev.facts) ?? true;
       const expires = audience.expires?.(ev.facts, at)?.toISOString() ?? null;
-      for (const user_id of users) rows.push({ event_id: ev.id, user_id, audience: audience.key, expires_at: expires });
-      groups.push({ audience, users });
+      if (bell) for (const user_id of users) rows.push({ event_id: ev.id, user_id, audience: audience.key, expires_at: expires });
+      groups.push({ audience, users, bell });
     }
 
     for (const part of chunks(rows, 500)) {
@@ -106,7 +108,7 @@ async function dispatchOne(sb: NotificationsDb, ev: EventRow): Promise<number | 
     if (doneErr) throw new Error(`mark: ${doneErr.message}`);
 
     for (const g of groups) {
-      if (g.audience.level === "normal") continue;
+      if (!g.bell || g.audience.level === "normal") continue;
       await pushGroup(sb, ev, g.audience, g.users).catch((e: unknown) =>
         console.error("[notifications] push failed", { event: ev.id, error: e instanceof Error ? e.message : String(e) }),
       );

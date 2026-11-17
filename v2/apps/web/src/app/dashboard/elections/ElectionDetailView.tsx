@@ -30,7 +30,7 @@ import { ActingModal } from "../members/assignments/ActingModal";
 const CUSTOM = "custom";
 const DURATIONS = [
   { value: "1", label: "يوم واحد" },
-  { value: "3", label: "٣ أيّام" },
+  { value: "3", label: "3 أيّام" },
   { value: CUSTOM, label: "موعد مخصّص" },
 ];
 
@@ -56,7 +56,7 @@ type Confirm = { title: string; text: string; confirmLabel: string; tone: "warni
  * قسمُ السجلّ في ذيل الصفحة، ونافذةُ المرشّح تنخل منه أحداثَه وحدَه.
  * و`serverNow` ساعةُ الطلب (`requestNow`): يقرؤها خطُّ السجلّ الزمنيّ («اليوم»، «أمس») فلا يختلف الخادمُ والمتصفّح.
  */
-export function ElectionDetailView({ election, log, logError = null, votes = [], votesError = null, readOnly = false, serverNow }: { election: ElectionDetail; log: ElectionLogEvent[]; logError?: string | null; votes?: VoteDetailRow[]; votesError?: string | null; readOnly?: boolean; serverNow: number }) {
+export function ElectionDetailView({ election, log, logError = null, votes = [], votesError = null, readOnly = false, canAppoint = !readOnly, liveTotals = !readOnly, serverNow }: { election: ElectionDetail; log: ElectionLogEvent[]; logError?: string | null; votes?: VoteDetailRow[]; votesError?: string | null; readOnly?: boolean; canAppoint?: boolean; liveTotals?: boolean; serverNow: number }) {
   const toast = useToast();
   const api = useElectionApi();
   const [pending, startPending] = useTransition();
@@ -136,9 +136,13 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
     declaredAt: election.winnerDeclaredAtRaw,
   });
 
-  /** لفظُ الفعل يتبع صاحبَه: «إعلان الفائزة نورة» لا «الفائز نورة». والمجهولُ يُذكَّر (`byGender`). */
-  const declareLabel = (c: CandidateRow) =>
-    election.confidence ? "إعلان التزكية" : `إعلان ${byGender(c.gender, "الفائز", "الفائزة")}`;
+  /**
+   * لفظُ الفعل يتبع صاحبَه: «إعلان الفائزة نورة» لا «الفائز نورة». والمجهولُ يُذكَّر (`byGender`).
+   * **والصاحبُ قد يغيب** (٢٠٢٦-١١-٠٧): نافذةُ التعادل تُرسَم وهي مغلقة، فتسأل عن `leaders[0]` في
+   * انتخابٍ لا مرشّحَ فيه بعد، فكان `c.gender` يُسقط صفحةَ الانتخاب كلَّها («This page couldn't load»).
+   */
+  const declareLabel = (c?: CandidateRow) =>
+    election.confidence ? "إعلان التزكية" : `إعلان ${byGender(c?.gender, "الفائز", "الفائزة")}`;
 
   /** تأكيدُ الإعلان: الحصيلةُ تُقرأ قبل الضغط، وأثرُ الفعل مكتوبٌ (إسنادٌ وقفلُ دورة). */
   const confirmDeclare = (c: CandidateRow) => setConfirm({
@@ -191,12 +195,14 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
 
   // وزنُ التأييد في التزكية = وزنُ المرشّح الوحيد المعتمَد (الاعتراضُ محسوبٌ للانتخاب نفسه)
   const soleApproved = election.confidence ? election.candidates.find((c) => c.status === "approved") ?? null : null;
+  // المجاميع (المادة ٥): حيّةً للمديرين الثلاثة، ولغيرهم بعد إغلاق التصويت. والخادم يحجبها قبل ذلك أصلًا.
+  const showTotals = liveTotals || (phase !== "candidacy" && s !== "voting_open");
 
   const columns: Column<CandidateRow>[] = [
     { key: "number", header: "#", width: "56px", align: "center", render: (c) => <span className="txt num">{c.number}</span> },
     { key: "name", header: "المرشّح", width: "minmax(180px, 2fr)", render: (c) => <span className="txt"><b>{c.name}</b></span> },
     { key: "status", header: "الحالة", width: "1.1fr", render: (c) => { const m = CANDIDATE_STATUS_META[c.status]; return <Badge tone={m.tone} variant="soft" dot>{m.label}</Badge>; } },
-    ...(phase === "candidacy"
+    ...(phase === "candidacy" || !showTotals
       ? [{ key: "submitted", header: "قُدّم", width: "1fr", render: (c: CandidateRow) => <span className="txt">{c.submitted}</span> }]
       : [
         { key: "weight", header: "الوزن", width: "0.8fr", align: "center" as const, render: (c: CandidateRow) => <span className="txt num">{c.weight}</span> },
@@ -377,7 +383,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
       <div className="stat-grid" style={{ margin: "16px 0" }}>
         <Stat icon={<UsersThree />} value={election.candidates.length} label="المرشّحون" />
         <Stat icon={<CheckCircle />} value={approvedCount} label="المعتمَدون" tone="success" />
-        {election.confidence && phase !== "candidacy" ? (
+        {election.confidence && phase !== "candidacy" && showTotals ? (
           <>
             <Stat icon={<HandTap />} value={soleApproved?.weight ?? 0} label="وزن التأييد" tone="success" />
             <Stat icon={<Prohibit />} value={election.opposeWeight} label="وزن الاعتراض" tone="danger" />
@@ -395,7 +401,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
             stalled ? (
               <>
                 <Button variant="primary" size="md" onClick={openDeadline} disabled={pending}><CalendarBlank size={18} />تمديد المهلة</Button>
-                <Button variant="ghost" size="md" onClick={openAppoint} disabled={pending}><UserPlus size={18} />تكليف شاغل</Button>
+                {canAppoint ? <Button variant="ghost" size="md" onClick={openAppoint} disabled={pending}><UserPlus size={18} />تكليف شاغل</Button> : null}
               </>
             ) : (
               <Button variant="primary" size="md" onClick={() => setConfirm({ title: "إغلاق باب الترشّح؟", text: "لن يُقبل مرشّحون جدد. ويكفي مرشّحٌ واحدٌ معتمَد: يُعرَض على الناخبين تزكيةً يؤيّدونها أو يعترضون عليها.", confirmLabel: "إغلاق الترشّح", tone: "warning", run: () => api.transitionElection(election.id, "candidacy_closed") })} loading={acting === "close_c"} disabled={pending}><StopCircle size={18} />إغلاق الترشّح</Button>
@@ -546,7 +552,7 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
               /* الفراغُ يُقال ولا يُسكت عنه: غيابُ الزرّ يُقرأ عطلًا، والخبرُ الساكن يُقرأ خبرًا */
               <FileButton state="empty" icon={<FileDashed />} label="لا ملف انتخابي مرفوق" hint="اكتفى المرشّح ببيانه" />
             )}
-            {phase !== "candidacy" ? (
+            {phase !== "candidacy" && showTotals ? (
               <div className="txt">الوزن: <b className="num">{detail.weight}</b>، الأصوات: <b className="num">{detail.votes}</b></div>
             ) : null}
             {/* **الحكمُ باسم صاحبه**: عنوانُ التنبيه يقول ما الحكمُ ومَن أصدره ومتى، ومتنُه
@@ -651,9 +657,6 @@ export function ElectionDetailView({ election, log, logError = null, votes = [],
         busy={pending}
         footer={
           <>
-            {deadlineRaw ? (
-              <Button variant="danger" size="md" onClick={() => run("dl_clear", () => api.setDeadline(election.id, null), () => setDeadlineOpen(false))} loading={acting === "dl_clear"} disabled={pending}>إزالة الموعد</Button>
-            ) : null}
             <Button variant="ghost" size="md" onClick={() => setDeadlineOpen(false)} disabled={pending}>إلغاء</Button>
             <Button variant="primary" size="md" onClick={() => run("dl_save", () => api.setDeadline(election.id, fromClubInput(deadline)), () => setDeadlineOpen(false))} loading={acting === "dl_save"} disabled={pending || !deadline}>حفظ</Button>
           </>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
-import { blocksToText, type StatementDoc } from "@/lib/statements/paper";
+import { STATEMENT_BODY_MAX, STATEMENT_TITLE_MAX, blocksToText, type StatementDoc } from "@/lib/statements/paper";
 
 export type IssueResult = { ok: boolean; message: string; number?: string };
 
@@ -22,6 +22,9 @@ export async function issueStatement(input: StatementDoc & { pages: number }): P
   const names = input.signers === "both" ? input.names
     : input.signers === "president" ? { president: input.names.president } : { ceo: input.names.ceo };
   const blocks = input.blocks.map((b) => ({ kind: b.kind, text: b.text.replace(/\s+/g, " ").trim() })).filter((b) => b.text);
+  // الحدّان يُعاد التحقّقُ منهما هنا: العدّادُ في الواجهة لا يقطع الكتابة (قاعدةُ العدّاد الواحدة)
+  if (input.title.length > STATEMENT_TITLE_MAX) return { ok: false, message: `العنوان أطولُ من ${STATEMENT_TITLE_MAX} حرفًا.` };
+  if (blocksToText(blocks).length > STATEMENT_BODY_MAX) return { ok: false, message: `المتن أطولُ من ${STATEMENT_BODY_MAX} حرف.` };
   const { data, error } = await createAdeebServiceClient(url, key).rpc("issue_statement", {
     p_actor: admin.id,
     p_title: input.title,

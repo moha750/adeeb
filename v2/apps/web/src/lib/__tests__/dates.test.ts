@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CLUB_TZ, fmtDate, fmtDayMonth, fmtMonthYear, fmtStamp, fromClubInput, toClubInput } from "@/lib/dates";
-import { fmtDateOnly, fmtSince, fmtTimeRange } from "@/lib/dates";
+import { fmtDateOnly, fmtSince, fmtTimeRange, fmtWallClock } from "@/lib/dates";
 
 /**
  * ساعةُ النادي — **الرياض لا ساعةُ الجهاز**. وهذا الملفُّ هو الجواب المكتوب على العطب الذي
@@ -85,21 +85,21 @@ describe("fmtStamp", () => {
    * واحدةً لا تتبدّل.
    */
   it("ساعةُ الظهيرة ثنتا عشرةَ مساءً لا صفرًا", () => {
-    expect(fmtStamp("2026-08-16T09:00:00Z")).toBe("16 أغسطس 2026 الساعة 12:00 م");
+    expect(fmtStamp("2026-08-16T09:00:00Z")).toBe("16 أغسطس 2026 الساعة 12:00 مساءً");
   });
 
   it("ساعةُ منتصف الليل ثنتا عشرةَ صباحًا لا صفرًا", () => {
-    expect(fmtStamp("2026-08-16T21:00:00Z")).toBe("17 أغسطس 2026 الساعة 12:00 ص");
+    expect(fmtStamp("2026-08-16T21:00:00Z")).toBe("17 أغسطس 2026 الساعة 12:00 صباحًا");
   });
 
   it("ما قبل الظهر صباحٌ وما بعده مساء", () => {
-    expect(fmtStamp("2026-08-16T05:30:00Z")).toBe("16 أغسطس 2026 الساعة 8:30 ص");
-    expect(fmtStamp("2026-08-16T20:59:00Z")).toBe("16 أغسطس 2026 الساعة 11:59 م");
+    expect(fmtStamp("2026-08-16T05:30:00Z")).toBe("16 أغسطس 2026 الساعة 8:30 صباحًا");
+    expect(fmtStamp("2026-08-16T20:59:00Z")).toBe("16 أغسطس 2026 الساعة 11:59 مساءً");
   });
 
   // الدقيقةُ بخانتين والساعةُ بلا صفرٍ سابق: «8:05 ص» لا «08:05 ص»
   it("الدقيقةُ مصفوفةٌ بخانتين والساعةُ بلا حشو", () => {
-    expect(fmtStamp("2026-08-16T05:05:00Z")).toBe("16 أغسطس 2026 الساعة 8:05 ص");
+    expect(fmtStamp("2026-08-16T05:05:00Z")).toBe("16 أغسطس 2026 الساعة 8:05 صباحًا");
   });
 
   it("الفارغُ فارغ", () => {
@@ -198,7 +198,7 @@ describe("الوافدة: fmtDateOnly", () => {
   it("طابعُ اللحظة لا يفارق يومَ fmtDate", () => {
     const iso = "2026-08-16T21:30:00Z";
     expect(fmtStamp(iso).startsWith(fmtDate(iso))).toBe(true);
-    expect(fmtStamp(iso)).toBe("17 أغسطس 2026 الساعة 12:30 ص");
+    expect(fmtStamp(iso)).toBe("17 أغسطس 2026 الساعة 12:30 صباحًا");
   });
 });
 
@@ -259,17 +259,17 @@ describe("fmtSince", () => {
  */
 describe("fmtTimeRange", () => {
   it("عمودا `time` كما يردّهما PostgREST بثوانيهما", () => {
-    expect(fmtTimeRange("16:00:00", "20:00:00")).toBe("من 4 م إلى 8 م");
+    expect(fmtTimeRange("16:00:00", "20:00:00")).toBe("من 4 إلى 8 مساءً");
   });
 
   it("قيمتا حقل الوقت، والدقيقةُ تُكتب حين تفرق وحدَها", () => {
-    expect(fmtTimeRange("16:00", "20:30")).toBe("من 4 م إلى 8:30 م");
-    expect(fmtTimeRange("09:05", "11:00")).toBe("من 9:05 ص إلى 11 ص");
+    expect(fmtTimeRange("16:00", "20:30")).toBe("من 4 إلى 8:30 مساءً");
+    expect(fmtTimeRange("09:05", "11:00")).toBe("من 9:05 إلى 11 صباحًا");
   });
 
   it("الظهيرةُ ثنتا عشرةَ مساءً ومنتصفُ الليل ثنتا عشرةَ صباحًا، لا صفر", () => {
-    expect(fmtTimeRange("00:00", "12:00")).toBe("من 12 ص إلى 12 م");
-    expect(fmtTimeRange("12:30", "13:00")).toBe("من 12:30 م إلى 1 م");
+    expect(fmtTimeRange("00:00", "12:00")).toBe("من 12 صباحًا إلى 12 مساءً");
+    expect(fmtTimeRange("12:30", "13:00")).toBe("من 12:30 إلى 1 مساءً");
   });
 
   it("نصفُ المدى فارغٌ كلُّه، والفاسدُ فارغ", () => {
@@ -278,5 +278,17 @@ describe("fmtTimeRange", () => {
     expect(fmtTimeRange(undefined, undefined)).toBe("");
     expect(fmtTimeRange("25:00", "26:00")).toBe("");
     expect(fmtTimeRange("لا شيء", "20:00")).toBe("");
+  });
+});
+
+describe("fmtWallClock", () => {
+  it("الساعةُ وحدها حين تكون الدقيقةُ صفرًا، والدقيقةُ بخانتين حين تفرق", () => {
+    expect(fmtWallClock("19:00:00")).toBe("7 مساءً");
+    expect(fmtWallClock("09:05")).toBe("9:05 صباحًا");
+    expect(fmtWallClock("00:30")).toBe("12:30 صباحًا");
+  });
+  it("الفاسدُ والفارغُ فارغ", () => {
+    expect(fmtWallClock("25:00")).toBe("");
+    expect(fmtWallClock(null)).toBe("");
   });
 });

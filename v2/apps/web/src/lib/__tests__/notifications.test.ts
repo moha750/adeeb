@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KIND_SHAPE, LEVELS, SECTIONS, catalogEntries } from "../notifications/catalog";
+import { KIND_SHAPE, LEVELS, SECTIONS, catalogEntries, kindOf } from "../notifications/catalog";
 import { internalHref, renderNote } from "../notifications/render";
 import type { Address, Gender } from "../notifications/types";
 
@@ -26,6 +26,22 @@ function isAddress(a: Address): boolean {
   if ("capability" in o) return typeof o.capability === "string" && o.capability.length > 0;
   if ("committee" in o) return Number.isInteger(o.committee);
   if ("standing" in o) return o.standing === "member" || o.standing === "volunteer";
+  // عناوينُ الانتخاب (٢٠٢٦-١١-١٧): كلُّها بمعرّف انتخاب
+  const uuid = (v: unknown) => typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v);
+  if ("electorate" in o) return uuid(o.electorate);
+  if ("election_managers" in o) return uuid(o.election_managers);
+  if ("election_candidates" in o) return uuid(o.election_candidates);
+  if ("voided_voters" in o) {
+    return (
+      uuid(o.voided_voters) &&
+      ["candidacy_ended", "single_left"].includes(o.reason as string) &&
+      typeof o.at === "string" &&
+      !Number.isNaN(Date.parse(o.at)) &&
+      (o.candidate === undefined || uuid(o.candidate))
+    );
+  }
+  if ("revote_voters" in o) return uuid(o.revote_voters);
+  if ("council" in o) return o.council === true;
   return false;
 }
 
@@ -39,6 +55,8 @@ describe("دليل الإشعارات", () => {
       const keys = kind.audiences.map((a) => a.key);
       expect(new Set(keys).size, key).toBe(keys.length);
       for (const a of kind.audiences) expect(LEVELS[a.level], `${key}/${a.key}`).toBeDefined();
+      // مخاطَبٌ قد يُحجب عن الجرس لا بدّ له من بريد، وإلا حُجب ولم يصل شيء.
+      for (const a of kind.audiences) if (a.bell) expect(a.email, `${key}/${a.key}`).toBe(true);
     }
   });
 
@@ -96,5 +114,16 @@ describe("قناة البريد في الإشعارات", () => {
     const f = renderNote("position.assigned", "holder", { userId: "u", rank: "قائد", unit: "لجنة التأليف", from: null }, "female");
     expect(m.title).toBe("أُسند إليك منصب «قائد لجنة التأليف»");
     expect(f.title).toBe("أُسند إليكِ منصب «قائدة لجنة التأليف»");
+  });
+
+  it("الإسنادُ من الانتخاب لا يصل الجرس ويصل بريدُه، والفوزُ إشعارٌ جامع", () => {
+    const holder = kindOf("position.assigned")!.audiences.find((a) => a.key === "holder")!;
+    const facts = { userId: "u", rank: "نائب", unit: "لجنة الرواة", from: null };
+    expect(holder.bell?.({ ...facts, viaElection: true })).toBe(false);
+    expect(holder.bell?.(facts)).toBe(true);
+    expect(holder.email).toBe(true);
+    const win = renderNote("election.winner_declared", "winner",
+      { electionId: "e", at: "2026-11-17T09:00:00Z", rank: "نائب", unit: "لجنة الرواة", userId: "u", name: "ريم", female: true, how: "top" }, "male");
+    expect(win.title).toBe("فزتَ بمقعد «نائب لجنة الرواة»، وأُسند إليك المنصب");
   });
 });

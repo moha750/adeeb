@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionClaims } from "@/lib/auth";
 import { fmtDate, fmtSince, fmtStamp } from "@/lib/dates";
 import { describeDevice, deviceKind, providerKey, type ProviderKey, type SessionKind } from "./vocab";
+import type { ProfileVisits } from "@/lib/profileVisits";
 
 /* ── طرقُ الدخول ─────────────────────────────────────────────────────────────
  * هويّاتُ الحساب عند GoTrue تُقرأ من الجلسة نفسِها (`getUser().identities`) لا بنداءٍ
@@ -54,6 +55,8 @@ export type MySettings = {
   bio: string;
   /** عنوانُ صفحته العلنيّة — `null` لمن لم يبلغ حدَّ النشر (لا منصبَ فعّالًا له). */
   publicSlug: string | null;
+  /** زوّارُ صفحتك العلنيّة (`my_profile_views`، ٢٠٢٦-١١-١٧) — عددٌ بلا أسماء، و`null` إن تعثّرت القراءة فيسكت السطر */
+  pageVisits: ProfileVisits | null;
   sessions: MySession[];
   /** تعذّرت قراءة الجلسات — يُقال ولا يُبتلَع (الشاشة تعرض الباقي). */
   sessionsError: string | null;
@@ -73,11 +76,12 @@ export async function getMySettings(): Promise<{ settings: MySettings | null; er
   // مطالباتُ الطلب مقروءةٌ ومحفوظةٌ قبل أن نصل (`cache`).
   const here = (await getSessionClaims())?.session_id ?? null;
 
-  const [sRes, pRes, rRes] = await Promise.all([
+  const [sRes, pRes, rRes, vRes] = await Promise.all([
     supabase.rpc("my_sessions"),
     supabase.from("profiles").select("bio, accepts_marketing, public_slug").eq("id", user.id).maybeSingle(),
     // حدُّ النشر منصبٌ فعّال، فالعنوانُ وحدَه لا يكفي (القاعدةُ نفسُها في `profile/data.ts`)
     supabase.from("user_roles").select("id").eq("user_id", user.id).eq("is_active", true).limit(1),
+    supabase.rpc("my_profile_views"),
   ]);
 
   const rows = (sRes.data ?? []) as { id: string; created_at: string; last_seen: string; user_agent: string | null; ip: string | null }[];
@@ -125,6 +129,7 @@ export async function getMySettings(): Promise<{ settings: MySettings | null; er
       marketing: p?.accepts_marketing ?? false,
       bio: p?.bio ?? "",
       publicSlug: (rRes.data?.length ?? 0) > 0 ? (p?.public_slug ?? null) : null,
+      pageVisits: vRes.error || !vRes.data ? null : (vRes.data as ProfileVisits),
       sessions,
       sessionsError: sRes.error?.message ?? null,
       profileError: pRes.error?.message ?? null,

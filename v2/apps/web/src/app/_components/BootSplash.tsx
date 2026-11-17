@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LogoLoader } from "@adeeb/design-system";
+import { isStageFrame } from "@/lib/stageFrame";
 import { onStoryReady, skipStory, storyOwnsReadiness } from "@/app/_story/ready";
 
 /** أقلُّ ما تبقى فيه الشاشة — دونه تومض ومضةً لا تُقرأ فتُزعج أكثر ممّا تطمئن. */
@@ -113,6 +114,8 @@ export function BootSplash() {
   // (واسمُه في اللعبة موضعان قرّرهما المالك لا ثالثَ لهما). وصالةُ `/games` مثلُها منذ صارت صالةً
   // (٢٠٢٦-١٠-١٧): لها شعارُها الذي يشتعل عند الفتح. والصفحتان مرسومتان من الخادم فلا تستران شيئًا.
   if (pathname === "/games" || pathname?.startsWith("/games/")) return null;
+  // إطاراتُ المنضدة داخل المحرّر (٢٠٢٦-١١-١٢): لا شاشةَ بدءٍ في كلّ تحميلٍ للإطار
+  if (isStageFrame(pathname)) return null;
 
   return <LogoLoader fixed dismissed={dismissed} size={150} className="ldr-boot" label="جارٍ فتح الموقع…" />;
 }

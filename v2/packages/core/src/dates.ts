@@ -103,7 +103,8 @@ export const fmtStamp = (iso: string | null | undefined): string => {
   const p = parts(new Date(iso as string));
   const h24 = Number(p.hour);
   const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-  return `${day} الساعة ${h12}:${p.minute} ${h24 < 12 ? "ص" : "م"}`;
+  // «صباحًا» و«مساءً» كاملتين لا «ص» و«م» (المالك ٢٠٢٦-١١-١٥: صيغةٌ واحدةٌ في الموقع كلّه، والمختصرُ لمحاور الرسوم وحدها)
+  return `${day} الساعة ${h12}:${p.minute} ${h24 < 12 ? "صباحًا" : "مساءً"}`;
 };
 
 /* ══ حقلُ `datetime-local` : ما يكتبه المشرف ساعةُ النادي لا ساعةُ جهازه ═════════ */
@@ -250,6 +251,26 @@ export const hour12Long = (h: number): string => {
 };
 
 /**
+ * **ساعةُ الجدار الواحدة** («10 ص»، «4:30 م») من عمود `time` أو حقل الوقت — طرفا `fmtTimeRange` نفسُهما، وخرجت منه ٢٠٢٦-١١-١٥ لموعدٍ
+ * بلا نهاية («الساعة 7 م» في صفحة الفعاليّة) فلا يُعاد كتابتُها في كلّ شاشة. والفاسدُ فارغ.
+ */
+/** الساعةُ والدقيقةُ بلا كلمتها («10»، «4:30») ونصفُ اليوم وحده — قطعتا `fmtWallClock` و`fmtTimeRange` */
+const wallParts = (t: string | null | undefined): { n: string; am: boolean } | null => {
+  const m = /^(\d{1,2}):(\d{2})/.exec(t ?? "");
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null;
+  const h = Number(m[1]);
+  const twelve = h % 12 === 0 ? 12 : h % 12;
+  return { n: m[2] === "00" ? `${twelve}` : `${twelve}:${m[2]}`, am: h < 12 };
+};
+const half = (am: boolean) => (am ? "صباحًا" : "مساءً");
+
+/** «7 مساءً»، «9:05 صباحًا» — بالكلمة كاملةً (المالك ٢٠٢٦-١١-١٥: «صباحًا ومساءً بدل ص وم»، صيغةٌ واحدةٌ في الموقع كلّه) */
+export const fmtWallClock = (t: string | null | undefined): string => {
+  const p = wallParts(t);
+  return p ? `${p.n} ${half(p.am)}` : "";
+};
+
+/**
  * **مدى الساعة اليوميّ**: «من 4 م إلى 8 م» من عمودَي `time` («16:00:00») أو من قيمتَي حقل الوقت
  * («16:00»). وُضع ٢٠٢٦-٠٩-٣٠ حين صارت مدّةُ الفرصة التطوّعيّة ساعةً تُختار من كذا إلى كذا بعد أن
  * كانت نصًّا حرًّا («أربع ساعاتٍ يوميًّا») يكتبه كلُّ مشرفٍ بصيغته.
@@ -260,15 +281,11 @@ export const hour12Long = (h: number): string => {
  * ونصفُ المدى فارغٌ كلُّه: قيدُ القاعدة يمنع طرفًا بلا طرف، فلا يُرسَم «من 4 م» معلّقًا.
  */
 export const fmtTimeRange = (from: string | null | undefined, to: string | null | undefined): string => {
-  const clock = (t: string | null | undefined): string => {
-    const m = /^(\d{1,2}):(\d{2})/.exec(t ?? "");
-    if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return "";
-    const h = Number(m[1]);
-    return m[2] === "00" ? hour12(h) : `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? "ص" : "م"}`;
-  };
-  const a = clock(from);
-  const b = clock(to);
-  return a && b ? `من ${a} إلى ${b}` : "";
+  const a = wallParts(from);
+  const b = wallParts(to);
+  if (!a || !b) return "";
+  // نصفُ اليوم الواحد يُقال مرّةً: «من 10 إلى 11 صباحًا» لا «من 10 صباحًا إلى 11 صباحًا»
+  return a.am === b.am ? `من ${a.n} إلى ${b.n} ${half(b.am)}` : `من ${a.n} ${half(a.am)} إلى ${b.n} ${half(b.am)}`;
 };
 
 export const clubWeekday = (iso?: string | null): number => {
@@ -283,3 +300,14 @@ export const clubHour = (iso?: string | null): number => {
   // «٢٤» تخرج من بعض إصدارات ICU عند منتصف الليل (hourCycle h24)، فتُردّ إلى صفرها.
   return Number(parts(d).hour) % 24;
 };
+
+/**
+ * **موعدُ اليوم الواحد**: «من 10 ص إلى 11 ص»، أو «الساعة 7 م» لموعدٍ بلا نهاية، أو فارغٌ إن فسد البدء. مصدرٌ واحدٌ لوقت الفعاليّة
+ * (٢٠٢٦-١١-١٥): كان «10:00–11:00» بأربعٍ وعشرين ساعة في صفحتها العامّة وفي غرفة الفعاليّات، خلافَ قرار المالك (اثنتا عشرةَ بصباحٍ ومساء).
+ */
+export const fmtClockSpan = (from: string | null | undefined, to: string | null | undefined): string => {
+  if (to) return fmtTimeRange(from, to);
+  const c = fmtWallClock(from);
+  return c ? `الساعة ${c}` : "";
+};
+

@@ -101,7 +101,7 @@ export function StationForm({ station }: { station: StationData | null }) {
             <UploadSimple size={30} className="text-content-muted" />
           )}
           <div className="text-content-muted text-sm">
-            شعار الإذاعة: مربّعٌ لا يقلّ عن ١٤٠٠×١٤٠٠. اسحبه هنا أو اختره من جهازك.
+            شعار الإذاعة: مربّعٌ لا يقلّ عن 1400×1400. اسحبه هنا أو اختره من جهازك.
           </div>
           <Button variant="ghost" size="md" onClick={() => stLogoRef.current?.click()} loading={uploadingLogo}>
             <UploadSimple size={18} />{station.logoUrl ? "استبدال الشعار" : "اختر الشعار"}

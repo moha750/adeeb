@@ -5,6 +5,7 @@ import { buildStructure, committeeNodes } from "@/app/dashboard/members/structur
 import { myCommittees } from "@/app/dashboard/members/supervised/model";
 import { getDepartedInMyWatch } from "@/lib/mySupervision";
 import { getMyScope } from "@/lib/myScope";
+import { unitIconNode } from "@/lib/unitIconCatalog";
 import { AdRoomError } from "../states";
 import { roomView } from "../view-server";
 import { requestNow } from "../now";
@@ -19,6 +20,9 @@ import { COMMITTEE_ROOM } from "./committee.meta";
  * والنطاق نفسيهما اللذين كانت صفحاتُها القديمة تجريهما حرفًا. والصفحةُ تحرس بابَها ثمّ تستدعي هذه بمعرّف صاحب الجلسة؛ والمختبرُ
  * (`dashboard/ad/units`) يستدعيها بمعرّف مشرفٍ أو منسّقٍ أو قائدٍ حقيقيّ، فيُرى ما يراه صاحبُها بعينه.
  */
+
+/** رمزُ الوحدة من عمودها (`icon`) يرسمه الخادم — رمزُ مجموعتها في خريطة «القيادات»؛ وبلا رمزٍ معروفٍ يرسم الكشفُ رمزَه العامّ */
+const iconOf = (key: string | null | undefined) => (key ? unitIconNode(key) ?? undefined : undefined);
 
 /** في المختبر وحده: «لجنة الفعاليات (كما يراها ريان، القائد)» — فيُعرف بعين من تُرى الغرفة */
 const labTitle = (title: string, as?: string) => (as ? `${title} (كما يراها ${as})` : title);
@@ -52,7 +56,7 @@ export async function SupervisedRoomFor({ userId, as }: { userId: string; as?: s
       members={rows}
       mode="reach"
       contact
-      committees={list.map((c) => leadFromMine(c, self))}
+      committees={list.map((c) => ({ ...leadFromMine(c, self), icon: iconOf(org.committees.find((x) => x.id === c.id)?.icon) }))}
       title={labTitle(SUPERVISED_ROOM.title, as)}
       viewerId={userId}
       seatRows={members}
@@ -74,10 +78,11 @@ export async function SupervisedRoomFor({ userId, as }: { userId: string; as?: s
   );
 }
 
-/** «قسمي» — لجانُ القسم مواضع، عرضًا محضًا (`readOnly`)، وقروبُ القسم على اللوح. */
+/** «قسمي» — لجانُ القسم مواضع، عرضًا محضًا (`readOnly`) والتواصلُ ظاهر، وقروبُ القسم على اللوح. */
 export async function DepartmentRoomFor({ userId, as }: { userId: string; as?: string }) {
   const scope = await getMyScope(userId);
-  const base = { navPath: DEPARTMENT_ROOM.navPath, viewKey: DEPARTMENT_ROOM.viewKey, readOnly: true, serverNow: await requestNow(), view: await roomView(DEPARTMENT_ROOM.viewKey, DEPARTMENT_ROOM.defaultView) };
+  // والتواصلُ ظاهرٌ على كروت أعضاء القسم كما في «لجنتي» (محمد ٢٠٢٦-١١-٠٤: «المنسّقُ يحتاج زرَّ التواصل») — والكشفُ عرضٌ محضٌ كما كان
+  const base = { navPath: DEPARTMENT_ROOM.navPath, viewKey: DEPARTMENT_ROOM.viewKey, readOnly: true, contact: true, serverNow: await requestNow(), view: await roomView(DEPARTMENT_ROOM.viewKey, DEPARTMENT_ROOM.defaultView) };
   if (!scope.department) {
     return (
       <MembersRoom
@@ -106,9 +111,9 @@ export async function DepartmentRoomFor({ userId, as }: { userId: string; as?: s
     <MembersRoom
       {...base}
       members={members.filter((m) => mine.has(m.id) && m.status !== "suspended")}
-      committees={committees.map((c) => leadFromNode(c, scope.department?.name))}
+      committees={committees.map((c) => ({ ...leadFromNode(c, scope.department?.name), icon: iconOf(org.committees.find((x) => x.id === c.id)?.icon) }))}
       title={labTitle(scope.department.name, as)}
-      unitHead={{ title: "منسّق القسم", person: seatOf(dnode?.head), unit: scope.department.name }}
+      unitHead={{ title: "منسّق القسم", person: seatOf(dnode?.head), unit: scope.department.name, icon: iconOf(org.departments.find((d) => d.id === scope.department?.id)?.icon) }}
       viewerId={userId}
       seatRows={members}
       seatContact

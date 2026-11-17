@@ -36,6 +36,8 @@ export type DeeboConversation = {
   ownerStanding: "member" | "volunteer" | "account" | null;
   /** جنسُ صاحبها — للفعل المسنَد إليه («حذفها» / «حذفتها»)، لا لغيره. */
   ownerGender: "male" | "female" | null;
+  /** صورةُ صاحبها لوجهه في الحوار — تُقرأ في صفحة المحادثة وحدها (`getDeeboTalk`)، والسجلُّ لا يحتاجها */
+  ownerAvatar?: string | null;
   entryPath: string | null;
   model: string;
   messageCount: number;
@@ -212,14 +214,17 @@ export async function getDeeboTalk(
   let ownerName: string | null = null;
   let ownerStanding: DeeboConversation["ownerStanding"] = null;
   let ownerGender: DeeboConversation["ownerGender"] = null;
+  let ownerAvatar: string | null = null;
   if (c.user_id) {
     const [person, mem, vol] = await Promise.all([
-      sb.from("profiles").select("full_name, gender").eq("id", c.user_id).maybeSingle(),
+      sb.from("profiles").select("full_name, gender, avatar_url").eq("id", c.user_id).maybeSingle(),
       sb.from("members").select("id").eq("id", c.user_id).maybeSingle(),
       sb.from("volunteers").select("ended_at").eq("user_id", c.user_id).maybeSingle(),
     ]);
-    const row = person.data as { full_name: string | null; gender: string | null } | null;
+    const row = person.data as { full_name: string | null; gender: string | null; avatar_url: string | null } | null;
     ownerName = row?.full_name ?? NAMELESS_OWNER;
+    // وجهُه في الحوار صورتُه (٢٠٢٦-١١-٠٧): بلاها كان «Avatar» يرسم شعارَ أدِيب، فبدا كأنّ حسابَ النادي هو السائل
+    ownerAvatar = row?.avatar_url ?? null;
     ownerGender = row?.gender === "male" || row?.gender === "female" ? row.gender : null;
     const volRow = vol.data as { ended_at: string | null } | null;
     ownerStanding = mem.data ? "member" : volRow && !volRow.ended_at ? "volunteer" : "account";
@@ -248,6 +253,7 @@ export async function getDeeboTalk(
       ownerName,
       ownerStanding,
       ownerGender,
+      ownerAvatar,
       entryPath: c.entry_path,
       model: c.model,
       messageCount: c.message_count,

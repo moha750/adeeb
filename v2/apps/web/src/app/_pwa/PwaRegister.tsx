@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { pushSupported, swRegistration } from "./client";
 import { savePushSubscription } from "./actions";
+import { isStageFrame } from "@/lib/stageFrame";
 
 /**
  * **يسجّل عاملَ الخدمة، ويُبقي اشتراكَ الجهاز مقيّدًا بجلسة من يحمله** — ولا يرسم شيئًا.
@@ -41,6 +42,9 @@ export function PwaRegister() {
 
   // أوّلَ التحميل — متأخّرًا قليلًا كي لا يزاحم ما يراه الزائرُ أوّلًا.
   useEffect(() => {
+    // **ولا شيءَ في إطارات المنضدة** (`/frame/*`، ٢٠٢٦-١١-١٣): صفحةٌ داخل محرّرٍ يعيد تحميلَها، فكان كلُّ فتحٍ للمحرّر
+    // حفظًا آخرَ لاشتراك الجهاز نفسِه بلا داعٍ — الصفحةُ الحاملةُ حولها تحفظه
+    if (isStageFrame(window.location.pathname)) return;
     const t = window.setTimeout(() => {
       last.current = Date.now();
       void sync();

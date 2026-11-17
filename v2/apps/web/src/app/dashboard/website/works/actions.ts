@@ -4,6 +4,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { UPLOAD_RULES, checkFile } from "@/lib/upload";
+import { isWorkCategory } from "./vocab";
 
 export type WorkResult = { ok: boolean; message: string; id?: string };
 
@@ -43,6 +44,9 @@ export type WorkInput = {
 function validateWork(input: WorkInput): string | null {
   if (!clean(input.title)) return "عنوان العمل مطلوب.";
   if (!clean(input.imageUrl)) return "صورة العمل مطلوبة. ارفع صورةً أوّلًا.";
+  // التصنيفُ من الستّة الثابتة (`vocab.ts` ومرآتُه قيدُ القاعدة) — والفارغُ مقبول
+  const cat = clean(input.category);
+  if (cat && !isWorkCategory(cat)) return "اختر تصنيفًا من القائمة.";
   return null;
 }
 

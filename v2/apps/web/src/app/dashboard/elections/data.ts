@@ -181,11 +181,11 @@ export type ScopeOption = { id: number; label: string };
 export type ElectionCreateOptions = {
   /** الأدوار المنتخَبة (roles.is_elected) — مصدر واحد، مرتّبة بالوزن. */
   roles: ElectableRole[];
-  /** لجان شاغرة القيادة بلا انتخاب نشط لمقعدها. */
+  /** لجان فارغة القيادة بلا انتخاب نشط لمقعدها. */
   leaderCommittees: ScopeOption[];
-  /** لجان شاغرة النيابة بلا انتخاب نشط لمقعدها. */
+  /** لجان فارغة النيابة بلا انتخاب نشط لمقعدها. */
   deputyCommittees: ScopeOption[];
-  /** أقسام شاغرة التنسيق بلا انتخاب نشط لمقعدها. */
+  /** أقسام فارغة التنسيق بلا انتخاب نشط لمقعدها. */
   departments: ScopeOption[];
   error: string | null;
 };
@@ -194,7 +194,7 @@ const EMPTY_OPTS: Omit<ElectionCreateOptions, "error"> = { roles: [], leaderComm
 
 /**
  * ما يُمكن فتح انتخابٍ له الآن — يُرشّح المتاح لا يعطّله (Select بلا تعطيل فرديّ):
- * المقعد شاغرٌ فعلًا ولا انتخاب نشط **لهذا المقعد**. وهذان هما حارسا القاعدة نفسها
+ * المقعد فارغٌ فعلًا ولا انتخاب نشط **لهذا المقعد**. وهذان هما حارسا القاعدة نفسها
  * (`enforce_vacant_target` و`elections_active_*_uniq`)، فلا تُصفّى هنا حالةٌ تقبلها.
  * والتداخل مسموح: مقعدُ القسم يُفتح ولجانُه في انتخاب، والعكس.
  */
@@ -329,7 +329,7 @@ const DECIDED = new Set<string>(["approved", "rejected", "needs_edit"]);
  * تفصيل انتخابٍ للوحة الإدارة — يقرأ المرشّحين بهُويّاتهم مباشرةً عبر الخدمة
  * (الصفحة محروسة بـ manage_elections سلفًا؛ التعمية للناخبين لا للمشرف).
  */
-export async function getElectionDetail(id: string): Promise<{ election: ElectionDetail | null; error: string | null }> {
+export async function getElectionDetail(id: string, opts: { liveTotals: boolean } = { liveTotals: false }): Promise<{ election: ElectionDetail | null; error: string | null }> {
   const sb = service();
   if (!sb) return { election: null, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
@@ -340,11 +340,15 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
 
   const [rRes, candRes, voteRes] = await Promise.all([
     sb.from("roles").select("role_name_ar, home_committee_id").eq("role_name", e.target_role_name).maybeSingle(),
-    sb.from("election_candidates").select("id, candidate_number, user_id, statement_ar, file_url, file_name, status, review_note_ar, reviewed_by, reviewed_at, submitted_at").eq("election_id", id).order("candidate_number", { ascending: true }),
+    sb.from("election_candidates").select("id, candidate_number, user_id, statement_ar, file_url, file_name, status, review_note_ar, reviewed_by, reviewed_at, submitted_at").eq("election_id", id).order("submitted_at", { ascending: true }), // الأسبقيّة بوقت التقدّم لا بالرقم (المادة ١٣)
     sb.from("election_votes").select("candidate_id, vote_weight, vote_choice").eq("election_id", id),
   ]);
   const firstErr = rRes.error || candRes.error || voteRes.error;
   if (firstErr) return { election: null, error: firstErr.message };
+
+  // المجاميع (المادة ٥): حيّةً لمديري الانتخابات الثلاثة وحدهم، ولغيرهم بعد إغلاق التصويت.
+  // تُحجب هنا قبل أن تخرج من الخادم، لا في الشاشة: فما يصل الصفحة يقرؤه صاحبها.
+  const totalsOpen = opts.liveTotals || !["candidacy_open", "candidacy_closed", "voting_open"].includes(e.status);
 
   // تجميع الأصوات لكلّ مرشّح (وزنًا وعددًا) — للمشرف بعد التصويت.
   // التأييدُ وحده يُنسب إلى المرشّح؛ والاعتراضُ (لا يكون إلّا في تزكية) يُجمع للانتخاب نفسه.
@@ -352,7 +356,7 @@ export async function getElectionDetail(id: string): Promise<{ election: Electio
   const votesByCand = new Map<string, number>();
   let opposeWeight = 0;
   let opposeVotes = 0;
-  for (const v of voteRes.data ?? []) {
+  for (const v of totalsOpen ? voteRes.data ?? [] : []) {
     if (v.vote_choice === "reject") { opposeWeight += Number(v.vote_weight); opposeVotes += 1; continue; }
     weightByCand.set(v.candidate_id, (weightByCand.get(v.candidate_id) ?? 0) + Number(v.vote_weight));
     votesByCand.set(v.candidate_id, (votesByCand.get(v.candidate_id) ?? 0) + 1);

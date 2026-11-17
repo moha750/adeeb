@@ -3,6 +3,7 @@
 import { getSessionAdmin } from "@/lib/auth";
 import { notificationsDb } from "@/lib/notifications/db";
 import { inboxPage, markRead, unreadCount } from "@/lib/notifications/inbox";
+import { bellPreview, previewItems } from "@/lib/notifications/preview";
 import type { Gender, InboxFilter, InboxItem } from "@/lib/notifications/types";
 
 /**
@@ -26,6 +27,9 @@ export async function loadInboxSummary(): Promise<{ userId: string; unread: numb
   const me = await who();
   const sb = notificationsDb();
   if (!me || !sb) return null;
+  // معاينةُ التطوير (`lib/notifications/preview.ts`): عيّناتُ الدليل بدل الصندوق، ولا كتابةَ في القاعدة.
+  const pv = await bellPreview();
+  if (pv) return { userId: me.id, unread: previewItems(pv.prefix, pv.gender ?? me.gender, "unread").length };
   return { userId: me.id, unread: await unreadCount(sb, me.id) };
 }
 
@@ -37,6 +41,8 @@ export async function loadInboxPage(
   const sb = notificationsDb();
   if (!me || !sb) return null;
   const f: InboxFilter = filter === "unread" ? "unread" : "all";
+  const pv = await bellPreview();
+  if (pv) return before ? { items: [], more: false } : { items: previewItems(pv.prefix, pv.gender ?? me.gender, f), more: false };
   const cursor = Number.isSafeInteger(before) && (before as number) > 0 ? (before as number) : null;
   try {
     return await inboxPage(sb, me.id, me.gender, f, cursor);

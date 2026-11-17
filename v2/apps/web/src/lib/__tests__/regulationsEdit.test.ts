@@ -37,6 +37,18 @@ describe("النصّ ⇄ الكتل", () => {
   });
 });
 
+describe("فقرةٌ تشبه علامة", () => {
+  it("تُحفظ بشرطةٍ مائلة وتعود فقرةً كما هي", () => {
+    const blocks = [para("- ليست قائمة"), para("١. ولا هذه"), para("| ولا جدول"), para("![شكل](figure:structure)")];
+    const md = blocksToMarkup(blocks);
+    expect(md.split("\n\n").every((l) => l.startsWith("\\"))).toBe(true);
+    expect(markupToBlocks(md)).toEqual({ blocks });
+  });
+  it("الجدولُ الفارغ لا يُحفظ", () => {
+    expect(markupToBlocks("|  |  |\n|  |  |")).toEqual({ error: "الجدولُ فارغ: اكتب رأسه وخاناته، أو احذفه." });
+  });
+});
+
 describe("إعادة الترقيم", () => {
   const base = doc(["تُطبَّق المادة ٣.", "نصّ.", "وفق المادة ٢ والمواد ١ إلى ٤ من الدستور.", "نصّ أخير."]);
 

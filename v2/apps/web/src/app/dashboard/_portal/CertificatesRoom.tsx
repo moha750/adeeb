@@ -29,7 +29,8 @@ const GROUPS: { kind: CertKind; label: string; Icon: Ico; say: (items: PortalCer
 
 /** الورقةُ الحقيقيّة: تُرسَم مرّةً لكلّ رقم (المصغّرةُ والكبيرةُ صورةٌ واحدة)، وراسمُ الورق يُحمَّل عند الطلب. */
 const drawn = new Map<string, Promise<string>>();
-function draw(paper: PortalCert["paper"]): Promise<string> {
+/** مُصدَّرٌ لتذكرة الشهادة في القالب الجديد (`_ad/rooms/MyCertificatesRoom.tsx`، ٢٠٢٦-١١-٠٤): الورقةُ ترسم مرّةً للغرفتين. */
+export function draw(paper: PortalCert["paper"]): Promise<string> {
   const key = paper.c.serial;
   let p = drawn.get(key);
   if (!p) {
@@ -55,7 +56,7 @@ function Shot({ paper, alt }: { paper: PortalCert["paper"]; alt: string }) {
   return src ? <img className="acr-shot" src={src} alt={alt} /> : <span className="acr-shot" aria-hidden />;
 }
 
-async function download(paper: PortalCert["paper"], as: "png" | "pdf") {
+export async function download(paper: PortalCert["paper"], as: "png" | "pdf") {
   if (paper.as === "participation") {
     const m = await import("@/lib/certificates/participation");
     await (as === "pdf" ? m.downloadParticipationPdf(paper.c) : m.downloadParticipation(paper.c));

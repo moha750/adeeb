@@ -305,7 +305,7 @@ export function ShowEditorView({
     const errs: Partial<Record<keyof EpForm, string>> = {};
     if (!s.title.trim()) errs.title = "عنوان الحلقة مطلوب.";
     if (!slugify(s.slug)) errs.slug = "المعرّف مطلوب: أحرف لاتينيّة وأرقام.";
-    if (!/^\d+$/.test(s.number) || Number(s.number) < 1) errs.number = "رقم الحلقة يبدأ من ١.";
+    if (!/^\d+$/.test(s.number) || Number(s.number) < 1) errs.number = "رقم الحلقة يبدأ من 1.";
     if (s.youtubeUrl.trim() && !/^https:\/\/(www\.)?(youtube\.com\/|youtu\.be\/)/.test(s.youtubeUrl.trim())) {
       errs.youtubeUrl = "يبدأ بـ https://youtube.com أو https://youtu.be.";
     }
@@ -491,7 +491,7 @@ export function ShowEditorView({
                 <UploadSimple size={30} className="text-content-muted" />
               )}
               <div className="text-content-muted text-sm">
-                شعار البرنامج: مربّعٌ لا يقلّ عن ١٤٠٠×١٤٠٠. اسحبه هنا أو اختره من جهازك.
+                شعار البرنامج: مربّعٌ لا يقلّ عن 1400×1400. اسحبه هنا أو اختره من جهازك.
               </div>
               <Button variant="ghost" size="md" onClick={() => logoRef.current?.click()} loading={uploadingLogo !== null}>
                 <UploadSimple size={18} />{show.logoUrl ? "استبدال الشعار" : "اختر الشعار"}

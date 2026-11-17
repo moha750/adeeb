@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdeebServerClient } from "@adeeb/core";
-import { fmtDate } from "@/lib/dates";
+import { fmtDate, fmtDateOnly } from "@/lib/dates";
 import { isSections, type Section } from "@/lib/news/blocks";
 import { readingMinutes, type Category } from "../dashboard/news/vocab";
 
@@ -152,4 +152,23 @@ export async function getMoreNews(
   return picked
     .sort((x, y) => new Date(y.published_at ?? 0).getTime() - new Date(x.published_at ?? 0).getTime())
     .map(map);
+}
+
+/**
+ * **فعاليّةُ الخبر** (صفحةُ الخبر على قالب «القراءة»، ٢٠٢٦-١١-١٧): الخبرُ الذي يغطّي فعاليّةً (`news.activity_id`، حقلُ «فعاليّة الخبر» في المحرّر)
+ * يقول ذلك ويفتح صفحتها — كما تفتح صفحتُها «اقرأ خبر التغطية». والفعاليّةُ المنشورةُ وحدها؛ وإن لم تُربط أو لم تُنشر فلا شيء.
+ */
+export type NewsActivity = { id: string; name: string; dateLabel: string | null };
+
+export async function getNewsActivity(newsId: string, forceId?: string | null): Promise<NewsActivity | null> {
+  const sb = anon();
+  let id = forceId ?? null;
+  if (!id) {
+    const { data } = await sb.from("news").select("activity_id").eq("id", newsId).eq("workflow_status", "published").maybeSingle();
+    id = (data as { activity_id: string | null } | null)?.activity_id ?? null;
+  }
+  if (!id) return null;
+  const { data: a } = await sb.from("activities").select("id, name, activity_date").eq("id", id).eq("is_published", true).maybeSingle();
+  const row = a as { id: string; name: string; activity_date: string | null } | null;
+  return row ? { id: row.id, name: row.name.trim(), dateLabel: row.activity_date ? fmtDateOnly(row.activity_date) : null } : null;
 }

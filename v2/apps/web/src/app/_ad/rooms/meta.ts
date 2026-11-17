@@ -29,6 +29,9 @@ import { MEMBERS_ROOM } from "./members.meta";
 import { SUPERVISED_ROOM } from "./supervised.meta";
 import { DEPARTMENT_ROOM } from "./department.meta";
 import { COMMITTEE_ROOM } from "./committee.meta";
+import { EXITS_ROOM } from "./exits.meta";
+import { VOLUNTEER_CERTIFICATES_ROOM } from "./volunteer-certificates.meta";
+import { MY_CANDIDACIES_ROOM, RUN_ROOM, VOTE_ROOM } from "./member-elections.meta";
 /**
  * **هويّةُ كلّ غرفة** (اسمُها ومسارُها ومفتاحُ طريقة عرضها وأعمدةُ جدولها) — مصدرٌ واحدٌ تقرؤه الغرفةُ وحالتا تحميلها وخطئها،
  * فيرى العضوُ الهيكلَ نفسَه قبل البيانات وبعدها. ملفٌّ بلا `"use client"` لأنّ صفحاتِ الخادم و`loading.tsx` تقرؤه قيمًا.
@@ -51,12 +54,15 @@ export type RoomMeta = {
 export const NEWS_ROOM: RoomMeta = { title: "غرفة تحرير أدِيب", navPath: "/dashboard/news", viewKey: "news-view", cols: 3, stub: true, what: "الأخبار" };
 export const SURVEYS_ROOM: RoomMeta = { title: "الاستبيانات", navPath: "/dashboard/surveys", viewKey: "surveys-view", cols: 3, textCols: 1, stub: true, what: "الاستبيانات" };
 export const EVENTS_ROOM: RoomMeta = { title: "الفعاليّات", navPath: "/dashboard/events", viewKey: "events-view", cols: 2, stub: true, what: "الفعاليّات" };
+/** **شخصيةُ ديبو** منضدةٌ لا قائمة، فلا عرضَ ولا أعمدة: تُسجَّل ليصل بلاغُ خطئها (`report.ts` لا يقبل إلّا غرفةً معروفة، ٢٠٢٦-١١-١٧) */
+export const DEEBO_PERSONA_ROOM: RoomMeta = { title: "شخصية ديبو", navPath: "/dashboard/deebo/persona", viewKey: "deebo-persona-view", cols: 0, flat: true, what: "شخصية ديبو" };
 
 /** كلُّ غرفةٍ على القالب — منه يعرف بلاغُ الخطأ (`report.ts`) أنّ المسارَ غرفةٌ حقًّا ويقرأ اسمَها، فلا يُؤخذ اسمٌ ولا رابطٌ من المتصفّح. */
 export const ROOMS: readonly RoomMeta[] = [
-  NEWS_ROOM, SURVEYS_ROOM, EVENTS_ROOM, LIBRARY_ROOM, CONTACT_ROOM, MEMBER_CERTIFICATES_ROOM, FAQ_ROOM, SPONSORS_ROOM, WORKS_ROOM,
+  NEWS_ROOM, SURVEYS_ROOM, EVENTS_ROOM, DEEBO_PERSONA_ROOM, LIBRARY_ROOM, CONTACT_ROOM, MEMBER_CERTIFICATES_ROOM, FAQ_ROOM, SPONSORS_ROOM, WORKS_ROOM,
   ELECTIONS_ROOM, VOLUNTEERING_ROOM, TASKS_ROOM, WARNINGS_ROOM, IRFAN_OVERSIGHT_ROOM, DEEBO_KNOWLEDGE_ROOM, QR_OVERSIGHT_ROOM,
   EMAIL_LOG_ROOM, DEEBO_LOG_ROOM, BIRTHDAYS_ROOM, QR_LINKS_ROOM, QR_CAMPAIGNS_ROOM,
   ACHIEVEMENTS_ROOM, TICKER_ROOM, HERO_NEWS_ROOM, RADIO_ROOM, REGULATIONS_ROOM,
-  VOLUNTEERS_ROOM, FRIENDS_ROOM, UNIT_ROOM, MEMBERS_ROOM, SUPERVISED_ROOM, DEPARTMENT_ROOM, COMMITTEE_ROOM,
+  VOLUNTEERS_ROOM, FRIENDS_ROOM, UNIT_ROOM, MEMBERS_ROOM, SUPERVISED_ROOM, DEPARTMENT_ROOM, COMMITTEE_ROOM, EXITS_ROOM, VOLUNTEER_CERTIFICATES_ROOM,
+  RUN_ROOM, VOTE_ROOM, MY_CANDIDACIES_ROOM,
 ];

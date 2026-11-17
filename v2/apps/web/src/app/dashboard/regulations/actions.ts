@@ -267,8 +267,8 @@ export async function publishDraft(slug: string, rev: string, effectiveFrom: str
   if (revOf(d.body) !== rev) return fail(STALE);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom) || effectiveFrom < riyadhToday()) return fail("تاريخُ النفاذ اليومَ أو بعده.");
   const note = changeNote.trim();
-  if (note.length < 2 || note.length > 500) return fail("خلاصةُ التعديل مطلوبة، ولا تزيد على ٥٠٠ حرف.");
-  if (approvalNote.trim().length > 500) return fail("ملاحظةُ الإقرار لا تزيد على ٥٠٠ حرف.");
+  if (note.length < 2 || note.length > 500) return fail("خلاصةُ التعديل مطلوبة، ولا تزيد على 500 حرف.");
+  if (approvalNote.trim().length > 500) return fail("ملاحظةُ الإقرار لا تزيد على 500 حرف.");
 
   const p = await plan(c);
   if (p.broken.length) return fail(`تُحيل إلى موادَّ حُذفت: ${p.broken.map((b) => `${b.title} (${b.articles.join(" و")})`).join("، ")}.`);

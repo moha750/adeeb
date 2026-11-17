@@ -1,34 +1,12 @@
-import { Alert } from "@adeeb/design-system";
-import { getOrgData } from "./orgData";
-import { buildStructure } from "./model";
-import { StructureView } from "./StructureView";
-import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../_components/PageHeader";
+import { redirect } from "next/navigation";
+import { STRUCTURE_PATH } from "@/lib/structurePage";
 
-const Head = () => (
-  <PageHeader title="هيكلة أدِيب" />
-);
-
-export default async function StructurePage() {
-  const denied = await denyUnless("/dashboard/members/structure");
-  if (denied) return denied;
-
-  const org = await getOrgData();
-  if (org.error) {
-    return (
-      <>
-        <Head />
-        <Alert tone="warning" title="تعذّر جلب الهيكلة">{org.error}</Alert>
-      </>
-    );
-  }
-
-  const model = buildStructure(org.councils, org.departments, org.committees, org.roles, org.userRoles, org.profiles, org.supervision);
-
-  return (
-    <>
-      <Head />
-      <StructureView model={model} />
-    </>
-  );
+/**
+ * **«هيكلة أدِيب» في البوّابة بابٌ إلى الصفحة العلنيّة** (قرار محمد ٢٠٢٦-١١-١٤): كانت غرفةً بثلاث شجراتٍ للاختيار ومعاينةِ مقترحٍ رابع،
+ * لا يبلغها إلّا رئيسُ أدِيب. والغايةُ أن يتعرّف العضوُ على إداراته ولجانه — وهذه معرفةٌ ليست سرًّا، وأحوجُ الناس إليها من يفكّر في
+ * الانضمام. فصارت الهيكلةُ صفحةً واحدةً علنيّةً (`/structure`)، والبندُ لكلّ عضوٍ يفتحها، وتُثرى لاحقًا مع الموقع العامّ (وصفُ كلّ
+ * وحدةٍ في نافذتها، و«أنت هنا»، وشرحُ المصطلحات). وما هو داخليٌّ فعلًا في مكانه: الإشرافُ في «تعيين المناصب»، والقروبُ في «لجنتي».
+ */
+export default function StructurePage() {
+  redirect(STRUCTURE_PATH);
 }

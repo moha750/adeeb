@@ -100,10 +100,10 @@ export function ComponentsGallery() {
   const [pageSize, setPageSize] = useState(50);
 
   const tabItems = [
-    { value: "all", label: "الكل", badge: "٢١٤" },
-    { value: "active", label: "نشط", badge: "١٩٨" },
-    { value: "inactive", label: "غير نشط", badge: "١٢" },
-    { value: "suspended", label: "موقوف", badge: "٤" },
+    { value: "all", label: "الكل", badge: "214" },
+    { value: "active", label: "نشط", badge: "198" },
+    { value: "inactive", label: "غير نشط", badge: "12" },
+    { value: "suspended", label: "موقوف", badge: "4" },
   ];
 
   return (
@@ -212,7 +212,7 @@ export function ComponentsGallery() {
             <Field label="البريد الإلكترونيّ" icon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.mail}</span>} innerIcon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.at}</span>} placeholder="you@adeeb.club" defaultValue="member@adeeb.club" success />
             <Field label="كلمة المرور" icon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.lock}</span>} innerIcon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.key}</span>} placeholder="••••••••" error="كلمة المرور قصيرة جدًّا" />
             <Field label="نبذة" icon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.note}</span>} innerIcon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.edit}</span>} placeholder="اكتب هنا…" helper="حقل اختياريّ يظهر في ملفّك العامّ." />
-            <Textarea label="ملاحظات" icon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.note}</span>} innerIcon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.edit}</span>} placeholder="اكتب هنا…" helper="حتّى ٢٠٠ حرف." rows={3} />
+            <Textarea label="ملاحظات" icon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.note}</span>} innerIcon={<span style={{ width: 18, height: 18, display: "inline-flex" }}>{Ic.edit}</span>} placeholder="اكتب هنا…" helper="حتّى 200 حرف." rows={3} />
             <Select
               label="القسم"
               searchable
@@ -275,7 +275,7 @@ export function ComponentsGallery() {
             <Alert tone="info" title="معلومة">تُحفظ التغييرات تلقائيًّا أثناء التحرير.</Alert>
             <Alert tone="success" title="تمّ الحفظ">حُدِّثت بيانات العضو بنجاح.</Alert>
             <Alert tone="warning" title="انتبه" actions={<><Button size="sm" variant="ghost-warning">لاحقًا</Button><Button size="sm" variant="warning">تحديث الآن</Button></>}>
-              اكتمل ٨٠٪ من ملفّك؛ أكمِل البيانات لتفعيل كامل الصلاحيات.
+              اكتمل 80% من ملفّك؛ أكمِل البيانات لتفعيل كامل الصلاحيات.
             </Alert>
             <Alert tone="danger" title="خطأ" onClose={() => toast.info("أُغلق التنبيه")} actions={<><Button size="sm" variant="ghost-danger">تجاهل</Button><Button size="sm" variant="danger">إعادة المحاولة</Button></>}>
               تعذّر الاتصال بالخادم؛ حاول مجدّدًا.

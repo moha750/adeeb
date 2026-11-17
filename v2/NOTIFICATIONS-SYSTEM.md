@@ -141,8 +141,11 @@
 
 ## ٨. القديم
 
-- `notifications` و`notification_reads` ودوالّهما ومحفّزا المرشّحين: تُنقل إشعاراتُ الانتخابات إلى
-  الدليل في تبويبها، ثمّ يُحذف القديم بإذن محمد.
+- `notifications` و`notification_reads` ودوالّهما ومحفّزا المرشّحين: **نُقلت إشعاراتُ الانتخابات إلى الدليل**
+  (٢٠٢٦-١١-١٧، الترحيل `20261117100000_elections_v2_05_notifications`، لم يُطبَّق بعد). مصدرُها سجلُّ الانتخاب:
+  محفّزُ `election_audit_notify` يحوّل كلَّ سطرٍ فيه إلى واقعة `election.*`، وعناوينُ جديدة في `notification_recipients`
+  (`electorate`، `election_managers`، `election_candidates`، `voided_voters`، `revote_voters`، `council`). وأُسقط
+  المحفّزان، وصارت `_send_election_notification` لا تفعل إلا الحرمانَ ورفعَه. ويبقى حذفُ الجدول القديم بإذن محمد.
 - إبلاغُ الإنذار بواتساب (YCloud، `v2/WHATSAPP-NOTIFICATIONS.md`): ترحيلُه لم يُطبَّق على القاعدة
   الحيّة، فشاشةُ الإنذارات تقرأ جدولًا غيرَ موجود. يُترك حتى تبويب الإنذارات.
 

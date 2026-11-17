@@ -62,7 +62,7 @@ export function MyData({ me }: { me: MyAccount }) {
     return (
       <div className="flex flex-col gap-4">
         <Alert tone="info" title="أنت عضوٌ في أدِيب">
-          بياناتُك ومسيرتُك في <Link className="font-bold underline" href="/dashboard">بوّابة أدِيب</Link>، وهناك تُحرَّر.
+          بياناتُك ومسيرتُك في <Link className="font-bold" href="/dashboard">بوّابة أدِيب</Link>، وهناك تُحرَّر.
         </Alert>
         <div className="flex flex-col gap-3">
           <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={me.fullName} disabled readOnly />

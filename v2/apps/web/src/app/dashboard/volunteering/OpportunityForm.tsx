@@ -2,14 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field, SaveBar, SectionCard, Segmented, Select, Textarea } from "@adeeb/design-system";
-import { Buildings, CalendarBlank, ChatText, Clock, Flag, GenderIntersex, Handshake, Hash, HourglassMedium, MapPin, TextT, UsersThree } from "@phosphor-icons/react";
-import { PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
+import { Field, Select, Textarea } from "@adeeb/design-system";
+import { Buildings, CalendarBlank, ChatText, Clock, FloppyDisk, Flag, GenderIntersex, Handshake, Hash, HourglassMedium, Infinity as Endless, MapPin, Megaphone, TextT, UsersThree } from "@phosphor-icons/react";
+import { PencilSimple, Plus } from "@/app/_components/glyphs";
 import { clubNow, periodStarted, sortPeriods, type ClubNow } from "@/lib/volunteerPeriods";
-import { PageHeader } from "../_components/PageHeader";
 import { useToast } from "../_components/ToastProvider";
 import { saveOpportunity, type OppInput } from "./actions";
 import type { OppRow } from "./data";
+import { AdBadge, AdButton, AdCard, type AdMeta } from "@/app/_ad/primitives";
+import { dayParts, fmtDayFull } from "@/app/_ad/format";
+import { arCount } from "@/lib/arabicCount";
+import { FormChoice, FormRepeatItem, FormRoom, FormSection } from "@/app/_ad/form";
 
 const GENDER_OPTS = [
   { value: "", label: "الجميع" },
@@ -49,7 +52,7 @@ const isBlank = (p: PeriodDraft) => !p.day && !p.from && !p.to && !p.seats.trim(
  *
  * كانت نافذةً فوق الكشف، فلمّا صار الموعدُ فتراتٍ تطول بعددها (أربعةُ حقولٍ لكلّ فترة) صارت النافذةُ
  * عمودًا يُمرَّر، وإغلاقُها خطأً يُضيّع ما كُتب. فصارت صفحةً على سابقة نموذج الفعاليّة (`EventForm`):
- * قسمٌ لتفاصيلها وقسمٌ لفتراتها، وشريطُ الحفظ اللاصق يظهر حين يُكتب شيء. وللإنشاء فعلان: النشرُ أساسٌ
+ * قسمٌ لتفاصيلها وقسمٌ لفتراتها، على قالب صفحة النموذج (`_ad/form.tsx`، ٢٠٢٦-١١-٠٧). وللإنشاء فعلان: النشرُ أساسٌ
  * والمسوّدةُ جانبًا (أمرُه في اليوم نفسه)، وللتحرير حفظٌ وحدَه.
  *
  * **والفتراتُ صفوف**: على العريض كلُّ فترةٍ سطرٌ واحد (شارتُها · اليوم · من · إلى · العدد · حذف) وأسماءُ
@@ -136,7 +139,7 @@ export function OpportunityForm({ opp, committees, now: nowAtLoad }: {
         }),
   });
 
-  // **أثمّة ما يُحفَظ؟** — لقطةُ ما يُرسَل تُقارَن بأصلها المجمَّد (سابقةُ `EventForm`)، فالشريطُ لا يظهر حتى يُكتب شيء
+  // **أثمّة ما يُحفَظ؟** — لقطةُ ما يُرسَل تُقارَن بأصلها المجمَّد (سابقةُ `EventForm`): التحريرُ لا يُحفظ قبل أوّل تغيير، وفي الضيّق يلحقك الفعلُ
   const snapshot = JSON.stringify(toInput());
   const [origin] = useState(snapshot);
   const dirty = snapshot !== origin;
@@ -155,100 +158,104 @@ export function OpportunityForm({ opp, committees, now: nowAtLoad }: {
     });
   };
 
+  /* التذكرةُ كما ستظهر في غرفة التطوّع (`_ad/rooms/VolunteeringRoom`): الكعبُ يومُ أوّل فترة (أو «مرنة»)، والسطورُ الأربعة بصيغها */
+  const firstDay = [...periods].filter((p) => p.day).sort((a, b) => a.day.localeCompare(b.day))[0]?.day;
+  const days = new Set(periods.filter((p) => p.day).map((p) => p.day)).size;
+  const committee = committees.find((c) => String(c.id) === committeeId)?.name;
+  const schedule = flexible
+    ? deadline ? `مرنة، حتى ${fmtDayFull(`${deadline}T12:00:00`)}` : "مرنة، بلا آخر موعد"
+    : firstDay ? (days > 1 ? `${fmtDayFull(`${firstDay}T12:00:00`)}، و${arCount(days - 1, ["يومٌ آخر", "يومان آخران", "أيامٍ أخرى", "يومًا آخر"])}` : fmtDayFull(`${firstDay}T12:00:00`)) : "";
+  const meta: AdMeta[] = [
+    { icon: <Buildings />, text: committee ? `لصالح ${committee}` : "بلا لجنة" },
+    location.trim() ? { icon: <MapPin />, text: location.trim() } : { icon: <MapPin />, text: "المكان لم يُحدَّد", tone: "muted" },
+    schedule ? { icon: <CalendarBlank />, text: schedule } : { icon: <CalendarBlank />, text: "الموعد لم يُحدَّد", tone: "muted" },
+    { icon: <GenderIntersex />, text: gender === "male" ? "للرجال" : gender === "female" ? "للنساء" : "للجميع" },
+  ];
+  const stub = flexible ? { big: "", icon: <Endless />, small: "مرنة" } : firstDay ? (() => { const d = dayParts(`${firstDay}T12:00:00`); return { big: d.day, small: d.month }; })() : undefined;
+  const preview = (
+    <div className="ad-form-preview-card" data-untitled={title.trim() ? undefined : ""}>
+      <AdCard seed={opp?.id ?? "new-opp"} stub={stub} chips={editing ? undefined : <AdBadge tone="info">مسودّة</AdBadge>} title={title.trim() || "عنوان الفرصة"} meta={meta} />
+    </div>
+  );
+
   return (
-    <>
-      <PageHeader title={editing ? `تحرير: ${opp.title}` : "فرصة تطوّعيّة جديدة"} crumbLeaf={editing ? "تحرير" : "فرصة جديدة"} />
+    <FormRoom
+      title={editing ? `تحرير: ${opp.title}` : "فرصة تطوّعيّة جديدة"}
+      preview={preview}
+      commit={editing ? {
+        primary: { label: "حفظ التغييرات", icon: <FloppyDisk />, onClick: () => save(), busy: saving, held: !dirty },
+        cancelHref: `/dashboard/volunteering/${opp.id}`,
+        dirty,
+      } : {
+        primary: { label: "إنشاء ونشر", icon: <Megaphone />, onClick: () => save(true), busy: saving },
+        secondary: { label: "حفظ كمسوّدة", onClick: () => save(false) },
+        cancelHref: "/dashboard/volunteering",
+        dirty,
+      }}
+    >
+      <FormSection id="details" icon={<Handshake />} title="تفاصيل الفرصة">
+        <div className="form-grid">
+          <Field className="form-full" label="عنوان الفرصة" icon={<TextT />} innerIcon={<PencilSimple />}
+            placeholder="مصوّر في معرض التطوّع" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Textarea className="form-full" label="الوصف" icon={<TextT />} innerIcon={<ChatText />}
+            placeholder="ما المطلوب من المتطوّع؟" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
+          <Field className="form-full" label="المكان" icon={<MapPin />} innerIcon={<PencilSimple />} placeholder="مركز الملك سلمان"
+            value={location} onChange={(e) => setLocation(e.target.value)} optional />
+          <Select label="الجهة المُحتاجة" icon={<Buildings />}
+            options={[{ value: "", label: "بلا لجنة" }, ...committees.map((c) => ({ value: String(c.id), label: c.name }))]}
+            value={committeeId} onValueChange={setCommitteeId} optional />
+          <Select label="الجنس" icon={<GenderIntersex />} options={GENDER_OPTS} value={gender} onValueChange={setGender} optional />
+        </div>
+      </FormSection>
 
-      <div className="form-build">
-        <SectionCard headerVariant="chip" icon={<Handshake />} title="تفاصيل الفرصة">
-          <div className="form-grid">
-            <Field className="form-full" label="عنوان الفرصة" icon={<TextT />} innerIcon={<PencilSimple />}
-              placeholder="مصوّر في معرض التطوّع" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <Textarea className="form-full" label="الوصف" icon={<TextT />} innerIcon={<ChatText />}
-              placeholder="ما المطلوب من المتطوّع؟" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
-            <Field className="form-full" label="المكان" icon={<MapPin />} innerIcon={<PencilSimple />} placeholder="مركز الملك سلمان"
-              value={location} onChange={(e) => setLocation(e.target.value)} optional />
-            <Select label="الجهة المُحتاجة" icon={<Buildings />}
-              options={[{ value: "", label: "بلا لجنة" }, ...committees.map((c) => ({ value: String(c.id), label: c.name }))]}
-              value={committeeId} onValueChange={setCommitteeId} optional />
-            <Select label="الجنس" icon={<GenderIntersex />} options={GENDER_OPTS} value={gender} onValueChange={setGender} optional />
-          </div>
-        </SectionCard>
-
-        {/* مبدّلُ الموعد في رأس قسمه (أمرُ المالك ٢٠٢٦-١٠-٠١: «المبدّلُ مقابلَ الموعد»): هو بابُ القسم كلِّه لا حقلٌ
-            فيه، فيقف حيث يقف العنوان، ويتبعه ما تحته (الفتراتُ أو العددُ وآخرُ يوم) */}
-        <SectionCard
-          headerVariant="chip" icon={<CalendarBlank />} title="الموعد"
-          actions={legacy?.locked ? undefined : (
-            <Segmented
-              items={[{ value: "periods", label: "بفترات" }, { value: "flex", label: "مرنة" }]}
-              value={flexible ? "flex" : "periods"}
-              onValueChange={(v) => setFlexible(v === "flex")}
-            />
-          )}
-        >
-          {flexible ? (
-            <div className="vpd">
-              <p className="vpd-note">
-                بلا يومٍ ولا ساعة: عملٌ يُنجَز في وقته، كتصميمٍ أو كتابة. ويقدّم المتطوّعُ عليها كلِّها، فإن لم تكتب
-                آخرَ موعدٍ للإنجاز أنهيتَها من قائمة كرتها حين يكتمل العمل.
-              </p>
-              <div className="form-grid">
-                <Field label="العدد" {...SEATS_INPUT} icon={<UsersThree />} innerIcon={<Hash />}
-                  value={seats} onChange={(e) => setSeats(seatsText(e.target.value))} optional />
-                <Field label="آخرُ موعدٍ للإنجاز" type="date" icon={<CalendarBlank />} innerIcon={<Flag />} placeholder="" min={now.day}
-                  error={deadlinePast() ? "مضى هذا اليوم" : undefined}
-                  value={deadline} onChange={(e) => setDeadline(e.target.value)} optional />
-              </div>
-            </div>
-          ) : (
-            <div className="vpd">
-              <p className="vpd-note">
-                {legacy
-                  ? legacy.locked
-                    ? `موعدُها قبل الفترات: ${legacy.text}. وعليها طلباتٌ للفرصة كلِّها، فلا تُضاف لها فترات.`
-                    : `موعدُها قبل الفترات: ${legacy.text}. الفتراتُ التي تكتبها تحلّ محلَّه.`
-                  : "لكلّ فترةٍ يومُها وساعتاها وعددُها، ويختار المتطوّعُ منها فترةً أو أكثر."}
-              </p>
-              {periods.map((p, i) => (
-                <div key={p.key} className="vpd-row" role="group" aria-label={`الفترة ${i + 1}`}>
-                  <span className="vpd-n" aria-hidden><span className="vpd-n-word">الفترة</span><b>{i + 1}</b></span>
-                  <Field className="vpd-day" label="اليوم" type="date" icon={<CalendarBlank />} innerIcon={<CalendarBlank />} placeholder=""
-                    min={touched(p) ? now.day : undefined} error={dayPast(p) ? "مضى هذا اليوم" : undefined}
-                    value={p.day} onChange={(e) => setPeriod(p.key, { day: e.target.value })} required />
-                  <Field className="vpd-from" label="من الساعة" type="time" icon={<Clock />} innerIcon={<HourglassMedium />} placeholder=""
-                    min={touched(p) && p.day === now.day ? now.time : undefined} error={hourPast(p) ? "مضت هذه الساعة" : undefined}
-                    value={p.from} onChange={(e) => setPeriod(p.key, { from: e.target.value })} required />
-                  <Field className="vpd-to" label="إلى الساعة" type="time" icon={<Clock />} innerIcon={<Flag />} placeholder=""
-                    helper={overnight(p) ? "تنتهي في اليوم التالي" : undefined}
-                    value={p.to} onChange={(e) => setPeriod(p.key, { to: e.target.value })} required />
-                  <Field className="vpd-seats" label="العدد" {...SEATS_INPUT} icon={<UsersThree />} innerIcon={<Hash />}
-                    value={p.seats} onChange={(e) => setPeriod(p.key, { seats: seatsText(e.target.value) })} optional />
-                  {periods.length > 1 ? (
-                    <Button className="vpd-del" variant="ghost-danger" size="sm" onClick={() => removePeriod(p.key)} aria-label={`حذف الفترة ${i + 1}`}>
-                      <Trash size={16} />حذف
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
-              {legacy?.locked ? null : (
-                <Button variant="ghost" size="md" onClick={addPeriod}><Plus size={18} />إضافة فترة</Button>
-              )}
-            </div>
-          )}
-        </SectionCard>
-      </div>
-
-      <SaveBar open={dirty} message={editing ? undefined : "فرصةٌ لم تُنشأ بعد"}>
-        {editing ? (
-          <Button variant="primary" size="md" loading={saving} onClick={() => save()}>حفظ التغييرات</Button>
-        ) : (
-          <>
-            <Button variant="ghost" size="md" onClick={() => save(false)} disabled={saving}>حفظ كمسوّدة</Button>
-            <Button variant="primary" size="md" loading={saving} onClick={() => save(true)}>إنشاء ونشر</Button>
-          </>
+      {/* مبدّلُ الموعد في رأس قسمه (أمرُ المالك ٢٠٢٦-١٠-٠١: «المبدّلُ مقابلَ الموعد»): هو بابُ القسم كلِّه لا حقلٌ فيه، فيقف حيث يقف
+          العنوان، ويتبعه ما تحته (الفتراتُ أو العددُ وآخرُ يوم). وشرحُ الباب سطرُ رأس القسم (كان فقرةً فوق الحقول) */}
+      <FormSection
+        id="when" icon={<CalendarBlank />} title="الموعد"
+        sub={flexible
+          ? "بلا يومٍ ولا ساعة: عملٌ يُنجَز في وقته، كتصميمٍ أو كتابة. ويقدّم المتطوّعُ عليها كلِّها، فإن لم تكتب آخرَ موعدٍ للإنجاز أنهيتَها من قائمة كرتها حين يكتمل العمل."
+          : legacy
+            ? legacy.locked
+              ? `موعدُها قبل الفترات: ${legacy.text}. وعليها طلباتٌ للفرصة كلِّها، فلا تُضاف لها فترات.`
+              : `موعدُها قبل الفترات: ${legacy.text}. الفتراتُ التي تكتبها تحلّ محلَّه.`
+            : "لكلّ فترةٍ يومُها وساعتاها وعددُها، ويختار المتطوّعُ منها فترةً أو أكثر. واترك العددَ فارغًا ليكون مفتوحًا."}
+        act={legacy?.locked ? undefined : (
+          <FormChoice label="نوع الموعد" items={[{ value: "periods", label: "بفترات" }, { value: "flex", label: "مرنة" }]}
+            value={flexible ? "flex" : "periods"} onChange={(v) => setFlexible(v === "flex")} />
         )}
-      </SaveBar>
-    </>
+      >
+        {flexible ? (
+          <div className="form-grid">
+            <Field label="العدد" {...SEATS_INPUT} icon={<UsersThree />} innerIcon={<Hash />}
+              value={seats} onChange={(e) => setSeats(seatsText(e.target.value))} optional />
+            <Field label="آخرُ موعدٍ للإنجاز" type="date" icon={<CalendarBlank />} innerIcon={<Flag />} placeholder="" min={now.day}
+              error={deadlinePast() ? "مضى هذا اليوم" : undefined}
+              value={deadline} onChange={(e) => setDeadline(e.target.value)} optional />
+          </div>
+        ) : (
+          <div className="ad-freps">
+            {periods.map((p, i) => (
+              <FormRepeatItem key={p.key} n={i + 1} label="الفترة" onRemove={periods.length > 1 ? () => removePeriod(p.key) : undefined}>
+                <Field label="اليوم" type="date" icon={<CalendarBlank />} innerIcon={<CalendarBlank />} placeholder=""
+                  min={touched(p) ? now.day : undefined} error={dayPast(p) ? "مضى هذا اليوم" : undefined}
+                  value={p.day} onChange={(e) => setPeriod(p.key, { day: e.target.value })} required />
+                <Field label="من الساعة" type="time" icon={<Clock />} innerIcon={<HourglassMedium />} placeholder=""
+                  min={touched(p) && p.day === now.day ? now.time : undefined} error={hourPast(p) ? "مضت هذه الساعة" : undefined}
+                  value={p.from} onChange={(e) => setPeriod(p.key, { from: e.target.value })} required />
+                <Field label="إلى الساعة" type="time" icon={<Clock />} innerIcon={<Flag />} placeholder=""
+                  helper={overnight(p) ? "تنتهي في اليوم التالي" : undefined}
+                  value={p.to} onChange={(e) => setPeriod(p.key, { to: e.target.value })} required />
+                {/* وصفُ «اتركه لجعل العدد مفتوحًا» قيل مرّةً في سطر القسم لا تحت كلّ فترة (محمد ٢٠٢٦-١١-٠٧: «كلامٌ محشورٌ في حقلٍ صغير») */}
+                <Field label="العدد" {...SEATS_INPUT} helper={undefined} icon={<UsersThree />} innerIcon={<Hash />}
+                  value={p.seats} onChange={(e) => setPeriod(p.key, { seats: seatsText(e.target.value) })} optional />
+              </FormRepeatItem>
+            ))}
+            {legacy?.locked ? null : (
+              <span className="ad-frep-add"><AdButton variant="line" icon={<Plus />} onClick={addPeriod}>إضافة فترة</AdButton></span>
+            )}
+          </div>
+        )}
+      </FormSection>
+    </FormRoom>
   );
 }

@@ -1,20 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { useToast } from "../../../../_components/ToastProvider";
-import { PageHeader } from "../../../../_components/PageHeader";
-import { QrToolView, type QrSpecSaver } from "../../QrToolView";
+import type { QrSpecSaver } from "../../QrToolView";
 import { updateQrSpec } from "../../actions";
 import type { QrLinkRow } from "../../data";
+import { QrDesignRoom } from "@/app/_ad/rooms/QrDesignRoom";
 
 /**
  * **الخطوةُ الثانية: الشكل.**
  *
- * وصلةٌ بين المحرّر وأفعال الغرفة، ووجودُها لعلّةٍ واحدة: `QrToolView` يُعرَض أيضًا في
- * `‎/ui/qr-dock` بلا مزوّدِ توست ولا مُوجِّه، فلا يجوز أن ينادي `useToast` بنفسه.
+ * وصلةٌ بين الغرفة وأفعالها. والغرفةُ «المنضدة» (`_ad/rooms/QrDesignRoom`، اعتمدها محمد ٢٠٢٦-١١-١٧) مكانَ `QrToolView`:
+ * لا «حفظ» ولا «تحميل» فيها، والفعلُ الواحدُ «تمّ» إلى بيت الباركود حيث يُحمَّل ويُنسخ رابطُه.
  */
-export function QrDesignView({ link }: { link: QrLinkRow }) {
+export function QrDesignView({ link, fresh }: { link: QrLinkRow; fresh?: boolean }) {
   const toast = useToast();
   const router = useRouter();
 
@@ -30,17 +29,5 @@ export function QrDesignView({ link }: { link: QrLinkRow }) {
     return res;
   };
 
-  return (
-    <>
-      <PageHeader title={link.title} crumbLeaf="التصميم" />
-      {/* **الموقوفُ يُقال في غرفة تصميمه** (٢٠٢٦-٠٩-٠٥): كانت المعاينةُ تُعرَض حيّةً لرمزٍ
-          يقود ماسحَه إلى صفحة «غير متاح»، فيُصمَّم ويُطبَع وهو ميّت. */}
-      {link.active ? null : (
-        <Alert tone="warning" title="الباركود موقوف">
-          تصميمُك يُحفَظ، لكنّ من يمسحه الآن يرى صفحةً تقول إنّه غير متاح. تشغيلُه من صفحة الباركود.
-        </Alert>
-      )}
-      <QrToolView code={link.code} title={link.title} initial={link.spec} embedded onSaveSpec={onSaveSpec} />
-    </>
-  );
+  return <QrDesignRoom link={link} fresh={fresh} done={`/dashboard/tools/qr/${link.id}${fresh ? "?ready=1" : ""}`} onSaveSpec={onSaveSpec} />;
 }

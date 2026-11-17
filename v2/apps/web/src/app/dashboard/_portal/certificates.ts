@@ -21,6 +21,8 @@ export type PortalCert = {
   meta: string[];
   hours: number | null;
   date: string;
+  /** يومُ إصدارها (YYYY-MM-DD) — كعبُ تذكرتها في القالب الجديد (`dayParts`). */
+  issuedOn?: string | null;
   star: boolean;
   quote: string | null;
   paper:
@@ -51,6 +53,7 @@ export async function getMyCertificates(
     meta: ["تطوّع", ...(c.hours ? [hoursLabel(c.hours)] : []), c.distinction ? "بتميّز" : c.issuedLabel],
     hours: c.hours,
     date: c.issuedLabel,
+    issuedOn: c.issuedOn,
     star: !!c.distinction,
     quote: c.distinction,
     paper: { as: "participation", c: { name: c.holderName, serial: c.serial, opportunity: c.opportunityTitle, gender: c.gender ?? gender, from: c.servedFrom, to: c.servedTo, hours: c.hours, distinction: c.distinction } },
@@ -75,6 +78,7 @@ export async function getMyCertificates(
     meta: ["خبرة", years(c.period_from, c.period_to)],
     hours: null,
     date: years(c.period_from, c.period_to),
+    issuedOn: c.created_at.slice(0, 10),
     star: false,
     quote: null,
     // الورقةُ باسمه اليوم إن تغيّر بعد الإصدار (`paper_name`)، كما في «عضويتي»

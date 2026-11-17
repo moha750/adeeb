@@ -28,6 +28,7 @@ export { Field, type FieldProps } from "./components/Field";
 export { ColorField, type ColorFieldProps } from "./components/ColorField";
 export { Textarea, type TextareaProps } from "./components/Textarea";
 export { FieldMark } from "./components/FieldMark";
+export { FieldCount, overBy, overMessage, lettersCount, type FieldCountRule } from "./components/FieldCount";
 export { Select, type SelectProps, type SelectOption } from "./components/Select";
 export { PersonPicker, type PersonPickerProps, type PersonOption } from "./components/PersonPicker";
 export { AnchoredPopover, type AnchoredPopoverProps, type PopoverAlign, type PopoverSide, type PopoverDismissReason } from "./components/AnchoredPopover";

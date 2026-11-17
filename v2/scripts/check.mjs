@@ -23,6 +23,8 @@ const GUARDS = [
   { file: "glyph-weights.mjs", name: "أوزان الأيقونات" },
   // سقّاطة الهويّة (٢٠٢٦-١٠-٣٠): عدّاداتُ ما يُكتب خارج نظام الهويّة لا تصعد — identity-ratchet.mjs
   { file: "identity-ratchet.mjs", name: "سقّاطة الهويّة" },
+  // حارسُ الختم (٢٠٢٦-١١-١٦): الزرُّ الثانويُّ يحمل أيقونتَه، والاستثناءُ `plain` مكتوب — button-stamps.mjs
+  { file: "button-stamps.mjs", name: "ختم الأزرار" },
 ];
 
 const fallen = [];

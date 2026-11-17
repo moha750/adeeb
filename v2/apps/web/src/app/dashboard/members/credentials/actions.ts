@@ -39,7 +39,7 @@ export async function updateCredentials(input: {
   if (!userId) return { ok: false, message: "لم يُحدَّد العضو." };
   if (!email && !password) return { ok: false, message: "أدخِل بريدًا جديدًا أو كلمة مرور جديدة." };
   if (email && !isEmail(email)) return { ok: false, message: `${EMAIL_HINT}.` };
-  if (password && password.length < 8) return { ok: false, message: "كلمة المرور يجب ألّا تقلّ عن ٨ محارف." };
+  if (password && password.length < 8) return { ok: false, message: "كلمة المرور يجب ألّا تقلّ عن 8 محارف." };
 
   const sb = createAdeebServiceClient(url, key);
 

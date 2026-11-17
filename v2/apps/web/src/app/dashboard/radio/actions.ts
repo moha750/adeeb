@@ -437,7 +437,7 @@ const YOUTUBE_URL = /^https:\/\/(www\.)?(youtube\.com\/|youtu\.be\/)/;
 
 function validateEpisode(input: EpisodeInput): { error: string } | { slug: string } {
   if (!clean(input.title)) return { error: "عنوان الحلقة مطلوب." };
-  if (!Number.isInteger(input.number) || input.number < 1) return { error: "رقم الحلقة يبدأ من ١." };
+  if (!Number.isInteger(input.number) || input.number < 1) return { error: "رقم الحلقة يبدأ من 1." };
   const slug = slugify(input.slug ?? "");
   if (!slug) return { error: "معرّف الحلقة مطلوب: أحرف لاتينيّة وأرقام." };
   const yt = clean(input.youtubeUrl);

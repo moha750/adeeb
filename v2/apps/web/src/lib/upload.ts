@@ -165,7 +165,7 @@ export function fileKindAr(mime: string | null | undefined): string {
   return "ملفّ";
 }
 
-/** وصفُ مرفَقٍ في سطرٍ واحد: «PDF، ١٫٢ ميغابايت» — وبلا حجمٍ معلومٍ يبقى النوعُ وحدَه. */
+/** وصفُ مرفَقٍ في سطرٍ واحد: «PDF، 1.2 ميغابايت» — وبلا حجمٍ معلومٍ يبقى النوعُ وحدَه. */
 export const fileMeta = (mime: string | null | undefined, bytes: number | null | undefined): string => {
   const size = formatBytesAr(bytes);
   return size ? `${fileKindAr(mime)}، ${size}` : fileKindAr(mime);
@@ -184,8 +184,9 @@ export function checkFile(file: File, rule: UploadRule): string | null {
   if (file.size > rule.maxBytes) {
     const size = formatBytesAr(file.size);
     const limit = formatBytesAr(rule.maxBytes);
-    // «٦ ميغابايت والحدُّ ٥» لا «٦ ميغابايت والحدُّ ٥ ميغابايت»: الوحدةُ تُقال مرّةً إن اتّحدت
-    const [num, unit] = limit.split(" ");
+    // «6 ميغابايت والحدُّ 5» لا «6 ميغابايت والحدُّ 5 ميغابايت»: الوحدةُ تُقال مرّةً إن اتّحدت
+    // الفاصلُ بين الرقم ووحدته مسافةٌ لا تنكسر (`formatBytesAr`، فلا ينفصل «5» عن «ميغابايت» في آخر السطر)
+    const [num, unit] = limit.split(/[\s\u00a0]/);
     const limitText_ = size.endsWith(unit) ? num : limit;
     const exit = rule.optional ? "اختر أصغر أو تابع بلا مرفَق" : "اختر أصغر منه";
     return `الحجمُ ${size} والحدُّ ${limitText_} : ${exit}`;

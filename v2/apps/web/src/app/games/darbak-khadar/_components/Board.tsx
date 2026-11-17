@@ -206,7 +206,7 @@ function Leaders({
               <li key={r} className="drba-step" data-rank={r} data-empty={e ? undefined : ""} data-me={e && me?.name === e.name ? "" : undefined}>
                 {r === 1 ? <Crown className="drba-crown" /> : null}
                 <span className="drba-av" aria-hidden="true">{e ? initial(e.name) : "؟"}</span>
-                <span className="drba-who">{e ? e.name : "مكانٌ شاغر"}</span>
+                <span className="drba-who">{e ? e.name : "مكانٌ فارغ"}</span>
                 <span className="drba-val">{e ? <Val b={b} v={e.value} /> : null}</span>
                 <span className="drba-block">{r}</span>
               </li>

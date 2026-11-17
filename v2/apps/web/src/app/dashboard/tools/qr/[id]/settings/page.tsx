@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
+import { AdRoomMissing } from "@/app/_ad/states";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getSessionAdmin } from "@/lib/auth";
 import { getQrAccess, getQrLink, getQrSchedules, getQrShares } from "../../data";
 import { getQrShareCandidates } from "../../shares";
-import { QrSettingsView } from "../../QrSettingsView";
+import { QrSettingsRoom } from "@/app/_ad/rooms/QrSettingsRoom";
 
 export const metadata = { title: "إعدادات الباركود، بوّابة أدِيب" };
 
@@ -40,15 +41,18 @@ export default async function QrSettingsPage({
   // فيُردّ إلى ما أُعطيه: صفحةُ الإحصاء.
   if (link.link && access === "read") redirect(`/dashboard/tools/qr/${id}`);
 
+  // **المفقودُ يُقال** كما كانت `QrSettingsView` تقوله حين لا صفّ — والغرفةُ (قالبُ «حسابي»، محمد ٢٠٢٦-١١-١٧) تفترض باركودًا
+  if (!link.link) return <AdRoomMissing title="إعدادات الباركود" navPath="/dashboard/tools/qr" what="الباركود" desc="إمّا أنّه حُذف، وإمّا أنّه ليس من رموزك." back={{ label: "إلى باركوداتك", href: "/dashboard/tools/qr" }} />;
+
   return (
-    <QrSettingsView
+    <QrSettingsRoom
       link={link.link}
       schedules={schedules.rows}
       shares={shares.rows}
       candidates={candidates}
       // **المشاركةُ للمالك وحدَه**: الشريكُ يقرأ القائمةَ ولا يوسّعها، والقاعدةُ تردّه
       // لو نبت له زرٌّ (سياسةُ الكتابة تشترط المِلكيّة).
-      canManage={!!me && !!link.link && link.link.ownerId === me.id}
+      canManage={!!me && link.link.ownerId === me.id}
       openShare={share === "1"}
     />
   );

@@ -25,10 +25,13 @@ export function ArticleGallery({
   images,
   photographers,
   title,
+  onOpen,
 }: {
   images: string[];
   photographers: string[];
   title: string;
+  /** **عارضُ صاحبها** (صفحةُ الخبر الجديدة ٢٠٢٦-١١-١٧): الغلافُ والمعرضُ صورٌ واحدةٌ تُقلَّب معًا — فيُفتح عارضُها لا عارضُ المعرض وحده */
+  onOpen?: (i: number) => void;
 }) {
   const [open, setOpen] = useState<number | null>(null);
 
@@ -47,7 +50,7 @@ export function ArticleGallery({
       <div className="art-gal" data-n={shown.length}>
         {shown.map((s, i) => (
           <figure key={s.src} className="art-shot">
-            <button type="button" onClick={() => setOpen(i)} aria-label={`افتح ${s.alt}`}>
+            <button type="button" onClick={() => (onOpen ? onOpen(i) : setOpen(i))} aria-label={`افتح ${s.alt}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={s.src} alt={s.alt} loading="lazy" />
               {s.by ? (
@@ -59,7 +62,7 @@ export function ArticleGallery({
         ))}
       </div>
 
-      <Lightbox
+      {onOpen ? null : <Lightbox
         shots={shots}
         index={open}
         onClose={() => setOpen(null)}
@@ -67,7 +70,7 @@ export function ArticleGallery({
         emptyBy="بلا نسبة"
         byIcon={<Camera size={14} aria-hidden />}
         closeIcon={<X aria-hidden />}
-      />
+      />}
     </>
   );
 }

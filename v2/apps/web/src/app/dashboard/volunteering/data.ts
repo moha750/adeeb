@@ -820,6 +820,8 @@ export type IssuedCertRow = {
   distinction: string | null;
   issuedBy: Actor;
   issuedAt: string;
+  /** يومُ الإصدار خامًا — كعبُ الشهادة في القالب الجديد يصوغه بساعة النادي (`dayParts`). */
+  issuedIso?: string;
   status: "active" | "revoked";
   revokedBy: Actor;
   revokedAt: string | null;
@@ -985,6 +987,7 @@ export async function listCertificateRoom(): Promise<CertificatesRoom> {
       distinction: c.distinction_note,
       issuedBy: who(c.issued_by),
       issuedAt: fmtWhen(c.issued_at),
+      issuedIso: c.issued_at,
       status: c.status === "revoked" ? "revoked" : "active",
       revokedBy: who(c.revoked_by),
       revokedAt: c.revoked_at ? fmtWhen(c.revoked_at) : null,

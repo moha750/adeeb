@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Container, Footer } from "@adeeb/design-system";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { actingLine, positionLine } from "@/lib/positionLabel";
 import { shareOg } from "@/lib/share";
 import { getPublicProfile, type PublicPosition } from "./data";
-import { ProfileView } from "./ProfileView";
+import { MemberPublic } from "@/app/_ad/rooms/MemberPublicRoom";
 
 export const revalidate = 300;
 
@@ -36,6 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  * بمفتاحه، والوحدةُ باسمها، والوسامُ بسببه. ولا بيانَ فيها يخصّ الشخصَ دون المنصب:
  * البابُ `get_public_profile` لا يُخرِج بريدًا ولا جوّالًا ولا ميلادًا ولا إنذارًا،
  * فالحجبُ في القاعدة لا في هذه الشاشة.
+ *
+ * **على قالب «القراءة»** (`_ad/rooms/MemberPublicRoom`، اعتمده محمد ٢٠٢٦-١١-١٧): بطاقةُ أدِيب تتدلّى من اللوح، والأوسمةُ و«عنه» سطورًا،
+ * ولصاحبها وحده ملاحظةٌ بزوّار صفحته. و`ProfileView` القديمُ باقٍ بلا مستعمِل حتى يقرّر المالكُ حذفه.
  */
 export default async function MemberProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -45,12 +49,10 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
   return (
     <>
       <SiteHeader />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container className="max-w-3xl">
-            <ProfileView me={me} />
-          </Container>
-        </section>
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <MemberPublic me={me} />
+        </div>
       </main>
       <Footer />
     </>

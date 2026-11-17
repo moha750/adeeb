@@ -22,7 +22,7 @@ import { roomIconKey, useRoomCrumb } from "./crumb";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 import { useAdLab } from "./lab";
 import {
-  AdButton, AdEmpty, AdList, AdPager, AdPickItem, AdPickScope, AdRoom, AdSelBar, AdSwitch, AdTools, RoomPlate,
+  AdButton, AdEmpty, AdGroupPick, AdList, AdPager, AdPickItem, AdPickScope, AdRoom, AdSelBar, AdSwitch, AdTools, RoomPlate,
   AD_HEAD, type AdAction, type AdColumn, type AdFilter, type AdOp, type AdSort,
 } from "./primitives";
 
@@ -36,6 +36,23 @@ export type Position<T> = {
   canCreate?: boolean;
   /** يُفتح نادرًا (الأرشيف، والمحذوفات، والملغاة): مكانُه «المزيد» في المبدّل. */
   rare?: boolean;
+  /**
+   * **موضعٌ لوحة** (محمد ٢٠٢٦-١١-٠٤: «القيادات» خريطةُ قيادة القسم): ما فوق القائمة (`notice`) هو الموضعُ كلُّه — لا أدواتَ بحثٍ
+   * ولا قائمةَ تحته. والعددُ في المبدّل عددُ ما يطابقه كما في غيره.
+   */
+  board?: boolean;
+  /** عددُه في المبدّل حين لا يكون عددَ ما يطابقه (اللوحة: مقاعدُ الخريطة المشغولة لا كروتُ القادة) */
+  count?: number;
+  /**
+   * **اسمُ سجلّاته حين يخالف اسمَ الغرفة** (شهاداتُ المتطوّعين ٢٠٢٦-١١-٠٤): الغرفةُ «شهادات» وموضعُ «بانتظار الحضور» متطوّعون لم
+   * تصدر لهم شهادةٌ بعد — فعدُّه «3 متطوّعين» لا «3 شهادات».
+   */
+  noun?: ArForms;
+  /**
+   * **لا تحديدَ في هذا الموضع** (`false`؛ شهاداتُ المتطوّعين ٢٠٢٦-١١-٠٤): الأفعالُ الجماعيّة (`bulk`) لموضعٍ بعينه — «إصدار» لما حُدّد في
+   * «جاهزة لم تصدر» — فلا تُرسم مربّعاتُ التحديد في طابور الحضور ولا في السجلّ. بلا قيمةٍ: التحديدُ حيث كانت `bulk`.
+   */
+  pick?: false;
 };
 
 export type FilterDef<T> = {
@@ -61,12 +78,23 @@ const PAGE_SIZE = 50;
 export type SortKey = number | string;
 /** عمودُ الجدول، وإن أُعطي `sortBy` رُتّب الجدولُ به من رأسه. */
 export type TableColumn<T> = AdColumn & { sortBy?: (item: T) => SortKey };
+/** رأسُ الجدول (`CollectionRoom.table`) — اسمُ عمود السجلّ، وأعمدتُه، وكعبُه. */
+export type TableSpec<T> = { head: string; headSortBy?: (item: T) => SortKey; columns: TableColumn<T>[]; stub?: TableColumn<T> };
 
 export function CollectionRoom<T>({
-  navPath, title, action, extra, noun, items, positions, defaultPosition,
+  navPath, title, action, extra, noun: nounAll, items, positions, defaultPosition,
   searchPlaceholder, matchSearch, filters = [], viewKey, initialView, emptyAll, createAction,
-  renderCard, renderRow, table, notice, after, idOf, bulk, reorder, group,
+  renderCard, renderRow, table: tableOf, notice, after, idOf, bulk, reorder, group: groupAll, head: recordHead, listOnly: onlyList, pageSize,
 }: {
+  /** سجلّاتٌ في الصفحة الواحدة (خمسون): وقائمةُ ما في السجلّ كلُّها صفحةٌ واحدة (`Infinity`) كما كانت — فـ«تحديدُ الكلّ» يحدّد المرحلةَ كلَّها */
+  pageSize?: number;
+  /**
+   * **رأسُ صفحة السجلّ مكانَ لوح الغرفة** (قالبُ «التذكرة المفتوحة»، `_ad/record.tsx`، اعتمده محمد ٢٠٢٦-١١-٠٧): الغرفةُ قائمةُ ما في
+   * السجلّ (حجوزاتُ الفعاليّة، طلباتُ الفرصة) ورأسُها تذكرتُه مفتوحة. وبلا سجلّاتٍ لا مبدّلَ ولا أدوات: الفراغُ وحده يقول «لا حجوزات بعد».
+   */
+  head?: ReactNode;
+  /** قائمةٌ وحدها بلا زرّ الكروت (قائمةُ ما في السجلّ: مشاركون وطلبات) — ويُشترط `renderRow` و`table` */
+  listOnly?: boolean;
   /** مسارُ الغرفة في خريطة التنقّل — منه الفتات (بوّابة أدِيب › المجموعة)، والاسمُ نفسُه عنوانُ اللوح. */
   navPath?: string;
   title: string;
@@ -87,14 +115,20 @@ export function CollectionRoom<T>({
   initialView?: RoomView;
   emptyAll: { title: string; desc: string };
   createAction?: ReactNode;
-  renderCard: (item: T) => ReactNode;
-  renderRow?: (item: T) => ReactNode;
+  /** `position`: الموضعُ الحاليّ — لسطرٍ يتبدّل فعلُه بموضعه (مرحلةُ الحجز: «تأكيد» ثمّ «حاضر» ثمّ «أُرسلت») */
+  renderCard: (item: T, position: string) => ReactNode;
+  renderRow?: (item: T, position: string) => ReactNode;
   /**
    * رأسُ الجدول: اسمُ عمود السجلّ («الخبر»)، ثمّ أعمدتُه بأسمائها ورموزها — والسطرُ يملؤها بالترتيب نفسِه.
    * و`headSortBy` و`sortBy` لكلّ عمود: ما يُرتَّب به من رأسه (في الجدول وحده؛ الكروتُ بترتيب البيانات).
    */
-  table?: { head: string; headSortBy?: (item: T) => SortKey; columns: TableColumn<T>[]; stub?: TableColumn<T> };
-  notice?: ReactNode;
+  /**
+   * أو دالّةٌ تأخذ الموضعَ فتعطي رأسَه (شهاداتُ المتطوّعين ٢٠٢٦-١١-٠٤): غرفةٌ مواضعُها سجلّاتٌ من نوعين — طابورُ متطوّعين بوجوههم
+   * (الكعبُ وجه)، وسجلُّ شهاداتٍ بأرقامها (الكعبُ يومُ الإصدار، وأعمدتُه الرقمُ والمدّة).
+   */
+  table?: TableSpec<T> | ((position: string) => TableSpec<T>);
+  /** ما فوق القائمة — أو دالّةٌ تأخذ `choose` فتنقل إلى موضعٍ آخر بفعلٍ فيها («اعرض القيادات») */
+  notice?: ReactNode | ((ctx: { choose: (key: string) => void }) => ReactNode);
   /**
    * قسمٌ ثانٍ بعد القائمة داخل الغرفة نفسِها (سجلُّ أحداث الباركود «ما الذي جرى») — بعرضها وفجوتها. كان القسمُ يُلفّ مع الغرفة في
    * غرفةٍ ثانية فانكمشت الداخلةُ إلى عرض محتواها وسط الصفحة (وجده محمد ٢٠٢٦-١١-٠٢ بحساب أدِيب)
@@ -112,14 +146,20 @@ export function CollectionRoom<T>({
    */
   group?: {
     of: (item: T) => string;
-    head: (items: T[]) => ReactNode;
+    /** `position`: الموضعُ الحاليّ — رأسُ الفترة في سجلّ الفرصة يقول «قُبل 3 من 5» في موضع القبول وعددَ متطوّعيها في غيره */
+    head: (items: T[], position: string) => ReactNode;
     order?: (a: T[], b: T[]) => number;
     inner?: (a: T, b: T) => number;
+    /**
+     * **مواضعُ التجميع** (كـ`FilterDef.in`، ٢٠٢٦-١١-٠٤): يُجمع فيها وحدها، وتكون قائمةً وحدها فيها وحدها — طابورا الشهادات تحت
+     * فرصهما (الفرصةُ وحدةُ العمل)، وسجلُّ الشهادات بلا تجميعٍ كروتًا وجدولًا كشهادات الخبرة. بلا قيمةٍ: في المواضع كلّها.
+     */
+    in?: string[];
   };
   /** معرّفُ السجلّ — للتحديد الجماعيّ */
   idOf?: (item: T) => string;
-  /** الأفعالُ الجماعيّة على المحدَّد؛ بدونها لا تحديدَ في الغرفة */
-  bulk?: (ids: string[]) => AdOp[];
+  /** الأفعالُ الجماعيّة على المحدَّد؛ بدونها لا تحديدَ في الغرفة. و`position` الموضعُ الحاليّ (فعلُ كلّ مرحلةٍ في صفحة السجلّ) */
+  bulk?: (ids: string[], position: string) => AdOp[];
   /**
    * غرفةٌ ترتيبُها يدويّ (يحدّد ترتيبَ قسمها في الموقع): كعبُ كلّ سجلٍّ مقبضٌ يُسحب في القائمة نفسِها، والحفظُ عند الإفلات
    * (`reorder.tsx`). ويتطلّب `idOf`، و`items` بترتيبها المحفوظ
@@ -127,7 +167,7 @@ export function CollectionRoom<T>({
   reorder?: ReorderSpec<T>;
 }) {
   const lab = useAdLab();
-  const PAGE = lab.pageSize ?? PAGE_SIZE;
+  const PAGE = lab.pageSize ?? pageSize ?? PAGE_SIZE;
   const router = useRouter();
   const toast = useToast();
   // **الترتيبُ بالسحب** (`reorder.tsx`): الإفلاتُ يرتّب القائمةَ في مكانها فورًا (`moved`) ثمّ يحفظ. والترتيبُ المؤقّت مربوطٌ
@@ -156,7 +196,6 @@ export function CollectionRoom<T>({
     ];
   };
   const bulkOps = bulk ?? (lab.select ? preview : undefined);
-  const canPick = !!idOf && !!bulkOps;
   // الموضعُ والصفحةُ في الرابط (`?pos=`، `?page=`): الرجوعُ من سجلٍّ فُتح في الصفحة الثالثة يعيد إليها لا إلى أوّل القائمة
   const sp = useSearchParams();
   const fallback = defaultPosition ?? positions[0]?.key ?? "all";
@@ -170,6 +209,12 @@ export function CollectionRoom<T>({
   const head = useRef<HTMLDivElement>(null);
   // غرفةٌ بلا مواضع: موضعٌ واحدٌ يجمع كلَّ شيء، ولا مبدّلَ يُرسم (`plates.length > 1`)
   const ALL = useMemo<Position<T>>(() => ({ key: "all", label: "الكلّ", match: () => true, empty: emptyAll.title }), [emptyAll.title]);
+  // الموضعُ الحاليّ قبل كلّ شيء: منه رأسُ الجدول، والتجميعُ، واسمُ السجلّات (ما يخصّ موضعًا بعينه)
+  const current = positions.find((p) => p.key === position) ?? positions[0] ?? ALL;
+  const table = typeof tableOf === "function" ? tableOf(current.key) : tableOf;
+  const group = groupAll && (!groupAll.in || groupAll.in.includes(current.key)) ? groupAll : undefined;
+  const noun = current.noun ?? nounAll;
+  const canPick = !!idOf && !!bulkOps && current.pick !== false;
   const writeUrl = (pos: string, pg: number) => {
     const q = new URLSearchParams(window.location.search);
     if (pos === fallback) q.delete("pos"); else q.set("pos", pos);
@@ -184,7 +229,7 @@ export function CollectionRoom<T>({
    * أصحابها)، والغرفةُ المرتّبة يدويًّا — ترتيبُها تسلسلٌ واحد (1، 2، 3…) والشبكةُ ترسمه متعرّجًا بين صفّين، فيلتبس «قبلَه»
    * و«بعدَه» ويغرب السحبُ بين الصفوف. فلا زرَّ للكروت فيهما، ويُشترط `renderRow` و`table`.
    */
-  const listOnly = (!!group || sortable) && !!renderRow && !!table;
+  const listOnly = (!!onlyList || !!group || sortable) && !!renderRow && !!table;
   const view: "cards" | "list" = listOnly || (viewKey && savedView === "table" && renderRow && table) ? "list" : "cards";
   const twoViews = !!viewKey && !!renderRow && !!table && !listOnly;
   // التحديدُ في الجدول وحده: الجدولُ عرضُ الإدارة، والتذكرةُ للتصفّح
@@ -202,7 +247,6 @@ export function CollectionRoom<T>({
   // المرشّحُ يُحسب ما دام ظاهرًا وقيمتُه من خياراته: مرشّحٌ اختفى (خيارٌ واحدٌ بقي) أو قيمةٌ سقطت لا تُبقي القائمةَ مصفّاةً بلا حبّةٍ تُمسح
   const live = (f: FilterDef<T>) => !!fv[f.key] && f.options.some((o) => o.value === fv[f.key]);
   const applies = (f: FilterDef<T>, pos: string) => !f.in || f.in.includes(pos);
-  const current = positions.find((p) => p.key === position) ?? positions[0] ?? ALL;
   const filtering = !!q || filters.some((f) => live(f) && applies(f, current.key));
   const matches = useMemo(
     () => (item: T, pos: string) =>
@@ -246,8 +290,8 @@ export function CollectionRoom<T>({
     const list = [...m.values()].map((l) => (by || !group.inner ? l : [...l].sort(group.inner)));
     if (group.order) list.sort(group.order);
     return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `group` و`by` يُبنيان في كلّ رسم؛ ما يغيّر النتيجةَ هو `sorted`
-  }, [sorted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `group` و`by` يُبنيان في كلّ رسم؛ ما يغيّر النتيجةَ هو `sorted` والموضع
+  }, [sorted, current.key]);
   const rows = groups ? groups.flat() : sorted;
   const groupOf = useMemo(() => {
     const m = new Map<T, T[]>();
@@ -260,7 +304,7 @@ export function CollectionRoom<T>({
 
   const plates = positions.map((p) => {
     const list = inPos.get(p.key) ?? [];
-    return { key: p.key, label: p.label, count: list.length, rare: p.rare };
+    return { key: p.key, label: p.label, count: p.count ?? list.length, rare: p.rare };
   });
 
   // الصفحةُ في الرابط ما لم يكن بحثٌ أو تصفية: الرجوعُ يعيد القائمةَ بلا بحثها، فصفحتُها الثالثة لا معنى لها هناك
@@ -273,6 +317,16 @@ export function CollectionRoom<T>({
   const pageIds = selectable ? visible.map((i) => idOf!(i)) : [];
   const toggle = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const pickPage = (on: boolean) => setSel((s) => { const n = new Set(s); pageIds.forEach((id) => (on ? n.add(id) : n.delete(id))); return n; });
+  // المجموعةُ كلُّها من رأسها (وإن انقسمت بين صفحتين): سجلّاتُ الفرصة الواحدة تُحدَّد معًا
+  const groupPick = (all: T[]) => {
+    const ids = all.map((i) => idOf!(i));
+    const on = ids.filter((id) => sel.has(id)).length;
+    return {
+      all: ids.length > 0 && on === ids.length,
+      some: on > 0,
+      onAll: (v: boolean) => setSel((s) => { const n = new Set(s); ids.forEach((id) => (v ? n.add(id) : n.delete(id))); return n; }),
+    };
+  };
   // السحبُ في القائمة كما رُتّبت: لا أثناء البحث أو التصفية (ترتيبُ قائمةٍ ناقصةٍ يخفي ما بين سجلّاتها)، ولا والجدولُ مفروزٌ من رأسه
   // — والرقمُ يبقى في كلّ ذلك
   const canDrag = sortable && !filtering && !(view === "list" && sort) && !pair;
@@ -280,8 +334,8 @@ export function CollectionRoom<T>({
     ? `الترتيبُ بالسحب متوقّفٌ أثناء ${filters.length ? "البحث والتصفية" : "البحث"}`
     : "الترتيبُ بالسحب متوقّفٌ والجدولُ مفروزٌ من رأسه";
   const visIds = sortable ? visible.map(idOf!) : [];
-  const wrap = (item: T, render: (item: T) => ReactNode) => {
-    let el = selectable ? <AdPickItem key={idOf!(item)} id={idOf!(item)}>{render(item)}</AdPickItem> : render(item);
+  const wrap = (item: T, render: (item: T, position: string) => ReactNode) => {
+    let el = selectable ? <AdPickItem key={idOf!(item)} id={idOf!(item)}>{render(item, current.key)}</AdPickItem> : render(item, current.key);
     if (sortable) {
       const id = idOf!(item);
       const i = visIds.indexOf(id);
@@ -406,7 +460,7 @@ export function CollectionRoom<T>({
         action={
           <span className="ad-empty-acts">
             {elsewhere.map((p) => (
-              <AdButton key={p.key} variant="soft" size="sm" onClick={() => choose(p.key)}>{`${p.label} ${p.count}`}</AdButton>
+              <AdButton plain key={p.key} variant="soft" size="sm" onClick={() => choose(p.key)}>{`${p.label} ${p.count}`}</AdButton>
             ))}
             <AdButton variant="soft" size="sm" icon={<X className="ad-line" />} onClick={clear}>مسح البحث</AdButton>
           </span>
@@ -430,7 +484,7 @@ export function CollectionRoom<T>({
         action={
           next || current.canCreate ? (
             <>
-              {next && <AdButton variant="soft" onClick={() => choose(next.key)}>{`افتح «${next.label}» (${next.count})`}</AdButton>}
+              {next && <AdButton plain variant="soft" onClick={() => choose(next.key)}>{`افتح «${next.label}» (${next.count})`}</AdButton>}
               {current.canCreate && createAction}
             </>
           ) : undefined
@@ -444,9 +498,9 @@ export function CollectionRoom<T>({
       <div className="ad-pairs">
         {visible.map((item, i) => (
           <div key={idOf ? idOf(item) : i} className="ad-pair">
-            {renderCard(item)}
+            {renderCard(item, current.key)}
             <AdList label={title} head={table.head} columns={table.columns.map(colHead)} stub={table.stub && colHead(table.stub)}>
-              {renderRow(item)}
+              {renderRow(item, current.key)}
             </AdList>
           </div>
         ))}
@@ -469,7 +523,11 @@ export function CollectionRoom<T>({
         {groups
           ? segments(visible).map((sg) => (
               <Fragment key={sg.key}>
-                <div className="ad-tr ad-tgroup" role="row"><div className="ad-tgroup-cell" role="cell">{group!.head(sg.all)}</div></div>
+                <div className="ad-tr ad-tgroup" role="row">
+                  <div className="ad-tgroup-cell" role="cell">
+                    <AdGroupPick.Provider value={selectable ? groupPick(sg.all) : null}>{group!.head(sg.all, current.key)}</AdGroupPick.Provider>
+                  </div>
+                </div>
                 {sg.items.map((item) => wrap(item, renderRow))}
               </Fragment>
             ))
@@ -489,15 +547,16 @@ export function CollectionRoom<T>({
     <AdPickScope value={selectable ? { selected: sel, toggle } : null}>
     <AdRoom label={title}>
       <div ref={head} className="ad-room-head">
-        <RoomPlate title={title} crumb={crumb} action={action} extra={extra} />
-        {plates.length > 1 && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
+        {recordHead ?? <RoomPlate title={title} crumb={crumb} action={action} extra={extra} />}
+        {plates.length > 1 && !(recordHead && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
       </div>
-      {notice}
-      {selectable && picked.length > 0 ? (
+      {typeof notice === "function" ? notice({ choose }) : notice}
+      {current.board || (recordHead && items.length === 0) ? null : selectable && picked.length > 0 ? (
         <AdSelBar
           count={picked.length}
           noun={noun}
-          ops={bulkOps(picked)}
+          // الفعلُ الجماعيّ الذي يعود بنجاحه (`true`) يُسقط التحديدَ في الحال: لا يبقى الشريطُ قائمًا يُرسَل منه الشيءُ نفسُه مرّتين
+          ops={bulkOps(picked, current.key).map((o) => ({ ...o, onClick: async () => { if ((await (o.onClick?.() as unknown)) === true) unpick(); } }))}
           // الشريطُ يعود شريطَ أدوات فيختفي الزرّ: التركيزُ إلى البحث لا إلى أوّل الصفحة
           onClear={() => { unpick(); requestAnimationFrame(() => head.current?.parentElement?.querySelector<HTMLInputElement>(".ad-search-input")?.focus()); }}
         />
@@ -509,8 +568,8 @@ export function CollectionRoom<T>({
           count={rows.length > 0 ? count : undefined}
         />
       )}
-      {body}
-      {after}
+      {!current.board && body}
+      {!current.board && after}
     </AdRoom>
     </AdPickScope>
   );

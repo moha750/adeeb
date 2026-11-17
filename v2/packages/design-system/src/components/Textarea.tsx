@@ -5,6 +5,7 @@ import { cn } from "../lib/cn";
 import { useCharsetGuard, type FieldCharset } from "../lib/charset";
 import { CharsetWhisper, KeyboardGlyph } from "./CharsetWhisper";
 import { FieldMark } from "./FieldMark";
+import { FieldCount, overMessage, useFieldCount, type FieldCountRule } from "./FieldCount";
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
@@ -24,6 +25,8 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   helper?: string;
   /** وسم «اختياري» هادئ في آخر صفّ التسمية (رماديّ خافت). يُلغي وسم الإلزام. */
   optional?: boolean;
+  /** عدّادُ الطول تحت الحقل، في سطر الوصف بطرفه الآخر (`FieldCount`). */
+  count?: FieldCountRule;
 }
 
 /**
@@ -31,13 +34,16 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
  * عميليّ (`use client`) لأنّ حارس `charset` يعترض الإدخال.
  */
 export function Textarea({
-  label, icon, innerIcon, placeholder, charset, error, success, helper, optional, required, className, dir, onBeforeInput, onChange, ...props
+  label, icon, innerIcon, placeholder, charset, error, success, helper, optional, count, required, className, dir, onBeforeInput, onChange, onInput, ...props
 }: TextareaProps) {
-  const msg = error ?? helper;
   const { guard, whisper, leaving, hush } = useCharsetGuard<HTMLTextAreaElement>(charset, onBeforeInput, onChange);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const counted = useFieldCount<HTMLTextAreaElement>(count, props.value, props.defaultValue);
+  /** ما زاد على الحدّ خطأٌ برسالته الواحدة (`FieldCount`) */
+  const err = error ?? (counted.over ? overMessage(counted.over) : undefined);
+  const msg = err ?? helper;
   return (
-    <label className={cn("fld", error ? "err" : undefined, success && !error ? "ok" : undefined, className)}>
+    <label className={cn("fld", err ? "err" : undefined, success && !err ? "ok" : undefined, className)}>
       <span className="fld-lbl">
         <span className="fld-lic" aria-hidden="true">{icon}</span>
         {label}
@@ -50,13 +56,18 @@ export function Textarea({
           placeholder={placeholder}
           dir={dir ?? (charset ? "ltr" : undefined)}
           required={required}
-          aria-invalid={error ? true : undefined}
+          aria-invalid={err ? true : undefined}
+          /* سقفٌ واسعٌ للّصق وحده، كتعليقات الخبر: الكاتبُ لا يُقطع عند الحدّ، ولا يُلصق كتابٌ كامل */
+          maxLength={count?.max != null ? count.max * 4 : undefined}
           {...props}
           {...guard}
+          onInput={counted.onInput ? (e) => { counted.onInput?.(e); onInput?.(e); } : onInput}
         />
       </div>
       <CharsetWhisper text={whisper} anchorRef={wrapRef} leaving={leaving} onHush={hush} />
-      {msg ? <span className="fld-help">{msg}</span> : null}
+      {count ? (
+        <span className="fld-under">{msg ? <span className="fld-help">{msg}</span> : null}<FieldCount rule={count} text={counted.text} /></span>
+      ) : msg ? <span className="fld-help">{msg}</span> : null}
     </label>
   );
 }

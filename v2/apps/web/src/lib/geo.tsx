@@ -33,7 +33,9 @@ const regionNames = new Map<GeoLocale, Intl.DisplayNames | null>();
 const regionsOf = (locale: GeoLocale) => {
   if (!regionNames.has(locale)) {
     try {
-      regionNames.set(locale, new Intl.DisplayNames([locale], { type: "region" }));
+      // **الاسمُ القصير** (٢٠٢٦-١١-١٤): الطويلُ يختلف بين الخادم والمتصفّح («هونغ كونغ الصينية (منطقة إدارية خاصة)» في Node و«هونغ كونغ»
+      // في كروم) فتنكسر الإماهة، والقصيرُ واحدٌ فيهما وأقرأ («فلسطين» لا «الأراضي الفلسطينية»، و«مكاو» لا «منطقة ماكاو الإدارية الخاصة»)
+      regionNames.set(locale, new Intl.DisplayNames([locale], { type: "region", style: "short" }));
     } catch {
       regionNames.set(locale, null);
     }

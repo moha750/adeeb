@@ -10,7 +10,8 @@ import { FieldMark } from "./FieldMark";
  * `hint` — سطرُ حالٍ تحت التسمية: واقعةٌ عن الخيار لا وصفٌ له («عضو — لجنة التصميم»).
  * يدخل البحث مع التسمية، فيُطلب الخيار بموضعه كما يُطلب باسمه.
  */
-export type SelectOption = { value: string; label: string; hint?: string; icon?: ReactNode; group?: string };
+/** `groupIcon`: رمزُ مجموعته، يُرسم قبل اسمها في رأسها (يكفي في أوّل خياراتها) — محمد ٢٠٢٦-١١-١٢ */
+export type SelectOption = { value: string; label: string; hint?: string; icon?: ReactNode; group?: string; groupIcon?: ReactNode };
 
 export interface SelectProps {
   /** تسمية أعلى القائمة — اختياريّة (تُحذف في السياقات المضغوطة كترقيم «صفوف لكل صفحة»). */
@@ -27,7 +28,7 @@ export interface SelectProps {
   tone?: "warning" | "danger" | "success";
   error?: string;
   helper?: string;
-  /** نصٌّ خافتٌ داخل الحقل المغلق ما دام لا اختيار. */
+  /** نصٌّ خافتٌ داخل الحقل المغلق ما دام لا اختيار — «اختر» إن لم يُمرَّر: كان سطرُ القيمة فارغًا كأنّ شيئًا سقط (٢٠٢٦-١١-٠٧). */
   placeholder?: string;
   disabled?: boolean;
   /** اسم حقل مخفيّ لإرساله ضمن النماذج. */
@@ -66,7 +67,7 @@ export function Select({
   value,
   defaultValue,
   onValueChange,
-  searchable = false,
+  searchable: searchableProp,
   tone,
   error,
   helper,
@@ -83,7 +84,12 @@ export function Select({
   const [query, setQuery] = useState("");
   const [hl, setHl] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  // **البحثُ إذا زادت الخيارات على ثمانية** (قاعدةُ المرشّح، محمد ٢٠٢٦-١١-١٢) — في البوّابة وحدها (`.ash-content`) ما لم يُطلب صراحةً
+  const [inPortal, setInPortal] = useState(false);
+  useEffect(() => { setInPortal(!!rootRef.current?.closest(".ash-content")); }, []);
+  const searchable = searchableProp ?? (inPortal && options.length > 8);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -96,12 +102,12 @@ export function Select({
 
   // تسلسل العرض: عناوين المجموعات + الخيارات (مع فهرس للتنقّل)
   const seq = useMemo(() => {
-    const out: Array<{ type: "header"; label: string } | { type: "option"; opt: SelectOption; index: number }> = [];
+    const out: Array<{ type: "header"; label: string; icon?: ReactNode } | { type: "option"; opt: SelectOption; index: number }> = [];
     let idx = 0;
     let lastGroup: string | undefined;
     for (const o of filtered) {
       if (o.group && o.group !== lastGroup) {
-        out.push({ type: "header", label: o.group });
+        out.push({ type: "header", label: o.group, icon: o.groupIcon });
         lastGroup = o.group;
       }
       out.push({ type: "option", opt: o, index: idx });
@@ -117,11 +123,18 @@ export function Select({
     setQuery("");
   };
 
+  // **لا صفَّ مُنارٌ عند الفتح بالنقر** (قاعدةُ قائمة المرشّح المعتمدة): المختارُ يُعرف بنغمته وعلامته، والإنارةُ للمرور وللوحة المفاتيح —
+  // فمن فتح بالمفاتيح يبدأ من المختار، ومن فتح بالنقر لا يُنار له شيءٌ حتى يمرّ (٢٠٢٦-١١-١٢)
+  const byKey = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    // يُغلق فيُمحى بحثُه: من أعاد الفتح يرى الخيارات كلّها لا بقيّةَ بحثٍ مضى
+    if (!open) { setQuery(""); return; }
     const cur = filtered.findIndex((o) => o.value === val);
-    setHl(cur >= 0 ? cur : 0);
-    if (searchable) setTimeout(() => searchRef.current?.focus(), 0);
+    setHl(byKey.current ? (cur >= 0 ? cur : 0) : -1);
+    byKey.current = false;
+    if (cur >= 0) setTimeout(() => panelRef.current?.querySelector<HTMLElement>(".asel-sel")?.scrollIntoView({ block: "nearest" }), 0);
+    // البحثُ التلقائيّ (أكثرُ من ثمانية) لا يُركَّز عليه في اللمس: يرفع لوحةَ المفاتيح فتغطّي القائمة؛ والمطلوبُ صراحةً كما كان
+    if (searchable && (searchableProp || window.matchMedia("(pointer: fine)").matches)) setTimeout(() => searchRef.current?.focus(), 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -134,6 +147,7 @@ export function Select({
     if (!open) {
       if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
         e.preventDefault();
+        byKey.current = true;
         setOpen(true);
       }
       return;
@@ -151,7 +165,8 @@ export function Select({
       setHl((h) => Math.max(0, h - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const o = filtered[hl];
+      // لا صفَّ مُنارٌ (فُتحت بالنقر): Enter يُبقي المختار، أو يأخذ الأوّل — كما كان قبل أن تُطفأ الإنارةُ عند الفتح
+      const o = hl >= 0 ? filtered[hl] : filtered.find((x) => x.value === val) ?? filtered[0];
       if (o) choose(o.value);
     }
   };
@@ -159,7 +174,7 @@ export function Select({
   return (
     <div className={cn("fld", error ? "err" : undefined, className)}>
       {label ? (
-        <span className="fld-lbl">
+        <span ref={labelRef} className="fld-lbl">
           {icon ? <span className="fld-lic" aria-hidden="true">{icon}</span> : null}
           {label}
           <FieldMark optional={optional} required={required} />
@@ -187,7 +202,7 @@ export function Select({
       >
         {/* التلميح يبقى بعد الاختيار: الحقلُ المغلق هو ما يراه المستخدم لحظةَ الإرسال. */}
         <span className="asel-value">
-          {selected ? selected.label : placeholder ? <span className="asel-ph">{placeholder}</span> : ""}
+          {selected ? selected.label : <span className="asel-ph">{placeholder ?? "اختر"}</span>}
           {selected?.hint ? <span className="asel-vhint">{selected.hint}</span> : null}
         </span>
         <span className="asel-chev"><Chev /></span>
@@ -197,6 +212,7 @@ export function Select({
       <AnchoredPopover
         open={open && !disabled}
         anchorRef={rootRef}
+        topRef={labelRef}
         onDismiss={(reason) => {
           setOpen(false);
           if (reason === "escape") triggerRef.current?.focus();
@@ -228,7 +244,7 @@ export function Select({
           {seq.length === 0 ? <div className="asel-empty">لا نتائج</div> : null}
           {seq.map((row, i) =>
             row.type === "header" ? (
-              <div className="asel-gh" key={`h-${i}`}>{row.label}</div>
+              <div className="asel-gh" key={`h-${i}`}>{row.icon ? <span className="asel-gi" aria-hidden>{row.icon}</span> : null}<span>{row.label}</span></div>
             ) : (
               <div
                 key={row.opt.value}

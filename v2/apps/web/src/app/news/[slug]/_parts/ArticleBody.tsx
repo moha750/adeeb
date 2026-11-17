@@ -17,10 +17,21 @@ import { anchorId, type Block } from "@/lib/news/body";
 /** "…" و“…” تصير «…»: تنصيصٌ واحدٌ في الأخبار كلّها. */
 export const arQuotes = (t: string) => t.replace(/["“]([^"“”\n]+)["”]/g, "«$1»");
 
-/** الأرقامُ في المتن بخطّ Eras عريضةً بلون الهويّة: «1,000 وجبة» تُرى قبل أن تُقرأ. */
+/** الشهورُ الميلاديّةُ والهجريّة: الرقمُ قبلها يومٌ لا كمّيّة */
+const MONTH = /^\s*(يناير|فبراير|مارس|أبريل|إبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر|محرّ?م|صفر|ربيع|جمادى|رجب|شعبان|رمضان|شوّ?ال|ذو|ذي)/;
+
+/**
+ * الأرقامُ في المتن بخطّ Eras، و**الكمّيّةُ وحدها عريضةً بلون الهويّة**: «1,000 وجبة» و«120 طالبة» تُرى قبل أن تُقرأ. أمّا التاريخ —
+ * يومٌ قبل اسم شهر («10 نوفمبر»)، أو سنةٌ («2026»، «1446ه») — فبخطّ المتن: عريضًا كان يُقرأ تأكيدًا وهو تاريخ (محمد ٢٠٢٦-١١-١٧)
+ */
 export function rich(t: string): ReactNode {
   const parts = arQuotes(t).split(/(\d[\d,.]*\d|\d)/g);
-  return parts.map((x, i) => (i % 2 ? <span key={i} className="art-num">{x}</span> : x));
+  return parts.map((x, i) => {
+    if (!(i % 2)) return x;
+    const next = parts[i + 1] ?? "";
+    const date = MONTH.test(next) || /^(1[3-5]|19|20)\d\d$/.test(x) || /^\s*(ه|هـ|م)(?![\u0621-\u064A])/.test(next);
+    return <span key={i} className={date ? "art-num art-num-date" : "art-num"}>{x}</span>;
+  });
 }
 
 /** «عنوانُ البند: شرحُه» — يُفكّ إن كان العنوانُ قصيرًا (أربعُ كلماتٍ فأقلّ). */
@@ -34,14 +45,42 @@ export const isSubhead = (t: string) => t.trim().split(/\s+/).length <= 5 && !/[
 
 const two = (k: number) => String(k).padStart(2, "0");
 
-export function ArticleBody({ blocks }: { blocks: Block[] }) {
+export function ArticleBody({ blocks, look }: {
+  blocks: Block[];
+  /**
+   * **`ad`: رأسُ الفصل عنوانُ مجموعةٍ من الهويّة** (صفحةُ الخبر على قالب «القراءة»، ٢٠٢٦-١١-١٧): لوحةُ اسمٍ صغيرةٌ برقم الفصل وعنوانه ثمّ خطٌّ
+   * يذوب (`.ad-gtitle`) — كان كلُّ فصلٍ لوحًا كحليًّا كاملًا ينافس لوحَ الصدر، والهويّةُ لوحٌ واحدٌ في رأس الصفحة. والقديمُ لمعاينة المحرّر حتى تنتقل
+   */
+  look?: "ad" | "plate";
+}) {
   // رقمُ كلّ فصلٍ وموضعُ المدخل يُحسبان قبل الرسم لا أثناءه.
   const nums = blocks.map((_, i) => blocks.slice(0, i + 1).filter((x) => x.kind === "heading").length);
-  const lead = blocks.findIndex((b) => b.kind === "para");
+  // **المدخلُ مدخلُ الخبر لا مدخلُ فصله الأوّل** (محمد ٢٠٢٦-١١-١٧: «لماذا القسمُ الأوّلُ دائمًا بولد عكسَ الباقي؟»): الفقرةُ الأولى تُكتب أكبرَ
+  // وأثقلَ مدخلًا صحفيًّا حين تسبق الفصول. وخبرٌ يبدأ بفصلٍ لا مدخلَ له — كانت الأولى تُثقَّل داخل الفصل الأوّل وحده فيبدو مختلفًا عن إخوته
+  const first = blocks.findIndex((b) => b.kind === "para");
+  const head = blocks.findIndex((b) => b.kind === "heading");
+  const lead = head !== -1 && head < first ? -1 : first;
 
   return (
     <div className="art-body">
       {blocks.map((b, i) => {
+        if (b.kind === "heading" && look === "plate") {
+          // **لوحُ الفصل** (محمد ٢٠٢٦-١١-١٧: «الفواصلُ السابقة أجمل… مناسبةٌ مرّةً للخبر»): توقيعُ الخبر بمادّة الهويّة — اللوحُ ونقشُه ورقمُ الفصل
+          // يذوب خلف عنوانه — لا بألوان الملفّ القديم
+          return (
+            <h2 key={i} id={anchorId(i)} className="ad-nr-chap">
+              <span className="ad-nr-chap-n" aria-hidden>{two(nums[i]!)}</span>
+              <span className="ad-nr-chap-t">{arQuotes(b.text)}</span>
+            </h2>
+          );
+        }
+        if (b.kind === "heading" && look === "ad") {
+          return (
+            <h2 key={i} id={anchorId(i)} className="ad-gtitle ad-nr-h">
+              <span className="ad-gtitle-name"><span className="ad-nr-num" aria-hidden>{two(nums[i]!)}</span><span>{arQuotes(b.text)}</span></span>
+            </h2>
+          );
+        }
         if (b.kind === "heading") {
           return (
             <h2 key={i} id={anchorId(i)} className="art-h">

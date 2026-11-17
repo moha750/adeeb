@@ -350,22 +350,25 @@ export function useMemberDialogs({ moveTargets = [], warningLimit = 3, confirm: 
         footer={
           modal?.mode === "view" ? (
             <>
-              <Button variant="ghost" size="md" onClick={close}>إغلاق</Button>
-              {/* «تعديل» يتبع سلطتك على هذا العضو بعينه — والمنتهية عضويّته لا تُحرَّر بياناته */}
+              <Button key="close" variant="ghost" size="md" onClick={close}>إغلاق</Button>
+              {/* «تعديل» يتبع سلطتك على هذا العضو بعينه — والمنتهية عضويّته لا تُحرَّر بياناته.
+                  **ولكلّ زرٍّ مفتاحُه** (٢٠٢٦-١١-٠٧): بلا مفتاحٍ يُعيد React الزرَّ نفسَه في التذييل التالي، فيصير «تعديل» وهو تحت
+                  النقرة زرَّ «حفظ التغييرات» من نوع submit، فيُكمل المتصفّحُ النقرةَ إرسالًا: كان «تعديل» يحفظ البيانات كما هي ويغلق
+                  النافذة قبل أن يُرى النموذج */}
               {member?.canEdit && member.status !== "suspended"
-                ? <Button variant="primary" size="md" onClick={() => openEdit(member)}>تعديل</Button>
+                ? <Button key="edit" variant="primary" size="md" onClick={() => openEdit(member)}>تعديل</Button>
                 : null}
             </>
           ) : modal?.mode === "edit" ? (
             // نافذةُ البيانات للبيانات وحدها: الإنهاءُ والنقلُ إلى المتطوّعين في قائمة النقاط لا هنا (قرار المالك ٢٠٢٦-١٠-٠٨)
             <>
-              <Button variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
-              <Button type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
+              <Button key="cancel" variant="ghost" size="md" onClick={close} disabled={saving}>إلغاء</Button>
+              <Button key="save" type="submit" form="member-form" variant="primary" size="md" loading={saving}>حفظ التغييرات</Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="md" onClick={close}>إلغاء</Button>
-              <Button type="submit" form="member-form" variant="primary" size="md">إضافة العضو</Button>
+              <Button key="cancel" variant="ghost" size="md" onClick={close}>إلغاء</Button>
+              <Button key="add" type="submit" form="member-form" variant="primary" size="md">إضافة العضو</Button>
             </>
           )
         }

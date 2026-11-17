@@ -1,11 +1,11 @@
+import { getCreditPeople } from "@/lib/people";
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getEventForEdit, getOrganizerOptions } from "../../data";
 import { EventForm } from "../../EventForm";
 import { getEventsManager } from "@/lib/events/authz";
 import { EventsDenied } from "../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../../_components/PageHeader";
+import { AdRoomError } from "@/app/_ad/states";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/events");
@@ -15,21 +15,16 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   const { id } = await params;
 
-  const [{ event, error }, { options, error: oErr }] = await Promise.all([
+  const [{ event, error }, { options, error: oErr }, members] = await Promise.all([
     getEventForEdit(id),
     getOrganizerOptions(),
+    getCreditPeople(),
   ]);
 
   const failure = error ?? oErr;
-  if (failure) {
-    return (
-      <>
-        <PageHeader title="تحرير الفعاليّة" crumbLeaf="تحرير" />
-        <Alert tone="warning" title="تعذّر جلب الفعاليّة">{failure}</Alert>
-      </>
-    );
-  }
+  // **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧): لوحُ الغرفة، ورمزُ السحابة المنقطعة، و«إعادة المحاولة» و«أبلغ الدعم الفني»
+  if (failure) return <AdRoomError title="تحرير الفعاليّة" navPath="/dashboard/events" what="الفعاليّة" message={failure} />;
   if (!event) notFound();
 
-  return <EventForm event={event} organizers={options} />;
+  return <EventForm event={event} organizers={options} members={members} />;
 }

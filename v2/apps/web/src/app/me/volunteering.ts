@@ -30,6 +30,9 @@ export type OpenOpportunity = {
   /** «من 4 م إلى 8 م»، أو المدّةُ النصّيّة القديمة حين لا مدى: مصدرُها `oppTimeLabel` كلوحة الفرص. */
   timeLabel: string | null;
   location: string | null;
+  /** يومُ بدئها (YYYY-MM-DD) وأمرنةٌ هي — كعبُ تذكرتها في القالب الجديد (٢٠٢٦-١١-٠٤). */
+  startsOn?: string | null;
+  flexible?: boolean;
   /**
    * **فتراتُها** (٢٠٢٦-١٠-٠١): المتطوّعُ يختار منها فترةً أو أكثر. وفارغةٌ في فرصةٍ قبل الفترات، فيقدّم
    * على الفرصة كلِّها كما كان.
@@ -291,6 +294,8 @@ export async function getMyVolunteering(userId: string): Promise<MyVolunteering 
             : fmtDate(o.starts_on),
         timeLabel: oppTimeLabel(o),
         location: o.location,
+        startsOn: o.starts_on,
+        flexible: o.flexible,
         periods: periodsOf.get(o.id) ?? [],
       })),
     applications: ((appRows ?? []) as {

@@ -27,6 +27,9 @@ export type ExitRow = {
   reason: string;
   at: string;
   since: string;
+  /** الطلبُ وقرارُه بتوقيتهما الخام — يصوغهما القالبُ الجديد بساعة النادي (كعبُ التذكرة، وسطرُ القرار). */
+  createdAt: string;
+  decidedIso: string | null;
   status: "pending" | "approved" | "rejected" | "withdrawn";
   decisionReason: string | null;
   decidedAt: string | null;
@@ -112,6 +115,8 @@ export async function getExitRequests(): Promise<ExitsData> {
     status: r.status,
     decisionReason: r.decision_reason,
     decidedAt: r.decided_at ? fmtDate(r.decided_at) : null,
+    createdAt: r.created_at,
+    decidedIso: r.decided_at,
     canDecide: decidable.get(r.id) === true,
   });
 

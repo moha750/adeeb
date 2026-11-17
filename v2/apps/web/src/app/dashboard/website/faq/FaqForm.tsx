@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SaveBar, SectionCard, Field, Textarea } from "@adeeb/design-system";
-import { ChatText, TextT } from "@phosphor-icons/react";
-import { PencilSimple, Question } from "@/app/_components/glyphs";
+import { Field, Textarea } from "@adeeb/design-system";
+import { ChatCenteredText, ChatText, FloppyDisk, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Plus, Question } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { FaqEditData } from "./data";
 import { createFaq, updateFaq, type FaqInput } from "./actions";
-import { PageHeader } from "../../_components/PageHeader";
+import { AdCard } from "@/app/_ad/primitives";
+import { FormRoom, FormSection } from "@/app/_ad/form";
 
 export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
   const toast = useToast();
@@ -23,7 +24,7 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
   const toInput = (): FaqInput => ({ question, answer });
 
   /**
-   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * **أثمّة ما يُحفَظ؟** — في التحرير لا يُحفظ قبل أوّل تغيير، وفي الضيّق يلحقك الفعلُ حين يوجد (`FormRoom`). والمقارنةُ بلَقطةِ `toInput()`
    * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
    * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
    * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
@@ -44,26 +45,32 @@ export function FaqForm({ faq }: { faq?: FaqEditData | null }) {
     });
   };
 
+  /* التذكرةُ كما ستظهر في غرفة الأسئلة (`_ad/rooms/FaqRoom`): السؤالُ عنوانُها والإجابةُ سطرُها (والكعبُ ترتيبُه في الغرفة) */
+  const preview = (
+    <div className="ad-form-preview-card" data-untitled={question.trim() ? undefined : ""}>
+      <AdCard seed={faq?.id ?? "new-faq"} title={question.trim() || "السؤال"}
+        meta={[answer.trim() ? { icon: <ChatCenteredText />, text: answer.trim() } : { icon: <ChatCenteredText />, text: "الإجابة لم تُكتب", tone: "muted" }]} />
+    </div>
+  );
+
   return (
-    <>
-      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
-          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
-      <PageHeader title={editing ? "تحرير السؤال" : "سؤال جديد"} />
-
-      <div className="form-build">
-        <SectionCard headerVariant="chip" icon={<Question />} title="السؤال والإجابة">
-          <div className="form-grid">
-            <Field className="form-full" label="السؤال" icon={<Question />} innerIcon={<PencilSimple />} placeholder="مثال: كيف أنضمّ إلى النادي؟" value={question} onChange={(e) => setQuestion(e.target.value)} required />
-            <Textarea className="form-full" label="الإجابة" icon={<TextT />} innerIcon={<ChatText />} placeholder="اكتب إجابةً واضحةً ومختصرة" rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} required />
-          </div>
-        </SectionCard>
-      </div>
-
-      <SaveBar open={dirty} message={editing ? undefined : "سؤالٌ لم يُضَف بعد"}>
-        <Button variant="primary" size="md" loading={saving} onClick={save}>
-          {editing ? "حفظ التغييرات" : "إضافة السؤال"}
-        </Button>
-      </SaveBar>
-    </>
+    <FormRoom
+      title={editing ? "تحرير السؤال" : "سؤال جديد"}
+      preview={preview}
+      commit={{
+        primary: editing
+          ? { label: "حفظ التغييرات", icon: <FloppyDisk />, onClick: save, busy: saving, held: !dirty }
+          : { label: "إضافة السؤال", icon: <Plus />, onClick: save, busy: saving },
+        cancelHref: "/dashboard/website/faq",
+        dirty,
+      }}
+    >
+      <FormSection id="qa" icon={<Question />} title="السؤال والإجابة">
+        <div className="form-grid">
+          <Field className="form-full" label="السؤال" icon={<Question />} innerIcon={<PencilSimple />} placeholder="مثال: كيف أنضمّ إلى النادي؟" value={question} onChange={(e) => setQuestion(e.target.value)} required />
+          <Textarea className="form-full" label="الإجابة" icon={<TextT />} innerIcon={<ChatText />} placeholder="اكتب إجابةً واضحةً ومختصرة" rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} required />
+        </div>
+      </FormSection>
+    </FormRoom>
   );
 }

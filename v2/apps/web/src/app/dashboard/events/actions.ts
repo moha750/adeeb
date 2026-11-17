@@ -3,7 +3,10 @@
 import { createAdeebServiceClient } from "@adeeb/core";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { parseOrganizer } from "@/lib/activities";
+import { GUEST_ROLE_VALUES, HONORIFICS, parseOrganizer } from "@/lib/activities";
+import { fromClubInput } from "@/lib/dates";
+import { arabicNameError } from "@/lib/personName";
+import type { EventGuest } from "./data";
 import { getEventsManager } from "@/lib/events/authz";
 import { STATUS_OPS, TYPE_VALUES, deriveStatus, reservationErrorMessage, type ActivityType, type StatusOp } from "./vocab";
 
@@ -119,6 +122,10 @@ export type EventInput = {
   femaleSeats: number | null;
   targetGender: "male" | "female" | null;  // null = للجنسين
   coverImageUrl?: string | null;
+  /** ٢٠٢٦-١١-١٥: شهادةُ الحضور، وآخرُ موعدٍ للتسجيل (حقلُ الوقت المحلّيّ بساعة النادي، أو فارغ)، والضيوف بترتيبهم */
+  hasCertificate?: boolean;
+  bookingClosesAt?: string | null;
+  guests?: EventGuest[];
 };
 
 /** التحقّق المشترك — نفس قيود القاعدة برسائل عربيّة (لا نثق بالعميل). */
@@ -137,6 +144,23 @@ function validateEvent(input: EventInput): string | null {
     if (input.maleSeats == null || input.femaleSeats == null) return "حدّد مقاعد الرجال والنساء معًا، أو اتركهما فارغين.";
     if (!Number.isInteger(input.maleSeats) || input.maleSeats < 0 || !Number.isInteger(input.femaleSeats) || input.femaleSeats < 0) return "مقاعد الجنسين يجب أن تكون أرقامًا صحيحة غير سالبة.";
     if (input.maleSeats + input.femaleSeats !== input.totalSeats) return "مجموع مقاعد الرجال والنساء يجب أن يساوي الإجمالي.";
+  }
+  // آخرُ موعدٍ للتسجيل لا يجاوز بدايةَ الفعاليّة: بعدها لا معنى له (والماضي يرفضه الحجزُ أصلًا)
+  if (input.bookingClosesAt) {
+    const closes = fromClubInput(input.bookingClosesAt);
+    if (!closes) return "آخر موعد للتسجيل غير صالح.";
+    const starts = fromClubInput(`${input.date}T${input.startTime}`);
+    if (starts && closes > starts) return "آخر موعد للتسجيل يجب أن يسبق بداية الفعاليّة.";
+  }
+  for (const [i, g] of (input.guests ?? []).entries()) {
+    const n = i + 1;
+    if (g.memberId && !/^[0-9a-f-]{36}$/i.test(g.memberId)) return `الضيف ${n} غير معروف.`;
+    if (!g.memberId && !clean(g.name)) return `اختر الضيف ${n} أو اكتب اسمه، أو احذفه.`;
+    const nameErr = g.memberId ? null : arabicNameError(g.name);
+    if (nameErr) return `الضيف ${n}: ${nameErr}.`;
+    if (!GUEST_ROLE_VALUES.includes(g.role)) return `صفة الضيف ${n} غير معروفة.`;
+    if (g.gender !== "male" && g.gender !== "female") return `حدّد جنس الضيف ${n}.`;
+    if (g.honorific && !(HONORIFICS as readonly string[]).includes(g.honorific)) return `لقب الضيف ${n} غير معروف.`;
   }
   return null;
 }
@@ -166,7 +190,36 @@ function eventColumns(input: EventInput) {
     male_seats: split ? input.maleSeats : null,
     female_seats: split ? input.femaleSeats : null,
     cover_image_url: clean(input.coverImageUrl),
+    has_certificate: !!input.hasCertificate,
+    booking_closes_at: input.bookingClosesAt ? fromClubInput(input.bookingClosesAt) : null,
   };
+}
+
+/**
+ * **الضيوفُ يُكتبون جملةً** بعد صفّ الفعاليّة: يُمحى ما كان ويُكتب ما في النموذج بترتيبه — النموذجُ يحمل القائمةَ كاملة، فلا حاجةَ
+ * لمطابقة صفٍّ بصفّ. بمفتاح الخدمة (الجدولُ لا يُكتب من المتصفّح). وفشلُه رسالةٌ لا رمي: الفعاليّةُ حُفظت، والضيوفُ لم يُحفظوا.
+ */
+async function writeGuests(sb: NonNullable<ReturnType<typeof service>>, activityId: string, guests: EventGuest[] | undefined): Promise<string | null> {
+  if (!guests) return null;
+  const del = await sb.from("activity_guests").delete().eq("activity_id", activityId);
+  if (del.error) return del.error.message;
+  if (!guests.length) return null;
+  // عضوُ أدِيب: اسمُه وجنسُه من ملفّه لا ممّا أرسله المتصفّح (فيُكتبان كما هما، ويبقى الصفُّ مقروءًا لو حُذف الملفّ)
+  const ids = guests.map((g) => g.memberId).filter((v): v is string => !!v);
+  const prof = new Map<string, { full_name: string; gender: string | null }>();
+  if (ids.length) {
+    const { data } = await sb.from("profiles").select("id, full_name, gender").in("id", ids);
+    for (const p of data ?? []) prof.set(p.id as string, { full_name: p.full_name as string, gender: (p.gender as string | null) ?? null });
+  }
+  const ins = await sb.from("activity_guests").insert(guests.map((g, position) => {
+    const p = g.memberId ? prof.get(g.memberId) : undefined;
+    return {
+      activity_id: activityId, member_id: p ? g.memberId : null,
+      name: p?.full_name ?? clean(g.name), honorific: g.honorific || null, role: g.role,
+      gender: p?.gender === "male" || p?.gender === "female" ? p.gender : g.gender, position,
+    };
+  }));
+  return ins.error?.message ?? null;
 }
 
 export async function createEvent(input: EventInput): Promise<EventResult> {
@@ -185,6 +238,8 @@ export async function createEvent(input: EventInput): Promise<EventResult> {
     .select("id")
     .single();
   if (error || !created) return { ok: false, message: `تعذّر إنشاء الفعاليّة: ${error?.message ?? "بلا تفاصيل"}` };
+  const gErr = await writeGuests(sb, created.id, input.guests);
+  if (gErr) return { ok: false, message: `أُنشئت الفعاليّة، وتعذّر حفظ الضيوف: ${gErr}`, id: created.id };
 
   revalidatePath("/dashboard/events", "layout");
   return { ok: true, message: "أُنشئت الفعاليّة مسودّةً.", id: created.id };
@@ -206,6 +261,8 @@ export async function updateEvent(eventId: string, input: EventInput): Promise<E
     .update({ ...eventColumns(input), updated_at: new Date().toISOString() })
     .eq("id", eventId);
   if (error) return { ok: false, message: error.message };
+  const gErr = await writeGuests(sb, eventId, input.guests);
+  if (gErr) return { ok: false, message: `حُفظت الفعاليّة، وتعذّر حفظ الضيوف: ${gErr}` };
 
   revalidatePath("/dashboard/events", "layout");
   return { ok: true, message: "حُفظت التغييرات.", id: eventId };
@@ -230,7 +287,7 @@ export async function uploadEventCover(formData: FormData): Promise<UploadResult
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "لم تُرفَق صورة." };
-  if (file.size > MAX_COVER_BYTES) return { ok: false, message: "حجم الصورة يتجاوز ٥ ميغابايت." };
+  if (file.size > MAX_COVER_BYTES) return { ok: false, message: "حجم الصورة يتجاوز 5 ميغابايت." };
   const ext = EXT_BY_MIME[file.type];
   if (!ext) return { ok: false, message: "صيغة غير مدعومة. استخدم JPG أو PNG أو WEBP أو GIF." };
 

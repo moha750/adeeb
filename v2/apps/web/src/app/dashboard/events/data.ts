@@ -2,6 +2,8 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
+import { fmtClockSpan, toClubInput } from "@/lib/dates";
+import type { GuestRole } from "@/lib/activities";
 import { buildUnitOptions, organizerValue, type UnitOption } from "@/lib/activities";
 import type { AccountType } from "@/lib/standing";
 import { deriveStatus, reservationErrorMessage, type ActivityType, type AttendanceStatus, type EventStatus } from "./vocab";
@@ -51,7 +53,7 @@ export type EventRow = {
   locationUrl: string | null;
   date: string;          // activity_date "YYYY-MM-DD" (خام، للفرز)
   dateLabel: string;     // عربيّ مختصر
-  timeLabel: string;     // "10:00–12:00" أو "10:00"
+  timeLabel: string;     // «من 10 ص إلى 12 م» أو «الساعة 10 ص» (`fmtClockSpan`)
   startTime: string | null;    // "10:00" خام — لمن يصوغ الوقتَ بصباحٍ ومساء (`fmtTimeRange`)
   endTime: string | null;
   totalSeats: number | null;   // null = غير محدود
@@ -111,7 +113,7 @@ export async function getEvents(): Promise<{ events: EventRow[]; error: string |
       locationUrl: a.location_url ?? null,
       date: a.activity_date,
       dateLabel: fmtDate(a.activity_date),
-      timeLabel: a.end_time ? `${hm(a.start_time)}–${hm(a.end_time)}` : hm(a.start_time),
+      timeLabel: fmtClockSpan(a.start_time, a.end_time),
       startTime: a.start_time ? hm(a.start_time) : null,
       endTime: a.end_time ? hm(a.end_time) : null,
       totalSeats: a.total_seats ?? null,
@@ -175,7 +177,14 @@ export type EventEditData = {
   maleSeats: number | null;   // null = بلا تقسيم (مفتوح للجنسين)
   femaleSeats: number | null;
   coverImageUrl: string | null;
+  /** ٢٠٢٦-١١-١٥ (`activity_details_*`): شهادةُ الحضور، وآخرُ موعدٍ للتسجيل بقيمة حقل الوقت المحلّيّ («YYYY-MM-DDTHH:MM»)، والضيوف */
+  hasCertificate: boolean;
+  bookingClosesAt: string;
+  guests: EventGuest[];
 };
+
+/** `memberId`: الضيفُ عضوٌ في أدِيب اختير من منتقي الأشخاص (اسمُه وجنسُه من ملفّه عند الحفظ)؛ وبلا معرّفٍ اسمٌ مكتوب */
+export type EventGuest = { name: string; honorific: string | null; role: GuestRole; gender: "male" | "female"; memberId?: string | null };
 
 export async function getEventForEdit(id: string): Promise<{ event: EventEditData | null; error: string | null }> {
   const sb = service();
@@ -183,11 +192,13 @@ export async function getEventForEdit(id: string): Promise<{ event: EventEditDat
 
   const { data, error } = await sb
     .from("activities")
-    .select("id, name, activity_type, target_gender, organizing_committee_id, organizing_department_id, description, location, location_url, activity_date, start_time, end_time, total_seats, male_seats, female_seats, cover_image_url")
+    .select("id, name, activity_type, target_gender, organizing_committee_id, organizing_department_id, description, location, location_url, activity_date, start_time, end_time, total_seats, male_seats, female_seats, cover_image_url, has_certificate, booking_closes_at")
     .eq("id", id)
     .maybeSingle();
   if (error) return { event: null, error: error.message };
   if (!data) return { event: null, error: null };
+  const { data: guestRows } = await sb.from("activity_guests").select("name, honorific, role, gender, member_id").eq("activity_id", id).order("position");
+  const guests = (guestRows ?? []).map((g) => ({ name: g.name, honorific: g.honorific, role: g.role, gender: g.gender, memberId: g.member_id ?? null }));
 
   return {
     event: {
@@ -206,6 +217,9 @@ export async function getEventForEdit(id: string): Promise<{ event: EventEditDat
       maleSeats: data.male_seats ?? null,
       femaleSeats: data.female_seats ?? null,
       coverImageUrl: data.cover_image_url ?? null,
+      hasCertificate: !!data.has_certificate,
+      bookingClosesAt: toClubInput(data.booking_closes_at ?? null),
+      guests: guests as EventGuest[],
     },
     error: null,
   };
@@ -304,7 +318,7 @@ export async function getEventDetail(id: string): Promise<{ detail: EventDetail 
     type: a.activity_type as ActivityType,
     date: dateYMD,
     dateLabel: fmtDate(dateYMD),
-    timeLabel: endTime ? `${hm(startTime)}–${hm(endTime)}` : hm(startTime),
+    timeLabel: fmtClockSpan(startTime, endTime),
     startTime: hm(startTime),
     endTime: endTime ? hm(endTime) : null,
     location: (a.location as string | null) ?? null,

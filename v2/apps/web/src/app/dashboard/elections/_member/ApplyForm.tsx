@@ -207,7 +207,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
               label="بيان الترشّح"
               icon={<PencilSimple />}
               innerIcon={<Note />}
-              placeholder="رؤيتُك للمنصب، وأهدافك، وخبرتك، دون ذكر اسمك…"
+              placeholder="رؤيتُك للمنصب، وأهدافك، وخبرتك…"
               value={statement}
               onChange={(e) => setTyped(e.target.value)}
               rows={12}

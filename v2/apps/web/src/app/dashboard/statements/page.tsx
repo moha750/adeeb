@@ -1,8 +1,7 @@
-import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../_components/PageHeader";
 import { getStatementsRoom } from "./data";
-import { StatementsView } from "./StatementsView";
+import { StatementsRoom } from "@/app/_ad/rooms/StatementsRoom";
+import { requestNow } from "@/app/_ad/now";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +13,8 @@ export const dynamic = "force-dynamic";
 export default async function StatementsPage() {
   const denied = await denyUnless("/dashboard/statements");
   if (denied) return denied;
-  const { signers, statements, error } = await getStatementsRoom();
-  return (
-    <>
-      <PageHeader title="البيانات" />
-      {error ? <Alert tone="warning" title="تعذّر جلب البيانات">{error}</Alert> : <StatementsView signers={signers} statements={statements} />}
-    </>
-  );
+  const [{ signers, statements, error }, now] = await Promise.all([getStatementsRoom(), requestNow()]);
+  // على قالب «مساحة العمل» منذ ٢٠٢٦-١١-١٣ (`_ad/rooms/StatementsRoom`)؛ والقديمُ (`./StatementsView`) يقرؤه المختبرُ للمقارنة.
+  // وخطأُ الجلب تنبيهٌ فوق المحرّر، والإصدارُ موقوفٌ معه (الموقّعان من الجلب نفسِه)
+  return <StatementsRoom signers={signers} statements={statements} error={error ? `تعذّر جلب البيانات: ${error}` : null} now={now} />;
 }

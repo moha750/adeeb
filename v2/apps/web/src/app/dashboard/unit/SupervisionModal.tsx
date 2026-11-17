@@ -27,7 +27,7 @@ export type SupState =
 
 /**
  * محرّر توزيع الإشراف — النافذة المنغّمة (القاعدة ٩). النغمةُ تقول شدّة الفعل:
- * ضمٌّ أو إسنادٌ لمقعدٍ شاغر = محايد · استبدالُ مشرفٍ قائم = warning · سحبٌ أو إخراج = danger.
+ * ضمٌّ أو إسنادٌ لمقعدٍ فارغ = محايد · استبدالُ مشرفٍ قائم = warning · سحبٌ أو إخراج = danger.
  * مُتحكَّم به: يملك المستدعي الاختيار والإرسال، وأنماطه من المكتبة (`.mdl-*`/`.org-modal-*`).
  */
 export function SupervisionModal({
@@ -54,7 +54,7 @@ export function SupervisionModal({
   onSubmit: () => void;
 }) {
   const isDanger = state?.kind === "remove" || state?.kind === "expel";
-  // شدّةُ الفعل من حال المقعد: شاغرٌ إسناد، ومشغولٌ استبدال.
+  // شدّةُ الفعل من حال المقعد: فارغٌ إسناد، ومشغولٌ استبدال.
   const isReplace = state?.kind === "seat" && state.holder !== null;
   const tone = isDanger ? "danger" : isReplace ? "warning" : undefined;
 
@@ -145,7 +145,7 @@ export function SupervisionModal({
                   onValueChange={onPick}
                   required
                 />
-                {vacates ? <p className="org-modal-warn">{`سيُخلى مقعده «${vacates}» بنقله، ويبقى شاغرًا حتى يُعيَّن بديل.`}</p> : null}
+                {vacates ? <p className="org-modal-warn">{`سيُخلى مقعده «${vacates}» بنقله، ويبقى فارغًا حتى يُعيَّن بديل.`}</p> : null}
                 {unit.supervises ? <p className="org-modal-warn">
                   {`التعيينُ انتماءٌ لا توزيع: يصير عضوًا إداريًّا في ${unit.name} بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
                 </p> : null}

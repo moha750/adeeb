@@ -171,7 +171,7 @@ export function ElectionsRoom({ elections, createOptions, readOnly = false, view
             { key: "votes", label: "الأصوات", icon: <Checks />, sortBy: (e) => e.votes },
           ],
         }}
-        emptyAll={{ title: "لا انتخابات بعد", desc: "افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ شاغر، فيظهر هنا بمرشّحيه وأصواته." }}
+        emptyAll={{ title: "لا انتخابات بعد", desc: "افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ فارغ، فيظهر هنا بمرشّحيه وأصواته." }}
         createAction={readOnly ? undefined : <AdButton variant="fill" icon={<Plus />} onClick={openNew}>انتخاب جديد</AdButton>}
         renderCard={(e) => (
           <AdCard

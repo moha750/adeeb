@@ -332,7 +332,7 @@ export function finalizeConfidence(w: SimWorld, actorId: string | null, election
   const nay = choiceWeight(w, electionId, "reject");
   if (yes > nay) return false;
   applyCancel(w, actorId, e, `سقطت التزكية : لم يغلب التأييدُ الاعتراض (تأييد ${yes} مقابل ${nay})`, "confidence_failed");
-  notify(w, "election_participants", "سقطت التزكية", `لم يغلب التأييدُ الاعتراضَ في تزكية ${targetLabel(e)}. أُلغي الانتخاب وبقي المقعد شاغرًا.`, "warning");
+  notify(w, "election_participants", "سقطت التزكية", `لم يغلب التأييدُ الاعتراضَ في تزكية ${targetLabel(e)}. أُلغي الانتخاب وبقي المقعد فارغًا.`, "warning");
   return true;
 }
 
@@ -589,7 +589,7 @@ export function sweep(w: SimWorld): { closedCandidacy: number; stalled: number; 
 
 /* ══ خياراتُ الفتح والتكليف ═════════════════════════════════════════ */
 
-/** @db `getElectionCreateOptions` — المقعدُ شاغرٌ فعلًا ولا انتخابَ نشطٌ له. */
+/** @db `getElectionCreateOptions` — المقعدُ فارغٌ فعلًا ولا انتخابَ نشطٌ له. */
 export function createOptions(w: SimWorld) {
   const free = (role: ElectedRole, committeeId: number | null, departmentId: number | null) =>
     !seatHolder(w, role, committeeId, departmentId)

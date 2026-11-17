@@ -1,7 +1,8 @@
+import "@adeeb/design-system/ad.css";
 import { notFound } from "next/navigation";
-import { Footer, Container } from "@adeeb/design-system";
+import { Footer } from "@adeeb/design-system";
 import { getPublicActivity } from "../data";
-import { ActivityDetailView } from "./ActivityDetailView";
+import { ActivityRead } from "../../_ad/rooms/ActivityReadRoom";
 import { SiteHeader } from "../../_components/SiteHeader";
 
 export const revalidate = 30;
@@ -23,13 +24,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <SiteHeader activeHref="/activities" />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container>
-            <ActivityDetailView a={a} />
-          </Container>
-        </section>
-      </main>
+      <main className="ad-pub"><div className="ad-pub-wrap"><ActivityRead a={a} /></div></main>
       <Footer />
     </>
   );

@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getWorkForEdit } from "../../data";
 import { WorkForm } from "../../WorkForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../../../_components/PageHeader";
+import { AdRoomError } from "@/app/_ad/states";
 
 export default async function EditWorkPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/works");
@@ -16,14 +15,8 @@ export default async function EditWorkPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const { work, error } = await getWorkForEdit(id);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="تحرير العمل" crumbLeaf="تحرير" />
-        <Alert tone="warning" title="تعذّر جلب العمل">{error}</Alert>
-      </>
-    );
-  }
+  // **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧): لوحُ الغرفة، ورمزُ السحابة المنقطعة، و«إعادة المحاولة» و«أبلغ الدعم الفني»
+  if (error) return <AdRoomError title="تحرير العمل" navPath="/dashboard/website/works" what="العمل" message={error} />;
   if (!work) notFound();
 
   return <WorkForm work={work} />;

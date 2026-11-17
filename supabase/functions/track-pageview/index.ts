@@ -4,11 +4,12 @@
 //   POST /                  → تسجيل pageview جديد، يرجع pageview_id
 //   POST /heartbeat         → تحديث total_seconds دورياً
 //   POST /end               → تحديث نهائي (يُستقبل عبر navigator.sendBeacon)
+//   POST /subject           → موضوعُ الزيارة إن أعلنته الصفحةُ بعد بدئها (٢٠٢٦-١١-١٧)
 //
 // لا يتعرّض schema الجدول للعميل. الـ IP لا يُخزَّن خاماً (SHA-256 + salt).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 // CORS — الموقع يُخدَم من GitHub Pages فقط (وقد يكون له domain مخصص)
 // نفتح للـ origins الشائعة، Supabase يضع origin اعتماداً على request
@@ -34,6 +35,25 @@ const ok = () =>
 const BOT_REGEX = /bot|crawler|spider|slurp|googlebot|bingbot|yandex|duckduckbot|facebookexternalhit|twitterbot|whatsapp|telegrambot|headlesschrome|phantomjs|selenium|puppeteer|lighthouse|chrome-lighthouse|pagespeed|gtmetrix|pingdom|uptimerobot|baiduspider|sogou|exabot|ia_archiver|archive\.org|semrush|ahrefs|mj12bot/i;
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ─── موضوعُ الزيارة (٢٠٢٦-١١-١٧) ─────────────────────────────────────────────
+// الصفحةُ التي صيّرت خبرًا أو كتابًا أو استبيانًا تُعلنه (`<ViewSubject>` في الموقع)، فيصل هنا مع الزيارة،
+// ومنه وحده تُعدّ المشاهدة (`pageview_count_subject` في القاعدة). لا يُستنتج من الرابط شيء.
+// والشكلُ يُفحص هنا ثمّ يُفرض في القاعدة (`site_pageviews_subject_shape`)، فما فسد يُسقط ولا يُسقط الزيارة.
+// ولكلّ نوعٍ بابُ صفحته: لا يُقبل خبرٌ من صفحة استبيان، فطلبٌ مصنوعٌ لا يعدّ موضوعًا على غير مساره.
+const SUBJECT_PATH: Record<string, string> = { news: '/news/', book: '/library/', survey: '/s/' };
+const SUBJECT_KINDS = new Set(Object.keys(SUBJECT_PATH));
+type SubjectCols = { subject_kind: string; subject_id: string };
+
+function cleanSubject(s: unknown, path?: string): SubjectCols | null {
+  if (!s || typeof s !== 'object') return null;
+  const { kind, id } = s as { kind?: unknown; id?: unknown };
+  if (typeof kind !== 'string' || !SUBJECT_KINDS.has(kind)) return null;
+  if (path !== undefined && !path.startsWith(SUBJECT_PATH[kind])) return null;
+  const sid = typeof id === 'number' ? String(id) : typeof id === 'string' ? id.trim().toLowerCase() : '';
+  if (kind === 'survey') return /^[0-9]{1,9}$/.test(sid) ? { subject_kind: kind, subject_id: sid } : null;
+  return UUID_REGEX.test(sid) ? { subject_kind: kind, subject_id: sid } : null;
+}
 
 // UA parser خفيف (يكفي لتمييز المتصفح والنظام والجهاز)
 function parseUA(ua: string) {
@@ -163,11 +183,51 @@ interface StartBody {
   user_id?: string | null;
   /** بابُ الزيارة: 'web' أو 'app'. ما سواهما يُشتقّ من مخطَّط العنوان. */
   source?: string | null;
+  /**
+   * ما عرضته الصفحة: `{ kind, id }`، أو `null` لصفحةٍ بلا موضوع (أو لم تُعلنه بعد).
+   * والمتتبّعُ الجديد يرسل المفتاحَ دائمًا؛ وغيابُه علامةُ متتبّعٍ قديمٍ في متصفّحٍ لم يتحدّث (انظر المَعبر).
+   */
+  subject?: unknown;
+}
+
+interface SubjectBody {
+  pageview_id?: string;
+  subject?: unknown;
 }
 
 interface HeartbeatBody {
   pageview_id?: string;
   total_seconds?: number;
+}
+
+/**
+ * **مَعبرٌ مؤقّت للمتتبّع القديم** — يُهدم مع ترحيل `view_subject_03` بعد رفع الموقع.
+ *
+ * المتصفّحُ الذي فتح الموقعَ قبل الرفع يحمل متتبّعًا لا يعرف الموضوع، والكتبُ والاستبياناتُ فيه
+ * ما زالت تُعدّ بآلتيها القديمتين. أمّا الخبرُ فقد هُدم عدّادُه المخمِّن، فيُقرأ هنا بالقاعدة التي
+ * تقرأ بها صفحةُ الخبر نفسُها رابطَها (`getPublicNewsItem`): فكُّ الترميز ثمّ مطابقةٌ تامّةٌ
+ * للمسمّى أو المعرّف، خبرًا منشورًا. لا تخمينَ ذيلٍ ولا مطابقةَ جزء.
+ */
+async function legacyNewsSubject(
+  supabase: SupabaseClient,
+  path: string,
+): Promise<SubjectCols | null> {
+  const m = /^\/news\/([^/]+)$/.exec(path);
+  if (!m) return null;
+  let key: string;
+  try {
+    key = decodeURIComponent(m[1]);
+  } catch {
+    return null;
+  }
+  const isUuid = UUID_REGEX.test(key);
+  const { data } = await supabase
+    .from('news')
+    .select('id')
+    .eq('workflow_status', 'published')
+    .eq(isUuid ? 'id' : 'slug', isUuid ? key.toLowerCase() : key)
+    .maybeSingle();
+  return data?.id ? { subject_kind: 'news', subject_id: String(data.id) } : null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -209,6 +269,30 @@ Deno.serve(async (req: Request) => {
 
       if (updErr) {
         console.error('[track-pageview/heartbeat] update error:', updErr);
+        return json({ error: 'update_failed' }, 500);
+      }
+      return ok();
+    }
+
+    // ---------- /subject ----------
+    // صفحةٌ أعلنت موضوعَها بعد أن بدأت زيارتُها (تتدفّق، أو بطُؤ تصييرُها). يُكتب مرّةً واحدة:
+    // الشرطُ `subject_kind is null` هنا، وفي القاعدة مُشغِّلٌ يمنع تبديله ولو تجاوز أحدٌ هذا الباب.
+    if (last === 'subject') {
+      const body = (await req.json()) as SubjectBody;
+      const id = body.pageview_id;
+      if (!id || !UUID_REGEX.test(id)) return json({ error: 'invalid_pageview_id' }, 400);
+      const subject = cleanSubject(body.subject);
+      if (!subject) return json({ error: 'invalid_subject' }, 400);
+
+      const { error: updErr } = await supabase
+        .from('site_pageviews')
+        .update(subject)
+        .eq('id', id)
+        .is('subject_kind', null)
+        .like('page_path', `${SUBJECT_PATH[subject.subject_kind]}%`);
+
+      if (updErr) {
+        console.error('[track-pageview/subject] update error:', updErr);
         return json({ error: 'update_failed' }, 500);
       }
       return ok();
@@ -268,13 +352,24 @@ Deno.serve(async (req: Request) => {
     // تطبيع طول الحقول
     const cap = (s: string | null | undefined, n: number) =>
       s == null ? null : String(s).slice(0, n);
+    // المسارُ يُقصّ بالبايت لا بالحرف: فهرسُ `idx_pv_page_path` لا يتّسع لأكثر من نحو ٢٧٠٠ بايت، والحرفُ
+    // العربيُّ غيرُ المرمَّز بايتان. والمتصفّحُ يرسله مرمَّزًا (حرفٌ لاتينيٌّ لكلّ بايت) فلا يبلغ القصَّ عادةً.
+    const capBytes = (s: string, n: number) => {
+      const enc = new TextEncoder();
+      if (enc.encode(s).length <= n) return s;
+      let out = s.slice(0, n);
+      while (out && enc.encode(out).length > n) out = out.slice(0, -1);
+      return out;
+    };
 
     const insertRow = {
       visitor_id: body.visitor_id,
       session_id: body.session_id,
       user_id: body.user_id && UUID_REGEX.test(body.user_id) ? body.user_id : null,
 
-      page_path:  cap(body.page_path,  500),
+      // ٢٠٠٠ لا ٥٠٠ (٢٠٢٦-١١-١٧): المسمّى العربيُّ الطويل يُرمَّز فوق الخمسمئة، فكان المسارُ يُحفظ
+      // مقصوصًا ولا يدلّ على صفحته في إحصاء «أكثر الصفحات زيارةً».
+      page_path:  capBytes(body.page_path, 2000),
       page_url:   cap(body.page_url,   2000),
       page_title: cap(body.page_title, 500),
       referrer:   cap(body.referrer,   2000),
@@ -306,6 +401,8 @@ Deno.serve(async (req: Request) => {
       is_bot: bot,
       total_seconds: 0,
       visited_at: new Date().toISOString(),
+
+      ...(('subject' in body) ? cleanSubject(body.subject, body.page_path) : await legacyNewsSubject(supabase, body.page_path)),
     };
 
     const { data, error } = await supabase

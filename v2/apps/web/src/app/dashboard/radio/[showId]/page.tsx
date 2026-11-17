@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getMemberOptions, getShowEditor } from "../data";
-import { ShowEditorView } from "./ShowEditorView";
+import { ShowEditorRoom } from "@/app/_ad/rooms/ShowEditorRoom";
 import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../_components/PageHeader";
+import { AdRoomError } from "@/app/_ad/states";
 
 export default async function ShowEditorPage({ params }: { params: Promise<{ showId: string }> }) {
   const denied = await denyUnless("/dashboard/radio");
@@ -16,18 +15,13 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
   const { showId } = await params;
   const [{ data, error }, members] = await Promise.all([getShowEditor(showId), getMemberOptions()]);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="البرنامج" />
-        <Alert tone="warning" title="تعذّر جلب البرنامج">{error}</Alert>
-      </>
-    );
-  }
+  // **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧): لوحُ الغرفة، ورمزُ السحابة المنقطعة، و«إعادة المحاولة» و«أبلغ الدعم الفني»
+  if (error) return <AdRoomError title="البرنامج" navPath="/dashboard/radio" what="البرنامج" message={error} />;
   if (!data) notFound();
 
+  // **محرّرُ البرنامج على المنضدة** (`ShowEditorRoom`، اعتمده محمد ٢٠٢٦-١١-١٦ بعد المختبر `/dashboard/ad/show-editor`). و`ShowEditorView` القديمُ باقٍ بلا مستعمِل
   return (
-    <ShowEditorView
+    <ShowEditorRoom
       show={data.show}
       episodes={data.episodes}
       platforms={data.platforms}

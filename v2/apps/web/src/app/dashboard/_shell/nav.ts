@@ -56,6 +56,9 @@ export const NAV: NavGroup[] = [
       { label: "إدارتي", icon: "unit", href: "/dashboard/unit", seat: "unit" },
       { label: "قسمي", icon: "dept", href: "/dashboard/department", seat: "department" },
       { label: "لجنتي", icon: "users", href: "/dashboard/committee", seat: "committee" },
+      // «هيكلة أدِيب» لكلّ عضو (٢٠٢٦-١١-١٤): يفتح الصفحةَ العلنيّة — أين أنت من إداراتك ولجانك. في صدر «أنت» بعد غرف موقعك،
+      // لا في «العضوية» (تلك غرفُ إدارة الأعضاء)
+      { label: "هيكلة أدِيب", icon: "tree", href: "/dashboard/members/structure" },
     ],
   },
   {
@@ -103,7 +106,6 @@ export const NAV: NavGroup[] = [
       { label: "طلبات الخروج", icon: "suspended", href: "/dashboard/members/exits" },
       { label: "شهادات الخبرة", icon: "certificate", href: "/dashboard/members/certificates" },
       { label: "أعياد الميلاد", icon: "cake", href: "/dashboard/members/birthdays" },
-      { label: "هيكلة أدِيب", icon: "tree", href: "/dashboard/members/structure" },
       { label: "تعيين المناصب", icon: "assign", href: "/dashboard/members/assignments" },
       { label: "بيانات الدخول", icon: "key", href: "/dashboard/members/credentials" },
     ],
@@ -141,7 +143,7 @@ export const NAV: NavGroup[] = [
       // ولا يعرف الأبناء، واللوحةُ منتَجُ جوّالٍ قبل كلّ شيء. وهو بندان لفعلٍ واحدٍ في
       // وجهين: تقرأ في السجلّ أين كذب، فتصلحه في الغرفة المجاورة.
       { label: "معرفة ديبو", icon: "faq", href: "/dashboard/deebo/knowledge" },
-      { label: "طبع ديبو", icon: "profile", href: "/dashboard/deebo/persona" },
+      { label: "شخصية ديبو", icon: "profile", href: "/dashboard/deebo/persona" }, // كانت «طبع ديبو»: الكلمةُ أربكت محمد نفسَه (٢٠٢٦-١١-١٣)
     ],
   },
   {
@@ -270,6 +272,17 @@ export function firstHref(nav: NavGroup[]): NavHref | null {
  * جُرّب أطولُ بندٍ يبدأ به (‏`/dashboard/members` ← بند `‎/dashboard/members/active`‎).
  * تُعيد المفتاح لا المكوّن: هذا ملفُّ بياناتٍ بلا JSX، والراسمُ `ICONS[key]` عند المستهلك.
  */
+/** **اسمُ البند من الخريطة كلِّها لا من المرئيّ منها** (٢٠٢٦-١١-١٧): من أُقفلت دونه غرفةٌ لا يرى بندَها، فيُقرأ اسمُها هنا لتُسمّى على لوح «خارج صلاحياتك» */
+export function navLabelForHref(href: string): string | null {
+  for (const g of NAV) {
+    for (const it of g.items) {
+      if (it.href === href) return it.label;
+      for (const c of it.children ?? []) if (c.href === href) return c.label;
+    }
+  }
+  return null;
+}
+
 export function iconKeyForHref(href: string): IconKey | null {
   let prefix: IconKey | null = null;
   for (const g of NAV) {

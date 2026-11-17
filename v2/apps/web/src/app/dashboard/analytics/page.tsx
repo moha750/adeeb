@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
-import { Alert } from "@adeeb/design-system";
+import { VisitorStatsRoom } from "@/app/_ad/rooms/VisitorStatsRoom";
+import { AdNote, AdRoom, RoomPlate } from "@/app/_ad/primitives";
 import { getAnalytics, type Source } from "./data";
-import { StatsView } from "./StatsView";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../_components/PageHeader";
 import { ALL_DAYS, DEFAULT_PRESET, PRESETS, isDayKey, presetRange } from "@/lib/analyticsRange";
 
 const SOURCES: Source[] = ["web", "app"];
@@ -13,10 +12,6 @@ const SOURCES: Source[] = ["web", "app"];
  * و«الثلاثون» حُذفت من الاختصارات، فتُحمل على أقربِ ما بقي معنًى: «هذا الشهر».
  */
 const FROM_DAYS: Record<string, string> = { "7": "7", "30": "mtd", "90": "90", "3650": "all" };
-
-// كانت لـ«دربك خضر» صفحةُ أرقامها تحت هذا القسم وبابُها من هنا (٢٠٢٦-٠٩-٢٥)، فنُقلت إلى
-// غرفة الألعاب (`/dashboard/games/darbak-khadar`) يومَ بُنيت (٢٠٢٦-١٠-١٧)، والرابطُ القديم يُحوَّل إليها.
-const Head = () => <PageHeader title="إحصائيّات الزوّار" />;
 
 type Params = { preset?: string; from?: string; to?: string; days?: string; src?: string; cmp?: string };
 
@@ -53,19 +48,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   // الأيّامُ لا تُقرأ إلّا حين لا حدودَ للمدى («منذ البداية»)
   const { data, error } = await getAnalytics(range ? 30 : ALL_DAYS, source, range);
 
+  // على قالب الإحصاء منذ ٢٠٢٦-١١-١٤ (`_ad/rooms/VisitorStatsRoom`)؛ والقديمُ (`./StatsView`) يقرؤه المختبرُ للمقارنة
   if (error || !data) {
     return (
-      <>
-        <Head />
-        <Alert tone="warning" title="تعذّر جلب الإحصائيّات">{error ?? "لا بيانات."}</Alert>
-      </>
+      <AdRoom label="إحصائيّات الزوّار">
+        <RoomPlate title="إحصائيّات الزوّار" />
+        <AdNote tone="warn" title="تعذّر جلب الإحصائيّات">{error ?? "لا بيانات."}</AdNote>
+      </AdRoom>
     );
   }
 
-  return (
-    <>
-      <Head />
-      <StatsView data={data} preset={preset} source={source} compare={compare} />
-    </>
-  );
+  return <VisitorStatsRoom data={data} preset={preset} source={source} compare={compare} />;
 }

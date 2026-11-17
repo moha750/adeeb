@@ -1,8 +1,8 @@
-import { Ambient, Footer, Container } from "@adeeb/design-system";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
 import { CLUB_TZ, fmtDate } from "@adeeb/core/dates";
 import { getPublicNews } from "./data";
-import { NewsCard } from "./NewsCard";
-import { NewsMasthead } from "./NewsMasthead";
+import { NewsIndex } from "../_ad/rooms/PublicIndexRooms";
 import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
@@ -19,42 +19,17 @@ function today() {
   const hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", {
     day: "numeric", month: "long", year: "numeric", timeZone: CLUB_TZ,
   }).format(now);
-  return { dateLine: `${day} ${fmtDate(now.toISOString())}`, hijri };
+  return [`${day} ${fmtDate(now.toISOString())}`, hijri];
 }
 
 export default async function NewsPage() {
   const items = await getPublicNews();
 
+  // على قالب «الفهرس» العامّ الذي وُلد من ترويستها (٢٠٢٦-١١-١٥)، فلا تختلف تفاصيلُها عن الفعاليّات والمكتبة وأعمالنا
   return (
     <>
       <SiteHeader activeHref="/news" />
-      <main className="amb-host">
-        <Ambient />
-        <section className="pt-6 pb-16 md:pt-12 md:pb-24">
-          <Container>
-            {/* الترويسةُ بلغة «الشُّرفة المقلوبة» والشبكةُ تتدلّى منها — المالك ٢٠٢٦-١٠-١٤ */}
-            <div className="news-mast">
-              <NewsMasthead
-                {...today()}
-                count={items.length}
-                featured={items.filter((n) => n.featured).length}
-                views={items.reduce((s, n) => s + n.views, 0)}
-              />
-              {items.length === 0 ? (
-                <p className="news-mast-grid text-center text-content-muted" style={{ marginBlockStart: 24 }}>
-                  لا أخبار منشورة بعد. تابعنا لتصلك الجديدة.
-                </p>
-              ) : (
-                <div className="card-grid news-mast-grid">
-                  {items.map((n, k) => (
-                    <NewsCard key={n.id} n={n} lead={k === 0} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </Container>
-        </section>
-      </main>
+      <main className="ad-pub"><div className="ad-pub-wrap"><NewsIndex items={items} dateLine={today()} /></div></main>
       <Footer />
     </>
   );

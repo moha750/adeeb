@@ -1,14 +1,9 @@
-import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getPermissionMatrix, getVacantPositions, getViewAsTargets } from "./data";
-import { PermissionsMatrix } from "./PermissionsMatrix";
-import { ViewAsPicker } from "./ViewAsPicker";
-import { VacantSeatPicker } from "./VacantSeatPicker";
-import { PageHeader } from "../../_components/PageHeader";
+import { PermissionsRoom } from "@/app/_ad/rooms/PermissionsRoom";
 
-const Head = () => (
-  <PageHeader title="لوحة الصلاحيات" />
-);
+/** على قالب «الحساب» منذ ٢٠٢٦-١١-١٤ (`_ad/rooms/PermissionsRoom`)؛ والقديمُ (`./PermissionsMatrix`) يقرؤه المختبرُ للمقارنة. */
+export const metadata = { title: "الصلاحيات، بوّابة أدِيب" };
 
 export default async function PermissionsPage() {
   const denied = await denyUnless("/dashboard/system/permissions");
@@ -20,21 +15,5 @@ export default async function PermissionsPage() {
     getVacantPositions(),
   ]);
 
-  if (error) {
-    return (
-      <>
-        <Head />
-        <Alert tone="warning" title="تعذّر جلب الصلاحيات">{error}</Alert>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Head />
-      {targets.length ? <ViewAsPicker targets={targets} /> : null}
-      {vacancies.length ? <VacantSeatPicker seats={vacancies} /> : null}
-      <PermissionsMatrix roles={roles} capabilities={capabilities} granted={granted} />
-    </>
-  );
+  return <PermissionsRoom roles={roles} capabilities={capabilities} granted={granted} targets={targets} vacancies={vacancies} error={error} />;
 }

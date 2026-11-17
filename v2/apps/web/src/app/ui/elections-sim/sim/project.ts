@@ -241,7 +241,7 @@ export function toVoteItems(w: SimWorld, userId: string): VoteItem[] {
     }));
 }
 
-/* ══ بطاقةُ الاقتراع — مرآةُ `getBallot` + `get_anonymized_candidates` ══ */
+/* ══ بطاقةُ الاقتراع — مرآةُ `getBallot` + `get_ballot_candidates` ══ */
 
 export function toBallot(w: SimWorld, userId: string, electionId: string): BallotContext {
   const election = toVoteItems(w, userId).find((e) => e.electionId === electionId) ?? null;
@@ -252,6 +252,8 @@ export function toBallot(w: SimWorld, userId: string, electionId: string): Ballo
     .sort((a, b) => a.number - b.number)
     .map((c) => ({
       id: c.id, number: c.number, statement: c.statement,
+      // المرشّحُ معروفٌ باسمه (٢٠٢٦-١١-٠٧): الاسمُ والجنسُ من ملفّه، ولا صورةَ في المحاكي
+      name: memberIn(w, c.userId)?.name ?? null, gender: memberIn(w, c.userId)?.gender ?? null, avatarUrl: null,
       fileUrl: c.fileUrl, fileName: c.fileName, fileSize: c.fileSize, fileMime: c.fileMime,
       // `is_self` تُحسب في القاعدة من `auth.uid()`، فلا يعرفها إلّا صاحبُها
       isSelf: c.userId === userId,

@@ -7,7 +7,7 @@ import {
   coverKey, galleryKey, newsPrefix, pathFromUrl,
 } from "@/lib/news/media";
 import { parseUnit } from "@adeeb/core/org-unit";
-import { CATEGORY_VALUES, FIELD_VALUES, type Category, type FieldKey } from "./vocab";
+import { CATEGORY_VALUES, FIELD_VALUES, GALLERY_MAX, SUMMARY_MAX, TITLE_MAX, type Category, type FieldKey } from "./vocab";
 import { cleanSections, sectionsToText, type Section } from "@/lib/news/blocks";
 
 export type Result = { ok: boolean; message: string; id?: string };
@@ -23,7 +23,7 @@ const cleanList = (v: string[] | null | undefined): string[] =>
 
 /** حرّاس القاعدة تُترجَم لرسائل عربيّة — فلا يرى المستخدم اسم قيدٍ إنجليزيّ. */
 function guardMessage(msg: string): string | null {
-  if (/news_publish_guard/.test(msg)) return "لا يُنشَر خبرٌ ناقص. أكمِل الملخّص والغلاف واسم الكاتب.";
+  if (/news_publish_guard/.test(msg)) return "لا يُنشَر خبرٌ ناقص. أكمِل الملخّص والغلاف واسم الكاتب وعنوانَ كلّ فصل.";
   if (/news_category_check/.test(msg)) return "قسمٌ غير معروف.";
   if (/news_gallery_photographers_aligned/.test(msg)) return "عدد مصوّري المعرض لا يطابق عدد صوره.";
   if (/news_slug_present/.test(msg)) return "المعرّف مطلوب.";
@@ -89,6 +89,8 @@ export type NewsInput = Partial<{
   unit: string | null;
   coverPhotographer: string | null;
   galleryPhotographers: string[];
+  /** فعاليّةُ الخبر (٢٠٢٦-١١-١٥): خبرُ التغطية يعرف فعاليّتَه فتدلّ صفحتُها المنتهيةُ عليه. إدارةٌ لرئيس التحرير كالجهة. "" = بلا فعاليّة */
+  activityId: string | null;
 }>;
 
 /** خريطة حقل الواجهة إلى عمود القاعدة — مصدرٌ واحد يقرؤه الترشيح والكتابة معًا. */
@@ -140,6 +142,9 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
     else rejected.push(f);
   };
 
+  // الحدّان يُعاد التحقّقُ منهما هنا: العدّادُ في المحرّر لا يقطع الكتابة، والحفظُ يتوقّف حتى يُختصر (قاعدةُ العدّاد الواحدة، ٢٠٢٦-١١-٠٧)
+  if (input.title !== undefined && (clean(input.title)?.length ?? 0) > TITLE_MAX) return { ok: false, message: `العنوانُ أطولُ من ${TITLE_MAX} حرفًا.` };
+  if (input.summary !== undefined && (clean(input.summary)?.length ?? 0) > SUMMARY_MAX) return { ok: false, message: `الملخّصُ أطولُ من ${SUMMARY_MAX} حرفًا.` };
   put("title", clean(input.title), input.title !== undefined);
   put("summary", clean(input.summary), input.summary !== undefined);
   put("content", input.content?.trim() ?? "", input.content !== undefined);
@@ -165,6 +170,11 @@ export async function saveNews(id: string, input: NewsInput): Promise<Result> {
   // المعرّف والجهة ليسا حقلَي كتابة — إدارةٌ لرئيس التحرير وحده.
   if (actor.isChief) {
     if (input.slug !== undefined) patch.slug = clean(input.slug);
+    if (input.activityId !== undefined) {
+      const v = clean(input.activityId);
+      if (v && !/^[0-9a-f-]{36}$/i.test(v)) return { ok: false, message: "الفعاليّة غير معروفة." };
+      patch.activity_id = v;
+    }
     if (input.unit !== undefined) {
       const u = parseUnit(input.unit);
       patch.committee_id = u.committeeId;
@@ -331,6 +341,11 @@ export async function createImageUploadUrl(
   const ext = IMAGE_EXT[mime];
   if (!ext) return { ok: false, message: BAD_MIME };
   if (size > IMAGE_MAX_BYTES) return { ok: false, message: TOO_BIG };
+  // المعرضُ الممتلئ لا تذكرةَ له: لا يُرفع ملفٌّ إلى المخزن ثمّ يُرفض فيبقى يتيمًا
+  if (kind === "gallery") {
+    const { data: cur } = await sb.from("news").select("gallery_images").eq("id", newsId).maybeSingle();
+    if (((cur?.gallery_images as string[] | null) ?? []).length >= GALLERY_MAX) return { ok: false, message: `المعرضُ ${GALLERY_MAX} صورٍ لا أكثر.` };
+  }
 
   const path = kind === "cover" ? coverKey(newsId, ext) : galleryKey(newsId, ext);
   const { data, error } = await sb.storage.from(NEWS_BUCKET).createSignedUploadUrl(path);
@@ -404,6 +419,10 @@ export async function addGalleryImage(
 
   const { data: cur } = await sb
     .from("news").select("gallery_images, gallery_photographers").eq("id", newsId).maybeSingle();
+  // الحدُّ يُعاد التحقّقُ منه هنا: المحرّرُ يمنع الزيادةَ، والخادمُ لا يثق به (قبله رُفعت خمسٌ فوق أربع)
+  if (((cur?.gallery_images as string[] | null) ?? []).length >= GALLERY_MAX) {
+    return { ok: false, message: `المعرضُ ${GALLERY_MAX} صورٍ لا أكثر.` };
+  }
   const images = [...((cur?.gallery_images as string[] | null) ?? []), url];
   const shooters = [...((cur?.gallery_photographers as string[] | null) ?? []), clean(photographer) ?? ""];
 
@@ -441,6 +460,35 @@ export async function removeGalleryImage(newsId: string, index: number): Promise
 
   touch();
   return { ok: true, message: "حُذفت الصورة." };
+}
+
+/**
+ * **مصوّرُ صورةٍ واحدة في المعرض** (٢٠٢٦-١١-١٣، طلبه المالك: «عندما رفعتُ الصورة كيف أضع اسم الشخص؟»): كانت الصورةُ تُنسب عند رفعها
+ * إلى مصوّر الغلاف ولا تُبدَّل نسبتُها. والصورةُ تُعرف **برابطها لا بموضعها** — صورةٌ حُذفت قبلها بيدٍ أخرى لا تنقل النسبةَ إلى جارتها.
+ * ويُكتب الموضعُ نفسُه في المصفوفة الموازية فلا تفترقان طولًا (القيد `news_gallery_photographers_aligned`)؛ و`saveNews` لا يصلح لهذا:
+ * `cleanList` يُسقط الفارغ فيُقصّر المصفوفة.
+ */
+export async function setGalleryPhotographer(newsId: string, imageUrl: string, photographer: string | null): Promise<Result> {
+  const sb = newsService();
+  if (!sb) return { ok: false, message: ENV_MISSING };
+  const allow = await allowedFields(newsId);
+  if (!allow || (allow !== "all" && !allow.has("gallery_photographers"))) {
+    return { ok: false, message: "لم تُكلَّف بمصوّري المعرض." };
+  }
+
+  const { data: cur } = await sb
+    .from("news").select("gallery_images, gallery_photographers").eq("id", newsId).maybeSingle();
+  const images = [...((cur?.gallery_images as string[] | null) ?? [])];
+  const index = images.indexOf(imageUrl);
+  if (index < 0) return { ok: false, message: "لا صورة هناك." };
+  const shooters = images.map((_, i) => ((cur?.gallery_photographers as string[] | null) ?? [])[i] ?? "");
+  shooters[index] = clean(photographer) ?? "";
+
+  const { error } = await sb.from("news").update({ gallery_photographers: shooters }).eq("id", newsId);
+  if (error) return fail(error.message, "تعذّر حفظ المصوّر");
+
+  touch();
+  return { ok: true, message: shooters[index] ? "حُفظ مصوّر الصورة." : "أُزيل مصوّر الصورة." };
 }
 
 /* ══ تعليقات التعاون الداخليّة ═══════════════════════════════════════ */

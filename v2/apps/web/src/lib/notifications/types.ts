@@ -24,13 +24,28 @@ export type Gender = "male" | "female" | null;
  * - `capability`: كلُّ من يملك القدرة (منطقُ `get_user_permissions` نفسُه).
  * - `committee`: كلُّ مقاعد اللجنة الحيّة.
  * - `standing`: المنزلة كلُّها.
+ *
+ * وعناوينُ الانتخاب (٢٠٢٦-١١-١٧)، كلُّها بمعرّف الانتخاب:
+ * - `electorate`: ناخبو المقعد (لجنتُه، أو لجانُ قسمه لمنسّق القسم) ومن يصوّت في كلّ انتخاب.
+ * - `election_managers`: مديرو الانتخابات، ومشرفُ اللجنة لمقعد القائد ونائبه.
+ * - `election_candidates`: مرشّحوه القائمون.
+ * - `voided_voters`: من بطل صوتُه في لحظةٍ بعينها (`at`)، لسببٍ بعينه، ولمرشّحٍ بعينه إن ذُكر.
+ *   يُعرفون لحظةَ التوزيع، فلا تحمل الواقعةُ من صوّت لمن.
+ * - `revote_voters`: من ينتظر إعادة التصويت المقصورة.
+ * - `council`: المجلسُ الإداري، مقاعدُه المشغولة (للتعادل).
  */
 export type Address =
   | { user: string }
   | { seat: string; committee?: number; department?: number }
   | { capability: string }
   | { committee: number }
-  | { standing: "member" | "volunteer" };
+  | { standing: "member" | "volunteer" }
+  | { electorate: string }
+  | { election_managers: string }
+  | { election_candidates: string }
+  | { voided_voters: string; reason: string; at: string; candidate?: string }
+  | { revote_voters: string }
+  | { council: true };
 
 /** ما يصل الجرسَ من الخادم: مرسومًا بجنس قارئه، فلا يبلغ المتصفّحَ من الواقعة إلّا ما يُقرأ. */
 export type InboxItem = {

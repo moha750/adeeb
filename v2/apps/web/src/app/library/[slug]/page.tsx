@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Footer, Container } from "@adeeb/design-system";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
 import type { BookReaderPage } from "@adeeb/design-system";
 import { createAdeebServerClient } from "@adeeb/core";
 import { KIND_META, yearLabel, type BookKind } from "../../dashboard/library/vocab";
-import { Reader } from "./Reader";
+import { BookRead } from "../../_ad/rooms/BookReadRoom";
+import { getShelf } from "../shelf";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { shareOg } from "@/lib/share";
+import { ViewSubject } from "@/app/_components/ViewSubject";
 
 export const revalidate = 60;
 
@@ -23,7 +26,7 @@ async function loadBook(slug: string) {
   const client = sb();
   const { data: book } = await client
     .from("library_books")
-    .select("id, title, slug, summary, kind, year_hijri, year_gregorian")
+    .select("id, title, slug, summary, kind, year_hijri, year_gregorian, views")
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
@@ -39,18 +42,22 @@ async function loadBook(slug: string) {
   // المصغّرة: تحويلٌ بعرض 150 — هنا ينفع التحويل فعلًا (تصغيرٌ حقيقيّ لشريط الفهرس).
   const pages: BookReaderPage[] = (rows ?? []).map((p) => ({
     src: client.storage.from(BUCKET).getPublicUrl(p.storage_path).data.publicUrl,
-    thumb: client.storage.from(BUCKET).getPublicUrl(p.storage_path, { transform: { width: 150, quality: 60 } }).data.publicUrl,
+    // **`resize: "contain"` شرطٌ لا زينة** (٢٠٢٦-١١-١٦): بالعرض وحده كان Supabase يُبقي ارتفاعَ الأصل فتخرج المصغّرةُ 150×1755، صفحةً
+    // معصورةً في شريطٍ رفيع — وكان القصُّ (`object-fit: cover`) يخفي ذلك فتبدو المصغّراتُ مقصوصة. و240 لتكون حادّةً على شاشات الضعف
+    thumb: client.storage.from(BUCKET).getPublicUrl(p.storage_path, { transform: { width: 240, resize: "contain", quality: 60 } }).data.publicUrl,
     alt: p.label ?? `صفحة ${p.page_number}`,
     hard: p.is_hard,
   }));
-  return { book, pages };
+  // **فهرسُ الكتيّب**: الصفحاتُ المسمّاةُ في البوّابة («تسمية») أقسامُه، بمؤشّرها في القارئ
+  const sections = (rows ?? []).flatMap((p, i) => (p.label ? [{ title: p.label, page: i }] : []));
+  return { book, pages, sections };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const res = await loadBook(slug);
   if (!res) return { title: "المكتبة، أدِيب" };
-  const { book, pages } = res;
+  const { book } = res;
   return {
     title: `${book.title}، مكتبة أدِيب`,
     description: book.summary ?? "منشورٌ من مكتبة «إرثٌ يُروى» في نادي أدِيب.",
@@ -58,33 +65,33 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function BookReaderPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function BookReaderPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ p?: string }> }) {
   const { slug } = await params;
-  const res = await loadBook(slug);
+  // **رابطٌ إلى صفحةٍ بعينها** (`?p=34`، يبدأ بواحد كعدّاد القارئ)
+  const sp = await searchParams;
+  const pNum = Number(sp.p);
+  const [res, shelf] = await Promise.all([loadBook(slug), getShelf()]);
   if (!res) notFound();
-  const { book, pages } = res;
-
-  const kindLabel = KIND_META[book.kind as BookKind].label;
-  const yr = yearLabel(book.year_hijri ?? null, book.year_gregorian ?? null);
+  const { book, pages, sections } = res;
+  const initialPage = Number.isInteger(pNum) && pNum > 1 && pNum <= pages.length ? pNum - 1 : undefined;
 
   return (
     <>
+      {/* المشاهدةُ تُعدّ من هنا: الكتابُ صُيِّر فعلًا، فالصفحةُ تُعلنه (٢٠٢٦-١١-١٧). */}
+      <ViewSubject kind="book" id={book.id} />
       <SiteHeader activeHref="/library" />
-      <main>
-        <section className="py-10 md:py-14">
-          <Container>
-            <div className="mb-6 text-center">
-              <div className="font-body text-sm font-bold text-secondary">{kindLabel}{yr ? `، ${yr}` : ""}</div>
-              <h1 className="font-display text-2xl font-bold text-content md:text-3xl">{book.title}</h1>
-              {book.summary ? <p className="mx-auto mt-2 max-w-2xl text-content-muted">{book.summary}</p> : null}
-            </div>
-            {pages.length === 0 ? (
-              <p className="text-center text-content-muted">لا صفحات في هذا المنشور بعد.</p>
-            ) : (
-              <Reader bookId={book.id} pages={pages} />
-            )}
-          </Container>
-        </section>
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <BookRead
+            book={{
+              id: book.id, slug: book.slug, title: book.title, summary: book.summary ?? null, kindLabel: KIND_META[book.kind as BookKind].label,
+              yearLabel: yearLabel(book.year_hijri ?? null, book.year_gregorian ?? null), views: book.views ?? 0, pages, sections,
+              cover: shelf.books.find((b) => b.id === book.id)?.coverUrl ?? pages[0]?.src ?? null,
+            }}
+            initialPage={initialPage}
+            others={shelf.books.filter((b) => b.id !== book.id)}
+          />
+        </div>
       </main>
       <Footer />
     </>

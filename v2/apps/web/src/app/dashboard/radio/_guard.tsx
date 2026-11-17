@@ -1,17 +1,13 @@
-import { Alert } from "@adeeb/design-system";
-import { PageHeader } from "../_components/PageHeader";
+import { AdRoomDenied } from "@/app/_ad/states";
 
 /**
  * تنبيه «لا صلاحية» لصفحات الإذاعة — يُعرض لمن لا يملك قدرة `manage_radio`
  * (ولو كان من الإدارة العليا: الرتبة لا تعني الوصول، القدرة وحدها تعنيه).
+ * **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧، `AdRoomDenied`): لوحُ الغرفة باسمها، وتحته القفلُ وجملتُه نفسُها و«العودة إلى البوّابة».
  */
 export function RadioDenied() {
   return (
-    <>
-      <PageHeader title="إذاعة أدِيب" />
-      <Alert tone="warning" title="لا تملك صلاحية إدارة الإذاعة">
-        هذه الصفحة لمن مُنحت له قدرة «إدارة الإذاعة». إن رأيت أنّها ينبغي أن تكون لك، فراجع مسؤول الصلاحيات.
-      </Alert>
-    </>
+    <AdRoomDenied title="إذاعة أدِيب" navPath="/dashboard/radio" what="إدارة الإذاعة"
+      desc="هذه الصفحة لمن مُنحت له قدرة «إدارة الإذاعة». إن رأيت أنّها ينبغي أن تكون لك، فراجع مسؤول الصلاحيات." />
   );
 }

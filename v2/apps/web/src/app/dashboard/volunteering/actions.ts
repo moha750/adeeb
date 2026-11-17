@@ -8,6 +8,7 @@ import { AR_CERTIFICATE, arCount } from "@/lib/arabicCount";
 import { clubNow, periodEnded, periodStarted, type ClubNow } from "@/lib/volunteerPeriods";
 import { listVolunteers, type VolunteerRow } from "./data";
 import { STRUCTURE_PATH } from "@/lib/structurePage";
+import { DISTINCTION_NOTE_MAX } from "@/lib/volunteerNotes";
 
 export type Result = { ok: boolean; message: string; id?: string };
 
@@ -383,6 +384,8 @@ export async function markAttendance(id: string, attendance: "attended" | "absen
  * ويُرفع. فالأفعالُ أربعة، وكلُّها على الشخص في الفرصة كلِّها لا على فترةٍ منها (الشهادةُ للفرصة).
  */
 export async function nominateDistinction(id: string, note: string, oppId: string): Promise<Result> {
+  // الحدُّ يُعاد التحقّقُ منه هنا: العدّادُ في النافذة لا يقطع الكتابة (قاعدةُ العدّاد الواحدة، ٢٠٢٦-١١-٠٧)
+  if ((clean(note)?.length ?? 0) > DISTINCTION_NOTE_MAX) return { ok: false, message: `سببُ التميّز ${DISTINCTION_NOTE_MAX} حرفٍ على الأكثر.` };
   return callRpc("nominate_volunteer_distinction", { p_id: id, p_note: clean(note) }, [`/dashboard/volunteering/${oppId}`, CERTS_ROOM]);
 }
 

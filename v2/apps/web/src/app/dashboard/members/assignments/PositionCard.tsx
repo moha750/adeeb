@@ -15,7 +15,9 @@ export function holderNote(h: Holder): string | null {
     if (h.acting.awaits) return `تكليفًا حتى عودة ${firstNameOf(h.acting.awaits)}`;
     return h.acting.until ? `تكليفًا حتى ${fmtDayMonth(h.acting.until)}` : "تكليفًا";
   }
-  if (h.frozen) return h.frozen.until ? `مجمَّد حتى ${fmtDayMonth(h.frozen.until)}` : "مجمَّد";
+  // بجنس صاحبه (المراجع ٢٠٢٦-١١-١٤): «مجمَّدة» لها
+  const frozen = h.gender === "female" ? "مجمَّدة" : "مجمَّد";
+  if (h.frozen) return h.frozen.until ? `${frozen} حتى ${fmtDayMonth(h.frozen.until)}` : frozen;
   return null;
 }
 
@@ -23,15 +25,15 @@ export function holderNote(h: Holder): string | null {
  * كرت المنصب — منصبٌ وحالته في شبكة مقاعد. كان كرتَ تبويب «تعيين المناصب» حتى ٢٠٢٦-١٠-١٠، ثمّ صار
  * التبويبُ لوحةَ مقاعد (`SeatBoard`)، وبقي الكرتُ لـ«توزيع الإشراف» في «إدارتي» (`hero="scope"`).
  * المنصب هو البطل (اسمٌ + نطاق)، ثمّ شارةُ المجلس والعضويّة مدموجةً،
- * وشريطُ شاغلٍ (أفتار + اسم + ⋯) أو نداءُ «شاغر» يفتح الإسناد. النغمةُ تقول الحالة:
- * brand = مشغول (هادئ) · warning = محجوزٌ لصاحبه المجمَّد · danger = شاغر — أنماطُه في `.pcard-*` بالمكتبة.
+ * وشريطُ شاغلٍ (أفتار + اسم + ⋯) أو نداءُ «فارغ» يفتح الإسناد. النغمةُ تقول الحالة:
+ * brand = مشغول (هادئ) · warning = محجوزٌ لصاحبه المجمَّد · danger = فارغ — أنماطُه في `.pcard-*` بالمكتبة.
  *
  * **`hero` — أيّ السطرين البطل:** الافتراض المنصب (شبكةٌ تعرض مناصب شتّى). أمّا حيث
  * يكون المنصب **واحدًا مكرّرًا** والنطاقُ هو المتغيّر — «توزيع الإشراف»: مقعدُ إدارةٍ
  * واحدةٍ على تسع لجان — فالبطلُ النطاق (`hero="scope"`). والدورُ حينئذٍ **يسقط لا يتزحزح**:
  * اسمُه وشارةُ عضويّته ثابتان على الكروت التسعة كلّها، وما لا يتغيّر عبر الشبكة لا يميّز
  * كرتًا عن كرت — يقوله عنوانُ الشاشة وفتاتُها مرّةً واحدة. فيبقى في الكرت ما يتغيّر:
- * اللجنةُ، والشاغلُ أو نداءُ «شاغر»، والنغمة.
+ * اللجنةُ، والشاغلُ أو نداءُ «فارغ»، والنغمة.
  *
  * **المفرد والمتعدّد:** الشاغلون قائمةٌ لا واحد، و`p.singleton` (مصدره `roles.holder_uniqueness`)
  * يقول أيّ نداءٍ يُختم به الكرت: المفردُ المشغول لا نداء له (يُستبدَل من قائمته)، والمتعدّدُ
@@ -55,7 +57,7 @@ export function PositionCard({ position: p, actions, onAssign, onAct, hero = "ro
   // المنصبُ واحدٌ مكرّرٌ عبر الشبكة: يسقط اسمُه وشارةُ عضويّته معًا (ثابتان لا يميّزان)
   const repeated = hero === "scope";
   const tone = filled ? "brand" : reserved ? "warning" : "danger";
-  // والتكليف على مقعدٍ شاغر وحده (أو محجوزٍ لصاحبه)، والمتعدّد يقبله مهما امتلأ
+  // والتكليف على مقعدٍ فارغ وحده (أو محجوزٍ لصاحبه)، والمتعدّد يقبله مهما امتلأ
   const act = !!onAct && p.actable && (!filled || !p.singleton);
   // المحجوزُ لا يُسنَد إسنادًا دائمًا: التكليف وحده حتى يعود صاحبه
   const assignable = !reserved && (!filled || !p.singleton);
@@ -98,7 +100,7 @@ export function PositionCard({ position: p, actions, onAssign, onAct, hero = "ro
         <div className="pcard-acts">
           {assignable ? (
             <button type="button" className="pcard-vacant" onClick={onAssign}>
-              <UserPlus aria-hidden /> {filled ? "إضافة شاغل" : act ? "إسناد" : "شاغر، إسناد"}
+              <UserPlus aria-hidden /> {filled ? "إضافة شاغل" : act ? "إسناد" : "فارغ، إسناد"}
             </button>
           ) : null}
           {act ? (

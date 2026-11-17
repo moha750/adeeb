@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, Field, Modal, Textarea } from "@adeeb/design-system";
+import { Button, Field, Modal, Textarea, overBy } from "@adeeb/design-system";
 import { ChatText, LinkSimple, Shapes, TextAa, WhatsappLogo } from "@phosphor-icons/react";
 import { MagnifyingGlass, PencilSimple } from "@/app/_components/glyphs";
 import { UNIT_ICONS, isSuggestedIcon } from "@/lib/unitIcons";
 import { UnitIcon, useUnitIconNodes } from "../../_components/UnitIcon";
-import { EmptyState } from "../../_components/EmptyState";
+import { AdEmpty } from "@/app/_ad/primitives";
 import { Skeleton } from "../../_components/Skeleton";
 import { searchUnitIcons } from "./iconActions";
 
@@ -28,6 +28,8 @@ export type UnitValues = { name: string; icon: string | null; description: strin
 
 /** أقصرُ اسمٍ يُقبل لوحدةٍ جديدة (نظيرُه في `createOrgUnit`). */
 export const UNIT_NAME_MIN = 3;
+/** حدُّ الاسم (العدّادُ تحته، والحفظُ يتوقّف حتى يُختصر؛ والإجراءُ يعيد التحقّق: «الاسم بين ٣ و٦٠ حرفًا») */
+export const UNIT_NAME_MAX = 60;
 const SEARCH_MIN_MS = 500;
 
 /**
@@ -94,7 +96,7 @@ export function UnitEditModal({ unit, busy, onClose, onSubmit }: {
   // الوصفُ والرابطُ إلزاميّان في الوضعين (المالك ٢٠٢٦-١٠-١١)، فالوحدةُ الناقصةُ لا تُحفَظ ولو تغيّرت أيقونتُها.
   const filled = !!description.trim() && !!link.trim();
   const ready = !!unit && filled && (creating
-    ? name.trim().length >= UNIT_NAME_MIN
+    ? name.trim().length >= UNIT_NAME_MIN && !overBy(name.trim(), UNIT_NAME_MAX)
     : icon !== (unit.icon ?? null) || description.trim() !== (unit.description ?? "") || link.trim() !== (unit.link ?? ""));
   const title = !unit ? "الوحدة"
     : !creating ? `تعديل ${unit.name}`
@@ -126,7 +128,7 @@ export function UnitEditModal({ unit, busy, onClose, onSubmit }: {
           placeholder={kind === "department" ? "قسم الشراكات" : "لجنة البودكاست"}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          maxLength={60}
+          count={{ max: UNIT_NAME_MAX }}
           autoFocus
           required
         />
@@ -148,7 +150,7 @@ export function UnitEditModal({ unit, busy, onClose, onSubmit }: {
               {Array.from({ length: 14 }, (_, i) => <Skeleton key={i} className="unit-ic-sk" />)}
             </div>
           ) : results && !results.length ? (
-            <EmptyState variant="soft" icon={<MagnifyingGlass />} title="لا أيقونة مطابقة" description="جرّب كلمةً أخرى بالعربية أو الإنجليزية." />
+            <AdEmpty icon={<MagnifyingGlass />} title="لا أيقونة مطابقة" desc="جرّب كلمةً أخرى بالعربية أو الإنجليزية." />
           ) : (
             <div className="unit-ic-grid" role="radiogroup" aria-label="الأيقونة">
               {(results

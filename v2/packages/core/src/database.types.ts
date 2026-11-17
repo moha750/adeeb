@@ -6592,15 +6592,18 @@ export type Database = {
           total_seats: number
         }[]
       }
-      get_anonymized_candidates: {
+      get_ballot_candidates: {
         Args: { p_election: string }
         Returns: {
+          avatar_url: string
           candidate_id: string
           candidate_number: number
           file_mime: string
           file_name: string
           file_size_bytes: number
           file_url: string
+          full_name: string
+          gender: string
           is_self: boolean
           statement_ar: string
         }[]
