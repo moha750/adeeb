@@ -1,5 +1,5 @@
 import "server-only";
-import { fmtMonthYear } from "@/lib/dates";
+import { dateOnlyParts, fmtMonthYear } from "@/lib/dates";
 import { getPublicActivities } from "@/app/activities/data";
 import type { MyAccount } from "@/app/me/data";
 import type { MyVolunteering } from "@/app/me/volunteering";
@@ -16,28 +16,37 @@ import { counted, dayLabel, daysUntil, seatsLeft, soonLabel, today } from "./tim
 /** شهادةٌ «جاهزة» ما صدرت في هذه المدّة: خبرُها جديد. */
 const FRESH_DAYS = 14;
 
+/** و`day` يومُه (ISO) لكعب تذكرته في الرئيسية الجديدة (٢٠٢٦-١١-٠٥) */
 export type HomeWaiting =
-  | { kind: "volunteer"; k: string; v: string; sub: string; href: string }
-  | { kind: "certificate"; k: string; v: string; sub: string; paper: ParticipationCertificate }
-  | { kind: "booking"; k: string; v: string; sub: string; href: string };
+  | { kind: "volunteer"; k: string; v: string; sub: string; href: string; day?: string | null; /** شارةُ تذكرته في «تطوّعي» نفسُها */ say?: string }
+  | { kind: "certificate"; k: string; v: string; sub: string; paper: ParticipationCertificate; day?: string | null }
+  | {
+      kind: "booking"; k: string; v: string; sub: string; href: string; day?: string | null;
+      /** ما تقوله تذكرةُ الحجز في «حجوزاتي» نفسُها: نوعُ الفعاليّة، وساعتُها، ومكانُها، وأمؤكَّدٌ حضورُه بواتساب */
+      type?: string; time?: string | null; place?: string | null; confirmed?: boolean; activityId?: string;
+    };
 
 export type HomeView = {
   firstName: string;
+  /** «السبت، 7 نوفمبر» — عنوانُ لوح «أجندتك» (٢٠٢٦-١١-٠٧)، بيوم النادي */
+  today?: string;
   headline: string;
   volunteer: boolean;
   since: string;
   figs: { key: "hours" | "joined" | "certs" | "bookings" | "attended"; value: number; label: string; note?: string }[];
   waiting: HomeWaiting[];
   prefs: string[] | null;
-  opps: { id: string; committee: string | null; fit: boolean; title: string; sub: string }[];
-  events: { id: string; title: string; when: string; seats: string }[];
+  opps: { id: string; committee: string | null; fit: boolean; title: string; sub: string; day?: string | null; flexible?: boolean }[];
+  events: { id: string; title: string; when: string; seats: string; day?: string }[];
 };
 
 const firstWord = (s: string) => s.trim().split(/\s+/)[0] ?? "";
 
 
-export async function buildHome({ name, account, vol }: {
+export async function buildHome({ name, account, vol, female }: {
   name: string;
+  /** لشارة الموعد بخطاب صاحبه («قُبلتِ، نراكِ في موعدكِ») كما في «تطوّعي» */
+  female?: boolean;
   account: MyAccount | null;
   vol: MyVolunteering | null;
 }): Promise<HomeView> {
@@ -57,6 +66,8 @@ export async function buildHome({ name, account, vol }: {
       v: nextShift.title,
       sub: nextShift.period ?? dayLabel(nextShift.day),
       href: `/dashboard/volunteer/${nextShift.opportunityId}`,
+      day: nextShift.day,
+      say: nextShift.day === now ? (female ? "قُبلتِ، وموعدكِ اليوم" : "قُبلت، وموعدك اليوم") : (female ? "قُبلتِ، نراكِ في موعدكِ" : "قُبلت، نراك في موعدك"),
     });
   }
   // الأحدثُ أوّلَ القارئ، و«جاهزةٌ» ما صدرت في الأيّام الأخيرة: خبرُها جديد
@@ -67,6 +78,7 @@ export async function buildHome({ name, account, vol }: {
       kind: "certificate",
       k: "شهادتك جاهزة",
       v: freshCert.opportunityTitle,
+      day: freshCert.issuedOn,
       sub: [freshCert.hours ? counted(freshCert.hours, "ساعة", "ساعتان", "ساعات", "ساعة") : null, `صدرت في ${freshCert.issuedLabel}`].filter(Boolean).join("، "),
       paper: {
         name: freshCert.holderName, serial: freshCert.serial, opportunity: freshCert.opportunityTitle,
@@ -83,6 +95,9 @@ export async function buildHome({ name, account, vol }: {
       v: nextBooking.name,
       sub: [dayLabel(nextBooking.date), nextBooking.timeLabel].filter(Boolean).join("، "),
       href: "/dashboard/bookings",
+      day: nextBooking.date,
+      type: nextBooking.type, time: nextBooking.timeLabel || null, place: nextBooking.location, confirmed: nextBooking.whatsappConfirmed,
+      activityId: nextBooking.activityId,
     });
   }
 
@@ -121,6 +136,8 @@ export async function buildHome({ name, account, vol }: {
           committee: o.committee,
           fit: !!o.committee && (prefs ?? []).includes(o.committee),
           title: o.title,
+          day: o.startsOn ?? null,
+          flexible: !!o.flexible,
           sub: [o.dateLabel, o.periods.length ? counted(o.periods.filter((p) => !p.mine && !p.full && !p.passed).length, "فترةٌ متاحة", "فترتان متاحتان", "فترات متاحة", "فترةً متاحة") : null].filter(Boolean).join("، "),
         }))
         .sort((a, b) => Number(b.fit) - Number(a.fit))
@@ -131,10 +148,12 @@ export async function buildHome({ name, account, vol }: {
   const events = (await getPublicActivities())
     .filter((a) => !mine.has(a.id) && !a.full && a.date >= now)
     .slice(0, 3)
-    .map((a) => ({ id: a.id, title: a.name, when: dayLabel(a.date), seats: seatsLeft(a.totalRemaining, a.unlimited) }));
+    .map((a) => ({ id: a.id, title: a.name, when: dayLabel(a.date), seats: seatsLeft(a.totalRemaining, a.unlimited), day: a.date }));
 
+  const p = dateOnlyParts(now);
   return {
     firstName: firstWord(name),
+    today: p ? `${p.weekday}، ${p.day} ${p.month}` : undefined,
     headline,
     volunteer,
     since: volunteer ? (vol?.since ? `منذ ${fmtMonthYear(vol.since)}` : "") : account?.since ? `منذ ${fmtMonthYear(account.since)}` : "",

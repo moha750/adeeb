@@ -195,6 +195,7 @@ export function DropdownMenu({
         onDismiss={(reason) => close(reason === "escape")}
         align="start"
         matchWidth={matchWidth}
+        fitAnchor
         className={"dm-menu" + (tone ? ` dm-tone-${tone}` : "")}
         role="menu"
         id={menuId}

@@ -2,14 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, SaveBar, SectionCard, Field, Switch, Textarea } from "@adeeb/design-system";
-import { ChatText, TextT } from "@phosphor-icons/react";
-import { PencilSimple } from "@/app/_components/glyphs";
+import { Field, Textarea } from "@adeeb/design-system";
+import { ChatCenteredText, ChatText, FloppyDisk, TextT } from "@phosphor-icons/react";
+import { Eye, EyeSlash, PencilSimple, Plus } from "@/app/_components/glyphs";
 import { IconDeebo } from "../../_shell/icons";
 import { useToast } from "../../_components/ToastProvider";
 import type { FactEditData } from "./data";
 import { createFact, updateFact, type FactInput } from "./actions";
-import { PageHeader } from "../../_components/PageHeader";
+import { AdBadge, AdCard, AdNote } from "@/app/_ad/primitives";
+import { FormRoom, FormSection, FormToggle } from "@/app/_ad/form";
 
 /**
  * **الأرقامُ تُنبَّه ولا تُمنَع.**
@@ -33,7 +34,7 @@ export function KnowledgeForm({ fact }: { fact?: FactEditData | null }) {
 
   const toInput = (): FactInput => ({ title, body, isActive });
 
-  /* أثمّة ما يُحفَظ؟ — الشريطُ اللاصق لا يظهر حتى يوجد، والمقارنةُ بلَقطةِ `toInput()`
+  /* أثمّة ما يُحفَظ؟ — في التحرير لا يُحفظ قبل أوّل تغيير، وفي الضيّق يلحقك الفعلُ حين يوجد (`FormRoom`)، والمقارنةُ بلَقطةِ `toInput()`
      نفسِها التي تُرسَل. والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
      فلا معنى لتحديثه (وقراءةُ `ref.current` أثناء الرسم يردّها `react-hooks/refs` خطأً). */
   const snapshot = JSON.stringify(toInput());
@@ -52,57 +53,68 @@ export function KnowledgeForm({ fact }: { fact?: FactEditData | null }) {
     });
   };
 
+  /* التذكرةُ كما ستظهر في غرفة المعرفة (`_ad/rooms/DeeboKnowledgeRoom`): الحالُ شارتُها («يقولها» أو «موقوفة»)، والنصُّ سطرُها */
+  const preview = (
+    <div className="ad-form-preview-card" data-untitled={title.trim() ? undefined : ""}>
+      <AdCard seed={fact?.id ?? "new-fact"} title={title.trim() || "العنوان"}
+        chips={isActive ? <AdBadge tone="ok" icon={<Eye />}>يقولها</AdBadge> : <AdBadge icon={<EyeSlash />}>موقوفة</AdBadge>}
+        meta={[body.trim() ? { icon: <ChatCenteredText />, text: body.trim() } : { icon: <ChatCenteredText />, text: "النصّ لم يُكتب", tone: "muted" }]} />
+    </div>
+  );
+
   return (
-    <>
-      <PageHeader title={editing ? "تحرير الواقعة" : "واقعة جديدة"} crumbLeaf={editing ? "تحرير" : undefined} />
-
-      <div className="form-build">
-        <SectionCard headerVariant="chip" icon={<IconDeebo />} title="ما يعرفه ديبو">
-          <div className="form-grid">
-            <Field
-              className="form-full"
-              label="العنوان"
-              icon={<TextT />}
-              innerIcon={<PencilSimple />}
-              placeholder="مثال: أين أدِيب"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-            <Textarea
-              className="form-full"
-              label="النصّ"
-              icon={<ChatText />}
-              innerIcon={<TextT />}
-              placeholder="اكتبها جملةً أو جملتين، كما يقولها ديبو لسائله"
-              rows={5}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              required
-            />
-            {hasDigits(`${title} ${body}`) ? (
-              <Alert className="form-full" tone="warning" title="فيها رقم" compact>
-                إن كان ثابتًا لا يتبدّل فدعه، وإن كان عددًا يزيد أو تاريخًا يمضي فامحُه:
-                ديبو يقول ما هنا حرفيًّا بعد سنة.
-              </Alert>
-            ) : null}
-            <Switch
-              className="form-full"
-              row
-              label="يقولها ديبو"
-              description="الموقوفةُ تبقى محفوظةً هنا ولا تدخل معرفته."
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-            />
-          </div>
-        </SectionCard>
-      </div>
-
-      <SaveBar open={dirty} message={editing ? undefined : "واقعةٌ لم تُضَف بعد"}>
-        <Button variant="primary" size="md" loading={saving} onClick={save}>
-          {editing ? "حفظ التغييرات" : "إضافة الواقعة"}
-        </Button>
-      </SaveBar>
-    </>
+    <FormRoom
+      title={editing ? "تحرير الواقعة" : "واقعة جديدة"}
+      preview={preview}
+      commit={{
+        primary: editing
+          ? { label: "حفظ التغييرات", icon: <FloppyDisk />, onClick: save, busy: saving, held: !dirty }
+          : { label: "إضافة الواقعة", icon: <Plus />, onClick: save, busy: saving },
+        cancelHref: "/dashboard/deebo/knowledge",
+        dirty,
+      }}
+    >
+      <FormSection id="fact" icon={<IconDeebo />} title="ما يعرفه ديبو">
+        <div className="form-grid">
+          <Field
+            className="form-full"
+            label="العنوان"
+            icon={<TextT />}
+            innerIcon={<PencilSimple />}
+            placeholder="مثال: أين أدِيب"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <Textarea
+            className="form-full"
+            label="النصّ"
+            icon={<ChatText />}
+            innerIcon={<TextT />}
+            placeholder="اكتبها جملةً أو جملتين، كما يقولها ديبو لسائله"
+            rows={5}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            required
+          />
+          {/* التنبيهُ بلغة الغرف (`AdNote`) لا `Alert` القديم: صفحةُ النموذج غرفة */}
+          {hasDigits(`${title} ${body}`) ? (
+            <div className="form-full">
+              <AdNote tone="warn" label="فيها رقم">
+                إن كان ثابتًا لا يتبدّل فدعه، وإن كان عددًا يزيد أو تاريخًا يمضي فامحُه: ديبو يقول ما هنا حرفيًّا بعد سنة.
+              </AdNote>
+            </div>
+          ) : null}
+          <FormToggle
+            className="form-full"
+            icon={<IconDeebo />}
+            label="يقولها ديبو"
+            description="الموقوفةُ تبقى محفوظةً هنا ولا تدخل معرفته."
+            checked={isActive}
+            onChange={setIsActive}
+          />
+        </div>
+      </FormSection>
+    </FormRoom>
   );
 }

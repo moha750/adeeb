@@ -12,7 +12,7 @@ import { COUNCIL_AR } from "./positionLabels";
 
 export type MemberOption = { id: string; name: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null; heldRole?: string | null };
 
-// حالة المحرّر: إسنادٌ (لشاغرٍ أو زيادةٌ لمتعدّد أو استبدالٌ لمشغولٍ مفرد) أو إزالة.
+// حالة المحرّر: إسنادٌ (لفارغٍ أو زيادةٌ لمتعدّد أو استبدالٌ لمشغولٍ مفرد) أو إزالة.
 // تُملَك من المستدعي (مُتحكَّم به). والإزالة تحمل **شاغلَها**: المنصب المتعدّد فيه
 // أكثر من واحد، فـ«شاغل المنصب» وحدها لا تعيّن من يُزال.
 export type AssignState =
@@ -119,7 +119,7 @@ const memberOptions = (list: MemberOption[]): SelectOption[] => list.map((m) => 
  * والنافذةُ مبنيّةٌ حول الأشخاص لا «النقلات» (ردّ محمد الأولى: «لم أفهم شيئًا»): من يُزاح من مقعده تسأل عنه
  * «وأين ينتقل فلان؟» تحت اختياره مباشرة، وجوابُه قد يُزيح غيرَه فتسأل عنه — حتى تنغلق الدورة. فتبديلُ قائدٍ ونائبه
  * ودورةُ ثلاثةٍ بين مقاعدهم نافذةٌ واحدةٌ بلا فكرةٍ جديدة، و«تغيير منصب عضو آخر» للمستقلّ (التشكيل السنويّ).
- * و«ملخص التغييرات» يقول لكلّ واحدٍ من أين إلى أين، وما يبقى شاغرًا.
+ * و«ملخص التغييرات» يقول لكلّ واحدٍ من أين إلى أين، وما يبقى فارغًا.
  * و«يسري في» يجعلها مجدولة، و«القرار أو السبب» سجلٌّ داخليّ لا يصل العضو.
  *
  * تملك حالتَها (الاختيار والنقلات والتاريخ والسبب) وتُفتح من جديدٍ بمفتاحٍ يضعه المستدعي.
@@ -207,7 +207,7 @@ export function AssignmentModal({
     const movers = new Set(rows.map((r) => r.userId).filter(Boolean));
     const pending = asks.filter((a) => !movers.has(a.holder.userId));
     const targeted = new Set(rows.filter((r) => r.seat).map((r) => r.seat!.key));
-    // ما يبقى شاغرًا: مقعدٌ مفردٌ يغادره من في الخطّة ولا يدخله أحد
+    // ما يبقى فارغًا: مقعدٌ مفردٌ يغادره من في الخطّة ولا يدخله أحد
     const vacated = seats.filter((s) => s.singleton && !targeted.has(s.key)
       && s.holders.some((h) => !h.acting && !h.frozen && movers.has(h.userId))).map((s) => s.label);
     const users = rows.map((r) => r.userId).filter(Boolean);
@@ -254,7 +254,7 @@ export function AssignmentModal({
     const taken = new Set(plan.rows.filter((r) => !self(r) && r.seat?.singleton).map((r) => r.seat!.key));
     return seats.filter((s) => !taken.has(s.key) && s.key !== except).map((s) => ({
       value: s.key, label: s.label, group: s.group,
-      hint: s.singleton ? (s.holders.filter((h) => !h.frozen).map((h) => h.name).join("، ") || "شاغر") : undefined,
+      hint: s.singleton ? (s.holders.filter((h) => !h.frozen).map((h) => h.name).join("، ") || "فارغ") : undefined,
     }));
   };
   // والأعضاءُ المعروضون: لا من اختير في تغييرٍ آخر
@@ -372,7 +372,7 @@ export function AssignmentModal({
                       );
                     })}
                     {plan.vacated.map((label) => (
-                      <p key={`v-${label}`} className="asgm-out-vac">{`يبقى شاغرًا: ${label}`}</p>
+                      <p key={`v-${label}`} className="asgm-out-vac">{`يبقى فارغًا: ${label}`}</p>
                     ))}
                     {plan.dupUser ? <p className="asgm-out-err">{`«${people.get(plan.dupUser)?.name ?? ""}» في أكثر من تعيين.`}</p> : null}
                     {plan.dupSeat ? <p className="asgm-out-err">{`«${seatByKey.get(plan.dupSeat)?.label ?? primarySeat?.label ?? ""}» مقعدٌ واحد، واختير له أكثر من عضو.`}</p> : null}

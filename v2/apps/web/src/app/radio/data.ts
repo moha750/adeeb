@@ -10,9 +10,10 @@ import { cache } from "react";
 import { createAdeebServerClient } from "@adeeb/core";
 import { fmtDate } from "@/lib/dates";
 import { publicUrl } from "@/lib/radio/r2";
-import { parseChapters } from "@/lib/radio/chapters";
 import type { Platform, ShowTone } from "../dashboard/radio/vocab";
-import type { Track } from "./_player/PlayerProvider";
+import { isPlayable, type PublicEpisode, type PublicShow } from "./model";
+
+export { isPlayable, toTrack, type PublicEpisode, type PublicShow } from "./model";
 
 const anon = () =>
   createAdeebServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
@@ -79,21 +80,6 @@ export const getStationWave = cache(async function getStationWave(bars = 40): Pr
 
 /* ══ البرامج ═════════════════════════════════════════════════════════ */
 
-export type PublicShow = {
-  id: string;
-  slug: string;
-  title: string;
-  tagline: string | null;
-  description: string | null;
-  logoUrl: string | null;
-  tone: ShowTone;
-  /** ثانيةُ بدء الحديث في هذا البرنامج — ترثها حلقاتُه. */
-  talkStartsAt: number;
-  hostName: string | null;
-  isFeatured: boolean;
-  episodeCount: number;
-};
-
 const SHOW_COLS = "id, slug, title, tagline, description, logo_path, tone, talk_starts_at, is_featured, host_member_id";
 
 type ShowRaw = {
@@ -152,44 +138,6 @@ export async function getPublicShows(): Promise<{ shows: PublicShow[]; error: bo
 }
 
 /* ══ الحلقات ═════════════════════════════════════════════════════════ */
-
-export type PublicEpisode = {
-  id: string;
-  slug: string;
-  number: number;
-  title: string;
-  summary: string | null;
-  notes: string | null;
-  transcript: string | null;
-  hostName: string | null;
-  /**
-   * روابطُ البثّ. والحلقةُ تُسمَع بأحد بابين:
-   *   المساران (`plainUrl` + `stemUrl`) فيظهر المقبض، وهو ما تُرفَع به الحلقاتُ اليوم.
-   *   المكسُ وحدَه (`musicUrl`) في الحلقات القديمة، ومعه مبدّلٌ لا مقبض.
-   */
-  musicUrl: string | null;
-  plainUrl: string | null;
-  stemUrl: string | null;
-  musicSeconds: number | null;
-  plainSeconds: number | null;
-  /**
-   * موجتان تُعرضان: موجةُ ما يُسمَع بالموسيقى (`musicPeaks`) وموجةُ الصوت وحدَه.
-   * ولكلٍّ موجتُها لأنّ المقدّمة موسيقى خالصة، فموجةٌ واحدةٌ لهما تكذب على العين.
-   */
-  musicPeaks: number[] | null;
-  plainPeaks: number[] | null;
-  /**
-   * ثانيةُ بدء الحديث **بعد** الوراثة. المساران تايم لاينٌ واحد فلا يحتاجها الجمع،
-   * وإنّما يستعملها المشغّل لشيءٍ واحد: ألّا يجلس المستمعُ في صمتٍ إن أطفأ الموسيقى
-   * والمقدّمةُ لم تنتهِ.
-   */
-  talkStartsAt: number;
-  youtubeUrl: string | null;
-  publishedAt: string | null;
-  dateLabel: string;
-  likes: number;
-  plays: number;
-};
 
 const EP_COLS =
   "id, slug, number, title, summary, notes, transcript, host_member_id, audio_music_path, audio_music_seconds, audio_plain_path, audio_plain_seconds, audio_stem_path, audio_music_peaks, audio_plain_peaks, talk_starts_at, youtube_url, published_at, likes, plays";
@@ -272,45 +220,6 @@ export async function getPublicEpisode(showSlug: string, episodeSlug: string): P
   const episode = page.episodes.find((e) => e.slug === episodeSlug);
   if (!episode || !isPlayable(episode)) return null;
   return { show: page.show, episode, siblings: page.episodes.filter((e) => e.id !== episode.id) };
-}
-
-/**
- * أفيها ما يُسمَع؟ بابان: المساران معًا، أو المكسُ القديم وحدَه.
- * وهو الحدُّ نفسُه الذي يحرسه `radio_episodes_publish_guard` في القاعدة.
- */
-export const isPlayable = (e: PublicEpisode): boolean =>
-  Boolean(e.musicUrl) || Boolean(e.plainUrl && e.stemUrl);
-
-/**
- * صفُّ الحلقة كما يقرؤه المشغّل — **مصدرٌ واحد لثلاث صفحات**: الهبوط وصفحةُ
- * البرنامج وصفحةُ الحلقة. وكانت الثلاثُ تبنيه بأيديها، فأيُّ حقلٍ يُضاف يُنسى
- * في واحدة (وقع فعلًا يوم أُضيف مسارُ الموسيقى).
- *
- * والمدّةُ من المكس إن وُجد وإلّا من مسار الصوت: الحلقةُ بالمسارين لا مكسَ لها.
- */
-export function toTrack(
-  e: PublicEpisode,
-  show: { title: string; slug: string; logoUrl: string | null; tone: ShowTone },
-): Track {
-  return {
-    id: e.id,
-    title: e.title,
-    showTitle: show.title,
-    showSlug: show.slug,
-    episodeSlug: e.slug,
-    musicUrl: e.musicUrl,
-    plainUrl: e.plainUrl,
-    stemUrl: e.stemUrl,
-    talkStartsAt: e.talkStartsAt,
-    coverUrl: show.logoUrl,
-    seconds: e.musicSeconds ?? e.plainSeconds,
-    musicPeaks: e.musicPeaks,
-    plainPeaks: e.plainPeaks,
-    tone: show.tone,
-    /* المحاورُ تُشتقّ هنا مرّةً وتُحمَل مع الصفّ: الشاشةُ الكاملة تُفتَح من أيّ
-       سطحٍ في المحطّة ولا سبيلَ لها إلى `notes` هناك. */
-    chapters: parseChapters(e.notes),
-  };
 }
 
 /**

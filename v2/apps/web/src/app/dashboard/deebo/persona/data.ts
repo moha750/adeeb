@@ -37,7 +37,7 @@ export async function getPersona(): Promise<{ persona: PersonaForm | null; error
     .eq("id", 1)
     .maybeSingle();
   if (error) return { persona: null, error: error.message };
-  if (!data) return { persona: null, error: "صفُّ طبع ديبو مفقودٌ من القاعدة." };
+  if (!data) return { persona: null, error: "صفُّ شخصية ديبو مفقودٌ من القاعدة." };
 
   return {
     persona: {

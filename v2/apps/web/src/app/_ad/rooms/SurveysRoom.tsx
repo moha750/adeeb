@@ -12,48 +12,26 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { matchesSearch } from "@adeeb/design-system";
 import {
-  Archive, CalendarBlank, ChartBar, Clock, GlobeHemisphereEast, Handshake, LinkSimple, ListChecks, LockSimple, PauseCircle, Play, StopCircle, UserCircle, UsersThree,
+  Archive, CalendarBlank, ChartBar, Handshake, LinkSimple, ListChecks, PauseCircle, Play, StopCircle, UsersThree,
 } from "@phosphor-icons/react";
 import { ArrowClockwise, ArrowCounterClockwise, Eye, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { useLiveNow } from "@/app/dashboard/_components/useLiveNow";
 import type { SurveyRow } from "@/app/dashboard/surveys/data";
-import { ACCESS_LABEL, ACCESS_TYPES, OP_NEEDS, STATUS_OPS, canEditSurvey, canSurvey, type StatusOp } from "@/app/dashboard/surveys/vocab";
+import { ACCESS_TYPES, OP_NEEDS, STATUS_OPS, canEditSurvey, canSurvey, type StatusOp } from "@/app/dashboard/surveys/vocab";
 import { deleteSurveyPermanently, getSurveyPreview, setSurveyStatus } from "@/app/dashboard/surveys/actions";
 import { SurveyPreview } from "@/app/dashboard/surveys/SurveyPreview";
 import { SurveyShareModal, useSurveyShareOpener } from "@/app/dashboard/surveys/SurveyShares";
 import type { PublicQuestion, PublicSurvey } from "@/app/s/[code]/SurveyRespond";
 import { copyText } from "@/lib/clipboard";
 import { surveyPath } from "@/lib/surveys/code";
-import { AdActs, AdConfirm, AdBadge, AdButton, AdCard, AdRow, type AdMeta, type AdMetaTone, type AdOp } from "../primitives";
+import { AdActs, AdConfirm, AdButton, AdCard, AdRow, type AdMeta, type AdOp } from "../primitives";
 import { CollectionRoom, type Position } from "../collection";
 import { useAdLab } from "../lab";
-import { fmtDayFull, fmtNum, relTime } from "../format";
-import { arCount, arCounted, type ArForms } from "@/lib/arabicCount";
+import { fmtDayFull, fmtNum } from "../format";
+import { arCount, type ArForms } from "@/lib/arabicCount";
+import { WHO_ANSWERS, surveyChips, surveyInfo, surveyStub } from "./survey-ticket";
 
-/**
- * المعدودُ تحت رقم الكعب: «1 مُشاركة»، «2 مُشاركتان»، «5 مُشاركات»، «12 مُشاركةً» — لا «1 المشاركات».
- * والميمُ مضمومةٌ (محمد ٢٠٢٦-١٠-٣٠) حيث تقف الكلمةُ وحدها بلا سياق: تحت الرقم، وعنوانِ عمود السطر.
- */
-/**
- * **مَن يجيب** (محمد ٢٠٢٦-١٠-٣١: «عامّ» أو «للأعضاء» منفردةً غيرُ واضحة — و«عام» بلا شدّةٍ تُقرأ «سنة»): الرقاقةُ تقول
- * الجوابَ كاملًا برمزه، «للجميع» بالكرة و«للأعضاء فقط» بالقفل — وزنُهما واحد («لـ…»)، والمعنى معنى خيارَي النموذج.
- */
-const WHO_ANSWERS: Record<keyof typeof ACCESS_LABEL, { label: string; icon: React.ReactNode }> = {
-  public: { label: "للجميع", icon: <GlobeHemisphereEast /> },
-  members_only: { label: "للأعضاء فقط", icon: <LockSimple /> },
-};
-/**
- * **رقاقةُ الشراكة** (محمد ٢٠٢٦-١٠-٣١) برمز فعل «شركاء الاستبيان» نفسِه: عند الشريك ما ليس له وإذنُه فيه («مُشارَك معك
- * للقراءة/للتحرير» — لا تُخطئ جنسًا)، وعند صاحبه فعلُه هو («شاركته مع شريكين» — محمد ٢٠٢٦-١٠-٣١: الصاحبُ فاعلُ المشاركة؛
- * و«شاركته» بلا حركاتٍ تصلح للمخاطَب والمخاطَبة). وحسابُ النادي بلا رقاقة: الأزرارُ تكفيه.
- */
-const PARTNERS: ArForms = ["شريكٍ واحد", "شريكين", "شركاء", "شريكًا"];
-const partnerChip = (s: SurveyRow) =>
-  s.role === "read" ? "مُشارَك معك للقراءة"
-  : s.role === "edit" ? "مُشارَك معك للتحرير"
-  : s.role === "owner" && (s.shareCount ?? 0) > 0 ? `شاركته مع ${arCount(s.shareCount ?? 0, PARTNERS)}`
-  : null;
 /**
  * **مرشّحُ الملكيّة** (محمد ٢٠٢٦-١٠-٣١: «تريد نظامًا متكاملًا أم ترقّع؟»): الغرفةُ تخلط ما يملكه العضوُ بما شُورك معه
  * وبما يشرف عليه حسابُ النادي، والرقاقةُ تفرّقها كرتًا كرتًا لا قائمةً. فالمرشّحُ يجمعها — **ولا يظهر إلّا حين يفرّق**:
@@ -64,7 +42,6 @@ const OWNERSHIP: { value: string; label: string; roles: SurveyRow["role"][] }[] 
   { value: "shared", label: "مُشارَكة معي", roles: ["edit", "read"] },
   { value: "stewarded", label: "بإشراف النادي", roles: ["steward"] },
 ];
-const RESPONSES: ArForms = ["مُشاركة", "مُشاركتان", "مُشاركات", "مُشاركةً"];
 /** بعد «مع» في نافذة الحذف: مجرورة («مع مشاركتين»)، والصفرُ لا يُذكر. */
 const WITH_RESPONSES: ArForms = ["مشاركةٍ واحدة", "مشاركتين", "مشاركات", "مشاركةً"];
 
@@ -86,39 +63,6 @@ const POSITIONS: Position<SurveyRow>[] = [
 ];
 
 type StateOp = AdOp;
-
-/** الحالُ حيث تخالف موضعَها وحدها: في «نشطة» المتوقّفُ والمجدولُ والمنقضي. رقاقةٌ على الكرت، وشارةٌ في السطر. */
-function deviation(s: SurveyRow) {
-  if (s.deleted || s.archived) return null;
-  const d =
-    s.status === "paused" ? { tone: "warn" as const, label: "متوقّف مؤقّتًا" }
-    : s.status === "active" && s.scheduled ? { tone: "info" as const, label: "مجدول" }
-    : s.status === "active" && s.expired ? { tone: "neutral" as const, label: "انتهت مدّته" }
-    : null;
-  if (!d) return null;
-  return <AdBadge tone={d.tone}>{d.label}</AdBadge>;
-}
-
-/** لونُ سطر الحال: مفتوحٌ أخضر، وما يحتاج انتباهًا (موقوف، مجدول، يُغلق خلال ثلاثة أيّام) كهرمانيّ، والمنتهي خافت. */
-const SOON = 3 * 864e5;
-function statusTone(s: SurveyRow, now: number): AdMetaTone {
-  if (s.deleted) return "bad";
-  if (s.status === "draft" || s.status === "closed" || s.expired) return "muted";
-  if (s.status === "paused" || s.scheduled) return "warn";
-  if (s.endDate && +new Date(s.endDate) - now < SOON) return "warn";
-  return "ok";
-}
-
-function statusText(s: SurveyRow, now: number): string {
-  if (s.deleted) return "محذوف";
-  if (s.status === "draft") return "لم يُنشر بعد";
-  if (s.status === "paused") return "موقوفٌ مؤقّتًا";
-  if (s.status === "closed") return s.endDate ? `انتهى ${relTime(s.endDate, now)}` : "مغلق";
-  if (s.scheduled) return s.startDate ? `يفتح ${relTime(s.startDate, now)}` : "مجدولٌ للفتح";
-  if (s.expired) return s.endDate ? `انتهت مدّته ${relTime(s.endDate, now)}` : "انتهت مدّته";
-  if (s.endDate) return `يُغلق ${relTime(s.endDate, now)}`;
-  return "مفتوحٌ للمشاركة دائمًا";
-}
 
 /**
  * مختبر (`?as=`): الغرفةُ كما يراها صاحبُ دورٍ بعينه — كلُّ استبيانٍ بهذا الدور، وأفعالُ الحال معطّلة (الدورُ مُحاكًى).
@@ -226,24 +170,14 @@ export function SurveysRoom({ surveys: realSurveys, serverNow, view }: { surveys
 
   const t = now || serverNow;
   /** الكعبُ: المشاركاتُ بعددها ومعدودِها — في الكرت، وكعبًا مصغّرًا أوّلَ السطر. */
-  const stubOf = (s: SurveyRow) => ({ big: fmtNum(s.responses), small: arCounted(s.responses, RESPONSES) });
+  const stubOf = surveyStub;
   /** **الرقاقاتُ والسطورُ مصدرُها واحد** (محمد ٢٠٢٦-١١-٠١): مَن يجيب، والشراكة، والحالُ حيث تخالف موضعَها — رقاقاتٌ في العرضين. */
-  const chips = (s: SurveyRow) => (
-    <>
-      <AdBadge icon={WHO_ANSWERS[s.access].icon}>{WHO_ANSWERS[s.access].label}</AdBadge>
-      {partnerChip(s) && <AdBadge icon={<Handshake />}>{partnerChip(s)}</AdBadge>}
-      {deviation(s)}
-    </>
-  );
+  const chips = surveyChips;
   /**
    * والسطورُ بترتيبها (محمد ٢٠٢٦-١٠-٣١): الحالُ، ثمّ «أُنشئ 19 أكتوبر 2026»، ثمّ «بإعداد فلان» — كالفعاليّة: الموعدُ ثمّ «بتنظيم».
    * و«بإعداد» على قاعدة «بتحرير/بتنظيم»: لا تُخطئ جنسَ المُعِدّ. وفي السطر «أُنشئ» عمودٌ فيخرج منها.
    */
-  const info = (s: SurveyRow, inCard: boolean): AdMeta[] => [
-    { icon: <Clock />, text: statusText(s, t), tone: statusTone(s, t) },
-    ...(inCard && s.createdRaw ? [{ icon: <CalendarBlank />, text: `أُنشئ ${fmtDayFull(s.createdRaw)}` }] : []),
-    { icon: <UserCircle />, text: s.createdBy ? `بإعداد ${s.createdBy}` : "المُعِدّ غير معروف" },
-  ];
+  const info = (s: SurveyRow, inCard: boolean): AdMeta[] => surveyInfo(s, inCard, t);
 
   const create = <AdButton variant="fill" icon={<Plus />} href="/dashboard/surveys/new">استبيان جديد</AdButton>;
   const ownership = OWNERSHIP.filter((o) => live.some((s) => o.roles.includes(s.role)));

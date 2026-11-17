@@ -122,6 +122,9 @@ export function Dialog({
     if (!mounted) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        // **ما انفتح داخل النافذة يُغلق أوّلًا** (٢٠٢٦-١١-١٣): قائمةُ حقلٍ مفتوحةٌ (`aria-expanded`) تأخذ Escape لنفسها، وكانت النافذةُ
+        // تلتقطه قبلها (الالتقاطُ على الوثيقة) فتُغلَق كلُّها ويضيع ما كُتب فيها
+        if ((e.target as Element | null)?.closest?.('[aria-expanded="true"]')) return;
         // نبتلعه في الحالين — حتى في الانشغال — كي لا يلتقطه حوارٌ أعلى فيُغلق بدلًا منّا
         e.stopPropagation();
         if (!busy) onClose();

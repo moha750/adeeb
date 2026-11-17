@@ -14,7 +14,7 @@ import { DEEBO_KNOWLEDGE_ROOM } from "./deebo-knowledge.meta";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { matchesSearch } from "@adeeb/design-system";
-import { ChatCenteredText, ListNumbers } from "@phosphor-icons/react";
+import { ChatCenteredText, ListNumbers, Robot } from "@phosphor-icons/react";
 import { Eye, EyeSlash, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import type { FactRow } from "@/app/dashboard/deebo/knowledge/data";
@@ -96,6 +96,8 @@ export function DeeboKnowledgeRoom({ facts, view }: { facts: FactRow[]; serverNo
         navPath={DEEBO_KNOWLEDGE_ROOM.navPath}
         title={DEEBO_KNOWLEDGE_ROOM.title}
         action={{ label: "واقعة جديدة", icon: <Plus />, href: NEW_HREF }}
+        // الطريقُ إلى شخصيّته (محمد ٢٠٢٦-١١-١٣): المعرفةُ ماذا يقول، والشخصيّةُ كيف يقوله وما يرفضه
+        extra={{ label: "شخصية ديبو", icon: <Robot />, href: "/dashboard/deebo/persona" }}
         noun={AR_FACT}
         items={facts}
         positions={POSITIONS}
@@ -108,9 +110,8 @@ export function DeeboKnowledgeRoom({ facts, view }: { facts: FactRow[]; serverNo
         reorder={{ title: (f) => f.title, save: reorderFacts }}
         // حدُّ الغرفة مكتوبٌ فيها لا في وثيقةٍ بعيدة: كاتبُ الواقعة يقرؤه وهو يكتب
         notice={
-          <AdNote tone="info">
-            {/* (محمد ٢٠٢٦-١١-٠٢: «الثابتُ وحده يُكتب هنا — لم أفهمها») فصارت تقول القاعدةَ وسببَها بكلامٍ مباشر */}
-            <b>اكتب هنا ما لا يتغيّر مع الوقت.</b>{" "}
+          // (محمد ٢٠٢٦-١١-٠٢: «الثابتُ وحده يُكتب هنا — لم أفهمها») فصارت تقول القاعدةَ وسببَها بكلامٍ مباشر
+          <AdNote tone="info" label="قاعدة هذه الغرفة" title="اكتب هنا ما لا يتغيّر مع الوقت.">
             ديبو يقرأ هذه الوقائع كما هي في كلّ محادثة، فلا تكتب ما يتغيّر، كعدد الأعضاء أو اسم القائد الحاليّ أو موعد فعاليّةٍ
             قادمة: سيبقى ديبو يقوله بعد أن يتغيّر.
           </AdNote>

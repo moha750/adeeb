@@ -4,6 +4,7 @@
  * والترشيح بحسب الدور يجري هنا صراحةً: **الكاتب لا يرى إلّا ما كُلِّف به**.
  */
 import "server-only";
+import { fmtDateOnly } from "@/lib/dates";
 import { newsService, ENV_MISSING, type NewsroomActor } from "@/lib/news/authz";
 import { CLUB_LABEL, buildUnitOptions, unitNameIndex, unitValue, type UnitOption } from "@adeeb/core/org-unit";
 import type { AssignmentStatus, Category, Workflow } from "./vocab";
@@ -210,6 +211,8 @@ export type PublicComment = {
 
 export type NewsDetail = {
   row: NewsRow;
+  /** فعاليّةُ الخبر إن رُبط بها (`news.activity_id`، ٢٠٢٦-١١-١٥) */
+  activityId: string | null;
   coverPhotographer: string | null;
   galleryImages: string[];
   galleryPhotographers: string[];
@@ -236,7 +239,7 @@ export async function getNewsDetail(
 
   const [extraRes, aRes, cRes, lRes, pcRes] = await Promise.all([
     sb.from("news")
-      .select("cover_photographer, gallery_images, gallery_photographers, review_notes, submitted_at")
+      .select("cover_photographer, gallery_images, gallery_photographers, review_notes, submitted_at, activity_id")
       .eq("id", id).maybeSingle(),
     sb.from("news_writer_assignments")
       .select("writer_id, status, assigned_fields, assignment_notes, assigned_at, started_at, completed_at")
@@ -286,6 +289,7 @@ export async function getNewsDetail(
   return {
     detail: {
       row,
+      activityId: (extraRes.data as { activity_id?: string | null } | null)?.activity_id ?? null,
       coverPhotographer: extraRes.data?.cover_photographer ?? null,
       galleryImages: (extraRes.data?.gallery_images as string[] | null) ?? [],
       galleryPhotographers: (extraRes.data?.gallery_photographers as string[] | null) ?? [],
@@ -331,13 +335,30 @@ export async function getNewsDetail(
 export type Option = { value: string; label: string };
 
 /** الأعضاء النشطون وحدهم يصلحون كتّابًا — الموقوف لا يُكلَّف. */
-export async function getMemberOptions(): Promise<Option[]> {
+export type MemberOption = Option & { avatarUrl: string | null; gender: string | null; unit: string | null };
+/**
+ * ومعها الوجهُ والجنسُ ولجنتُه (٢٠٢٦-١١-١٣): منتقي الكتّاب في نافذة التكليف يرسمهم كمنتقي النسبة — والوحدةُ تحت الاسم تفصل بين
+ * متشابهَي الاسم. **وحسابُ النادي ليس كاتبًا**: مؤسّسةٌ لا تُكلَّف بمحتوى (المالك ٢٠٢٦-١٠-١٨).
+ */
+export async function getMemberOptions(): Promise<MemberOption[]> {
   const sb = newsService();
   if (!sb) return [];
-  const { data } = await sb
-    .from("profiles").select("id, full_name")
-    .eq("account_status", "active").order("full_name", { ascending: true });
-  return (data ?? []).map((p) => ({ value: p.id, label: p.full_name }));
+  const [pRes, clubRes, urRes, cRes] = await Promise.all([
+    sb.from("profiles").select("id, full_name, avatar_url, gender").eq("account_status", "active").order("full_name", { ascending: true }),
+    sb.from("user_roles").select("user_id").eq("role_name", "adeeb_admin").eq("is_active", true),
+    sb.from("user_roles").select("user_id, committee_id").eq("is_active", true).not("committee_id", "is", null).order("is_acting", { ascending: true }),
+    sb.from("committees").select("id, committee_name_ar"),
+  ]);
+  const club = new Set((clubRes.data ?? []).map((r) => r.user_id as string));
+  const committee = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string]));
+  const unit = new Map<string, string>();
+  for (const r of urRes.data ?? []) {
+    const nm = committee.get(r.committee_id as number);
+    if (nm && !unit.has(r.user_id as string)) unit.set(r.user_id as string, nm);
+  }
+  return (pRes.data ?? []).filter((p) => !club.has(p.id)).map((p) => ({
+    value: p.id, label: p.full_name, avatarUrl: p.avatar_url ?? null, gender: p.gender ?? null, unit: unit.get(p.id) ?? null,
+  }));
 }
 
 /**
@@ -354,3 +375,15 @@ export async function getUnitOptions(): Promise<UnitOption[]> {
   ]);
   return buildUnitOptions({ councils: clRes.data, departments: dRes.data, committees: cRes.data });
 }
+
+/**
+ * **الفعاليّاتُ التي يُربط بها خبر** (٢٠٢٦-١١-١٥): المنشورةُ الأحدثُ فالأقدم، مئةٌ بحدٍّ — للقائمة في «الجهة والرابط» عند رئيس التحرير.
+ * والتسميةُ اسمُها ويومُها («احتراف الفوتوغراف، 4 مايو 2026») فلا تلتبس فعاليّتان باسمٍ واحد.
+ */
+export async function getActivityOptions(): Promise<{ value: string; label: string }[]> {
+  const sb = newsService();
+  if (!sb) return [];
+  const { data } = await sb.from("activities").select("id, name, activity_date").eq("is_published", true).order("activity_date", { ascending: false }).limit(100);
+  return (data ?? []).map((a: { id: string; name: string; activity_date: string }) => ({ value: a.id, label: `${a.name}، ${fmtDateOnly(a.activity_date)}` }));
+}
+

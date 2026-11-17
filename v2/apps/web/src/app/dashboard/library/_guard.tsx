@@ -1,17 +1,13 @@
-import { Alert } from "@adeeb/design-system";
-import { PageHeader } from "../_components/PageHeader";
+import { AdRoomDenied } from "@/app/_ad/states";
 
 /**
  * تنبيه «لا صلاحية» لصفحات المكتبة — يُعرض لمن لا يملك قدرة `manage_library`
  * (ولو كان من الإدارة العليا: الرتبة لا تعني الوصول، القدرة وحدها تعنيه).
+ * **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧، `AdRoomDenied`): لوحُ الغرفة باسمها، وتحته القفلُ وجملتُه نفسُها و«العودة إلى البوّابة».
  */
 export function LibraryDenied() {
   return (
-    <>
-      <PageHeader title="المكتبة" />
-      <Alert tone="warning" title="لا تملك صلاحية إدارة المكتبة">
-        هذه الصفحة لمن مُنحت له قدرة «إدارة المكتبة». إن رأيت أنّها ينبغي أن تكون لك، فراجع مسؤول الصلاحيات.
-      </Alert>
-    </>
+    <AdRoomDenied title="المكتبة" navPath="/dashboard/library" what="إدارة المكتبة"
+      desc="هذه الصفحة لمن مُنحت له قدرة «إدارة المكتبة». إن رأيت أنّها ينبغي أن تكون لك، فراجع مسؤول الصلاحيات." />
   );
 }

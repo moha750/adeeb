@@ -4,7 +4,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import type { Choice, QuestionType } from "@/app/dashboard/surveys/vocab";
-import { hasChoices } from "@/app/dashboard/surveys/vocab";
+import { hasChoices, isDataQuestion, type QuestionOptions } from "@/app/dashboard/surveys/vocab";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -21,6 +21,8 @@ export type QuestionAgg = {
   type: QuestionType;
   required: boolean;
   answered: number;
+  /** حقلُ بياناتٍ لا يُلخَّص في الخلاصة (`isDataQuestion`: قرارُ صاحب الاستبيان، وإلّا افتراضُ النوع) */
+  data: boolean;
 } & (
   | { kind: "choice"; items: ChoiceCount[] }
   | { kind: "boolean"; yes: number; no: number }
@@ -96,6 +98,7 @@ export async function getSurveyAggregates(surveyId: number): Promise<{ agg: Surv
       type: q.question_type as QuestionType,
       required: !!q.is_required,
       answered: rows.length,
+      data: isDataQuestion(q.question_type, (q.options ?? null) as QuestionOptions),
     };
     const options = (q.options ?? null) as { choices?: Choice[]; scale?: { min: number; max: number } } | null;
 

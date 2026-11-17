@@ -22,7 +22,7 @@ import {
 import { ArrowCounterClockwise, ArrowsClockwise, Eye, PencilSimple, Prohibit } from "@/app/_components/glyphs";
 import { positionLine } from "@/lib/positionLabel";
 import { waHref } from "@/lib/whatsapp";
-import { arCount, type ArForms } from "@/lib/arabicCount";
+import type { ArForms } from "@/lib/arabicCount";
 import type { MemberRow, MemberStatus, MoveTarget } from "@/app/dashboard/members/data";
 import { GENDERS, TERMINATION_KINDS } from "@/app/dashboard/members/vocab";
 import { useMemberDialogs } from "@/app/dashboard/members/MemberDialogs";
@@ -32,7 +32,6 @@ import { CollectionRoom, type FilterDef, type Position } from "../collection";
 import { fmtDayFull } from "../format";
 
 const AR_MEMBER: ArForms = ["عضوٌ واحد", "عضوان", "أعضاء", "عضوًا"];
-const AR_COMMITTEE: ArForms = ["لجنةٌ واحدة", "لجنتان", "لجان", "لجنةً"];
 
 /** عنوانُ الغرفة واسمُ ناسها بالحالة المثبّتة — كما في القديمة. */
 const SECTION: Record<"all" | MemberStatus, { title: string; noun: string }> = {
@@ -80,7 +79,7 @@ export function MembersRoom({
   /**
    * **اللجانُ مواضعُ الغرفة** (محمد ٢٠٢٦-١١-٠٣) — «من أشرف عليهم» و«قسمي» و«لجنتي»: «الكلّ» ثمّ موضعٌ لكلّ لجنةٍ بعدد أعضائها
    * (ولجنةٌ واحدة بلا مبدّل)، ثمّ «السابقون» إن كان في الأعضاء سابقون (من غادر لجانَ المشرف أثناء إشرافه). وقيادةُ اللجنة المختارة
-   * سطرٌ فوق الكروت (القائد والنائب والمشرفون، والشاغرُ بلونه)، وفي «الكلّ» ما ينقص القيادةَ من لجان. كانت كروتُ اللجان تبويبًا
+   * سطرٌ فوق الكروت (القائد والنائب والمشرفون، والفارغُ بلونه)، وفي «الكلّ» ما ينقص القيادةَ من لجان. كانت كروتُ اللجان تبويبًا
    * وحدها («اللجان») فصارت معلومتُها هذا السطر، والسجلُّ إنسانٌ واحدٌ بكرتٍ واحد.
    */
   committees?: CommitteeLead[];
@@ -100,7 +99,7 @@ export function MembersRoom({
   seatRows?: MemberRow[];
   /**
    * **التواصلُ من صفّ القيادة** (محمد ٢٠٢٦-١١-٠٣: «القائدُ والنائبُ يحتاجان أن يتواصلا مع مشرفيهما») — زرُّ واتساب في آخر كلّ تذكرة
-   * لغير صاحب الشاشة ولغير الشاغر وبشرط الجوّال. يتبع `contact` افتراضًا، و«قسمي» يطلبه وحده: عرضٌ محضٌ للكشف لكنّ المنسّقَ يصل قياداته.
+   * لغير صاحب الشاشة ولغير الفارغ وبشرط الجوّال. يتبع `contact` افتراضًا، و«قسمي» يطلبه وحده: عرضٌ محضٌ للكشف لكنّ المنسّقَ يصل قياداته.
    */
   seatContact?: boolean;
   serverNow: number;
@@ -141,12 +140,13 @@ export function MembersRoom({
   const inSeat = (m: MemberRow) => m.status !== "suspended" && seat(m) < 2;
   const shown = committees && !multi ? items.filter((m) => !inSeat(m)) : items;
 
-  /** **صفُّ القيادة** للجنة المختارة (أو الوحيدة): رأسُ الوحدة إن كان، ثمّ القائد والنائب والمشرفون — والشاغرُ مقعدٌ متقطّع */
+  /** **صفُّ القيادة** للجنة المختارة (أو الوحيدة): رأسُ الوحدة إن كان، ثمّ القائد والنائب والمشرفون — والفارغُ مقعدٌ متقطّع */
   const people = new Map([...seatRows, ...members].map((m) => [m.id, m]));
-  const toSeat = (title: string, p: SeatPerson | null, icon?: ReactNode, meta?: AdMeta[]): AdSeat => ({
+  const toSeat = (title: string, p: SeatPerson | null, icon: ReactNode, meta: AdMeta[], group: AdSeat["group"]): AdSeat => ({
     title,
     icon,
     meta,
+    group,
     person: p ? { name: p.name, src: p.avatar, gender: p.gender } : null,
     you: !!p && p.id === viewerId,
     onOpen: p && people.has(p.id) ? () => openView(people.get(p.id)!) : undefined,
@@ -157,43 +157,45 @@ export function MembersRoom({
   });
   /**
    * **لكلّ مقعدٍ سطورُه تحت اسمه، سطورَ الكرت برموزها** (محمد ٢٠٢٦-١١-٠٣: «الاتّساقُ البصريّ») — القائدُ والنائبُ والمنسّقُ منذ متى
-   * («منذ 17 أبريل 2026»، و«تكليفًا منذ…» للمكلَّف)، والمشرفُ إدارتُه باسمها كاملًا سطرًا ومنذ متى سطرًا. والشاغرُ لغتُه:
+   * («منذ 17 أبريل 2026»، و«تكليفًا منذ…» للمكلَّف)، والمشرفُ إدارتُه باسمها كاملًا سطرًا ومنذ متى سطرًا. والفارغُ لغتُه:
    * «لم يُنتخب بعد» أو «لم يُعيَّن بعد».
    */
   const sinceOf = (p: SeatPerson | null, vacant: string): AdMeta[] => {
     const text = !p ? vacant : p.since ? `${p.acting ? "تكليفًا منذ" : "منذ"} ${fmtDayFull(p.since)}` : p.acting ? "تكليفًا" : null;
     return text ? [{ icon: <CalendarCheck />, text, tone: p ? undefined : "muted" }] : [];
   };
-  const headSeat = (h: HeadSeat) => toSeat("المنسّق", h.person, <Compass />, [{ icon: <Buildings />, text: h.unit }, ...sinceOf(h.person, "لم يُعيَّن بعد")]);
+  // ومجموعاتُ الصفّ: من يقود الوحدة («القيادة»: المنسّقُ، والقائدُ ونائبُه)، ومن يشرف عليها من خارجها («الإشراف») — ورمزُ كلٍّ
+  // رمزُ عائلة مقاعدها (التاجُ للقيادة، والدرعُ للإشراف)، فيُرى الرمزُ فوق المجموعة ثمّ في كروتها (محمد ٢٠٢٦-١١-٠٤: «نضيف أيقونة؟»)
+  const LEAD = { label: "القيادة", icon: <Crown /> };
+  const OVERSIGHT = { label: "الإشراف", icon: <ShieldCheck /> };
+  const headSeat = (h: HeadSeat) => toSeat("المنسّق", h.person, <Compass />, [{ icon: <Buildings />, text: h.unit }, ...sinceOf(h.person, "لم يُعيَّن بعد")], LEAD);
   // ومقعدُ المنسّق لا يتكرّر في كلّ لجنة: ثابتٌ لا يتغيّر بتغيّرها، وهو صاحبُ الشاشة — مكانُه «الأعضاء» و«القيادات» (محمد ٢٠٢٦-١١-٠٣)
   // والقائدُ والنائبُ سطرُهما الأوّل قسمُ لجنتهما كما المشرفُ إدارتُه — فلكلّ مقعدٍ سطران: جهتُه ثمّ منذ متى
   const deptLine = (c: CommitteeLead): AdMeta[] => (c.dept ? [{ icon: <Buildings />, text: c.dept }] : []);
   const seatsOf = (c: CommitteeLead): AdSeat[] => [
-    toSeat("القائد", c.leader, <Crown />, [...deptLine(c), ...sinceOf(c.leader, c.leaderElected ? "لم يُنتخب بعد" : "لم يُعيَّن بعد")]),
-    toSeat("النائب", c.deputy, <CrownSimple />, [...deptLine(c), ...sinceOf(c.deputy, "لم يُعيَّن بعد")]),
+    toSeat("القائد", c.leader, <Crown />, [...deptLine(c), ...sinceOf(c.leader, c.leaderElected ? "لم يُنتخب بعد" : "لم يُعيَّن بعد")], LEAD),
+    toSeat("النائب", c.deputy, <CrownSimple />, [...deptLine(c), ...sinceOf(c.deputy, "لم يُعيَّن بعد")], LEAD),
     // المشرفُ سطران: إدارتُه ثمّ منذ متى. (جُرّب ٢٠٢٦-١١-٠٣ أن تكون الإدارةُ في اسم المقعد «مشرف إدارة الموارد البشرية» ليستوي السطرُ
     // الواحد في الكروت الأربعة — فقال محمد: «قبلُ كان أجمل»؛ ورُدّ أن يُزاد للقائد والنائب قسمُ اللجنة: معلومتُها لا معلومتُهما، ومكرّرة)
-    ...c.supervisors.map((x) => toSeat("المشرف", x.person, <ShieldCheck />, [{ icon: <Buildings />, text: x.unit }, ...sinceOf(x.person, "لم يُعيَّن بعد")])),
+    ...c.supervisors.map((x) => toSeat("المشرف", x.person, <ShieldCheck />, [{ icon: <Buildings />, text: x.unit }, ...sinceOf(x.person, "لم يُعيَّن بعد")], OVERSIGHT)),
   ];
   /**
-   * **ما ينقص اللجانَ سطرٌ في «الأعضاء» و«القيادات»** (حيث لا صفَّ للجنةٍ بعينها): «ينقص لجنتان: لجنة التصوير (بلا نائب)…» —
-   * وفي اللجنة المختارة يقولها صفُّ القيادة نفسُه بمقاعده المتقطّعة، فلا سطر.
+   * **«القيادات» خريطةُ قيادة الوحدة** (محمد ٢٠٢٦-١١-٠٤): كان كروتَ أعضاءٍ للقادة وحدهم بلا مشرفين ولا شواغر، فلا يُري المنسّقَ
+   * قيادةَ قسمه. فصار لوحةً (`board`): رأسُ الوحدة (المنسّق) تحت اسم القسم ورمزه، ثمّ كلُّ لجنةٍ مجموعةً بعنوانها (`AdGroupTitle`
+   * برمزها) وتحتها مقاعدُها الأربعة — فالشواغرُ مقاعدُ متقطّعةٌ تُرى، لا جملة.
    */
-  const vacancies = (c: CommitteeLead) => [
-    ...(!c.leader && !c.deputy ? ["بلا قائد ولا نائب"] : !c.leader ? ["بلا قائد"] : !c.deputy ? ["بلا نائب"] : []),
-    ...c.supervisors.filter((x) => !x.person).map((x) => `بلا مشرف من ${x.unit}`),
+  const seatMap = (): AdSeat[] => [
+    ...(unitHead ? [{ ...headSeat(unitHead), group: { label: unitHead.unit, icon: unitHead.icon ?? <Buildings />, head: true } }] : []),
+    ...(committees ?? []).flatMap((c) => seatsOf(c).map((x) => ({ ...x, group: { label: c.name, icon: c.icon ?? <UsersThree /> } }))),
   ];
-  const gaps = (committees ?? []).filter((c) => vacancies(c).length);
-  const gapText = gaps.length
-    ? `ينقص ${arCount(gaps.length, AR_COMMITTEE)}: ${gaps.map((c) => `${c.name} (${vacancies(c).join("، ")})`).join("، ")}.`
-    : null;
+  // ولا تنبيهَ في «الأعضاء» (محمد ٢٠٢٦-١١-٠٤: «هل له داعٍ؟»، و«تصميمُ التنبيه لم يعجبني أبدًا»): الشواغرُ مقاعدُ تُرى في «القيادات»،
+  // فالسطرُ يكرّر ما تقوله الخريطة. (كانت جملةً برتقاليّةً تعدّد اللجانَ وما ينقصها، ثمّ سطرًا يعدّ المقاعدَ الفارغة بفعلٍ يفتحها.)
   const notice = !committees || pos === "former"
     ? undefined
     : selected
-      ? <AdSeats label={`قيادة ${selected.name}`} seats={seatsOf(selected)} gaps={null} />
-      // وفي «الأعضاء» و«القيادات»: رأسُ الوحدة وما ينقص لجانَها في صفٍّ واحد (كانا صندوقين: صفٌّ بمقعدٍ وحيد وسطرٌ أحمر تحته)
-      : unitHead || gapText
-        ? <AdSeats label={unitHead ? `قيادة ${unitHead.unit}` : "قيادة لجانك"} seats={unitHead ? [headSeat(unitHead)] : []} gaps={gapText} />
+      ? <AdSeats label={`قيادة ${selected.name}`} seats={seatsOf(selected)} />
+      : pos === "leads"
+        ? <AdSeats label={`قيادة ${title}`} seats={seatMap()} />
         : undefined;
   const extra: AdAction | undefined = groupLink
     ? { label: groupLink.label, icon: <UsersThree />, onClick: () => window.open(groupLink.href, "_blank", "noopener") }
@@ -210,7 +212,8 @@ export function MembersRoom({
     // «الأعضاء» لا «الكلّ»: القادةُ في «القيادات» وفي صفّ كلّ لجنة، والكشفُ أعضاؤها
     ...(multi || hasFormer ? [{ key: "all", label: "الأعضاء", match: (m: MemberRow) => m.status !== "suspended" && !inSeat(m), empty: "لا أعضاء بعد." }] : []),
     // «القيادات»: قادةُ اللجان ونوّابُهم معًا (محمد ٢٠٢٦-١١-٠٣) — للمنسّق والمشرف على أكثر من لجنة
-    ...(multi ? [{ key: "leads", label: "القيادات", match: (m: MemberRow) => inSeat(m), empty: "لا قادةَ ولا نوّابَ بعد." }] : []),
+    // وعددُه مقاعدُ الخريطة المشغولة — رأسُ الوحدة والقادةُ والنوّابُ والمشرفون (محمد ٢٠٢٦-١١-٠٤: كان ٣ والخريطةُ تُري ٦)
+    ...(multi ? [{ key: "leads", label: "القيادات", match: (m: MemberRow) => inSeat(m), empty: "لا قادةَ ولا نوّابَ بعد.", board: true, count: seatMap().filter((x) => x.person).length }] : []),
     ...(multi ? committees.map((c) => ({
       key: `c${c.id}`, label: c.name, match: (m: MemberRow) => m.status !== "suspended" && !inSeat(m) && m.committeeId === c.id, empty: "لا أعضاء في هذه اللجنة بعد.",
     })) : []),

@@ -48,7 +48,8 @@ export type StatusOp = keyof typeof STATUS_OPS;
 export type AccessType = "public" | "members_only";
 
 export const ACCESS_TYPES: { value: AccessType; label: string }[] = [
-  { value: "public", label: "عامّ: يجيب أيّ زائر" },
+  // «للجميع» لا «عامّ: يجيب أيّ زائر»: «زائر» اسمُ من يتصفّح بلا حساب، والمقصودُ أيُّ أحد (محمد ٢٠٢٦-١١-١٢)
+  { value: "public", label: "للجميع: يشارك أيّ أحد" },
   { value: "members_only", label: "للأعضاء فقط: يتطلّب عضويّة نشطة" },
 ];
 export const ACCESS_LABEL: Record<AccessType, string> = { public: "عامّ", members_only: "للأعضاء" };
@@ -159,11 +160,23 @@ export const hasScale = (t: string): boolean => t === "rating_stars" || t === "l
  */
 export type Choice = { id: string; label: string; retired?: boolean };
 
-/** شكل عمود options في survey_questions. */
+/** شكل عمود options في survey_questions. و`data` (٢٠٢٦-١١-٠٨) قرارُ صاحب الاستبيان: حقلُ بياناتٍ أم سؤالُ رأي — لا يُكتب إلّا إذا خالف افتراضَ النوع. */
 export type QuestionOptions = {
   choices?: Choice[];
   scale?: { min: number; max: number };
+  data?: boolean;
 } | null;
+
+/**
+ * **حقلُ بيانات أم سؤالُ رأي** (٢٠٢٦-١١-٠٨). حقلُ البيانات (اسمٌ وجوالٌ وبريدٌ ورقمٌ جامعيّ…) يُجمع ليُقرأ في جدول النتائج ولا يُلخَّص
+ * في خلاصتها، وسؤالُ الرأي يُلخَّص بنسبه أو تعليقاته. والنوعُ وحده لا يقول النيّة (محمد: سؤالُ «رقم» قد يكون رقمًا جامعيًّا فيُلخَّص
+ * توزيعًا لأرقام الطلاب، و«نصٌّ قصير» قد يكون رأيًا)، فهو افتراضٌ يغيّره صاحبُ الاستبيان عند بناء السؤال.
+ */
+export const DATA_TYPES: ReadonlySet<string> = new Set(["short_text", "email", "phone", "url", "date", "time", "datetime"]);
+export const isDataType = (t: string): boolean => DATA_TYPES.has(t);
+/** القرارُ النافذ: ما اختاره صاحبُ الاستبيان، وإلّا افتراضُ النوع */
+export const isDataQuestion = (t: string, options: QuestionOptions | undefined): boolean =>
+  typeof options?.data === "boolean" ? options.data : isDataType(t);
 
 /** حدود المقياس المقبولة — يتحقّق منها النموذج والفعل الخادميّ معًا. */
 export const SCALE_MIN = 0;

@@ -1,28 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { BookReaderPage } from "@adeeb/design-system";
-import { createClient } from "@/lib/supabase/client";
 
 // المحرّك client-only — يُحمَّل ديناميكيًّا (ssr:false) فلا يمسّ SSR إطلاقًا، مع لبنة تحميل.
 const BookReader = dynamic(() => import("@adeeb/design-system").then((m) => m.BookReader), {
   ssr: false,
-  loading: () => (
-    <div className="grid min-h-[360px] place-items-center text-content-muted" style={{ fontFamily: "var(--font-latin)" }}>
-      …يُفتح الكتاب
-    </div>
-  ),
+  loading: () => <p className="ad-pr-reader-wait" role="status">يُفتح الكتاب…</p>,
 });
 
-export function Reader({ bookId, pages }: { bookId: string; pages: BookReaderPage[] }) {
-  // منارة مشاهدة واحدة (RPC ذرّيّ عبر anon) — أدقّ من الحقن أثناء التصيير المُخزَّن.
-  const counted = useRef(false);
-  useEffect(() => {
-    if (counted.current) return;
-    counted.current = true;
-    createClient().rpc("library_increment_views", { p_book_id: bookId }).then(() => {}, () => {});
-  }, [bookId]);
-
-  return <BookReader pages={pages} rtl />;
+export function Reader({ bookId, pages, tools, sections, initialPage, onPage }: {
+  bookId: string; pages: BookReaderPage[]; tools?: ReactNode;
+  sections?: { title: string; page: number }[]; initialPage?: number; onPage?: (page: number) => void;
+}) {
+  // لا عدَّ هنا (٢٠٢٦-١١-١٧): المشاهدةُ تُعلنها صفحةُ الكتاب نفسُها (`library/[slug]/page.tsx`) عند تصييره،
+  // فتُعدّ كما يُعدّ الخبرُ والاستبيان. والقارئُ يُفتح في نافذةٍ لا مع كلّ زيارة، فالعدُّ فيه يُسقط مَن لم يفتحه.
+  return <BookReader pages={pages} rtl tools={tools} sections={sections} initialPage={initialPage} onPage={onPage} resumeKey={bookId} offerResume={false} fullscreen="page" labelled />;
 }

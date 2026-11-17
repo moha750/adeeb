@@ -141,6 +141,8 @@ export type SurveyQuestion = {
   required: boolean;
   choices: Choice[];
   scale: { min: number; max: number } | null;
+  /** ما قرّره صاحبُ الاستبيان: حقلُ بياناتٍ أم رأي — `null` حين يُترك لافتراض النوع */
+  data: boolean | null;
   /** كم إجابة مخزّنة لهذا السؤال — يحكم ما يُسمح به في التحرير (نوعٌ لا يتغيّر، وحذفٌ يُصادَق عليه). */
   answers: number;
 };
@@ -197,6 +199,7 @@ export async function getSurveyDetail(id: number): Promise<{ survey: SurveyDetai
         required: !!q.is_required,
         choices: options?.choices ?? [],
         scale: options?.scale ?? null,
+        data: typeof options?.data === "boolean" ? options.data : null,
         answers: answerCount.get(q.id) ?? 0,
       };
     }),

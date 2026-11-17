@@ -39,15 +39,15 @@ const DIGITS = /[0-9٠-٩۰-۹]/;
 /** التحقّق المشترك — نفس قيود القاعدة برسائل عربيّة (لا نثق بالعميل). */
 function validate(input: PersonaForm): string | null {
   const required: [keyof PersonaForm, string, number][] = [
-    ["identity", "«من أنت»", 2000],
-    ["tone", "«نبرتك»", 1200],
-    ["unknownAnswer", "جملة «لا أعرف»", 400],
+    ["identity", "«من هو»", 2000],
+    ["tone", "«كيف يتكلّم»", 1200],
+    ["unknownAnswer", "«ما يقوله حين لا يعرف»", 400],
   ];
   for (const [key, label, max] of required) {
     const v = clean(input[key] as string);
     if (v.length < 2) return `${label} مطلوبٌ ولا يُترك فارغًا.`;
     if (v.length > max) return `${label} أطول من الحدّ المسموح.`;
-    if (DIGITS.test(v)) return `${label} فيه رقم. الرقمُ في طبع ديبو يُسقط حارسَ الأرقام، فامحُه.`;
+    if (DIGITS.test(v)) return `${label} فيه رقم. الرقمُ في شخصية ديبو يُسقط حارسَ الأرقام، فامحُه.`;
   }
   const bad = lines(input.prohibitions).find((p) => DIGITS.test(p));
   if (bad) return `في المحظورات رقم: «${bad}». اكتبها شُرَطًا لا قائمةً مرقَّمة.`;
@@ -60,9 +60,9 @@ function validate(input: PersonaForm): string | null {
     const name = r.title?.trim() || `الحكم ${["الأوّل","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن"][i] ?? ""}`.trim();
     const body = clean(r.body);
     if (body.length < 2) return `${name}: متنُه فارغ. اكتبه أو احذف الحكم.`;
-    if (body.length > 1200) return `${name}: أطولُ من الحدّ (١٢٠٠ حرف). اقسمه حكمين.`;
+    if (body.length > 1200) return `${name}: أطولُ من الحدّ (1200 حرف). اقسمه حكمين.`;
     if (DIGITS.test(body) || DIGITS.test(r.title ?? "")) {
-      return `${name}: فيه رقم. الرقمُ في طبع ديبو يُسقط حارسَ الأرقام، فامحُه.`;
+      return `${name}: فيه رقم. الرقمُ في شخصية ديبو يُسقط حارسَ الأرقام، فامحُه.`;
     }
   }
 
@@ -74,7 +74,7 @@ function validate(input: PersonaForm): string | null {
     PROMPT_FIELDS.reduce((n, k) => n + clean(input[k] as string).length, 0) +
     boundariesText(input.rules).length;
   if (total > PROMPT_BUDGET) {
-    return `طبعُه أطول ممّا يحتمل (${total} من ${PROMPT_BUDGET} حرفًا). التوجيهُ المتورّم يُنسي أوّلَه، فاحذف قبل أن تضيف.`;
+    return `شخصيّتُه أطول ممّا تحتمل (${total} من ${PROMPT_BUDGET} حرفًا). التوجيهُ المتورّم يُنسي أوّلَه، فاحذف قبل أن تضيف.`;
   }
 
   const asks = lines(input.suggestedQuestions);
@@ -119,7 +119,7 @@ export async function savePersona(input: PersonaForm): Promise<PersonaResult> {
   revalidatePath("/dashboard/deebo/persona");
   // الصفحةُ العلنيّةُ تقرأ أسئلتَه وجملةَ «لا أعرف» عند الرسم، فتُنعَش معها.
   revalidatePath("/deebo");
-  return { ok: true, message: "حُفظ طبعُ ديبو، ويتكلّم به من الآن." };
+  return { ok: true, message: "حُفظت شخصية ديبو، ويتكلّم بها من الآن." };
 }
 
 export type ProbeResult =

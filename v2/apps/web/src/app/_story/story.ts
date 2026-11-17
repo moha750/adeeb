@@ -9,6 +9,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
+import { toLatinDigits } from "@adeeb/core/digits";
 import { AUDIO, AUDIO_KEY, fmtDigits, STORY_ASSETS, STORY_CONFIG, TIME_MONTHS, WALL_SHOTS } from "./config";
 import { markStoryReady, storyIsReady } from "./ready";
 
@@ -1486,8 +1487,8 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
     });
 
     /* عرض (يوم/شهر/سنة) لكل فهرس: ميلاديًّا حسابًا مباشرًا، وهجريًّا عبر
-       Intl أم القرى — لا حساب هجريّ يدويّ (التوجيه نصًّا) */
-    const latinize = (s: string) => s.replace(/[٠-٩]/g, (c) => String("٠١٢٣٤٥٦٧٨٩".indexOf(c)));
+       Intl أم القرى — لا حساب هجريّ يدويّ (التوجيه نصًّا). وأجزاءُ Intl العربيّة تأتي بأرقامٍ هنديّة
+       فتُردّ لاتينيّةً بالمحوّل الواحد (`toLatinDigits`) قبل أن تُحسب، لا بمحوّلٍ محلّيّ */
     const hijriFmt =
       TH.calendar === "hijri"
         ? new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
@@ -1501,7 +1502,7 @@ export async function initStory(root: HTMLElement): Promise<() => void> {
       const dt = new Date(i * DAY_MS);
       if (hijriFmt) {
         const g: Record<string, number> = {};
-        for (const p of hijriFmt.formatToParts(dt)) if (p.type !== "literal") g[p.type] = Number(latinize(p.value));
+        for (const p of hijriFmt.formatToParts(dt)) if (p.type !== "literal") g[p.type] = Number(toLatinDigits(p.value));
         return { dom: g.day, mon: g.month - 1, year: g.year };
       }
       return { dom: dt.getUTCDate(), mon: dt.getUTCMonth(), year: dt.getUTCFullYear() };

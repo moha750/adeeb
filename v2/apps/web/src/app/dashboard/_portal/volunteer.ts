@@ -22,10 +22,11 @@ export type VolunteerView = {
   /** «متطوّعة أدِيب منذ سبتمبر 2026» — بجنس صاحبها كما في رأس الإطار. */
   since: string;
   trip: { hours: number; nowNote: string | null; months: { key: string; name: string; h: number; now: boolean }[]; joined: number; stars: number; certs: number };
-  upcoming: { id: string; oppId: string; when: string; title: string; say: string; tone: "ok" | "wait" | "muted"; icon: UpIcon; act: "withdraw" | "excuse" | null }[];
-  history: { id: string; when: string; title: string; out: string; tone: "ok" | "bad" | "muted"; icon: HistIcon; cert: boolean }[];
+  upcoming: { id: string; oppId: string; when: string; title: string; say: string; tone: "ok" | "wait" | "muted"; icon: UpIcon; act: "withdraw" | "excuse" | null; day?: string | null; flexible?: boolean }[];
+  history: { id: string; oppId?: string; when: string; title: string; out: string; tone: "ok" | "bad" | "muted"; icon: HistIcon; cert: boolean; day?: string | null; flexible?: boolean }[];
   prefs: string[];
-  opps: { id: string; committee: string | null; fit: boolean; title: string; sub: string }[];
+  /** `startsOn` و`flexible` و`dateLabel` و`seatsLabel`: كعبُ التذكرة وسطورُها في القالب الجديد (٢٠٢٦-١١-٠٤) */
+  opps: { id: string; committee: string | null; fit: boolean; title: string; sub: string; startsOn?: string | null; flexible?: boolean; dateLabel?: string | null; timeLabel?: string | null; location?: string | null; seatsLabel?: string | null }[];
 };
 
 const shortDay = (day: string) => dayLabel(day).split(" ").slice(1).join(" ");
@@ -35,11 +36,15 @@ const isFit = (o: OpenOpportunity, prefs: string[]) => !!o.committee && prefs.in
 /** الفتراتُ المتاحةُ لك في الفرصة: لم تقدّم عليها ولم تكتمل ولم تمضِ. */
 export const openPeriods = (o: OpenOpportunity) => o.periods.filter((p) => !p.mine && !p.full && !p.passed);
 
-export function oppSub(o: OpenOpportunity): string {
-  const seats = o.periods.length
+/** ما بقي فيها: فتراتُها المتاحة، أو مقاعدُها — `null` لفرصةٍ بلا سقف. */
+export function oppSeats(o: OpenOpportunity): string | null {
+  return o.periods.length
     ? counted(openPeriods(o).length, "فترةٌ متاحة", "فترتان متاحتان", "فترات متاحة", "فترةً متاحة")
     : o.seats == null ? null : o.taken >= o.seats ? "اكتمل العدد" : `باقٍ ${o.seats - o.taken} من ${o.seats}`;
-  return [o.dateLabel, seats].filter(Boolean).join("، ");
+}
+
+export function oppSub(o: OpenOpportunity): string {
+  return [o.dateLabel, oppSeats(o)].filter(Boolean).join("، ");
 }
 
 /** شهادةُ مشاركةٍ بعينها: بعنوان فرصتها ويوم خدمتها، وإلّا بالعنوان وحده. */
@@ -75,7 +80,7 @@ export function buildVolunteer(vol: MyVolunteering, female: boolean): VolunteerV
   const history: VolunteerView["history"] = [];
   for (const a of vol.applications) {
     const when = a.day ? `${dayLabel(a.day)}${a.period ? `، ${a.period.split("، ").slice(1).join("، ")}` : ""}` : a.flexible ? "مرنة، تنجزها في وقتك" : "موعدُها يُعلَن";
-    const base = { id: a.id, oppId: a.opportunityId, when: when.replace(/،\s*$/, ""), title: a.title };
+    const base = { id: a.id, oppId: a.opportunityId, when: when.replace(/،\s*$/, ""), title: a.title, day: a.day, flexible: a.flexible };
     if (a.status === "pending") {
       upcoming.push({ ...base, say: t("طلبك قيد المراجعة", "طلبكِ قيد المراجعة"), tone: "wait", icon: "pending", act: "withdraw" });
       continue;
@@ -93,11 +98,11 @@ export function buildVolunteer(vol: MyVolunteering, female: boolean): VolunteerV
       const done = a.flexible ? t("أنجزت", "أنجزتِ") : t("حضرت", "حضرتِ");
       const out = [c?.distinction ? `${done} بتميّز` : done, c?.hours ? hoursLabel(c.hours) : null,
         a.deservesCertificate === false ? `وحُجبت الشهادة${a.denialReason ? `: ${a.denialReason}` : ""}` : null].filter(Boolean).join("، ");
-      history.push({ id: a.id, when: hk, title: a.title, out, tone: "ok", icon: c?.distinction ? "star" : "attended", cert: !!c });
+      history.push({ id: a.id, oppId: a.opportunityId, day: a.day, flexible: a.flexible, when: hk, title: a.title, out, tone: "ok", icon: c?.distinction ? "star" : "attended", cert: !!c });
       continue;
     }
     if (a.attendance === "absent") {
-      history.push({ id: a.id, when: hk, title: a.title, out: a.flexible ? t("لم تنجزها", "لم تنجزيها") : t("غبت", "غبتِ"), tone: "bad", icon: "absent", cert: false });
+      history.push({ id: a.id, oppId: a.opportunityId, day: a.day, flexible: a.flexible, when: hk, title: a.title, out: a.flexible ? t("لم تنجزها", "لم تنجزيها") : t("غبت", "غبتِ"), tone: "bad", icon: "absent", cert: false });
       continue;
     }
     const out = {
@@ -108,7 +113,7 @@ export function buildVolunteer(vol: MyVolunteering, female: boolean): VolunteerV
       accepted: "",
       pending: "",
     }[a.status];
-    history.push({ id: a.id, when: hk, title: a.title, out, tone: "muted", icon: "off", cert: false });
+    history.push({ id: a.id, oppId: a.opportunityId, day: a.day, flexible: a.flexible, when: hk, title: a.title, out, tone: "muted", icon: "off", cert: false });
   }
   // الأقربُ موعدًا أوّلًا في الجاري، والأحدثُ أوّلًا في السجلّ (المرنةُ في آخرهما)
   const dayOf = new Map(vol.applications.map((a) => [a.id, a.day ?? ""]));
@@ -117,7 +122,10 @@ export function buildVolunteer(vol: MyVolunteering, female: boolean): VolunteerV
 
   const prefs = vol.prefs.filter(Boolean);
   const opps = vol.open
-    .map((o) => ({ id: o.id, committee: o.committee, fit: isFit(o, prefs), title: o.title, sub: oppSub(o) }))
+    .map((o) => ({
+      id: o.id, committee: o.committee, fit: isFit(o, prefs), title: o.title, sub: oppSub(o),
+      startsOn: o.startsOn ?? null, flexible: !!o.flexible, dateLabel: o.dateLabel, timeLabel: o.timeLabel, location: o.location, seatsLabel: oppSeats(o),
+    }))
     .sort((a, b) => Number(b.fit) - Number(a.fit));
 
   return {

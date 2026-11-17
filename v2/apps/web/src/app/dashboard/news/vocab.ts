@@ -70,6 +70,9 @@ export const FIELD_VALUES = Object.keys(FIELD_META) as FieldKey[];
 /** ما يُكلَّف به الكاتب افتراضًا: الكلمة له، والصورة لأهلها. */
 export const DEFAULT_FIELDS: FieldKey[] = ["title", "summary", "content", "authors"];
 
+/** **المعرضُ أربعُ صورٍ لا أكثر** (قرارُ المالك القديم، أعاده ٢٠٢٦-١١-١٣): كان بلا حدٍّ فقُبلت خمسٌ فوق أربع. يحرسه المحرّرُ والخادمُ معًا */
+export const GALLERY_MAX = 4;
+
 /* ══ حالة التكليف ════════════════════════════════════════════════════ */
 
 export type AssignmentStatus = "pending" | "accepted" | "declined" | "in_progress" | "completed";
@@ -89,6 +92,11 @@ export type Publishable = {
   imageUrl: string | null;
   authors: string[];
   content: string | null;
+  /**
+   * **لا فصلَ بلا عنوان** (محمد ٢٠٢٦-١١-١٧): فصولُ المتن إن عُرفت — فصلٌ بلا عنوانٍ ينقص الخبرَ كما تنقصه صورةُ الغلاف. وكُتبت يومَها عناوينُ
+   * الفصول الأولى الخمسة عشر التي كانت بلا عنوان، فلا يقف خبرٌ قائم. (والحارسُ في القاعدة `news_publish_guard` لا يعرفه بعدُ: ينتظر إذنَه)
+   */
+  sections?: { heading: string | null; body: string }[] | null;
 };
 
 /**
@@ -128,6 +136,7 @@ export function missingForPublish(n: Publishable): string[] {
   if (!n.summary?.trim()) gaps.push("الملخّص");
   if (!n.imageUrl?.trim()) gaps.push("صورة الغلاف");
   if (!n.authors.length) gaps.push("اسم الكاتب");
+  if (n.sections?.some((s) => (s.heading?.trim() || s.body.trim()) && !s.heading?.trim())) gaps.push("عنوانُ كلّ فصل");
   return gaps;
 }
 

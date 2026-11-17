@@ -8,9 +8,9 @@ const unit = (n: number, one: string, two: string, few: string, many: string): s
 
 /**
  * ما تبقّى من الموعد نصًّا. يُظهر أكبر وحدتين ما دام في الأمر يومٌ أو أكثر، فإذا دخل
- * اليومَ الأخير أضاف الثواني : فالعدّاد يتحرّك حيث الحركة تعني شيئًا.
+ * اليومَ الأخير أضاف الثواني : فالعدّاد يتحرّك حيث الحركة تعني شيئًا. (مُصدَّرٌ لسطر العدّاد في غرفتَي الترشّح والتصويت، ٢٠٢٦-١١-٠٤.)
  */
-function remain(ms: number): string {
+export function remain(ms: number): string {
   if (ms <= 0) return "انتهى الوقت";
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);

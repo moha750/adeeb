@@ -1,13 +1,17 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { isDayKey, presetRange } from "@/lib/analyticsRange";
+import { isDayKey, presetRange, PRESETS, todayKey } from "@/lib/analyticsRange";
 import { getQrAccess, getQrStats } from "../data";
-import { QrStatsView } from "../QrStatsView";
+import { QrStatsRoom } from "@/app/_ad/rooms/QrStatsRoom";
 
-export const metadata = { title: "إحصاء الباركود، بوّابة أدِيب" };
+export const metadata = { title: "الباركود، بوّابة أدِيب" };
 
 /**
  * إحصاءُ رمزٍ واحد. القفلُ قفلُ الغرفة نفسِه، والمِلكيّةُ تحكمها سياسةُ own-row: من طلب
  * رمزَ غيرِه لم يُردَّ بمنعٍ يكشف وجودَه، بل بصفحةٍ تقول «لم يُعثر عليه».
+ * والشكلُ قالبُ الإحصاء (`_ad/rooms/QrStatsRoom.tsx`، ٢٠٢٦-١١-٠٧)؛ والقديمُ `QrStatsView` باقٍ حتى يقرّر المالك حذفه.
+ *
+ * **وهي بيتُ الباركود** (محمد ٢٠٢٦-١١-١٧، بعد «حمّلها كصورة، ثمّ ماذا؟ أين يذهب؟»): الباركودُ نفسُه وتنزيلاه ونسخُ رابطه وفتحُ وجهته
+ * وتعديلُ شكله فوق الإحصاء، فإليها ينتهي الإنشاءُ بعد «تمّ» في التصميم (`?ready=1` يقول «باركودُك جاهز» لمن وصل منه).
  */
 export default async function QrStatsPage({
   params,
@@ -31,21 +35,44 @@ export default async function QrStatsPage({
   const preset = one(sp.preset) ?? "all";
   const from = one(sp.from);
   const to = one(sp.to);
-  const range =
-    isDayKey(from) && isDayKey(to)
-      ? { from, to }
-      : preset === "all"
-        ? null
-        : presetRange(preset);
-  // نداءان متوازيان: الإحصاءُ لا ينتظر منزلةَ الناظر ولا هي تنتظره.
-  const [stats, access] = await Promise.all([getQrStats(id, range), getQrAccess(id)]);
+  const custom = isDayKey(from) && isDayKey(to);
+  const range = custom ? { from, to } : preset === "all" ? null : presetRange(preset);
+
+  /**
+   * نداءاتٌ متوازية: الإحصاءُ لا ينتظر منزلةَ الناظر ولا هي تنتظره. **وسجلُّ العمر يُقرأ مرّةً ثانيةً حين تُختار مدّة**
+   * (قالبُ الإحصاء): منه أعدادُ المبدّل (كم في «هذا الشهر» وكم في «اليوم» قبل النقر)، ومنه «آخر 7 أيّام» والسبعةُ قبلها —
+   * فلا يكون صفرًا تحت «الشهر الماضي» كما كان «هذا الأسبوع» يُعدّ من صفوفٍ قصّتها المدّة.
+   */
+  const [stats, all, access] = await Promise.all([
+    getQrStats(id, range),
+    range ? getQrStats(id, null) : Promise.resolve(null),
+    getQrAccess(id),
+  ]);
+  const life = (all ?? stats).daily;
+  const today = todayKey();
+  const sumIn = (a: string | null, b: string | null) =>
+    life.filter((x) => (!a || x.day >= a) && (!b || x.day <= b)).reduce((s, x) => s + x.count, 0);
+  const counts = Object.fromEntries(
+    PRESETS.map((p) => {
+      const r = p.key === "all" ? null : presetRange(p.key, today);
+      return [p.key, sumIn(r?.from ?? null, r?.to ?? null)];
+    }),
+  );
+  const shift = (k: string, n: number) => new Date(+new Date(`${k}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+  const week = { now: sumIn(shift(today, -6), today), before: sumIn(shift(today, -13), shift(today, -7)) };
+
+  // **قراءةُ العمر الثانية إن تعثّرت قيلت** (المراجعةُ المستقلّة): منها أعدادُ المبدّل و«آخر 7 أيّام»، فصفرُها بلا تنبيهٍ كذب
+  const error = [stats.error, all?.error].filter(Boolean).join("، ") || null;
 
   return (
-    <QrStatsView
-      stats={stats}
-      range={{ preset: isDayKey(from) && isDayKey(to) ? "custom" : preset, from: range?.from ?? null, to: range?.to ?? null }}
+    <QrStatsRoom
+      stats={{ ...stats, error }}
+      counts={counts}
+      week={week}
+      range={{ preset: custom ? "custom" : preset, from: range?.from ?? null, to: range?.to ?? null }}
       // بابُ الإعدادات لا يُعرَض لمن لا يملك تبديلَ شيء.
       canSettings={access === "owner" || access === "edit"}
+      home={{ ready: one(sp.ready) === "1" }}
     />
   );
 }

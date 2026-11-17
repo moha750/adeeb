@@ -8,6 +8,7 @@ import { fmtStamp } from "@/lib/dates";
 import { toPublicSurvey, toPublicQuestions } from "./public";
 import { isSurveyCode, surveyPath } from "@/lib/surveys/code";
 import { isAdeebMember } from "@/lib/memberRecord";
+import { ViewSubject } from "@/app/_components/ViewSubject";
 
 function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -119,9 +120,6 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ c
     }
   }
 
-  // عدّ المشاهدة — من الخادم وحده (الدالّة سُحب تنفيذها من anon/authenticated)
-  await sb.rpc("increment_survey_views", { survey_id: surveyId });
-
   // التحويل من مصدرٍ واحد يشاركه فعل المعاينة (getSurveyPreview) — فلا ينحرف العرضان
   const publicSurvey = toPublicSurvey(survey);
   const questions = toPublicQuestions(qRes.data ?? []);
@@ -130,5 +128,12 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ c
     return <StateScreen kind="empty" title="هذا الاستبيان غير مكتمل" text="لا أسئلة فيه بعد. عد لاحقًا." />;
   }
 
-  return <SurveyRespond survey={publicSurvey} questions={questions} />;
+  // المشاهدةُ تُعدّ من إعلان الصفحة (٢٠٢٦-١١-١٧) حين تُعرض الأسئلةُ فعلًا، لا من تصيير الخادم: ذاك كان
+  // يعدّ معاينةَ واتساب وكلَّ تحديثٍ وكلَّ روبوت. وشاشاتُ «للأعضاء» و«سبق أن شاركت» لا تُعدّ، كما كانت.
+  return (
+    <>
+      <ViewSubject kind="survey" id={surveyId} />
+      <SurveyRespond survey={publicSurvey} questions={questions} />
+    </>
+  );
 }

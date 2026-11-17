@@ -13,7 +13,8 @@ const fmtDate = (iso: string | null): string => {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 };
 
-function service() {
+/** يقرؤه مختبرُ المحرّر (`/dashboard/ad/book-editor`) ليختار كتيّبًا حين لا يُعطى معرّفُه */
+export function service() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   // تنقية المفتاح من محارف دخيلة قد تلتصق عند اللصق (JWT لا يحوي إلا هذه)
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
@@ -125,6 +126,9 @@ export type BookHeader = {
   status: BookStatus;
   yearLabel: string;
   coverPageId: string | null;
+  /** للمعاينة في المنضدة (الكتيّبُ كما سيُرى): نبذتُه وعدّادُ قراءاته */
+  summary: string | null;
+  views: number;
 };
 
 export type PageEditRow = {
@@ -134,6 +138,8 @@ export type PageEditRow = {
   label: string | null;
   isHard: boolean;
   isCover: boolean;
+  /** مصغّرةُ الصفحة بتحويل الصفحة العامّة نفسِه (عرض 240، `contain`) — لسطرها في المحرّر وفهرس المعاينة */
+  thumb?: string;
 };
 
 export async function getBookEditor(id: string): Promise<{ book: BookHeader | null; pages: PageEditRow[]; error: string | null }> {
@@ -141,7 +147,7 @@ export async function getBookEditor(id: string): Promise<{ book: BookHeader | nu
   if (!sb) return { book: null, pages: [], error: ENV_MISSING };
 
   const [bRes, pRes] = await Promise.all([
-    sb.from("library_books").select("id, title, slug, kind, status, year_hijri, year_gregorian, cover_page_id").eq("id", id).maybeSingle(),
+    sb.from("library_books").select("id, title, slug, kind, status, summary, views, year_hijri, year_gregorian, cover_page_id").eq("id", id).maybeSingle(),
     sb.from("library_pages").select("id, storage_path, page_number, label, is_hard").eq("book_id", id).order("page_number", { ascending: true }),
   ]);
   if (bRes.error) return { book: null, pages: [], error: bRes.error.message };
@@ -152,10 +158,12 @@ export async function getBookEditor(id: string): Promise<{ book: BookHeader | nu
   const book: BookHeader = {
     id: b.id, title: b.title, slug: b.slug, kind: b.kind as BookKind, status: b.status as BookStatus,
     yearLabel: yearLabel(b.year_hijri ?? null, b.year_gregorian ?? null), coverPageId: b.cover_page_id ?? null,
+    summary: b.summary ?? null, views: b.views ?? 0,
   };
   const pages: PageEditRow[] = (pRes.data ?? []).map((p) => ({
     id: p.id,
     url: sb.storage.from(BUCKET).getPublicUrl(p.storage_path).data.publicUrl,
+    thumb: sb.storage.from(BUCKET).getPublicUrl(p.storage_path, { transform: { width: 240, resize: "contain", quality: 60 } }).data.publicUrl,
     pageNumber: p.page_number,
     label: p.label ?? null,
     isHard: p.is_hard,

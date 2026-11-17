@@ -30,6 +30,21 @@ export const AUDIENCE_OPTIONS: { value: "" | "male" | "female"; label: string }[
   { value: "female", label: "للنساء" },
 ];
 export const AUDIENCE_LABEL: Record<"male" | "female", string> = { male: "للرجال", female: "للنساء" };
+
+/**
+ * **صفاتُ ضيوف الفعاليّة** (٢٠٢٦-١١-١٥): مفتاحٌ وجنسٌ، والاسمُ بتأنيثه — مرآةُ `activity_guests_role_check` و`_gender_check`
+ * (`20261115060000_activity_details_01_columns.sql`). والألقابُ مرآةُ `activity_guests_honorific_check`: الاسمُ عربيٌّ خالص بلا نقطة.
+ */
+export type GuestRole = "guest" | "moderator" | "host" | "trainer";
+export const GUEST_ROLES: Record<GuestRole, { male: string; female: string }> = {
+  guest: { male: "الضيف", female: "الضيفة" },
+  moderator: { male: "المحاور", female: "المحاورة" },
+  host: { male: "المقدّم", female: "المقدّمة" },
+  trainer: { male: "المدرّب", female: "المدرّبة" },
+};
+export const GUEST_ROLE_VALUES = Object.keys(GUEST_ROLES) as GuestRole[];
+export const HONORIFICS = ["أ.", "د.", "م.", "أ.د."] as const;
+export const guestRoleLabel = (role: GuestRole, gender: "male" | "female"): string => GUEST_ROLES[role][gender];
 export const GENDER_OPTIONS: { value: "male" | "female"; label: string }[] = [
   { value: "male", label: "رجل" },
   { value: "female", label: "امرأة" },
@@ -85,6 +100,7 @@ export const BOOK_ERRORS: Record<string, string> = {
   ALREADY_BOOKED: "لديك حجزٌ مؤكّد في هذه الفعاليّة.",
   NO_SEATS_AVAILABLE_FOR_GENDER: "لا مقاعد متاحة لفئتك حاليًّا.",
   NO_SEATS_AVAILABLE: "اكتملت المقاعد.",
+  BOOKING_CLOSED: "أُغلق التسجيل في هذه الفعاليّة.",
   WRONG_GENDER: "هذه الفعاليّة موجَّهة لجنسٍ آخر.",
   REASON_REQUIRED: "سبب الإلغاء مطلوب.",
   RESERVATION_NOT_FOUND: "لم نعثر على الحجز.",

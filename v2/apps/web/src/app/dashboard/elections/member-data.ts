@@ -54,6 +54,8 @@ export type CandidacyJourney = {
   cycle: string;
   /** استقرّ مآلُه فلا ينتظر منك شيئًا: منسحبٌ أو مرفوضٌ أو انتهى انتخابُه. */
   archived: boolean;
+  /** يومُ التقديم خامًا — كعبُ الترشّح في القالب الجديد (`dayParts`)، كما يومُ الإنشاء كعبُ الانتخاب في غرفة الإدارة. */
+  submittedIso?: string | null;
   status: CandidateStatus; statusLabel: string; statusTone: RecordTone;
   next: string; future: string | null;
   statement: string; fileUrl: string | null; fileName: string | null;
@@ -228,6 +230,8 @@ function statusView(status: CandidateStatus, election: ElectionStatus, isWinner:
     }
     case "rejected": return { label: base.label, tone: base.tone, next: "تعتذر إدارة الموارد البشرية عن قبول ترشّحك في هذا الانتخاب، يُمكنك رؤية سبب الرفض.", future: null };
     case "withdrawn": return { label: base.label, tone: base.tone, next: "سحبتَ ترشّحك من هذا الانتخاب.", future: null };
+    case "frozen": return { label: base.label, tone: base.tone, next: election === "cancelled" ? "أُلغي الانتخاب وترشّحك مجمَّد." : "جُمّد ترشّحك بقرار إدارة الموارد البشرية، ولك أن تُجيب في المهلة.", future: null };
+    case "ended": return { label: base.label, tone: base.tone, next: "انتهى ترشّحك في هذا الانتخاب.", future: null };
     default: return { label: base.label, tone: base.tone, next: "", future: null };
   }
 }
@@ -276,11 +280,12 @@ export async function getMyCandidacies(userId: string): Promise<MemberFetch<Cand
     const cycle = fmtMonthYear(r.candidacy_end ?? r.submitted_at);
     // الأرشفةُ باستقرار المآل لا بحال الانتخاب وحدَه: المنسحبُ لا ينتظر شيئًا ولو بقي البابُ مفتوحًا
     const archived =
-      r.candidate_status === "withdrawn" || r.candidate_status === "rejected" ||
+      r.candidate_status === "withdrawn" || r.candidate_status === "rejected" || r.candidate_status === "ended" ||
       r.election_status === "completed" || r.election_status === "cancelled" || !!r.election_archived_at;
     return {
       candidateId: r.candidate_id, electionId: r.election_id, position,
       cycle: cycle ? `دورة ${cycle}` : "", archived,
+      submittedIso: r.submitted_at,
       number: r.candidate_number, status: r.candidate_status,
       statusLabel: view.label, statusTone: view.tone, next: view.next, future: view.future,
       statement: r.statement_ar, fileUrl: r.file_url ?? null, fileName: r.file_name ?? null,
@@ -313,7 +318,8 @@ export type ApplyContext = {
 
 /** مقاعدُ العضو الحيّة تُقرأ كلُّها ثمّ تُنخل بالقسم، فمصدرُ الوحدات خريطتان تُقرآن مرّة. */
 const LIVE_ELECTION = ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"];
-const LIVE_CANDIDACY = ["pending", "approved", "needs_edit"];
+// الترشّح القائم (المادة ٢)، ومنه المجمَّد — يطابق `_is_live_candidacy` في القاعدة.
+const LIVE_CANDIDACY = ["pending", "approved", "needs_edit", "frozen"];
 
 export async function getApplyContext(userId: string, electionId: string): Promise<ApplyContext> {
   const base: ApplyContext = { ok: false, error: null, electionId, position: "", departmentId: null, roleName: "", status: "candidacy_open", existing: null, siblings: [], preferredElectionId: electionId, otherOpen: 0 };

@@ -35,7 +35,7 @@ fi
 rm -rf "$tmp"
 
 # ٢-٥) الباقون — على شجرة العمل (والخامسُ سقّاطةُ الهويّة، ٢٠٢٦-١٠-٣٠)
-for guard in modal-spacing no-separators glyph-weights identity-ratchet; do
+for guard in modal-spacing no-separators glyph-weights identity-ratchet button-stamps; do
   node "v2/scripts/$guard.mjs" || rc=1
 done
 

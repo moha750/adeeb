@@ -36,7 +36,7 @@ describe("memberIn و seatHolder", () => {
     expect(voteWeight(w, "u-m1")).toBe(ROLES.committee_leader.weight);
   });
 
-  it("seatHolder يسمّي شاغلَ المقعد ويصمت عن الشاغر", () => {
+  it("seatHolder يسمّي شاغلَ المقعد ويصمت عن الفارغ", () => {
     const w = emptyWorld(NOW);
     expect(seatHolder(w, "committee_leader", 12, null)!.id).toBe("u-leader");
     expect(seatHolder(w, "committee_leader", 11, null)).toBeNull();

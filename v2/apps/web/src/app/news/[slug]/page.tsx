@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
-import { Ambient, Footer, Container } from "@adeeb/design-system";
-import { getMoreNews, getPublicNewsItem } from "../data";
-import { ArticleView } from "./ArticleView";
-import { MoreNews } from "./_parts/MoreNews";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
+import { getMoreNews, getNewsActivity, getPublicNewsItem } from "../data";
+import { NewsRead } from "@/app/_ad/rooms/NewsReadRoom";
 import { ReadingProgress } from "./_parts/ReadingProgress";
 import { getApprovedComments } from "./data";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { shareOg } from "@/lib/share";
+import { ViewSubject } from "@/app/_components/ViewSubject";
 
 export const revalidate = 60;
 
@@ -33,32 +34,23 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
   const n = await getPublicNewsItem(decodeURIComponent(slug));
   if (!n) notFound();
 
-  const [more, comments] = await Promise.all([getMoreNews(n.id, 3, n.category, n.publishedAt), getApprovedComments(n.id)]);
+  const [more, comments, activity] = await Promise.all([
+    getMoreNews(n.id, 3, n.category, n.publishedAt), getApprovedComments(n.id), getNewsActivity(n.id),
+  ]);
 
   return (
     <>
+      {/* المشاهدةُ تُعدّ من هنا: الخبرُ صُيِّر فعلًا، فالصفحةُ تُعلنه (لا يُستنتج من الرابط). */}
+      <ViewSubject kind="news" id={n.id} />
       {/* خيطُ القراءة **خارج** `.art`: تلك حاويةُ استعلامٍ، وكلُّ `fixed` داخلها يُنسَب
           إليها لا إلى الشاشة. */}
       <ReadingProgress targetId="art" />
       <SiteHeader activeHref="/news" />
-      <main className="amb-host">
-        <Ambient />
-        <section className="pt-4 pb-16 md:pt-6 md:pb-24">
-          <Container>
-            <ArticleView
-              n={n}
-              comments={comments}
-              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-            />
-          </Container>
-        </section>
-        {more.length ? (
-          <section className="pb-20 md:pb-28">
-            <Container>
-              <MoreNews items={more} />
-            </Container>
-          </section>
-        ) : null}
+      {/* **قالبُ «القراءة» بهويّة الخبر** (اعتمده محمد ٢٠٢٦-١١-١٧ في المختبر): ألواحُ الفصول، والفهرسُ الملازم، والختامُ، وشرفةُ التعليق */}
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <NewsRead n={n} comments={comments} more={more} activity={activity} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
+        </div>
       </main>
       <Footer />
     </>

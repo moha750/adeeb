@@ -17,6 +17,8 @@ export interface AnchoredPopoverProps {
   open: boolean;
   /** المُطلِق: تُحاذيه اللوحة وتُقاس منه، وما خرج عنه وعن اللوحة = نقرٌ خارجيّ. */
   anchorRef: RefObject<HTMLElement | null>;
+  /** أعلى ما يُحترم حين تنفتح اللوحةُ فوق المُطلِق (تسميةُ الحقل فوق قيمته): لا تغطّيه — كانت قائمةُ الحقل المنقلبةُ تغطّي اسمَه (٢٠٢٦-١١-١٢) */
+  topRef?: RefObject<HTMLElement | null>;
   /** يُستدعى عند النقر خارج اللوحة والمُطلِق، وعند Escape (مع السبب). */
   onDismiss: (reason: PopoverDismissReason) => void;
   /** المحاذاة الأفقيّة حين لا يُطابَق العرض (افتراضي: البداية). */
@@ -25,6 +27,9 @@ export interface AnchoredPopoverProps {
   side?: PopoverSide;
   /** عرض اللوحة = عرض المُطلِق (حقل Select). حين true تُهمَل `align`. */
   matchWidth?: boolean;
+  /** **عرضُ اللوحة لا يقلّ عن عرض المُطلِق** وتزيد إن طال محتواها (قوائمُ «المزيد» كلُّها، محمد ٢٠٢٦-١١-١٦: «تكون بطول الزرّ نفسه»).
+   *  زرٌّ عريضٌ تخرج منه قائمةٌ بعرضه كأنّها امتدادُه، وزرُّ الأيقونة تبقى قائمتُه على حدّها الأدنى فلا تنخنق بنودُها. */
+  fitAnchor?: boolean;
   /** صنف الجلد البصريّ للوحة (asel-panel · dm-menu · tb-fs-panel). */
   className?: string;
   role?: string;
@@ -49,10 +54,12 @@ export interface AnchoredPopoverProps {
 export function AnchoredPopover({
   open,
   anchorRef,
+  topRef,
   onDismiss,
   align = "start",
   side = "below",
   matchWidth = false,
+  fitAnchor = false,
   className,
   role,
   id,
@@ -64,7 +71,7 @@ export function AnchoredPopover({
   children,
 }: AnchoredPopoverProps) {
   const innerRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number; width?: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width?: number; below: boolean } | null>(null);
 
   // أحدث onDismiss في ref: يقرؤه المستمعون وقت الحدث، فلا يُعاد اشتراكهم مع كلّ إعادة رسم (بحث/تصفية)
   const onDismissRef = useRef(onDismiss);
@@ -80,12 +87,23 @@ export function AnchoredPopover({
     [panelRef],
   );
 
+  // الجهةُ تُقرَّر مرّةً عند الفتح: كانت تنقلب والمرءُ يكتب في بحثها (قصرت القائمةُ فاتّسع لها ما تحت المُطلِق) فيقفز البحثُ من تحت عينه
+  const sideLock = useRef<"below" | "above" | null>(null);
   const place = useCallback(() => {
     const anchor = anchorRef.current;
     const panel = innerRef.current;
     if (!anchor || !panel) return;
     const a = anchor.getBoundingClientRect();
     if (matchWidth) panel.style.width = `${a.width}px`; // العرض أوّلًا كي يُقاس الارتفاع نهائيًّا (قد يلتفّ النصّ)
+    else if (fitAnchor) {
+      // الأكبرُ من حدّ الجلد الأدنى (`.dm-menu` 210) وعرضِ المُطلِق — والسطرُ المضمَّن وحده كان يمحو الحدَّ فتنخنق قائمةُ زرّ الأيقونة
+      panel.style.minWidth = "";
+      const base = parseFloat(getComputedStyle(panel).minWidth) || 0;
+      // **وله حدٌّ أعلى** (عشرون سطرًا من خطّ الجذر، نحو 320): قسيمةُ «شارك» وحدها بعرض التذكرة كانت تمدّ القائمةَ 540 وأغلبُها فراغ.
+      // فإن زاد الزرُّ عليه توسّطت القائمةُ تحته (أدناه)، فتبقى منه كأنّها امتدادُ وسطه
+      const cap = 20 * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+      panel.style.minWidth = `${Math.max(base, Math.min(a.width, cap))}px`;
+    }
     const pw = panel.offsetWidth;
     const ph = panel.offsetHeight;
     const PAD = 8;
@@ -94,25 +112,28 @@ export function AnchoredPopover({
     const vh = window.innerHeight;
     // عموديًّا: الجهة المفضّلة أوّلًا، وتنقلب للأخرى عند ضيقها واتّساع مقابلها، ثمّ تُقصر داخل الشاشة
     const below = a.bottom + GAP;
-    const above = a.top - GAP - ph;
+    const above = (topRef?.current?.getBoundingClientRect().top ?? a.top) - GAP - ph;
     let top = side === "above" ? above : below;
-    if (side === "above" ? top < PAD && below + ph <= vh - PAD : top + ph > vh - PAD && above >= PAD) {
+    if (sideLock.current) top = sideLock.current === "above" ? above : below;
+    else if (side === "above" ? top < PAD && below + ph <= vh - PAD : top + ph > vh - PAD && above >= PAD) {
       top = side === "above" ? below : above;
     }
+    sideLock.current = top === above ? "above" : "below";
     top = Math.max(PAD, Math.min(top, vh - ph - PAD));
     // أفقيًّا: محاذاة منطقيّة تتبع اتجاه المستند (start في RTL = الحافّة اليمنى)، ثمّ قصر داخل الشاشة
     const rtl = getComputedStyle(anchor).direction === "rtl";
     const startLeft = rtl ? a.right - pw : a.left;
     const endLeft = rtl ? a.left : a.right - pw;
     const centerLeft = a.left + (a.width - pw) / 2;
-    let left = matchWidth ? a.left : align === "end" ? endLeft : align === "center" ? centerLeft : startLeft;
+    let left = matchWidth ? a.left : fitAnchor && a.width > pw + 1 ? centerLeft : align === "end" ? endLeft : align === "center" ? centerLeft : startLeft;
     left = Math.max(PAD, Math.min(left, vw - pw - PAD));
-    setPos({ top, left, width: matchWidth ? a.width : undefined });
-  }, [anchorRef, align, side, matchWidth]);
+    setPos({ top, left, width: matchWidth ? a.width : undefined, below: top >= a.bottom });
+  }, [anchorRef, topRef, align, side, matchWidth, fitAnchor]);
 
   useLayoutEffect(() => {
     if (!open) {
       setPos(null);
+      sideLock.current = null;
       return;
     }
     place();
@@ -161,6 +182,7 @@ export function AnchoredPopover({
       aria-labelledby={ariaLabelledby}
       tabIndex={tabIndex}
       className={"apop" + (className ? " " + className : "")}
+      data-side={pos ? (pos.below ? "below" : "above") : undefined}
       style={{
         top: pos?.top ?? 0,
         left: pos?.left ?? 0,

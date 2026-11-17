@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { CommitteeNode, Holder } from "@/app/dashboard/members/structure/model";
 import type { MyCommittee } from "@/app/dashboard/members/supervised/model";
 
@@ -14,8 +15,10 @@ export type SeatPerson = {
 export type CommitteeLead = {
   id: number;
   name: string;
+  /** رمزُ اللجنة من عمودها (`committees.icon`، يرسمه الخادم) — رمزُ مجموعتها في خريطة «القيادات» */
+  icon?: ReactNode;
   leader: SeatPerson | null;
-  /** أمنتخَبٌ مقعدُ قيادتها — لغةُ الشاغر: «لم يُنتخب بعد» أو «لم يُعيَّن بعد» */
+  /** أمنتخَبٌ مقعدُ قيادتها — لغةُ الفارغ: «لم يُنتخب بعد» أو «لم يُعيَّن بعد» */
   leaderElected?: boolean;
   deputy: SeatPerson | null;
   /** قسمُها («قسم الإنتاج الإعلامي») — سطرُ القائد والنائب الأوّل كما إدارةُ المشرف سطرُه (محمد ٢٠٢٦-١١-٠٣: «الاتّساقُ البصريّ») */
@@ -24,7 +27,7 @@ export type CommitteeLead = {
   supervisors: { unit: string; person: SeatPerson | null }[];
 };
 /** مقعدُ رأس الوحدة فوق لجانها (منسّقُ القسم في «قسمي»). */
-export type HeadSeat = { title: string; person: SeatPerson | null; /** اسمُ الوحدة: «قيادة قسم الإنتاج الإعلامي» */ unit: string };
+export type HeadSeat = { title: string; person: SeatPerson | null; /** اسمُ الوحدة: «قسم الإنتاج الإعلامي» */ unit: string; /** رمزُ الوحدة (`departments.icon`) */ icon?: ReactNode };
 
 export const seatOf = (h: Holder | null | undefined): SeatPerson | null =>
   h ? { id: h.userId, name: h.name, avatar: h.avatar, gender: h.gender, since: h.acting?.since ?? h.since ?? null, acting: !!h.acting } : null;

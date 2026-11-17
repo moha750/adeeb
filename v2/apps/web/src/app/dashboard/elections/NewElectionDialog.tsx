@@ -11,7 +11,7 @@ import type { ElectionCreateOptions } from "./data";
 /**
  * فتح انتخابٍ جديد — نافذةٌ لا صفحة: المُدخَل منصبٌ ونطاقٌ وموعدُ إغلاق ترشّح،
  * فمكوّنات المكتبة (Modal · Select · Field · Button) تكفيه بلا تخطيطٍ شارد.
- * الخيارات المعروضة **متاحة فعلًا** (شاغرة بلا انتخاب نشط لمقعدها)، والقاعدة تبقى
+ * الخيارات المعروضة **متاحة فعلًا** (فارغة بلا انتخاب نشط لمقعدها)، والقاعدة تبقى
  * الحكَم النهائيّ عند الإنشاء. والموعدُ اختياريّ: فارغُه بابٌ يُغلق بيد المشرف.
  */
 export function NewElectionDialog({ open, onClose, options }: { open: boolean; onClose: () => void; options: ElectionCreateOptions }) {
@@ -75,7 +75,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
       />
       {role ? (
         noScope ? (
-          <Alert tone="warning" title="لا مناصب شاغرة">
+          <Alert tone="warning" title="لا مناصب فارغة">
             لا {role.scope === "department" ? "أقسام" : "لجان"} متاحة لهذا المنصب الآن: كلّها مشغولة أو لها انتخابٌ نشط.
           </Alert>
         ) : (

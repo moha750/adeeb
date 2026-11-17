@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { FIRST_HEARTBEAT_MS, HEARTBEAT_MS, SESSION_AT_KEY, SESSION_IDLE_MS, SESSION_KEY, TRACK_FN, TRACK_MAX_SECONDS, VISITOR_KEY, randomUuid } from "@adeeb/core/tracking";
 import { hasSessionCookie, loadClient } from "@/lib/supabase/lazy";
+import { isStageFrame } from "@/lib/stageFrame";
+import { onViewSubject, viewSubjectOf } from "@/lib/viewSubject";
 
 /**
  * **تتبّعُ الزيارات في V2** — كان السكربتُ في V1 وحده (`adeeb/visit-tracker.js`)، فلمّا حلّ V2 محلَّه
@@ -24,6 +26,10 @@ import { hasSessionCookie, loadClient } from "@/lib/supabase/lazy";
  *
  * ومعه ما لم يكن في V1 كاملًا: **هويّةُ العضو** (`user_id` من جلسة Supabase) — فمؤشّر «زيارة عضو»
  * كان صفرًا دائمًا لأنّ أحدًا لم يرسله.
+ *
+ * **ويحمل موضوعَ الزيارة** (٢٠٢٦-١١-١٧): ما أعلنته الصفحةُ بـ`<ViewSubject>` (خبرٌ، كتابٌ، استبيان)
+ * يُرسَل مع الزيارة، أو بعدها على `/subject` إن أعلنته الصفحةُ متأخّرة. ومنه وحده تُعدّ المشاهدة في
+ * القاعدة، فلا يُستنتج الموضوعُ من الرابط (هكذا بقي خبرٌ فتحه ٤٣ إنسانًا بصفر مشاهدات).
  */
 
 // الوجهةُ والمفاتيحُ والنبضةُ في `@adeeb/core/tracking` — يقرؤها الويبُ والتطبيقُ معًا.
@@ -75,6 +81,8 @@ const stored = (store: Storage | undefined, key: string) => {
 function shouldTrack(path: string) {
   if (typeof window === "undefined") return false;
   if (path.startsWith("/dashboard")) return false;
+  // إطاراتُ المنضدة داخل المحرّر (معاينةُ الاستبيان والخبر) ليست زياراتٍ للموقع (٢٠٢٦-١١-١٢)
+  if (isStageFrame(path)) return false;
   const host = window.location.hostname;
   const isLocal = host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
   if (isLocal) {
@@ -90,7 +98,7 @@ function shouldTrack(path: string) {
 export function VisitTracker() {
   const path = usePathname();
   // مرجعٌ واحدٌ للزيارة الجارية: يُغلق عند التنقّل فلا تتراكب نبضتان.
-  const live = useRef<{ id: string | null; started: number; stopped: boolean }>({ id: null, started: 0, stopped: false });
+  const live = useRef<{ id: string | null; started: number; stopped: boolean; subjectSent: boolean }>({ id: null, started: 0, stopped: false, subjectSent: false });
 
   useEffect(() => {
     if (!path || !shouldTrack(path)) return;
@@ -99,12 +107,29 @@ export function VisitTracker() {
     if (!base) return;
     const url = base.replace(/\/+$/, "") + TRACK_FN;
 
-    const view = { id: null as string | null, started: Date.now(), stopped: false };
+    const view = { id: null as string | null, started: Date.now(), stopped: false, subjectSent: false };
     live.current = view;
 
     const seconds = () => Math.min(TRACK_MAX_SECONDS, Math.floor((Date.now() - view.started) / 1000));
     let timer: ReturnType<typeof setInterval> | undefined;
     let early: ReturnType<typeof setTimeout> | undefined;
+
+    /** موضوعٌ أعلنته الصفحةُ بعد بدء الزيارة: يُلحق بها مرّةً واحدة (والقاعدةُ ترفض تبديله). */
+    const sendSubject = (subject: ReturnType<typeof viewSubjectOf>) => {
+      if (!subject || !view.id || view.subjectSent) return;
+      view.subjectSent = true;
+      void fetch(`${url}/subject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "omit",
+        mode: "cors",
+        keepalive: true,
+        body: JSON.stringify({ pageview_id: view.id, subject }),
+      }).catch(() => {});
+    };
+    const offSubject = onViewSubject((p, subject) => {
+      if (p === path && !view.stopped) sendSubject(subject);
+    });
 
     const begin = async () => {
       let userId: string | null = null;
@@ -118,6 +143,10 @@ export function VisitTracker() {
         userId = null;
       }
       if (view.stopped) return;
+
+      // المفتاحُ يُرسَل دائمًا ولو فارغًا: غيابُه عند الدالّة علامةُ متتبّعٍ قديم.
+      const subject = viewSubjectOf(path);
+      if (subject) view.subjectSent = true;
 
       try {
         const res = await fetch(url, {
@@ -138,12 +167,15 @@ export function VisitTracker() {
             language: (navigator.language || "").slice(0, 20) || null,
             user_id: userId,
             source: "web",
+            subject,
           }),
         });
         if (!res.ok || view.stopped) return;
         const data = (await res.json()) as { pageview_id?: string };
         if (!data?.pageview_id || view.stopped) return;
         view.id = data.pageview_id;
+        // أعلنته الصفحةُ والطلبُ في الطريق؟ يُلحق الآن.
+        sendSubject(viewSubjectOf(path));
 
         // نبضةٌ مبكّرةٌ بعد خمس ثوانٍ ثمّ كلّ خمس عشرة: الكتابةُ والصفحةُ حيّةٌ أصدقُ من
         // رسالةِ وداعٍ عند الهدم، فأكثرُ الزيارات كانت تنتهي قبل النبضة الأولى فتُسجَّل صفرًا.
@@ -224,6 +256,7 @@ export function VisitTracker() {
     return () => {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", endOnUnload);
+      offSubject();
       clearTimeout(starter);
       if (early) clearTimeout(early);
       if (timer) clearInterval(timer);

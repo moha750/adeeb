@@ -16,7 +16,8 @@ import type { PersonOption } from "@adeeb/design-system";
  * الشخص من هذه البِركة يضمن الهجاءَ ولا يُنشئ ارتباطًا. وإذا تشابه اسمان (وفي السجلّ
  * اليوم اسمٌ لحسابين) طُوِيا في مدخلٍ واحد: القيمةُ واحدةٌ فلا معنى لصفّين يكتبانها.
  */
-export type CreditPerson = PersonOption & { avatarUrl: string | null; gender: string | null };
+/** `id` معرّفُ الملفّ — لمن يربط الشخصَ بحسابه لا باسمه (ضيوفُ الفعاليّة، ٢٠٢٦-١١-١٥)؛ والنسبةُ تبقى بالاسم */
+export type CreditPerson = PersonOption & { avatarUrl: string | null; gender: string | null; id?: string };
 
 export const MEMBERS_GROUP = "أعضاء أدِيب";
 export const VOLUNTEERS_GROUP = "متطوّعو أدِيب";
@@ -27,14 +28,17 @@ export async function getCreditPeople(): Promise<CreditPerson[]> {
   if (!url || !key) return [];
   const sb = createAdeebServiceClient(url, key);
 
-  const [mRes, vRes, urRes, cRes] = await Promise.all([
+  const [mRes, vRes, urRes, cRes, clubRes] = await Promise.all([
     sb.from("profiles").select("id, full_name, avatar_url, gender, joined_date, account_status")
       .eq("account_status", "active").not("joined_date", "is", null),
     sb.from("volunteers").select("user_id").eq("status", "active"),
     // الأصيلُ قبل التكليف (20261010): الوحدةُ المميِّزة وحدةُ موضعه
     sb.from("user_roles").select("user_id, committee_id").eq("is_active", true).not("committee_id", "is", null).order("is_acting", { ascending: true }),
     sb.from("committees").select("id, committee_name_ar"),
+    // **حسابُ النادي مؤسّسةٌ لا شخص** (المالك ٢٠٢٦-١٠-١٨): لا يُنسب إليه خبرٌ ولا صورة، فيُستثنى من بِركة النسبة (٢٠٢٦-١١-١٣)
+    sb.from("user_roles").select("user_id").eq("role_name", "adeeb_admin").eq("is_active", true),
   ]);
+  const club = new Set((clubRes.data ?? []).map((r) => r.user_id as string));
 
   const committeeName = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string]));
   // وحدةُ العضو تُقال تحت اسمه لتفصل بين متشابهَي الاسم — وأوّلُ صفٍّ يكفي: هي تمييزٌ
@@ -46,7 +50,7 @@ export async function getCreditPeople(): Promise<CreditPerson[]> {
   }
 
   const volunteerIds = new Set((vRes.data ?? []).map((v) => v.user_id as string));
-  const members = (mRes.data ?? []) as { id: string; full_name: string | null; avatar_url: string | null; gender: string | null }[];
+  const members = ((mRes.data ?? []) as { id: string; full_name: string | null; avatar_url: string | null; gender: string | null }[]).filter((m) => !club.has(m.id));
   const memberIds = new Set(members.map((m) => m.id));
 
   // المتطوّعون يُجلَبون بعد أن عُرفت أسماؤهم: صفُّ `volunteers` معرّفٌ وحده.
@@ -58,11 +62,11 @@ export async function getCreditPeople(): Promise<CreditPerson[]> {
 
   const out: CreditPerson[] = [];
   const seen = new Set<string>();
-  const push = (p: { full_name: string | null; avatar_url: string | null; gender: string | null }, group: string, hint?: string) => {
+  const push = (p: { id: string; full_name: string | null; avatar_url: string | null; gender: string | null }, group: string, hint?: string) => {
     const name = (p.full_name ?? "").trim();
     if (!name || seen.has(name)) return;
     seen.add(name);
-    out.push({ name, hint, group, avatarUrl: p.avatar_url, gender: p.gender });
+    out.push({ name, hint, group, avatarUrl: p.avatar_url, gender: p.gender, id: p.id });
   };
 
   const ar = (a: string, b: string) => a.localeCompare(b, "ar");

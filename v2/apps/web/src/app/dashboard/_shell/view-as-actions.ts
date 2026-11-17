@@ -55,7 +55,7 @@ export async function startViewAs(userId: string): Promise<ViewAsResult> {
 }
 
 /**
- * معاينة **منصبٍ شاغر** — تُجلِس الدُّمية عليه ثمّ تلبس هويّتها.
+ * معاينة **منصبٍ فارغ** — تُجلِس الدُّمية عليه ثمّ تلبس هويّتها.
  *
  * النطاق يُقرأ من القاعدة لا من الطلب: الدور يُجلَب باسمه، ونطاقُه من `seatScope`،
  * فوحدةٌ زائدة تُطرَح ووحدةٌ ناقصة تُردّ — لا يُدرَج صفٌّ بنطاقٍ لا يخصّه.
@@ -107,7 +107,7 @@ export async function previewVacantPosition(input: { roleName: string; unitId: n
     committeeId,
     departmentId,
   });
-  // أشهرُ ردٍّ هنا حارسُ التفرّد على الجدول — أيْ أنّ المقعد لم يكن شاغرًا حقًّا
+  // أشهرُ ردٍّ هنا حارسُ التفرّد على الجدول — أيْ أنّ المقعد لم يكن فارغًا حقًّا
   if (seatErr) return { ok: false, message: `تعذّر إجلاس الشاغل المؤقّت: ${seatErr}` };
 
   await wearIdentity(puppet.id);

@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getSponsorForEdit } from "../../data";
 import { SponsorForm } from "../../SponsorForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../../../_components/PageHeader";
+import { AdRoomError } from "@/app/_ad/states";
 
 export default async function EditSponsorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/sponsors");
@@ -16,14 +15,8 @@ export default async function EditSponsorPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const { sponsor, error } = await getSponsorForEdit(id);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="تحرير الراعي" crumbLeaf="تحرير" />
-        <Alert tone="warning" title="تعذّر جلب الراعي">{error}</Alert>
-      </>
-    );
-  }
+  // **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧): لوحُ الغرفة، ورمزُ السحابة المنقطعة، و«إعادة المحاولة» و«أبلغ الدعم الفني»
+  if (error) return <AdRoomError title="تحرير الراعي" navPath="/dashboard/website/sponsors" what="الراعي" message={error} />;
   if (!sponsor) notFound();
 
   return <SponsorForm sponsor={sponsor} />;

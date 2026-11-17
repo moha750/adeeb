@@ -90,6 +90,10 @@ const BULLET_RE = /^[•\-–*]\s+/;
 const NUMBER_RE = /^[0-9٠-٩]+\s*[.)\-–]\s+/;
 
 /** علامةُ السطر في المربّع: ما يُكتب قبل نصّه (يُعاد ترقيمُه دائمًا). */
+/** حدّا البيان (العدّادُ تحت الحقلين، والإصدارُ يتوقّف حتى يُختصر — قاعدةُ العدّاد الواحدة، ٢٠٢٦-١١-٠٧) */
+export const STATEMENT_TITLE_MAX = 120;
+export const STATEMENT_BODY_MAX = 8000;
+
 export function lineKind(line: string): { kind: Block["kind"]; rest: string } {
   const t = line.trimStart();
   let m = t.match(BULLET_RE);

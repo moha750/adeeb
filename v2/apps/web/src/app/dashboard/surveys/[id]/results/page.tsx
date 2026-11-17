@@ -1,13 +1,22 @@
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getSurveyAggregates } from "@/lib/surveys/aggregate";
 import { getSurveyResponses } from "../../results-data";
-import { ResultsView } from "../../ResultsView";
+import { getSurveys } from "../../data";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { authorizeSurvey } from "@/lib/surveys/authz";
 import { canSurvey } from "../../vocab";
-import { PageHeader } from "../../../_components/PageHeader";
+import { SurveyResultsRoom } from "@/app/_ad/rooms/SurveyResultsRoom";
+import { SURVEYS_ROOM } from "@/app/_ad/rooms/meta";
+import { AdRoomError } from "@/app/_ad/states";
+import { requestNow } from "@/app/_ad/now";
 
+export const metadata = { title: "نتائج الاستبيان، بوّابة أدِيب" };
+
+/**
+ * نتائجُ الاستبيان على قالب الإحصاء (`_ad/rooms/SurveyResultsRoom.tsx`، ٢٠٢٦-١١-٠٧). الحرّاسُ والجلبُ كما كانت حرفًا، ومعها صفُّ
+ * الاستبيان في غرفته (`getSurveys`) لتكون التذكرةُ تذكرتَه نفسَها؛ فإن لم يُقرأ بُنيت من النتائج. والقديمُ `../../ResultsView.tsx` باقٍ
+ * حتى يقرّر المالكُ حذفه. والخطأُ حالُ الغرفة («القطعة») لا تنبيهٌ تحت رأسٍ قديم.
+ */
 export default async function SurveyResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/surveys");
   if (denied) return denied;
@@ -20,21 +29,24 @@ export default async function SurveyResultsPage({ params }: { params: Promise<{ 
   const grant = await authorizeSurvey(surveyId, "results");
   if (!grant.ok) notFound();
 
-  const [aggRes, respRes] = await Promise.all([
+  // صفُّ الاستبيان من غرفة صاحب الجلسة (`grant.userId` — الحارسُ قرأه، فلا يُقرأ ثانيةً): منه شاراتُ تذكرته وسطورُها
+  const [aggRes, respRes, rowsRes] = await Promise.all([
     getSurveyAggregates(surveyId),
     getSurveyResponses(surveyId),
+    getSurveys(grant.userId),
   ]);
 
   const error = aggRes.error ?? respRes.error;
-  if (error) {
-    return (
-      <>
-        <PageHeader title="نتائج الاستبيان" crumbLeaf="النتائج" />
-        <Alert tone="warning" title="تعذّر جلب النتائج">{error}</Alert>
-      </>
-    );
-  }
+  if (error) return <AdRoomError {...SURVEYS_ROOM} title="نتائج الاستبيان" what="النتائج" message={error} />;
   if (!aggRes.agg) notFound();
 
-  return <ResultsView agg={aggRes.agg} responses={respRes.rows} canEdit={canSurvey(grant.role, "edit")} />;
+  return (
+    <SurveyResultsRoom
+      agg={aggRes.agg}
+      responses={respRes.rows}
+      canEdit={canSurvey(grant.role, "edit")}
+      survey={rowsRes.surveys.find((s) => s.id === surveyId) ?? null}
+      serverNow={await requestNow()}
+    />
+  );
 }

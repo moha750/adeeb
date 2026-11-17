@@ -14,5 +14,8 @@ import { createContext, useContext } from "react";
  * ولا قيمةَ لها خارج المختبر.
  */
 export type AdAsRole = "owner" | "edit" | "read" | "steward";
-export const AdLab = createContext<{ filterPanelAt?: number; allStates?: boolean; asRole?: AdAsRole; pageSize?: number; select?: boolean }>({});
+/**
+ * `dry`: صفحاتُ `/dashboard/ad/upload` تعرض نماذجَ حقيقيّة، فلا يُحفظ منها شيءٌ ولا يُرفع (الصورةُ تُعرض محلّيًّا).
+ */
+export const AdLab = createContext<{ filterPanelAt?: number; allStates?: boolean; asRole?: AdAsRole; pageSize?: number; select?: boolean; dry?: boolean }>({});
 export const useAdLab = () => useContext(AdLab);

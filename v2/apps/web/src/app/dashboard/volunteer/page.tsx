@@ -1,15 +1,17 @@
-import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "../_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { usesSidebar } from "@/lib/capabilities";
 import { getMyVolunteering } from "@/app/me/volunteering";
-import { PageHeader } from "../_components/PageHeader";
 import { buildVolunteer } from "../_portal/volunteer";
-import { VolunteerRoom } from "../_portal/VolunteerRoom";
+import { MyVolunteerRoom } from "@/app/_ad/rooms/MyVolunteerRoom";
+import { AccountRoom } from "@/app/_ad/account";
+import { AdNote } from "@/app/_ad/primitives";
 
 /**
  * **تطوّعي** — للمتطوّع وحده (`view_own_volunteering`، مفتاحٌ مشتقٌّ من مكانته لا يُمنح بدور).
  * مشاركاتُه وفرصُه ورحلتُه وسجلُّه، من `getMyVolunteering` بمعرّف صاحب الجلسة.
+ * على قالب «الحساب» (اعتمده محمد ٢٠٢٦-١١-٠٥): المواضعُ تذاكر، و«رحلتك» رأسُ «سجلّك»، و«رغباتك» رأسُ «فرصٌ مفتوحة» — والجلبُ كما كان
+ * حرفًا، والغرفةُ القديمة (`_portal/VolunteerRoom`) باقيةٌ بلا استعمال حتى يقرّر المالكُ حذفها. ولوحُ الغرفة في الإطارين (الشريطُ الجانبيّ
+ * والإطارُ الخفيف) كحجوزاتي وشهاداتي.
  */
 export const metadata = { title: "تطوّعي، بوّابة أدِيب" };
 
@@ -18,7 +20,12 @@ export default async function VolunteerPage() {
   if (denied) return denied;
   const me = (await getCurrentAdmin())!;
   const vol = await getMyVolunteering(me.id);
-  const header = usesSidebar(me.caps) ? <PageHeader title="تطوّعي" /> : null;
-  if (!vol) return <>{header}<Alert tone="danger" title="تعذّر تحميل تطوّعك">إعداد الخادم ناقص. أبلغ الإدارة.</Alert></>;
-  return <>{header}<VolunteerRoom view={buildVolunteer(vol, me.gender === "female")} /></>;
+  if (!vol) {
+    return (
+      <AccountRoom navPath="/dashboard/volunteer" title="تطوّعي">
+        <AdNote tone="bad" title="تعذّر تحميل تطوّعك.">إعدادُ الخادم ناقص. أبلغ الإدارة.</AdNote>
+      </AccountRoom>
+    );
+  }
+  return <MyVolunteerRoom view={buildVolunteer(vol, me.gender === "female")} />;
 }

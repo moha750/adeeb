@@ -154,11 +154,12 @@ export function Comments({
             <>
               {siteKey ? <TurnstileWidget siteKey={siteKey} onToken={setToken} resetSignal={reset} /> : null}
               <div className="cm-foot">
-                {/* العدّادُ ظاهرٌ دائمًا، ويُقرأ من اليمين: المكتوبُ ثمّ الحدّ (المالك ٢٠٢٦-١٠-١٥). ويتلوّن:
-                    كهرمانيٌّ من ٨٠٪، وأحمرُ إذا جاوز الحدَّ (وحينها لا يُرسَل). */}
+                {/* العدّادُ ظاهرٌ دائمًا، ويُقرأ من اليمين: المكتوبُ ثمّ الحدّ (المالك ٢٠٢٦-١٠-١٥). **ولونان فقط**
+                    (قاعدةُ العدّاد الواحدة في الموقع، ٢٠٢٦-١١-٠٧): رماديٌّ ضمن الحدّ، وأحمرُ إذا جاوزه وحينها لا يُرسَل —
+                    والكهرمانيُّ عند ٨٠٪ أُسقط: الرقمُ نفسُه يقول إنّك اقتربت. */}
                 <span
                   className="cm-count"
-                  data-level={clean.length > COMMENT_MAX ? "over" : clean.length >= COMMENT_MAX * 0.8 ? "near" : undefined}
+                  data-level={clean.length > COMMENT_MAX ? "over" : undefined}
                   aria-label={`${clean.length} من ${COMMENT_MAX} حرف`}
                 >
                   <span>{clean.length}</span><span aria-hidden>/</span><span>{COMMENT_MAX}</span>

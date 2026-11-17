@@ -1,15 +1,16 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, SaveBar, SectionCard, Field } from "@adeeb/design-system";
-import {
-  Image as ImageIcon, LinkSimple, Sparkle, Tag, TextT } from "@phosphor-icons/react";
-import { PencilSimple, Trash, UploadSimple } from "@/app/_components/glyphs";
+import { Field, Select } from "@adeeb/design-system";
+import { FloppyDisk, Image as ImageIcon, LinkSimple, Sparkle, Tag, TextT } from "@phosphor-icons/react";
+import { PencilSimple, Plus } from "@/app/_components/glyphs";
 import { useToast } from "../../_components/ToastProvider";
 import type { WorkEditData } from "./data";
 import { createWork, updateWork, uploadWorkImage, type WorkInput } from "./actions";
-import { PageHeader } from "../../_components/PageHeader";
+import { WORK_CATEGORY_OPTIONS } from "./vocab";
+import { AdBadge, AdCard } from "@/app/_ad/primitives";
+import { AdImageField, FormRoom, FormSection } from "@/app/_ad/form";
 import { UPLOAD_RULES, attachHint, checkFile, shrinkImage } from "@/lib/upload";
 
 // وصفةُ الصورة من قانون المرفقات (`lib/upload`) — الحدُّ والصيغُ وجملُ الرفض هناك
@@ -19,7 +20,6 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
   const toast = useToast();
   const router = useRouter();
   const [saving, startSave] = useTransition();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   const [title, setTitle] = useState(work?.title ?? "");
@@ -29,12 +29,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
 
   const editing = work != null;
 
-  const pickFile = () => fileRef.current?.click();
-
-  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // كي يُقبَل اختيار الملفّ نفسه ثانيةً
-    if (!file) return;
+  const onFile = async (file: File) => {
     // بوّابةُ قانون المرفقات قبل الشبكة: لا يُرفع ما سيُردّ، ولا ينتظر صاحبُه ليُقال له
     const why = checkFile(file, IMAGE_RULE);
     if (why) { toast.error(why); return; }
@@ -59,7 +54,7 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
   });
 
   /**
-   * **أثمّة ما يُحفَظ؟** — الشريطُ اللاصق لا يظهر حتى يوجد. والمقارنةُ بلَقطةِ `toInput()`
+   * **أثمّة ما يُحفَظ؟** — في التحرير لا يُحفظ قبل أوّل تغيير، وفي الضيّق يلحقك الفعلُ حين يوجد (`FormRoom`). والمقارنةُ بلَقطةِ `toInput()`
    * نفسِها التي تُرسَل، والأصلُ يُجمَّد في حالةٍ تُهيَّأ مرّةً: الشاشةُ تُغادَر بعد الحفظ
    * فلا معنى لتحديثه. **ولا `useRef`** — قراءةُ `ref.current` أثناء الرسم يردّها
    * `react-hooks/refs` خطأً، والحالةُ المهيّأةُ مرّةً تقول المعنى نفسَه وتُقرأ في الرسم.
@@ -80,49 +75,39 @@ export function WorkForm({ work }: { work?: WorkEditData | null }) {
     });
   };
 
+  /* التذكرةُ كما ستظهر في غرفة الأعمال (`_ad/rooms/WorksRoom`): الصورةُ غلافُ كعبها، والتصنيفُ شارتُها، ونطاقُ الرابط سطرُها (أو العارضُ الداخليّ) */
+  const host = (u: string) => { try { return new URL(u).host.replace(/^www\./, ""); } catch { return u; } };
+  const preview = (
+    <div className="ad-form-preview-card" data-untitled={title.trim() ? undefined : ""}>
+      <AdCard seed={work?.id ?? "new-work"} cover={image} chips={category.trim() ? <AdBadge>{category.trim()}</AdBadge> : undefined} title={title.trim() || "عنوان العمل"}
+        meta={[linkUrl.trim() ? { icon: <LinkSimple />, text: host(linkUrl.trim()) } : { icon: <LinkSimple />, text: "عارض داخليّ", tone: "muted" }]} />
+    </div>
+  );
+
   return (
-    <>
-      {/* «إلغاء» سقط: يكرّر فتاتَ المسار الذي فوقه بسطر. و«حفظ» فعلُ التزامٍ لا فعلُ
-          رأسٍ، فنزل إلى الشريط اللاصق أسفلَه (حكمُ `/ui/page-header`). */}
-      <PageHeader title={editing ? `تحرير: ${work.title}` : "عمل جديد"} />
+    <FormRoom
+      title={editing ? `تحرير: ${work.title}` : "عمل جديد"}
+      preview={preview}
+      commit={{
+        primary: editing
+          ? { label: "حفظ التغييرات", icon: <FloppyDisk />, onClick: save, busy: saving, held: !dirty || uploading }
+          : { label: "إضافة العمل", icon: <Plus />, onClick: save, busy: saving, held: uploading },
+        cancelHref: "/dashboard/website/works",
+        dirty,
+      }}
+    >
+      <FormSection id="details" icon={<Sparkle />} title="تفاصيل العمل">
+        <div className="form-grid">
+          <Field className="form-full" label="عنوان العمل" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: قصيدة «حيثُ تُولَد الكلمة»" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Select label="التصنيف" icon={<Tag />} options={WORK_CATEGORY_OPTIONS} value={category} onValueChange={setCategory} optional />
+          <Field label="رابط العمل" icon={<LinkSimple />} innerIcon={<LinkSimple />} placeholder="https://…" charset="latin" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} helper="إن تُرك فارغًا فُتِح العمل في عارضٍ داخليّ (صورته)." optional />
+        </div>
+      </FormSection>
 
-      <div className="form-build">
-        <SectionCard headerVariant="chip" icon={<Sparkle />} title="تفاصيل العمل">
-          <div className="form-grid">
-            <Field className="form-full" label="عنوان العمل" icon={<TextT />} innerIcon={<PencilSimple />} placeholder="مثال: قصيدة «حيثُ تُولَد الكلمة»" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <Field label="التصنيف" icon={<Tag />} innerIcon={<PencilSimple />} placeholder="مثال: شعر، تصميم، قصّة" value={category} onChange={(e) => setCategory(e.target.value)} optional />
-            <Field label="رابط العمل" icon={<LinkSimple />} innerIcon={<LinkSimple />} placeholder="https://…" charset="latin" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} helper="إن تُرك فارغًا فُتِح العمل في عارضٍ داخليّ (صورته)." optional />
-          </div>
-        </SectionCard>
-
-        <SectionCard headerVariant="chip" icon={<ImageIcon />} title="صورة العمل (مطلوبة)">
-          <div className="flex flex-col gap-3 items-start">
-            {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt="صورة العمل" referrerPolicy="no-referrer" className="w-full max-h-56 object-cover rounded" />
-            ) : (
-              <div className="text-sm text-content-muted">{`لا صورة بعد. ارفع صورةً (${attachHint(IMAGE_RULE)}). الصورة هي وجه العمل في المعرض.`}</div>
-            )}
-            <div className="btn-row">
-              <Button variant="ghost" size="md" onClick={pickFile} loading={uploading}>
-                <UploadSimple size={18} />{image ? "تغيير الصورة" : "رفع صورة العمل"}
-              </Button>
-              {image ? (
-                <Button variant="ghost-danger" size="md" onClick={() => setImage(null)} disabled={uploading}>
-                  <Trash size={18} />إزالة
-                </Button>
-              ) : null}
-            </div>
-            <input ref={fileRef} type="file" accept={IMAGE_RULE.accept} hidden onChange={onPickFile} />
-          </div>
-        </SectionCard>
-      </div>
-
-      <SaveBar open={dirty} message={editing ? undefined : "عملٌ لم يُضَف بعد"}>
-        <Button variant="primary" size="md" loading={saving} onClick={save}>
-          {editing ? "حفظ التغييرات" : "إضافة العمل"}
-        </Button>
-      </SaveBar>
-    </>
+      <FormSection id="image" icon={<ImageIcon />} title="صورة العمل" mark="required">
+        <AdImageField bare label="صورة العمل" icon={<ImageIcon />} required value={image} onFile={onFile} onClear={() => setImage(null)} busy={uploading}
+          accept={IMAGE_RULE.accept} help={`${attachHint(IMAGE_RULE)}. الصورة هي وجه العمل في المعرض.`} alt="صورة العمل" />
+      </FormSection>
+    </FormRoom>
   );
 }

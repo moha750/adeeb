@@ -6,6 +6,7 @@ import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { getCurrentAdmin } from "@/lib/auth";
 import { fmtDateOnly, fmtDate } from "@/lib/dates";
+import { arCount } from "@/lib/arabicCount";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
 import { actingLine, positionLine, positionParts } from "@/lib/positionLabel";
@@ -38,7 +39,19 @@ export type Membership = {
   duration: string; // «٦ أشهر و١٠ أيام»
   journey: JourneyStop[];
   /** إنذاراتُه السارية — يراها صاحبُها بأسبابها كما كُتبت (قرار المالك). */
-  warnings: { id: string; ordinal: number; category: string; reason: string; date: string }[];
+  warnings: {
+    id: string; ordinal: number; category: string; reason: string; date: string;
+    /** (٢٠٢٦-١١-١٤) ما يطّلع عليه العضو بنصّ نظام الانضباط (م١٢: «ومن أصدرها ومن ألغاها»، وم٧: تاريخُ الواقعة إلزاميّ) —
+     *  ولقطةُ منصبه ولجنته يومَ الإصدار ليُرسم خطابُه كما رسمته الموارد البشريّة */
+    occurred: string | null; issuer: string | null; issuedAt: string; roleAr: string | null; committee: string | null;
+  }[];
+  /**
+   * **أوسمتُه** (٢٠٢٦-١١-١٤، «نعم»): تُحسب **حيّةً عند القراءة** بقواعدها في القاعدة (`badge_awards()`، قراءةٌ محضة) — جدولُ
+   * `member_badges` كُتب مرّةً في ٢٠٢٦-٠٨-١٠ ولا شيء يحدّثه بعدها. والمقفلُ يظهر إن شاء الوسامُ ذلك (`show_locked`)، ومعه ما بلغه منه.
+   */
+  badges: { key: string; name: string; how: string; icon: string; earnedOn: string | null; progress: string | null }[];
+  /** إنذاراتُه **الملغاة** — تخرج من العدّ وتبقى في سجلّه مشطوبةً (م١٥)، ويطّلع عليها بمن ألغاها وسببه (م١٢) */
+  cancelled: { id: string; category: string; reason: string; date: string; cancelledOn: string; canceller: string | null; cancelReason: string | null }[];
   /** حدُّ الإنذارات من القاعدة — لا رقمٌ محفور في الشاشة. */
   warningLimit: number;
   /**
@@ -82,7 +95,9 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     sb.from("councils").select("id, name_ar"),
     // إنذاراتُ صاحب الجلسة **السارية** وحدها — الملغى خرج من العدّ فلا يُعاد ذكرُه عليه.
     // ورتبتُها ترتيبُها الزمنيّ (كما تحسبها القاعدة)، فالفرزُ هنا هو نفسه هناك.
-    sb.from("member_warnings").select("id, category, reason, created_at").eq("user_id", me.id).eq("status", "active").order("created_at"),
+    // والملغاةُ معها (٢٠٢٦-١١-١٤): يطّلع عليها صاحبُها مشطوبةً (نظام الانضباط م١٢ وم١٥) — والعدُّ والرتبةُ من السارية وحدها كما كان
+    sb.from("member_warnings").select("id, category, reason, created_at, occurred_on, issued_by, role_at_issue, committee_id, status, cancelled_by, cancelled_at, cancel_reason")
+      .eq("user_id", me.id).in("status", ["active", "cancelled"]).order("created_at"),
     sb.rpc("warning_limit"),
     // شهاداتُ خبرته السارية — «لكلٍّ شهاداتُ نفسه» بندٌ في `can_view_certificate_of`
     sb.from("experience_certificates")
@@ -171,6 +186,48 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
     }),
   ].sort((a, b) => a.at - b.at);
 
+  type WarnRow = {
+    id: string; category: string; reason: string; created_at: string; occurred_on: string | null; issued_by: string | null;
+    role_at_issue: string | null; committee_id: number | null; status: string; cancelled_by: string | null; cancelled_at: string | null; cancel_reason: string | null;
+  };
+  const allW = (wRes.data ?? []) as WarnRow[];
+  const activeW = allW.filter((w) => w.status === "active");
+  const cancelledW = allW.filter((w) => w.status === "cancelled").reverse();
+  // أسماءُ من أصدر ومن ألغى — من سجلّ الأعضاء بمفتاح الخدمة، مقيَّدةً بمعرّفات إنذاراته هو وحده
+  const peopleIds = [...new Set(allW.flatMap((w) => [w.issued_by, w.cancelled_by]).filter((x): x is string => !!x))];
+  const people = peopleIds.length ? (await sb.from("profiles").select("id, full_name").in("id", peopleIds)).data ?? [] : [];
+  const personName = new Map(people.map((x) => [x.id as string, (x.full_name as string | null) ?? null]));
+  const nameOf = (id: string | null) => (id ? personName.get(id) ?? null : null);
+
+  // الأوسمة: قواعدُها في القاعدة وحدها (مصدرٌ واحد)، والاستحقاقُ يُصفّى لصاحب الجلسة هنا
+  const [bRes, awRes, attRes] = await Promise.all([
+    // المحسوبةُ وحدها: `badge_awards()` لا يعرف غيرها، فالوسامُ اليدويُّ (إن جاء) يبقى مقفلًا أبدًا هنا لو قُرئ
+    sb.from("badges").select("badge_key, name_ar, description_ar, icon, rule_key, threshold, show_locked, sort_order, id").eq("is_active", true).eq("kind", "computed").order("sort_order"),
+    sb.rpc("badge_awards"),
+    // عدُّ الحضور بقاعدة المحرّك نفسِها (`attended_at` قائم) — وإلّا قرأ «حضرت 3 من 3» والوسامُ مقفل
+    sb.from("activity_reservations").select("id", { count: "exact", head: true }).eq("user_id", me.id).eq("attendance_status", "attended").not("attended_at", "is", null),
+  ]);
+  type Award = { user_id: string; badge_id: string; earned_at: string };
+  const mine = new Map(((awRes.data ?? []) as Award[]).filter((x) => x.user_id === me.id).map((x) => [x.badge_id, x.earned_at]));
+  const attended = attRes.count ?? 0;
+  const tenureDays = p.joined_date ? Math.floor((Date.now() - Date.parse(`${p.joined_date}T00:00:00Z`)) / 86_400_000) : 0;
+  type BadgeRow = { id: string; badge_key: string; name_ar: string; description_ar: string; icon: string; rule_key: string; threshold: number; show_locked: boolean };
+  // وإن تعذّرت قراءةٌ منها غاب القسمُ كلُّه: أوسمةٌ منالةٌ تُعرض مقفلةً بـ«حضرت 0» معلومةٌ خاطئة، لا قسمٌ فارغ
+  const badgesFailed = !!(bRes.error || awRes.error || attRes.error);
+  const badges = badgesFailed ? [] : ((bRes.data ?? []) as BadgeRow[])
+    .filter((b) => mine.has(b.id) || b.show_locked)
+    .map((b) => {
+      const at = mine.get(b.id) ?? null;
+      // ما بلغه من المقفل — للعدديّ وحده (الحضور والمدّة)؛ والقيادةُ والترشّحُ نعم أو لا
+      const progress = at ? null
+        : b.rule_key === "events_attended" ? `حضرت ${attended} من ${b.threshold}`
+          : b.rule_key === "tenure_days" ? `بقي ${arCount(Math.max(1, b.threshold - tenureDays), ["يومٌ واحد", "يومان", "أيّام", "يومًا"])}`
+            : null;
+      return { key: b.badge_key, name: b.name_ar, how: b.description_ar, icon: b.icon, earnedOn: at ? fmtDate(at) : null, progress };
+    })
+    // المنالُ أوّلًا بترتيب الأوسمة، ثمّ المقفل
+    .sort((x, y) => Number(!x.earnedOn) - Number(!y.earnedOn));
+
   return {
     membership: {
       name: p.full_name ?? me.fullName ?? "",
@@ -181,8 +238,17 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       joined: fmtDateOnly(p.joined_date),
       duration: membershipDuration(p.joined_date, Date.now()),
       journey,
-      warnings: ((wRes.data ?? []) as { id: string; category: string; reason: string; created_at: string }[])
-        .map((w, i) => ({ id: w.id, ordinal: i + 1, category: w.category, reason: w.reason, date: fmtDate(w.created_at) })),
+      warnings: activeW.map((w, i) => ({
+        id: w.id, ordinal: i + 1, category: w.category, reason: w.reason, date: fmtDate(w.created_at),
+        occurred: w.occurred_on ? fmtDateOnly(w.occurred_on) : null, issuer: nameOf(w.issued_by), issuedAt: w.created_at,
+        roleAr: w.role_at_issue ? roleAr.get(w.role_at_issue) ?? w.role_at_issue : null,
+        committee: w.committee_id != null ? committeeName.get(w.committee_id) ?? null : null,
+      })),
+      badges,
+      cancelled: cancelledW.map((w) => ({
+        id: w.id, category: w.category, reason: w.reason, date: fmtDate(w.created_at),
+        cancelledOn: fmtDate(w.cancelled_at), canceller: nameOf(w.cancelled_by), cancelReason: w.cancel_reason,
+      })),
       warningLimit: typeof wlRes.data === "number" ? wlRes.data : 3,
       certificates: ((certRes.data ?? []) as {
         id: string; serial: string; holder_name: string; paper_name: string | null; position_title: string;

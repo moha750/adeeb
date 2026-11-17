@@ -19,8 +19,6 @@ export const STORY_CONFIG = {
      - date: 'YYYY-MM-DD' | 'YYYY-MM' (بلا يوم ⇒ بكرتا الشهر والسنة فقط) | 'live' (يوم الزيارة نفسه). */
   timeHero: {
     calendar: "gregorian" as "gregorian" | "hijri",
-    /* أرقام لاتينية لأن التاريخ ميلاديّ ('arabic' = ٢٠٢٤ · 'latin' = 2024) */
-    digits: "latin" as "arabic" | "latin",
     /* أربع محطات وحدها — يوم الزيارة ليس محطة: منه تنطلق أول بكرة عودًا إلى
        التأسيس (يقرأه story.ts حيًّا)، ولا يُعرض في الخاتمة لأنه لا يقول شيئًا. */
     stations: [
@@ -38,9 +36,10 @@ export const TIME_MONTHS = {
   hijri: ["محرّم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", "رمضان", "شوّال", "ذو القعدة", "ذو الحجة"],
 };
 
-const ARABIC_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-export const fmtDigits = (n: number | string): string =>
-  STORY_CONFIG.timeHero.digits === "arabic" ? String(n).replace(/\d/g, (d) => ARABIC_DIGITS[+d]) : String(n);
+/* كان هنا مفتاحُ `timeHero.digits` يجيز الأرقام الهنديّة ('arabic' = ٢٠٢٤)، وهو على 'latin'. فسقط المفتاحُ
+   ومحوّلُه بقرار صاحب الموقع (٢٠٢٦-١١-٠٧): الأرقامُ لاتينيّةٌ في الموقع كلِّه، فلا خيارَ يعيدها. وبقي
+   `fmtDigits` باسمه كي لا تتغيّر نداءاتُه. */
+export const fmtDigits = (n: number | string): string => String(n);
 
 export const STORY_ASSETS = {
   oldLogo: "/story/old-logo.svg", // الشعار القديم الحقيقي (من v2/المتطلبات/oldAdeebLogo.svg)

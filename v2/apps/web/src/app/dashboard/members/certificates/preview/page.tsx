@@ -1,5 +1,5 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PreviewView } from "./PreviewView";
+import { CertificatePreviewRoom } from "@/app/_ad/rooms/PaperPreviewRooms";
 
 /**
  * معاينة شهادة الخبرة — عيّنةٌ متخيَّلة تُرسَم في المتصفّح، لا بيانات فيها من القاعدة.
@@ -11,5 +11,6 @@ export default async function CertificatePreviewPage() {
   const denied = await denyUnless("/dashboard/members/certificates");
   if (denied) return denied;
 
-  return <PreviewView />;
+  // على الهويّة الجديدة (٢٠٢٦-١١-١٤): المعرضُ — العيّناتُ في الجانب والمختارةُ ورقتُها كبيرة
+  return <CertificatePreviewRoom />;
 }

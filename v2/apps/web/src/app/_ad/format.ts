@@ -64,8 +64,13 @@ export const fmtDayFull = (iso: string): string => DAY_Y.format(new Date(iso));
 export const daysSince = (iso: string, now: number): number => Math.floor((now - new Date(iso).getTime()) / 86_400_000);
 
 /** «10:41 ص» بساعة النادي — وقتُ الواقعة في سجلّ الأحداث، ويومُها في رأس مجموعتها (`dayHead`). */
-const CLOCK = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { hour: "numeric", minute: "2-digit", timeZone: TZ });
-export const fmtClock = (iso: string): string => CLOCK.format(new Date(iso));
+const CLOCK = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hourCycle: "h23", timeZone: TZ });
+/** «10:05 صباحًا» — بالكلمة كاملةً كبقيّة الموقع (المالك ٢٠٢٦-١١-١٥)، لا «م» التي يكتبها `Intl` بالعربيّة */
+export const fmtClock = (iso: string): string => {
+  const [h, m] = CLOCK.format(new Date(iso)).split(":").map(Number);
+  const hh = h % 24;
+  return `${hh % 12 === 0 ? 12 : hh % 12}:${String(m).padStart(2, "0")} ${hh < 12 ? "صباحًا" : "مساءً"}`;
+};
 
 /**
  * اسمُ يومٍ في سجلّ الأحداث بجانب كعبه (الكعبُ يقول التاريخ): «اليوم»، «أمس»، ثمّ اسمُ اليوم «الخميس» — لأنّ السجلَّ يُقرأ

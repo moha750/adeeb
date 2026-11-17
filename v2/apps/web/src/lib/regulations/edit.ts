@@ -40,7 +40,7 @@ const cellsOf = (l: string) => l.replace(/^\|/, "").replace(/\|$/, "").split("|"
 export function blocksToMarkup(blocks: RegBlock[]): string {
   return blocks
     .map((b) => {
-      if (b.kind === "para") return latin(b.text);
+      if (b.kind === "para") return escLead(latin(b.text));
       if (b.kind === "list") return b.items.map((it, i) => `${b.ordered ? `${i + 1}.` : "-"} ${latin(it)}`).join("\n");
       if (b.kind === "table") return [b.head, ...b.rows].map((r) => `| ${r.map(latin).join(" | ")} |`).join("\n");
       return `![${latin(b.caption)}](figure:${b.ref})`;
@@ -48,10 +48,17 @@ export function blocksToMarkup(blocks: RegBlock[]): string {
     .join("\n\n");
 }
 
+/**
+ * **فقرةٌ تبدأ بما يشبه علامة** («- »، «1. »، «|»، «![…](figure:…)») تُحفظ بشرطةٍ مائلةٍ قبلها (`\\- ليست قائمة`)، وتُقرأ فقرةً بلا الشرطة.
+ * كانت تُقرأ قائمةً أو جدولًا لم يصنعه أحد (المراجعة ٢٠٢٦-١١-١٦): المحرّرُ المرئيّ يُري فقرةً، فلا يُحفظ غيرُها.
+ */
+const escLead = (s: string) => (!s.startsWith("\\") && kindOf(s) === "para" ? s : `\\${s}`);
+const unEsc = (l: string) => (l.startsWith("\\") ? l.slice(1) : l);
+
 type Run = { kind: "para" | "ul" | "ol" | "table"; lines: string[] };
 const FIG = /^!\[([^\]]*)\]\(figure:([a-z-]+)\)$/;
 const kindOf = (l: string): Run["kind"] | "figure" =>
-  /^[-•]\s+/.test(l) ? "ul" : /^[0-9٠-٩]+[.)]\s+/.test(l) ? "ol" : l.startsWith("|") ? "table" : FIG.test(l) ? "figure" : "para";
+  l.startsWith("\\") ? "para" : /^[-•]\s+/.test(l) ? "ul" : /^[0-9٠-٩]+[.)]\s+/.test(l) ? "ol" : l.startsWith("|") ? "table" : FIG.test(l) ? "figure" : "para";
 
 /**
  * نصُّ الرئيس كتلًا. الكتلُ تفصلها الأسطرُ الفارغة، وتنقسم الكتلةُ أيضًا حيث يتبدّل نوعُ سطورها: فقرةٌ
@@ -66,13 +73,15 @@ export function markupToBlocks(src: string): { blocks: RegBlock[] } | { error: s
     if (!run) return;
     const r = run;
     run = null;
-    if (r.kind === "para") blocks.push({ kind: "para", text: store(r.lines.join(" ")) });
+    if (r.kind === "para") blocks.push({ kind: "para", text: store(r.lines.map(unEsc).join(" ")) });
     else if (r.kind === "ul") blocks.push({ kind: "list", ordered: false, items: r.lines.map((l) => store(l.replace(/^[-•]\s+/, ""))) });
     else if (r.kind === "ol") blocks.push({ kind: "list", ordered: true, items: r.lines.map((l) => store(l.replace(/^[0-9٠-٩]+[.)]\s+/, ""))) });
     else {
       const rows = r.lines.filter((l) => !/^\|[\s|:-]*-{3}[\s|:-]*$/.test(l)).map(cellsOf);
       if (rows.length < 2) error ??= "الجدول يحتاج سطرَ رأسٍ وصفًّا واحدًا على الأقلّ.";
       else if (rows.some((x) => x.length !== rows[0].length)) error ??= "عددُ خانات كلّ صفٍّ في الجدول يساوي عددَ خانات رأسه.";
+      // الجدولُ الذي أُدرج ولم يُكتب فيه شيء لا يُحفظ جدولًا فارغًا (المراجعة ٢٠٢٦-١١-١٦)
+      else if (rows.every((x) => x.every((c) => !c))) error ??= "الجدولُ فارغ: اكتب رأسه وخاناته، أو احذفه.";
       else blocks.push({ kind: "table", head: rows[0], rows: rows.slice(1) });
     }
   };
@@ -107,7 +116,7 @@ export function markupToBlocks(src: string): { blocks: RegBlock[] } | { error: s
 export function cleanTitle(s: string, what: string): { title: string } | { error: string } {
   const t = store(s);
   if (t.length < 2) return { error: `${what} مطلوب.` };
-  if (t.length > 80) return { error: `${what} أطولُ من ٨٠ حرفًا.` };
+  if (t.length > 80) return { error: `${what} أطولُ من 80 حرفًا.` };
   return { title: t };
 }
 

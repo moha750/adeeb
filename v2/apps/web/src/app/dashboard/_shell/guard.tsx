@@ -1,6 +1,7 @@
 import { getCurrentAdmin } from "@/lib/auth";
 import { SECTION_CAP, type Section } from "@/lib/capabilities";
-import { AccessDenied } from "./AccessDenied";
+import { AdRoomDenied } from "@/app/_ad/states";
+import { navLabelForHref } from "./nav";
 
 /**
  * حارس الغرفة — أوّل سطرٍ في كلّ صفحة:
@@ -19,5 +20,10 @@ import { AccessDenied } from "./AccessDenied";
 export async function denyUnless(section: Section) {
   const admin = await getCurrentAdmin();
   if (admin?.caps.includes(SECTION_CAP[section])) return null;
-  return <AccessDenied name={admin?.fullName ?? null} scope="room" />;
+  // **أمام غرفةٍ بعينها وهو داخل البوّابة** (٢٠٢٦-١١-١٧): كان بابَ الدخول نفسَه (`AccessDenied` على `AuthShell`) وسط البوّابة، فصار لوحَ
+  // الغرفة باسمها من الخريطة (لا يرى بندَها فلا يُقرأ من المرئيّ) وتحته القفل، والجملةُ نفسُها. والبابُ (`gate`) باقٍ في `layout`
+  return (
+    <AdRoomDenied title={navLabelForHref(section) ?? "بوّابة أدِيب"} navPath={section}
+      desc="حسابك لا يملك صلاحية هذه الصفحة. ما تملكه من أقسامٍ يظهر في القائمة الجانبيّة." />
+  );
 }

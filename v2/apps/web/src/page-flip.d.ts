@@ -31,6 +31,8 @@ declare module "page-flip" {
     flip(page: number, corner?: "top" | "bottom"): void;
     getCurrentPageIndex(): number;
     getPageCount(): number;
+    /** «landscape» صفحتان متقابلتان، «portrait» صفحةٌ واحدة */
+    getOrientation(): "landscape" | "portrait";
     destroy(): void;
   }
 }

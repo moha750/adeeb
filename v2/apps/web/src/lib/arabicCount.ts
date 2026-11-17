@@ -44,3 +44,4 @@ export const AR_READ_MIN: ArForms = ["دقيقةُ قراءة", "دقيقتا ق
 export const AR_NEWS: ArForms = ["خبرٌ واحد", "خبران", "أخبار", "خبرًا"];
 export const AR_VIEW: ArForms = ["مشاهدةٌ واحدة", "مشاهدتان", "مشاهدات", "مشاهدةً"];
 export const AR_VOLUNTEER: ArForms = ["متطوّعٌ واحد", "متطوّعان", "متطوّعين", "متطوّعًا"];
+export const AR_SEAT: ArForms = ["مقعدٌ واحد", "مقعدان", "مقاعد", "مقعدًا"];

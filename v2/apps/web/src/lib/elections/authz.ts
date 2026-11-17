@@ -13,6 +13,17 @@ export type ElectionManager = { userId: string };
  * الهويّة من الجلسة، والقدرة من `check_user_permission` (SECURITY DEFINER،
  * يمرّ عبر role_permissions بالاسم — صفر role_level).
  */
+/**
+ * هل يدير صاحب الجلسة هذا الانتخاب؟ مديرو الانتخابات الثلاثة في كلّ انتخاب، ومشرف اللجنة
+ * من الموارد البشرية في انتخاب قيادتها ونيابتها (نظام الانتخابات، المادتان ٢ و٤).
+ * الحكَم دالّةُ القاعدة `can_manage_election`، تقرأ الهويّة من الجلسة لا من النداء.
+ */
+export async function canManageElection(electionId: string): Promise<boolean> {
+  const session = await createClient();
+  const { data, error } = await session.rpc("can_manage_election", { p_election: electionId });
+  return !error && data === true;
+}
+
 export async function getElectionManager(): Promise<ElectionManager | null> {
   const session = await createClient();
   const { data: { user } } = await session.auth.getUser();

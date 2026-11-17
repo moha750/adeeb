@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Field, Modal, Radio, Segmented, Select, Textarea, type SelectOption } from "@adeeb/design-system";
+import { Button, Field, Modal, Radio, Select, Textarea, type SelectOption } from "@adeeb/design-system";
+import { FormChoice } from "@/app/_ad/form";
 import { CalendarBlank, CalendarCheck, ChatText, Pause, Play, UserPlus } from "@phosphor-icons/react";
 import { PencilSimple } from "@/app/_components/glyphs";
 import { clubDayKey, fmtDateOnly } from "@/lib/dates";
@@ -141,7 +142,8 @@ export function ActingModal({ seat, members, busy, onClose, onSubmit, title, des
         />
       ) : (
         <>
-          <Segmented wide aria-label="مدّة التكليف" value={span} onValueChange={setSpan} items={SPANS} />
+          {/* مبدّلُ الهويّة الجديدة (`FormChoice`) لا `Segmented` القديم: النافذةُ تُفتح من «تعيين المناصب» المنقولة (٢٠٢٦-١١-١٤) */}
+          <FormChoice label="مدّة التكليف" items={SPANS} value={span} onChange={setSpan} />
           {span === "custom" ? (
             <Field
               label="آخر يوم في التكليف"

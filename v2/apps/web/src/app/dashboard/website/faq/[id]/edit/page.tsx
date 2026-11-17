@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
 import { getFaqForEdit } from "../../data";
 import { FaqForm } from "../../FaqForm";
 import { getWebsiteManager } from "@/lib/website/authz";
 import { WebsiteDenied } from "../../../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
-import { PageHeader } from "../../../../_components/PageHeader";
+import { AdRoomError } from "@/app/_ad/states";
 
 export default async function EditFaqPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/website/faq");
@@ -16,14 +15,8 @@ export default async function EditFaqPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { faq, error } = await getFaqForEdit(id);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="تحرير السؤال" crumbLeaf="تحرير" />
-        <Alert tone="warning" title="تعذّر جلب السؤال">{error}</Alert>
-      </>
-    );
-  }
+  // **بالقطعة لا بالتنبيه القديم** (٢٠٢٦-١١-١٧): لوحُ الغرفة، ورمزُ السحابة المنقطعة، و«إعادة المحاولة» و«أبلغ الدعم الفني»
+  if (error) return <AdRoomError title="تحرير السؤال" navPath="/dashboard/website/faq" what="السؤال" message={error} />;
   if (!faq) notFound();
 
   return <FaqForm faq={faq} />;

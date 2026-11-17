@@ -16,8 +16,8 @@
 import Link from "next/link";
 import { Fragment, createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnchoredPopover, Checkbox, Dialog, matchesSearch } from "@adeeb/design-system";
-import { Copy, ListBullets, SquaresFour, WhatsappLogo } from "@phosphor-icons/react";
-import { CaretDown, CaretLeft, CaretRight, CaretUp, CaretUpDown, Check, DuotoneZone, FunnelSimple, MagnifyingGlass, X } from "@/app/_components/glyphs";
+import { Copy, ListBullets, SquaresFour, UserCircleDashed, WhatsappLogo } from "@phosphor-icons/react";
+import { CaretDown, CaretLeft, CaretRight, CaretUp, CaretUpDown, Check, CheckCircle, DuotoneZone, FunnelSimple, Info, MagnifyingGlass, Warning, WarningCircle, X } from "@/app/_components/glyphs";
 import { DropdownMenu, type MenuGroup } from "@/app/dashboard/_components/DropdownMenu";
 import { useRouter } from "next/navigation";
 import { useAdLab } from "./lab";
@@ -52,7 +52,16 @@ type BtnVariant = "fill" | "inverse" | "inverse-quiet" | "line" | "soft" | "quie
  *  `busy`: الفعلُ يجري — دوّارةٌ مكانَ الرمز (أو قبل الاسم إن لم يكن له رمز)، والنقرُ لا يُكرَّر.
  *  `held`: موقوفٌ مؤقّتًا (إلغاءُ نافذةٍ يجري فعلُها). **وكلاهما `aria-disabled` لا `disabled`**: الزرُّ المعطَّل يُسقط التركيزَ
  *  إلى أوّل الصفحة، فيخرج من النافذة المفتوحة ولا يعود (المراجعة المستقلّة). */
-type BtnBase = { variant?: BtnVariant; size?: "sm"; icon?: ReactNode; iconEnd?: boolean; children: ReactNode; done?: boolean; first?: boolean; busy?: boolean; held?: boolean };
+type BtnBase = { variant?: BtnVariant; size?: "sm"; icon?: ReactNode; iconEnd?: boolean; children: ReactNode; done?: boolean; first?: boolean; busy?: boolean; held?: boolean;
+  /** رابطٌ خارج الموقع (الخريطة): يُفتح في تبويبٍ جديد كما كان الرابطُ في الصفحات القديمة */
+  external?: boolean;
+  /**
+   * **بلا ختمٍ بقرار** (حارسُ الختم `scripts/button-stamps.mjs`): الثانويُّ يحمل أيقونتَه دائمًا، إلّا الرجوعَ (إلغاء، إغلاق، تراجع) وثانيَي
+   * الالتزام في النماذج — فيُكتب ذلك على الزرّ نفسه لا يُسكت عنه. لا أثرَ له في الرسم
+   */
+  plain?: boolean;
+  /** زرُّ شريطٍ يُبقي حالته (العريضُ والقائمتان في المحرّر المرئيّ): يُعلن أنّه مضغوط، ويُرى كذلك */
+  pressed?: boolean };
 type BtnProps = BtnBase &
   ({ href: string; onClick?: never; disabled?: never } | { href?: never; onClick: () => void; disabled?: boolean });
 
@@ -63,7 +72,17 @@ type BtnProps = BtnBase &
  */
 const btnClass = (v: BtnVariant, size?: "sm", end?: boolean) => `ad-btn ad-btn-${v}${size ? " ad-btn-sm" : ""}${end ? " ad-btn-end" : ""}`;
 
-export function AdButton({ variant = "line", size, icon, iconEnd, children, done, first, busy, held, ...rest }: BtnProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- `plain` علامةٌ للحارس لا للرسم، فتُنزع من الخصائص
+export function AdButton({ variant = "line", size, icon, iconEnd, children, done, first, busy, held, external, plain: _plain, pressed, ...rest }: BtnProps) {
+  if ("href" in rest && rest.href && external) {
+    return (
+      <a href={rest.href} target="_blank" rel="noopener noreferrer" className={btnClass(variant, size, iconEnd)}>
+        {!iconEnd && icon}
+        {children}
+        {iconEnd && icon}
+      </a>
+    );
+  }
   if ("href" in rest && rest.href) {
     return (
       <Link href={rest.href} className={btnClass(variant, size, iconEnd)} data-done={done || undefined}>
@@ -83,6 +102,7 @@ export function AdButton({ variant = "line", size, icon, iconEnd, children, done
       disabled={r.disabled}
       aria-disabled={busy || held || undefined}
       aria-busy={busy || undefined}
+      aria-pressed={pressed}
       data-done={done || undefined}
       data-autofocus={first || undefined}
     >
@@ -95,9 +115,22 @@ export function AdButton({ variant = "line", size, icon, iconEnd, children, done
 
 /** زرُّ أيقونة ظاهرٌ دائمًا، واسمُه للقارئ الآليّ وللتلميح معًا. */
 export function AdIconButton({
-  label, icon, onClick, href, danger, disabled,
-}: { label: string; icon: ReactNode; onClick?: () => void; href?: string; danger?: boolean; disabled?: boolean }) {
+  label, icon, onClick, href, danger, quiet, disabled, external, done,
+}: { label: string; icon: ReactNode; onClick?: () => void; href?: string; danger?: boolean; disabled?: boolean;
+  /** خطرٌ هادئ: رمزٌ أحمرُ على صبغة الخطر لا زرٌّ مصمت — حين يجاوره زرٌّ مصمتٌ أحمر (إعجابٌ مضغوط) فلا يلتبسان */
+  quiet?: boolean;
+  /** رابطٌ خارجيّ (الخريطة، واتساب) يُفتح في نافذةٍ جديدة، ويقول ذلك لقارئ الشاشة */
+  external?: boolean;
+  /** تمّ الفعلُ للتوّ («نُسخ الرابط»): الرمزُ بلون النجاح (`[data-done]`) */
+  done?: boolean }) {
   const cls = `ad-ibtn${danger ? " ad-ibtn-danger" : ""}`;
+  if (href && external) {
+    return (
+      <a href={href} className={cls} aria-label={`${label}، يُفتح في نافذةٍ جديدة`} data-tip={label} target="_blank" rel="noopener noreferrer">
+        {icon}
+      </a>
+    );
+  }
   if (href) {
     return (
       <Link href={href} className={cls} aria-label={label} data-tip={label}>
@@ -106,7 +139,7 @@ export function AdIconButton({
     );
   }
   return (
-    <button type="button" className={cls} aria-label={label} data-tip={label} onClick={onClick} disabled={disabled}>
+    <button type="button" className={cls} aria-label={label} data-tip={label} onClick={onClick} disabled={disabled} data-done={done || undefined} data-quiet={quiet || undefined}>
       {icon}
     </button>
   );
@@ -118,9 +151,13 @@ export function AdIconButton({
  * («منشور» خضراء، «موقوف» كهرمانيّة، «أُعيد للتعديل» حمراء)، والعلامةُ والنوعُ محايدان برمزهما («مميّز» بالنجمة).
  * (كانت في الكرت «رقاقةً» بنقطةٍ ملوّنة — بقيّةُ زمن الزجاج على اللوح حيث لا تُقرأ التعبئة — وفي السطر «شارةً» معبّأة: قطعتان لمعنًى واحد.)
  */
-export function AdBadge({ tone = "neutral", icon, children }: { tone?: AdTone; icon?: ReactNode; children: ReactNode }) {
+export function AdBadge({ tone = "neutral", icon, glass, children }: {
+  tone?: AdTone; icon?: ReactNode;
+  /** **الشارةُ الزجاجيّة** فوق صورةٍ ملوّنة (غلافُ الكرت في الموقع العامّ، محمد ٢٠٢٦-١١-١٥: «لماذا لا نأخذ البادج العادي ونصنع منه واحدًا زجاجيًّا؟») — هندستُها هندستُها، ومادّتُها زجاجُ اللوح */
+  glass?: boolean; children: ReactNode;
+}) {
   return (
-    <span className="ad-badge" data-tone={tone === "neutral" ? undefined : tone}>
+    <span className="ad-badge" data-tone={tone === "neutral" ? undefined : tone} data-glass={glass || undefined}>
       {icon}
       {children}
     </span>
@@ -129,12 +166,31 @@ export function AdBadge({ tone = "neutral", icon, children }: { tone?: AdTone; i
 
 /* ═══ البصمة: لوح الغرفة ═══ */
 /** `rare`: موضعٌ يُفتح نادرًا (الأرشيف، والمحذوفات، والملغاة) — مكانُه «المزيد» في المبدّل لا صفُّه. */
-export type AdPosition = { key: string; label: string; count: number; rare?: boolean };
+/** `count` اختياريّ: موضعٌ ليس عددًا (عرضٌ من عروض السجلّ — «التحليلات» في نتائج الاستبيان، ٢٠٢٦-١١-٠٧) يُكتب اسمُه وحده */
+export type AdPosition = { key: string; label: string; count?: number; rare?: boolean };
+/** `busy`: يدور الزرُّ وحدَه حتى يعود ما فعله (حضورُ متطوّعٍ في الطابور)، ويُمسَك إخوتُه في السجلّ نفسِه. */
 export type AdAction =
-  | { label: string; icon?: ReactNode; href: string; onClick?: never }
-  | { label: string; icon?: ReactNode; onClick: () => void; href?: never };
+  | { label: string; icon?: ReactNode; href: string; onClick?: never; busy?: never; disabled?: never }
+  | { label: string; icon?: ReactNode; onClick: () => void; href?: never; busy?: boolean;
+      /** موقوفٌ لسببٍ في السجلّ (قبولُ متطوّعٍ اكتمل عددُ فترته) — يُرى ولا يُضغط */
+      disabled?: boolean };
 
 /** اللوح — رأسُ الغرفة: المسار، والاسم، والفعلُ الأساسيّ. والمواضعُ ليست فيه، تحته في المبدّل. ولا سطرَ حالٍ فيه (٢٠٢٦-١٠-٣١). */
+/** مسارُ اللوح — واحدٌ للوح الغرفة ولكعب الكرت الذي يلبس رأسَها (`AdRoomBand`) */
+export function PlateCrumb({ crumb }: { crumb?: { label: string; href?: string }[] }) {
+  if (!crumb || crumb.length === 0) return null;
+  return (
+    <nav className="ad-crumb" aria-label="المسار">
+      {crumb.map((c, i) => (
+        <span key={c.label} className="ad-crumb-step">
+          {c.href ? <Link href={c.href}>{c.label}</Link> : <span>{c.label}</span>}
+          {i < crumb.length - 1 && <CaretLeft aria-hidden />}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
 export function RoomPlate({
   title, crumb, action, extra,
 }: {
@@ -151,16 +207,7 @@ export function RoomPlate({
     <section className="ad-plate" aria-labelledby="ad-room-title">
       <div className="ad-plate-body">
         <div className="ad-plate-id">
-          {crumb && crumb.length > 0 && (
-            <nav className="ad-crumb" aria-label="المسار">
-              {crumb.map((c, i) => (
-                <span key={c.label} className="ad-crumb-step">
-                  {c.href ? <Link href={c.href}>{c.label}</Link> : <span>{c.label}</span>}
-                  {i < crumb.length - 1 && <CaretLeft aria-hidden />}
-                </span>
-              ))}
-            </nav>
-          )}
+          <PlateCrumb crumb={crumb} />
           <h1 id="ad-room-title" className="ad-plate-title">{title}</h1>
         </div>
         {(action || extra) && (
@@ -189,10 +236,14 @@ export function RoomPlate({
    - **أجزاءٌ متساوية العرض،** في كلّ جزءٍ اسمُ الموضع وعدده. والمختارُ بتدرّج الهويّة.
    - **حجمٌ ثابت:** عرضُ الجزء واحدٌ في المكتب واللوحيّ، ولا يمتدّ إلّا على الجوّال ليملأ السطر — فلا
      يأخذ نصفَ الصفحة هنا وكلَّها هناك (ملاحظةُ محمد على الكبسولات).
-   - **أربعةُ أجزاءٍ حدًّا:** ما يُفتح نادرًا (`rare`) وما زاد على الأربعة يذهب إلى جزءٍ أخير «المزيد»
-     يفتح قائمةً بعددها. وإن كان الموضعُ المختار هناك، حمل الجزءُ اسمَه وعددَه فلا يضيع المكان.
+   - **أربعةُ أجزاءٍ على الأقلّ، وما اتّسع له العرضُ فوقها** (محمد ٢٠٢٦-١١-٠٤: «المزيد» أخفت لجنتين من ثلاثٍ في «قسمي» والشريطُ
+     يتّسع لها — واللجانُ أصلُ الغرفة): يُقاس الشريط فيظهر من الأجزاء ما يتّسع له بعرضٍ لا يقلّ عن `SEG_MIN`، ولا يقلّ عن أربعة
+     (كان حدًّا ثابتًا). وما يُفتح نادرًا (`rare`) وما فاض يذهب إلى جزءٍ أخير «المزيد» يفتح قائمةً بعددها. وإن كان الموضعُ المختار
+     هناك، حمل الجزءُ اسمَه وعددَه فلا يضيع المكان.
    - الغرفةُ بلا مواضع لا يُرسم لها شيء. */
-const SWITCH_MAX = 4;
+const SWITCH_MIN = 4;
+/** أقلُّ عرضٍ للجزء بوحدة خطّ الشريط — اسمُ لجنةٍ وعددُها بلا قصّ */
+const SEG_MIN = 9;
 
 export function AdSwitch({
   positions, position, onPosition, label = "المواضع",
@@ -202,11 +253,25 @@ export function AdSwitch({
   onPosition: (key: string) => void;
   label?: string;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [max, setMax] = useState(SWITCH_MIN);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const fit = () => {
+      const seg = (parseFloat(getComputedStyle(el).fontSize) || 16) * SEG_MIN;
+      setMax(Math.max(SWITCH_MIN, Math.floor(el.clientWidth / seg)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   if (positions.length < 2) return null;
   let shown = positions.filter((p) => !p.rare);
   let more = positions.filter((p) => p.rare);
-  if (shown.length + (more.length > 0 ? 1 : 0) > SWITCH_MAX) {
-    const keep = SWITCH_MAX - 1;
+  if (shown.length + (more.length > 0 ? 1 : 0) > max) {
+    const keep = max - 1;
     more = [...shown.slice(keep), ...more];
     shown = shown.slice(0, keep);
   }
@@ -215,7 +280,7 @@ export function AdSwitch({
   if (more.length === 1) { shown = [...shown, ...more]; more = []; }
   const inMore = more.find((p) => p.key === position);
   return (
-    <div className="ad-switch" role="group" aria-label={label}>
+    <div ref={box} className="ad-switch" role="group" aria-label={label}>
       {shown.map((p) => (
         <button
           key={p.key}
@@ -225,7 +290,7 @@ export function AdSwitch({
           onClick={() => onPosition(p.key)}
         >
           <span className="ad-switch-l" title={p.label}>{p.label}</span>
-          <span className="ad-switch-n">{p.count}</span>
+          {p.count !== undefined && <span className="ad-switch-n">{fmtNum(p.count)}</span>}
         </button>
       ))}
       {more.length > 0 && <AdSwitchMore more={more} inMore={inMore} position={position} onPosition={onPosition} />}
@@ -260,7 +325,7 @@ function AdSwitchMore({
           {inMore ? inMore.label : "المزيد"}
           <CaretDown className="ad-caret" aria-hidden />
         </span>
-        {inMore && <span className="ad-switch-n">{inMore.count}</span>}
+        {inMore?.count !== undefined && <span className="ad-switch-n">{fmtNum(inMore.count)}</span>}
       </button>
       <AdChoiceList
         open={open}
@@ -297,7 +362,8 @@ export type AdFilter = {
   key: string;
   label: string;
   value: string;
-  options: { value: string; label: string; group?: string }[];
+  /** `chip`: اسمُ الخيار مختارًا حين لا يقول نفسَه خارج مجموعته («نعم» ← «أحضرت؟: نعم») */
+  options: { value: string; label: string; group?: string; chip?: string; groupIcon?: ReactNode }[];
   onChange: (v: string) => void;
 };
 
@@ -369,7 +435,8 @@ export function AdTools({
  */
 const SEARCH_AT = 8;
 /** `apart`: خطٌّ بعده — «الكلّ» رفعُ المرشّح لا قيمةٌ من قيمه، كما يُفصل «حذف» عن الأفعال في «المزيد» */
-type AdChoice = { value: string; label: string; group?: string; count?: number; apart?: boolean };
+/** `groupIcon`: رمزُ مجموعته قبل اسمها في رأسها — كرأس مجموعة قائمة الحقل (محمد ٢٠٢٦-١١-١٢) */
+type AdChoice = { value: string; label: string; group?: string; groupIcon?: ReactNode; count?: number; apart?: boolean };
 type AdChoiceProps = {
   open: boolean;
   anchorRef: React.RefObject<HTMLElement | null>;
@@ -420,11 +487,11 @@ function AdChoiceListOpen({ anchorRef, label, options, value, onChoose, onDismis
   };
 
   // المجموعاتُ بترتيبها، والترتيبُ المسطّحُ للأسهم هو ترتيبُ الرسم نفسُه
-  const groups: { group?: string; items: { o: AdChoice; i: number }[] }[] = [];
+  const groups: { group?: string; icon?: ReactNode; items: { o: AdChoice; i: number }[] }[] = [];
   flat.forEach((o, i) => {
     const last = groups[groups.length - 1];
     if (last && last.group === o.group) last.items.push({ o, i });
-    else groups.push({ group: o.group, items: [{ o, i }] });
+    else groups.push({ group: o.group, icon: o.groupIcon, items: [{ o, i }] });
   });
 
   return (
@@ -462,8 +529,8 @@ function AdChoiceListOpen({ anchorRef, label, options, value, onChoose, onDismis
         onMouseLeave={() => setActive(-1)}
       >
         {groups.map((g, gi) => (
-          <Fragment key={g.group ?? `g${gi}`}>
-            {g.group && <div className="dm-hd" role="presentation">{g.group}</div>}
+          <div key={gi} role={g.group ? "group" : "presentation"} aria-label={g.group}>
+            {g.group && <div className="dm-hd" aria-hidden>{g.icon ? <span className="dm-hd-ic">{g.icon}</span> : null}<span>{g.group}</span></div>}
             {g.items.map(({ o, i }) => (
               <Fragment key={o.value || "all"}>
                 <div
@@ -477,13 +544,13 @@ function AdChoiceListOpen({ anchorRef, label, options, value, onChoose, onDismis
                 >
                   {/* العلامةُ في آخر الصفّ كمنسدل الهويّة (`.asel-ck`)، محجوزةٌ بالرؤية فلا يتزحزح شيء، وأوّلُ الصفّ للاسم لا لفراغ */}
                   <span className="ad-flist-l">{o.label}</span>
-                  {o.count !== undefined && <span className="ad-switch-n">{o.count}</span>}
+                  {o.count !== undefined && <span className="ad-switch-n">{fmtNum(o.count)}</span>}
                   <Check className="ad-flist-ck ad-line" aria-hidden />
                 </div>
                 {o.apart && i < flat.length - 1 && <div className="dm-sep" role="separator" />}
               </Fragment>
             ))}
-          </Fragment>
+          </div>
         ))}
         {!flat.length && <p className="ad-flist-none">لا خيارَ يطابق «{q.trim()}».</p>}
       </div>
@@ -500,7 +567,7 @@ function AdChoiceListOpen({ anchorRef, label, options, value, onChoose, onDismis
  * `field`: في لوحة «التصفية» — حقلٌ يمتدّ بعرض صفّه كحبّات جيرانه، ويقول قيمتَه («الكلّ»، «لجنة التأليف») لأنّ رأسَ الصفّ
  * يسمّيه (كان «الجهة ▾» تحت رأس «الجهة»)، وقائمتُه بعرضه.
  */
-function AdFilterMenu({ f, onOpen, field }: { f: AdFilter; onOpen?: (open: boolean) => void; field?: boolean }) {
+export function AdFilterMenu({ f, onOpen, field }: { f: AdFilter; onOpen?: (open: boolean) => void; field?: boolean }) {
   const [open, setOpenState] = useState(false);
   const setOpen = (v: boolean) => {
     setOpenState(v);
@@ -522,18 +589,18 @@ function AdFilterMenu({ f, onOpen, field }: { f: AdFilter; onOpen?: (open: boole
         className="ad-filter-btn"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`${f.label}: ${chosen ? chosen.label : "الكلّ"}`}
+        aria-label={`${f.label}: ${chosen ? chosen.chip ?? chosen.label : "الكلّ"}`}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); setOpen(true); } }}
       >
         {/* فارغًا باسمه وحده («الجهة ▾»)، ومختارًا باسمه خافتًا ثمّ قيمتِه («الجهة لجنة التأليف ✕») — الشريطُ ملخّصُ ما صُفّي،
             وبعضُ القيم لا تقول مرشّحَها وحدها («للجميع»، «نشط») (محمد ٢٠٢٦-١٠-٣١) */}
         {field ? (
-          <b className="ad-filter-v" title={chosen?.label}>{chosen ? chosen.label : "الكلّ"}</b>
+          <b className="ad-filter-v" title={chosen?.chip ?? chosen?.label}>{chosen ? chosen.chip ?? chosen.label : "الكلّ"}</b>
         ) : (
           <>
             <span className="ad-filter-l">{f.label}</span>
-            {chosen && <b className="ad-filter-v" title={chosen.label}>{chosen.label}</b>}
+            {chosen && <b className="ad-filter-v" title={chosen.chip ?? chosen.label}>{chosen.chip ?? chosen.label}</b>}
           </>
         )}
         {!chosen && <CaretDown className="ad-caret" aria-hidden />}
@@ -689,7 +756,12 @@ export type AdMeterOf = { now: number; max: number; full?: string; note?: string
  * `ltr`: قيمةٌ لاتينيّة (رقمٌ مرجعيّ، رمز) تُكتب بالخطّ اللاتينيّ من أوّلها إلى آخرها كالبريد في سطور المعلومات — كانت بخطّ المتن
  * العربيّ، فحروفُها بلاتينيّته المذيّلة وأرقامُها بأرقامه، خطّان في كلمةٍ واحدة (محمد ٢٠٢٦-١١-٠١).
  */
-export type AdFigure = { value: string | number; label: string; icon: ReactNode; of?: AdMeterOf; ltr?: boolean };
+export type AdFigure = {
+  value: string | number; label: string; icon: ReactNode; of?: AdMeterOf; ltr?: boolean;
+  /** **الفرقُ عن الفترة السابقة** (إحصائيّات الزوّار، ٢٠٢٦-١١-١٤): تقرؤه خلاصةُ المدّة هناك شارةً بسهمها، خضراءَ للأحسن وحمراءَ للأسوأ —
+   *  و«أحسن» ليس دائمًا «أكبر»، فالحكمُ (`good`) يأتي من صاحب الرقم لا من السهم. وسطرُ الأرقام (`AdFigureRow`) لا يرسمه */
+  delta?: { pct: number; good: boolean | null };
+};
 const latin = (v: ReactNode, ltr?: boolean) => (ltr ? <bdi dir="ltr" className="lat">{v}</bdi> : v);
 /** الشريطُ نفسُه في الكرت والجدول: النسبة، أو الكلمةُ مكانَها («مكتمل»، «لم يبدأ»، «أُلغيت»). */
 function meterOf(of?: AdMeterOf) {
@@ -701,7 +773,7 @@ function meterOf(of?: AdMeterOf) {
 /** `seed` (معرّفُ السجلّ): يُقصّ قماشُ الكعب من موضعٍ يخصّه — فالكعوبُ قطعٌ مختلفةٌ من قماشٍ واحد لا نسخٌ متطابقة. */
 /** ستّةُ مواضع قصٍّ ثابتة (`ad.css`)، يختار المعرّفُ أحدَها — ثابتٌ للسجلّ نفسه بين الزيارات. */
 const CUTS = 6;
-const cutOf = (seed: string) => {
+export const cutOf = (seed: string) => {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
   return Math.abs(h) % CUTS;
@@ -710,10 +782,18 @@ const cutOf = (seed: string) => {
 /** **كعبُ اليوم**: قطعةُ الجدول المصغّرةُ نفسُها (رقمُ اليوم وتحته «أكتوبر 2026») علامةً ليومٍ على خطّ سجلّ الأحداث (`AdLog`). */
 export function AdDayTile({ iso }: { iso: string }) {
   const d = dayParts(iso);
+  return <AdStubTile seed={iso.slice(0, 10)} stub={{ big: d.day, small: d.month }} />;
+}
+
+/**
+ * **الكعبُ المصغّرُ قائمًا بذاته** (٢٠٢٦-١١-٠٤): قطعةُ الجدول نفسُها خارجَ السطر — صورةُ رأس مجموعةٍ صاحبُها سجلٌّ مؤرَّخ (الفرصةُ
+ * فوق متطوّعيها في طابور الشهادات: يومُها، أو رمزُ المرنة). وبلا حقيقةٍ قماشُه وحده كالكعب.
+ */
+export function AdStubTile({ stub, seed }: { stub?: AdStub; seed: string }) {
   return (
-    <span className="ad-td-stub" data-cut={cutOf(iso.slice(0, 10))} aria-hidden>
-      <b className="ad-num">{d.day}</b>
-      <span>{d.month}</span>
+    <span className="ad-td-stub" data-cut={cutOf(seed)} aria-hidden>
+      {stub?.icon ? <span className="ad-stub-icon">{stub.icon}</span> : stub?.big ? <b className="ad-num">{stub.big}</b> : null}
+      {stub?.small && <span>{stub.small}</span>}
     </span>
   );
 }
@@ -759,7 +839,7 @@ function usePick() {
 }
 
 /** مربّعُ «الصفحة كلِّها» في رأس الجدول: نصفُ تحديدٍ (شَرطة) حين يُحدَّد بعضُها — حالٌ لا تُكتب إلّا على العنصر نفسِه */
-function PickAll({ all, some, onAll }: { all: boolean; some: boolean; onAll: (on: boolean) => void }) {
+function PickAll({ all, some, onAll, label }: { all: boolean; some: boolean; onAll: (on: boolean) => void; label?: string }) {
   const box = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const input = box.current?.querySelector("input");
@@ -767,7 +847,7 @@ function PickAll({ all, some, onAll }: { all: boolean; some: boolean; onAll: (on
   }, [all, some]);
   return (
     <span ref={box} className="ad-pick-all">
-      <Checkbox className="ad-pick" checked={all} onChange={() => onAll(!all)} aria-label={all ? "إلغاء تحديد الصفحة" : "تحديد الصفحة كلِّها"} />
+      <Checkbox className="ad-pick" checked={all} onChange={() => onAll(!all)} aria-label={label ?? (all ? "إلغاء تحديد الصفحة" : "تحديد الصفحة كلِّها")} />
     </span>
   );
 }
@@ -786,7 +866,7 @@ export function AdSelBar({ count, noun, ops, onClear }: { count: number; noun: A
       <span className="ad-sel-x"><AdButton variant="soft" icon={<X className="ad-line" />} onClick={onClear}>إلغاء التحديد</AdButton></span>
       <div className="ad-tools-set ad-sel-acts">
         {ops.map((o) => (
-          <AdButton key={o.key} variant={o.danger ? "danger" : "soft"} icon={o.icon} onClick={() => o.onClick?.()} disabled={o.disabled}>{o.label}</AdButton>
+          <AdButton key={o.key} variant={o.danger ? "danger" : "soft"} icon={o.icon} onClick={() => o.onClick?.()} disabled={o.disabled} busy={o.busy} held={!o.busy && ops.some((x) => x.busy)}>{o.label}</AdButton>
         ))}
       </div>
     </div>
@@ -811,15 +891,22 @@ function titleOf(title: string, href?: string, onOpen?: () => void) {
  */
 export type AdFace = {
   src?: string | null; gender?: string | null; name: string;
-  /** مقعدٌ شاغر: مكانُ الوجه متقطّعٌ بلا رسم (صفُّ القيادة) */
+  /** مقعدٌ فارغ: مكانُ الوجه متقطّعٌ بلا رسم (صفُّ القيادة) */
   vacant?: boolean;
   /** شارةٌ على حدّ الوجه السفليّ في وسطه، كبطاقة اسمٍ مثبّتةٍ عليه («أنت» في صفّ القيادة، فكرةُ محمد ٢٠٢٦-١١-٠٣) */
   mark?: ReactNode;
+  /** الوجهُ نفسُه عنصرًا يُمرَّر مكانَ الصورة: محرّرُ صورة صاحب الحساب في «حسابي» (`AvatarEditor` بكاميرته) */
+  node?: ReactNode;
 };
 
 export function AdCard({
-  cover, seed, stub, chips, title, href, onOpen, meta, figures, foot, face,
+  cover, seed, stub, chips, title, href, onOpen, meta, figures, foot, face, paper, band,
 }: {
+  /**
+   * ما يُكتب على الكعب نفسِه: **رأسُ الغرفة حين يقودها الكرت في الجوّال** (`AdRoomBand`؛ اعتمده محمد ٢٠٢٦-١١-٠٥). يظهر في الضيّق
+   * وحده حين يكون الكرتُ أوّلَ العمود الصاعد (`AdCols top`)، ويغيب لوحُ الغرفة؛ وفي المكتب اللوحُ في مكانه والكعبُ بلا كتابة.
+   */
+  band?: ReactNode;
   /** فتحُ السجلّ بلا صفحة (نافذة: قراءةُ رسالة) — العنوانُ زرٌّ يمتدّ على الكرت كما يمتدّ الرابط */
   onOpen?: () => void;
   cover?: string | null;
@@ -830,21 +917,29 @@ export function AdCard({
   href?: string;
   meta?: AdMeta[];
   figures?: AdFigure[];
-  foot: ReactNode;
+  /** القاعُ وأفعالُه — وبلا قاعٍ («كرتُك» في حسابي: لا فعلَ عليه سوى صورته) لا يُرسم شريطُه */
+  foot?: ReactNode;
   /**
    * **كرتُ الشخص: التذكرةُ واقفة** — الكعبُ شريطٌ أعلاها (كما تصير التذكرةُ في الضيّق)، ووجهُ صاحبها على حدّه، واسمُه
    * وسطورُه تحته في وسطها. فالإنسانُ يُعرف بوجهه قبل اسمه، والقطعةُ قطعةُ الهويّة نفسُها.
    */
   face?: AdFace;
+  /**
+   * **تذكرةُ الورقة** (شهاداتي، ٢٠٢٦-١١-٠٤: «أراها الأضعف»): الشهادةُ عند صاحبها هي ورقتُها، فالكعبُ رأسُ التذكرة بنسبة الورقة نفسِها
+   * (`cover` صورتُها كاملةً بلونها الطبيعيّ لا شريطٌ مقصوصٌ مصبوغ — «الشهادةُ شيءٌ رسميّ»)، والثلمتان على خطّ القطع تحته — كتذكرة الضيّق، في كلّ عرض.
+   */
+  /** `"portrait"`: الورقةُ قائمةٌ بنسبة بطاقة عِرفان (1080×1350) لا بنسبة الشهادة */
+  paper?: boolean | "portrait";
 }) {
   // في الغرفة المرتَّبة يدويًّا (`reorder.tsx`) الكعبُ مقبضُ السحب، ورقمُه موضعُ السجلّ الحيّ
   const sort = useSortItem();
   const node = useSortNode(sort);
   return (
-    <div className="ad-card-wrap" ref={node} data-sort-id={sort?.id} data-dragging={sort?.isDragging || undefined} data-face={face ? "" : undefined}>
+    <div className="ad-card-wrap" ref={node} data-sort-id={sort?.id} data-dragging={sort?.isDragging || undefined} data-face={face ? "" : undefined} data-paper={paper === "portrait" ? "portrait" : paper ? "" : undefined}>
       <span className="ad-card-shade" aria-hidden><span /></span>
       <article className="ad-card">
         <div className="ad-card-stub" data-cut={seed ? cutOf(seed) : undefined}>
+          {band ? <div className="ad-card-band">{band}</div> : null}
           {stub && (
             <div className="ad-card-stub-fact">
               {stub.icon && !sort ? <span className="ad-stub-icon" aria-hidden>{stub.icon}</span> : <b className="ad-num">{sort ? fmtNum(sort.n) : stub.big}</b>}
@@ -862,8 +957,10 @@ export function AdCard({
         </div>
         {face && (
           <span className="ad-card-face">
-            {face.vacant
-              ? <span className="av av-xl ad-card-face-empty" aria-hidden />
+            {face.node ? face.node : face.vacant
+              // الفارغُ وجهٌ كالوجوه بأرضه وإطاره، وفيه الشخصُ المقطَّع (محمد ٢٠٢٦-١١-٠٤: «يظهر فارغًا، هل هناك خطأ؟»؛ ثمّ «أيقونةُ
+              // الشخص الباهتة في إطارٍ متقطّع قبيحة: توقّعتُ خلفيّةً والشخصَ المقطَّع») — كان إطارًا متقطّعًا بلا رسم فيُظنّ صورةً لم تُحمَّل
+              ? <span className="av av-xl ad-card-face-empty" aria-hidden><span className="av-icon"><UserCircleDashed /></span></span>
               : <Avatar name={face.name} src={face.src ?? undefined} gender={face.gender} size="xl" />}
             {face.mark && <span className="ad-card-face-mark">{face.mark}</span>}
           </span>
@@ -878,50 +975,63 @@ export function AdCard({
               </div>
             ) : chips && <span className="ad-chips">{chips}</span>}
             <h3 className="ad-card-title">{titleOf(title, href, onOpen)}</h3>
-            {meta && meta.length > 0 && (
-              <ul className="ad-meta">
-                {meta.map((m) => (
-                  <li key={m.text} className="ad-meta-line" data-tone={m.tone}>{m.icon}<span title={m.text}>{metaText(m)}</span></li>
-                ))}
-              </ul>
-            )}
-            {figures && figures.length > 0 && (
-              <dl className="ad-figures">
-                {figures.map((f) => {
-                  const m = meterOf(f.of);
-                  const of = m?.of;
-                  const full = !!m?.full;
-                  const pct = m?.pct ?? 0;
-                  const word = m?.word;
-                  return (
-                    <div key={f.label} className="ad-figure">
-                      <dt>{f.icon}{f.label}</dt>
-                      {/* النسبةُ في طرف سطر الرقم مقابلَه («25 / 40 … 63%»)، والشريطُ تحتهما بعرض العمود كلِّه (اقتراحُ محمد
-                          ٢٠٢٦-١٠-٣٠)؛ وإذا كان الاكتمالُ تنبيهًا قالت الكلمةُ مكانَ النسبة («مكتمل») */}
-                      <dd className="ad-num ad-figure-v">
-                        {latin(f.value, f.ltr)}
-                        {of && <span className="ad-meter-pct" data-word={of.note ? "note" : full ? "full" : undefined}>{word ?? fmtPct(pct)}</span>}
-                      </dd>
-                      {of && (
-                        <dd className="ad-meter-row">
-                          <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
-                        </dd>
-                      )}
-                    </div>
-                  );
-                })}
-              </dl>
-            )}
+            {meta && meta.length > 0 && <AdMetaList meta={meta} />}
+            {figures && figures.length > 0 && <AdFigureRow figures={figures} />}
           </div>
-          <div className="ad-card-foot">{foot}</div>
+          {foot ? <div className="ad-card-foot">{foot}</div> : null}
         </div>
       </article>
     </div>
   );
 }
 
+/**
+ * **صفُّ أرقام التذكرة** (`AdCard.figures`): كلُّ رقمٍ برمزه واسمه، والنسبةُ في طرف سطره، والشريطُ تحته — قطعةٌ واحدةٌ للكرت
+ * ولرأس صفحة السجلّ (`_ad/record.tsx`) الذي هو التذكرةُ نفسُها مفتوحة.
+ */
+/** سطورُ معلومات التذكرة، كلٌّ برمزه على مربّعٍ مصبوغٍ بلون سطره — للكرت ولرأس صفحة السجلّ معًا */
+export function AdMetaList({ meta }: { meta: AdMeta[] }) {
+  return (
+    <ul className="ad-meta">
+      {meta.map((m) => (
+        <li key={m.text} className="ad-meta-line" data-tone={m.tone}>{m.icon}<span title={m.text}>{metaText(m)}</span></li>
+      ))}
+    </ul>
+  );
+}
+
+export function AdFigureRow({ figures }: { figures: AdFigure[] }) {
+  return (
+    <dl className="ad-figures">
+      {figures.map((f) => {
+        const m = meterOf(f.of);
+        const of = m?.of;
+        const full = !!m?.full;
+        const pct = m?.pct ?? 0;
+        const word = m?.word;
+        return (
+          <div key={f.label} className="ad-figure">
+            <dt>{f.icon}{f.label}</dt>
+            {/* النسبةُ في طرف سطر الرقم مقابلَه («25 / 40 … 63%»)، والشريطُ تحتهما بعرض العمود كلِّه (اقتراحُ محمد
+                ٢٠٢٦-١٠-٣٠)؛ وإذا كان الاكتمالُ تنبيهًا قالت الكلمةُ مكانَ النسبة («مكتمل») */}
+            <dd className="ad-num ad-figure-v">
+              {latin(f.value, f.ltr)}
+              {of && <span className="ad-meter-pct" data-word={of.note ? "note" : full ? "full" : undefined}>{word ?? fmtPct(pct)}</span>}
+            </dd>
+            {of && (
+              <dd className="ad-meter-row">
+                <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
+              </dd>
+            )}
+          </div>
+        );
+      })}
+    </dl>
+  );
+}
+
 /** فعلٌ في كرتٍ أو سطر: باسمه ورمزه، رابطًا أو نقرة. */
-export type AdOp = { key: string; label: string; icon: ReactNode; href?: string; onClick?: () => void; danger?: boolean; disabled?: boolean };
+export type AdOp = { key: string; label: string; icon: ReactNode; href?: string; onClick?: () => void; danger?: boolean; disabled?: boolean; busy?: boolean };
 
 /**
  * **أفعالُ السجلّ: الأساسيُّ ظاهرٌ دائمًا، والبقيّةُ في «المزيد» — إلّا إذا كان فعلًا واحدًا فيظهر باسمه** (محمد ٢٠٢٦-١١-٠٢).
@@ -939,8 +1049,10 @@ export function AdActs({ primary, ops, inRow }: { primary: AdAction; ops: AdOp[]
   const router = useRouter();
   const safe = ops.filter((o) => !o.danger);
   const danger = ops.filter((o) => o.danger);
+  // فعلٌ يعمل: يدور زرُّه، ويُمسَك ما سواه في السجلّ نفسِه حتى يعود (لا حكمان على سجلٍّ واحدٍ معًا)
+  const anyBusy = !!primary.busy || ops.some((o) => o.busy);
   const item = (o: AdOp) => ({
-    label: o.label, icon: o.icon, danger: o.danger, disabled: o.disabled,
+    label: o.label, icon: o.icon, danger: o.danger, disabled: o.disabled || anyBusy,
     onSelect: () => (o.href ? router.push(o.href) : o.onClick?.()),
   });
   const groups: MenuGroup[] = [
@@ -954,12 +1066,12 @@ export function AdActs({ primary, ops, inRow }: { primary: AdAction; ops: AdOp[]
       {primary.href ? (
         <AdButton variant={inRow ? "soft" : "fill"} size="sm" icon={primary.icon} href={primary.href}>{primary.label}</AdButton>
       ) : (
-        <AdButton variant={inRow ? "soft" : "fill"} size="sm" icon={primary.icon} onClick={primary.onClick!}>{primary.label}</AdButton>
+        <AdButton variant={inRow ? "soft" : "fill"} size="sm" icon={primary.icon} onClick={primary.onClick!} busy={primary.busy} held={anyBusy && !primary.busy} disabled={primary.disabled}>{primary.label}</AdButton>
       )}
       {lone && (lone.href ? (
         <AdButton variant={lone.danger ? "danger" : "soft"} size="sm" icon={lone.icon} href={lone.href}>{lone.label}</AdButton>
       ) : (
-        <AdButton variant={lone.danger ? "danger" : "soft"} size="sm" icon={lone.icon} onClick={lone.onClick!} disabled={lone.disabled}>{lone.label}</AdButton>
+        <AdButton variant={lone.danger ? "danger" : "soft"} size="sm" icon={lone.icon} onClick={lone.onClick!} disabled={lone.disabled} busy={lone.busy} held={anyBusy && !lone.busy}>{lone.label}</AdButton>
       ))}
       {!lone && groups.length > 0 && (
         <DropdownMenu
@@ -1129,17 +1241,41 @@ export function AdRow({
 /** درجاتُ حدٍّ في رأس مجموعة: `max` قطعًا تمتلئ منها `now` بنغمتها، وتحتها `label` كلمةً (`AdGroupHead.steps`). */
 export type AdSteps = { now: number; max: number; tone?: "warn" | "bad"; label: string };
 
+/** الدرجاتُ قطعةً واحدة — في رأس المجموعة (غرفةُ الإنذارات)، وفي رأس القسم (`AdSection.steps`: «إنذاراتي» في «عضويتي»، ٢٠٢٦-١١-١٤) */
+export function AdStepsBar({ steps }: { steps: AdSteps }) {
+  return (
+    <div className="ad-steps" data-tone={steps.now > 0 ? steps.tone : undefined}>
+      <span className="ad-steps-bar" role="img" aria-label={`${steps.now} من ${steps.max}`}>
+        {Array.from({ length: Math.max(steps.max, 1) }, (_, i) => <i key={i} data-on={i < steps.now || undefined} />)}
+      </span>
+      <span className="ad-steps-l">{steps.label}</span>
+    </div>
+  );
+}
+
 /**
  * **رأسُ مجموعة** (`CollectionRoom.group`، محمد ٢٠٢٦-١١-٠٢: «شريطٌ باسم الشخص وتحته إنذاراته»؛ ثمّ «نظيفٌ مقبول لكن ليس جميلًا»):
  * صاحبُ المجموعة بوجهه (`lead`: صورتُه) واسمِه بخطّ العنوان وسطورِه تحته، وفي طرفه **درجاتُ حدّه** (`steps`): قطعٌ بعدد الحدّ
  * تمتلئ بنغمتها وتحتها كلمتُها («بقي إنذارٌ واحد») — صورةٌ تُقرأ بلمحةٍ مع جملتها، لا رقمٌ يكرّرها. أو رقمٌ بشريطه (`figure`)
  * لمجموعةٍ لا حدَّ لها. في الكروت قطعةٌ فوق شبكتها، وفي الجدول شريطٌ بعرضه كلِّه.
  */
-export function AdGroupHead({ title, sub, lead, steps, figure }: { title: string; sub?: AdMeta[]; lead?: ReactNode; steps?: AdSteps; figure?: AdFigure }) {
+/**
+ * **تحديدُ المجموعة كلِّها من رأسها** (محمد ٢٠٢٦-١١-٠٤، شهاداتُ المتطوّعين: «الفرصةُ وحدةُ العمل»): حين يكون في الموضع تحديدٌ جماعيّ
+ * يضع القالبُ (`CollectionRoom`) مربّعَ التحديد نفسَه أوّلَ رأس كلّ مجموعة — يحدّد سجلّاتها وحدها بضغطة، ويُعلن نصفَ التحديد كمربّع الصفحة.
+ */
+export const AdGroupPick = createContext<{ all: boolean; some: boolean; onAll: (on: boolean) => void } | null>(null);
+
+export function AdGroupHead({ title, sub, lead, steps, figure, act }: {
+  title: string; sub?: AdMeta[]; lead?: ReactNode; steps?: AdSteps; figure?: AdFigure;
+  /** فعلُ المجموعة في طرفها («افتح الفرصة» فوق متطوّعيها) — زرٌّ ظاهرٌ باسمه كأفعال السجلّ */
+  act?: ReactNode;
+}) {
   const m = meterOf(figure?.of);
+  const pick = useContext(AdGroupPick);
   return (
     <div className="ad-group-head">
       <div className="ad-group-who">
+        {pick && <PickAll {...pick} label={pick.all ? `إلغاء تحديد «${title}»` : `تحديد «${title}» كلِّها`} />}
         {lead}
         <div className="ad-group-main">
           <span className="ad-group-title">{title}</span>
@@ -1150,14 +1286,7 @@ export function AdGroupHead({ title, sub, lead, steps, figure }: { title: string
           )}
         </div>
       </div>
-      {steps && (
-        <div className="ad-steps" data-tone={steps.now > 0 ? steps.tone : undefined}>
-          <span className="ad-steps-bar" role="img" aria-label={`${steps.now} من ${steps.max}`}>
-            {Array.from({ length: Math.max(steps.max, 1) }, (_, i) => <i key={i} data-on={i < steps.now || undefined} />)}
-          </span>
-          <span className="ad-steps-l">{steps.label}</span>
-        </div>
-      )}
+      {steps && <AdStepsBar steps={steps} />}
       {figure && (
         <div className="ad-group-fig">
           <span className="ad-group-fig-l">{figure.icon}{figure.label}</span>
@@ -1168,6 +1297,7 @@ export function AdGroupHead({ title, sub, lead, steps, figure }: { title: string
           {m && <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${figure.label}: ${m.word ?? fmtPct(m.pct)}`} />}
         </div>
       )}
+      {act && <div className="ad-group-act">{act}</div>}
     </div>
   );
 }
@@ -1283,8 +1413,8 @@ function ConfirmInner({
       <div className="ad-dlg-main">
         {text && <p id={descId} className="ad-dlg-x">{text}</p>}
         <div className="ad-dlg-foot">
-          <AdButton variant={tone === "danger" ? "danger-fill" : "fill"} onClick={onConfirm} busy={loading}>{confirmLabel}</AdButton>
-          {!single && <AdButton variant="soft" onClick={onCancel ?? onClose} held={loading} first={tone !== "success"}>{cancelLabel}</AdButton>}
+          <AdButton plain variant={tone === "danger" ? "danger-fill" : "fill"} onClick={onConfirm} busy={loading}>{confirmLabel}</AdButton>
+          {!single && <AdButton plain variant="soft" onClick={onCancel ?? onClose} held={loading} first={tone !== "success"}>{cancelLabel}</AdButton>}
         </div>
       </div>
     </DuotoneZone>
@@ -1350,8 +1480,8 @@ function ErrDetail({ text, report }: { text: string; report?: () => string }) {
  */
 /**
  * **صفُّ القيادة** (محمد ٢٠٢٦-١١-٠٣): مقاعدُ الوحدة وجوهًا بمسمّياتها — منسّقُ القسم، والقائد، والنائب، والمشرفان — فوق كروت
- * أعضائها. كانت القيادةُ كرتين بين الأعضاء وسطرًا نصّيًّا («لا يُلاحَظ من كثر ما هو عاديّ»)، فصار لها مكانٌ واحدٌ يُرى. والمقعدُ الشاغر
- * دائرةٌ متقطّعة بلون التحذير مكتوبٌ تحتها «شاغر»، فيُلفت العينَ بلا جملة. وصاحبُ الشاشة «أنت» أينما جلس، والوجهُ يفتح ملفَّه.
+ * أعضائها. كانت القيادةُ كرتين بين الأعضاء وسطرًا نصّيًّا («لا يُلاحَظ من كثر ما هو عاديّ»)، فصار لها مكانٌ واحدٌ يُرى. والمقعدُ الفارغ
+ * دائرةٌ متقطّعة بلون التحذير مكتوبٌ تحتها «فارغ»، فيُلفت العينَ بلا جملة. وصاحبُ الشاشة «أنت» أينما جلس، والوجهُ يفتح ملفَّه.
  */
 export type AdSeat = {
   /** المنصب — في كعب التذكرة مع رمزه («القائد»، «المشرف») */
@@ -1366,13 +1496,26 @@ export type AdSeat = {
   onOpen?: () => void;
   /** التواصلُ معه (واتساب) — «التواصل» في قاع كرته كما في كروت الأعضاء (محمد ٢٠٢٦-١١-٠٣: «القائدُ يحتاج أن يتواصل مع مشرفيه») */
   onContact?: () => void;
+  /** مجموعتُه في الصفّ («القيادة» بالتاج، «الإشراف» بالدرع) — المقاعدُ المتتالية بمجموعةٍ واحدة تحت عنوانها ورمزِه */
+  group?: {
+    label: string; icon?: ReactNode; /** رأسُ الوحدة فوق لجانها: صفٌّ وحده في منتصفه، كرأس صفحة الهيكلة */ head?: boolean;
+    /** أفعالٌ على المجموعة في سطر عنوانها («تعديل» اللجنة) — `AdGroupTitle act` */
+    act?: AdGroupAct[];
+    /** سطرٌ تحت اسمها («مقعدٌ فارغ») */
+    sub?: string;
+  };
+  /**
+   * **قاعُ المقعد أفعالُ صاحب الغرفة** (تعيينُ المناصب ٢٠٢٦-١١-١٤): «استبدال» و«إزالة»، و«إسناد» و«تكليف» للفارغ — مكانَ «التواصل».
+   * والقاعدةُ نفسُها: قاعٌ في المقاعد كلّها، فمقعدٌ لا فعلَ فيه («منصبٌ ثابت») قاعُه سطرٌ هادئٌ لا فراغ
+   */
+  foot?: ReactNode;
 };
 /**
  * **صفُّ القيادة: كلُّ مقعدٍ كرتُ شخصٍ واقف** (محمد ٢٠٢٦-١١-٠٣: «المبدأُ والتذكرةُ متّفقٌ عليهما، والتطبيقُ قبيح»). المقعدُ هو `AdCard`
  * بوجهه نفسِه لا قطعةٌ تشبهه: الكعبُ شريطٌ أعلاه بقماشه وثلمتيه وفيه المنصبُ برمزه، والوجهُ على حدّه، والاسمُ وسطورُه تحته،
  * وقاعُه «التواصل» في المقاعد كلّها، و«أنت» شارةٌ على حدّ وجهك. فلا حجمَ ولا زاويةَ ولا ثلمةَ ولا زرَّ إلّا ما في كروت البوّابة.
  * (رُدّ قبله: تذكرةٌ أفقيّةٌ عريضةٌ قصيرة بزاويةٍ وثلمةٍ أصغر من الكرت — نوعٌ آخرُ من التذاكر، وفراغٌ بين الاسم وطرفها، وصفٌّ يتبدّل
- * بين صفٍّ وصفّين بقياس الأسماء؛ ودائرةُ رمز الواتساب وحده؛ وطرفٌ مثقوبٌ بخطٍّ متقطّع، والمتقطّعُ عندنا حدُّ الشاغر.)
+ * بين صفٍّ وصفّين بقياس الأسماء؛ ودائرةُ رمز الواتساب وحده؛ وطرفٌ مثقوبٌ بخطٍّ متقطّع، والمتقطّعُ عندنا حدُّ الفارغ.)
  */
 export function AdSeats({ label, seats, gaps }: {
   label: string;
@@ -1380,40 +1523,117 @@ export function AdSeats({ label, seats, gaps }: {
   /** ما ينقص اللجانَ — سطرٌ في الصفّ نفسِه لا صندوقٌ ثانٍ */
   gaps?: string | null;
 }) {
+  /**
+   * **الصفُّ مجموعاتٌ بعناوينها** (محمد ٢٠٢٦-١١-٠٣: «"قيادة لجنة الفعاليات" غيرُ واضحة: هل المشرفان قيادة؟»): القائدُ والنائبُ تحت
+   * «القيادة»، والمشرفان تحت «الإشراف» — فالهيكلُ يُرى بنفسه: من يقود اللجنة ومن يشرف عليها من خارجها. والكروتُ صفٌّ واحدٌ كما كانت
+   * (شبكةٌ فرعيّة)، واسمُ الوحدة لا يتكرّر فوقها: هو في رأس الصفحة وفي موضعها المختار. وبلا مجموعات يبقى العنوانُ الواحد.
+   */
+  const groups = seats.reduce<{ label?: string; icon?: ReactNode; head?: boolean; act?: NonNullable<AdSeat["group"]>["act"]; sub?: string; seats: AdSeat[] }[]>((acc, x) => {
+    const last = acc[acc.length - 1];
+    if (last && last.label === x.group?.label) last.seats.push(x);
+    else acc.push({ label: x.group?.label, icon: x.group?.icon, head: x.group?.head, act: x.group?.act, sub: x.group?.sub, seats: [x] });
+    return acc;
+  }, []);
+  const card = (x: AdSeat) => (
+    <li key={`${x.title}-${x.person?.name ?? ""}-${x.meta?.[0]?.text ?? ""}`} className="ad-seat-cell" data-vacant={x.person ? undefined : ""}>
+      <AdCard
+        seed={`${x.title}${x.person?.name ?? ""}`}
+        stub={{ big: "", small: x.title, icon: x.icon }}
+        face={x.person ? { name: x.person.name, src: x.person.src, gender: x.person.gender, mark: x.you ? <AdBadge>أنت</AdBadge> : undefined } : { name: "", vacant: true }}
+        title={x.person ? x.person.name : "فارغ"}
+        onOpen={x.person ? x.onOpen : undefined}
+        meta={x.meta}
+        /* **قاعٌ واحدٌ بزرٍّ واحد في المقاعد كلّها** (محمد ٢٠٢٦-١١-٠٣: «الفارغُ أيضًا يحتاج فوترًا ليتّسق»): «التواصل» لغيرك (زرُّ كروت
+           الأعضاء نفسُه)، ومعطّلًا حيث لا أحدَ يُتواصَل معه — الفارغ، ومن لا جوّال له، ومقعدُك (و«أنت» على حدّ وجهك).
+           (رُدّ قبله: القاعُ كاملًا «الملفّ الشخصيّ» و«التواصل» — فعلان متلاصقان في كرتٍ من أربعة؛ و«الملفّ الشخصيّ» وحده في مقعدك —
+           «لا داعي، الاسمُ يفتحه»؛ و«أنت» شارةً في القاع — «قبيح»؛ وكبسولةً في ركن الشريط؛ وزرًّا معطّلًا مكانَ الزرّ.) */
+        // `foot: null` كرتٌ بلا قاع (ضيوفُ الفعاليّة: لا تواصلَ مع ضيفٍ من صفحةٍ عامّة)
+        foot={x.foot === null ? undefined : x.foot ?? <AdButton variant="soft" size="sm" icon={<WhatsappLogo />} onClick={x.onContact ?? (() => {})} disabled={!x.onContact || !x.person}>التواصل</AdButton>}
+      />
+    </li>
+  );
+  const grouped = groups.some((g) => g.label);
   return (
     <section className="ad-seats" aria-label={label}>
-      <h3 className="ad-seats-title">{label}</h3>
+      {!grouped && <h3 className="ad-seats-title">{label}</h3>}
       {seats.length > 0 && (
-        <ul className="ad-seats-row" data-n={Math.min(seats.length, 4)}>
-          {seats.map((x) => (
-            <li key={`${x.title}-${x.meta?.[0]?.text ?? ""}`} className="ad-seat-cell" data-vacant={x.person ? undefined : ""}>
-              <AdCard
-                seed={`${x.title}${x.person?.name ?? ""}`}
-                stub={{ big: "", small: x.title, icon: x.icon }}
-                face={x.person ? { name: x.person.name, src: x.person.src, gender: x.person.gender, mark: x.you ? <AdBadge>أنت</AdBadge> : undefined } : { name: "", vacant: true }}
-                title={x.person ? x.person.name : "شاغر"}
-                onOpen={x.person ? x.onOpen : undefined}
-                meta={x.meta}
-                /* **قاعٌ واحدٌ بزرٍّ واحد في المقاعد كلّها** (محمد ٢٠٢٦-١١-٠٣: «الشاغرُ أيضًا يحتاج فوترًا ليتّسق»): «التواصل» لغيرك (زرُّ كروت
-                   الأعضاء نفسُه)، ومعطّلًا حيث لا أحدَ يُتواصَل معه — الشاغر، ومن لا جوّال له، ومقعدُك (و«أنت» على حدّ وجهك).
-                   (رُدّ قبله: القاعُ كاملًا «الملفّ الشخصيّ» و«التواصل» — فعلان متلاصقان في كرتٍ من أربعة؛ و«الملفّ الشخصيّ» وحده في مقعدك —
-                   «لا داعي، الاسمُ يفتحه»؛ و«أنت» شارةً في القاع — «قبيح»؛ وكبسولةً في ركن الشريط؛ وزرًّا معطّلًا مكانَ الزرّ.) */
-                foot={<AdButton variant="soft" size="sm" icon={<WhatsappLogo />} onClick={x.onContact ?? (() => {})} disabled={!x.onContact || !x.person}>التواصل</AdButton>}
-              />
-            </li>
+        <div className="ad-seats-row" data-n={Math.min(seats.length, 4)}>
+          {groups.map((g, i) => (
+            <div key={`${g.label ?? ""}-${i}`} className="ad-seat-group" data-k={Math.min(g.seats.length, 4)} data-head={g.head ? "" : undefined}>
+              {g.label && <AdGroupTitle icon={g.icon} act={g.act} sub={g.sub}>{g.label}</AdGroupTitle>}
+              <ul className="ad-seat-list">{g.seats.map(card)}</ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {gaps && <p className="ad-seats-gaps">{gaps}</p>}
     </section>
   );
 }
 
-export function AdNote({ tone, children, action }: { tone?: "bad" | "info"; children: ReactNode; action?: ReactNode }) {
+/**
+ * **عنوانُ مجموعة الكروت** (محمد ٢٠٢٦-١١-٠٤، قاعدة): لوحةُ اسمٍ من اللوح الكحليّ بنقشه — رمزُ عائلة الكروت وكلمتُها — ثمّ خطٌّ يخرج
+ * منها ويذوب إلى آخر المجموعة. لكلّ غرفةٍ تقسم كروتها مجموعات («القيادة» و«الإشراف» في صفّ القيادة)؛ والشكلُ وما رُدّ قبله في `ad.css`.
+ */
+export type AdGroupAct = { label: string; icon: ReactNode; onClick: () => void };
+export function AdGroupTitle({ icon, children, sub, more, act }: {
+  icon?: ReactNode; children: ReactNode;
+  /** **أفعالٌ على المجموعة نفسِها** في موضع «عرض الكل» (تعيينُ المناصب ٢٠٢٦-١١-١٤: «تعديل» اللجنة فوق مقعدَيها، و«إضافة لجنة») — أزرارٌ لا روابط */
+  act?: AdGroupAct[];
+  /**
+   * **«عرض الكل (N)»** (قطعةٌ جديدة، أُعلنت لمحمد ٢٠٢٦-١١-١٣ مع الرئيسية): المجموعةُ ملخّصٌ من غرفتها («من كلّ نوعٍ ثلاثةٌ ثمّ عرض الكل»،
+   * قاعدةُ النموّ ٢٠٢٦-١١-٠٧)، فبابُ غرفتها في طرف سطرها بعد الشعرة، بعدد ما فيها كلِّه
+   */
+  more?: { label: string; href: string };
+  /** سطرٌ تحت الاسم يلخّص المجموعة («ينتظرك»: «لك موعدٌ بعد 7 أيام، وشهادةٌ جاهزة» — الرئيسية ٢٠٢٦-١١-٠٥): الاسمُ قصيرٌ في قطعته،
+   *  والجملةُ بحبر الورق تحته — كانت الجملةُ نفسُها في القطعة فثقُل الكحليُّ تحت لوح الغرفة */
+  sub?: string;
+}) {
+  const title = (
+    <h3 className="ad-gtitle">
+      <span className="ad-gtitle-name">{icon}<span>{children}</span></span>
+      {more ? <Link className="ad-btn ad-btn-line ad-btn-sm ad-btn-end ad-gtitle-more" href={more.href}>{more.label}<CaretLeft /></Link> : null}
+      {act?.length ? (
+        <span className="ad-gtitle-more ad-gtitle-acts">
+          {act.map((a) => <button key={a.label} type="button" className="ad-btn ad-btn-line ad-btn-sm" onClick={a.onClick}>{a.icon}{a.label}</button>)}
+        </span>
+      ) : null}
+    </h3>
+  );
+  return sub ? <div className="ad-gtitle-wrap">{title}<p className="ad-gtitle-sub">{sub}</p></div> : title;
+}
+
+/**
+ * **التنبيه** (`AdNote`، اعتمده محمد ٢٠٢٦-١١-٠٥: «ممتاز، يعتمد» — «ي» الورقةُ المضاءة، بعد تسعة توجّهاتٍ بُنيت في الغرف: الختم، والكرت،
+ * واللوحُ بنغمته شريطًا، والسطر، والعلامةُ المائيّة، والختمُ في السطر، واللوحُ كاملًا، واللسان — وكان الأوّلُ «عاديًّا جدًّا»):
+ * ورقةٌ بيضاءُ بحافّةٍ داخليّةٍ فاتحة (لغةُ كرت العضويّة)، و**الختمُ قطعةٌ من مادّة اللوح بلون المعنى** برمزه وضوئه، و**وهجٌ بلونه ينبعث
+ * من الختم** دائرةً ناعمة، ثمّ التسميةُ الصغيرة (`label`) فوق الجملة بخطّ العناوين (`title`) وشرحِها (`children`)، ثمّ الفعلُ في الطرف
+ * المقابل (وفي الضيّق تحت النصّ). والجملةُ الواحدةُ بلا عنوان هي العنوانُ نفسُه. والنغماتُ أربع: إعلاميٌّ بلوح الهويّة الكحليّ، ونجاحٌ
+ * وتحذيرٌ وخطر — **لونٌ واحدٌ يسري في الختم والوهج والجملة وختمِ الفعل**. و`onClose` إغلاقُه (رسالةٌ بعد فعلٍ تمّ). والرسالةُ المنبثقة
+ * القطعةُ نفسُها حين تأتي وتذهب (`ad.css`).
+ */
+type NoteTone = "info" | "ok" | "warn" | "bad";
+const NOTE_IC: Record<NoteTone, ReactNode> = { info: <Info />, ok: <CheckCircle />, warn: <Warning />, bad: <WarningCircle /> };
+
+export function AdNote({ tone, label, title, icon, children, action, onClose, live }: {
+  tone?: NoteTone;
+  /** **حالٌ تصل بعد فعل** («حُفظ مقعدك»): تُعلَن لقارئ الشاشة (`status`) — الملاحظةُ الساكنةُ في نغمتها الهادئة `note` لا تُعلَن */
+  live?: boolean;
+  /** تسميةٌ صغيرةٌ فوق الجملة («رغباتك»، «البريد») — لغةُ سطر «حسابي»: التسميةُ فوق القيمة */
+  label?: string;
+  title?: ReactNode; icon?: ReactNode; children?: ReactNode; action?: ReactNode; onClose?: () => void;
+}) {
+  const t: NoteTone = tone ?? "warn";
   return (
-    <div className="ad-note" data-tone={tone} role={tone === "info" ? "note" : "alert"}>
-      <span>{children}</span>
-      {action}
+    <div className="ad-note" data-tone={t} role={live ? "status" : t === "info" || t === "ok" ? "note" : "alert"}>
+      <span className="ad-note-band" aria-hidden><span>{icon ?? NOTE_IC[t]}</span></span>
+      <span className="ad-note-t">{label ? <small>{label}</small> : null}{title ? <b>{title}</b> : null}{children ? <span>{children}</span> : null}</span>
+      {action || onClose ? (
+        <span className="ad-note-act">
+          {action}
+          {onClose ? <button type="button" className="ad-note-x" onClick={onClose} aria-label="إغلاق"><X /></button> : null}
+        </span>
+      ) : null}
     </div>
   );
 }

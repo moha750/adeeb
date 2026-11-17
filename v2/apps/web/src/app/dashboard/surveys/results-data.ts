@@ -38,7 +38,9 @@ function formatAnswer(
   if (a.answer_time != null) return a.answer_time;
   if (a.answer_datetime != null) return String(a.answer_datetime);
   const v = a.answer_json;
-  const label = (id: unknown) => (typeof id === "string" ? q.choices.get(id)?.label ?? id : "");
+  // خيارٌ حُذف من النموذج نهائيًّا يُسمّى كما يسمّيه التجميعُ (`aggregate.ts`: «(خيار محذوف)») لا بمعرّفه الخامّ («c7»): فتصفيةُ
+  // «مَن اختاره» في صفحة النتائج تجده، والتصديرُ يقول ما هو (٢٠٢٦-١١-٠٨، المراجعةُ المستقلّة)
+  const label = (id: unknown) => (typeof id === "string" ? q.choices.get(id)?.label ?? "(خيار محذوف)" : "");
   if (typeof v === "string") return label(v);
   if (Array.isArray(v)) return v.map(label).filter(Boolean).join("، ");
   return "";

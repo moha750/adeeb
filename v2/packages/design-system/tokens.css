@@ -317,6 +317,15 @@
   --ad-ink-head: var(--navy-800);
   --ad-brand: var(--navy-700);
   --ad-brand-2: var(--steel-600);
+  /* درجاتُ البيانات (٢٠٢٦-١١-١٢): ستٌّ من العلامة نحو الورقة، أبرزُها الأولى. تُكتب مرّةً هنا وتتبع الوضعَ وحدها، لأنّ العلامةَ
+     والورقةَ تتبدّلان معًا في الداكن (كحليٌّ على أبيض ← فولاذيٌّ فاتحٌ على ليل) — فالأبرزُ أبرزُ في الوضعين. كانت خلطاتٍ داخل
+     كلّ رسم (الحلقة، والشريط المقسوم)، فصارت دورًا يأخذه كلُّ رسمٍ قادم. الترتيبُ يختاره `dataStep` في `_ad/charts.tsx`. */
+  --ad-data-1: var(--ad-brand);
+  --ad-data-2: color-mix(in oklab, var(--ad-brand) 78%, var(--ad-sheet));
+  --ad-data-3: color-mix(in oklab, var(--ad-brand) 58%, var(--ad-sheet));
+  --ad-data-4: color-mix(in oklab, var(--ad-brand) 46%, var(--ad-sheet));
+  --ad-data-5: color-mix(in oklab, var(--ad-brand) 36%, var(--ad-sheet));
+  --ad-data-6: color-mix(in oklab, var(--ad-brand) 20%, var(--ad-sheet));
   --ad-tint: var(--navy-50);
   --ad-tint-2: var(--navy-100);
   --ad-soft: var(--navy-50);          /* الزرّ اللطيف: الفعلُ الأساسيّ داخل الكرت */
@@ -373,6 +382,11 @@
   --ad-plate-veil-2: color-mix(in oklab, var(--steel-50) 18%, transparent);
   --ad-plate-hair: color-mix(in oklab, var(--steel-50) 22%, transparent);   /* حدُّ زجاج الشريط (`.ash-mark`) */
   --ad-plate-hair-2: color-mix(in oklab, var(--steel-50) 34%, transparent); /* وأوضحُه (`.ash-srch:focus-within`) */
+  /* **زجاجُ الصورة** (محمد ٢٠٢٦-١١-١٥): مادّةٌ واحدةٌ لكلّ ما يقع على صورة — لوحُ الكرت الزجاجيّ مرجعُها، والشارةُ ومربّعُ فتح العمل
+     منها. كحليُّ اللوح شفّافًا بحدّ زجاج الشريط وتغبيشٍ لما خلفه. وعلى اللوح الكحليّ زجاجُه الأبيض (`--ad-plate-veil-2`) لا هذا. */
+  --ad-glass-photo: color-mix(in oklab, var(--navy-900) 58%, transparent);
+  --ad-glass-photo-edge: var(--ad-plate-hair);
+  --ad-glass-photo-blur: blur(14px) saturate(1.2);
   --ad-plate-naqsh: .15;
   --ad-plate-mesh: color-mix(in oklab, var(--steel-50) 15%, transparent);
 
@@ -380,6 +394,7 @@
   --ad-ok: var(--success-700);      --ad-ok-soft: var(--success-50);      --ad-ok-edge: var(--success-200);
   --ad-ok-veil: color-mix(in oklab, var(--success-600) 7%, transparent);   --ad-ok-hair: color-mix(in oklab, var(--success-600) 18%, transparent);
   --ad-warn: var(--warning-700);    --ad-warn-soft: var(--warning-50);    --ad-warn-edge: var(--warning-200);
+  --ad-warn-veil: color-mix(in oklab, var(--warning-600) 8%, transparent);   /* صبغةُ السطر بلون التنبيه عند التمرير (٢٠٢٦-١١-٠٥) */
   --ad-bad: var(--danger-700);      --ad-bad-soft: var(--danger-50);      --ad-bad-edge: var(--danger-200);
   --ad-bad-veil: color-mix(in oklab, var(--danger-600) 6%, transparent);   --ad-bad-hair: color-mix(in oklab, var(--danger-600) 16%, transparent);   /* صبغةُ الأداة ودرجتُها كالكحليّ (`--ad-veil`/`--ad-hair`) بلون الخطر */
   /* **نافذةُ التأكيد** (٢٠٢٦-١٠-٣١): رأسُها لوحٌ مصمتٌ بلون معناها. الدافئُ مساحةً بدرجةٍ واحدة: أعمقُ من الصافي («فاقع») وفي لونه
@@ -442,6 +457,7 @@
   --ad-ok: var(--success-300);      --ad-ok-soft: color-mix(in oklab, var(--success-500) 15%, transparent);  --ad-ok-edge: color-mix(in oklab, var(--success-400) 32%, transparent);
   --ad-ok-veil: color-mix(in oklab, var(--success-400) 10%, transparent);   --ad-ok-hair: color-mix(in oklab, var(--success-400) 24%, transparent);
   --ad-warn: var(--warning-300);    --ad-warn-soft: color-mix(in oklab, var(--warning-500) 15%, transparent); --ad-warn-edge: color-mix(in oklab, var(--warning-400) 32%, transparent);
+  --ad-warn-veil: color-mix(in oklab, var(--warning-400) 10%, transparent);
   --ad-bad: var(--danger-300);      --ad-bad-soft: color-mix(in oklab, var(--danger-500) 16%, transparent);  --ad-bad-edge: color-mix(in oklab, var(--danger-400) 34%, transparent);
   --ad-bad-veil: color-mix(in oklab, var(--danger-400) 9%, transparent);   --ad-bad-hair: color-mix(in oklab, var(--danger-400) 20%, transparent);
   --ad-dlg-paper: #18191c;   /* ورقةُ النافذة في الداكن سوداءُ محايدة: لا كحليّةٌ تجاور لونَها، ولا مصبوغةٌ به فتتعكّر */

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { authorizeSurvey, getSurveyManager } from "@/lib/surveys/authz";
 import {
   ACCESS_TYPES, OP_NEEDS, QUESTION_TYPE_VALUES, SCALE_MAX, SCALE_MIN, STATUS_OPS,
-  canEditSurvey, canSurvey, hasChoices, hasScale, isShareLevel, shareErrorMessage,
+  canEditSurvey, canSurvey, hasChoices, hasScale, isDataType, isShareLevel, shareErrorMessage,
   type AccessType, type Choice, type QuestionType, type ShareLevel, type StatusOp, type SurveyStatus,
 } from "./vocab";
 import { toPublicSurvey, toPublicQuestions } from "@/app/s/[code]/public";
@@ -38,6 +38,8 @@ export type QuestionInput = {
   /** خيارات الأنواع الاختياريّة — الموجود يحمل هُويّته، والجديد id فارغ يعيّنه الخادم. */
   choices?: { id: string | null; label: string }[];
   scale?: { min: number; max: number };
+  /** حقلُ بياناتٍ أم سؤالُ رأي — يُخزَّن حين يخالف افتراضَ النوع وحده (`isDataQuestion`) */
+  data?: boolean;
 };
 
 export type SurveyInput = {
@@ -104,6 +106,17 @@ function surveyColumns(input: SurveyInput) {
  * (retired) فلا يُعرض للمجيب ويبقى تجميعه صادقًا — لا حذف يُيتّم إجابات.
  */
 function buildOptions(
+  q: QuestionInput,
+  existing: Choice[] | null,
+  hasAnswers: boolean,
+): { choices?: Choice[]; scale?: { min: number; max: number }; data?: boolean } | null {
+  // قرارُ «حقل بيانات أم رأي» يُكتب حين يخالف افتراضَ النوع وحده، فتبقى صفوفُ القديم كما هي
+  const flag = typeof q.data === "boolean" && q.data !== isDataType(q.type) ? { data: q.data } : {};
+  const core = coreOptions(q, existing, hasAnswers);
+  return core || Object.keys(flag).length ? { ...(core ?? {}), ...flag } : null;
+}
+
+function coreOptions(
   q: QuestionInput,
   existing: Choice[] | null,
   hasAnswers: boolean,

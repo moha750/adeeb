@@ -18,7 +18,7 @@ import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type Announcements, type DragEndEvent, type ScreenReaderInstructions, type UniqueIdentifier,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CaretDown, CaretLeft, CaretRight, CaretUp, DotsSixVertical } from "@/app/_components/glyphs";
 import { fmtNum } from "./format";
@@ -35,8 +35,10 @@ const INSTRUCTIONS: ScreenReaderInstructions = {
 };
 
 /** ساحةُ السحب: السجلّاتُ الظاهرة بمعرّفاتها، والإفلاتُ يُبلغ الغرفةَ بالمسحوب ومكانه. ومواضعُ الإعلان مواضعُ القائمة كلِّها (`placeOf`) */
-export function SortArea({ ids, total, nameOf, placeOf, onMove, children }: {
+export function SortArea({ ids, total, nameOf, placeOf, onMove, list, children }: {
   ids: string[];
+  /** قائمةٌ عموديّةٌ بقطعٍ مختلفة الارتفاع (أسئلةُ المحرّر، مفتوحةٌ بين مطويّات): تُزاح بترتيبها لا بمربّعاتها */
+  list?: boolean;
   total: number;
   nameOf: (id: string) => string;
   placeOf: (id: string) => number;
@@ -84,7 +86,7 @@ export function SortArea({ ids, total, nameOf, placeOf, onMove, children }: {
       accessibility={{ announcements, screenReaderInstructions: INSTRUCTIONS }}
     >
       <LiveCtx.Provider value={live}>
-        <SortableContext items={ids} strategy={rectSortingStrategy}>{children}</SortableContext>
+        <SortableContext items={ids} strategy={list ? verticalListSortingStrategy : rectSortingStrategy}>{children}</SortableContext>
       </LiveCtx.Provider>
     </DndContext>
   );
@@ -141,8 +143,10 @@ export function useSortNode(sort: Sort | null) {
  * (رُفض قبله: الكعبُ مقبضًا ورمزُه داخله — ذاب في زخرفته؛ وسطرُ تعليماتٍ فوق القائمة — «لم يزد التوضيحَ إلّا قبحًا».)
  * وحين يتوقّف السحبُ (بحث) يخفت المحرّكُ كلُّه وتلميحُه يقول لماذا (`why`).
  */
-export function SortGrip({ sort, cell }: { sort: Sort | null; cell?: boolean }) {
+/** `axis`: «y» لقائمةٍ تجري من أعلى إلى أسفل خارج الجدول (أسئلةُ المحرّر وأقسامُه) — كالجدول، بلا خليّة. */
+export function SortGrip({ sort, cell, axis }: { sort: Sort | null; cell?: boolean; axis?: "x" | "y" }) {
   if (!sort) return null;
+  const y = cell || axis === "y";
   const on = sort.on;
   const grip = on ? (
     <button type="button" className="ad-grip" title="اسحب لتغيير الترتيب" {...sort.attributes} {...sort.listeners}
@@ -157,18 +161,28 @@ export function SortGrip({ sort, cell }: { sort: Sort | null; cell?: boolean }) 
       type="button"
       className="ad-step"
       title={tip}
-      aria-label={`${tip} «${sort.label}» إلى الموضع ${fmtNum(sort.n + dir)}`}
+      aria-label={can ? `${tip} «${sort.label}» إلى الموضع ${fmtNum(sort.n + dir)}` : `${tip} «${sort.label}»`}
       disabled={!on || !can}
-      onClick={() => sort.onStep(dir)}
+      data-step={dir}
+      onClick={(e) => {
+        // **التركيزُ يبقى على السهم بعد النقل** (المراجع ٢٠٢٦-١١-١٦): السجلُّ ينتقل في الشجرة فيسقط التركيزُ إلى الصفحة، فلا يُضغط السهمُ ثانيةً
+        // من لوحة المفاتيح. فيُعاد إليه في موضعه الجديد، وإلى المقبض إن صار السهمُ معطَّلًا (بلغ السجلُّ طرفَ القائمة)
+        const mover = e.currentTarget.closest(".ad-mover");
+        sort.onStep(dir);
+        requestAnimationFrame(() => {
+          const back = mover?.querySelector<HTMLButtonElement>(`[data-step="${dir}"]:not(:disabled)`) ?? mover?.querySelector<HTMLElement>("button.ad-grip");
+          back?.focus();
+        });
+      }}
     >
       {icon}
     </button>
   );
   const mover = (
-    <div className="ad-mover" data-axis={cell ? "y" : "x"} data-off={on ? undefined : ""} title={on ? undefined : sort.why}>
-      {step(-1, sort.prev, cell ? <CaretUp aria-hidden /> : <CaretRight aria-hidden />, "تقديم")}
+    <div className="ad-mover" data-axis={y ? "y" : "x"} data-off={on ? undefined : ""} title={on ? undefined : sort.why}>
+      {step(-1, sort.prev, y ? <CaretUp aria-hidden /> : <CaretRight aria-hidden />, "تقديم")}
       {grip}
-      {step(1, sort.next, cell ? <CaretDown aria-hidden /> : <CaretLeft aria-hidden />, "تأخير")}
+      {step(1, sort.next, y ? <CaretDown aria-hidden /> : <CaretLeft aria-hidden />, "تأخير")}
     </div>
   );
   return cell ? <div className="ad-td-grip" role="cell">{mover}</div> : mover;

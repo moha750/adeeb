@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Button, Field, FileButton, Modal } from "@adeeb/design-system";
+import { Button, Field, FileButton, Modal, overBy } from "@adeeb/design-system";
 import { File as FileIcon, FilePdf, Globe, ImageSquare, LinkSimple, QrCode, TextAa } from "@phosphor-icons/react";
 import { QR_TITLE_MAX, checkTarget, qrFileType, type QrKind } from "@/lib/qrLinks";
 import { UPLOAD_RULES, attachHint, fileMeta } from "@/lib/upload";
@@ -55,7 +55,7 @@ export function EditTargetModal({
   const trimmed = target.trim();
   const link = !isFile && trimmed ? checkTarget(trimmed) : null;
   const bad = link && !link.ok ? link.message : null;
-  const ready = title.trim().length > 0 && (isFile ? !!picked || !!current : !!link?.ok);
+  const ready = title.trim().length > 0 && !overBy(title, QR_TITLE_MAX) && (isFile ? !!picked || !!current : !!link?.ok);
 
   // معاينةُ المختار إن كان صورة: رابطٌ محلّيٌّ يُحرَّر حين يتبدّل الملفّ
   const pickedUrl = useMemo(() => (picked && !isPdf(picked) ? URL.createObjectURL(picked) : null), [picked]);
@@ -100,8 +100,9 @@ export function EditTargetModal({
           innerIcon={<QrCode />}
           placeholder="اكتب اسم الباركود"
           value={title}
-          onChange={(e) => onTitle(e.target.value.slice(0, QR_TITLE_MAX))}
+          onChange={(e) => onTitle(e.target.value)}
           helper="تكتبه لك أنت لتعرفه بين باركوداتك، ولا يظهر لمن يمسحه."
+          count={{ max: QR_TITLE_MAX }}
           required
         />
         <div className="form-full">

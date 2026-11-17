@@ -11,21 +11,18 @@
  *   وكاردُ «محادثة» عددُ «الكلّ». (والمرشّحُ القديمُ لم يكن يعمل: `filters.blocked` لا يُقرأ في `DeeboLogView`.)
  */
 import { matchesSearch } from "@adeeb/design-system";
-import { CalendarBlank, ChatCircleText, ChatsCircle, Clock, ShieldWarning, UserCircle } from "@phosphor-icons/react";
-import { EyeSlash } from "@/app/_components/glyphs";
-import { arCount, type ArForms } from "@/lib/arabicCount";
-import { firstNameOf } from "@/lib/personName";
-import { standingName } from "@/lib/standing";
-import { NAMELESS_OWNER, firstAsk, hasGuardBlock } from "@/app/dashboard/deebo/talk";
+import { CalendarBlank, ChatCircleText, ChatsCircle } from "@phosphor-icons/react";
+import { type ArForms } from "@/lib/arabicCount";
+import { hasGuardBlock } from "@/app/dashboard/deebo/talk";
 import type { DeeboConversation } from "@/app/dashboard/deebo/data";
 import type { RoomView } from "../view";
-import { AdActs, AdBadge, AdCard, AdRow, type AdMeta } from "../primitives";
+import { AdActs, AdCard, AdRow } from "../primitives";
 import { CollectionRoom, type FilterDef, type Position } from "../collection";
-import { dayParts, fmtClock, fmtNum } from "../format";
+import { fmtNum } from "../format";
 import { DEEBO_LOG_ROOM } from "./deebo-log.meta";
+import { askTitle, talkChips, talkHref, talkInfo, talkStub } from "./deebo-ticket";
 
 const AR_TALK: ArForms = ["محادثةٌ واحدة", "محادثتان", "محادثات", "محادثةً"];
-const AR_MSG: ArForms = ["رسالةٌ واحدة", "رسالتان", "رسائل", "رسالةً"];
 
 /**
  * **مواضعُ المحادثات**: كان فوق الكروت القديمة كاردا إحصاء («محادثة»، «حجبٌ لرقم») ومرشّحُ «حارس الأرقام» («حجب جملةً») —
@@ -37,53 +34,11 @@ const POSITIONS: Position<DeeboConversation>[] = [
   { key: "blocked", label: "حجب رقمًا", match: hasGuardBlock, empty: "لم يحجب حارسُ الأرقام جملةً بعد." },
 ];
 
-/** أطولُ السؤال عنوانًا — والسؤالُ حتى ٦٠٠ حرف (`MAX_QUESTION` في `api/deebo`)، وكاملُه في صفحة المحادثة */
-const TITLE_MAX = 120;
-/** السؤالُ عنوانًا: سطرٌ واحدٌ بلا أسطره، مقصوصٌ عند كلمةٍ لا عند حرف (سابقةُ `conversationTitle` في `api/deebo`). */
-function askTitle(c: DeeboConversation): string {
-  const flat = firstAsk(c).replace(/\s+/g, " ").trim();
-  if (flat.length <= TITLE_MAX) return flat;
-  const cut = flat.slice(0, TITLE_MAX);
-  const space = cut.lastIndexOf(" ");
-  return `${(space > TITLE_MAX / 2 ? cut.slice(0, space) : cut).trim()}…`;
-}
-
-/**
- * **مَن سأل** شارةً: صفتُه في أدِيب من القاعدة (`lib/standing`: «عضو أدِيب»، «متطوّع أدِيب»، «صديق أدِيب»)، و«زائر» لمن سأل
- * بلا حساب — وهي قسمةُ مرشّح «السائل» نفسُه. واسمُ صاحب الحساب سطرٌ تحتها، والزائرُ لا اسمَ له فلا يُكرَّر «زائرٌ مجهول» تحت «زائر».
- */
-const askerOf = (c: DeeboConversation): string => (c.ownerName ? standingName(c.ownerStanding ?? "account", c.ownerGender) : "زائر");
-
-/**
- * مَن حذفها: صاحبُها وحده يحذفها من عنده، فيُسمّى باسمه الأوّل (الثلاثيُّ يطفح بالشارة) — والفعلُ للمحادثة لا لفاعلها
- * («حُذفت بيد سارة»)، فلا جنسَ يُخمَّن. ومن لا اسمَ في ملفّه «صاحبُ الحساب»، ومن لا حسابَ له «الزائر».
- */
-const deletedBy = (c: DeeboConversation): string =>
-  !c.ownerName ? "حُذفت بيد الزائر"
-  : c.ownerName === NAMELESS_OWNER ? "حُذفت بيد صاحب الحساب"
-  : `حُذفت بيد ${firstNameOf(c.ownerName)}`;
-
-/**
- * **شاراتُ المحادثة**: مَن سأل أوّلًا، ثمّ حالُها إن كانت — والحجبُ أشدُّ خبرًا من الحذف فيتقدّم (كانت شارةً واحدةً في الكرت القديم،
- * ونغمتُه `warning` للحجب و`danger` للحذف).
- */
-const chips = (c: DeeboConversation) => (
-  <>
-    <AdBadge icon={<UserCircle />}>{askerOf(c)}</AdBadge>
-    {hasGuardBlock(c) ? <AdBadge tone="warn" icon={<ShieldWarning />}>حجب رقمًا</AdBadge>
-      : c.hiddenAt ? <AdBadge tone="bad" icon={<EyeSlash />}>{deletedBy(c)}</AdBadge>
-      : null}
-  </>
-);
-
-/** سطورُ المعلومات بترتيبٍ واحدٍ في العرضين: اسمُ صاحب الحساب، وساعتُها (يومُها في الكعب)، وعددُ رسائلها — وفي السطر عددُها عمودٌ فيخرج منها. */
-const info = (c: DeeboConversation, inCard: boolean): AdMeta[] => [
-  ...(c.ownerName ? [{ icon: <UserCircle />, text: c.ownerName }] : []),
-  { icon: <Clock />, text: fmtClock(c.startedAt) },
-  ...(inCard ? [{ icon: <ChatsCircle />, text: arCount(c.messages.length, AR_MSG) }] : []),
-];
-const stubOf = (c: DeeboConversation) => { const d = dayParts(c.startedAt); return { big: d.day, small: d.month }; };
-const hrefOf = (c: DeeboConversation) => `/dashboard/deebo/${c.id}`;
+/* عنوانُ المحادثة وشاراتُها وسطورُها وكعبُها ورابطُها من `deebo-ticket.tsx`: مصدرٌ واحدٌ لكرتها وسطرها ورأسِ صفحتها (٢٠٢٦-١١-٠٧) */
+const hrefOf = talkHref;
+const chips = talkChips;
+const info = talkInfo;
+const stubOf = talkStub;
 const acts = (c: DeeboConversation, inRow?: boolean) => (
   <AdActs inRow={inRow} primary={{ label: "افتح المحادثة", icon: <ChatCircleText />, href: hrefOf(c) }} ops={[]} />
 );

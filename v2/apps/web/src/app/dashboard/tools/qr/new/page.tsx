@@ -1,6 +1,6 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getQrCampaign } from "../campaigns/data";
-import { NewQrView } from "./NewQrView";
+import { NewQrRoom } from "@/app/_ad/rooms/NewQrRoom";
 
 export const metadata = { title: "باركود جديد، بوّابة أدِيب" };
 
@@ -24,7 +24,8 @@ export default async function NewQrPage({
   const room = wanted ? await getQrCampaign(wanted) : null;
 
   return (
-    <NewQrView
+    // على قالب «النموذج» منذ ٢٠٢٦-١١-١٣ (`_ad/rooms/NewQrRoom`)؛ والقديمُ (`./NewQrView`) يقرؤه المختبرُ للمقارنة
+    <NewQrRoom
       campaignId={room?.campaign?.id ?? null}
       campaignName={room?.campaign?.name ?? null}
     />

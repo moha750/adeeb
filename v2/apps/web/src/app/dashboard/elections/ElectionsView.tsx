@@ -183,7 +183,7 @@ export function ElectionsView({ elections, createOptions, readOnly = false }: {
       variant="aurora"
       icon={<Scales />}
       title="لا انتخابات بعد"
-      description="افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ شاغر، فيظهر هنا بمرشّحيه وأصواته."
+      description="افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ فارغ، فيظهر هنا بمرشّحيه وأصواته."
       action={createCta}
     />
   ) : filtering ? (

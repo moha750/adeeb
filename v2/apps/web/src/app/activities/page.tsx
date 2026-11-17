@@ -1,6 +1,7 @@
-import { Footer, Container, LandingHeading } from "@adeeb/design-system";
-import { getPublicActivities } from "./data";
-import { PublicActivityCard } from "./PublicActivityCard";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
+import { getPastActivities, getPublicActivities } from "./data";
+import { ActivitiesIndex } from "../_ad/rooms/PublicIndexRooms";
 import { SiteHeader } from "../_components/SiteHeader";
 
 export const revalidate = 60;
@@ -10,33 +11,13 @@ export const metadata = {
   description: "احجز مقعدك في ورش نادي أدِيب وبرامجه وحواراته القادمة.",
 };
 
+/** الفعاليّاتُ القادمة على قالب «الفهرس» العامّ (٢٠٢٦-١١-١٥، اعتمده محمد) — الخادمُ يجلب، والقالبُ يعرض ويرشّح. */
 export default async function ActivitiesPage() {
-  const items = await getPublicActivities();
-
+  const [items, past] = await Promise.all([getPublicActivities(), getPastActivities()]);
   return (
     <>
       <SiteHeader activeHref="/activities" />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container>
-            <LandingHeading
-              eyebrow="برامجنا"
-              title="أنشطةٌ قادمة"
-              deck="احجز مقعدك في ورش أدِيب وبرامجه وحواراته."
-              align="center"
-            />
-            {items.length === 0 ? (
-              <p className="text-center text-content-muted">لا فعاليّات قادمة الآن. تابعنا لتصلك الجديدة.</p>
-            ) : (
-              <div className="card-grid" style={{ marginTop: 32 }}>
-                {items.map((a) => (
-                  <PublicActivityCard key={a.id} a={a} />
-                ))}
-              </div>
-            )}
-          </Container>
-        </section>
-      </main>
+      <main className="ad-pub"><div className="ad-pub-wrap"><ActivitiesIndex items={items} past={past} /></div></main>
       <Footer />
     </>
   );

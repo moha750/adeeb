@@ -49,6 +49,9 @@ export async function assignPosition(input: {
   committeeId?: number | null;
   departmentId?: number | null;
   replace?: boolean;
+  /** إقرارُ المنفّذ (المادة 17 من نظام الانتخابات): أهذا النقلُ بطلب صاحبه؟ يُسأل عنه حين يكون له
+   *  ترشّحٌ قائم، فإن خرج به من نطاق مقعده انتهى ترشّحُه «بطلبه»، وبقي «بغير طلبه». غيابُه = بغير طلبه. */
+  onRequest?: boolean;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
   if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
@@ -62,6 +65,8 @@ export async function assignPosition(input: {
     p_committee: input.committeeId ?? null,
     p_department: input.departmentId ?? null,
     p_replace: input.replace ?? false,
+    // يُرسَل حين يُقال وحده: فالنداءُ بلا إقرار يبقى صالحًا قبل ترحيل الرابعة-ب وبعده.
+    ...(input.onRequest === undefined ? {} : { p_on_request: input.onRequest }),
   });
   if (error) return { ok: false, message: `تعذّر الإسناد: ${error.message}` };
 
@@ -82,6 +87,8 @@ export async function removePosition(input: {
   userId: string;
   roleName: string;
   committeeId?: number | null;
+  /** إقرارُ المنفّذ: أهذه الإزالةُ بطلب صاحبها؟ (المادة 17، كأختها في `assignPosition`) */
+  onRequest?: boolean;
 }): Promise<ActionResult> {
   const admin = await getCurrentAdmin();
   if (!admin || !mayAssign(admin.caps)) return { ok: false, message: "لا تملك صلاحية إدارة الهيكلة." };
@@ -93,6 +100,7 @@ export async function removePosition(input: {
     p_user: input.userId,
     p_role_name: input.roleName,
     p_committee: input.committeeId ?? null,
+    ...(input.onRequest === undefined ? {} : { p_on_request: input.onRequest }),
   });
   if (error) return { ok: false, message: `تعذّرت الإزالة: ${error.message}` };
 
@@ -292,8 +300,8 @@ export async function updateOrgUnit(input: {
  * **إنشاء وحدة** — قسمٌ في المجلس التشغيليّ، أو لجنةٌ في قسم (المالك ٢٠٢٦-١٠-١١). بابُه نافذةُ الوحدة نفسُها
  * في «تعيين المناصب»، وقفلُه `manage_positions` كالتعديل.
  *
- * والمقاعدُ لا تُنشأ هنا: تُشتقّ من الوحدة (`buildPositions`)، فالقسمُ الجديد يولد بمقعد منسّقٍ شاغر، واللجنةُ
- * بمقعدَي القائد والنائب شاغرَين. واللجنةُ تأخذ مجلسَ قسمها (تريغرُ القاعدة يرفض المخالفة) ودورَي اللجان
+ * والمقاعدُ لا تُنشأ هنا: تُشتقّ من الوحدة (`buildPositions`)، فالقسمُ الجديد يولد بمقعد منسّقٍ فارغ، واللجنةُ
+ * بمقعدَي القائد والنائب فارغَين. واللجنةُ تأخذ مجلسَ قسمها (تريغرُ القاعدة يرفض المخالفة) ودورَي اللجان
  * التشغيليّة؛ فلجانُ المجلس الإداريّ (الإدارات) ليست من هذا الباب. والقسمُ آخرُ الأقسام ترتيبًا.
  */
 export async function createOrgUnit(input: {
@@ -310,7 +318,7 @@ export async function createOrgUnit(input: {
   if (!sb) return { ok: false, message: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
   const name = input.name.trim().replace(/\s+/g, " ");
-  if (name.length < 3 || name.length > 60) return { ok: false, message: "الاسم بين ٣ و٦٠ حرفًا." };
+  if (name.length < 3 || name.length > 60) return { ok: false, message: "الاسم بين 3 و60 حرفًا." };
   const description = input.description?.trim() || null;
   const link = input.groupLink?.trim() || null;
   if (!description) return { ok: false, message: "الوصف مطلوب." };
@@ -344,7 +352,10 @@ export async function createOrgUnit(input: {
  * عدّةُ نقلاتٍ تُطبَّق معًا أو لا يُطبَّق منها شيء — `create_position_batch`، والقاعدةُ هي الحَكَم: كلُّ نقلةٍ تمرّ
  * بـ`assign_position` نفسِها، وتُفحص الدفعةُ كاملةً قبل التنفيذ. «يسري في» يجعلها مجدولة، والسببُ سجلٌّ داخليّ. */
 
-export type BatchMoveInput = { userId: string; roleName: string; committeeId: number | null; departmentId: number | null };
+/** `onRequest`: إقرارُ المنفّذ لكلّ نقلة، أهي بطلب صاحبها (المادة 17). تحمله النقلةُ إلى القاعدة كما هو. */
+export type BatchMoveInput = {
+  userId: string; roleName: string; committeeId: number | null; departmentId: number | null; onRequest?: boolean;
+};
 
 export async function applyPositionBatch(input: {
   moves: BatchMoveInput[];

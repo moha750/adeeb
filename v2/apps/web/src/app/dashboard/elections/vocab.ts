@@ -66,18 +66,18 @@ export type StatusOp = keyof typeof STATUS_OPS;
 export const STATEMENT_MIN = 100;
 export const STATEMENT_MAX = 4000;
 
-const ar = (n: number) => String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
-
-/** رسالةُ عطب البيان أو `null` إن استقام — نصٌّ واحد لا يفترق بين العميل والخادم. */
+/** رسالةُ عطب البيان أو `null` إن استقام — نصٌّ واحد لا يفترق بين العميل والخادم. وحدّاه بأرقامٍ لاتينيّة
+ *  كسائر الموقع (قرار صاحب الموقع ٢٠٢٦-١١-٠٧)، فسقط محوّلُ الأرقام الهنديّة الذي كان هنا. */
 export function statementError(s: string): string | null {
-  if (s.length < STATEMENT_MIN) return `بيان الترشّح قصيرٌ جدًّا (${ar(STATEMENT_MIN)} حرفٍ على الأقلّ).`;
-  if (s.length > STATEMENT_MAX) return `بيان الترشّح طويلٌ جدًّا (${ar(STATEMENT_MAX)} حرفٍ حدًّا أقصى).`;
+  if (s.length < STATEMENT_MIN) return `بيان الترشّح قصيرٌ جدًّا (${STATEMENT_MIN} حرفٍ على الأقلّ).`;
+  if (s.length > STATEMENT_MAX) return `بيان الترشّح طويلٌ جدًّا (${STATEMENT_MAX} حرفٍ حدًّا أقصى).`;
   return null;
 }
 
 /* ══ حالة المرشّح ════════════════════════════════════════════════════ */
 
-export type CandidateStatus = "pending" | "approved" | "rejected" | "needs_edit" | "withdrawn";
+// «مجمَّد» و«منتهٍ» من الإصدار الثاني لنظام الانتخابات (المادتان ١٤ و١٦)، ويطابقان قيد القاعدة.
+export type CandidateStatus = "pending" | "approved" | "rejected" | "needs_edit" | "withdrawn" | "frozen" | "ended";
 
 export const CANDIDATE_STATUS_META: Record<CandidateStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" | "info" }> = {
   pending:    { label: "قيد المراجعة",  tone: "warning" },
@@ -85,6 +85,8 @@ export const CANDIDATE_STATUS_META: Record<CandidateStatus, { label: string; ton
   needs_edit: { label: "يحتاج تعديلًا", tone: "warning" },
   rejected:   { label: "مرفوض",         tone: "danger" },
   withdrawn:  { label: "منسحب",         tone: "neutral" },
+  frozen:     { label: "مجمَّد",        tone: "warning" },
+  ended:      { label: "منتهٍ",          tone: "neutral" },
 };
 
 /**
@@ -104,6 +106,8 @@ export function decisionLine(status: CandidateStatus, by: string | null): string
   // حكمٌ قائمٌ بلا صاحبٍ معروف: صفٌّ قديمٌ سبق تسجيلَ المراجع — يُقال الحكمُ ولا يُخترَع له فاعل
   if (verb) return by ? `${verb} بواسطة ${by}` : verb;
   if (status === "withdrawn") return "انسحب قبل أن يُقرَّر فيه";
+  if (status === "frozen") return "مجمَّدٌ بقرار إدارة الموارد البشرية";
+  if (status === "ended") return "انتهى ترشّحه";
   return "لم يُقرَّر فيه بعد";
 }
 
@@ -117,6 +121,8 @@ export const CANDIDATE_CARD_TONE: Record<CandidateStatus, "success" | "warning" 
   needs_edit: "warning",
   rejected: "danger",
   withdrawn: "neutral",
+  frozen: "warning",
+  ended: "neutral",
 };
 
 /* ══ التذكير والتأنيث ════════════════════════════════════════════════ */

@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CloudWarning, Headset } from "@phosphor-icons/react";
-import { ArrowClockwise, Check } from "@/app/_components/glyphs";
+import { CloudWarning, Headset, LockKey } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowRight, Check, MagnifyingGlass } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { fmtStamp } from "@/lib/dates";
 import { reportRoomError } from "./report";
@@ -101,7 +101,7 @@ const arabic = (s: string) => /[؀-ۿ]/.test(s);
  * و«أبلغ الدعم الفني» — يوصل البلاغَ بنفسه لقسم نظم المعلومات (محمد ٢٠٢٦-١٠-٣١: «الزائرُ لا يعرف قناةَ التواصل»).
  * و`preview` للمختبر: يُرى الزرُّ بحالاته ولا يُرسَل بلاغ.
  */
-export function AdRoomError({ title, navPath, what, message, detail, retry, preview }: RoomMeta & { message?: string | null; detail?: string | null; retry?: () => void; preview?: boolean }) {
+export function AdRoomError({ title, navPath, what, message, detail, retry, preview }: Partial<RoomMeta> & Pick<RoomMeta, "title" | "navPath" | "what"> & { message?: string | null; detail?: string | null; retry?: () => void; preview?: boolean }) {
   const crumb = useRoomCrumb(navPath, title);
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -142,6 +142,50 @@ export function AdRoomError({ title, navPath, what, message, detail, retry, prev
             </AdButton>
           </>
         }
+      />
+    </AdRoom>
+  );
+}
+
+/**
+ * **الحالتان الأخريان بالقطعة نفسها** (٢٠٢٦-١١-١٧): كانت صفحاتُ التحرير تقول «لم يُعثر» و«لا صلاحية» و«تعذّر الجلب» برأسٍ قديم
+ * (`PageHeader`) وتنبيهٍ كهرمانيٍّ من الهويّة القديمة (`Alert`)، وحدُّ «غير موجود» في اللوحة فراغٌ قديم، ومن أُقفلت دونه غرفةٌ يرى
+ * بابَ الدخول نفسَه (`AuthShell`) داخل البوّابة. فصارت الثلاثُ لوحَ الغرفة باسمها وفتاتها، وتحته «القطعة» برمزها وجملتها وفعلٍ واحد
+ * يوصل إلى حيث يُكمِل — كخطأ الجلب أعلاه. ونصوصُها نصوصُ صفحاتها كما كانت.
+ */
+type RoomPlace = { title: string; navPath: string };
+
+/** **لم يُعثر عليه**: حُذف، أو ليس له — والجوابان واحدٌ عمدًا (لا يُكشف وجودُ ما لغيره). والفعلُ إلى القائمة التي جاء منها */
+export function AdRoomMissing({ title, navPath, what, desc, back }: RoomPlace & { what: string; desc?: string; back?: { label: string; href: string } }) {
+  const crumb = useRoomCrumb(navPath, title);
+  return (
+    <AdRoom label={title}>
+      <div className="ad-room-head">
+        <RoomPlate title={title} crumb={crumb} />
+      </div>
+      <AdEmpty
+        icon={<MagnifyingGlass />}
+        title={`لم يُعثر على ${what}`}
+        desc={desc ?? "الرابط الذي جئت منه لعلّه تغيّر، أو حُذف ما يشير إليه."}
+        action={<AdButton variant="soft" icon={<ArrowRight />} href={back?.href ?? navPath}>{back?.label ?? "العودة"}</AdButton>}
+      />
+    </AdRoom>
+  );
+}
+
+/** **خارج صلاحياتك**: القفلُ وجملتُه تقول من تُفتح له الغرفةُ وكيف، والفعلُ إلى البوّابة (من دخل البابَ لا يُطرد منه لغرفةٍ أُقفلت دونه) */
+export function AdRoomDenied({ title, navPath, what, desc }: RoomPlace & { what?: string; desc: string }) {
+  const crumb = useRoomCrumb(navPath, title);
+  return (
+    <AdRoom label={title}>
+      <div className="ad-room-head">
+        <RoomPlate title={title} crumb={crumb} />
+      </div>
+      <AdEmpty
+        icon={<LockKey />}
+        title={what ? `لا تملك صلاحية ${what}` : "هذه الصفحة خارج صلاحياتك"}
+        desc={desc}
+        action={<AdButton variant="soft" icon={<ArrowRight />} href="/dashboard">العودة إلى البوّابة</AdButton>}
       />
     </AdRoom>
   );

@@ -1,15 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Alert, Button, Field, Select, Textarea } from "@adeeb/design-system";
-import { Hash, IdentificationBadge, MapPin, Phone, User, UsersThree } from "@phosphor-icons/react";
-import { CheckCircle, PencilSimple } from "@/app/_components/glyphs";
+import { useEffect, useState, type ReactNode } from "react";
+import { Field, Select, Textarea } from "@adeeb/design-system";
+import { Armchair, Hash, IdentificationBadge, MapPin, Phone, SignIn, Ticket, User, UserPlus, UsersThree } from "@phosphor-icons/react";
+import { PencilSimple, XCircle } from "@/app/_components/glyphs";
+import { AdButton } from "@/app/_ad/primitives";
+import { AdSection } from "@/app/_ad/account";
+import { FormHint } from "@/app/_ad/form";
 import { createClient } from "@/lib/supabase/client";
 import { AUDIENCE_LABEL, GENDER_OPTIONS } from "@/lib/activities";
+import { AR_SEAT, arCount } from "@/lib/arabicCount";
 import { PHONE_HINT, PHONE_LEN, PHONE_PREFIX, isPhone, phoneError } from "@/lib/fieldFormats";
-import { arabicNameError } from "@/lib/personName";
+import { arabicNameError, firstNameOf } from "@/lib/personName";
 /**
  * **ولا يُنشأ حسابٌ ههنا** (قرار المالك ٢٠٢٦-١٠-١٨): كان الصندوقُ يفتح حسابًا ببريدٍ ورمز، فصار
  * لإنشاء الحساب بابٌ واحد (`/signup`) وللدخول بابٌ واحد (`/login`). ومن لا جلسةَ له يرى زرّين
@@ -27,6 +30,7 @@ const BOOK_ERRORS: Record<string, string> = {
   ACTIVITY_NOT_PUBLISHED: "الفعاليّة غير متاحة للحجز.",
   ACTIVITY_CANCELLED: "أُلغيت هذه الفعاليّة.",
   ACTIVITY_PAST: "انتهى وقت هذه الفعاليّة.",
+  BOOKING_CLOSED: "أُغلق التسجيل في هذه الفعاليّة.",
   GENDER_REQUIRED: "لم نتعرّف على فئتك. أكمِل بياناتك.",
   ALREADY_BOOKED: "لديك حجزٌ مؤكّد في هذه الفعاليّة.",
   NO_SEATS_AVAILABLE_FOR_GENDER: "لا مقاعد متاحة لفئتك حاليًّا.",
@@ -46,7 +50,19 @@ const bookError = (raw: string | null | undefined): string => {
   return code ? BOOK_ERRORS[code] : "تعذّر إتمام العمليّة. حاول مجدّدًا.";
 };
 
-export function BookingWidget({ activityId, unlimited, splitByGender, targetGender, totalRemaining, maleRemaining, femaleRemaining }: { activityId: string; unlimited: boolean; splitByGender: boolean; targetGender: "male" | "female" | null; totalRemaining: number; maleRemaining: number | null; femaleRemaining: number | null }) {
+/**
+ * **ما يرسمه الحجزُ أجزاء**: يسلّم صاحبَه **حالَك** (`title` جملتُها، و`sub` شرحُها، و`tone` نغمتُها)، و**الفعل** (`acts`)، و**ما يحتاج
+ * مساحةً** (`panel`: إكمالُ البيانات مرّةً، وسببُ الإلغاء). وصفحةُ الفعاليّة ترسمها **تنبيهًا** (`AdNote`) تحت التذكرة (محمد ٢٠٢٦-١١-١٦:
+ * «بما أنّ احجز مقعدي يتغيّر بحسب الحساب أو الحال، ما رأيك أن يتحوّل إلى تنبيه؟»): الحالُ رسالةٌ لك وحدك، والتذكرةُ حقائقُ لكلّ من يراها.
+ * **وأفعالُ التنبيه صناديقُ بختم لونه برموزها** (`AdButton soft`، قاعدةُ التنبيه في البوّابة: «قطعةُ اللوح المصمتة تنافس ختمَ التنبيه نفسَه»)،
+ * والخطِرُ (إلغاءُ الحجز) صندوقُه الأحمر.
+ * (كان قسمًا كاملًا برأسه «مبالغ… ماخذ مساحة جدًّا كبيرة»، ثمّ جملةً في قاع التذكرة.)
+ */
+export type BookingParts = { title: ReactNode; sub?: ReactNode; tone?: "info" | "ok" | "warn" | "bad"; live?: boolean; acts?: ReactNode; panel?: ReactNode;
+  /** ختمٌ خاصٌّ بالحال: `full` المكتملة (رمزُ الجمع لا رمزُ التنبيه) */
+  icon?: "full" };
+export function BookingWidget({ activityId, unlimited, splitByGender, targetGender, totalRemaining, maleRemaining, femaleRemaining, render }: { activityId: string; unlimited: boolean; splitByGender: boolean; targetGender: "male" | "female" | null; totalRemaining: number; maleRemaining: number | null; femaleRemaining: number | null;
+  render: (parts: BookingParts) => ReactNode }) {
   const [sb] = useState(() => createClient());
   const [step, setStep] = useState<Step>("loading");
   const [busy, setBusy] = useState(false);
@@ -60,6 +76,8 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
   const [reason, setReason] = useState("");
   const [showCancel, setShowCancel] = useState(false);
   const [booked, setBooked] = useState<Booked | null>(null);
+  /** اسمُ صاحب الجلسة الأوّلُ للتحيّة («أهلًا محمد») — من صفّه في `profiles` إن كان له صفّ */
+  const [hello, setHello] = useState<string | null>(null);
   /** رايتا الصيغة تُرفعان عند مغادرة الحقل أو عند الإرسال — لا والزائر يكتب أوّلَ محرف. */
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [nameTouched, setNameTouched] = useState(false);
@@ -93,8 +111,9 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
 
       // بيتٌ واحدٌ يُسأل بعد توحيد الهويّة (م١): `profiles` صار صفَّ كلِّ صاحبِ حساب —
       // عضوًا كان أو صديقًا لأدِيب — و`visitors` حُنّط. ومن لا صفَّ له فحسابٌ بلا بيانات.
-      const { data: prof } = await sb.from("profiles").select("gender").eq("id", user.id).maybeSingle();
+      const { data: prof } = await sb.from("profiles").select("gender, full_name").eq("id", user.id).maybeSingle();
       const g = (prof?.gender ?? null) as "male" | "female" | null;
+      if (prof?.full_name) setHello(firstNameOf(prof.full_name));
       if (g) {
         setGender(g);
         setStep(genderAvailable(g) ? "ready" : "unavailable");
@@ -165,75 +184,100 @@ export function BookingWidget({ activityId, unlimited, splitByGender, targetGend
     setBusy(false);
   };
 
-  /* ── العرض بحسب الخطوة ── */
+  /* ── العرض بحسب الخطوة ──
+     أجزاءٌ بقطع الهويّة (٢٠٢٦-١١-١٦): الحالُ جملةٌ بنغمتها في قاع التذكرة، والفعلُ زرُّ الهويّة (`AdButton`: الأساسيُّ قطعةٌ من اللوح)،
+     والحقولُ حقولُ النماذج نفسُها في قسمٍ تحت التذكرة. والسلوكُ كما كان حرفًا. */
 
-  if (step === "loading") return <div className="text-content-muted text-sm">…جارٍ التحقّق</div>;
+  // الخطأُ يُقال حيث وقع الفعل: في القسم إن كان مفتوحًا، وإلّا جملةَ الحال في القاع
+  const errLine = err ? <FormHint tone="bad">{err}</FormHint> : null;
 
-  if (step === "unavailable") {
+  if (step === "loading") return render({ title: "جارٍ التحقّق…", tone: "info" });
+
+  // ready: كم بقي لفئتك — والصفرُ حالٌ («مكتملة») لا «باقٍ 0 مقعد» تحته «احجز مقعدي» (محمد ٢٠٢٦-١١-١٦: «فلماذا؟»)
+  const left = unlimited ? null : splitByGender ? (gender === "male" ? maleRemaining : femaleRemaining) : totalRemaining;
+  const isFull = step === "ready" && left != null && left <= 0;
+
+  if (step === "unavailable" || isFull) {
     if (targetGender && gender && gender !== targetGender) {
-      return <Alert tone="warning" title="مخصّصة لفئة أخرى">هذه الفعاليّة موجَّهة {AUDIENCE_LABEL[targetGender]} فقط.</Alert>;
+      return render({ title: "مخصّصة لفئة أخرى", sub: `هذه الفعاليّة موجَّهة ${AUDIENCE_LABEL[targetGender]} فقط.`, tone: "warn" });
     }
-    return <Alert tone="warning" title="اكتملت المقاعد">لا مقاعد متاحة لفئتك حاليًّا. تابعنا لفعاليّاتٍ قادمة.</Alert>;
+    // **المكتملةُ حالٌ هادئة** لا تحذير (محمد ٢٠٢٦-١١-١٦: الكهرمانيُّ «غير جميل أبدًا»): الامتلاءُ نجاحُ الفعاليّة لا خطرٌ عليك
+    return render({ title: "مكتملة", sub: "اكتملت المقاعد المتاحة لفئتك. تابعنا لفعاليّاتٍ قادمة.", tone: "info", icon: "full" });
   }
 
   if (step === "booked" && booked) {
-    return (
-      // **«مؤكَّد» بعد واتساب لا قبله**: الحجزُ يحفظ المقعد، والتأكيدُ اتّصالٌ يأتي بعده — فلا يُقال
-      // «مؤكَّد» لمن لم يُتّصَل به بعد (كما تقوله «حجوزاتي» نفسُها).
-      <Alert tone="success" title={booked.whatsappConfirmed ? "حجزك مؤكَّد" : "حُفظ مقعدك"} icon={<CheckCircle />}>
-        <div className="flex flex-col gap-3">
-          <span>
-            {booked.whatsappConfirmed ? "أكّدنا حضورك، ومقعدُك محفوظ." : "سنتواصل معك عبر واتساب لتأكيد حضورك."} وحجزُك في{" "}
-            <Link className="font-bold" href="/dashboard/bookings">حجوزاتي</Link>.
-          </span>
-          {err ? <span className="text-danger text-sm">{err}</span> : null}
-          {!showCancel ? (
-            <div className="btn-row"><Button variant="ghost-danger" size="sm" onClick={() => setShowCancel(true)}>إلغاء الحجز</Button></div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Textarea label="سبب الإلغاء" icon={<PencilSimple />} innerIcon={<PencilSimple />} placeholder="اختياريّ" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} optional />
-              <div className="btn-row">
-                <Button variant="danger" size="sm" loading={busy} onClick={cancel}>تأكيد الإلغاء</Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowCancel(false)} disabled={busy}>تراجع</Button>
-              </div>
+    // **«مؤكَّد» بعد واتساب لا قبله**: الحجزُ يحفظ المقعد، والتأكيدُ اتّصالٌ يأتي بعده — فلا يُقال «مؤكَّد» لمن لم يُتّصَل به بعد
+    // (كما تقوله «حجوزاتي» نفسُها).
+    const failed = err && !showCancel;
+    return render({
+      title: failed ? err : booked.whatsappConfirmed ? "حجزُك مؤكَّد" : "حُفظ مقعدُك",
+      sub: failed ? undefined : booked.whatsappConfirmed ? "أكّدنا حضورك، ومقعدُك محفوظ." : "سنتواصل معك عبر واتساب لتأكيد حضورك.",
+      tone: failed ? "bad" : "ok", live: true,
+      acts: (
+        <>
+          <AdButton variant="soft" size="sm" icon={<Ticket />} href="/dashboard/bookings">حجوزاتي</AdButton>
+          {showCancel ? null : <AdButton variant="danger" size="sm" icon={<XCircle />} onClick={() => setShowCancel(true)}>إلغاء الحجز</AdButton>}
+        </>
+      ),
+      panel: showCancel ? (
+        <AdSection icon={<XCircle />} title="إلغاء الحجز" foot={
+          <div className="ad-bk">
+            {errLine}
+            <Textarea label="سبب الإلغاء" icon={<PencilSimple />} innerIcon={<PencilSimple />} placeholder="اختياريّ" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} optional />
+            <div className="ad-bk-row">
+              <AdButton variant="danger-fill" size="sm" busy={busy} onClick={cancel}>تأكيد الإلغاء</AdButton>
+              <AdButton variant="quiet" size="sm" held={busy} onClick={() => setShowCancel(false)}>تراجع</AdButton>
             </div>
-          )}
-        </div>
-      </Alert>
-    );
+          </div>
+        } />
+      ) : undefined,
+    });
   }
 
-  return (
-    <div className="flex flex-col gap-3">
-      {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
-
-      {step === "auth" ? (
-        <>
-          <p className="text-sm text-content-muted">احجز مقعدك بحسابك في أدِيب.</p>
-          <div className="btn-row">
-            <Link className="abtn abtn-primary abtn-md" href={`/signup?next=${back}`}>أنشئ حسابًا</Link>
-            <Link className="abtn abtn-ghost abtn-md" href={`/login?next=${back}`}>بوّابة أدِيب</Link>
+  if (step === "profile") {
+    return render({
+      title: "أكمِل بياناتك مرّةً واحدة",
+      sub: "وبعدها يُحجز مقعدُك مباشرةً.",
+      tone: "info",
+      panel: (
+        <AdSection icon={<IdentificationBadge />} title="بياناتك" foot={
+          <div className="ad-bk">
+            {errLine}
+            <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setNameTouched(true)} error={nameTouched ? arabicNameError(name) ?? undefined : undefined} required />
+            <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhoneTouched(true)} error={phoneError(phone, phoneTouched)} required />
+            <Select label="الجنس" icon={<UsersThree />} options={genderOptions} value={gender} onValueChange={(v) => setGender(v as "male" | "female")} required />
+            <Field label="المدينة" icon={<MapPin />} innerIcon={<IdentificationBadge />} placeholder="مدينتك" value={city} onChange={(e) => setCity(e.target.value)} optional />
+            <div className="ad-bk-row"><AdButton variant="fill" busy={busy} onClick={submitProfile}>تأكيد الحجز</AdButton></div>
           </div>
-        </>
-      ) : null}
+        } />
+      ),
+    });
+  }
 
-      {step === "profile" ? (
+  if (step === "auth") {
+    // **المكتملةُ تقولها قبل الدخول** (إصلاح ٢٠٢٦-١١-١٦): كان من لا جلسةَ له يُدعى إلى إنشاء حسابٍ ليحجز في فعاليّةٍ لا مقعدَ فيها، ثمّ
+    // يعود فيجد «اكتملت المقاعد». فالمكتملةُ لكلّ فئةٍ تقول ذلك من أوّلها، ولا تدعو إلى البابين
+    if (bothFull) return render({ title: "مكتملة", sub: "اكتملت المقاعد كلُّها. تابعنا لفعاليّاتٍ قادمة.", tone: "info", icon: "full" });
+    // **أوضحُ وألطف** (محمد ٢٠٢٦-١١-١٦): يقول البابين بأسمائهما — حسابٌ جديد، أو دخولٌ لمن له حساب — وأنّه يعود إلى هنا
+    return render({
+      title: err ?? "احجز مقعدك بحسابك في أدِيب",
+      sub: err ? undefined : "أنشئ حسابك في دقيقة، أو سجّل الدخول إن كان لديك حساب، وتعود إلى هنا لتُتمّ حجزك.",
+      tone: err ? "bad" : "info",
+      acts: (
         <>
-          <p className="text-sm text-content-muted">أكمِل بياناتك مرّةً واحدة لإتمام الحجز.</p>
-          <Field label="الاسم الكامل" icon={<User />} innerIcon={<PencilSimple />} placeholder="اسمك الثلاثيّ" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setNameTouched(true)} error={nameTouched ? arabicNameError(name) ?? undefined : undefined} required />
-          <Field label="رقم الجوّال" type="tel" charset="digits" maxLength={PHONE_LEN} prefix={PHONE_PREFIX} icon={<Phone />} innerIcon={<Hash />} placeholder="05xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhoneTouched(true)} error={phoneError(phone, phoneTouched)} required />
-          <Select label="الجنس" icon={<UsersThree />} options={genderOptions} value={gender} onValueChange={(v) => setGender(v as "male" | "female")} required />
-          <Field label="المدينة" icon={<MapPin />} innerIcon={<IdentificationBadge />} placeholder="مدينتك" value={city} onChange={(e) => setCity(e.target.value)} optional />
-          <Button variant="primary" size="md" loading={busy} onClick={submitProfile}>تأكيد الحجز</Button>
+          <AdButton variant="soft" size="sm" icon={<UserPlus />} href={`/signup?next=${back}`}>أنشئ حسابًا</AdButton>
+          <AdButton variant="soft" size="sm" icon={<SignIn />} href={`/login?next=${back}`}>سجّل الدخول</AdButton>
         </>
-      ) : null}
+      ),
+    });
+  }
 
-      {step === "ready" ? (
-        <>
-          <p className="text-sm text-content-muted">أنت مسجّل الدخول، احجز مقعدك بضغطة.</p>
-          <Button variant="primary" size="md" loading={busy} onClick={book}>احجز مقعدي</Button>
-        </>
-      ) : null}
-    </div>
-  );
+  // **تحيّةٌ باسمه** (محمد ٢٠٢٦-١١-١٦: «لماذا لا تكون ألطف؟ أهلًا محمد…»)، والفعلُ بجنس صاحبه
+  const go = gender === "female" ? "احجزي مقعدك" : "احجز مقعدك";
+  return render({
+    title: err ?? (left == null ? "التسجيلُ مفتوح" : `باقٍ ${arCount(left, AR_SEAT)}${splitByGender && gender ? ` ${AUDIENCE_LABEL[gender]}` : ""}`),
+    sub: err ? undefined : hello ? `أهلًا ${hello}، ${go} بضغطة زرّ.` : `${go} بضغطة زرّ.`,
+    tone: err ? "bad" : "info",
+    acts: <AdButton variant="soft" size="sm" icon={<Armchair />} busy={busy} onClick={book}>احجز مقعدي</AdButton>,
+  });
 }

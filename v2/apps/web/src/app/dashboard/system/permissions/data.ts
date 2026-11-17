@@ -139,7 +139,7 @@ export async function getViewAsTargets(): Promise<ViewAsTarget[]> {
 export type VacantSeat = { roleName: string; roleAr: string; scope: SeatScope; units: { id: number; name: string }[] };
 
 /**
- * المناصب الشاغرة — كلّ دورٍ لا يشغله عضوٌ نشط، ومعه **الوحدات التي يصحّ فيها**.
+ * المناصب الفارغة — كلّ دورٍ لا يشغله عضوٌ نشط، ومعه **الوحدات التي يصحّ فيها**.
  *
  * الوحدات مقروءةٌ من الهيكلة لا مُخمَّنة: من يقود وحدةً (`leader_role_name`) وحداتُه هي؛
  * ومن كان دورَ عضوها (`member_role_name`) فوحدتُه أمُّه — إدارةً كانت أو لجنة. (كانت وحداتُ

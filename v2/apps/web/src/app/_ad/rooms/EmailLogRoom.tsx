@@ -17,54 +17,24 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { matchesSearch } from "@adeeb/design-system";
-import { Buildings, CalendarBlank, Clock, EnvelopeSimple, EnvelopeSimpleOpen, Hourglass, PaperPlaneTilt, UserCircle } from "@phosphor-icons/react";
-import { ArrowCounterClockwise, ArrowsClockwise, ArrowUUpLeft, Prohibit, Warning } from "@/app/_components/glyphs";
+import { CalendarBlank, EnvelopeSimpleOpen, PaperPlaneTilt } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, ArrowsClockwise } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { clubDayKey, daysBetweenKeys } from "@/lib/dates";
 import { liftSuppression, retryMail, sendTestMail } from "@/app/dashboard/system/email/actions";
-import type { MailHealth, MailRow, MailStatus } from "@/app/dashboard/system/email/data";
+import type { MailHealth, MailRow } from "@/app/dashboard/system/email/data";
 import type { ArForms } from "@/lib/arabicCount";
 import type { RoomView } from "../view";
-import { AdActs, AdBadge, AdCard, AdNote, AdRow, type AdMeta, type AdOp, type AdTone } from "../primitives";
+import { AdActs, AdCard, AdNote, AdRow, type AdOp } from "../primitives";
 import { CollectionRoom, type FilterDef, type Position } from "../collection";
-import { dayParts, fmtClock, localDay, relTime } from "../format";
+import { localDay, relTime } from "../format";
+import { atOf, canRetry, mailChips, mailInfo, mailStub, pending, returned } from "./email-ticket";
 import { EMAIL_LOG_ROOM } from "./email-log.meta";
 
 const AR_MAIL: ArForms = ["رسالةٌ واحدة", "رسالتان", "رسائل", "رسالةً"];
 
-const STATUS: Record<MailStatus, { label: string; tone: AdTone }> = {
-  sent: { label: "خرجت", tone: "ok" },
-  queued: { label: "تنتظر", tone: "warn" },
-  sending: { label: "تخرج الآن", tone: "warn" },
-  dead: { label: "تعثّرت", tone: "bad" },
-  cancelled: { label: "أُلغيت", tone: "neutral" },
-};
-/**
- * **حالُ ما بعد الخروج يغلب «خرجت»** (خطّافُ Resend، ٢٠٢٦-١٠-١٩): «خرجت» تعني أنّ المزوّد قبلها، فإن قال بعدها
- * وصلت أو ارتدّت قيل ذلك مكانها.
- */
-const DELIVERY: Record<NonNullable<MailRow["delivery"]>, { label: string; tone: AdTone }> = {
-  delivered: { label: "وصلت", tone: "ok" },
-  delayed: { label: "تتأخّر", tone: "warn" },
-  bounced: { label: "ارتدّت", tone: "bad" },
-  complained: { label: "عُدّت مزعجة", tone: "bad" },
-};
-const badgeOf = (m: MailRow) => (m.status === "sent" && m.delivery ? DELIVERY[m.delivery] : STATUS[m.status]);
 /** المتعثّرُ في أسبوعه يحتاج نظرًا، وما بعده صار تاريخًا يُقرأ في السجلّ لا مهمّةً في الصدر. */
 const NEEDS_DAYS = 7;
-
-/** الإعادةُ لما مات قبل الخروج، لا لرسالة مصادقة، ولا لعنوانٍ موقوف: تموت ثانيةً حتى يُرفع إيقافُه. */
-const canRetry = (m: MailRow) => m.status === "dead" && !m.auth && !m.suppressed;
-const pending = (m: MailRow) => m.status === "queued" || m.status === "sending";
-const returned = (m: MailRow) => m.delivery === "bounced" || m.delivery === "complained";
-
-/** رمزُ حالها في شارتها: خرجت مغلقة، ووصلت مفتوحة، وتنتظر ساعةً رمليّة، وتعثّرت تحذيرًا، وارتدّت راجعة. */
-const iconOf = (m: MailRow) =>
-  returned(m) ? <ArrowUUpLeft /> : m.status === "dead" ? <Warning /> : pending(m) ? <Hourglass />
-  : m.status === "cancelled" ? <Prohibit /> : m.delivery === "delivered" ? <EnvelopeSimpleOpen /> : <EnvelopeSimple />;
-
-/** وقتُ الرسالة: خروجُها إن خرجت، وإلّا كتابتُها — كما كان سطرُ «متى» في الكرت القديم */
-const atOf = (m: MailRow) => m.sentAt ?? m.createdAt;
 
 export function EmailLogRoom({ rows, health, serverNow, view }: { rows: MailRow[]; health: MailHealth; serverNow: number; view?: RoomView }) {
   const router = useRouter();
@@ -104,17 +74,10 @@ export function EmailLogRoom({ rows, health, serverNow, view }: { rows: MailRow[
     ? [{ key: "unit", label: "الجهة", options: units.map((u) => ({ value: u, label: u })), match: (m, v) => m.unit === v }]
     : [];
 
-  /** شارةُ حالها — أوّلُ ما يُسأل عن رسالة: أوصلت أم تعثّرت (كانت شارةَ الكرت القديم) */
-  const chips = (m: MailRow) => { const b = badgeOf(m); return <AdBadge tone={b.tone} icon={iconOf(m)}>{b.label}</AdBadge>; };
-  /** سطورُها بترتيب حقائق الكرت القديم: لمن، وسببُ تعثّرها، وجهتُها، وساعتُها (يومُها في الكعب) */
-  const info = (m: MailRow): AdMeta[] => [
-    { icon: <UserCircle />, text: `إلى ${m.to}` },
-    ...(m.why ? [{ icon: <Warning />, text: m.why, tone: "bad" as const }] : []),
-    ...(m.auth && m.status === "dead" ? [{ icon: <Warning />, text: "رسالةُ مصادقةٍ لا تُعاد: يطلب صاحبُها رمزًا جديدًا" }] : []),
-    ...(m.unit ? [{ icon: <Buildings />, text: m.unit }] : []),
-    { icon: <Clock />, text: fmtClock(atOf(m)) },
-  ];
-  const stubOf = (m: MailRow) => { const d = dayParts(atOf(m)); return { big: d.day, small: d.month }; };
+  // الشارةُ والسطورُ والكعبُ من مصدرها الواحد (`email-ticket.tsx`): هي نفسُها رأسُ صفحة الرسالة
+  const chips = mailChips;
+  const info = mailInfo;
+  const stubOf = mailStub;
   const hrefOf = (m: MailRow) => `/dashboard/system/email/${m.id}`;
   /**
    * الأساسيُّ فتحُها (وجهةُ النقر على الكرت القديم)، ثمّ فعلُها الآخرُ إن كان: العنوانُ الموقوفُ يُرفع إيقافُه بعد تصحيحه،
@@ -145,8 +108,8 @@ export function EmailLogRoom({ rows, health, serverNow, view }: { rows: MailRow[
       idOf={(m) => String(m.id)}
       action={{ label: busy && busyId === null ? "تُرسل الآن…" : "أرسل رسالة تجربة", icon: <PaperPlaneTilt />, onClick: () => run(null, sendTestMail) }}
       notice={health.down
-        ? <AdNote tone="bad">{`البريدُ متعطّل، و${pulse}.`}</AdNote>
-        : <AdNote tone="info">{`البريدُ يعمل، و${pulse}.`}</AdNote>}
+        ? <AdNote tone="bad" label="البريد" title="متعطّل.">{`${pulse}.`}</AdNote>
+        : <AdNote tone="ok" label="البريد" title="يعمل.">{`${pulse}.`}</AdNote>}
       emptyAll={{
         title: "لم تخرج رسالةٌ في ثلاثين يومًا",
         desc: "كلُّ رسالةٍ يرسلها أدِيب تُكتب هنا من نفسها: رموزُ الدخول، والإشعارات، والردود.",

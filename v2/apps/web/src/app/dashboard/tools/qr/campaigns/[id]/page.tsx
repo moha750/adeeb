@@ -1,9 +1,8 @@
-import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getQrShareCandidates } from "../../shares";
 import { getMyQrCampaignBriefs, getQrCampaign, getQrCampaignShares } from "../data";
 import { QrCampaignRoom } from "@/app/_ad/rooms/QrCampaignRoom";
-import { AdRoomError } from "@/app/_ad/states";
+import { AdRoomError, AdRoomMissing } from "@/app/_ad/states";
 import { QR_CAMPAIGN_ROOM } from "@/app/_ad/rooms/qr-campaign.meta";
 import { roomView } from "@/app/_ad/view-server";
 import { requestNow } from "@/app/_ad/now";
@@ -18,7 +17,7 @@ import { roomMetadata } from "@/app/_ad/metadata";
  * وقراءتُها لكلّ ناظرٍ نداءٌ بلا مستعمِل.
  *
  * وعلى قالب «قائمة السجلّات» (٢٠٢٦-١١-٠٢)، ولا مساراتٍ أبناءَ للمجلّد فحالتا التحميل والخطأ بجانب الصفحة. **و«لم يُعثر»
- * ليس خطأَ جلب**: يبقى تنبيهَه كما كان، فلا يُقال «تعذّر جلب الحملة» عن حملةٍ معدومةٍ أو ليست لك.
+ * ليس خطأَ جلب**: حالُه وحده (`AdRoomMissing`، ٢٠٢٦-١١-١٧)، فلا يُقال «تعذّر جلب الحملة» عن حملةٍ معدومةٍ أو ليست لك.
  */
 export const metadata = roomMetadata(QR_CAMPAIGN_ROOM);
 
@@ -33,7 +32,7 @@ export default async function QrCampaignPage({ params }: { params: Promise<{ id:
   ]);
 
   if (error) return <AdRoomError {...QR_CAMPAIGN_ROOM} message={error} />;
-  if (!campaign) return <Alert tone="warning" title="لم يُعثر على الحملة">قد تكون حُذفت، أو ليست لك.</Alert>;
+  if (!campaign) return <AdRoomMissing title={QR_CAMPAIGN_ROOM.title} navPath={QR_CAMPAIGN_ROOM.navPath} what="الحملة" desc="قد تكون حُذفت، أو ليست لك." back={{ label: "إلى الحملات", href: "/dashboard/tools/qr/campaigns" }} />;
 
   // **وحملاتُه تُقرأ للمالك وحدَه**: هي وجهاتُ النقل في نافذةٍ لا يفتحها غيرُه.
   const [candidates, campaigns] = await Promise.all([
