@@ -1,12 +1,12 @@
 /**
  * **معجمُ غرفة الألعاب** — بلا إطارٍ فيقرؤه الخادمُ والمتصفّح معًا.
  *
- * كلُّ قيمةٍ هنا تطابق قيدًا في القاعدة (قيدُ عمود `tone` في `20261017091345_games_01_hall.sql`)،
+ * كلُّ قيمةٍ هنا تطابق قيدًا في القاعدة (قيدُ عمود `tone`، آخرُه `20261114100005_games_09_tone_dallah.sql`)،
  * وكلُّ نغمةٍ سطرُها في `components.css` (`.agm [data-tone="…"]`). فنغمةٌ جديدةٌ ثلاثةُ مواضع
  * في تغييرٍ واحد: القيدُ، وهذا الملفّ، وسطرُ اللون.
  */
 
-export const GAME_TONES = ["darb", "amber", "sky", "violet"] as const;
+export const GAME_TONES = ["darb", "amber", "sky", "violet", "dallah"] as const;
 export type GameTone = (typeof GAME_TONES)[number];
 
 export const TONE_LABEL: Record<GameTone, string> = {
@@ -14,6 +14,7 @@ export const TONE_LABEL: Record<GameTone, string> = {
   amber: "برتقاليّ",
   sky: "سماويّ",
   violet: "بنفسجيّ",
+  dallah: "ذهبيّ",
 };
 export const TONE_OPTIONS = GAME_TONES.map((v) => ({ value: v, label: TONE_LABEL[v] }));
 
@@ -85,6 +86,7 @@ export const NOUNS = {
   DATE: { one: "تمرة", few: "تمرات", many: "تمرةً" },
   VISITOR: { one: "زائر", few: "زوّار", many: "زائرًا" },
   GAME: { one: "لعبة", few: "ألعاب", many: "لعبةً" },
+  CERT: { one: "شهادة", few: "شهادات", many: "شهادةً" },
 } as const satisfies Record<string, Noun>;
 
 /** تمييزُ العدد: الواحدُ مفرد، ومن ٣ إلى ١٠ جمع، وما فوقها مفردٌ منصوب (والاثنان جمعٌ هنا تجوّزًا). */
@@ -122,6 +124,34 @@ export type BankStats = {
   levels: Partial<Record<"easy" | "medium" | "hard" | "none", number>>;
   langs: Partial<Record<"ar" | "en", number>>;
   days: { day: string; plays: number }[];
+};
+
+/**
+ * **«مدارس الأصول» منذ إطلاقها** (`osool_plays`، الترحيل `games_11_osool_plays`): تُحسب في الخادم من الجدول نفسِه
+ * (`getOsool`)، فلا دالّةَ لها في القاعدة. الزائرُ من فتح اللعبة، واللاعبُ من بدأ جولة، كلاهما بمعرّف جهازه.
+ */
+export type OsoolStats = {
+  visitors: number;
+  rounds: number;
+  players: number;
+  accounts: number;
+  outcomes: Partial<Record<"won" | "lost" | "playing", number>>;
+  majlis: Partial<Record<"m" | "f", number>>;
+  certs: { issued: number; saved: number; shared: number };
+  faults: Record<"order" | "full" | "shake" | "more" | "late", number>;
+};
+
+/** جولةٌ في قائمة لاعبي «مدارس الأصول»: الاسمُ الذي كتبه للشهادة، واسمُ حسابه إن كان داخلًا. */
+export type OsoolPlayer = {
+  id: string;
+  at: string;
+  name: string;
+  account: string | null;
+  majlis: "m" | "f" | null;
+  outcome: "won" | "lost" | "playing";
+  grades: number[] | null;
+  saved: boolean;
+  shared: boolean;
 };
 
 /** أوائلُ «دربك خضر» منذ إطلاقها: أكثرُ تمرٍ وأبعدُ مسافة (`darb_players` بلا المخفيّين). */

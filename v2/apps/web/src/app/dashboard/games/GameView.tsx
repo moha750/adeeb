@@ -17,7 +17,7 @@ import { ContestCard } from "./ContestCard";
 import { ContestEditor, type ContestTarget } from "./ContestEditor";
 import { useVideoSlot } from "./useVideoSlot";
 import { deleteContest, setGameInHall, updateGame } from "./actions";
-import type { BankStats, BoardRow, ContestRow, DarbLeaders, GameDay, GameDraft, GameDraftErrors, GameMetric, GameRow, GamePeriod } from "./vocab";
+import type { BankStats, BoardRow, ContestRow, DarbLeaders, GameDay, GameDraft, GameDraftErrors, GameMetric, GameRow, GamePeriod, OsoolPlayer, OsoolStats } from "./vocab";
 
 type Tab = "overview" | "contests" | "settings";
 
@@ -34,7 +34,7 @@ const draftOf = (g: GameRow): GameDraft => ({
  *  - **الإعداد:** السطرُ والمقطعُ أوّلًا والتقنيُّ مطويّ، وشريطُ «حفظ» يظهر متى تغيّر شيء.
  */
 export function GameView({
-  game, initialTab, contests, metrics, boards, days, period, bank, leaders, statsError, now,
+  game, initialTab, contests, metrics, boards, days, period, bank, leaders, osool, statsError, now,
 }: {
   game: GameRow;
   /** تبويبٌ يُفتح به (`?tab=contests` من قائمة المسابقات في الغرفة). */
@@ -48,6 +48,8 @@ export function GameView({
   period?: GamePeriod;
   bank?: BankStats | null;
   leaders?: DarbLeaders | null;
+  /** «مدارس الأصول»: ما منذ إطلاقها ومن لعبها (`getOsool`). */
+  osool?: { stats: OsoolStats; players: OsoolPlayer[] } | null;
   statsError: string | null;
   now: number;
 }) {
@@ -122,7 +124,7 @@ export function GameView({
         statsError ? (
           <Alert tone="warning" title="تعذّر جلب الأرقام">{statsError}</Alert>
         ) : (
-          <GameStats slug={game.slug} days={days} period={period} bank={bank} leaders={leaders} />
+          <GameStats slug={game.slug} days={days} period={period} bank={bank} leaders={leaders} osool={osool} />
         )
       ) : tab === "contests" ? (
         contests.length ? (
