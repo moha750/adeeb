@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { AdRoomDenied, AdRoomError, AdRoomMissing } from "@/app/_ad/states";
 
 /**
@@ -10,6 +11,9 @@ export const metadata = { title: "حالات الغرفة: المختبر" };
 export default async function StatesLab({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
   // مختبرٌ لا يُرفع، ويُقفل في الإنتاج احتياطًا (لاحظته محادثةُ الانتخابات ٢٠٢٦-١١-١٧: بلا قفل)
   if (process.env.NODE_ENV === "production") notFound();
+  // وحارسُ اللوحة كإخوته في `dashboard/ad` (اختبارُ «لا صفحةَ لوحةٍ بلا حارس» أسقطه بدونه)
+  const denied = await denyUnless("/dashboard");
+  if (denied) return denied;
   const { s } = await searchParams;
   if (s === "denied") {
     return <AdRoomDenied title="إذاعة أدِيب" navPath="/dashboard/radio" what="إدارة الإذاعة"
