@@ -172,7 +172,7 @@ input{font:600 17px "Readex Pro",system-ui,sans-serif;width:100%;height:46px;bor
     <button class="fs" id="fs" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="#b0164f" stroke-width="2.6" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
     <div class="bin" id="bin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c2185b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></div>
     <button class="go" id="go">تتويج ✦</button>
-    <div class="hall" id="hall"><header><h2>قاعة التيجان</h2><button class="btn" id="hallX" style="padding:0 22px">رجوع</button></header><div class="grid" id="grid"></div></div>
+    <div class="hall" id="hall"><header><h2>قاعة التيجان</h2><div class="row"><button class="btn sup" id="post" style="padding:0 18px">صورة البوست</button><button class="btn" id="hallX" style="padding:0 22px">رجوع</button></div></header><div class="grid" id="grid"></div></div>
     <div class="win" id="win"><b id="winT">مبروك التتويج!</b><small id="winN"></small>
       <div class="row"><button class="btn" id="more">أكمل التزيين</button><button class="btn" id="fresh">تاج جديد</button></div>
     </div>
@@ -344,16 +344,45 @@ function chime(){const a=[1047,1175,1319,1568,1760][Math.floor(Math.random()*5)]
 function fanfare(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.13,i==3?.9:.3,'triangle',.2));[1568,1760,2093,2349,2637].forEach((f,i)=>tone(f,.6+i*.08,.3,'sine',.07))}
 document.addEventListener('pointerdown',ac,{capture:true});
 // ---------- hall of crowns ----------
-let HALL=[];try{HALL=JSON.parse(localStorage.getItem('adeeb-crowns')||'[]')}catch(_){HALL=[]}
+// قاعةُ التيجان في IndexedDB: تتّسع لمئات التيجان ولا يُمسح منها شيء (كان localStorage بسقف ٤٠)
+let HALL=[],db=null;
 const ar=n=>n.toLocaleString('ar-SA');
 const showCnt=()=>{$('cnt').textContent=ar(HALL.length)};
+const idbOpen=()=>new Promise(res=>{try{const r=indexedDB.open('adeeb-taji',1);r.onupgradeneeded=()=>r.result.createObjectStore('crowns',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(_){res(null)}});
+const idbAll=()=>new Promise(res=>{try{const q=db.transaction('crowns').objectStore('crowns').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>res([])}catch(_){res([])}});
+const idbPut=o=>new Promise(res=>{try{const tx=db.transaction('crowns','readwrite');const q=tx.objectStore('crowns').put(o);q.onsuccess=()=>{o.id=q.result;res(o)};q.onerror=()=>res(o)}catch(_){res(o)}});
+(async()=>{db=await idbOpen();if(!db){showCnt();return}
+  try{const old=JSON.parse(localStorage.getItem('adeeb-crowns')||'[]');if(old.length){for(const o of old.slice().reverse())await idbPut({n:o.n,img:o.img,t:Date.now()});localStorage.removeItem('adeeb-crowns')}}catch(_){}
+  const all=await idbAll();HALL=all.reverse().concat(HALL.filter(h=>!h.id));showCnt()})();
 function snap(){const c=sv.cloneNode(true);c.setAttribute('viewBox','70 40 460 440');c.setAttribute('width','400');c.setAttribute('height','383');
   ['rays','trail','fx'].forEach(id=>{const x=c.querySelector('#'+id);if(x)x.remove()});c.querySelector('defs').insertAdjacentHTML('beforeend',$('dd').innerHTML);
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c))}
-function save(n){HALL.unshift({n,img:snap()});HALL=HALL.slice(0,40);try{localStorage.setItem('adeeb-crowns',JSON.stringify(HALL))}catch(_){try{HALL=HALL.slice(0,15);localStorage.setItem('adeeb-crowns',JSON.stringify(HALL))}catch(_){}}showCnt()}
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
+async function toJpeg(src){const i=await loadImg(src),c=document.createElement('canvas');c.width=400;c.height=383;const x=c.getContext('2d');x.fillStyle='#ffe6ef';x.fillRect(0,0,400,383);x.drawImage(i,0,0,400,383);return c.toDataURL('image/jpeg',.86)}
+function save(n){const o={n,img:snap(),t:Date.now()};HALL.unshift(o);showCnt();
+  (async()=>{try{o.img=await toJpeg(o.img)}catch(_){}if(db)await idbPut(o)})()}
+// صورةُ البوست: شبكةُ التيجان بأسمائها، عشرون في الصفحة (١٠٨٠×١٣٥٠)، أقدمُها أوّلًا
+async function poster(){if(!HALL.length)return;const b=$('post'),lbl=b.textContent;b.textContent='جارٍ التجهيز…';b.disabled=true;
+  try{await document.fonts.load('700 80px "El Messiri"');let logo=null;try{logo=await loadImg('/brand/logo-horizontal.svg')}catch(_){}
+  const list=HALL.slice().reverse(),PER=20,pages=Math.ceil(list.length/PER);
+  for(let p=0;p<pages;p++){const items=list.slice(p*PER,p*PER+PER),n=items.length,cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=cv.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,1350);g.addColorStop(0,'#ff9fc2');g.addColorStop(.35,'#ffe6ef');g.addColorStop(1,'#fff6fa');x.fillStyle=g;x.fillRect(0,0,1080,1350);
+    x.fillStyle='rgba(255,255,255,.7)';for(let k=0;k<26;k++){const sx=(k*389)%1080,sy=(k*211)%1350,r=6+(k%4)*4;x.beginPath();x.moveTo(sx,sy-r);x.lineTo(sx+r*.25,sy-r*.25);x.lineTo(sx+r,sy);x.lineTo(sx+r*.25,sy+r*.25);x.lineTo(sx,sy+r);x.lineTo(sx-r*.25,sy+r*.25);x.lineTo(sx-r,sy);x.lineTo(sx-r*.25,sy-r*.25);x.fill()}
+    x.direction='rtl';x.textAlign='center';x.fillStyle='#c2185b';x.font='700 88px "El Messiri", serif';x.fillText('قاعة التيجان',540,150);
+    x.fillStyle='#7a1f4a';x.font='600 34px "Readex Pro", sans-serif';x.fillText('تيجانٌ صمّمها أبطالنا في اليوم العالمي للطفل',540,212);
+    const cols=n<=1?1:n<=4?2:n<=9?3:4,rows=Math.ceil(n/cols),W=980,H=960,cell=Math.min(W/cols,H/rows),card=cell-18,ox=50+(W-cols*cell)/2,oy=262+(H-rows*cell)/2;
+    for(let k=0;k<n;k++){const it=items[k],c=k%cols,r=Math.floor(k/cols),inRow=Math.min(cols,n-r*cols),cx=1080-ox-(c+1)*cell+9-(cols-inRow)*cell/2,cy=oy+r*cell+9;
+      x.fillStyle='rgba(122,10,60,.10)';rr(x,cx,cy+6,card,card,card*.1);x.fill();x.fillStyle='#fff';rr(x,cx,cy,card,card,card*.1);x.fill();
+      const im=card*.8,ih=im*383/400;try{const img=await loadImg(it.img);x.save();rr(x,cx+(card-im)/2,cy+card*.05,im,ih,card*.07);x.clip();x.drawImage(img,cx+(card-im)/2,cy+card*.05,im,ih);x.restore()}catch(_){}
+      x.fillStyle='#4a0f2b';x.font=`700 ${Math.round(Math.max(22,card*.11))}px "El Messiri", serif`;x.fillText(it.n||'تاج ملكي',cx+card/2,cy+card*.05+ih+card*.115)}
+    if(logo){const lh=64,lw=logo.width/logo.height*lh;x.drawImage(logo,1080-60-lw,1350-60-lh,lw,lh)}else{x.fillStyle='#c2185b';x.font='700 40px "El Messiri", serif';x.textAlign='right';x.fillText('نادي أدِيب',1020,1290)}
+    x.direction='ltr';x.textAlign='left';x.fillStyle='#7a1f4a';x.font='600 32px "Readex Pro", sans-serif';x.fillText('adeeb.club/taj'+(pages>1?`   ${p+1}/${pages}`:''),60,1294);
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`tijan-adeeb-${p+1}.png`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);await new Promise(r=>setTimeout(r,400))}
+  }finally{b.textContent=lbl;b.disabled=false}}
+function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
 function openHall(){const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   $('grid').innerHTML=HALL.length?HALL.map(h=>`<figure><img src="${h.img}" alt=""><figcaption>${esc(h.n||'تاج ملكي')}</figcaption></figure>`).join(''):'<div class="empty">ما فيه تيجان للحين، توّج أول تاج!</div>';$('hall').classList.add('on')}
-$('hallB').onclick=()=>{openHall();ding(784)};$('hallX').onclick=()=>$('hall').classList.remove('on');
+$('hallB').onclick=()=>{openHall();ding(784)};$('post').onclick=()=>poster();$('hallX').onclick=()=>$('hall').classList.remove('on');
 $('fs').onclick=()=>{const d=document;try{if(d.fullscreenElement)d.exitFullscreen();else d.documentElement.requestFullscreen().catch(()=>{})}catch(_){}};
 if(!document.fullscreenEnabled)$('fs').style.display='none';
 // ---------- celebrate ----------
