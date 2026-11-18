@@ -74,6 +74,8 @@ const nextConfig: NextConfig = {
       { source: "/bank", destination: "/games/bank-adeeb/play", permanent: true },
       // وصفحاتُ المسابقات تحت `/games/contests/<id>`، ولا فهرسَ لها: المسابقةُ الجاريةُ يعلنها شريطُ الصالة.
       { source: "/games/contests", destination: "/games", permanent: false },
+      // `/taj` القصيرُ لتابلت ركن «صمّم تاجك» (٢٠٢٦-١١-١٨).
+      { source: "/taj", destination: "/games/taji/play", permanent: false },
     ];
   },
   async rewrites() {
@@ -87,6 +89,9 @@ const nextConfig: NextConfig = {
       // بنفسها كأختيها، ودخلت الصالةَ بكلمته (٢٠٢٦-١١-١٤) بكابينةٍ ذهبيّة. بلا جداولَ لها بعد: لوحةُ صدارتها تُعرض
       // عليه قبل إنشائها. (و`/osool` أدناه شيءٌ آخر: محاكي الركن نفسِه.)
       { source: "/games/osool/play", destination: "/games/osool/game.html" },
+      // «صمّم تاجك»: لعبةُ ركن التيجان في فعاليات اليوم العالمي للطفل (٢٠٢٦-١١-١٨)، صفحةٌ مكتفيةٌ بنفسها كأخواتها
+      // للآيباد واللابتوب. «قاعة التيجان» فيها تُحفظ في متصفّح الجهاز وحده (localStorage)، بلا جداول.
+      { source: "/games/taji/play", destination: "/games/taji/game.html" },
       // «مدارس الأصول الأهلية»: محاكي ركن «البيت» ثلاثيُّ الأبعاد لمشاركة النادي في معرض القهوة
       // (٢٠٢٦-١١-١١). صفحةٌ مكتفيةٌ بنفسها في `public/exhibits/osool/`، وعنوانُها القصير هذا هو
       // ما يُرسَل للمجلس الإداريّ، فلا يُغيَّر بعد نشره.
