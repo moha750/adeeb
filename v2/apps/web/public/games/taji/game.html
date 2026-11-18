@@ -344,27 +344,36 @@ function chime(){const a=[1047,1175,1319,1568,1760][Math.floor(Math.random()*5)]
 function fanfare(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.13,i==3?.9:.3,'triangle',.2));[1568,1760,2093,2349,2637].forEach((f,i)=>tone(f,.6+i*.08,.3,'sine',.07))}
 document.addEventListener('pointerdown',ac,{capture:true});
 // ---------- hall of crowns ----------
-// قاعةُ التيجان في IndexedDB: تتّسع لمئات التيجان ولا يُمسح منها شيء (كان localStorage بسقف ٤٠)
-let HALL=[],db=null;
+// قاعةُ التيجان واحدةٌ لكلّ أجهزة الركن (٢٠٢٦-١١-١٨): تُعلَّق في قاعدة أدِيب (`taji_crowns`) بدالّتين عامّتين
+// كأختها «بنك أدِيب»، وما لم يبلغها بعدُ ينتظر في طابور الجهاز (IndexedDB) ويُعاد إرساله حين يعود الاتصال.
+const SB_URL="https://nnlhkfeybyhvlinbqqfa.supabase.co",SB_KEY="sb_publishable_DRACscCdZu0N94ggkwkW3Q_w5NW-h9a";
+let HALL=[],PEND=[],db=null,last=0;
 const ar=n=>n.toLocaleString('ar-SA');
-const showCnt=()=>{$('cnt').textContent=ar(HALL.length)};
-const idbOpen=()=>new Promise(res=>{try{const r=indexedDB.open('adeeb-taji',1);r.onupgradeneeded=()=>r.result.createObjectStore('crowns',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(_){res(null)}});
-const idbAll=()=>new Promise(res=>{try{const q=db.transaction('crowns').objectStore('crowns').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>res([])}catch(_){res([])}});
-const idbPut=o=>new Promise(res=>{try{const tx=db.transaction('crowns','readwrite');const q=tx.objectStore('crowns').put(o);q.onsuccess=()=>{o.id=q.result;res(o)};q.onerror=()=>res(o)}catch(_){res(o)}});
-(async()=>{db=await idbOpen();if(!db){showCnt();return}
-  try{const old=JSON.parse(localStorage.getItem('adeeb-crowns')||'[]');if(old.length){for(const o of old.slice().reverse())await idbPut({n:o.n,img:o.img,t:Date.now()});localStorage.removeItem('adeeb-crowns')}}catch(_){}
-  const all=await idbAll();HALL=all.reverse().concat(HALL.filter(h=>!h.id));showCnt()})();
+const total=()=>HALL.length+PEND.length;
+const showCnt=()=>{$('cnt').textContent=ar(total())};
+const rpc=(fn,body)=>fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+const uuid=()=>{try{return crypto.randomUUID()}catch(_){const b=crypto.getRandomValues(new Uint8Array(16));b[6]=b[6]&15|64;b[8]=b[8]&63|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`}};
+const idbOpen=()=>new Promise(res=>{try{const r=indexedDB.open('adeeb-taji',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('queue'))r.result.createObjectStore('queue',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(_){res(null)}});
+const idbDo=(mode,fn)=>new Promise(res=>{try{const q=fn(db.transaction('queue',mode).objectStore('queue'));q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)}catch(_){res(null)}});
+async function pull(){try{const rows=await rpc('taji_hall',{p_after:last});for(const r of rows){if(!HALL.some(h=>h.id===r.id))HALL.unshift({id:r.id,n:r.name,img:r.image,seq:r.seq});last=Math.max(last,r.seq)}
+  HALL.sort((x,y)=>y.seq-x.seq);PEND=PEND.filter(p=>!HALL.some(h=>h.id===p.id));showCnt();if(rows.length===300)await pull()}catch(_){}}
+async function push(o){if(!String(o.img).startsWith('data:image/jpeg'))return null;
+  try{const seq=await rpc('taji_log_crown',{p:{id:o.id,madeAt:new Date(o.t).toISOString(),name:o.n||'',image:o.img}});o.seq=seq;if(db)await idbDo('readwrite',st=>st.delete(o.id));
+    PEND=PEND.filter(p=>p.id!==o.id);if(!HALL.some(h=>h.id===o.id))HALL.unshift(o);HALL.sort((x,y)=>y.seq-x.seq);showCnt();return seq}catch(_){return null}}
+const flush=async()=>{for(const o of PEND.slice())await push(o)};
+(async()=>{db=await idbOpen();if(db)PEND=((await idbDo('readonly',st=>st.getAll()))||[]).sort((a,b)=>a.t-b.t);showCnt();await pull();flush()})();
+setInterval(()=>{pull();flush()},30000);addEventListener('online',flush);
 function snap(){const c=sv.cloneNode(true);c.setAttribute('viewBox','70 40 460 440');c.setAttribute('width','400');c.setAttribute('height','383');
   ['rays','trail','fx'].forEach(id=>{const x=c.querySelector('#'+id);if(x)x.remove()});c.querySelector('defs').insertAdjacentHTML('beforeend',$('dd').innerHTML);
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c))}
 const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
 async function toJpeg(src){const i=await loadImg(src),c=document.createElement('canvas');c.width=400;c.height=383;const x=c.getContext('2d');x.fillStyle='#ffe6ef';x.fillRect(0,0,400,383);x.drawImage(i,0,0,400,383);return c.toDataURL('image/jpeg',.86)}
-function save(n){const o={n,img:snap(),t:Date.now()};HALL.unshift(o);showCnt();
-  (async()=>{try{o.img=await toJpeg(o.img)}catch(_){}if(db)await idbPut(o)})()}
+async function save(n){const o={id:uuid(),n,img:snap(),t:Date.now()};try{o.img=await toJpeg(o.img)}catch(_){}
+  PEND.push(o);showCnt();if(db)await idbDo('readwrite',st=>st.put(o));return push(o)}
 // صورةُ البوست: شبكةُ التيجان بأسمائها، عشرون في الصفحة (١٠٨٠×١٣٥٠)، أقدمُها أوّلًا
-async function poster(){if(!HALL.length)return;const b=$('post'),lbl=b.textContent;b.textContent='جارٍ التجهيز…';b.disabled=true;
+async function poster(){if(!total())return;const b=$('post'),lbl=b.textContent;b.textContent='جارٍ التجهيز…';b.disabled=true;
   try{await document.fonts.load('700 80px "El Messiri"');let logo=null;try{logo=await loadImg('/brand/logo-horizontal.svg')}catch(_){}
-  const list=HALL.slice().reverse(),PER=20,pages=Math.ceil(list.length/PER);
+  const list=HALL.slice().reverse().concat(PEND),PER=20,pages=Math.ceil(list.length/PER);
   for(let p=0;p<pages;p++){const items=list.slice(p*PER,p*PER+PER),n=items.length,cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=cv.getContext('2d');
     const g=x.createLinearGradient(0,0,0,1350);g.addColorStop(0,'#ff9fc2');g.addColorStop(.35,'#ffe6ef');g.addColorStop(1,'#fff6fa');x.fillStyle=g;x.fillRect(0,0,1080,1350);
     x.fillStyle='rgba(255,255,255,.7)';for(let k=0;k<26;k++){const sx=(k*389)%1080,sy=(k*211)%1350,r=6+(k%4)*4;x.beginPath();x.moveTo(sx,sy-r);x.lineTo(sx+r*.25,sy-r*.25);x.lineTo(sx+r,sy);x.lineTo(sx+r*.25,sy+r*.25);x.lineTo(sx,sy+r);x.lineTo(sx-r*.25,sy+r*.25);x.lineTo(sx-r,sy);x.lineTo(sx-r*.25,sy-r*.25);x.fill()}
@@ -381,8 +390,8 @@ async function poster(){if(!HALL.length)return;const b=$('post'),lbl=b.textConte
   }finally{b.textContent=lbl;b.disabled=false}}
 function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
 function openHall(){const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  $('grid').innerHTML=HALL.length?HALL.map(h=>`<figure><img src="${h.img}" alt=""><figcaption>${esc(h.n||'تاج ملكي')}</figcaption></figure>`).join(''):'<div class="empty">ما فيه تيجان للحين، توّج أول تاج!</div>';$('hall').classList.add('on')}
-$('hallB').onclick=()=>{openHall();ding(784)};$('post').onclick=()=>poster();$('hallX').onclick=()=>$('hall').classList.remove('on');
+  const all=PEND.slice().reverse().concat(HALL);$('grid').innerHTML=all.length?all.map(h=>`<figure><img src="${h.img}" alt=""><figcaption>${esc(h.n||'تاج ملكي')}</figcaption></figure>`).join(''):'<div class="empty">ما فيه تيجان للحين، توّج أول تاج!</div>';$('hall').classList.add('on')}
+$('hallB').onclick=()=>{openHall();ding(784);pull().then(()=>{if($('hall').classList.contains('on'))openHall()})};$('post').onclick=()=>poster();$('hallX').onclick=()=>$('hall').classList.remove('on');
 $('fs').onclick=()=>{const d=document;try{if(d.fullscreenElement)d.exitFullscreen();else d.documentElement.requestFullscreen().catch(()=>{})}catch(_){}};
 if(!document.fullscreenEnabled)$('fs').style.display='none';
 // ---------- celebrate ----------
@@ -391,7 +400,7 @@ function confetti(){const d=devicePixelRatio||1;cv.width=innerWidth*d;cv.height=
   const C=['#c2185b','#f5b700','#ff7eb6','#4b93d1','#13b366','#fff'];const Q=Array.from({length:190},()=>({x:r.left+r.width/2+(Math.random()-.5)*200,y:r.top+r.height*.35,vx:(Math.random()-.5)*16,vy:-Math.random()*15-4,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:C[Math.floor(Math.random()*C.length)],w:6+Math.random()*7,h:4+Math.random()*6,o:Math.random()<.3}));
   const t0=performance.now();(function f(t){cx.clearRect(0,0,innerWidth,innerHeight);Q.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;if(p.o){cx.beginPath();cx.arc(0,0,p.w/2,0,7);cx.fill()}else cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore()});if(t-t0<4200)requestAnimationFrame(f);else cx.clearRect(0,0,innerWidth,innerHeight)})(t0)}
 $('go').onclick=()=>{if($('win').classList.contains('on'))return;const n=$('name').value.trim();$('winT').textContent=n?`مبروك التتويج يا ${n}!`:'مبروك التتويج!';
-  save(n);$('winN').textContent=`التاج رقم ${ar(HALL.length)} في قاعة التيجان`;$('win').classList.add('on');stage.classList.add('party');
+  $('winN').textContent='يُعلَّق تاجك في القاعة…';save(n).then(seq=>{$('winN').textContent=seq?`التاج رقم ${ar(seq)} في قاعة التيجان`:'انحفظ تاجك، ويُعلَّق في القاعة حين يعود الاتصال'});$('win').classList.add('on');stage.classList.add('party');
   const c=$('crown');c.classList.remove('bounce');void c.getBoundingClientRect();c.classList.add('bounce');fanfare();
   if(!matchMedia('(prefers-reduced-motion:reduce)').matches)confetti()};
 $('more').onclick=()=>{$('win').classList.remove('on');stage.classList.remove('party')};
