@@ -25,6 +25,7 @@ import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
 import { explainEmailError } from "@/lib/email/errors";
 import { percentText } from "@/lib/evaluation/score";
+import { STALL, REJECT, ENDED, ENDED_SHORT } from "@/app/dashboard/elections/reasons";
 
 /**
  * أقسامُ الإشعار: اسمُها في المعرض، وأيقونتُها من خريطة اللوحة (`ICONS`) لا مخترَعة.
@@ -113,7 +114,8 @@ const SAMPLE_USER = "00000000-0000-0000-0000-000000000000";
 /** حقائقُ كلِّ واقعة انتخاب: المقعدُ (`_position_facts`)، ومعرّفُ الانتخاب، ووقتُ السطر في السجلّ. */
 type Ballot = Seat & { electionId: string; at: string };
 /** صاحبُ الترشّح أو من عُيّن: يُخاطَب بمعرّفه، ويُذكَر لغيره باسمه وبجنسه. */
-type Person = { userId: string; name: string; female: boolean };
+/** `candidate_id` يبقى في حقائق السطر حين يمسّ الحدثُ ترشّحًا (محفّز `election_audit_notify`)، فيُفتح البلاغُ على صفحة الترشّح */
+type Person = { userId: string; name: string; female: boolean; candidate_id?: string };
 const BALLOT: Ballot = {
   electionId: "11111111-1111-1111-1111-111111111111",
   at: "2026-11-17T09:00:00Z",
@@ -126,54 +128,15 @@ const ballotSeat = (f: Seat) => `«${seat(f, null)}»`;
 const ELECTIONS = "/dashboard/elections";
 /** أبوابُ الانتخاب: غرفةُ من يديره، وأبوابُ العضو الثلاثة (الترشّح، وسجلّ ترشّحي، والتصويت). */
 const MANAGE = (f: { electionId: string }) => `${ELECTIONS}/${f.electionId}`;
+/** صفحةُ الترشّح للمراجِع (محمد ٢٠٢٦-١١-١٧: «نختار باء»)، وغرفةُ الانتخاب إن غاب الترشّح من الحقائق */
+const CANDIDACY = (f: { electionId: string; candidate_id?: string }) => (f.candidate_id ? `${ELECTIONS}/${f.electionId}/candidates/${f.candidate_id}` : MANAGE(f));
 const RUN = (f: { electionId: string }) => `${ELECTIONS}/run/${f.electionId}`;
 const MY = (f: { electionId: string }) => `${ELECTIONS}/my/${f.electionId}`;
 const VOTE = (f: { electionId: string }) => `${ELECTIONS}/vote/${f.electionId}`;
 
-/** أسبابُ التعثّر (`elections.stall_reason`) كما تُقال لمن يدير الانتخاب (المادة ٢٥). */
-const STALL: Record<string, string> = {
-  no_candidates: "انقضى باب الترشّح ولم يتقدّم أحد",
-  no_live_after_close: "لم يبقَ ترشّحٌ قائم بعد إغلاق الباب",
-  confidence_failed: "سقطت التزكية: لم يغلب التأييدُ الاعتراض",
-  no_votes: "لم ينل أحدٌ من المرشّحين صوتًا",
-  none_left_after_27: "فاز كلُّ من نال صوتًا بمقعدٍ آخر في القسم",
-  none_left_in_voting: "انتهت الترشّحات كلُّها أثناء التصويت",
-};
-
-/** أسبابُ الاعتذار الثلاثة (المادة ١٤)، بجنس المرشّح. */
-const REJECT = (code: string, g: Gender) =>
-  ({
-    ineligible: `لا تنطبق ${fm(g, "عليك", "عليكِ")} شروط الترشّح لهذا المقعد`,
-    statement_violation: "البيان يخالف ضوابط الترشّح",
-    unrelated: "البيان لا يتّصل بالمقعد",
-  })[code] ?? "";
-
-/** أسبابُ انتهاء الترشّح (`election_candidates.end_reason`)، لصاحبه بجنسه. */
-const ENDED = (code: string, g: Gender) =>
-  ({
-    edit_expired: "مضت مهلة التعديل ولم يُعدَّل",
-    excluded: "استُبعد بقرار إدارة الموارد البشرية لمخالفة ضوابط الدعاية",
-    membership_ended: `انتهت ${fm(g, "عضويّتك", "عضويّتكِ")}`,
-    joined_admin: `${fm(g, "دخلتَ", "دخلتِ")} إحدى الإدارات الثلاث، ولا يترشّح أعضاؤها`,
-    left_scope: `${fm(g, "خرجتَ", "خرجتِ")} من نطاق المقعد ${fm(g, "بطلبك", "بطلبكِ")}`,
-    frozen_by_acting: `جُمّد ${fm(g, "منصبك", "منصبكِ")} بتكليفٍ على مقعدٍ آخر`,
-    kept_other_seat: `${fm(g, "فزتَ", "فزتِ")} بمقعدٍ آخر في القسم، فهو ${fm(g, "لك", "لكِ")}`,
-    debarred: `${fm(g, "حرمك", "حرمكِ")} رئيس أدِيب من الترشّح`,
-    confidence_failed: "سقطت التزكية: لم يغلب التأييدُ الاعتراض",
-  })[code] ?? "";
-
-/** والأسبابُ نفسُها لمن يدير الانتخاب، أسماءً لا خطابًا. */
-const ENDED_SHORT: Record<string, string> = {
-  edit_expired: "السبب: مضت مهلة التعديل.",
-  excluded: "السبب: الاستبعاد لمخالفة ضوابط الدعاية.",
-  membership_ended: "السبب: انتهاء العضويّة.",
-  joined_admin: "السبب: دخول إحدى الإدارات الثلاث.",
-  left_scope: "السبب: الخروج من نطاق المقعد بطلب صاحبه.",
-  frozen_by_acting: "السبب: تجميد المنصب بتكليفٍ على مقعدٍ آخر.",
-  kept_other_seat: "السبب: الفوز بمقعدٍ آخر في القسم.",
-  debarred: "السبب: الحرمان من الترشّح.",
-  confidence_failed: "السبب: سقوط التزكية.",
-};
+/** أسبابُ التعثّر والاعتذار والانتهاء: مصدرُها `dashboard/elections/reasons.ts` (يقرؤها العميلُ بلا هذا الدليل)،
+ *  وتُعاد هنا بأسمائها فلا ينكسر من يستوردها من الدليل. */
+export { STALL, REJECT, ENDED, ENDED_SHORT } from "@/app/dashboard/elections/reasons";
 
 /** كيف حُسم المقعد (`_declare_seat`): بالأعلى، أو بعد المادة ٢٧، أو في التعادل (المادة ٢٦). */
 const tieNote = (how: string) =>
@@ -961,7 +924,7 @@ export const CATALOG = {
   "election.voting_closed_early": defineKind<Ballot & { reason: string }>({
     section: "elections",
     when: "أُغلق التصويت قبل موعده",
-    sample: { ...BALLOT, reason: "اكتمل حضور الناخبين في الاجتماع" },
+    sample: { ...BALLOT, reason: "اكتمل حضور المصوّتين في الاجتماع" },
     audiences: [
       {
         key: "voter",
@@ -1122,7 +1085,7 @@ export const CATALOG = {
           title: `بطل ${fm(g, "صوتك", "صوتكِ")} لـ${ballotSeat(f)}`,
           body:
             f.reason === "single_left"
-              ? "لم يبقَ إلا مرشّحٌ واحد، فيُعاد التصويت تزكيةً بموعدٍ يُعلَن."
+              ? "لم يبقَ إلا مرشّحٌ واحد، فيُعاد التصويت تصويتَ ثقة بموعدٍ يُعلَن."
               : f.needsRevote
                 ? `انتهى ترشّح من ${fm(g, "صوّتَّ", "صوّتِّ")} له، ويُفتح ${fm(g, "لك", "لكِ")} التصويت من جديد بموعدٍ يُعلَن.`
                 : `انتهى ترشّح من ${fm(g, "صوّتَّ", "صوّتِّ")} له، ${fm(g, "فصوّت", "فصوّتي")} من جديد قبل إغلاق التصويت.`,
@@ -1137,7 +1100,7 @@ export const CATALOG = {
           title: `${fm(g, "حدّد", "حدّدي")} موعد إعادة التصويت لـ${ballotSeat(f)}`,
           body:
             f.reason === "single_left"
-              ? "لم يبقَ إلا مرشّحٌ واحد، فبطلت الأصوات كلّها، ويُعاد التصويت تزكيةً."
+              ? "لم يبقَ إلا مرشّحٌ واحد، فبطلت الأصوات كلّها، ويُعاد التصويت تصويتَ ثقة."
               : "انتهى ترشّحٌ بعد إغلاق التصويت فبطلت أصوات من صوّتوا له، ويُعاد التصويت لهم وحدهم.",
         }),
         href: (f) => MANAGE(f),
@@ -1176,7 +1139,7 @@ export const CATALOG = {
         level: "normal",
         to: (f) => [{ election_managers: f.electionId }],
         text: (f) => ({ title: `ترشّحٌ جديد لـ${ballotSeat(f)}`, body: `${f.female ? "تقدّمت" : "تقدّم"} ${f.name}، وينتظر المراجعة.` }),
-        href: (f) => MANAGE(f),
+        href: (f) => CANDIDACY(f),
       },
     ],
   }),
@@ -1192,7 +1155,7 @@ export const CATALOG = {
         level: "normal",
         to: (f) => [{ election_managers: f.electionId }],
         text: (f) => ({ title: `${f.female ? "عدّلت" : "عدّل"} ${f.name} ${f.female ? "ترشّحها" : "ترشّحه"} لـ${ballotSeat(f)}`, body: "وينتظر المراجعة." }),
-        href: (f) => MANAGE(f),
+        href: (f) => CANDIDACY(f),
       },
     ],
   }),
@@ -1294,15 +1257,15 @@ export const CATALOG = {
   /** **طلبُ تجميد ينتظر موافقة قائد الموارد** — من عضوٍ في الإدارة (المادة ١٦). ولا يعرف المرشّحُ من طلبه. */
   "election.freeze_requested": defineKind<Ballot & Person & { reason: string }>({
     section: "elections",
-    when: "طلب عضوٌ في الموارد البشرية تجميد ترشّح",
+    when: "طلب عضوٌ في الموارد البشرية استبعاد ترشّح",
     sample: { ...BALLOT, ...PERSON, reason: "دعا لنفسه من قناة أدِيب الرسمية" },
     audiences: [
       {
         key: "hr_leader",
         level: "important",
         to: () => [{ seat: "hr_committee_leader" }],
-        text: (f, g) => ({ title: `طلبُ تجميد ترشّح ${f.name} ينتظر ${fm(g, "موافقتك", "موافقتكِ")}`, body: `لـ${ballotSeat(f)}. السبب: ${f.reason}` }),
-        href: (f) => MANAGE(f),
+        text: (f, g) => ({ title: `طلبُ استبعاد ترشّح ${f.name} ينتظر ${fm(g, "موافقتك", "موافقتكِ")}`, body: `لـ${ballotSeat(f)}. السبب: ${f.reason}` }),
+        href: (f) => CANDIDACY(f),
       },
     ],
   }),
@@ -1310,7 +1273,7 @@ export const CATALOG = {
   /** **جُمّد ترشّحك** — ويُمهَل ليجيب، فإن لم يجب استُبعد (المادة ١٦). */
   "election.candidacy_frozen": defineKind<Ballot & Person & { reason: string; answer_due: string }>({
     section: "elections",
-    when: "جُمّد ترشّحٌ لمخالفة ضوابط الدعاية",
+    when: "أُمهل مرشّحٌ ليُجيب قبل استبعاده لمخالفة ضوابط الدعاية",
     sample: { ...BALLOT, ...PERSON, reason: "دعا لنفسه من قناة أدِيب الرسمية", answer_due: "2026-11-19T12:00:00Z" },
     audiences: [
       {
@@ -1318,7 +1281,7 @@ export const CATALOG = {
         level: "critical",
         to: (f) => [{ user: f.userId }],
         text: (f, g) => ({
-          title: `جُمّد ${fm(g, "ترشّحك", "ترشّحكِ")} لـ${ballotSeat(f)}`,
+          title: `طُلب استبعاد ${fm(g, "ترشّحك", "ترشّحكِ")} لـ${ballotSeat(f)}`,
           body: `السبب: ${f.reason}. ${fm(g, "أجب", "أجيبي")} قبل ${fmtStamp(f.answer_due)}، وإلا استُبعد ${fm(g, "ترشّحك", "ترشّحكِ")}.`,
         }),
         href: (f) => MY(f),
@@ -1330,7 +1293,7 @@ export const CATALOG = {
   /** **أجاب المجمَّد** — والقرارُ لقائد الموارد في أجله، وإلا رُفع التجميد (المادة ١٦). */
   "election.freeze_answered": defineKind<Ballot & Person & { decide_due: string }>({
     section: "elections",
-    when: "أجاب صاحب الترشّح المجمَّد",
+    when: "أجاب المرشّح عن طلب استبعاده",
     sample: { ...BALLOT, ...PERSON, decide_due: "2026-11-20T12:00:00Z" },
     audiences: [
       {
@@ -1338,10 +1301,10 @@ export const CATALOG = {
         level: "important",
         to: () => [{ seat: "hr_committee_leader" }],
         text: (f, g) => ({
-          title: `${f.female ? "أجابت" : "أجاب"} ${f.name} عن تجميد ${f.female ? "ترشّحها" : "ترشّحه"} لـ${ballotSeat(f)}`,
-          body: `${fm(g, "قرّر", "قرّري")} قبل ${fmtStamp(f.decide_due)}، وإلا رُفع التجميد.`,
+          title: `${f.female ? "أجابت" : "أجاب"} ${f.name} عن طلب استبعاد ${f.female ? "ترشّحها" : "ترشّحه"} لـ${ballotSeat(f)}`,
+          body: `${fm(g, "قرّر", "قرّري")} قبل ${fmtStamp(f.decide_due)}، وإلا بقي الترشّح.`,
         }),
-        href: (f) => MANAGE(f),
+        href: (f) => CANDIDACY(f),
         expires: (f) => new Date(f.decide_due),
       },
     ],
@@ -1350,7 +1313,7 @@ export const CATALOG = {
   /** **رُفع التجميد** — بقرار الموارد، أو لمضيّ أجل القرار (المادة ١٦). */
   "election.freeze_lifted": defineKind<Ballot & Person & { outcome: string; reason: string }>({
     section: "elections",
-    when: "رُفع تجميد ترشّح",
+    when: "بقي ترشّحٌ بعد طلب استبعاده",
     sample: { ...BALLOT, ...PERSON, outcome: "lifted", reason: "لم تثبت المخالفة بعد التحقّق" },
     audiences: [
       {
@@ -1358,7 +1321,7 @@ export const CATALOG = {
         level: "important",
         to: (f) => [{ user: f.userId }],
         text: (f, g) => ({
-          title: `رُفع تجميد ${fm(g, "ترشّحك", "ترشّحكِ")} لـ${ballotSeat(f)}`,
+          title: `بقي ${fm(g, "ترشّحك", "ترشّحكِ")} لـ${ballotSeat(f)}، ولم ${fm(g, "تُستبعد", "تُستبعدي")}`,
           body: f.outcome === "auto_lifted" ? "مضى أجل القرار ولم تقرّر الإدارة." : `السبب: ${f.reason}`,
         }),
         href: (f) => MY(f),

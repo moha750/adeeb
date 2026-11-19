@@ -9,6 +9,8 @@
 // المشتقّة بحالاتها، فيُمسِك انكسارَ **المنطق ههنا**. أمّا افتراقُه عن القاعدة فلا يُمسِكه.
 
 import type { CandidateStatus, ElectionStatus } from "@/app/dashboard/elections/vocab";
+import type { EndReason, RevotePending, StallReason } from "@/app/dashboard/elections/data";
+import type { RejectReason } from "@/app/dashboard/elections/actions";
 import { CAPS, COMMITTEES, MEMBERS, ROLES, committeeOf, type ElectedRole, type SimMember } from "./org";
 
 /* ══ الصفوف ══════════════════════════════════════════════════════════ */
@@ -31,6 +33,18 @@ export type SimElection = {
   createdAt: number;
   createdBy: string;
   cancelReason: string | null;
+  /* ── أعلامُ الدفعات الجديدة (٢٠٢٦-١١-١٧). اختياريّةٌ فلا يلزم كلَّ بذرٍ قديمٍ أن يذكرها، وغيابُها `null`. */
+  /** `stall_reason` — سببُ التعثّر في أيّ طور (المادة 25). */
+  stallReason?: StallReason | null;
+  /** `revote_pending` — التصويتُ مغلقٌ وينتظر من يفتح إعادتَه (المادة 16). */
+  revotePending?: RevotePending | null;
+  /** `revote_only` — التصويتُ المفتوح مقصورٌ على من بطل صوته. */
+  revoteOnly?: boolean;
+  /** `completed_by` و`appointed_user_id`. */
+  completedBy?: "winner" | "appointment" | null;
+  appointedUserId?: string | null;
+  /** أساسُ الإلغاء بعد فتح التصويت (في حمولة سطر السجلّ في القاعدة، لا في الصفّ). */
+  cancelBasis?: "stalled" | "defect" | null;
 };
 
 /** صفُّ `election_candidates`. */
@@ -52,6 +66,11 @@ export type SimCandidate = {
   withdrawnAt: number | null;
   /** `preference_rank` — الأدنى أوثَر، والافتراضُ ١ عند التقديم و٢ لمن لم يُسمَّ (كما تقرؤها الدالّة). */
   preferenceRank: number;
+  /* ── الجديد (المادتان 14 و16) */
+  editDueAt?: number | null;
+  rejectReason?: RejectReason | null;
+  endReason?: EndReason | null;
+  endedAt?: number | null;
 };
 
 /** صفُّ `election_votes`. */
@@ -65,6 +84,59 @@ export type SimVote = {
   roleSnapshot: string;
   choice: "approve" | "reject";
   at: number;
+  /** `voided_at`/`void_reason` — الصوتُ لا يُحذف بل يبطل ويبقى (المادة 16). */
+  voidedAt?: number | null;
+  voidReason?: "candidacy_ended" | "single_left" | "reopened" | null;
+};
+
+/** صفُّ `election_freezes` (المادة 16). والمهلتان نصّ فترةٍ كما في القاعدة. */
+export type SimFreeze = {
+  id: number;
+  candidateId: string;
+  electionId: string;
+  status: "requested" | "active" | "answered" | "closed";
+  reason: string;
+  answerWindow: string;
+  decideWindow: string;
+  requestedBy: string;
+  requestedAt: number;
+  answerDue: number | null;
+  answerText: string | null;
+  answeredAt: number | null;
+  decideDue: number | null;
+  /** يملؤها الفعلُ حين يقع (`_apply_freeze` و`_lift_freeze` و`_end_candidacy`)، وتغيب في البذر. */
+  priorStatus?: CandidateStatus | null;
+  /** ما بقي من مهلة التعديل لحظة التجميد (بالميلّي)، فتُكمَل من حيث وقفت. */
+  editRemaining?: number | null;
+  outcome?: string | null;
+  decidedBy?: string | null;
+  decisionReason?: string | null;
+};
+
+/** صفُّ `candidacy_bans` (المادة 11). و`until` يومٌ بتوقيت الرياض «YYYY-MM-DD». */
+export type SimBan = {
+  id: number;
+  userId: string;
+  reason: string;
+  until: string;
+  issuedBy: string;
+  issuedAt: number;
+  liftedAt: number | null;
+  liftReason: string | null;
+};
+
+/** صفّا `election_ties` و`election_tie_choices` (المادة 26). */
+export type SimTie = {
+  id: number;
+  electionId: string;
+  candidateIds: string[];
+  openedAt: number;
+  dueAt: number;
+  status: "open" | "decided" | "void";
+  outcome: "majority" | "president" | "earliest" | null;
+  winnerCandidateId: string | null;
+  pausedAt: number | null;
+  choices: { memberId: string; candidateId: string | null; reason: string; at: number }[];
 };
 
 /** صفُّ `election_audit_log`. و`electionId` فارغُه صفٌّ عامٌّ (حصادُ الكنّاسة). */
@@ -100,6 +172,10 @@ export type SimWorld = {
   log: SimLogRow[];
   assignments: SimAssignment[];
   notices: SimNotice[];
+  /** التجميداتُ والتعادلات (جدولان جديدان). */
+  freezes: SimFreeze[];
+  ties: SimTie[];
+  bans: SimBan[];
   /**
    * منصبُ من أُسنِد إليه شيءٌ في هذا العالم — يعلو منصبَه في `MEMBERS`.
    * **ولا بدّ منه**: مَن فاز صار قائدًا، فتغيّر وزنُه وسقطت أهليّتُه للترشّح لمقعده ثانيةً؛
@@ -109,7 +185,7 @@ export type SimWorld = {
 };
 
 export const emptyWorld = (now: number): SimWorld => ({
-  now, seq: 1, elections: [], candidates: [], votes: [], log: [], assignments: [], notices: [], seatOverride: {},
+  now, seq: 1, elections: [], candidates: [], votes: [], log: [], assignments: [], notices: [], freezes: [], ties: [], bans: [], seatOverride: {},
 });
 
 /**
@@ -137,12 +213,34 @@ export function shiftWorld(w: SimWorld, ms: number): void {
     c.submittedAt -= ms;
     c.reviewedAt = back(c.reviewedAt);
     c.withdrawnAt = back(c.withdrawnAt);
+    c.editDueAt = back(c.editDueAt ?? null);
+    c.endedAt = back(c.endedAt ?? null);
   }
-  for (const v of w.votes) v.at -= ms;
+  for (const v of w.votes) { v.at -= ms; v.voidedAt = back(v.voidedAt ?? null); }
+  for (const f of w.freezes ?? []) {
+    f.requestedAt -= ms;
+    f.answerDue = back(f.answerDue);
+    f.answeredAt = back(f.answeredAt);
+    f.decideDue = back(f.decideDue);
+  }
+  for (const b of w.bans ?? []) { b.issuedAt -= ms; b.liftedAt = back(b.liftedAt); }
+  for (const t of w.ties ?? []) {
+    t.openedAt -= ms;
+    t.dueAt -= ms;
+    t.pausedAt = back(t.pausedAt);
+    for (const c of t.choices) c.at -= ms;
+  }
   for (const r of w.log) r.at -= ms;
   for (const a of w.assignments) a.at -= ms;
   for (const n of w.notices) n.at -= ms;
 }
+
+/** يومُ الرياض «YYYY-MM-DD» للحظةٍ ما — به يُقاس أجلُ الحرمان كما تقيسه القاعدة. */
+export const riyadhDay = (t: number) => new Date(t).toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
+
+/** @db `_is_candidacy_banned(user)` — حرمانٌ لم يُرفع ولم يمضِ أجلُه. */
+export const activeBanOf = (w: SimWorld, userId: string): SimBan | null =>
+  (w.bans ?? []).find((b) => b.userId === userId && !b.liftedAt && b.until >= riyadhDay(w.now)) ?? null;
 
 /** العضوُ بمنصبه **في هذا العالم** — لا بمنصبه المكتوب في `MEMBERS` وحده. */
 export function memberIn(w: SimWorld, userId: string | null | undefined): SimMember | null {
@@ -190,7 +288,7 @@ export const soleCandidate = (w: SimWorld, userId: string, electionId: string) =
 
 /** @db `_choice_weight(election, choice)` — مجموعُ أوزان رأيٍ بعينه. */
 export const choiceWeight = (w: SimWorld, electionId: string, choice: SimVote["choice"]) =>
-  w.votes.filter((v) => v.electionId === electionId && v.choice === choice).reduce((s, v) => s + v.weight, 0);
+  w.votes.filter((v) => v.electionId === electionId && v.choice === choice && !v.voidedAt).reduce((s, v) => s + v.weight, 0);
 
 /** @db `get_vote_weight(user)` — أعلى وزنٍ بين أدوار العضو الحيّة، وأدناه ١. */
 export const voteWeight = (w: SimWorld, userId: string) => {
@@ -215,10 +313,13 @@ export const isTopAdmin = (w: SimWorld, userId: string) => {
 
 /** وزنُ مرشّحٍ = مجموعُ أوزان مؤيّديه (والاعتراضُ في التزكية لا يُحسب له). */
 export const candidateWeight = (w: SimWorld, candidateId: string) =>
-  w.votes.filter((v) => v.candidateId === candidateId && v.choice === "approve").reduce((s, v) => s + v.weight, 0);
+  w.votes.filter((v) => v.candidateId === candidateId && v.choice === "approve" && !v.voidedAt).reduce((s, v) => s + v.weight, 0);
 
 export const candidateVotes = (w: SimWorld, candidateId: string) =>
-  w.votes.filter((v) => v.candidateId === candidateId && v.choice === "approve").length;
+  w.votes.filter((v) => v.candidateId === candidateId && v.choice === "approve" && !v.voidedAt).length;
+
+/** الأصواتُ القائمة في مقعد: الباطلُ يبقى في الجدول ولا يُعدّ (المادة 16). */
+export const liveVotesOf = (w: SimWorld, electionId: string) => w.votes.filter((v) => v.electionId === electionId && !v.voidedAt);
 
 /**
  * @db `is_user_eligible_to_vote(user, election)` — الإداريُّ الأعلى يصوّت في الكلّ، ومن سواه
@@ -252,8 +353,9 @@ export function eligibleToRun(w: SimWorld, userId: string, electionId: string): 
   const m = memberIn(w, userId);
   if (!m) return false;
 
-  // (أ)
+  // (أ) — والمحرومُ من الترشّح لا يترشّح حتى يُرفع حرمانُه أو يمضي أجلُه (المادة 11)
   if (ROLES[m.roleName]?.council === "administrative") return false;
+  if (activeBanOf(w, userId)) return false;
   if (!hasCap(w, userId, "run_for_election")) return false;
 
   // (ب)

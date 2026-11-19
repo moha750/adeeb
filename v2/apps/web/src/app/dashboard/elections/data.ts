@@ -7,6 +7,66 @@ import { firstAndLastOf } from "@/lib/personName";
 import { positionLine, positionParts } from "@/lib/positionLabel";
 import { describeEvent, type LogKind } from "./log";
 import type { CandidateStatus, ElectionStatus } from "./vocab";
+import type { RejectReason } from "./actions";
+
+/* ══ أنواعُ القاعدة الجديدة (دفعات إصلاح الانتخابات ١–٥، ٢٠٢٦-١١-١٦/١٧) ══════════════════════
+   كلُّ قيمةٍ هنا توأمُ قيدٍ في القاعدة، والنصُّ العربيّ لها في دليل الإشعارات (`lib/notifications/catalog.ts`:
+   `STALL` و`ENDED` و`ENDED_SHORT` و`REJECT`) لا هنا. والمواصفة: مستندُ المشروع `claude/elections-screens-spec.md`. */
+
+/** سببُ التعثّر (`elections.stall_reason`، المادة 25). */
+export type StallReason =
+  | "no_candidates" | "no_live_after_close" | "confidence_failed" | "no_votes" | "none_left_after_27" | "none_left_in_voting";
+/** سببُ انتهاء الترشّح (`election_candidates.end_reason`). */
+export type EndReason =
+  | "edit_expired" | "excluded" | "membership_ended" | "joined_admin" | "left_scope" | "frozen_by_acting"
+  | "kept_other_seat" | "debarred" | "confidence_failed";
+/** إعادةُ التصويت المنتظرة (`elections.revote_pending`، المادة 16): لمن بطل صوته وحده، أو تزكيةٌ للجميع. */
+export type RevotePending = "partial" | "full";
+
+/**
+ * **التجميدُ القائم على ترشّح** (`election_freezes`، المادة 16) — خطواتُه: طلبَه عضوُ موارد (`requested`) فينتظر
+ * موافقةَ قائدها، ثمّ جُمّد (`active`) والمهلةُ للإجابة، ثمّ أجاب (`answered`) والأجلُ للقرار. والمُغلقُ لا يُقرأ هنا
+ * (أثرُه في السجلّ). و`requestedBy` لمن يدير الانتخاب وحده: المرشّحُ لا يعرف من طلب تجميده (المادة 5).
+ */
+export type FreezeState = {
+  id: number;
+  status: "requested" | "active" | "answered";
+  reason: string;
+  requestedBy: string | null;
+  requestedAtRaw: string;
+  /** المهلتان كما ضربهما الطالب (نصّ فترة، مثل «06:00:00» أو «1 day»). */
+  answerWindow: string;
+  decideWindow: string;
+  answerDueRaw: string | null;
+  answerText: string | null;
+  answeredAtRaw: string | null;
+  decideDueRaw: string | null;
+};
+
+/**
+ * **التعادل** (`election_ties`، المادة 26): يقرّره المجلسُ الإداريّ خلال 24 ساعة. `choices` و`isMember` من
+ * `get_election_tie` (لعضو المجلس ومن يدير الانتخاب)، و`null` لغيرهما. و`paused` حين يكون أحدُ المتعادلين مجمَّدًا:
+ * الأجلُ موقوفٌ حتى يُحسم التجميد.
+ */
+export type TieState = {
+  id: number;
+  status: "open" | "decided" | "void";
+  outcome: "majority" | "president" | "earliest" | null;
+  dueAtRaw: string;
+  paused: boolean;
+  candidateIds: string[];
+  winnerCandidateId: string | null;
+  /** المقاعدُ المشغولة في المجلس الآن (الأغلبيّةُ منها). */
+  councilSize: number | null;
+  isMember: boolean | null;
+  choices: { member: string; candidateId: string | null; reason: string; atRaw: string; isMe: boolean }[] | null;
+};
+
+/** الإلغاء: سببُه وأساسُه (بعد فتح التصويت: «تعثّر» أو «خلل»، المادة 29) ويومُه وفاعلُه — من سجلّ الانتخاب. */
+export type CancelInfo = { reason: string; basis: "stalled" | "defect" | null; atRaw: string; by: string | null };
+
+/** مقعدٌ في القسم يشارك هذا المقعدَ مرشّحًا ولم يُحسم بعد (المادة 27): ينتظره الإعلان. للزرّ إليه. */
+export type LinkedSeat = { id: string; positionLabel: string; status: ElectionStatus; stalled: boolean };
 
 // التنسيق من `lib/dates` (مصدرٌ واحد بتوقيت النادي)، ويُعاد تصديره لمن كان يقرؤه من هنا.
 export { fmtDate as fmtDateTime, fmtStamp } from "@/lib/dates";
@@ -51,8 +111,13 @@ export type ElectionRow = {
   archived: boolean;
   /** لحظةُ الأرشفة خامًا (ISO) — وهي في الملغى يومُ إلغائه، حصادُ عقدته الأخيرة في الكرت. */
   archivedRaw: string | null;
-  /** متعثّر: انقضت مهلةُ الترشّح ولا مرشّح، فالمقعد واقفٌ ينتظر قرار المشرف. */
+  /** متعثّر في أيّ طور (المادة 25)، وسببُه. والمقعدُ ينتظر قرارَ من يديره: إعادةُ الفتح، أو التعيين، أو الإلغاء. */
   stalled: boolean;
+  stallReason: StallReason | null;
+  /** التصويتُ مغلقٌ وينتظر من يفتح إعادتَه (المادة 16). */
+  revotePending: RevotePending | null;
+  /** اكتمل بالفوز أو بالتعيين على المتعثّر. */
+  completedBy: "winner" | "appointment" | null;
   created: string;
   createdRaw: string;
   /**
@@ -77,16 +142,18 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
   const sb = service();
   if (!sb) return { elections: [], error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
+  const E_COLS = "id, target_role_name, target_committee_id, target_department_id, status, winner_candidate_id, archived_at, stalled_at, candidacy_end, voting_end, created_at, created_by";
   const [eRes, rRes, cRes, dRes, candRes, voteRes] = await Promise.all([
-    sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, winner_candidate_id, archived_at, stalled_at, candidacy_end, voting_end, created_at, created_by").order("created_at", { ascending: false }),
+    sb.from("elections").select(`${E_COLS}, stall_reason, revote_pending, completed_by`).order("created_at", { ascending: false }),
     sb.from("roles").select("role_name, role_name_ar, home_committee_id").eq("is_elected", true),
     sb.from("committees").select("id, committee_name_ar"),
     sb.from("departments").select("id, name_ar"),
     sb.from("election_candidates").select("id, election_id, user_id, status"),
-    sb.from("election_votes").select("election_id, candidate_id"),
+    sb.from("election_votes").select("election_id, candidate_id, voided_at"),
   ]);
   const firstErr = eRes.error || rRes.error || cRes.error || dRes.error || candRes.error || voteRes.error;
   if (firstErr) return { elections: [], error: firstErr.message };
+  type ERow = { [k: string]: unknown } & { stall_reason?: string | null; revote_pending?: string | null; completed_by?: string | null };
 
   // تسميات المنصب والنطاق — من مصادرها الواحدة.
   const commLabel = new Map<number, string>();
@@ -107,7 +174,9 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
   const voteCount = new Map<string, number>();
   // وأصواتُ الفائز وحدَه — كرتُ المكتمل يقول «فاز بـN صوتًا» فيحتاج نصيبَه لا إجماليَّ الصندوق
   const votesByCand = new Map<string, number>();
-  for (const v of voteRes.data ?? []) {
+  for (const v of (voteRes.data ?? []) as { election_id: string; candidate_id: string | null; voided_at?: string | null }[]) {
+    // الباطلُ (المادة 16) لا يُعدّ: صوتٌ انتهى ترشّحُ صاحبه فأعاده الناخبُ لغيره
+    if (v.voided_at) continue;
     voteCount.set(v.election_id, (voteCount.get(v.election_id) ?? 0) + 1);
     if (v.candidate_id) votesByCand.set(v.candidate_id, (votesByCand.get(v.candidate_id) ?? 0) + 1);
   }
@@ -159,6 +228,9 @@ export async function getElections(): Promise<{ elections: ElectionRow[]; error:
       archived: !!e.archived_at,
       archivedRaw: e.archived_at ?? null,
       stalled: !!e.stalled_at,
+      stallReason: ((e as ERow).stall_reason ?? null) as StallReason | null,
+      revotePending: ((e as ERow).revote_pending ?? null) as RevotePending | null,
+      completedBy: ((e as ERow).completed_by ?? null) as "winner" | "appointment" | null,
       created: fmtDateTime(e.created_at),
       createdRaw: e.created_at ?? "",
       createdByName: profileById.get(e.created_by)?.name ?? null,
@@ -258,6 +330,35 @@ export async function getElectionCreateOptions(): Promise<ElectionCreateOptions>
   return { roles, leaderCommittees, deputyCommittees, departments, error: null };
 }
 
+/**
+ * **لجانُ مشرف الموارد** (المادة ٤: «ولمشرف اللجنة في انتخاب قيادتها ونيابتها ما لمديري الانتخابات، إلا التعيين والتكليف»): اللجانُ التي
+ * يشرف عليها صاحبُها عضوًا حيًّا في الموارد البشرية، توأمُ `_is_committee_supervisor` في القاعدة. بها يظهر له «انتخاب جديد» بمقاعدها
+ * وحدها (محمد ٢٠٢٦-١١-١٩: كانت القاعدةُ تأذن له والزرُّ لا يظهر إلّا للمديرين الثلاثة). والحكَمُ يبقى `open_election` بالجلسة.
+ */
+export async function getSupervisedCommittees(userId: string): Promise<number[]> {
+  const sb = service();
+  if (!sb) return [];
+  const [sRes, rRes] = await Promise.all([
+    sb.from("committee_supervision").select("committee_id, unit_id").eq("supervisor_id", userId),
+    sb.from("user_roles").select("committee_id").eq("user_id", userId).eq("is_active", true).eq("role_name", "hr_admin_member"),
+  ]);
+  if (sRes.error || rRes.error) return [];
+  const units = new Set((rRes.data ?? []).map((r) => r.committee_id as number | null).filter((x): x is number => x != null));
+  return [...new Set((sRes.data ?? []).filter((r) => units.has(r.unit_id as number)).map((r) => r.committee_id as number))];
+}
+
+/** خياراتُ «انتخاب جديد» للمشرف: قيادةُ لجانه ونيابتُها وحدها، ولا تنسيقَ قسم */
+export function scopeToSupervised(o: ElectionCreateOptions, committees: number[]): ElectionCreateOptions {
+  const mine = new Set(committees);
+  return {
+    ...o,
+    roles: o.roles.filter((r) => r.roleName === "committee_leader" || r.roleName === "deputy_committee_leader"),
+    leaderCommittees: o.leaderCommittees.filter((c) => mine.has(c.id)),
+    deputyCommittees: o.deputyCommittees.filter((c) => mine.has(c.id)),
+    departments: [],
+  };
+}
+
 /* ══ تفصيل انتخابٍ واحد + مرشّحوه (للوحة الإدارة) ════════════════════════ */
 
 export type CandidateRow = {
@@ -282,7 +383,16 @@ export type CandidateRow = {
   decidedAt: string | null;
   submitted: string;
   submittedRaw: string;
-  /** مجموع أوزان أصواته (للمشرف بعد التصويت) — التجميع لا يكشف مَن صوّت لمن. */
+  /** مهلةُ التعديل (`needs_edit`، المادة 14): يحدّدها المراجع، فإن مضت انتهى الترشّح. */
+  editDueRaw: string | null;
+  /** سببُ الاعتذار من الثلاثة (`rejected`، المادة 14). */
+  rejectReason: RejectReason | null;
+  /** سببُ الانتهاء ولحظتُه (`ended`). */
+  endReason: EndReason | null;
+  endedAtRaw: string | null;
+  /** التجميدُ القائم (المادة 16) — `null` لا تجميدَ عليه. */
+  freeze: FreezeState | null;
+  /** مجموع أوزان أصواته القائمة (للمشرف بعد التصويت) — الباطلُ لا يُحسب، والتجميعُ لا يكشف مَن صوّت لمن. */
   weight: number;
   votes: number;
 };
@@ -301,8 +411,25 @@ export type ElectionDetail = {
   /** الموعدان خامَين (ISO) — لتعبئة حقل الضبط، فالمعروض للعين لا للحقل. */
   candidacyEndRaw: string | null;
   votingEndRaw: string | null;
-  /** متعثّر: انقضت مهلةُ الترشّح ولا مرشّح، فالمقعد ينتظر قرارَ المشرف (الأبواب الثلاثة). */
+  /** متعثّر في أيّ طور (المادة 25)، وسببُه ولحظتُه. */
   stalled: boolean;
+  stallReason: StallReason | null;
+  stalledAtRaw: string | null;
+  /** التصويتُ مغلقٌ وينتظر من يفتح إعادتَه (المادة 16): لمن بطل صوته (`partial`) أو تزكيةٌ للجميع (`full`). */
+  revotePending: RevotePending | null;
+  /** التصويتُ المفتوحُ الآن مقصورٌ على من بطل صوته. */
+  revoteOnly: boolean;
+  /** اكتمل بالفوز أو بالتعيين، ومن عُيّن. */
+  completedBy: "winner" | "appointment" | null;
+  appointedName: string | null;
+  /** الإلغاء بسببه وأساسه ويومه وفاعله (`null` لغير الملغى). */
+  cancel: CancelInfo | null;
+  /** آخرُ تعادلٍ في المقعد (مفتوحًا أو محسومًا)، و`null` لا تعادل. */
+  tie: TieState | null;
+  /** مقاعدُ القسم التي ينتظرها إعلانُ هذا المقعد (المادة 27)، بأسمائها للزرّ إليها. */
+  linkedSeats: LinkedSeat[];
+  /** الأصواتُ الباطلة عددًا — لمن يرى المجاميع وحده (`liveTotals`، أو بعد الإغلاق)، وإلّا صفر. */
+  voidedVotes: number;
   /** تزكية: معتمَدٌ واحدٌ لا غير، فالاقتراعُ تأييدٌ أو اعتراضٌ لا اختيارٌ بين اثنين. */
   confidence: boolean;
   /** وزنُ الاعتراض وعددُه في التزكية (صفرٌ في التنافس، إذ لا اعتراضَ فيه). */
@@ -333,18 +460,27 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
   const sb = service();
   if (!sb) return { election: null, error: "أضِف SUPABASE_SERVICE_ROLE_KEY إلى apps/web/.env.local ثمّ أعِد تشغيل الخادم." };
 
-  const eRes = await sb.from("elections").select("id, target_role_name, target_committee_id, target_department_id, status, archived_at, stalled_at, candidacy_end, voting_end, winner_candidate_id, winner_declared_at").eq("id", id).maybeSingle();
+  const D_COLS = "id, target_role_name, target_committee_id, target_department_id, status, archived_at, stalled_at, candidacy_end, voting_end, winner_candidate_id, winner_declared_at";
+  type DRow = { stall_reason?: string | null; revote_pending?: string | null; revote_only?: boolean | null; completed_by?: string | null; appointed_user_id?: string | null };
+  const eRes = await sb.from("elections").select(`${D_COLS}, stall_reason, revote_pending, revote_only, completed_by, appointed_user_id`).eq("id", id).maybeSingle();
   if (eRes.error) return { election: null, error: eRes.error.message };
   if (!eRes.data) return { election: null, error: null };
   const e = eRes.data;
+  const ex = e as typeof e & DRow;
 
+  const C_COLS = "id, candidate_number, user_id, statement_ar, file_url, file_name, status, review_note_ar, reviewed_by, reviewed_at, submitted_at";
+  type CRow = { edit_due_at?: string | null; reject_reason?: string | null; end_reason?: string | null; ended_at?: string | null };
   const [rRes, candRes, voteRes] = await Promise.all([
     sb.from("roles").select("role_name_ar, home_committee_id").eq("role_name", e.target_role_name).maybeSingle(),
-    sb.from("election_candidates").select("id, candidate_number, user_id, statement_ar, file_url, file_name, status, review_note_ar, reviewed_by, reviewed_at, submitted_at").eq("election_id", id).order("submitted_at", { ascending: true }), // الأسبقيّة بوقت التقدّم لا بالرقم (المادة ١٣)
-    sb.from("election_votes").select("candidate_id, vote_weight, vote_choice").eq("election_id", id),
+    // الأسبقيّة بوقت التقدّم لا بالرقم (المادة ١٣)
+    sb.from("election_candidates").select(`${C_COLS}, edit_due_at, reject_reason, end_reason, ended_at`).eq("election_id", id).order("submitted_at", { ascending: true }),
+    sb.from("election_votes").select("candidate_id, vote_weight, vote_choice, voided_at").eq("election_id", id),
   ]);
   const firstErr = rRes.error || candRes.error || voteRes.error;
   if (firstErr) return { election: null, error: firstErr.message };
+  type VRow = { candidate_id: string; vote_weight: number | string; vote_choice: string; voided_at?: string | null };
+  const allVotes = (voteRes.data ?? []) as VRow[];
+  const liveVotes = allVotes.filter((v) => !v.voided_at);
 
   // المجاميع (المادة ٥): حيّةً لمديري الانتخابات الثلاثة وحدهم، ولغيرهم بعد إغلاق التصويت.
   // تُحجب هنا قبل أن تخرج من الخادم، لا في الشاشة: فما يصل الصفحة يقرؤه صاحبها.
@@ -356,7 +492,7 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
   const votesByCand = new Map<string, number>();
   let opposeWeight = 0;
   let opposeVotes = 0;
-  for (const v of totalsOpen ? voteRes.data ?? [] : []) {
+  for (const v of totalsOpen ? liveVotes : []) {
     if (v.vote_choice === "reject") { opposeWeight += Number(v.vote_weight); opposeVotes += 1; continue; }
     weightByCand.set(v.candidate_id, (weightByCand.get(v.candidate_id) ?? 0) + Number(v.vote_weight));
     votesByCand.set(v.candidate_id, (votesByCand.get(v.candidate_id) ?? 0) + 1);
@@ -375,9 +511,24 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
 
   // أسماء المرشّحين ومراجعيهم من profiles (استعلام منفصل تفاديًا لالتباس مفتاحَي user_id/reviewed_by):
   // نداءٌ واحدٌ يحمل الطرفين، فالمراجعُ اسمٌ يُقرأ لا معرّفٌ ثانٍ يُسأل عنه.
-  const cand = candRes.data ?? [];
+  const cand = (candRes.data ?? []) as (NonNullable<typeof candRes.data>[number] & CRow)[];
+
+  // التجميدُ القائم لكلّ مرشّح (المادة 16).
+  type FRow = { id: number; candidate_id: string; status: string; reason: string; requested_by: string | null; requested_at: string;
+    answer_window: string; decide_window: string; answer_due: string | null; answer_text: string | null; answered_at: string | null; decide_due: string | null };
+  const fRes = await sb.from("election_freezes")
+    .select("id, candidate_id, status, reason, requested_by, requested_at, answer_window, decide_window, answer_due, answer_text, answered_at, decide_due")
+    .eq("election_id", id).neq("status", "closed");
+  if (fRes.error) return { election: null, error: fRes.error.message };
+  const freezes = (fRes.data ?? []) as FRow[];
+
   const personById = new Map<string, { name: string; avatar: string | null; gender: string | null }>();
-  const userIds = [...new Set([...cand.map((c) => c.user_id), ...cand.map((c) => c.reviewed_by).filter((v): v is string => !!v)])];
+  const userIds = [...new Set([
+    ...cand.map((c) => c.user_id),
+    ...cand.map((c) => c.reviewed_by).filter((v): v is string => !!v),
+    ...freezes.map((f) => f.requested_by).filter((v): v is string => !!v),
+    ...(ex.appointed_user_id ? [ex.appointed_user_id] : []),
+  ])];
   if (userIds.length) {
     const pRes = await sb.from("profiles").select("id, full_name, avatar_url, gender").in("id", userIds);
     if (pRes.error) return { election: null, error: pRes.error.message };
@@ -401,6 +552,26 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
     decidedAt: DECIDED.has(c.status) ? fmtStamp(c.reviewed_at) || null : null,
     submitted: fmtDateTime(c.submitted_at),
     submittedRaw: c.submitted_at ?? "",
+    editDueRaw: c.status === "needs_edit" ? c.edit_due_at ?? null : null,
+    rejectReason: c.status === "rejected" ? ((c.reject_reason ?? null) as RejectReason | null) : null,
+    endReason: c.status === "ended" ? ((c.end_reason ?? null) as EndReason | null) : null,
+    endedAtRaw: c.status === "ended" ? c.ended_at ?? null : null,
+    freeze: (() => {
+      const f = freezes.find((x) => x.candidate_id === c.id);
+      return f ? {
+        id: f.id,
+        status: f.status as FreezeState["status"],
+        reason: f.reason,
+        requestedBy: f.requested_by ? personById.get(f.requested_by)?.name ?? null : null,
+        requestedAtRaw: f.requested_at,
+        answerWindow: f.answer_window,
+        decideWindow: f.decide_window,
+        answerDueRaw: f.answer_due,
+        answerText: f.answer_text,
+        answeredAtRaw: f.answered_at,
+        decideDueRaw: f.decide_due,
+      } : null;
+    })(),
     weight: weightByCand.get(c.id) ?? 0,
     votes: votesByCand.get(c.id) ?? 0,
   }));
@@ -417,9 +588,69 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
     const st = await sb.rpc("department_resolution_state", { p_election: id });
     const s = (st.data ?? null) as { department: number | null; blocking: number; pending: number } | null;
     if (s) { departmentId = s.department; jointPending = s.pending; jointBlocking = s.blocking; }
-  } else if (departmentId == null && e.target_committee_id != null) {
+  }
+  if (departmentId == null && e.target_committee_id != null) {
     const c = await sb.from("committees").select("department_id").eq("id", e.target_committee_id).maybeSingle();
     departmentId = (c.data?.department_id as number | null) ?? null;
+  }
+
+  // المقاعدُ المرتبطة بأسمائها (المادة 27): في القسم نفسِه، غيرُ محسومة، ولمرشّحٍ قائمٍ هنا ترشّحٌ قائمٌ فيها.
+  // `department_resolution_state` يعدّها، وهذه تسمّيها لزرّ «افتح ذلك المقعد».
+  const linkedSeats: LinkedSeat[] = [];
+  const liveHere = cand.filter((c) => c.status === "approved" || c.status === "frozen").map((c) => c.user_id);
+  if (e.status === "voting_closed" && departmentId != null && liveHere.length && !e.winner_candidate_id) {
+    const deptComms = await sb.from("committees").select("id, committee_name_ar").eq("department_id", departmentId);
+    const commIds = (deptComms.data ?? []).map((c) => c.id as number);
+    const others = await sb.from("election_candidates")
+      .select("election_id, status, elections!inner(id, target_role_name, target_committee_id, target_department_id, status, archived_at, stalled_at, winner_candidate_id)")
+      .in("user_id", liveHere).neq("election_id", id).in("status", ["pending", "approved", "needs_edit", "frozen"]);
+    const seen = new Set<string>();
+    for (const o of (others.data ?? []) as unknown as { elections: { id: string; target_role_name: string; target_committee_id: number | null; target_department_id: number | null; status: string; archived_at: string | null; stalled_at: string | null; winner_candidate_id: string | null } }[]) {
+      const x = o.elections;
+      if (!x || seen.has(x.id) || x.archived_at || x.winner_candidate_id) continue;
+      const inDept = x.target_department_id === departmentId || (x.target_committee_id != null && commIds.includes(x.target_committee_id));
+      if (!inDept) continue;
+      seen.add(x.id);
+      const rl = (await sb.from("roles").select("role_name_ar").eq("role_name", x.target_role_name).maybeSingle()).data?.role_name_ar ?? x.target_role_name;
+      const unit = x.target_committee_id != null
+        ? (deptComms.data ?? []).find((c) => c.id === x.target_committee_id)?.committee_name_ar ?? null
+        : (await sb.from("departments").select("name_ar").eq("id", x.target_department_id ?? -1).maybeSingle()).data?.name_ar ?? null;
+      linkedSeats.push({ id: x.id, positionLabel: positionLine(rl, unit) ?? rl, status: x.status as ElectionStatus, stalled: !!x.stalled_at });
+    }
+  }
+
+  // الإلغاءُ بسببه وفاعله — من آخر سطرٍ «cancelled» في السجلّ (السببُ لا يُحفظ في الصفّ نفسِه).
+  let cancel: CancelInfo | null = null;
+  if (e.status === "cancelled") {
+    const lRes = await sb.from("election_audit_log").select("actor_id, payload, created_at").eq("election_id", id).eq("event_type", "cancelled")
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (lRes.data) {
+      const pl = (lRes.data.payload ?? {}) as { reason?: string; basis?: string };
+      const by = lRes.data.actor_id
+        ? (await sb.from("profiles").select("full_name").eq("id", lRes.data.actor_id).maybeSingle()).data?.full_name ?? null
+        : null;
+      cancel = { reason: pl.reason ?? "", basis: pl.basis === "stalled" || pl.basis === "defect" ? pl.basis : null, atRaw: lRes.data.created_at, by };
+    }
+  }
+
+  // التعادل (المادة 26): حقائقُه بمفتاح الخدمة، واختياراتُ المجلس من دالّتها بعميل الجلسة (حارسُها لعضو المجلس
+  // ومن يدير الانتخاب) — فمن لا تُجيبه تبقى اختياراتُه `null` ويرى التعادلَ وأجلَه وحدهما.
+  let tie: TieState | null = null;
+  const tRes = await sb.from("election_ties").select("id, status, outcome, due_at, paused_at, candidate_ids, winner_candidate_id")
+    .eq("election_id", id).order("opened_at", { ascending: false }).limit(1).maybeSingle();
+  if (tRes.error) return { election: null, error: tRes.error.message };
+  if (tRes.data) {
+    const t = tRes.data as { id: number; status: TieState["status"]; outcome: TieState["outcome"]; due_at: string; paused_at: string | null; candidate_ids: string[]; winner_candidate_id: string | null };
+    tie = { id: t.id, status: t.status, outcome: t.outcome, dueAtRaw: t.due_at, paused: !!t.paused_at, candidateIds: t.candidate_ids ?? [],
+      winnerCandidateId: t.winner_candidate_id, councilSize: null, isMember: null, choices: null };
+    const session = await createClient();
+    const g = await session.rpc("get_election_tie", { p_election: id });
+    const j = (g.error ? null : g.data) as { council_size?: number; is_member?: boolean; choices?: { member: string | null; candidate_id: string | null; reason: string; chosen_at: string; is_me: boolean }[] | null } | null;
+    if (j) {
+      tie.councilSize = j.council_size ?? null;
+      tie.isMember = j.is_member ?? null;
+      tie.choices = (j.choices ?? []).map((c) => ({ member: c.member ? firstAndLastOf(c.member) : "—", candidateId: c.candidate_id, reason: c.reason, atRaw: c.chosen_at, isMe: !!c.is_me }));
+    }
   }
 
   return {
@@ -437,6 +668,16 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
       candidacyEndRaw: e.candidacy_end ?? null,
       votingEndRaw: e.voting_end ?? null,
       stalled: !!e.stalled_at,
+      stallReason: (ex.stall_reason ?? null) as StallReason | null,
+      stalledAtRaw: e.stalled_at ?? null,
+      revotePending: (ex.revote_pending ?? null) as RevotePending | null,
+      revoteOnly: !!ex.revote_only,
+      completedBy: (ex.completed_by ?? null) as "winner" | "appointment" | null,
+      appointedName: ex.appointed_user_id ? personById.get(ex.appointed_user_id)?.name ?? null : null,
+      cancel,
+      tie,
+      linkedSeats,
+      voidedVotes: totalsOpen ? allVotes.length - liveVotes.length : 0,
       confidence: candidates.filter((c) => c.status === "approved").length === 1,
       opposeWeight,
       opposeVotes,
@@ -448,7 +689,8 @@ export async function getElectionDetail(id: string, opts: { liveTotals: boolean 
       jointPending,
       jointBlocking,
       candidates,
-      votes: (voteRes.data ?? []).length,
+      // الأصواتُ القائمة: الباطلُ أعاده صاحبُه لغيره أو ينتظر إعادته (المادة 16)
+      votes: liveVotes.length,
     },
     error: null,
   };
@@ -532,9 +774,15 @@ export async function getAppointableMembers(electionId: string): Promise<{ membe
   const sb = service();
   if (!sb) return { members: [], error: "إعداد الخادم ناقص (مفتاح الخدمة)." };
 
-  const eRes = await sb.from("elections").select("target_committee_id, target_department_id").eq("id", electionId).maybeSingle();
+  const eRes = await sb.from("elections").select("target_committee_id, target_department_id, stall_reason").eq("id", electionId).maybeSingle();
   if (eRes.error) return { members: [], error: eRes.error.message };
   if (!eRes.data) return { members: [], error: "الانتخاب غير موجود." };
+  // من سقطت تزكيتُه في هذا الانتخاب لا يُعيَّن عليه ولا يُكلَّف (المادة 25، `_failed_confidence_user`)
+  let failed = new Set<string>();
+  if ((eRes.data as { stall_reason?: string | null }).stall_reason === "confidence_failed") {
+    const f = await sb.from("election_candidates").select("user_id").eq("election_id", electionId);
+    failed = new Set((f.data ?? []).map((x) => x.user_id as string));
+  }
 
   let committeeIds: number[] = [];
   if (eRes.data.target_committee_id != null) {
@@ -548,7 +796,7 @@ export async function getAppointableMembers(electionId: string): Promise<{ membe
 
   const uRes = await sb.from("user_roles").select("user_id").eq("is_active", true).in("committee_id", committeeIds);
   if (uRes.error) return { members: [], error: uRes.error.message };
-  const ids = [...new Set((uRes.data ?? []).map((u) => u.user_id as string))];
+  const ids = [...new Set((uRes.data ?? []).map((u) => u.user_id as string))].filter((id) => !failed.has(id));
   if (!ids.length) return { members: [], error: null };
 
   // السارون وحدهم يُعرَضون (لا موقوفَ ولا مُنهَى عضويّتُه)
@@ -583,6 +831,9 @@ export type VoteDetailRow = {
    */
   choice: "approve" | "reject";
   at: string;
+  /** صوتٌ باطل (المادة 16): يبقى في السجلّ مُعلَّمًا ولا يُحسب، ومعه سببُ بطلانه. */
+  voided: boolean;
+  voidReason: "candidacy_ended" | "single_left" | "reopened" | null;
 };
 
 export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]; error: string | null }> {
@@ -591,7 +842,7 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
   // رسالةُ الدالّة عربيّةٌ من عندنا، فتُعرَض كما هي وإلّا فاحتياطيٌّ نظيف
   if (error) return { rows: [], error: /[؀-ۿ]/.test(error.message ?? "") ? error.message : "تعذّر جلب تفصيل الأصوات." };
 
-  type Row = { voter_name: string | null; voter_role: string | null; candidate_number: number | null; candidate_name: string | null; vote_weight: number | string | null; vote_choice: string | null; voted_at: string };
+  type Row = { voter_name: string | null; voter_role: string | null; candidate_number: number | null; candidate_name: string | null; vote_weight: number | string | null; vote_choice: string | null; voted_at: string; voided_at?: string | null; void_reason?: string | null };
   const raw = (data ?? []) as Row[];
 
   // لقطةُ الرتبة محفوظةٌ بالاسم البرمجيّ (`club_president`)، والشاشةُ عربيّة — فتُترجم من
@@ -612,6 +863,45 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
     weight: Number(r.vote_weight ?? 0),
     choice: r.vote_choice === "reject" ? "reject" : "approve",
     at: fmtDateTime(r.voted_at),
+    voided: !!r.voided_at,
+    voidReason: (r.void_reason ?? null) as VoteDetailRow["voidReason"],
   }));
   return { rows, error: null };
+}
+
+
+/**
+ * **ترشّحاتُ العضو القائمة** — لسؤال «أهذا النقلُ بطلبه؟» في نافذة المنصب والإزالة والدفعات (المادة 2):
+ * حين يكون للعضو ترشّحٌ قائمٌ في انتخابٍ حيّ يُسأل من ينقله، فإن كان بطلبه انتهى ترشّحُه بخروجه من نطاقه.
+ * والترشّحُ القائم مرآةُ `_is_live_candidacy` (قيد المراجعة، معتمَد، يحتاج تعديلًا، مجمَّد).
+ */
+export type LiveCandidacy = { candidateId: string; electionId: string; position: string; status: CandidateStatus };
+
+export async function getLiveCandidacies(userId: string): Promise<{ items: LiveCandidacy[]; error: string | null }> {
+  const sb = service();
+  if (!sb) return { items: [], error: "إعداد الخادم ناقص (مفتاح الخدمة)." };
+  const cRes = await sb.from("election_candidates")
+    .select("id, status, election_id, elections!inner(id, target_role_name, target_committee_id, target_department_id, status, archived_at, winner_candidate_id)")
+    .eq("user_id", userId).in("status", ["pending", "approved", "needs_edit", "frozen"]);
+  if (cRes.error) return { items: [], error: cRes.error.message };
+  type Row = { id: string; status: CandidateStatus; election_id: string; elections: { target_role_name: string; target_committee_id: number | null; target_department_id: number | null; status: string; archived_at: string | null; winner_candidate_id: string | null } };
+  const rows = ((cRes.data ?? []) as unknown as Row[]).filter((r) => !r.elections.archived_at && !r.elections.winner_candidate_id
+    && ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"].includes(r.elections.status));
+  if (!rows.length) return { items: [], error: null };
+  const [rRes, cmRes, dRes] = await Promise.all([
+    sb.from("roles").select("role_name, role_name_ar").in("role_name", [...new Set(rows.map((r) => r.elections.target_role_name))]),
+    sb.from("committees").select("id, committee_name_ar"),
+    sb.from("departments").select("id, name_ar"),
+  ]);
+  const rank = new Map((rRes.data ?? []).map((r) => [r.role_name as string, (r.role_name_ar as string | null) ?? (r.role_name as string)]));
+  const com = new Map((cmRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string]));
+  const dep = new Map((dRes.data ?? []).map((d) => [d.id as number, d.name_ar as string]));
+  return {
+    items: rows.map((r) => {
+      const t = rank.get(r.elections.target_role_name) ?? r.elections.target_role_name;
+      const unit = r.elections.target_committee_id != null ? com.get(r.elections.target_committee_id) ?? null : dep.get(r.elections.target_department_id ?? -1) ?? null;
+      return { candidateId: r.id, electionId: r.election_id, position: positionLine(t, unit) ?? t, status: r.status };
+    }),
+    error: null,
+  };
 }

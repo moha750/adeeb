@@ -10,17 +10,17 @@ import { firstAndLastOf } from "@/lib/personName";
 import { positionLine, positionParts } from "@/lib/positionLabel";
 import { describeEvent, type LogKind } from "@/app/dashboard/elections/log";
 import type {
-  AppointOption, CandidateRow, ElectionCreateOptions, ElectionDetail, ElectionLogEvent, ElectionRow, VoteDetailRow,
+  AppointOption, CandidateRow, ElectionCreateOptions, ElectionDetail, ElectionLogEvent, ElectionRow, FreezeState, LinkedSeat, TieState, VoteDetailRow,
 } from "@/app/dashboard/elections/data";
 import type {
-  ApplyContext, BallotCandidate, BallotContext, CandidacyJourney, JourneyStep, MyVote, RunItem, VoteItem,
+  ApplyContext, BallotCandidate, BallotContext, CandidacyBan, CandidacyJourney, JourneyStep, MemberFreeze, MyVote, RunItem, SeatOutcome, SeatResult, VoteItem,
 } from "@/app/dashboard/elections/member-data";
-import { CANDIDATE_STATUS_META, type CandidateStatus, type ElectionStatus } from "@/app/dashboard/elections/vocab";
+import { statusView } from "@/app/dashboard/elections/journey";
 import { ROLES, committeeOf, departmentOf, type ElectedRole } from "./org";
 import { appointableMembers, createOptions } from "./rules";
 import {
   ACTIVE_CANDIDACY, LIVE_STATUSES, candidateVotes, candidateWeight, countApproved, departmentResolutionState,
-  electionDepartment, eligibleToRun, eligibleToVote, memberIn, soleCandidate, type SimCandidate, type SimElection, type SimWorld,
+  activeBanOf, electionDepartment, eligibleToRun, eligibleToVote, isElectionAdmin, liveVotesOf, memberIn, membersIn, soleCandidate, type SimCandidate, type SimElection, type SimWorld,
 } from "./world";
 
 /** الزمنُ عددٌ في العالم ونصٌّ ISO في الأنواع — فيُحوَّل عند الحدّ لا في الداخل. */
@@ -55,7 +55,7 @@ export function toElectionRows(w: SimWorld): ElectionRow[] {
         status: e.status,
         candidates: mine.length,
         approved: mine.filter((c) => c.status === "approved").length,
-        votes: w.votes.filter((v) => v.electionId === e.id).length,
+        votes: liveVotesOf(w, e.id).length,
         hasWinner: !!e.winnerCandidateId,
         winnerName: winnerMember?.name ?? null,
         winnerAvatar: null,
@@ -64,6 +64,9 @@ export function toElectionRows(w: SimWorld): ElectionRow[] {
         archived: !!e.archivedAt,
         archivedRaw: iso(e.archivedAt),
         stalled: !!e.stalledAt,
+        stallReason: e.stallReason ?? null,
+        revotePending: e.revotePending ?? null,
+        completedBy: e.completedBy ?? (e.winnerCandidateId ? "winner" : null),
         created: fmtDate(iso(e.createdAt)),
         createdRaw: iso(e.createdAt) ?? "",
         createdByName: creator?.name ?? null,
@@ -96,6 +99,57 @@ export function toCreateOptions(w: SimWorld): ElectionCreateOptions {
 
 const DECIDED = new Set<string>(["approved", "rejected", "needs_edit"]);
 
+/** مرآةُ قراءة `election_freezes` في `getElectionDetail`: القائمُ وحده، وطالبُه باسمه. */
+function freezeOf(w: SimWorld, candidateId: string): FreezeState | null {
+  const f = w.freezes.find((x) => x.candidateId === candidateId && x.status !== "closed");
+  if (!f) return null;
+  return {
+    id: f.id,
+    status: f.status as FreezeState["status"],
+    reason: f.reason,
+    requestedBy: memberIn(w, f.requestedBy)?.name ?? null,
+    requestedAtRaw: iso(f.requestedAt) ?? "",
+    answerWindow: f.answerWindow,
+    decideWindow: f.decideWindow,
+    answerDueRaw: iso(f.answerDue),
+    answerText: f.answerText,
+    answeredAtRaw: iso(f.answeredAt),
+    decideDueRaw: iso(f.decideDue),
+  };
+}
+
+/** مرآةُ قراءة التعادل: الحقائقُ لكلّ من يرى الصفحة، والاختياراتُ لعضو المجلس ومن يدير الانتخاب (حارسُ `get_election_tie`). */
+const COUNCIL = ["club_president", "executive_council_president", "hr_committee_leader"];
+function tieOf(w: SimWorld, electionId: string, viewerId: string | null): TieState | null {
+  const t = [...w.ties].filter((x) => x.electionId === electionId).sort((a, b) => b.openedAt - a.openedAt)[0];
+  if (!t) return null;
+  // المجلسُ الإداريّ = مقاعدُه المشغولةُ الآن (`_is_council_member`)؛ ومديرو الانتخاب في المحاكي هم أنفسُهم أعضاؤه
+  const council = membersIn(w).filter((m) => COUNCIL.includes(m.roleName)).map((m) => m.id);
+  const isMember = !!viewerId && council.includes(viewerId);
+  const guarded = isMember || (!!viewerId && isElectionAdmin(w, viewerId));
+  return {
+    id: t.id, status: t.status, outcome: t.outcome, dueAtRaw: iso(t.dueAt) ?? "", paused: !!t.pausedAt,
+    candidateIds: t.candidateIds, winnerCandidateId: t.winnerCandidateId,
+    councilSize: guarded ? council.length : null,
+    isMember: guarded ? isMember : null,
+    choices: guarded
+      ? t.choices.map((c) => ({ member: firstAndLastOf(memberIn(w, c.memberId)?.name ?? ""), candidateId: c.candidateId, reason: c.reason, atRaw: iso(c.at) ?? "", isMe: c.memberId === viewerId }))
+      : null,
+  };
+}
+
+/** مرآةُ المقاعد المرتبطة بأسمائها (المادة 27). */
+function linkedSeatsOf(w: SimWorld, e: SimElection): LinkedSeat[] {
+  if (e.status !== "voting_closed" || e.winnerCandidateId) return [];
+  const dept = electionDepartment(e);
+  const mine = w.candidates.filter((c) => c.electionId === e.id && (c.status === "approved" || c.status === "frozen")).map((c) => c.userId);
+  if (!mine.length) return [];
+  return w.elections
+    .filter((o) => o.id !== e.id && !o.archivedAt && !o.winnerCandidateId && electionDepartment(o) === dept)
+    .filter((o) => w.candidates.some((c) => c.electionId === o.id && mine.includes(c.userId) && ["pending", "approved", "needs_edit", "frozen"].includes(c.status)))
+    .map((o) => ({ id: o.id, positionLabel: labelsOf(o).positionLabel, status: o.status, stalled: !!o.stalledAt }));
+}
+
 function toCandidateRow(w: SimWorld, c: SimCandidate): CandidateRow {
   const m = memberIn(w, c.userId);
   const reviewer = c.reviewedBy ? memberIn(w, c.reviewedBy) : null;
@@ -115,12 +169,17 @@ function toCandidateRow(w: SimWorld, c: SimCandidate): CandidateRow {
     decidedAt: DECIDED.has(c.status) ? fmtStamp(iso(c.reviewedAt)) || null : null,
     submitted: fmtDate(iso(c.submittedAt)),
     submittedRaw: iso(c.submittedAt) ?? "",
+    editDueRaw: c.status === "needs_edit" ? iso(c.editDueAt ?? null) : null,
+    rejectReason: c.status === "rejected" ? c.rejectReason ?? null : null,
+    endReason: c.status === "ended" ? c.endReason ?? null : null,
+    endedAtRaw: c.status === "ended" ? iso(c.endedAt ?? null) : null,
+    freeze: freezeOf(w, c.id),
     weight: candidateWeight(w, c.id),
     votes: candidateVotes(w, c.id),
   };
 }
 
-export function toElectionDetail(w: SimWorld, electionId: string): ElectionDetail | null {
+export function toElectionDetail(w: SimWorld, electionId: string, viewerId: string | null = null): ElectionDetail | null {
   const e = w.elections.find((x) => x.id === electionId);
   if (!e) return null;
 
@@ -129,7 +188,11 @@ export function toElectionDetail(w: SimWorld, electionId: string): ElectionDetai
     .sort((a, b) => a.number - b.number)
     .map((c) => toCandidateRow(w, c));
 
-  const rejects = w.votes.filter((v) => v.electionId === electionId && v.choice === "reject");
+  const live = liveVotesOf(w, electionId);
+  const rejects = live.filter((v) => v.choice === "reject");
+  const cancelRow = e.status === "cancelled"
+    ? [...w.log].filter((r) => r.electionId === electionId && r.event === "cancelled").sort((a, b) => b.at - a.at)[0] ?? null
+    : null;
   const { roleLabel, scopeLabel, positionLabel } = labelsOf(e);
   const joint = e.status === "voting_closed" ? departmentResolutionState(w, electionId) : { pending: 0, blocking: 0 };
 
@@ -144,6 +207,23 @@ export function toElectionDetail(w: SimWorld, electionId: string): ElectionDetai
     candidacyEndRaw: iso(e.candidacyEnd),
     votingEndRaw: iso(e.votingEnd),
     stalled: !!e.stalledAt,
+    stallReason: e.stallReason ?? null,
+    stalledAtRaw: iso(e.stalledAt),
+    revotePending: e.revotePending ?? null,
+    revoteOnly: !!e.revoteOnly,
+    completedBy: e.completedBy ?? (e.winnerCandidateId ? "winner" : null),
+    appointedName: e.appointedUserId ? memberIn(w, e.appointedUserId)?.name ?? null : null,
+    cancel: e.status === "cancelled"
+      ? {
+        reason: (cancelRow?.payload["reason"] as string | undefined) ?? e.cancelReason ?? "",
+        basis: e.cancelBasis ?? null,
+        atRaw: iso(cancelRow?.at ?? e.archivedAt) ?? "",
+        by: cancelRow?.actorId ? memberIn(w, cancelRow.actorId)?.name ?? null : null,
+      }
+      : null,
+    tie: tieOf(w, electionId, viewerId),
+    linkedSeats: linkedSeatsOf(w, e),
+    voidedVotes: w.votes.filter((v) => v.electionId === electionId && v.voidedAt).length,
     confidence: countApproved(w, electionId) === 1,
     opposeWeight: rejects.reduce((s, v) => s + v.weight, 0),
     opposeVotes: rejects.length,
@@ -155,7 +235,7 @@ export function toElectionDetail(w: SimWorld, electionId: string): ElectionDetai
     jointPending: joint.pending,
     jointBlocking: joint.blocking,
     candidates,
-    votes: w.votes.filter((v) => v.electionId === electionId).length,
+    votes: live.length,
   };
 }
 
@@ -200,6 +280,8 @@ export function toVoteDetail(w: SimWorld, electionId: string): VoteDetailRow[] {
         // الرأيُ خامٌ كما تُخرجه `get_election_vote_detail` (والامتناعُ نُزع، فرأيان لا ثالث)
         choice: v.choice === "reject" ? "reject" : "approve",
         at: fmtDate(iso(v.at)),
+        voided: !!v.voidedAt,
+        voidReason: v.voidReason ?? null,
       } satisfies VoteDetailRow;
     });
 }
@@ -228,17 +310,24 @@ export function toRunItems(w: SimWorld, userId: string): RunItem[] {
 /* ══ بابُ التصويت — مرآةُ `getVoteElections` ═══════════════════════ */
 
 export function toVoteItems(w: SimWorld, userId: string): VoteItem[] {
+  const voidedHere = (e: SimElection) => w.votes.some((v) => v.electionId === e.id && v.voterId === userId && v.voidReason === "candidacy_ended");
   return w.elections
-    .filter((e) => e.status === "voting_open" && !e.archivedAt && eligibleToVote(w, userId, e.id))
-    .map((e) => ({
-      electionId: e.id,
-      position: labelsOf(e).positionLabel,
-      votingEnd: fmtDate(iso(e.votingEnd)),
-      votingEndRaw: iso(e.votingEnd),
-      hasVoted: w.votes.some((v) => v.electionId === e.id && v.voterId === userId),
-      // مرشّحُ المقعد الوحيد يرى ولا يفعل (`view_only` في الدالّة)
-      viewOnly: soleCandidate(w, userId, e.id),
-    }));
+    .filter((e) => e.status === "voting_open" && !e.archivedAt && (eligibleToVote(w, userId, e.id) || voidedHere(e)))
+    // إعادةُ التصويت المقصورة لا يدخلها غيرُ من بطل صوتُه (المادة 16)
+    .filter((e) => !e.revoteOnly || voidedHere(e))
+    .map((e) => {
+      const live = w.votes.some((v) => v.electionId === e.id && v.voterId === userId && !v.voidedAt);
+      return {
+        electionId: e.id,
+        position: labelsOf(e).positionLabel,
+        votingEnd: fmtDate(iso(e.votingEnd)),
+        votingEndRaw: iso(e.votingEnd),
+        hasVoted: live,
+        // مرشّحُ المقعد الوحيد يرى ولا يفعل (`view_only` في الدالّة)
+        viewOnly: soleCandidate(w, userId, e.id),
+        revote: !live && voidedHere(e),
+      };
+    });
 }
 
 /* ══ بطاقةُ الاقتراع — مرآةُ `getBallot` + `get_ballot_candidates` ══ */
@@ -259,38 +348,67 @@ export function toBallot(w: SimWorld, userId: string, electionId: string): Ballo
       isSelf: c.userId === userId,
     }));
 
-  const v = w.votes.find((x) => x.electionId === electionId && x.voterId === userId) ?? null;
+  const v = w.votes.find((x) => x.electionId === electionId && x.voterId === userId && !x.voidedAt) ?? null;
   const myVote: MyVote | null = v ? { candidateId: v.candidateId, choice: v.choice } : null;
   return { ok: true, error: null, election, candidates, myVote };
 }
 
 /* ══ سِجلّ ترشُّحي — مرآةُ `getMyCandidacies` ═══════════════════════ */
 
-/** مرآةُ `statusView` في `member-data` — الحالةُ المعروضة و«ما التالي» والمحطّة القادمة. */
-function statusView(status: CandidateStatus, election: ElectionStatus, isWinner: boolean, position: string, sole: boolean) {
-  if (election === "completed" && status === "approved") {
-    return isWinner
-      ? { label: "فائز", tone: "success" as const, next: sole ? `نلتَ ثقة الناخبين تزكيةً، مُبارَك لك يا ${position}` : `مُبارَك لك! فزتَ بالمنصب يا ${position}`, future: null }
-      : { label: "لم يُوفَّق", tone: "info" as const, next: "انتهى التصويت؛ لم يُوفَّق ترشّحك هذه المرّة، شكرًا لِمُشاركتك.", future: null };
-  }
-  const base = CANDIDATE_STATUS_META[status];
-  switch (status) {
-    case "pending": return { label: base.label, tone: base.tone, next: "طلبك تحت مراجعة إدارة الموارد البشرية. يمكنك تعديل أو تطوير ترشّحك خلال مراجعة ترشيحك.", future: election === "candidacy_open" ? "تصويت" : null };
-    case "needs_edit": return { label: base.label, tone: base.tone, next: "راجِع ملاحظة إدارة الموارد البشرية وعدّل بيانك أو ملفّك، ثمّ أعِد الإرسال.", future: election === "candidacy_open" ? "تصويت" : null };
-    case "approved": {
-      const next = election === "voting_open"
-        ? (sole ? "أنت المرشّح الوحيد، والتصويت جارٍ تزكيةً لك: يؤيّد الناخبون أو يعترضون." : "التصويت جارٍ الآن على ترشّحك.")
-        : election === "voting_closed" ? "أُغلق التصويت، بانتظار إعلان النتيجة."
-          : sole ? "قُبل ترشّحك، وأنت المرشّح الوحيد: يُعرَض على الناخبين تزكيةً لا منافسة."
-            : "مُبارك لك! تم قبول ترشحك لخوض مرحلة التصويت.";
-      const future = (election === "candidacy_open" || election === "candidacy_closed") ? "تصويت"
-        : (election === "voting_open" || election === "voting_closed") ? "النتيجة" : null;
-      return { label: base.label, tone: base.tone, next, future };
-    }
-    case "rejected": return { label: base.label, tone: base.tone, next: "تعتذر إدارة الموارد البشرية عن قبول ترشّحك في هذا الانتخاب، يُمكنك رؤية سبب الرفض.", future: null };
-    case "withdrawn": return { label: base.label, tone: base.tone, next: "سحبتَ ترشّحك من هذا الانتخاب.", future: null };
-    default: return { label: base.label, tone: base.tone, next: "", future: null };
-  }
+/** المطلوبُ تعديلُه في مهلته، والبابُ قبل التصويت (المادة 14). */
+function editable(w: SimWorld, c: SimCandidate): boolean {
+  const e = w.elections.find((x) => x.id === c.electionId);
+  return c.status === "needs_edit" && !!e && (e.status === "candidacy_open" || e.status === "candidacy_closed") && (!c.editDueAt || c.editDueAt > w.now);
+}
+
+/* ══ الحرمان — مرآةُ `getCandidacyBan` ═════════════════════════════ */
+
+export function toCandidacyBan(w: SimWorld, userId: string): CandidacyBan | null {
+  const b = activeBanOf(w, userId);
+  return b ? { id: b.id, reason: b.reason, until: b.until } : null;
+}
+
+/* ══ نتيجةُ المقعد — مرآةُ `getSeatResult` ═════════════════════════ */
+
+export function toSeatResult(w: SimWorld, electionId: string): SeatResult | null {
+  const e = w.elections.find((x) => x.id === electionId);
+  if (!e) return null;
+  const completedBy = e.completedBy ?? (e.winnerCandidateId ? "winner" : null);
+  const winner = e.winnerCandidateId ? w.candidates.find((c) => c.id === e.winnerCandidateId) ?? null : null;
+  const personId = e.status !== "completed" ? null : completedBy === "appointment" ? e.appointedUserId ?? null : winner?.userId ?? null;
+  const p = personId ? memberIn(w, personId) : null;
+  const cancelRow = e.status === "cancelled" ? [...w.log].filter((r) => r.electionId === e.id && r.event === "cancelled").sort((a, b) => b.at - a.at)[0] ?? null : null;
+  return {
+    electionId, position: labelsOf(e).positionLabel, status: e.status, completedBy,
+    person: p ? { name: p.name, gender: p.gender ?? null, avatarUrl: null } : null,
+    sole: completedBy === "winner" && countApproved(w, e.id) === 1,
+    atRaw: e.status === "completed" ? iso(e.winnerDeclaredAt ?? e.archivedAt) : null,
+    cancel: e.status === "cancelled" ? { reason: (cancelRow?.payload["reason"] as string | undefined) ?? e.cancelReason ?? "", atRaw: iso(cancelRow?.at ?? e.archivedAt) ?? "" } : null,
+    winnerCandidateId: e.status === "completed" && completedBy === "winner" ? e.winnerCandidateId ?? null : null,
+  };
+}
+
+/** مرآةُ `getSeatOutcome`: الورقةُ بعد الإعلان لمن صوّت فيها أو ترشّح لها، ومن سواهم `null` */
+export function toSeatOutcome(w: SimWorld, userId: string, r: SeatResult): SeatOutcome | null {
+  if (r.status !== "completed" || !r.winnerCandidateId) return null;
+  const all = w.candidates.filter((c) => c.electionId === r.electionId);
+  const v = w.votes.find((x) => x.electionId === r.electionId && x.voterId === userId && !x.voidedAt) ?? null;
+  if (!all.some((c) => c.userId === userId) && !v) return null;
+  const candidates: BallotCandidate[] = all
+    .filter((c) => c.status === "approved" || c.id === r.winnerCandidateId)
+    .sort((a, b) => a.number - b.number)
+    .map((c) => ({
+      id: c.id, number: c.number, statement: c.statement,
+      name: memberIn(w, c.userId)?.name ?? null, gender: memberIn(w, c.userId)?.gender ?? null, avatarUrl: null,
+      fileUrl: c.fileUrl, fileName: c.fileName, fileSize: c.fileSize, fileMime: c.fileMime,
+      isSelf: c.userId === userId,
+    }));
+  const myVote: MyVote | null = v ? { candidateId: v.candidateId, choice: v.choice } : null;
+  return {
+    election: { electionId: r.electionId, position: r.position, votingEnd: "", votingEndRaw: null, hasVoted: !!myVote, viewOnly: false, revote: false },
+    candidates, myVote, winnerId: r.winnerCandidateId,
+    youWon: all.find((c) => c.id === r.winnerCandidateId)?.userId === userId, declaredRaw: r.atRaw,
+  };
 }
 
 export function toMyCandidacies(w: SimWorld, userId: string): CandidacyJourney[] {
@@ -302,7 +420,26 @@ export function toMyCandidacies(w: SimWorld, userId: string): CandidacyJourney[]
       const position = labelsOf(e).positionLabel;
       const isWinner = e.winnerCandidateId === c.id;
       const sole = c.status === "approved" && countApproved(w, e.id) === 1;
-      const view = statusView(c.status, e.status, isWinner, position, sole);
+      const fz = w.freezes.find((f) => f.candidateId === c.id && (f.status === "active" || f.status === "answered")) ?? null;
+      const freeze: MemberFreeze | null = fz && c.status === "frozen" ? {
+        id: fz.id, status: fz.status as MemberFreeze["status"], reason: fz.reason,
+        answerDueRaw: iso(fz.answerDue), answerText: fz.answerText, answeredAtRaw: iso(fz.answeredAt), decideDueRaw: iso(fz.decideDue),
+      } : null;
+      const cancelRow = e.status === "cancelled" ? [...w.log].filter((r) => r.electionId === e.id && r.event === "cancelled").sort((a, b) => b.at - a.at)[0] ?? null : null;
+      const cancel = e.status === "cancelled"
+        ? { reason: (cancelRow?.payload["reason"] as string | undefined) ?? e.cancelReason ?? "", atRaw: iso(cancelRow?.at ?? e.archivedAt) ?? "" }
+        : null;
+      const facts = {
+        editDueRaw: c.status === "needs_edit" ? iso(c.editDueAt ?? null) : null,
+        rejectReason: c.status === "rejected" ? c.rejectReason ?? null : null,
+        endReason: c.status === "ended" ? c.endReason ?? null : null,
+        endedAtRaw: c.status === "ended" ? iso(c.endedAt ?? null) : null,
+        freeze, cancel,
+      };
+      const view = statusView({
+        status: c.status, election: e.status, isWinner, position, sole, gender: memberIn(w, userId)?.gender ?? null,
+        editDueRaw: facts.editDueRaw, rejectReason: facts.rejectReason, endReason: facts.endReason, freeze, cancelReason: cancel?.reason ?? null,
+      });
 
       const trailRows = w.log
         .filter((r) => r.electionId === e.id && r.payload["candidate_id"] === c.id)
@@ -320,7 +457,7 @@ export function toMyCandidacies(w: SimWorld, userId: string): CandidacyJourney[]
       }
 
       const cycle = fmtMonthYear(iso(e.candidacyEnd) ?? iso(c.submittedAt));
-      const archived = c.status === "withdrawn" || c.status === "rejected"
+      const archived = c.status === "withdrawn" || c.status === "rejected" || c.status === "ended"
         || e.status === "completed" || e.status === "cancelled" || !!e.archivedAt;
 
       return {
@@ -330,9 +467,10 @@ export function toMyCandidacies(w: SimWorld, userId: string): CandidacyJourney[]
         statusLabel: view.label, statusTone: view.tone, next: view.next, future: view.future,
         statement: c.statement, fileUrl: c.fileUrl, fileName: c.fileName,
         trail,
-        // @db ترحيل ٣٩: المعتمَد لا يُعدَّل ولو كان البابُ مفتوحًا؛ والسحبُ يبقى ما دام الطورُ ترشّحًا
-        canEdit: e.status === "candidacy_open" && (c.status === "pending" || c.status === "needs_edit"),
+        // @db ترحيل ٣٩: المعتمَد لا يُعدَّل؛ والمطلوبُ تعديلُه يعدّل في مهلته ولو أُغلق الباب (الدفعة الثانية)
+        canEdit: (e.status === "candidacy_open" && c.status === "pending") || editable(w, c),
         canWithdraw: ACTIVE_CANDIDACY.includes(c.status) && (e.status === "candidacy_open" || e.status === "candidacy_closed"),
+        ...facts,
       } satisfies CandidacyJourney;
     });
 }
@@ -377,7 +515,7 @@ export function toApplyContext(w: SimWorld, userId: string, electionId: string):
       statement: mineHere.statement,
       fileName: mineHere.fileName,
       fileUrl: mineHere.fileUrl,
-      canEdit: e.status === "candidacy_open" && (mineHere.status === "pending" || mineHere.status === "needs_edit"),
+      canEdit: (e.status === "candidacy_open" && mineHere.status === "pending") || editable(w, mineHere),
     } : null,
     siblings,
     preferredElectionId,

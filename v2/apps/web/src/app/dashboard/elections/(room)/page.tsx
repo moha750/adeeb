@@ -1,4 +1,4 @@
-import { getElections, getElectionCreateOptions } from "../data";
+import { getElections, getElectionCreateOptions, getSupervisedCommittees, scopeToSupervised } from "../data";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
 import { ElectionsRoom } from "@/app/_ad/rooms/ElectionsRoom";
@@ -24,11 +24,15 @@ export default async function ElectionsPage() {
 
   const me = await getCurrentAdmin();
   const canManage = !!me?.caps.includes("manage_elections");
+  // ومشرفُ اللجنة من الموارد يفتح انتخاب قيادتها ونيابتها (المادة ٤)، فيرى الزرَّ بمقاعد لجانه وحدها
+  const supervised = !canManage && me ? await getSupervisedCommittees(me.id) : [];
+  const canOpen = canManage || supervised.length > 0;
 
-  const [{ elections, error }, createOptions] = await Promise.all([
+  const [{ elections, error }, allOptions] = await Promise.all([
     getElections(),
-    canManage ? getElectionCreateOptions() : Promise.resolve(null),
+    canOpen ? getElectionCreateOptions() : Promise.resolve(null),
   ]);
+  const createOptions = allOptions && !canManage ? scopeToSupervised(allOptions, supervised) : allOptions;
 
   if (error) return <AdRoomError {...ELECTIONS_ROOM} message={error} />;
 
@@ -36,7 +40,7 @@ export default async function ElectionsPage() {
     <ElectionsRoom
       elections={elections}
       createOptions={createOptions}
-      readOnly={!canManage}
+      readOnly={!canOpen}
       serverNow={await requestNow()}
       view={await roomView(ELECTIONS_ROOM.viewKey, ELECTIONS_ROOM.defaultView)}
     />

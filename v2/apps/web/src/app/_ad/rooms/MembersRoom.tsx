@@ -12,7 +12,7 @@
  */
 import type { RoomView } from "../view";
 import { MEMBERS_ROOM } from "./members.meta";
-import { useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { matchesSearch } from "@adeeb/design-system";
 import {
@@ -29,6 +29,7 @@ import { useMemberDialogs } from "@/app/dashboard/members/MemberDialogs";
 import { AdActs, AdBadge, AdCard, AdConfirm, AdRow, AdSeats, type AdAction, type AdFace, type AdMeta, type AdOp, type AdSeat } from "../primitives";
 import type { CommitteeLead, HeadSeat, SeatPerson } from "./committee-lead";
 import { CollectionRoom, type FilterDef, type Position } from "../collection";
+import { CandidacyBanModal } from "./CandidacyBanModal";
 import { fmtDayFull } from "../format";
 
 const AR_MEMBER: ArForms = ["عضوٌ واحد", "عضوان", "أعضاء", "عضوًا"];
@@ -53,7 +54,7 @@ const uniqOpts = (vals: (string | null)[]) =>
 export function MembersRoom({
   members: input, lockedStatus, mode, readOnly = false, emptyNote, contact = false,
   warningLimit = 3, moveTargets = [], formerTab = false, initialTab = "active", navPath = MEMBERS_ROOM.navPath, view,
-  committees, title: titleProp, groupLink, emptyTitle, viewKey = MEMBERS_ROOM.viewKey, unitHead, viewerId, seatRows = [], seatContact = contact,
+  committees, title: titleProp, groupLink, emptyTitle, viewKey = MEMBERS_ROOM.viewKey, unitHead, viewerId, seatRows = [], seatContact = contact, canBan = false,
 }: {
   members: MemberRow[];
   /** الحالةُ المثبّتة: كشفُ حالةٍ واحدة (`active`، أو `suspended` لكشف «من غادر» في «من أشرف عليهم»). بلاها: الكلّ بلا مواضع. */
@@ -104,6 +105,8 @@ export function MembersRoom({
   seatContact?: boolean;
   serverNow: number;
   view?: RoomView;
+  /** **الحرمانُ من الترشّح** لرئيس أدِيب وحده (المادة ١١ من نظام الانتخابات؛ ٢٠٢٦-١١-١٧) — من مقعده، يقرؤه الخادم */
+  canBan?: boolean;
 }) {
   // منبعٌ واحد للسلطة (كما في القديمة): في العرض المحض تُقرأ صفرًا فتغيب الأفعال كلُّها من الكرت والسطر والنافذة
   const members = useMemo(
@@ -113,6 +116,9 @@ export function MembersRoom({
   // نوافذُ العضو من مصدرها الواحد — وتأكيدُ الإعادة بنافذة القالب (`AdConfirm`، بواجهة `ConfirmDialog` نفسِها)
   const { openView, openEdit, openEnd, openMove, openReason, openRestore, openWarning, openCertify, dialogs } =
     useMemberDialogs({ moveTargets, warningLimit, confirm: AdConfirm });
+
+  const [banFor, setBanFor] = useState<MemberRow | null>(null);
+  const closeBan = useCallback(() => setBanFor(null), []);
 
   const withFormer = formerTab && lockedStatus === "active";
   const section = lockedStatus ? SECTION[lockedStatus] : mode === "reach" ? { title: "من أشرف عليهم", noun: "عضو" } : SECTION.all;
@@ -323,6 +329,10 @@ export function MembersRoom({
         : []),
       ...(m.canWarn && m.status === "active" ? [{ key: "warn", label: "إصدار إنذار", icon: <ShieldWarning />, onClick: () => openWarning(m) }] : []),
       ...(m.canCertify ? [{ key: "cert", label: "إصدار شهادة خبرة", icon: <Certificate />, onClick: () => openCertify(m) }] : []),
+      // الحرمانُ قرارٌ على الترشّح لا على العضويّة: في منطقة الخطر قبل الإنهاء، ولا يُحرم الرئيسُ نفسَه
+      ...(canBan && m.status === "active" && m.id !== viewerId
+        ? [{ key: "ban", label: "الحرمان من الترشّح", icon: <Prohibit />, onClick: () => setBanFor(m), danger: true }]
+        : []),
       ...(m.canEnd
         ? [
             { key: "volunteer", label: "نقل إلى المتطوّعين", icon: <Handshake />, onClick: () => openEnd(m, "volunteer"), danger: true },
@@ -393,6 +403,7 @@ export function MembersRoom({
         )}
       />
       {dialogs}
+      {banFor ? <CandidacyBanModal key={banFor.id} member={banFor} onClose={closeBan} /> : null}
     </>
   );
 }

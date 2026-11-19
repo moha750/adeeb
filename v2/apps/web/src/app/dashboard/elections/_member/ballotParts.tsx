@@ -192,7 +192,7 @@ export function CandidateModal({ candidate, onClose, opener, onFail, action }: S
 export function ConfidenceNote() {
   return (
     <Alert tone="info" title="رأيُك يحسم هذا المقعد">
-      تُمنح الثقةُ بالتصويت : إن غلب التأييدُ الاعتراضَ تولّى المرشّح المنصب، وإلّا أُعيد فتحُ الباب.
+      تُمنح الثقةُ بالتصويت : إن غلب التأييدُ الاعتراضَ تولّى المرشّح المقعد، وإلّا أُعيد فتحُ الباب.
     </Alert>
   );
 }
@@ -223,7 +223,7 @@ export function SoleChoice({ value, onChange }: { value: string; onChange: (v: "
   );
   return (
     <>
-      {opt("approve", "أؤيّد توليَه المنصب", "أرى فيه أهلًا لهذا المقعد")}
+      {opt("approve", "أؤيّد توليَه المقعد", "أرى فيه أهلًا لهذا المقعد")}
       {opt("reject", "أعترض", "لا أرى توليَه هذا المقعد")}
     </>
   );
@@ -267,7 +267,7 @@ export function VoteTag({ choice }: { choice: "approve" | "reject" }) {
  */
 export function SelfCandidateNote() {
   return (
-    <Alert tone="info" title="أنت مرشّحٌ لهذا المنصب">
+    <Alert tone="info" title="أنت مرشّحٌ لهذا المقعد">
       نظامُ الانتخابات لا يُجيز التصويتَ للنفس. فاختر مرشّحًا آخر، أو تستطيع عدم التصويت.
     </Alert>
   );
@@ -312,7 +312,7 @@ export function ConfirmVote({ open, onClose, onConfirm, pending, number, choice 
       <div className="blt-row">
         {number !== null ? <CandidateMark number={number} lg /> : null}
         <span className="blt-name">
-          {number !== null ? `صوتك للمرشّح رقم ${number}` : reject ? "اعتراضك على التزكية" : "تأييدك للمرشّح"}
+          {number !== null ? `صوتك للمرشّح رقم ${number}` : reject ? "اعتراضك في تصويت الثقة" : "تأييدك للمرشّح"}
         </span>
       </div>
       {/* **الوعدُ بقدر ما يقع** (٢٠٢٦-٠٨-١٥): صار لإدارة الانتخابات أن تقرأ الأصوات بأسماء

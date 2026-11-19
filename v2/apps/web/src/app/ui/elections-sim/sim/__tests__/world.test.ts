@@ -253,11 +253,12 @@ describe("departmentResolutionState", () => {
    * دونه لأنّ تصويتَه لم يُغلق. تُقرأ فتُظهر زرَّ «إعلان فائزي القسم».
    */
   it("يعدّ الجاهزَ والحائلَ في القسم", () => {
-    const ready = load("department_seats"); // ثلاثةُ مقاعدَ أُغلق تصويتُها
-    expect(departmentResolutionState(ready, "e-head-1")).toEqual({ pending: 1, blocking: 0 });
-
     const blocked = load("joint_blocked"); // مقعدٌ مغلقٌ وآخرُ ما زال في التصويت
     expect(departmentResolutionState(blocked, "e-lead-11")).toEqual({ pending: 0, blocking: 1 });
+
+    const ready = load("joint_blocked"); // وإذا أُغلق الآخرُ صار جاهزًا معه
+    ready.elections.find((e) => e.id === "e-dep-11")!.status = "voting_closed";
+    expect(departmentResolutionState(ready, "e-lead-11")).toEqual({ pending: 1, blocking: 0 });
   });
 
   it("ولا شيءَ يُحسب لمقعدٍ لا معتمَدَ فيه أو لا وجودَ له", () => {

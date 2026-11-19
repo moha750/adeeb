@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { openCandidateFile } from "./candidateFile";
 import {
-  appointToSeat, cancelElection, castVote, createElection, declareWinner, loadAppointOptions,
-  openVoting, resolveDepartmentWinners, restoreCandidacy, resubmitCandidacy, reviewCandidate,
+  answerFreeze, appointSeatHolder, appointToSeat, approveFreeze, banFromCandidacy, cancelElection, castVote,
+  chooseInTie, createElection, decideFreeze, declareWinner, liftCandidacyBan, loadAppointOptions, openRevote,
+  openVoting, requestFreeze, resolveDepartmentWinners, restoreCandidacy, resubmitCandidacy, reviewCandidate,
   setDeadline, submitCandidacy, transitionElection, withdrawCandidacy,
   type CandidacyFile,
 } from "./actions";
@@ -36,6 +37,23 @@ export type ElectionApi = {
   declareWinner: typeof declareWinner;
   resolveDepartmentWinners: typeof resolveDepartmentWinners;
   cancelElection: typeof cancelElection;
+  /** إعادةُ التصويت بعد بطلان أصوات (المادة 16). */
+  openRevote: typeof openRevote;
+  /** التعيينُ على المقعد المتعثّر، فيكتمل به الانتخاب (المادة 25). للمديرين الثلاثة. */
+  appointSeatHolder: typeof appointSeatHolder;
+
+  /* ── التعادل (المادة 26)، للمجلس الإداري ──────────────────────────── */
+  chooseInTie: typeof chooseInTie;
+
+  /* ── التجميد (المادة 16): يطلبه عضوُ الموارد، ويوافق قائدُها ويقرّر، ويجيب المرشّح ── */
+  requestFreeze: typeof requestFreeze;
+  approveFreeze: typeof approveFreeze;
+  answerFreeze: typeof answerFreeze;
+  decideFreeze: typeof decideFreeze;
+
+  /* ── الحرمان من الترشّح (المادة 11)، لرئيس أدِيب ───────────────────── */
+  banFromCandidacy: typeof banFromCandidacy;
+  liftCandidacyBan: typeof liftCandidacyBan;
 
   /* ── أفعالُ العضو ───────────────────────────────────────────────── */
   submitCandidacy: typeof submitCandidacy;
@@ -98,6 +116,15 @@ export function useElectionApi(): ElectionApi {
     declareWinner,
     resolveDepartmentWinners,
     cancelElection,
+    openRevote,
+    appointSeatHolder,
+    chooseInTie,
+    requestFreeze,
+    approveFreeze,
+    answerFreeze,
+    decideFreeze,
+    banFromCandidacy,
+    liftCandidacyBan,
     submitCandidacy,
     resubmitCandidacy,
     castVote,

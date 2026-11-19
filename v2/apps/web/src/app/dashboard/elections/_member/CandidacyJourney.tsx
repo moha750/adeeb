@@ -33,7 +33,7 @@ export function CandidacyJourney({ c, cycle, onEdit, onWithdraw }: { c: CJ; cycl
         <div className="cjr-hero-top">
           <span className="cjr-medal"><span className="cjr-medal-cap">رقمك الانتخابي</span><b>#{c.number}</b></span>
           <div className="cjr-hero-main">
-            <span className="cjr-hero-eyebrow">المنصب المتقدَّم له</span>
+            <span className="cjr-hero-eyebrow">المقعد المتقدَّم له</span>
             <h2 className="cjr-hero-title">{c.position}</h2>
             {cycle ? <span className="cjr-hero-eyebrow">{cycle}</span> : null}
           </div>

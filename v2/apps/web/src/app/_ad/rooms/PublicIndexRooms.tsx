@@ -219,7 +219,9 @@ export function NewsIndex({ items, dateLine }: { items: PublicNews[]; dateLine: 
             return (
               <PubCard key={n.id} href={newsHref(n)} cover={n.cover} placeholder={<Newspaper />} eager={k === 0}
                 tag={n.featured ? <><Star aria-hidden />{CATEGORY_META[n.category].featured}</> : CATEGORY_META[n.category].label}
-                facts={[...(n.dateLabel ? [{ icon: <CalendarBlank />, text: n.dateLabel }] : []), { icon: <Clock />, text: arCount(n.readMinutes, AR_READ_MIN) }]}
+                // المشاهداتُ بعد مدّة القراءة كما في لوح الخبر نفسِه (محمد ٢٠٢٦-١١-١٧)
+                facts={[...(n.dateLabel ? [{ icon: <CalendarBlank />, text: n.dateLabel }] : []), { icon: <Clock />, text: arCount(n.readMinutes, AR_READ_MIN) },
+                  ...(n.views ? [{ icon: <Eye />, text: arCount(n.views, AR_VIEW) }] : [])]}
                 title={n.title} lines={by ? [{ icon: <Feather />, text: by }] : undefined} />
             );
           })}

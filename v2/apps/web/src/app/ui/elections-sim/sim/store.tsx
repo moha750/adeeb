@@ -9,7 +9,7 @@ import type { ElectionResult } from "@/app/dashboard/elections/actions";
 import * as R from "./rules";
 import { SCENARIOS, scenarioOf, type ScreenKey } from "./scenarios";
 import { toAppointOptions } from "./project";
-import { sweep } from "./rules";
+import { settle, sweep } from "./rules";
 import { shiftWorld, type SimWorld } from "./world";
 
 /**
@@ -80,7 +80,8 @@ export function SimProvider({ children, initialScenario }: { children: ReactNode
     const draft = clone(world);
     draft.now = Date.now(); // الساعةُ واحدةٌ للعالم وللشاشة (انظر `shiftWorld`)
     const res = fn(draft);
-    if (res.ok) setWorld(draft);
+    // ثمّ ما تفعله الكنّاسةُ في دقيقتها بلا مرور زمن: يُحسم كلُّ مقعدٍ أُغلق تصويتُه وصار جاهزًا
+    if (res.ok) { settle(draft); setWorld(draft); }
     note(`${label} : ${res.message}`, res.ok);
     return res;
   }, [world, note]);
@@ -129,16 +130,26 @@ export function SimProvider({ children, initialScenario }: { children: ReactNode
 
   const api = useMemo<ElectionApi>(() => ({
     createElection: async (input) => act("فتحُ انتخاب", (w) => R.createElection(w, actorId, input)),
-    reviewCandidate: async (id, status, n) => act("مراجعةُ مرشّح", (w) => R.reviewCandidate(w, actorId, id, status, n)),
+    reviewCandidate: async (id, status, n, opts) => act("مراجعةُ مرشّح", (w) => R.reviewCandidate(w, actorId, id, status, n, opts ?? {})),
     restoreCandidacy: async (id) => act("إرجاعُ منسحب", (w) => R.restoreCandidacy(w, actorId, id)),
-    transitionElection: async (id, next) => act("نقلُ الحالة", (w) => R.transitionElection(w, actorId, id, next)),
+    transitionElection: async (id, next, opts) => act("نقلُ الحالة", (w) => R.transitionElection(w, actorId, id, next, null, opts ?? {})),
     setDeadline: async (id, isoWhen) => act("ضبطُ الموعد", (w) => R.setDeadline(w, actorId, id, isoWhen)),
     openVoting: async (id, endIso) => act("فتحُ التصويت", (w) => R.openVoting(w, actorId, id, endIso)),
     loadAppointOptions: async (id) => ({ members: toAppointOptions(world, id), error: null }),
     appointToSeat: async (id, userId, reason) => act("تكليفُ شاغل", (w) => R.appointToSeat(w, actorId, id, userId, reason)),
-    declareWinner: async (id, candidateId) => act("إعلانُ فائز", (w) => R.declareWinner(w, actorId, id, candidateId)),
-    resolveDepartmentWinners: async (departmentId) => act("حسمُ مقاعد القسم", (w) => R.resolveDepartmentWinners(w, actorId, departmentId)),
-    cancelElection: async (id, reason) => act("إلغاءُ انتخاب", (w) => R.cancelElection(w, actorId, id, reason)),
+    // سقط الإعلانُ باليد (المادة 28): يردّان بنصّ الفعل الخادميّ نفسِه، والمنصّةُ تعلن عند الإغلاق
+    declareWinner: async () => act("إعلانُ فائز", () => ({ ok: false, message: "تُعلن المنصّة الفائز آليًّا لحظة إغلاق التصويت، ولا يُعلن باليد (المادة 28)." })),
+    resolveDepartmentWinners: async () => act("حسمُ مقاعد القسم", () => ({ ok: false, message: "تُحسم مقاعد القسم آليًّا حين يُغلق تصويت آخرها (المادة 27)." })),
+    cancelElection: async (id, reason, basis) => act("إلغاءُ انتخاب", (w) => R.cancelElection(w, actorId, id, reason, basis)),
+    openRevote: async (id, endIso, reason) => act("فتحُ إعادة التصويت", (w) => R.openRevote(w, actorId, id, endIso, reason)),
+    appointSeatHolder: async (id, userId, reason) => act("تعيينٌ على المتعثّر", (w) => R.appointSeatHolder(w, actorId, id, userId, reason)),
+    chooseInTie: async (tieId, candidateId, reason) => act("اختيارٌ في التعادل", (w) => R.chooseInTie(w, actorId, tieId, candidateId, reason)),
+    requestFreeze: async (candidateId, reason, answerWindow, decideWindow) => act("طلبُ تجميد", (w) => R.requestFreeze(w, actorId, candidateId, reason, answerWindow, decideWindow)),
+    approveFreeze: async (freezeId, approve, reason) => act(approve ? "موافقةٌ على التجميد" : "ردُّ طلب التجميد", (w) => R.approveFreeze(w, actorId, freezeId, approve, reason)),
+    answerFreeze: async (freezeId, text) => act("إجابةٌ عن التجميد", (w) => R.answerFreeze(w, actorId, freezeId, text)),
+    decideFreeze: async (freezeId, outcome, reason) => act(outcome === "lift" ? "رفعُ التجميد" : "استبعادُ المجمَّد", (w) => R.decideFreeze(w, actorId, freezeId, outcome, reason)),
+    banFromCandidacy: async (userId, reason, until) => act("حرمانٌ من الترشّح", (w) => R.banFromCandidacy(w, actorId, userId, reason, until)),
+    liftCandidacyBan: async (banId, reason) => act("رفعُ الحرمان", (w) => R.liftCandidacyBan(w, actorId, banId, reason)),
 
     submitCandidacy: async (id, statement, file) => act("إرسالُ ترشّح", (w) => R.submitCandidacy(w, actorId, id, statement, file ?? null)),
     resubmitCandidacy: async (candidateId, statement, file) => act("تعديلُ ترشّح", (w) => R.resubmitCandidacy(w, actorId, candidateId, statement, file ?? null)),

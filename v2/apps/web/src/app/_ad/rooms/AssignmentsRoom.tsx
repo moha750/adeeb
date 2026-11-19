@@ -147,13 +147,13 @@ export function AssignmentsRoom({ positions, units, members, canEditUnits, iconN
     if (!modal || modal.kind !== "assign") return;
     const m = v.moves[0];
     run(() => (v.simple
-      ? assignPosition({ userId: m.userId, roleName: m.roleName, committeeId: m.committeeId, departmentId: m.departmentId, replace: modal.replace })
+      ? assignPosition({ userId: m.userId, roleName: m.roleName, committeeId: m.committeeId, departmentId: m.departmentId, replace: modal.replace, onRequest: m.onRequest })
       : applyPositionBatch({ moves: v.moves, effectiveOn: v.effectiveOn, reason: v.reason })), () => setModal(null));
   };
-  const submitRemove = () => {
+  const submitRemove = (onRequest?: boolean) => {
     if (!modal || modal.kind !== "remove") return;
     const h = modal.holder;
-    run(() => removePosition({ userId: h.userId, roleName: h.roleName, committeeId: h.committeeId }), () => setModal(null));
+    run(() => removePosition({ userId: h.userId, roleName: h.roleName, committeeId: h.committeeId, onRequest }), () => setModal(null));
   };
   const submitCancelBatch = () => {
     const b = cancelFor;

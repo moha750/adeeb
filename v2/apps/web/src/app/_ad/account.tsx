@@ -18,6 +18,7 @@ import { CaretLeft, PencilSimple } from "@/app/_components/glyphs";
 import { AdFigureRow, AdGroupTitle, AdRoom, AdStepsBar, PlateCrumb, RoomPlate, type AdAction, type AdFigure, type AdSteps } from "./primitives";
 import { useRoomCrumb } from "./crumb";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
+import { DashEdge } from "./dash";
 
 /** غرفةُ الحساب: لوحُها بفتاته من خريطة الشريط، وتحته مبدّلُ مواضعها إن كان (`head`: «القادمة» و«السابقة»)، ثمّ ما فيها. */
 export function AccountRoom({ navPath, title, action, head, children }: { navPath: string; title: string; action?: AdAction; head?: ReactNode; children: ReactNode }) {
@@ -499,6 +500,22 @@ export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, externa
         <div className="ad-line-hit">{body}</div>
       )}
     </li>
+  );
+}
+
+/**
+ * **سطرُ الغياب** (`AdLineVoid`، ٢٠٢٦-١١-١٩؛ محمد: «فكرتُه صحيحة… نحتاج نضمّه ضمن الهويّة»، ثمّ اختار «المكان المخطّط»): مكانُ قيمةٍ لم تُعطَ
+ * في صفٍّ تتجاور فيه أشباهُها — ملفُّ مرشّحٍ بين ملفّات إخوته في ورقة التصويت. بارتفاع السطر المجاور فلا تختلّ المحاذاة، ومربّعُ رمزه مصمتٌ
+ * كمربّعه، وحدُّه الحدُّ المقطّعُ الواحد (`DashEdge`) بلونٍ محايد، وحبرُه باهتٌ فلا يُبرز صاحبه.
+ * **وليس الفراغَ المعتمد** (`AdEmpty`): ذاك غرفةٌ أو قسمٌ خالٍ كلُّه؛ وفي الصفّ يطول فيُفرغ ما بجانبه، وتجذب قطعتُه الكحليّةُ العينَ إلى الناقص.
+ */
+export function AdLineVoid({ icon, text }: { icon: ReactNode; text: string }) {
+  return (
+    <div className="ad-void">
+      <DashEdge />
+      <span className="ad-void-ic" aria-hidden>{icon}</span>
+      <span className="ad-void-t">{text}</span>
+    </div>
   );
 }
 

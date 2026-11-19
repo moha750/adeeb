@@ -22,9 +22,10 @@ import { CheckCircle, Checks, Eye, PencilSimple, Prohibit, XCircle } from "@/app
 import { TermsGate } from "@/app/dashboard/elections/_member/TermsGate";
 import { remain } from "@/app/dashboard/elections/_member/Countdown";
 import { useElectionApi } from "@/app/dashboard/elections/actions-context";
-import type { CandidacyJourney, RecordTone, RunItem, VoteItem } from "@/app/dashboard/elections/member-data";
+import type { CandidacyBan, CandidacyJourney, RecordTone, RunItem, VoteItem } from "@/app/dashboard/elections/member-data";
 import type { ArForms } from "@/lib/arabicCount";
 import { AdActs, AdBadge, AdButton, AdCard, AdRow, type AdMeta, type AdTone } from "../primitives";
+import { fmtDayFull } from "../format";
 import { CollectionRoom, type Position } from "../collection";
 import { dayParts } from "../format";
 
@@ -56,11 +57,12 @@ const dayStub = (iso: string | null | undefined) => {
   const d = dayParts(iso);
   return { big: d.day, small: d.month };
 };
-const dayTable = (label: string) => ({ head: "المنصب", stub: { key: "date", label, icon: <CalendarBlank /> }, columns: [] });
+const dayTable = (label: string) => ({ head: "المقعد", stub: { key: "date", label, icon: <CalendarBlank /> }, columns: [] });
 
 /* ── الترشُّح ──────────────────────────────────────────────────────────── */
 
-export function RunRoom({ items, view }: { items: RunItem[]; serverNow: number; view?: RoomView }) {
+export function RunRoom({ items, view, ban = null }: { items: RunItem[]; serverNow: number; view?: RoomView;
+  /** **المحرومُ يرى حرمانه مكانَ أبواب الترشّح** (المادة ١١؛ المواصفة ع١): سببُه وآخرُ يومٍ فيه، ولا زرَّ «ترشّح» */ ban?: CandidacyBan | null }) {
   const now = useTick();
   const api = useElectionApi();
   const [gate, setGate] = useState<{ electionId: string; position: string } | null>(null);
@@ -77,7 +79,7 @@ export function RunRoom({ items, view }: { items: RunItem[]; serverNow: number; 
     ? <AdBadge tone="ok" icon={<CheckCircle />}>ترشّحُك مُقدَّم</AdBadge>
     : <AdBadge tone="info" icon={<PenNib />}>مفتوح لترشّحك</AdBadge>);
   const act = (e: RunItem, inRow?: boolean): ReactNode => e.hasSubmission
-    ? <AdButton variant="soft" size="sm" icon={<Eye />} onClick={() => api.nav(`/dashboard/elections/my/${e.electionId}`)}>افتح ترشّحي</AdButton>
+    ? <AdButton variant="soft" size="sm" icon={<Eye />} onClick={() => api.nav(`/dashboard/elections/my/${e.electionId}?from=run`)}>افتح ترشّحي</AdButton>
     : <AdButton variant={inRow ? "soft" : "fill"} size="sm" icon={<PencilSimple />} onClick={() => setGate({ electionId: e.electionId, position: e.position })}>ترشّح</AdButton>;
 
   return (
@@ -86,15 +88,18 @@ export function RunRoom({ items, view }: { items: RunItem[]; serverNow: number; 
         navPath={RUN_ROOM.navPath}
         title={RUN_ROOM.title}
         noun={AR_ELECTION}
-        items={items}
+        items={ban ? items.filter((e) => e.hasSubmission) : items}
         positions={[]}
-        searchPlaceholder="ابحث بالمنصب…"
+        searchPlaceholder="ابحث بالمقعد…"
         matchSearch={(e, q) => matchesSearch(q, e.position)}
         viewKey={RUN_ROOM.viewKey}
         initialView={view}
         idOf={(e) => e.electionId}
         table={dayTable("ينتهي")}
-        emptyAll={{ title: "لا ترشّح مفتوح الآن", desc: "حين يُفتح بابُ ترشّحٍ لمنصبٍ في نطاقك، يظهر هنا لتقدّم بيانك." }}
+        // **الحرمانُ مكانَ الأبواب** (المواصفة ع١): لا كروتَ «مفتوح لترشّحك» تناقضه، بل فراغُ الغرفة يقوله بأجله وسببه
+        emptyAll={ban
+          ? { title: `الترشّح موقوفٌ عنك حتى ${fmtDayFull(`${ban.until}T12:00:00+03:00`)}`, desc: `بقرار رئيس أدِيب. السبب: ${ban.reason}` }
+          : { title: "لا ترشّح مفتوح الآن", desc: "حين يُفتح بابُ ترشّحٍ لمقعدٍ في نطاقك، يظهر هنا لتقدّم بيانك." }}
         renderCard={(e) => <AdCard key={e.electionId} seed={e.electionId} stub={dayStub(e.candidacyEndRaw)} chips={chips(e)} title={e.position} meta={info(e)} foot={act(e)} />}
         renderRow={(e) => <AdRow key={e.electionId} title={e.position} stub={{ ...dayStub(e.candidacyEndRaw), seed: e.electionId }} badge={chips(e)} sub={info(e)} cells={[]} acts={act(e, true)} />}
       />
@@ -135,7 +140,7 @@ export function VoteRoom({ items, view }: { items: VoteItem[]; serverNow: number
       noun={AR_ELECTION}
       items={items}
       positions={[]}
-      searchPlaceholder="ابحث بالمنصب…"
+      searchPlaceholder="ابحث بالمقعد…"
       matchSearch={(e, q) => matchesSearch(q, e.position)}
       viewKey={VOTE_ROOM.viewKey}
       initialView={view}
@@ -153,10 +158,10 @@ export function VoteRoom({ items, view }: { items: VoteItem[]; serverNow: number
 /** رمزُ المآل في شارة الحال — كما كان رمزَ الكرت القديم. */
 const iconOf = (c: CandidacyJourney) =>
   c.statusLabel === "فائز" ? <Trophy /> :
-  c.statusLabel === "مرفوض" ? <XCircle /> :
-  c.statusLabel === "منسحب" ? <Prohibit /> :
+  c.statusLabel === "اعتُذر عنه" ? <XCircle /> :
+  c.statusLabel === "انسحب" ? <Prohibit /> :
   c.statusLabel === "لم يُوفَّق" ? <FlagCheckered /> :
-  c.statusLabel === "يحتاج تعديلًا" ? <PencilSimple /> :
+  c.statusLabel === "مطلوبٌ تعديلُه" ? <PencilSimple /> :
   c.statusLabel === "معتمَد" ? <Scales /> : <Clock />;
 const TONE: Record<RecordTone, AdTone> = { success: "ok", danger: "bad", warning: "warn", info: "info", neutral: "neutral" };
 /**
@@ -164,12 +169,17 @@ const TONE: Record<RecordTone, AdTone> = { success: "ok", danger: "bad", warning
  * كلمةٌ إداريّة — فالفاعلُ ترشّحُه، كـ«ترشّحُك مُقدَّم» في غرفة الترشّح، فلا تذكيرَ فيها ولا تأنيث («فائز» و«منسحب» كانتا مذكّرتين).
  * وهي لهذه الغرفة وحدها: غرفةُ الإدارة تبقى بكلمات الحال القصيرة (`vocab.ts`).
  */
+/** شارةُ الترشّح بلسان صاحبه: يقرؤها سجلُّه وصفحةُ ترشّحه */
+export const myBadge = (c: CandidacyJourney) => <AdBadge tone={TONE[c.statusTone]} icon={iconOf(c)}>{MINE[c.statusLabel] ?? c.statusLabel}</AdBadge>;
+export const myTone = (c: CandidacyJourney): AdTone => TONE[c.statusTone];
 const MINE: Record<string, string> = {
   "قيد المراجعة": "ترشّحُك قيد المراجعة",
-  "يحتاج تعديلًا": "ترشّحُك يحتاج تعديلًا",
+  "مطلوبٌ تعديلُه": "مطلوبٌ تعديلُ ترشّحك",
   "معتمَد": "ترشّحُك مقبول",
-  "مرفوض": "ترشّحُك مرفوض",
-  "منسحب": "ترشّحُك مسحوب",
+  "اعتُذر عنه": "اعتُذر عن ترشّحك",
+  "انسحب": "انسحبت من الترشّح",
+  "مُمهَل ليُجيب": "طُلب استبعاد ترشّحك",
+  "انتهى ترشّحه": "انتهى ترشّحك",
   "فائز": "ترشّحُك فائز",
   "لم يُوفَّق": "لم يُوفَّق ترشّحُك",
 };
@@ -199,7 +209,7 @@ export function MyCandidaciesRoom({ items, view }: { items: CandidacyJourney[]; 
       items={items}
       positions={POSITIONS}
       defaultPosition="live"
-      searchPlaceholder="ابحث بالمنصب أو الدورة…"
+      searchPlaceholder="ابحث بالمقعد أو الدورة…"
       matchSearch={(c, q) => matchesSearch(q, `${c.position} ${c.cycle}`)}
       viewKey={MY_CANDIDACIES_ROOM.viewKey}
       initialView={view}

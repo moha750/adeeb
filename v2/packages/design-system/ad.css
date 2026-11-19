@@ -2261,6 +2261,15 @@ a.vz-arch-row:hover { border-color: var(--ad-edge-ctl); }
 .ad-sec-t p { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
 
 /* السطر: رمزٌ في مربّعٍ مصبوغٍ بلون سطره (لغةُ رموز الكرت مكبّرةً درجة)، ثمّ التسميةُ فوق القيمة والوصفُ تحتها، ثمّ الفعل */
+/* **سطرُ الغياب** (`AdLineVoid`، ٢٠٢٦-١١-١٩، اختار محمد «المكان المخطّط»): مكانُ قيمةٍ لم تُعطَ بين أشباهها — بارتفاع سطر الملفّ المجاور
+   وحشوته، **ومربّعُ رمزه مصمتٌ كمربّع السطر المجاور** (`.ad-line-ic`)، وحدُّه الحدُّ المقطّعُ الواحد (`DashEdge`) بلونٍ محايد: موضعٌ ينتظر
+   ما لم يأتِ، ولا فعلَ فيه فلا فولاذَ الإفلات. والحبرُ باهت */
+/* **وحدُّه بلون حدّ جاره وعرضِه** (محمد ٢٠٢٦-١١-١٩: «صار في تمييز بصري بينه وبين اللي يرافق ملف»): كان بلون حدّ الأدوات وعرضِ الإفلات فبدا
+   أثقلَ من صندوق الملفّ المجاور (خيطُ `--ad-rule`). فالفرقُ الباقي بينهما التقطيعُ وحده — أخفُّ فرقٍ يقول «لا شيء هنا» */
+.ad-void { --dz-edge: var(--ad-rule); --dz-w: 1; position: relative; display: flex; align-items: center; gap: var(--space-3); box-sizing: border-box; block-size: 100%; min-block-size: calc(var(--space-8) + var(--space-3) * 2); padding: var(--space-3) var(--space-5); border-radius: var(--ad-r-ctl); color: var(--ad-ink-3); }
+.ad-void-ic { display: grid; flex: none; place-items: center; inline-size: var(--space-8); block-size: var(--space-8); border-radius: var(--ad-r-sm); background: color-mix(in oklab, currentColor 12%, transparent); color: var(--ad-ink-3); }
+.ad-void-ic svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-void-t { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
 .ad-lines { display: grid; margin: 0; padding: 0; list-style: none; } /* وخارجَ القسم أيضًا (نافذةُ المشاركة): لا نقطةَ قبل السطر */
 .ad-line + .ad-line { border-block-start: 1px solid var(--ad-rule); }
 .ad-line-hit {
@@ -3093,6 +3102,20 @@ button.ad-line-hit[aria-current] .ad-line-ic { background: var(--ad-pick); color
 .ad-sec[data-tone="bad"] .ad-line-ic { color: var(--ad-bad); }
 .ad-sec[data-tone="bad"] .ad-line + .ad-line { border-block-start-color: var(--ad-bad-edge); }
 .ad-sec[data-tone="bad"] :is(a, button).ad-line-hit:hover { background: color-mix(in oklab, var(--ad-bad-soft) 80%, transparent); }
+/* **القسمُ الخطِر بنغمةٍ واحدة كالنافذة الخطِرة** (محمد ٢٠٢٦-١١-١٨: «الكونتينر أحمر، والزرُّ والحقلُ أزرق»): ما يحمل الفعلَ أحمر
+   (رمزُ الحقل، والخيارُ المختار، والزرُّ الأساسيّ)، وما سواه رماديٌّ محايد لا أزرق — القاعدةُ نفسُها في `DESIGN.md` */
+html:not([data-theme="dark"]) .ad-sec[data-tone="bad"] {
+  --ad-hair: color-mix(in oklab, var(--neutral-700) 14%, transparent);
+  --ad-ink-2: var(--neutral-600);
+  --ad-ink-3: var(--neutral-500);
+  --ad-edge-ctl: var(--neutral-500);
+  --fld-accent: var(--neutral-600);
+}
+html[lang] .ad-sec[data-tone="bad"] .fld .fld-lic { color: var(--ad-bad); }
+html[lang] .ad-sec[data-tone="bad"] .fld:is(:focus-within, :has(.asel-open)) .fld-lic { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
+.ad-sec[data-tone="bad"] .ad-switch-seg[aria-pressed="true"] { background: var(--ad-dlg-light), var(--ad-bad-solid); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
+.ad-sec[data-tone="bad"] .ad-btn-fill { background: var(--ad-dlg-light), var(--ad-bad-solid); }
+.ad-sec[data-tone="bad"] .ad-btn-fill:hover { background: var(--ad-dlg-light), var(--ad-bad-solid-hover); }
 /* لا زرَّ هجينًا هنا: كان الزرُّ الهادئ يُصبَغ ختمُه بالأحمر داخل هذا القسم فصار شكلًا ثالثًا بين الشرح والخطر (محمد ٢٠٢٦-١١-٠٥:
    «التفاصيل» و«خروج» «كلاهما أحمر» بشكلين). شكلُ الزرّ من معناه لا من موضعه، وقسمٌ لا فعلَ خطرٍ فيه لا يلبس الأحمر أصلًا */
 
@@ -3123,6 +3146,21 @@ button.ad-line-hit[aria-current] .ad-line-ic { background: var(--ad-pick); color
   font-family: var(--font-body);
 }
 .mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-bad-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
+/* **النافذةُ الخطِرة بنغمةٍ واحدة** (محمد ٢٠٢٦-١١-١٧، اختار «ب»: «نافذةٌ حمراء وحقولُها زرقاء غيرُ جميل… إن كان رماديًّا فمحايد،
+   أمّا أزرق فلا»): ما يحمل القرارَ أحمر (الرأس، والخيارُ المختار، ورمزُ الحقل، وزرُّ التأكيد)، وما سواه محايدٌ رماديّ لا أزرق —
+   حدودُ الحقول، والوصف، وتلميحُ الحقل، والنصّ. فتُعاد أدوارُ الحبر والحدّ داخل النافذة إلى الرماديّ (في النهار؛ والليلُ حبرُه فولاذيٌّ محايد أصلًا) */
+html:not([data-theme="dark"]) .mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) {
+  --ad-hair: color-mix(in oklab, var(--neutral-700) 14%, transparent);
+  --ad-ink-head: var(--neutral-900);
+  --ad-ink: var(--neutral-800);
+  --ad-ink-2: var(--neutral-600);
+  --ad-ink-3: var(--neutral-500);
+  --ad-edge-ctl: var(--neutral-500);
+  --fld-accent: var(--neutral-600);
+}
+html[lang] .mdl-tone-danger .fld .fld-lic { color: var(--ad-bad); }
+html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
+.mdl-tone-danger .ad-switch-seg[aria-pressed="true"] { background: var(--ad-dlg-light), var(--ad-bad-solid); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
 .mdl.mdl-tone-warning:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-warn-solid); --win-ink: var(--ad-warn-ink); --win-ink-2: color-mix(in oklab, var(--ad-warn-ink) 80%, transparent); }
 .mdl.mdl-tone-success:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-ok-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
 /* النغمةُ في الرأس وحده: حقولُ النافذة النغميّة لا تُصبغ بها (كانت حقولُ «إنهاء العضوية» ورديّة) */
@@ -3675,7 +3713,7 @@ html[lang] .fld .fld-wrap .fld-in:disabled { background: none; color: var(--ad-i
   /* **أفعالُ التذكرة على الجوّال صفٌّ بعرضها تقتسمه أزرارُها بالسويّة** (محمد ٢٠٢٦-١١-٠٧: زرُّ «الإعدادات» وحده في طرفٍ لا يبلغه
      الإبهامُ بيسر، ويريد قاعدةً واحدةً في كلّ صفحة سجلّ). كان الأساسيُّ وحده يمتدّ، والثانويُّ يقف صغيرًا في الطرف */
   .ad-rtk-acts { inline-size: 100%; }
-  .ad-rtk-acts > .ad-btn { flex: 1 1 0; }
+  .ad-rtk-acts > .ad-btn { flex: 1 1 0; min-inline-size: max-content; } /* يلتفّ إلى سطرٍ ثانٍ ولا يُقصّ اسمُه («تعديل الترشّح» قُصّ بجانب زرّ الرجوع، ١١-١٩) */
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -4344,10 +4382,11 @@ body:has(.ash-content) .ad-pp-panel .asel-oic > .av, body:has(.ash-content) .ad-
 /* **المقاطع** (الجولةُ الثانية ٢٠٢٦-١١-١٣، «غير راضٍ عنه جدًّا»): كان `1.5px dashed` رماديًّا — نقاطُ المتصفّح قصيرةٌ كثيفة، فبدا
    الحدُّ خطًّا مهزوزًا لا «مقطّعًا». فصار رسمًا: مقاطعُ 12 وفراغاتُ 8 مستديرةُ الأطراف بلون الفولاذ (`--ad-ring`) نصفَ شدّته، تشتدّ تحت المؤشّر، وتمشي
    حين يُسحب ملفٌّ فوقها */
-.ad-drop-edge { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; overflow: visible; pointer-events: none; }
-.ad-drop-edge rect {
+/* **وصار قطعةَ الهويّة الواحدة** (`DashEdge`، `_ad/dash.tsx`، ٢٠٢٦-١١-١٩): كلُّ حدٍّ متقطّعٍ في الموقع بهذه المقاطع، ولونُه `--dz-edge` من حاويه */
+.ad-dash { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; overflow: visible; pointer-events: none; }
+.ad-dash rect {
   x: 0.75px; y: 0.75px; width: calc(100% - 1.5px); height: calc(100% - 1.5px); rx: calc(var(--ad-r-ctl) - 0.75px); /* الخطُّ داخلَ المنطقة لا نصفُه خارجها */
-  fill: none; stroke: var(--dz-edge); stroke-width: 1.5; stroke-linecap: round;
+  fill: none; stroke: var(--dz-edge, var(--ad-edge-ctl)); stroke-width: var(--dz-w, 1.5); stroke-linecap: round;
   stroke-dasharray: var(--dz-dash, var(--space-3)) var(--dz-gap, var(--space-2)); /* يضبطهما `AdUpload` على طول الحدّ */
   transition: stroke var(--ad-dur-press) var(--ad-ease-out);
 }
@@ -4377,7 +4416,7 @@ body:has(.ash-content) .ad-pp-panel .asel-oic > .av, body:has(.ash-content) .ad-
 @media (hover: none) { .ad-drop-mouse { display: none; } .ad-drop-touch { display: inline; } }
 /* يُسحب ملفٌّ فوقها: المقاطعُ بلون الحلقة وتمشي، والأرضُ أشدُّ صبغة */
 .ad-up[data-drag] .ad-drop { --dz-edge: var(--ad-ring); background: color-mix(in oklab, var(--ad-ring) 10%, transparent); }
-.ad-up[data-drag] .ad-drop-edge rect { stroke-width: 2; animation: ad-dz-walk 0.9s linear infinite; }
+.ad-up[data-drag] .ad-dash rect { stroke-width: 2; animation: ad-dz-walk 0.9s linear infinite; }
 @keyframes ad-dz-walk { to { stroke-dashoffset: calc(var(--dz-dash, var(--space-3)) + var(--dz-gap, var(--space-2))); } }
 .ad-up[data-busy] .ad-drop { --dz-edge: var(--ad-ring); }
 /* السطرُ الثاني يُخفى ولا يُنزع حين يُسحب ملفٌّ أو يُرفع، فلا تصغر المنطقةُ تحت المؤشّر */
@@ -4385,7 +4424,7 @@ body:has(.ash-content) .ad-pp-panel .asel-oic > .av, body:has(.ash-content) .ad-
 .ad-up[data-err] .ad-drop { --dz-edge: var(--ad-bad); background: color-mix(in oklab, var(--ad-bad) 4%, transparent); }
 .ad-up[data-err] .ad-drop-ic { background: var(--ad-bad-soft); color: var(--ad-bad); }
 .ad-up[data-err] .ad-drop-h { color: var(--ad-bad); }
-@media (prefers-reduced-motion: reduce) { .ad-up[data-drag] .ad-drop-edge rect { animation: none; } .ad-drop-ic { transition: none; translate: none !important; } }
+@media (prefers-reduced-motion: reduce) { .ad-up[data-drag] .ad-dash rect { animation: none; } .ad-drop-ic { transition: none; translate: none !important; } }
 /* الإضافةُ في آخر المعرض أخفضُ: تحت سطور الصور لا بدلَها */
 .ad-up[data-add] .ad-drop { min-block-size: calc(var(--space-16) * 2); padding-block: var(--space-6); }
 /* الشعارُ المربّعُ في جانب حقوله: مربّعٌ بقدّ معاينته */
@@ -5373,4 +5412,58 @@ html[lang] .ad-rich ol { list-style: decimal; }
 
 /* رقمُ المادّة في صفحة النظام العامّة داكنةً (سطرٌ مؤقّت حتى تُنقل الصفحةُ إلى الهويّة): كان رقمًا فاتحًا على رقاقةٍ فاتحة، تباينُه 1:1 */
 [data-theme="dark"] .reg-no, [data-theme="dark"] .reg-hit-no { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
+
+
+/* ═══ نوافذُ صفحة الانتخاب (`_ad/rooms/ElectionWindows.tsx`، ٢٠٢٦-١١-١٧) ═══
+   البيانُ يُقرأ ولا يُكتب: تسميةٌ صغيرةٌ فوق نصٍّ بوزن القراءة (لغةُ سطر «حسابي»)، والملفُّ صندوقٌ تحته. والملاحظةُ سطرٌ هادئٌ بحبر الشرح */
+.ad-elw-note { margin: 0; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+/* تفصيلُ الأصوات: عنوانُ المجموعة ثمّ تنبيهُ الأمانة ثمّ السطور، بفجوة الغرفة */
+.ad-elw-votes { display: grid; gap: var(--space-4); }
+/* **صفحةُ الترشّح** (محمد ٢٠٢٦-١١-١٧: «نختار باء»): تذكرتُها، ثمّ البيانُ والملفُّ في الصدر، والقرارُ في جانبٍ يلازمك على السعة */
+.ad-elw-pg { display: grid; gap: var(--space-5); }
+.ad-elw-pg-cols { display: grid; gap: var(--space-5); align-items: start; }
+@media (min-width: 46rem) {
+  .ad-elw-pg-cols { grid-template-columns: minmax(0, 1fr) calc(var(--space-24) * 3.6); }
+  .ad-elw-pg-side { position: sticky; inset-block-start: var(--space-5); }
+}
+.ad-elw-pg-main, .ad-elw-pg-side { display: grid; gap: var(--space-5); align-content: start; min-inline-size: 0; }
+.ad-elw-decide { display: grid; gap: var(--space-4); align-content: start; }
+/* أسبابُ الاعتذار: سطورُ «حسابي» داخل قسم القرار، بلا حدّ القسم حولها */
+.ad-elw-why { margin: 0; padding: 0; border-radius: var(--ad-r-ctl); box-shadow: inset 0 0 0 1px var(--ad-rule); overflow: hidden; }
+/* نصُّ البيان في قسمه: بخطّ القراءة وعرضِها */
+.ad-elw-stmt-t { margin: 0; max-inline-size: 42rem; font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink); white-space: pre-line; text-wrap: pretty; }
+.ad-elw-pg-acts { display: grid; }
+.ad-elw-pg-acts-2 { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+/* **ورقةُ التصويت** (رحلةُ العضو ع٨؛ اعتمد محمد ٢٠٢٦-١١-١٩ «كرتَ الشخص» بعد سبعة أشكال): كرتُ الشخص من الهويّة لكلّ مرشّح (`AdCard face`)،
+   والشبكةُ ثلاثةٌ في العريض واثنان في اللوحيّ وواحدٌ في الجوّال — ولا سحبَ أفقيّ («مو كل واحد بيفهم إنه تقدر تسحب»)، و`auto-fit` لا يحجز عمودًا
+   فارغًا لمرشّحٍ غير موجود. والمختارُ شارةٌ على حدّ الوجه (قطعةُ الكرت نفسُه)، فلا شيءَ هنا يرسمه */
+/* **نتيجةُ المقعد** (`SeatResultRoom`، ع١١): كرتُ الشخص وحده في وسط الغرفة بعرض كرتٍ من كروت الورقة، لا ممدودًا بعرضها */
+.ad-res { display: grid; justify-items: center; }
+.ad-res > .ad-card-wrap { inline-size: min(100%, calc(var(--space-24) * 3.6)); }
+/* بخصوصيّة قاعدة كروت الوجوه العامّة (`:has(> .ad-card-wrap[data-face])`، تملأ بـauto-fill) وفوقها: كانت تغلبها فيبقى عمودٌ فارغٌ بجانب
+   مرشّحَين (محمد ٢٠٢٦-١١-١٩: «مشكلة الفراغ») */
+.ad-grid.ad-blt-people:has(> .ad-card-wrap) { grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-24) * 3.3)), 1fr)); }
+/* البيانُ والملفُّ في ورقته بحدٍّ مستقيمٍ من البداية تحت الاسم الموسَّط (لا يُوسَّط نصٌّ طويل) */
+.ad-blt-pc { display: grid; gap: var(--space-4); justify-self: stretch; margin-block-start: var(--space-3); text-align: start; }
+/* **البيانُ في الكرت مدخلُه لا كلُّه** (محمد: «بودّي يقلّ عدد الأسطر حتى على الحاسوب»): خمسةُ أسطرٍ في العريض وأربعةٌ في الجوّال، بالقصّ نفسه
+   للمرشّحين جميعًا، و«قراءة البيان كاملًا» تفتحه في نافذته. فتسع الشاشةُ المرشّحين وشريطَ الختم معًا */
+.ad-blt-pc-stmt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+@media (max-width: 40rem) { .ad-blt-pc-stmt { -webkit-line-clamp: 4; } }
+/* شريطُ الختم: يقول الاختيارَ بوجهه واسمه قبل «ختم صوتي». يلازم قاعَ الشاشة في الجوّال وحده (الكروتُ فيه تتتابع لأسفل)؛ وفي العريض يقف تحتها */
+.ad-blt-dock { position: relative; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-lift); }
+.ad-blt-dock-t { display: grid; flex: 1; min-inline-size: 0; }
+.ad-blt-dock small { font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
+.ad-blt-dock b { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); overflow-wrap: anywhere; }
+.ad-blt-dock:not([data-on]) b { color: var(--ad-ink-3); }
+@media (max-width: 40rem) { .ad-blt-dock { position: sticky; inset-block-end: var(--space-3); z-index: var(--ad-z-head); } }
+/* شريطُ المختبر وحده (لا يُرفع): مقاعدُ السيناريو */
+.ad-elw-lab { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-8); font-size: var(--ad-t-meta); }
+.ad-elw-lab a { padding: var(--space-1) var(--space-3); border-radius: var(--ad-r-full); color: var(--ad-ink-3); box-shadow: inset 0 0 0 1px var(--ad-rule); text-decoration: none; }
+.ad-elw-lab a[aria-current] { color: var(--ad-ink); font-weight: var(--ad-w-bold); }
+
+/* ── قصاصاتُ الفرح (`AdConfetti`، ٢٠٢٦-١١-١٩): لوحةٌ فوق النافذة لا تُنقَر. ألوانُها أزهى درجات الهويّة (محمد: «زاهية أكثر»):
+   الصلبُ والكحليّ وأخضرُ النجاح، والذهبيُّ من سُلّم التنبيه لأنّه لونُ الفرح الذي لا يملكه سُلّمٌ غيره ── */
+.ad-confetti { position: fixed; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; z-index: var(--z-toast);
+  --cf-1: var(--steel-400); --cf-2: var(--navy-500); --cf-3: var(--success-300); --cf-4: var(--success-500); --cf-5: var(--warning-300); }
+:root[data-theme="dark"] .ad-confetti { --cf-1: var(--steel-300); --cf-2: var(--navy-400); }
 

@@ -6,7 +6,10 @@ import { getElectionManager } from "@/lib/elections/authz";
 // فيُنادى الموزِّعُ بعد كلّ فعلٍ ناجح ليصل الإشعارُ في الحال لا بعد دقيقة.
 import { kickDispatch } from "@/lib/notifications/emit";
 import { createClient } from "@/lib/supabase/server";
-import { getAppointableMembers, type AppointOption } from "./data";
+import { getAppointableMembers, getLiveCandidacies, type AppointOption, type LiveCandidacy } from "./data";
+import { getCurrentAdmin } from "@/lib/auth";
+import { isClubPresident } from "@/lib/elections/president";
+import { getCandidacyBan, type CandidacyBan } from "./member-data";
 import { statementError } from "./vocab";
 import { refreshStructurePage } from "@/lib/structurePage";
 
@@ -30,7 +33,7 @@ function scopeError(input: CreateElectionInput): string | null {
     if (input.committeeId) return "منسّق القسم يُنتخَب على مستوى القسم لا اللجنة.";
   } else if (input.roleName === "committee_leader" || input.roleName === "deputy_committee_leader") {
     if (!input.committeeId) return "اختر اللجنة المستهدَفة.";
-    if (input.departmentId) return "هذا المنصب يُنتخَب على مستوى اللجنة لا القسم.";
+    if (input.departmentId) return "هذا المقعد يُنتخَب على مستوى اللجنة لا القسم.";
   } else {
     return "منصبٌ غير قابل للانتخاب.";
   }
@@ -40,11 +43,11 @@ function scopeError(input: CreateElectionInput): string | null {
 /** رسائل أخطاء الإنشاء — قيود القاعدة وتريغراتها إلى عربيّة نظيفة. */
 function mapCreateError(error: { code?: string; message?: string } | null): string {
   if (!error) return "تعذّر فتح الانتخاب.";
-  if (error.code === "23505") return "يوجد انتخابٌ نشطٌ لهذا المنصب بالفعل.";
-  if (error.code === "23514") return "نطاقٌ غير صالح لهذا المنصب.";
+  if (error.code === "23505") return "يوجد انتخابٌ نشطٌ لهذا المقعد بالفعل.";
+  if (error.code === "23514") return "نطاقٌ غير صالح لهذا المقعد.";
   // تريغرات النظام ترفع رسائل عربيّة من عندنا (منصب مشغول)
   if (error.code === "P0001" && error.message) return error.message;
-  return "تعذّر فتح الانتخاب. تحقّق من أنّ المنصب فارغٌ ولا انتخاب نشط له.";
+  return "تعذّر فتح الانتخاب. تحقّق من أنّ المقعد فارغٌ ولا انتخاب نشط له.";
 }
 
 /**
@@ -233,6 +236,18 @@ export async function openVoting(electionId: string, votingEndIso: string): Prom
 }
 
 /** أعضاءُ نطاق المقعد — تُحمَّل عند فتح نافذة التكليف (الحارس قدراتيّ قبل القراءة). */
+/**
+ * ترشّحاتُ عضوٍ القائمة، لسؤال «أهذا النقلُ بطلبه؟» قبل إسناد منصبه أو إزالته أو نقله في دفعة (المادة 2).
+ * لمن يملك تعيين المناصب (مفتاحا نافذة الهيكلة نفسُهما)، والحكمُ بعده في القاعدة (`p_on_request`).
+ */
+export async function loadLiveCandidacies(userId: string): Promise<{ items: LiveCandidacy[]; error: string | null }> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !admin.caps.some((c) => c === "assign_positions" || c === "assign_unit_members")) {
+    return { items: [], error: "لا تملك صلاحية إدارة الهيكلة." };
+  }
+  return getLiveCandidacies(userId);
+}
+
 export async function loadAppointOptions(electionId: string): Promise<{ members: AppointOption[]; error: string | null }> {
   const mgr = await getElectionManager();
   if (!mgr) return { members: [], error: "لا تملك صلاحية إدارة الانتخابات." };
@@ -350,7 +365,7 @@ export async function openRevote(electionId: string, votingEndIso: string, reaso
 
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch();
-  return { ok: true, message: "أُعيد فتح التصويت، وأُبلغ الناخبون." };
+  return { ok: true, message: "أُعيد فتح التصويت، وأُبلغ المصوّتون." };
 }
 
 /**
@@ -372,6 +387,13 @@ export async function banFromCandidacy(userId: string, reason: string, untilDate
 }
 
 /** رفع الحرمان (المادة 11): لرئيس أدِيب وحده، بسببٍ مكتوب. */
+/** الحرمانُ القائمُ على عضو، لنافذة رئيس أدِيب في «أعضاء أدِيب» (المادة ١١؛ الهويّة ٢٠٢٦-١١-١٧). لرئيس أدِيب وحده. */
+export async function loadCandidacyBan(userId: string): Promise<{ ban: CandidacyBan | null; error: string | null }> {
+  const admin = await getCurrentAdmin();
+  if (!admin || !(await isClubPresident(admin.id))) return { ban: null, error: "الحرمان من الترشّح لرئيس أدِيب وحده." };
+  return getCandidacyBan(userId);
+}
+
 export async function liftCandidacyBan(banId: number, reason: string): Promise<ElectionResult> {
   if (!reason?.trim() || reason.trim().length < 10) return { ok: false, message: "اكتب سبب رفع الحرمان (10 أحرف على الأقلّ)." };
   const sb = await userClient();
@@ -462,10 +484,10 @@ export async function requestFreeze(candidateId: string, reason: string, answerW
   const { error } = await sb.rpc("request_candidacy_freeze", {
     p_candidate: candidateId, p_reason: reason.trim(), p_answer_window: answerWindow, p_decide_window: decideWindow,
   });
-  if (error) return { ok: false, message: rpcMessage(error, "تعذّر طلب التجميد.") };
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر طلب الاستبعاد.") };
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch();
-  return { ok: true, message: "قُيّد طلب التجميد." };
+  return { ok: true, message: "قُيّد طلب الاستبعاد." };
 }
 
 /** موافقة القائد على طلب التجميد أو ردّه بسبب. */
@@ -473,10 +495,10 @@ export async function approveFreeze(freezeId: number, approve: boolean, reason?:
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
   const { error } = await sb.rpc("approve_candidacy_freeze", { p_freeze: freezeId, p_approve: approve, p_reason: reason?.trim() || null });
-  if (error) return { ok: false, message: rpcMessage(error, "تعذّر حسم طلب التجميد.") };
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر حسم طلب الاستبعاد.") };
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch();
-  return { ok: true, message: approve ? "جُمّد الترشّح، وبدأت مهلة الإجابة." : "رُدّ طلب التجميد." };
+  return { ok: true, message: approve ? "أُمهل المرشّح ليُجيب، وبدأت مهلته." : "رُدّ طلب الاستبعاد." };
 }
 
 /** إجابة المرشّح المجمَّد في مهلته. */
@@ -495,10 +517,10 @@ export async function decideFreeze(freezeId: number, outcome: "lift" | "exclude"
   const sb = await userClient();
   if (!sb) return { ok: false, message: "سجّل الدخول ثمّ أعِد المحاولة." };
   const { error } = await sb.rpc("decide_candidacy_freeze", { p_freeze: freezeId, p_outcome: outcome, p_reason: reason.trim() });
-  if (error) return { ok: false, message: rpcMessage(error, "تعذّر حسم التجميد.") };
+  if (error) return { ok: false, message: rpcMessage(error, "تعذّر حسم الاستبعاد.") };
   revalidatePath("/dashboard/elections", "layout");
   kickDispatch();
-  return { ok: true, message: outcome === "lift" ? "رُفع التجميد." : "استُبعد المرشّح." };
+  return { ok: true, message: outcome === "lift" ? "بقي الترشّح." : "استُبعد المرشّح." };
 }
 
 /* ══ السجلّ ═══════════════════════════════════════════════════════════

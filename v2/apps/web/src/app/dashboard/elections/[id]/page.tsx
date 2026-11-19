@@ -1,11 +1,10 @@
-import { Alert } from "@adeeb/design-system";
 import { notFound } from "next/navigation";
 import { getElectionDetail, getElectionLog, getVoteDetail } from "../data";
-import { ElectionDetailView } from "../ElectionDetailView";
+import { ElectionRecordView } from "./ElectionRecordView";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canManageElection } from "@/lib/elections/authz";
-import { AccessDenied } from "../../_shell/AccessDenied";
-import { PageHeader } from "../../_components/PageHeader";
+import { exclusionViewer } from "@/lib/elections/exclusion";
+import { AdRoomDenied, AdRoomError } from "@/app/_ad/states";
 import { requestNow } from "@/app/_ad/now";
 
 export default async function ElectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +13,7 @@ export default async function ElectionDetailPage({ params }: { params: Promise<{
   // ومشرف اللجنة في انتخاب قيادتها ونيابتها (المادة ٤). وللمديرين وحدهم ثلاثة: التعيين والتكليف،
   // ومن صوّت لمن، والنتائج قبل إغلاق التصويت (المادتان ٥ و٢١).
   const me = await getCurrentAdmin();
-  if (!me?.caps.includes("view_election_candidates")) return <AccessDenied name={me?.fullName ?? null} scope="room" />;
+  if (!me?.caps.includes("view_election_candidates")) return <AdRoomDenied title="الانتخابات" navPath="/dashboard/elections" what="الانتخابات" desc="هذه الصفحة لمن مُنحت له قدرة «الاطّلاع على المرشّحين» أو إدارة الانتخابات." />;
   const isManager = !!me.caps.includes("manage_elections");
 
   const { id } = await params;
@@ -22,24 +21,19 @@ export default async function ElectionDetailPage({ params }: { params: Promise<{
   // السجلُّ يُجلَب مع التفصيل لا بنداءٍ من المتصفّح: الصفحةُ تصل محمولةً بما يُقرأ فيها،
   // وسطحاه (ذيلُ الصفحة ونافذةُ المرشّح) يقرآن حِملًا واحدًا. وعطبُه لا يُسقط الصفحة.
   // وتفصيلُ الأصوات لإدارة الانتخابات وحدها (القاعدةُ ترفض غيرَها أصلًا)، فلا يُطلَب للمطّلِع
-  const [{ election, error }, logRes, voteRes] = await Promise.all([
+  const [{ election, error }, logRes, voteRes, viewer] = await Promise.all([
     getElectionDetail(id, { liveTotals: isManager }),
     getElectionLog(id),
     isManager ? getVoteDetail(id) : Promise.resolve({ rows: [], error: null }),
+    // قائدُ الموارد يرى في رأس الصفحة طلبَ الاستبعاد الذي ينتظره (محمد ٢٠٢٦-١١-١٩: «كيف ستعرف القائدة أن تدخل على هذا المرشّح؟»)
+    exclusionViewer(me.id),
   ]);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader title="الانتخابات" />
-        <Alert tone="warning" title="تعذّر جلب الانتخاب">{error}</Alert>
-      </>
-    );
-  }
+  if (error) return <AdRoomError title="الانتخاب" navPath="/dashboard/elections" what="الانتخاب" message={error} />;
   if (!election) notFound();
 
   return (
-    <ElectionDetailView
+    <ElectionRecordView
       election={election}
       log={logRes.events}
       logError={logRes.error}
@@ -48,6 +42,7 @@ export default async function ElectionDetailPage({ params }: { params: Promise<{
       readOnly={!canManage}
       canAppoint={isManager}
       liveTotals={isManager}
+      hrLeader={viewer.isHrLeader}
       serverNow={await requestNow()}
     />
   );

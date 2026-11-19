@@ -900,8 +900,10 @@ export type AdFace = {
 };
 
 export function AdCard({
-  cover, seed, stub, chips, title, href, onOpen, meta, figures, foot, face, paper, band,
+  cover, seed, stub, chips, title, href, onOpen, meta, figures, foot, face, paper, band, extra,
 }: {
+  /** ما يُقرأ في ورقة الكرت بعد سطوره (٢٠٢٦-١١-١٩): بيانُ المرشّح في ورقة التصويت — نصٌّ لا سطرُ معلومة */
+  extra?: ReactNode;
   /**
    * ما يُكتب على الكعب نفسِه: **رأسُ الغرفة حين يقودها الكرت في الجوّال** (`AdRoomBand`؛ اعتمده محمد ٢٠٢٦-١١-٠٥). يظهر في الضيّق
    * وحده حين يكون الكرتُ أوّلَ العمود الصاعد (`AdCols top`)، ويغيب لوحُ الغرفة؛ وفي المكتب اللوحُ في مكانه والكعبُ بلا كتابة.
@@ -977,6 +979,7 @@ export function AdCard({
             <h3 className="ad-card-title">{titleOf(title, href, onOpen)}</h3>
             {meta && meta.length > 0 && <AdMetaList meta={meta} />}
             {figures && figures.length > 0 && <AdFigureRow figures={figures} />}
+            {extra}
           </div>
           {foot ? <div className="ad-card-foot">{foot}</div> : null}
         </div>

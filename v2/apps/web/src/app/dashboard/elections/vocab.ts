@@ -36,10 +36,10 @@ export const deadlineRawOf = (e: { status: ElectionStatus; candidacyEndRaw: stri
  * و«تصويت جارٍ» يُستثنى فيبقى كاملًا في الكرت أيضًا: «جارٍ» وحدَه لفظٌ لا يقوم بنفسه.
  */
 export const STATUS_META: Record<ElectionStatus, { label: string; short: string; tone: "success" | "warning" | "danger" | "neutral" | "info"; live?: boolean }> = {
-  candidacy_open:   { label: "ترشّح مفتوح", short: "مفتوح", tone: "success", live: true },
-  candidacy_closed: { label: "ترشّح مغلق",  short: "مغلق",  tone: "warning" },
-  voting_open:      { label: "تصويت جارٍ",  short: "تصويت جارٍ", tone: "success", live: true },
-  voting_closed:    { label: "تصويت مغلق",  short: "مغلق",  tone: "warning" },
+  candidacy_open:   { label: "الترشّح مفتوح", short: "مفتوح", tone: "success", live: true },
+  candidacy_closed: { label: "الترشّح مغلق", short: "مغلق",  tone: "warning" },
+  voting_open:      { label: "التصويت مفتوح", short: "تصويت جارٍ", tone: "success", live: true },
+  voting_closed:    { label: "التصويت مغلق", short: "مغلق",  tone: "warning" },
   completed:        { label: "مكتمل",       short: "مكتمل", tone: "neutral" },
   cancelled:        { label: "ملغى",        short: "ملغى",  tone: "danger" },
 };
@@ -53,8 +53,8 @@ export const STATUS_META: Record<ElectionStatus, { label: string; short: string;
  *   • «إعلان الفائز» يستلزم اختيار مرشّح، والقاعدة تفرض أن يكون الأعلى وزنًا.
  */
 export const STATUS_OPS = {
-  closeCandidacy:  { from: ["candidacy_open"], to: "candidacy_closed", label: "إغلاق الترشّح" },
-  reopenCandidacy: { from: ["candidacy_closed"], to: "candidacy_open", label: "إعادة فتح الترشّح" },
+  closeCandidacy:  { from: ["candidacy_open"], to: "candidacy_closed", label: "إغلاق باب الترشّح" },
+  reopenCandidacy: { from: ["candidacy_closed"], to: "candidacy_open", label: "إعادة فتح باب الترشّح" },
   closeVoting:     { from: ["voting_open"], to: "voting_closed", label: "إغلاق التصويت" },
   cancel:          { from: ["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"], to: "cancelled", label: "إلغاء الانتخاب" },
 } as const;
@@ -82,11 +82,11 @@ export type CandidateStatus = "pending" | "approved" | "rejected" | "needs_edit"
 export const CANDIDATE_STATUS_META: Record<CandidateStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" | "info" }> = {
   pending:    { label: "قيد المراجعة",  tone: "warning" },
   approved:   { label: "معتمَد",        tone: "success" },
-  needs_edit: { label: "يحتاج تعديلًا", tone: "warning" },
-  rejected:   { label: "مرفوض",         tone: "danger" },
-  withdrawn:  { label: "منسحب",         tone: "neutral" },
-  frozen:     { label: "مجمَّد",        tone: "warning" },
-  ended:      { label: "منتهٍ",          tone: "neutral" },
+  needs_edit: { label: "مطلوبٌ تعديلُه", tone: "warning" },
+  rejected:   { label: "اعتُذر عنه",    tone: "danger" },
+  withdrawn:  { label: "انسحب",         tone: "neutral" },
+  frozen:     { label: "مُمهَل ليُجيب",  tone: "warning" },
+  ended:      { label: "انتهى ترشّحه",   tone: "neutral" },
 };
 
 /**
@@ -96,7 +96,7 @@ export const CANDIDATE_STATUS_META: Record<CandidateStatus, { label: string; ton
  */
 export const DECISION_VERB: Partial<Record<CandidateStatus, string>> = {
   approved: "اعتُمد",
-  rejected: "رُفض",
+  rejected: "اعتُذر عنه",
   needs_edit: "طُلب تعديله",
 };
 
@@ -104,9 +104,10 @@ export const DECISION_VERB: Partial<Record<CandidateStatus, string>> = {
 export function decisionLine(status: CandidateStatus, by: string | null): string {
   const verb = DECISION_VERB[status];
   // حكمٌ قائمٌ بلا صاحبٍ معروف: صفٌّ قديمٌ سبق تسجيلَ المراجع — يُقال الحكمُ ولا يُخترَع له فاعل
-  if (verb) return by ? `${verb} بواسطة ${by}` : verb;
+  // «بقرار فلان» لا «بواسطة» (المواصفة §٦، ٢٠٢٦-١١-١٧)
+  if (verb) return by ? `${verb} بقرار ${by}` : verb;
   if (status === "withdrawn") return "انسحب قبل أن يُقرَّر فيه";
-  if (status === "frozen") return "مجمَّدٌ بقرار إدارة الموارد البشرية";
+  if (status === "frozen") return "مُمهَلٌ ليُجيب قبل استبعاده";
   if (status === "ended") return "انتهى ترشّحه";
   return "لم يُقرَّر فيه بعد";
 }

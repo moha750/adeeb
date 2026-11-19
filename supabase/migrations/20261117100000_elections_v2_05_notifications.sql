@@ -16,6 +16,9 @@
 --       صارت لا تفعل شيئًا، إلا للحرمان ورفعه (لا انتخاب لهما في السجلّ) فتطلق واقعتهما.
 --   (٤) محفّزا الإشعار القديمان على `election_candidates` يُسقَطان مع دالّتيهما: ما كانا يقولانه
 --       يقوله السجلّ الآن.
+--   (٥) إشعارٌ واحدٌ في الجرس لمن فاز أو عُيّن (قرار محمد 2026-11-17): «فزتَ بمقعد …، وأُسند إليك المنصب».
+--       فإشعار «أُسند إليك منصب» الذي تطلقه `assign_position` يحمل `viaElection` حين يأتي الإسناد من
+--       الانتخاب، فلا يصل الجرس، ويصل بريدُه وحده: البريد هو السجلّ الرسميّ للمنصب.
 --
 -- لا يتّصل بخدمةٍ خارجيّة فورًا: الواقعة صفٌّ في `notification_events`، يوزّعه الموزّع بعد الختام.
 -- ولا حقائقَ فيها تكشف من صوّت لمن: من بطل صوته يُعرف لحظة التوزيع من عنوانه، لا من الواقعة.
@@ -231,3 +234,47 @@ drop trigger trg_notify_candidate_status_change on public.election_candidates;
 drop trigger trg_notify_candidate_submitted on public.election_candidates;
 drop function public.notify_candidate_status_change();
 drop function public.notify_candidate_submitted();
+
+-- ── ٥. الإسناد من الانتخاب: بريدُ المنصب وحده ────────────────────────────────────────────────
+-- `assign_position` تضع في واقعة «أُسند إليك منصب» علامةَ `viaElection` إن كان الإعداد مرفوعًا،
+-- والدليلُ يحجبها عن الجرس ويُبقي بريدها. ويرفع الإعدادَ بابا الانتخاب وحدهما حول الإسناد ثم يُنزلانه.
+do $patch$
+declare
+  rep text[][] := array[
+    array['public.assign_position(uuid,uuid,text,integer,integer,boolean,text,boolean)',
+          '    perform notify_event(''position.assigned'',' || chr(10)
+          || '      _position_facts(v_role_name, p_committee, p_department)' || chr(10)
+          || '        || jsonb_build_object(' || chr(10)
+          || '             ''userId'', p_user,',
+          '    perform notify_event(''position.assigned'',' || chr(10)
+          || '      _position_facts(v_role_name, p_committee, p_department)' || chr(10)
+          || '        || jsonb_build_object(' || chr(10)
+          || '             ''userId'', p_user,' || chr(10)
+          || '             -- الإسنادُ بالفوز أو بالتعيين على مقعدٍ متعثّر: إشعارُه في الجرس من الانتخاب، فهذا بريدٌ وحده.' || chr(10)
+          || '             ''viaElection'', coalesce(current_setting(''adeeb.via_election'', true), '''') = ''on'','],
+    array['public.auto_grant_winner_role()',
+          '  v_result := assign_position(',
+          '  perform set_config(''adeeb.via_election'', ''on'', true);' || chr(10) || '  v_result := assign_position('],
+    array['public.auto_grant_winner_role()',
+          '  perform set_config(''app.election_gate'', '''', true);',
+          '  perform set_config(''app.election_gate'', '''', true);' || chr(10)
+          || '  perform set_config(''adeeb.via_election'', '''', true);'],
+    array['public.appoint_seat_holder(uuid,uuid,text)',
+          '  v_res := assign_position(',
+          '  perform set_config(''adeeb.via_election'', ''on'', true);' || chr(10) || '  v_res := assign_position('],
+    array['public.appoint_seat_holder(uuid,uuid,text)',
+          '|| p_election::text || ''): '' || v_reason);',
+          '|| p_election::text || ''): '' || v_reason);' || chr(10)
+          || '  perform set_config(''adeeb.via_election'', '''', true);']];
+  d text;
+  i int;
+begin
+  for i in 1 .. array_length(rep, 1) loop
+    d := pg_get_functiondef(rep[i][1]::regprocedure);
+    if (length(d) - length(replace(d, rep[i][2], ''))) / length(rep[i][2]) <> 1 then
+      raise exception '%: لم يقع الاستبدال %', rep[i][1], i;
+    end if;
+    execute replace(d, rep[i][2], rep[i][3]);
+  end loop;
+end
+$patch$;

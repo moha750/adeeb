@@ -1,6 +1,6 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { getRunElections } from "../../member-data";
+import { getCandidacyBan, getRunElections } from "../../member-data";
 import { RunRoom } from "@/app/_ad/rooms/MemberElectionsRooms";
 import { RUN_ROOM } from "@/app/_ad/rooms/member-elections.meta";
 import { AdRoomError } from "@/app/_ad/states";
@@ -23,7 +23,8 @@ export default async function RunPage() {
   const me = await getCurrentAdmin();
   if (!me) return null; // لا يقع بعد مرور الحارس؛ لطمأنة الأنواع
 
-  const { items, error } = await getRunElections(me.id);
+  // المحرومُ يرى حرمانه مكانَ أبواب الترشّح (المادة ١١). وعطبُ قراءته لا يُسقط الباب: القاعدةُ ترفض ترشّحه على كلّ حال
+  const [{ items, error }, { ban }] = await Promise.all([getRunElections(me.id), getCandidacyBan(me.id)]);
   if (error) return <AdRoomError {...RUN_ROOM} message={error} />;
-  return <RunRoom items={items} serverNow={await requestNow()} view={await roomView(RUN_ROOM.viewKey, RUN_ROOM.defaultView)} />;
+  return <RunRoom items={items} ban={ban} serverNow={await requestNow()} view={await roomView(RUN_ROOM.viewKey, RUN_ROOM.defaultView)} />;
 }
