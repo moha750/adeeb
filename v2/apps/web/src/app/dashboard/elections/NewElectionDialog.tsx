@@ -55,7 +55,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
       open={open}
       onClose={close}
       title="فتح انتخابٍ جديد"
-      description="اختر المنصب المنتخَب ونطاقه. يبدأ الانتخاب بباب ترشّحٍ مفتوح."
+      description="اختر المقعد ونطاقه. يبدأ الانتخاب بباب ترشّحٍ مفتوح."
       size="sm"
       busy={pending}
       footer={
@@ -66,7 +66,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
       }
     >
       <Select
-        label="المنصب المنتخَب"
+        label="المقعد"
         icon={<Scales />}
         options={roleOptions}
         value={roleName}
@@ -76,7 +76,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
       {role ? (
         noScope ? (
           <Alert tone="warning" title="لا مناصب فارغة">
-            لا {role.scope === "department" ? "أقسام" : "لجان"} متاحة لهذا المنصب الآن: كلّها مشغولة أو لها انتخابٌ نشط.
+            لا {role.scope === "department" ? "أقسام" : "لجان"} متاحة لهذا المقعد الآن: كلّها مشغولة أو لها انتخابٌ نشط.
           </Alert>
         ) : (
           <>

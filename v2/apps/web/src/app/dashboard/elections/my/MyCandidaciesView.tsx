@@ -22,9 +22,9 @@ import type { CandidacyJourney as CJ, RecordTone } from "../member-data";
 const iconOf = (c: CJ) =>
   c.statusLabel === "فائز" ? <Trophy /> :
   c.statusLabel === "مرفوض" ? <XCircle /> :
-  c.statusLabel === "منسحب" ? <Prohibit /> :
+  c.statusLabel === "انسحب" ? <Prohibit /> :
   c.statusLabel === "لم يُوفَّق" ? <FlagCheckered /> :
-  c.statusLabel === "يحتاج تعديلًا" ? <PencilSimple /> :
+  c.statusLabel === "مطلوبٌ تعديلُه" ? <PencilSimple /> :
   c.statusLabel === "معتمَد" ? <Scales /> : <Clock />;
 
 /** نغمةُ الكرت من نغمة الحال — و«info» تصير `brand` (الكروت بلا نغمةٍ بهذا الاسم). */

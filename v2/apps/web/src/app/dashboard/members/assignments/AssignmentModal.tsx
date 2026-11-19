@@ -1,14 +1,17 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Field, IconButton, Modal, ModalSectionHeading, Select, type SelectOption } from "@adeeb/design-system";
-import { ArrowsLeftRight, Briefcase, CalendarBlank, CalendarCheck, Gavel, ListChecks, NotePencil, UserPlus, UserSwitch } from "@phosphor-icons/react";
+import { ArrowsLeftRight, Briefcase, CalendarBlank, CalendarCheck, Gavel, IdentificationBadge, ListChecks, NotePencil, UserPlus, UserSwitch } from "@phosphor-icons/react";
 import { ArrowLeft, Plus, Trash } from "@/app/_components/glyphs";
 import { positionLine } from "@/lib/positionLabel";
 import { clubDayKey } from "@/lib/dates";
 import { Avatar } from "../../_components/Avatar";
 import type { Holder, Position, RawCommittee, RawDept } from "../structure/model";
 import { COUNCIL_AR } from "./positionLabels";
+import { loadLiveCandidacies } from "@/app/dashboard/elections/actions";
+import type { LiveCandidacy } from "@/app/dashboard/elections/data";
+import { FormChoice } from "@/app/_ad/form";
 
 export type MemberOption = { id: string; name: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null; heldRole?: string | null };
 
@@ -20,7 +23,8 @@ export type AssignState =
   | { kind: "remove"; position: Position; holder: Holder };
 
 /** نقلةٌ واحدة كما تصل الخادم: عضوٌ إلى مقعد. */
-export type BatchMove = { userId: string; roleName: string; committeeId: number | null; departmentId: number | null };
+export type BatchMove = { userId: string; roleName: string; committeeId: number | null; departmentId: number | null;
+  /** إقرارُ المنفّذ: أهذا النقلُ بطلب صاحبه؟ (المادة ١٧) يُرسَل لمن له ترشّحٌ قائم وحده */ onRequest?: boolean };
 
 /**
  * ما يُرسَل: النقلاتُ كلُّها (الأولى مقعدُ النافذة)، و«يسري في» و«القرار أو السبب». و`simple` حين تكون
@@ -143,7 +147,8 @@ export function AssignmentModal({
   busy: boolean;
   onClose: () => void;
   onAssign: (v: AssignSubmit) => void;
-  onRemove: () => void;
+  /** `onRequest`: جوابُ «أهذه الإزالةُ بطلبه؟» لمن له ترشّحٌ قائم (المادة ١٧) */
+  onRemove: (onRequest?: boolean) => void;
 }) {
   const [pick, setPick] = useState("");
   // «وأين ينتقل؟»: لكلّ من يُزاح من مقعده مقعدُه الجديد (معرّفُ العضو ← مفتاحُ المقعد)
@@ -152,6 +157,10 @@ export function AssignmentModal({
   const [nextId, setNextId] = useState(1);
   const [effectiveOn, setEffectiveOn] = useState("");
   const [reason, setReason] = useState("");
+  // **«أبطلبه؟»** (المادة ١٧؛ الهويّة ٢٠٢٦-١١-١٧): لكلّ من تمسّه الخطّةُ ترشّحاتُه القائمة، وجوابُ المنفّذ. وبلا جوابٍ يُعدّ بغير طلبه
+  const [live, setLive] = useState<Record<string, LiveCandidacy[]>>({});
+  const [onReq, setOnReq] = useState<Record<string, "yes" | "no">>({});
+  const asked = useRef(new Set<string>());
 
   const p = state?.position ?? null;
   const isRemove = state?.kind === "remove";
@@ -218,6 +227,40 @@ export function AssignmentModal({
     return { rows, asks, pending, vacated, dupUser, dupSeat, incomplete };
   }, [primarySeat, pick, extras, dest, seatByKey, seats]);
 
+  // من تمسّه الخطّة: المنقولون كلُّهم، أو صاحبُ الإزالة. وترشّحاتُه تُقرأ مرّةً لكلٍّ حين يدخلها
+  const touched = useMemo(
+    () => (state?.kind === "remove" ? [state.holder.userId] : plan.rows.map((r) => r.userId).filter(Boolean)),
+    [state, plan.rows],
+  );
+  useEffect(() => {
+    for (const id of touched) {
+      if (asked.current.has(id)) continue;
+      asked.current.add(id);
+      loadLiveCandidacies(id).then((r) => setLive((l) => ({ ...l, [id]: r.items })));
+    }
+  }, [touched]);
+  const reqOf = (id: string) => (live[id]?.length ? onReq[id] === "yes" : undefined);
+  const candidacyAsk = (id: string) => {
+    const items = live[id];
+    if (!items?.length) return null;
+    const who = state?.kind === "remove" && state.holder.userId === id ? state.holder : people.get(id);
+    if (!who) return null;
+    const her = who.gender === "female";
+    const first = who.name.split(" ")[0];
+    const seatsText = items.map((i) => `«${i.position}»`).join(" و");
+    return (
+      <Fragment key={`cand-${id}`}>
+        <p className="org-modal-warn">{`لـ${first} ترشّحٌ قائم لـ${seatsText}. ${isRemove ? "أهذه الإزالة" : "أهذا النقل"} بطلب${her ? "ها" : "ه"}؟`}</p>
+        <FormChoice label={`أهذا بطلب ${first}؟`} value={onReq[id] ?? "no"} onChange={(v) => setOnReq((o) => ({ ...o, [id]: v as "yes" | "no" }))} disabled={busy}
+          items={[
+            { value: "yes", label: her ? "بطلبها، فينتهي ترشّحها" : "بطلبه، فينتهي ترشّحه" },
+            { value: "no", label: her ? "بغير طلبها، فيبقى" : "بغير طلبه، فيبقى" },
+          ]} />
+      </Fragment>
+    );
+  };
+  const asks = touched.map(candidacyAsk).filter(Boolean);
+
   const multi = plan.rows.length > 1 || extras.length > 0;
   const showSummary = isAssign && pick !== "" && (plan.rows.length > 1 || plan.vacated.length > 0);
   const scheduled = effectiveOn !== "";
@@ -237,10 +280,10 @@ export function AssignmentModal({
 
   const canSubmit = isAssign && pick !== "" && ready;
   const submit = () => {
-    if (isRemove) return onRemove();
+    if (isRemove) return onRemove(state?.kind === "remove" ? reqOf(state.holder.userId) : undefined);
     if (!canSubmit) return;
     onAssign({
-      moves: plan.rows.map((r) => ({ userId: r.userId, roleName: r.seat!.roleName, committeeId: r.seat!.committeeId, departmentId: r.seat!.departmentId })),
+      moves: plan.rows.map((r) => ({ userId: r.userId, roleName: r.seat!.roleName, committeeId: r.seat!.committeeId, departmentId: r.seat!.departmentId, onRequest: reqOf(r.userId) })),
       effectiveOn: scheduled ? effectiveOn : null,
       reason: reason.trim(),
       simple,
@@ -384,6 +427,8 @@ export function AssignmentModal({
                 <Button variant="ghost" size="sm" className="asgm-add" onClick={addExtra} disabled={busy}><Plus />إضافة تعيين آخر</Button>
               ) : null}
 
+              {asks.length ? <><ModalSectionHeading icon={<IdentificationBadge />} title="ترشّحٌ قائم" />{asks}</> : null}
+
               <ModalSectionHeading icon={<Gavel />} title="القرار" />
               {/* حقلا القرار في صفٍّ واحد، والسببُ سطرٌ واحد: القسمُ أخفُّ من الإسناد نفسِه (محمد ٢٠٢٦-١٠-٢٣) */}
               <div className="form-grid">
@@ -410,7 +455,10 @@ export function AssignmentModal({
               </div>
             </>
           ) : (
-            <p className="org-modal-warn">سيُلغى تفعيل هذا المنصب. لا يُحذف السجلّ نهائيًّا، لكن قد يُسحب ترشّح العضو الانتخابيّ إن كان قائمًا.</p>
+            <>
+              <p className="org-modal-warn">سيُلغى تفعيل هذا المنصب. لا يُحذف السجلّ نهائيًّا.</p>
+              {asks}
+            </>
           )}
         </>
       ) : null}

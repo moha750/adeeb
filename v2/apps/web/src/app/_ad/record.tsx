@@ -28,7 +28,7 @@ function useRecordCrumb(path: string | undefined, title: string) {
     .map((st) => ({ label: st.label, href: st.kind === "link" ? st.href : undefined }));
 }
 
-export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures }: {
+export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures, trail }: {
   path?: string;
   title: string;
   /** وصفُ السجلّ تحت اسمه (وصفُ الفرصة كما كتبه مشرفُها) */
@@ -44,8 +44,10 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
   info: AdMeta[];
   /** رحلةُ السجلّ: أربعةُ أرقامٍ تصير صفّين بجانب الحقائق */
   figures?: AdFigure[];
+  /** **مسارٌ أعمق من الغرفة** (صفحةُ ترشّحٍ داخل انتخاب، ٢٠٢٦-١١-١٧): «الانتخابات › منسّق قسم صناعة المحتوى» — والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ */
+  trail?: { label: string; href: string }[];
 }) {
-  const crumb = useRecordCrumb(path, title);
+  const crumb = [...useRecordCrumb(path, title), ...(trail ?? [])];
   return (
     <section className="ad-card-wrap ad-rtk" aria-labelledby="ad-room-title">
       <article className="ad-card">

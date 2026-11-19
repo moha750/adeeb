@@ -55,12 +55,12 @@ export function BallotRoom({ election, candidates, myVote }: { election: VoteIte
         <div className="blt">
           <BallotHead election={election} />
           {election.viewOnly ? (
-            <Alert tone="info" title="أنت مرشّحُ هذا المنصب">
+            <Alert tone="info" title="أنت مرشّحُ هذا المقعد">
               لا مرشّحَ سواك، ونظامُ الانتخابات لا يُجيز التصويتَ للنفس. فهذه بطاقتُك تطّلع عليها،
               والقرارُ للمصوّتين.
             </Alert>
           ) : (
-            <Alert tone="success" title={rejected ? "اعترضت على التزكية" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
+            <Alert tone="success" title={rejected ? "اعترضت في تصويت الثقة" : votedNumber !== null ? `صوّتّ إلى المرشّح ${votedNumber}` : "صوّتّ في هذا المقعد"}>
               صوتُك مسجَّلٌ ولا يُغيَّر. ويبقى لك أن تقرأ ما كتبه المرشّحون حتّى يُغلق الباب.
             </Alert>
           )}

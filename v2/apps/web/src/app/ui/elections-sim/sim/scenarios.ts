@@ -7,7 +7,7 @@
 
 import type { CandidateStatus, ElectionStatus } from "@/app/dashboard/elections/vocab";
 import type { ElectedRole } from "./org";
-import { emptyWorld, nextId, writeLog, type SimWorld, voteWeight, memberIn } from "./world";
+import { emptyWorld, nextId, writeLog, type SimElection, type SimCandidate, type SimFreeze, type SimTie, type SimWorld, voteWeight, memberIn } from "./world";
 
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
@@ -113,7 +113,7 @@ function seedCandidate(w: SimWorld, s: SeedCandidate): string {
   return id;
 }
 
-function seedVote(w: SimWorld, electionId: string, voterId: string, candidateId: string, choice: "approve" | "reject" = "approve") {
+function seedVote(w: SimWorld, electionId: string, voterId: string, candidateId: string, choice: "approve" | "reject" = "approve"): string {
   const id = nextId(w, "v");
   w.votes.push({
     id, electionId, voterId, candidateId,
@@ -122,6 +122,57 @@ function seedVote(w: SimWorld, electionId: string, voterId: string, candidateId:
     choice, at: w.now - HOUR,
   });
   writeLog(w, electionId, voterId, "vote_cast", { vote_id: id });
+  return id;
+}
+
+/* ══ بذرُ الجديد (دفعات ١–٥) — أعلامٌ وأسبابٌ وجداولُ لا تبلغها أفعالُ المحاكي القديمة بعد ══ */
+
+const el = (w: SimWorld, id: string): SimElection => w.elections.find((e) => e.id === id)!;
+const ca = (w: SimWorld, id: string): SimCandidate => w.candidates.find((c) => c.id === id)!;
+
+/** ينهي ترشّحًا بسببه، ويُبطل أصواتَه (المادة 16) — كما تفعل `_end_candidacy`. */
+function seedEnd(w: SimWorld, candidateId: string, reason: NonNullable<SimCandidate["endReason"]>, hoursAgo = 20) {
+  const c = ca(w, candidateId);
+  c.status = "ended";
+  c.endReason = reason;
+  c.endedAt = w.now - hoursAgo * HOUR;
+  writeLog(w, c.electionId, reason === "excluded" ? "u-hrlead" : null, "candidacy_ended", { candidate_id: candidateId, user_id: c.userId, reason }, c.endedAt);
+  const voided = w.votes.filter((v) => v.candidateId === candidateId && !v.voidedAt);
+  for (const v of voided) { v.voidedAt = c.endedAt; v.voidReason = "candidacy_ended"; }
+  if (voided.length) writeLog(w, c.electionId, null, "votes_voided", { candidate_id: candidateId, reason: "candidacy_ended" }, c.endedAt);
+}
+
+/** تجميدٌ على ترشّح بخطوته: مطلوب، أو قائمٌ ينتظر الإجابة، أو أُجيب وينتظر القرار. */
+function seedFreeze(w: SimWorld, candidateId: string, step: "requested" | "active" | "answered", reason: string): SimFreeze {
+  const c = ca(w, candidateId);
+  const at = w.now - 3 * HOUR;
+  const f: SimFreeze = {
+    id: w.freezes.length + 1, candidateId, electionId: c.electionId, status: step, reason,
+    answerWindow: "06:00:00", decideWindow: "1 day", requestedBy: "u-hrmem", requestedAt: at,
+    answerDue: step === "requested" ? null : at + 6 * HOUR,
+    answerText: step === "answered" ? "الصورةُ التي نشرتُها كانت في حسابي الشخصيّ قبل فتح الباب، وحذفتُها حين عرفتُ الضابط. ولم أطلب من أحدٍ نشرها." : null,
+    answeredAt: step === "answered" ? w.now - HOUR : null,
+    decideDue: step === "answered" ? w.now + 23 * HOUR : null,
+  };
+  w.freezes.push(f);
+  writeLog(w, c.electionId, "u-hrmem", "freeze_requested", { candidate_id: candidateId, freeze_id: f.id }, at);
+  if (step !== "requested") {
+    c.status = "frozen";
+    writeLog(w, c.electionId, "u-hrlead", "candidate_frozen", { candidate_id: candidateId, freeze_id: f.id }, at + HOUR / 2);
+  }
+  if (step === "answered") writeLog(w, c.electionId, c.userId, "freeze_answered", { candidate_id: candidateId, freeze_id: f.id }, f.answeredAt!);
+  return f;
+}
+
+/** تعادلٌ مفتوحٌ بين متصدّرَين، ومعه ما اختاره المجلسُ حتى الآن. */
+function seedTie(w: SimWorld, electionId: string, candidateIds: string[], choices: SimTie["choices"] = [], paused = false): SimTie {
+  const t: SimTie = {
+    id: w.ties.length + 1, electionId, candidateIds, openedAt: w.now - 4 * HOUR, dueAt: w.now + 20 * HOUR,
+    status: "open", outcome: null, winnerCandidateId: null, pausedAt: paused ? w.now - 2 * HOUR : null, choices,
+  };
+  w.ties.push(t);
+  writeLog(w, electionId, null, "tie_opened", { candidate_ids: candidateIds }, t.openedAt);
+  return t;
 }
 
 /* ══ الشاشاتُ التي يُفتح عليها السيناريو ═══════════════════════════ */
@@ -245,7 +296,8 @@ export const SCENARIOS: Scenario[] = [
     build: (now) => {
       const w = w0(now);
       const e = seedElection(w, { id: "e-lead-12", role: "committee_leader", committeeId: 21, status: "candidacy_open", candidacyEndInDays: -1, openedDaysAgo: 14, stalled: true });
-      writeLog(w, e, null, "candidacy_stalled", { active_count: 0 });
+      el(w, e).stallReason = "no_candidates";
+      writeLog(w, e, null, "candidacy_stalled", { active_count: 0, reason: "no_candidates" });
       return w;
     },
   },
@@ -289,18 +341,17 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     key: "declare_winner",
-    label: "أعلِن الفائز وخذ بطاقته",
-    about: "صندوقٌ أُغلق ونتيجتُه ظاهرة. لا تفتّش عن أحدٍ في القائمة: القاعدةُ تعرف المتصدّر (لا تقبل إعلانَ من ليس الأعلى وزنًا)، فالشريطُ يحمل **زرًّا واحدًا باسمه**. أعلِنه ثمّ استخرج بطاقةَ النتيجة التي تُرسَل في قروب اللجنة.",
+    label: "إغلاقُ التصويت يعلن الفائز",
+    about: "تصويتٌ جارٍ تتصدّره نورة بلا لبس. لا زرَّ إعلان: المنصّةُ تعلن الفائز لحظة الإغلاق وتُسند المنصب (المادة 28). أغلِق التصويت مبكّرًا بسبب، أو قدِّم الساعة، ثمّ استخرج بطاقةَ النتيجة.",
     steps: [
-      "اقرأ شريط الأفعال: «إعلان الفائزة نورة العتيبي»، اسمُها في الزرّ لا في القائمة",
-      "اضغطه: التأكيدُ يقول حصيلتَها قبل وقوع الفعل، وأثرَه (إسنادُ المنصب وقفلُ الانتخاب)",
-      "بعد الإعلان: من تنبيه «اكتمل الانتخاب» اضغط «بطاقة النتيجة» فتُنزَّل صورةٌ مربّعة",
-      "وفي الجوّال تُفتَح ورقةُ المشاركة ومعها نصُّ التهنئة، فتذهب إلى القروب مباشرةً",
+      "أغلِق التصويت مبكّرًا بسببٍ مكتوب: يكتمل الانتخاب باسم نورة في الحال",
+      "اقرأ السجلّ: «أُغلق التصويت قبل موعده» ثمّ «أُعلن الفائز»",
+      "من تنبيه الاكتمال اضغط «بطاقة النتيجة» فتُنزَّل صورةٌ مربّعة",
     ],
     start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
     build: (now) => {
       const w = w0(now);
-      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 16 });
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_open", votingEndInDays: 1, openedDaysAgo: 16 });
       const nora = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1, file: true });
       const ahmad = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
       const khaled = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2, file: false });
@@ -317,17 +368,17 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     key: "declare_tie",
-    label: "تعادُلٌ في الصدارة: القرارُ لك",
-    about: "مقعدٌ تساوى متصدّراه في الوزن. القاعدةُ تقبل أيًّا منهما، فلا ترجّح الشاشةُ أحدَهما بترتيبٍ لا معنى له: يصير الزرُّ «تساوى المتصدّرون، اختر»، وتفتح نافذةً تحت كلّ اسمٍ حصيلتُه.",
+    label: "تعادُلٌ في الصدارة: القرارُ للمجلس",
+    about: "تصويتٌ جارٍ تساوى متصدّراه في الوزن. أغلِقه فيفتح تعادلٌ للمجلس الإداري خلال 24 ساعة (المادة 26): يختار كلُّ عضوٍ بسببٍ لا يُعدَّل، والأغلبيّةُ اثنان من ثلاثة، ورئيسُ أدِيب يرجح، ومضيُّ الأجل يُعلن الأسبق.",
     steps: [
-      "اضغط «تساوى المتصدّرون، اختر» واقرأ حصيلةَ كلٍّ تحت اسمه",
-      "اختر أحدَهما: لفظُ الزرّ يتبع جنسَه (الفائز/الفائزة)",
-      "أعلِنه، ثمّ استخرج بطاقة النتيجة",
+      "بهويّة قائدة الموارد: أغلِق التصويت مبكّرًا بسبب، فيُفتح التعادل",
+      "بهويّة الرئيس التنفيذي ثمّ رئيس أدِيب: اختر بسبب، فيُعلَن الفائز بالأغلبيّة",
+      "أو قدِّم الساعة يومًا: يفوز الأسبق ترشّحًا",
     ],
     start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
     build: (now) => {
       const w = w0(now);
-      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 16 });
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_open", votingEndInDays: 1, openedDaysAgo: 16 });
       const nora = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1, file: true });
       const ahmad = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
       const khaled = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2, file: false });
@@ -341,18 +392,18 @@ export const SCENARIOS: Scenario[] = [
   {
     key: "department_seats",
     label: "مقاعدُ القسم تُحسَم معًا: أفضليّةٌ ووصيف",
-    about: "ثلاثةُ مقاعدَ في قسمٍ واحد أُغلق تصويتُها، وعضوٌ واحدٌ تصدّر مقعدين. الحسمُ الجماعيّ يعطيه مفضَّله ويُقصيه من الآخر فيرتقي الوصيف، وقد يتصدّر الوصيفُ مقعدًا ثالثًا فتُعاد الكرّة.",
+    about: "ثلاثةُ مقاعدَ في قسمٍ واحد، أُغلق تصويتُ اثنين وبقيت قيادةُ الرواة جارية، وأحمدُ يتصدّر التنسيقَ والقيادةَ معًا. لا يُعلَن التنسيق حتى تُغلق القيادة (المادة 27)، فإذا أُغلقت حُسم القسمُ كلُّه: أحمدُ لمفضَّله، والوصيفُ يرتقي.",
     steps: [
-      "افتح أيَّ مقعدٍ من الثلاثة: زرُّ «إعلان فائزي القسم معًا» بدل الإعلان المنفرد",
-      "جرّب فتحَ مرشّحٍ وإعلانَه وحدَه: يُحجَب لأنّ الحسمَ لا يصحّ منفردًا",
-      "اضغط «إعلان فائزي القسم معًا» ثمّ ارجع إلى القائمة: ثلاثةُ كروتِ منتخَبين",
+      "افتح التنسيق: «ينتظر إغلاق قيادة لجنة الرواة» بزرٍّ إليها",
+      "افتح القيادة وأغلِق تصويتها مبكّرًا بسبب",
+      "ارجع إلى القائمة: ثلاثةُ كروتِ منتخَبين، وأحمدُ في القيادة لا في التنسيق",
       "اقرأ سجلَّ كلّ مقعد: ترتيبُ الإعلان يقول كيف حُسم",
     ],
     start: { screen: "list", viewpoint: "u-pres" },
     build: (now) => {
       const w = w0(now);
       const head = seedElection(w, { id: "e-head-1", role: "department_head", departmentId: 1, status: "voting_closed", openedDaysAgo: 20 });
-      const lead = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 20 });
+      const lead = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_open", votingEndInDays: 1, openedDaysAgo: 20 });
       const dep = seedElection(w, { id: "e-dep-11", role: "deputy_committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 20 });
 
       // أحمدُ يتصدّر التنسيقَ والقيادةَ معًا، ومفضَّلُه القيادة (رتبةٌ ١ في مقعدها)
@@ -375,12 +426,11 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     key: "joint_blocked",
-    label: "إعلانٌ منفردٌ يُردّ",
-    about: "مقعدٌ أُغلق تصويتُه، وفي قسمه مقعدٌ آخر ما زال في التصويت يخوضه أحدُ مرشّحيه. القاعدةُ ترفض الإعلانَ المنفرد (فقد يفوز بالاثنين والمفضَّلُ لا يُعرَف بعد)، والشاشةُ تقول لك ما تفعله.",
+    label: "مقعدٌ أُغلق ولا يُعلَن بعد",
+    about: "مقعدٌ أُغلق تصويتُه، وفي قسمه مقعدٌ آخر ما زال في التصويت يخوضه أحدُ مرشّحيه. لا يُعلَن حتى يُغلق ذاك (فقد يفوز بالاثنين والمفضَّلُ لا يُعرَف بعد)، والشاشةُ تسمّيه بزرٍّ إليه.",
     steps: [
-      "افتح المقعد المغلق: يظهر سطرٌ يقول إنّ مقعدًا آخر لم يُغلق تصويتُه",
-      "افتح مرشّحًا معتمَدًا: لا زرَّ إعلانٍ في ذيل نافذته",
-      "أغلِق تصويتَ المقعد الآخر، ثمّ عُد: صار الزرُّ «إعلان فائزي القسم معًا»",
+      "افتح المقعد المغلق: «ينتظر إغلاق نيابة لجنة الرواة»",
+      "أغلِق تصويتَ النيابة بسبب، ثمّ عُد: حُسم المقعدان معًا",
     ],
     start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
     build: (now) => {
@@ -527,6 +577,7 @@ export const SCENARIOS: Scenario[] = [
       seedElection(w, { id: "e-b", role: "deputy_committee_leader", committeeId: 21, status: "candidacy_open", candidacyEndInDays: null, openedDaysAgo: 2 });
 
       seedElection(w, { id: "e-c", role: "committee_leader", committeeId: 21, status: "candidacy_open", candidacyEndInDays: -1, openedDaysAgo: 15, stalled: true });
+      el(w, "e-c").stallReason = "no_candidates";
 
       const d = seedElection(w, { id: "e-d", role: "deputy_committee_leader", committeeId: 11, status: "candidacy_closed", openedDaysAgo: 16, candidacyEndInDays: -2 });
       seedCandidate(w, { electionId: d, userId: "u-m3", status: "approved", pitch: 2, file: true });
@@ -552,6 +603,253 @@ export const SCENARIOS: Scenario[] = [
       writeLog(w, g, "u-pres", "declare_winner", { candidate_id: g1, auto_archived: true });
 
       seedElection(w, { id: "e-h", role: "deputy_committee_leader", committeeId: 12, status: "cancelled", openedDaysAgo: 45, cancelReason: "تعذّر إتمامُ الدورة في موعدها." });
+
+      // مكتملٌ بتنافس (٢٠٢٦-١١-١٩): ورقةُ المقعد بعد إعلانه، بعين ناخبٍ صوّت لغير الفائز (`u-m4`) وبعين الفائز (`u-m5`)
+      const i = seedElection(w, { id: "e-i", role: "deputy_committee_leader", committeeId: 12, status: "completed", openedDaysAgo: 70 });
+      const i1 = seedCandidate(w, { electionId: i, userId: "u-m5", status: "approved", pitch: 0, file: true, daysAgo: 65 });
+      const i2 = seedCandidate(w, { electionId: i, userId: "u-m6", status: "approved", pitch: 1, file: false, daysAgo: 64 });
+      seedVote(w, i, "u-pres", i1);
+      seedVote(w, i, "u-m4", i2);
+      w.elections.find((x) => x.id === i)!.winnerCandidateId = i1;
+      w.elections.find((x) => x.id === i)!.winnerDeclaredAt = now - 40 * DAY;
+      return w;
+    },
+  },
+
+  /* ══ أطوارُ صفحة المدير الجديدة — صفٌّ صفٌّ من جدول المواصفة (`claude/elections-screens-spec.md` §٣ م٣) ══
+     بذرٌ مباشرٌ للحال كما تكتبها الدفعات، لا أفعال: أفعالُ المحاكي ما زالت على القواعد القديمة حتى تُنقل. */
+  {
+    key: "cand_states",
+    label: "حالاتُ المرشّح الجديدة كلُّها في مقعدٍ واحد",
+    about: "تنسيقُ قسم صناعة المحتوى، وفيه مرشّحٌ من كلّ حال: قيد المراجعة، ومعتمَدٌ طُلب تجميدُه ولم يُوافَق بعد، ومطلوبٌ تعديلُه بمهلته، ومعتذَرٌ عنه بسببه، ومنسحب، ومجمَّدٌ ينتظر إجابته، ومجمَّدٌ أجاب وينتظر القرار، ومنتهٍ بالاستبعاد.",
+    steps: [
+      "اقرأ سطرَ القرار تحت كلّ مرشّح: المهلة، أو السبب، أو أجل الإجابة",
+      "بهويّة قائدة الموارد: التجميدُ المطلوب ينتظر موافقتها، والمُجاب ينتظر قرارها",
+      "بهويّة عضو الموارد: يرى من طلب التجميد ولا يقرّر",
+    ],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-head-1" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-head-1", role: "department_head", departmentId: 1, status: "candidacy_open", candidacyEndInDays: 2, openedDaysAgo: 6 });
+      seedCandidate(w, { electionId: e, userId: "u-m1", status: "pending", pitch: 0, file: true });
+      const req = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1 });
+      seedFreeze(w, req, "requested", "نشرت ملصقًا دعائيًّا في مجموعة اللجنة قبل اعتماد ترشّحها، وهذا يخالف ضوابط الدعاية.");
+      const ed = seedCandidate(w, { electionId: e, userId: "u-m3", status: "needs_edit", pitch: 2, reviewNote: "بيانك يذكر اسمَ فريقك، فأعد صياغة الفقرة الأولى بلا ما يعرّف بك." });
+      ca(w, ed).editDueAt = now + 18 * HOUR;
+      const rj = seedCandidate(w, { electionId: e, userId: "u-m4", status: "rejected", pitch: 3, reviewNote: "البيان يتضمّن وعودًا بمكافآت ماليّة للأعضاء." });
+      ca(w, rj).rejectReason = "statement_violation";
+      seedCandidate(w, { electionId: e, userId: "u-m5", status: "withdrawn", pitch: 4 });
+      const fa = seedCandidate(w, { electionId: e, userId: "u-m6", status: "approved", pitch: 0 });
+      seedFreeze(w, fa, "active", "وزّع منشورًا باسم أدِيب دون إذن، والضابطُ يمنع الدعاية باسم النادي.");
+      const fb = seedCandidate(w, { electionId: e, userId: "u-leader", status: "approved", pitch: 1, file: true });
+      seedFreeze(w, fb, "answered", "نشر صورةً دعائيّة في حسابه قبل فتح الباب.");
+      const ex = seedCandidate(w, { electionId: e, userId: "u-deputy", status: "approved", pitch: 2 });
+      seedEnd(w, ex, "excluded");
+      return w;
+    },
+  },
+  {
+    key: "closed_blocked",
+    label: "بابٌ مغلق، وفتحُ التصويت محجوبٌ بترشّحَين",
+    about: "أُغلق بابُ قيادة لجنة الرواة، ولا يُفتح التصويت لأنّ أحدَ المرشّحين مطلوبٌ تعديلُه ولم تمضِ مهلتُه، وآخرَ مجمَّدٌ ينتظر إجابته. التنبيهُ يسمّي صاحبَي العائق.",
+    steps: ["اقرأ التنبيه: الاسمان ومهلتاهما", "جرّب «فتح التصويت»: يُردّ بالسبب نفسِه"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "candidacy_closed", candidacyEndInDays: -0.5, openedDaysAgo: 8 });
+      seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      const ed = seedCandidate(w, { electionId: e, userId: "u-m2", status: "needs_edit", pitch: 1, reviewNote: "ارفع ملفًّا بصيغة PDF بدل الصورة، فالصورةُ لا تُقرأ على الجوّال." });
+      ca(w, ed).editDueAt = now + 10 * HOUR;
+      const fz = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2 });
+      seedFreeze(w, fz, "active", "طلب أصوات أعضاء اللجنة في رسائل خاصّة، والضابطُ يمنع الدعاية الفرديّة.");
+      return w;
+    },
+  },
+  {
+    key: "revote_only",
+    label: "إعادةُ تصويتٍ مفتوحة لمن بطل صوتُه وحده",
+    about: "استُبعدت نورة والتصويتُ جارٍ، فبطل صوتا من صوّتا لها. فُتحت الإعادة لهما وحدهما بوزنهما الأوّل، والبطاقةُ مغلقةٌ على غيرهما.",
+    steps: ["بهويّة قائدة الموارد: التنبيه «إعادة تصويتٍ لمن بطل صوته وحده»، وفي «الأصوات» الصوتان الباطلان مُعلَّمان", "بهويّة سارة (بطل صوتها): البطاقةُ مفتوحةٌ من جديد"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-dep-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-dep-11", role: "deputy_committee_leader", committeeId: 11, status: "voting_open", votingEndInDays: 1, openedDaysAgo: 12 });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      const b = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1 });
+      const c = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2 });
+      seedVote(w, e, "u-pres", a);
+      seedVote(w, e, "u-exec", c);
+      seedVote(w, e, "u-m4", b);
+      seedVote(w, e, "u-hrlead", b);
+      seedEnd(w, b, "excluded", 26);
+      el(w, e).revoteOnly = true;
+      writeLog(w, e, "u-hrlead", "revote_opened", { reason: "بطل صوتان باستبعاد مرشّحة، فيعيد صاحباهما التصويت." }, now - 2 * HOUR);
+      return w;
+    },
+  },
+  {
+    key: "revote_partial",
+    label: "انتهى ترشّحٌ بعد الإغلاق: الإعادةُ تنتظر من يفتحها",
+    about: "أُغلق التصويت، ثمّ استُبعدت نورة قبل الإعلان، فبطل صوتا من صوّتا لها. لا يُعلن أحد، والتصويتُ مغلقٌ ينتظر من يفتح الإعادة لهما بموعدٍ وسبب.",
+    steps: ["الفعلُ الأساسيّ «فتح إعادة التصويت»", "في «الأصوات»: الباطلُ مُعلَّمٌ بسببه ولا يُحسب في المجاميع"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-dep-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-dep-11", role: "deputy_committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 14 });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      const b = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1 });
+      const c = seedCandidate(w, { electionId: e, userId: "u-m3", status: "approved", pitch: 2 });
+      seedVote(w, e, "u-pres", a);
+      seedVote(w, e, "u-exec", c);
+      seedVote(w, e, "u-m4", b);
+      seedVote(w, e, "u-hrlead", b);
+      seedEnd(w, b, "excluded", 3);
+      el(w, e).revotePending = "partial";
+      return w;
+    },
+  },
+  {
+    key: "revote_full",
+    label: "لم يبقَ إلا مرشّحٌ واحد: تُعاد تزكيةً",
+    about: "أُغلق التصويت بين أحمد ونورة، ثمّ فازت نورة بمقعدٍ آخر في القسم فانتهى ترشّحها هنا. بقي أحمد وحده، فبطلت الأصوات كلُّها، والتصويتُ ينتظر من يفتحه تزكيةً للجميع.",
+    steps: ["التنبيه: «لم يبقَ إلا مرشّحٌ واحد، فيُعاد تزكيةً»", "الأصواتُ كلُّها باطلة، بسببين مختلفين"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 14 });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      const b = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1 });
+      seedVote(w, e, "u-pres", a);
+      seedVote(w, e, "u-m3", a);
+      seedVote(w, e, "u-exec", b);
+      seedEnd(w, b, "kept_other_seat", 2);
+      for (const v of w.votes.filter((x) => x.electionId === e && !x.voidedAt)) { v.voidedAt = now - 2 * HOUR; v.voidReason = "single_left"; }
+      writeLog(w, e, null, "votes_voided", { reason: "single_left" }, now - 2 * HOUR);
+      el(w, e).revotePending = "full";
+      return w;
+    },
+  },
+  {
+    key: "tie_open",
+    label: "تعادلٌ ينتظر قرار المجلس",
+    about: "تساوى أحمد ونورة في الوزن، فانتقل القرارُ إلى المجلس الإداريّ خلال 24 ساعة. اختارت الرئيسةُ التنفيذيّة أحمد بسببها، وبقي اثنان. والأغلبيّةُ اثنان من ثلاثة.",
+    steps: ["بهويّة رئيس أدِيب (عضو المجلس): اختر أو اترك الأمر للأسبق، بسبب", "بهويّة عضو الموارد: يرى التعادل وأجله، ولا يرى الاختيارات"],
+    start: { screen: "detail", viewpoint: "u-pres", electionId: "e-lead-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 14 });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true, daysAgo: 9 });
+      const b = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1, daysAgo: 8 });
+      seedVote(w, e, "u-m3", a);
+      seedVote(w, e, "u-m4", b);
+      seedTie(w, e, [a, b], [{ memberId: "u-exec", candidateId: a, reason: "خطّةُ أحمد أوضحُ في توزيع العمل، وقد قاد فريقًا في الفصل الماضي.", at: now - 3 * HOUR }]);
+      return w;
+    },
+  },
+  {
+    key: "tie_paused",
+    label: "تعادلٌ موقوفُ الأجل لأنّ أحد المتعادلين مجمَّد",
+    about: "تساوى أحمد ونورة، ثمّ جُمّدت نورة. أجلُ المجلس موقوفٌ حتى يُحسم التجميد: إن رُفع عاد الأجل، وإن استُبعدت أُعلن أحمد.",
+    steps: ["التنبيه يقول إنّ الأجل موقوف ولماذا"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 14 });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m1", status: "approved", pitch: 0, file: true, daysAgo: 9 });
+      const b = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1, daysAgo: 8 });
+      seedVote(w, e, "u-m3", a);
+      seedVote(w, e, "u-m4", b);
+      seedTie(w, e, [a, b], [], true);
+      seedFreeze(w, b, "answered", "نشرت دعايةً باسم اللجنة بعد إغلاق التصويت.");
+      return w;
+    },
+  },
+  {
+    key: "linked_wait",
+    label: "مقعدٌ أُغلق ولا يُعلن: ينتظر مقعدًا آخر في القسم",
+    about: "أُغلق تصويتُ قيادة الرواة وتصدّره أحمد، لكنّ أحمد مرشّحٌ أيضًا لتنسيق القسم وتصويتُه جارٍ. لا يُعلَن أحدٌ حتى يُغلق ذلك المقعد (المادة 27)، والتنبيهُ يسمّيه بزرٍّ إليه.",
+    steps: ["التنبيه: «ينتظر إغلاق تنسيق قسم صناعة المحتوى» بزرٍّ يفتحه"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-11" },
+    build: (now) => {
+      const w = w0(now);
+      const lead = seedElection(w, { id: "e-lead-11", role: "committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 16 });
+      const head = seedElection(w, { id: "e-head-1", role: "department_head", departmentId: 1, status: "voting_open", votingEndInDays: 2, openedDaysAgo: 16 });
+      const a = seedCandidate(w, { electionId: lead, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      seedCandidate(w, { electionId: lead, userId: "u-m2", status: "approved", pitch: 1 });
+      seedCandidate(w, { electionId: head, userId: "u-m1", status: "approved", pitch: 0, file: true });
+      seedCandidate(w, { electionId: head, userId: "u-m5", status: "approved", pitch: 3 });
+      seedVote(w, lead, "u-pres", a);
+      seedVote(w, lead, "u-m3", a);
+      return w;
+    },
+  },
+  {
+    key: "stall_no_votes",
+    label: "تعثّر بعد التصويت: لم ينل أحدٌ صوتًا",
+    about: "أُغلق تصويتُ قيادة لجنة التأليف ولم يصوّت أحد، فتعثّر المقعد. للمديرين الثلاثة: إعادةُ فتح الباب، أو التعيين، أو التكليف، أو الإلغاء بأساس «تعثّر».",
+    steps: ["التنبيه بسبب التعثّر من دليل الإشعارات", "بهويّة مشرف لجنة (لا مدير): لا تعيين ولا تكليف"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-12" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-12", role: "committee_leader", committeeId: 12, status: "voting_closed", openedDaysAgo: 15, stalled: true });
+      seedCandidate(w, { electionId: e, userId: "u-m5", status: "approved", pitch: 0, file: true });
+      seedCandidate(w, { electionId: e, userId: "u-m6", status: "approved", pitch: 1 });
+      el(w, e).stallReason = "no_votes";
+      writeLog(w, e, null, "election_stalled", { reason: "no_votes" }, now - HOUR);
+      return w;
+    },
+  },
+  {
+    key: "stall_confidence",
+    label: "سقطت التزكية فتعثّر المقعد",
+    about: "تزكيةُ نورة لنيابة الرواة غلب اعتراضُها تأييدَها، فتعثّر المقعد. ولا تظهر نورة في نافذة التعيين، وإن أُعيد فتح الباب انتهى ترشّحها بسقوط التزكية.",
+    steps: ["افتح «تعيين»: نورة ليست في القائمة", "أو أعِد فتح الباب بموعدٍ وسبب: تبطل الأصوات، وينتهي ترشّح نورة"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-dep-11" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-dep-11", role: "deputy_committee_leader", committeeId: 11, status: "voting_closed", openedDaysAgo: 15, stalled: true });
+      const c = seedCandidate(w, { electionId: e, userId: "u-m2", status: "approved", pitch: 1, file: true });
+      seedVote(w, e, "u-m1", c, "approve");
+      seedVote(w, e, "u-m3", c, "reject");
+      seedVote(w, e, "u-pres", c, "reject");
+      // تبقى نورة معتمَدةً: ينتهي ترشّحها بسقوط التزكية حين يُعاد فتح الباب، لا حين يتعثّر المقعد
+      el(w, e).stallReason = "confidence_failed";
+      writeLog(w, e, null, "election_stalled", { reason: "confidence_failed" }, now - HOUR);
+      return w;
+    },
+  },
+  {
+    key: "completed_appointment",
+    label: "اكتمل بالتعيين على المتعثّر",
+    about: "تعثّر مقعدُ قيادة لجنة التصوير بلا مرشّح، فعيّنت قائدةُ الموارد يوسف بسببها. الانتخابُ مكتملٌ بالتعيين لا بالفوز.",
+    steps: ["التنبيه: «عُيّن يوسف الزهراني»، والسببُ في السجلّ"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-lead-21" },
+    build: (now) => {
+      const w = w0(now);
+      const e = seedElection(w, { id: "e-lead-21", role: "committee_leader", committeeId: 21, status: "completed", candidacyEndInDays: -6, openedDaysAgo: 14 });
+      const x = el(w, e);
+      x.stallReason = null; x.completedBy = "appointment"; x.appointedUserId = "u-m7";
+      writeLog(w, e, null, "candidacy_stalled", { reason: "no_candidates" }, now - 6 * DAY);
+      writeLog(w, e, "u-hrlead", "completed_by_appointment", { user_id: "u-m7", reason: "يوسف أقدمُ أعضاء اللجنة وقاد مشروعَي الفصل الماضي." }, now - 5 * DAY);
+      w.seatOverride["u-m7"] = { roleName: "committee_leader", committeeId: 21, departmentId: null };
+      return w;
+    },
+  },
+  {
+    key: "cancelled_defect",
+    label: "أُلغي بعد فتح التصويت لخللٍ يمسّ صحّته",
+    about: "أُلغي انتخابُ نيابة لجنة التأليف والتصويتُ جارٍ، بأساس «خللٌ يمسّ صحّته» وسببٍ مكتوب. الأصواتُ تبقى في السجلّ، والسببُ يُرى في رأس الصفحة.",
+    steps: ["التنبيه: «أُلغي في يوم كذا. السبب: …» ومعه الأساس"],
+    start: { screen: "detail", viewpoint: "u-hrlead", electionId: "e-dep-12" },
+    build: (now) => {
+      const w = w0(now);
+      const reason = "تبيّن أنّ قائمة الناخبين أُخذت قبل نقل ثلاثة أعضاء إلى اللجنة، فلم يصوّتوا.";
+      const e = seedElection(w, { id: "e-dep-12", role: "deputy_committee_leader", committeeId: 12, status: "cancelled", openedDaysAgo: 12, cancelReason: reason });
+      const a = seedCandidate(w, { electionId: e, userId: "u-m5", status: "approved", pitch: 0, daysAgo: 10 });
+      seedCandidate(w, { electionId: e, userId: "u-m6", status: "approved", pitch: 1, daysAgo: 10 });
+      seedVote(w, e, "u-leader", a);
+      el(w, e).cancelBasis = "defect";
+      writeLog(w, e, "u-exec", "cancelled", { reason, basis: "defect" }, now - HOUR);
       return w;
     },
   },

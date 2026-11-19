@@ -133,7 +133,7 @@ export function ElectionsRoom({ elections, createOptions, readOnly = false, view
   /** حصادُ الطورين: المرشّحون ثمّ الأصوات — أرقامُ الكرت، وعمودا السطر بالترتيب نفسِه. */
   const figures = (e: ElectionRow): AdFigure[] => [
     { icon: <UsersThree />, value: fmtNum(e.candidates), label: "المرشّحون" },
-    { icon: <Checks />, value: fmtNum(e.votes), label: "الأصوات" },
+    { icon: <Checks />, value: fmtNum(e.votes), label: "المصوّتون" },
   ];
 
   const href = (e: ElectionRow) => `/dashboard/elections/${e.id}`;
@@ -154,24 +154,24 @@ export function ElectionsRoom({ elections, createOptions, readOnly = false, view
         items={items}
         positions={POSITIONS}
         defaultPosition="live"
-        searchPlaceholder="ابحث بالمنصب أو النطاق…"
+        searchPlaceholder="ابحث بالمقعد أو النطاق…"
         matchSearch={(e, q) => matchesSearch(q, e.positionLabel)}
-        filters={[{ key: "role", label: "المنصب", options: roles, match: (e, v) => e.targetRoleName === v }]}
+        filters={[{ key: "role", label: "المقعد", options: roles, match: (e, v) => e.targetRoleName === v }]}
         viewKey={ELECTIONS_ROOM.viewKey}
         initialView={view}
         idOf={(e) => e.id}
         table={{
           // الترتيبُ من رأس العمود كما كان في الجدول القديم (المنصب، والمرشّحون، والأصوات، والإنشاء).
           // والإنشاءُ رقمٌ فيبدأ بالأحدث، كتواريخ الغرف كلّها
-          head: "المنصب والنطاق",
+          head: "المقعد والنطاق",
           headSortBy: (e) => e.positionLabel.toLowerCase(),
           stub: { key: "created", label: "أُنشئ", icon: <CalendarBlank />, sortBy: (e) => (e.createdRaw ? +new Date(e.createdRaw) : 0) },
           columns: [
             { key: "candidates", label: "المرشّحون", icon: <UsersThree />, sortBy: (e) => e.candidates },
-            { key: "votes", label: "الأصوات", icon: <Checks />, sortBy: (e) => e.votes },
+            { key: "votes", label: "المصوّتون", icon: <Checks />, sortBy: (e) => e.votes },
           ],
         }}
-        emptyAll={{ title: "لا انتخابات بعد", desc: "افتح أوّل انتخابٍ لمنصبٍ منتخَبٍ فارغ، فيظهر هنا بمرشّحيه وأصواته." }}
+        emptyAll={{ title: "لا انتخابات بعد", desc: "افتح أوّل انتخابٍ لمقعدٍ فارغ، فيظهر هنا بمرشّحيه وأصواته." }}
         createAction={readOnly ? undefined : <AdButton variant="fill" icon={<Plus />} onClick={openNew}>انتخاب جديد</AdButton>}
         renderCard={(e) => (
           <AdCard

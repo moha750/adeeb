@@ -9,6 +9,7 @@ import { MEMBERS_ROOM } from "@/app/_ad/rooms/members.meta";
 import { roomView } from "@/app/_ad/view-server";
 import { requestNow } from "@/app/_ad/now";
 import { roomMetadata } from "@/app/_ad/metadata";
+import { isClubPresident } from "@/lib/elections/president";
 
 export const metadata = roomMetadata(MEMBERS_ROOM);
 
@@ -49,6 +50,8 @@ export default async function MembersByStatusPage({
   const caps = me?.caps ?? [];
   // قسمُ السابقين لمن يملك مفتاحَه وحده — وبلاه لا مبدّل ولا يُفتح عليه ولو طُلب بالرابط
   const formerTab = caps.includes("view_suspended_members");
+  // الحرمانُ من الترشّح لرئيس أدِيب من مقعده (المادة ١١)، لا من قدرة
+  const canBan = me ? await isClubPresident(me.id) : false;
 
   return (
     <MembersRoom
@@ -61,6 +64,8 @@ export default async function MembersByStatusPage({
       // وجهاتُ النقل — والبندُ نفسه يتبع سلطةَ الصفّ (`canMove`) لا هذه القائمة
       moveTargets={moveTargets}
       formerTab={formerTab}
+      canBan={canBan}
+      viewerId={me?.id}
       initialTab={formerTab ? initialTab : "active"}
       serverNow={await requestNow()}
       view={await roomView(MEMBERS_ROOM.viewKey, MEMBERS_ROOM.defaultView)}

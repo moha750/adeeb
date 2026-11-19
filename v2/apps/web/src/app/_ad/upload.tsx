@@ -17,9 +17,10 @@ import { useSectionSlots } from "./slots";
 import { FieldMark } from "@adeeb/design-system";
 import { ArrowsClockwise, Plus, Trash, UploadSimple } from "@/app/_components/glyphs";
 import { AdButton } from "./primitives";
+import { DashEdge } from "./dash";
 
 export function AdUpload({
-  label, icon, required, value, onFile, onFiles, onClear, busy, shape = "wide", help, error, accept, alt, bare, multiple, add, dry, dragging, file: picked, noun = "image", whole,
+  label, icon, required, value, onFile, onFiles, onClear, busy, shape = "wide", help, error, accept, alt, bare, unlabeled, multiple, add, dry, dragging, file: picked, noun = "image", whole,
 }: {
   label: string;
   icon: ReactNode;
@@ -37,6 +38,9 @@ export function AdUpload({
   alt: string;
   /** الحقلُ هو القسم: اسمُه عنوانُ القسم، فلا يُكرَّر في الحقل، وفعلاه في رأس القسم */
   bare?: boolean;
+  /** القسمُ يسمّي الحقلَ ويحمل علامتَه (`FormSection mark`)، فلا يُكتب فوق منطقة الإفلات اسمٌ يكرّره ولا «(اختياريّ)» ثانية؛
+   *  وصفُّ الملفّ المختار يبقى باسمه بلا علامة (محمد ٢٠٢٦-١١-١٩: «الملف (اختياري)» فوق «ملفّك الانتخابي»). */
+  unlabeled?: boolean;
   multiple?: boolean;
   /** منطقةُ «إضافة» في آخر قائمة (المعرض): بلا قيمة */
   add?: boolean;
@@ -75,27 +79,6 @@ export function AdUpload({
   }, [full, bare, slots.head]);
   // والمرفوضُ لا يبدّل شيئًا: يُنسى طلبُ النقل، وإلّا خطف التركيزَ تبدّلٌ لاحقٌ لا صلةَ له بالنقر
   useEffect(() => { if (error) refocus.current = false; }, [error]);
-  /* **المقاطعُ تتمّ الدورةَ بلا كسر**: طولُ الحدّ لا يكون عددًا صحيحًا من «مقطعٍ وفراغ» (20px)، فيلتحم في أوّل الرسم بقيّةُ مقطعٍ بأوّلِ
-     مقطع (15 إلى 19px) ويقفز موضعُه حين تمشي. فيُقاس الطولُ ويُقسَم على أقرب عددٍ صحيح، وتُكتب النسبةُ نفسُها (ثلاثةُ أخماسٍ مقطع) */
-  const zone = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const el = zone.current;
-    const rect = el?.querySelector<SVGRectElement>(".ad-drop-edge rect");
-    if (!el || !rect || typeof ResizeObserver === "undefined") return;
-    const fit = () => {
-      // المنطقةُ تُنزع حين تُختار الصورة (أو تُخفى)، ويبقى الرصدُ لحظةً: المستطيلُ غيرُ المرسوم يرمي خطأً بدل الطول، فيُترك
-      let len = 0;
-      try { len = rect.isConnected ? rect.getTotalLength() : 0; } catch { len = 0; }
-      if (!len) return;
-      const step = len / Math.max(1, Math.round(len / 20));
-      el.style.setProperty("--dz-dash", `${(step * 0.6).toFixed(2)}px`);
-      el.style.setProperty("--dz-gap", `${(step * 0.4).toFixed(2)}px`);
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [full]);
   const working = !!busy;
   const take = (list: File[]) => {
     if (!list.length || working) return;
@@ -144,13 +127,11 @@ export function AdUpload({
     const many = add || multiple;
     return (
       <div ref={root} className="ad-up form-full" {...common}>
-        {bare || add ? null : <span className="ad-up-k">{label}<FieldMark required={required} optional={!required} /></span>}
-        <button ref={zone} type="button" className="ad-drop" onClick={pick} disabled={working} aria-describedby={say ? `${id}-h` : undefined}
+        {bare || add || unlabeled ? null : <span className="ad-up-k">{label}<FieldMark required={required} optional={!required} /></span>}
+        <button type="button" className="ad-drop" onClick={pick} disabled={working} aria-describedby={say ? `${id}-h` : undefined}
           aria-label={state ?? (add ? "إضافة صور" : `اختيار ${label}`)}>
-          {/* الحدُّ المقطّعُ رسمٌ لا `border: dashed`: نقاطُ المتصفّح قصيرةٌ متلاصقةٌ لا يُتحكّم في طولها ولا في أطرافها، وهنا مقاطعُ
-              طويلةٌ مستديرةُ الأطراف («الحدّ مقسّم أو كذا مقطع»)، وتمشي حين يُسحب ملفٌّ فوقها. وسماتُ المستطيل احتياطٌ لمتصفّحٍ لا يقرأ
-              هندستَه من CSS (كان بلا سمات، فيختفي الحدُّ عنده بلا بديل) */}
-          <svg className="ad-drop-edge" aria-hidden focusable="false"><rect width="100%" height="100%" rx="16" /></svg>
+          {/* الحدُّ المقطّعُ قطعةُ الهويّة الواحدة (`DashEdge`)، ويمشي هنا حين يُسحب ملفٌّ فوقه */}
+          <DashEdge />
           <span className="ad-drop-ic" aria-hidden>{working ? spin : add ? <Plus /> : <UploadSimple />}</span>
           {/* الأسطرُ كلُّها باقيةٌ في كلّ حال، ويتبدّل نصُّ الأوّل وحده («أفلتها هنا»، «تُرفع الصورة») ويُخفى الباقي بلا أن يُنزع — كان
               يُنزع، فتصغر المنطقةُ تحت المؤشّر 34px ساعةَ الإفلات ويقفز ما تحتها، ويغيب الحدُّ ساعةَ الحاجة إليه (المراجع ٢٠٢٦-١١-١٣) */}
@@ -185,7 +166,7 @@ export function AdUpload({
         <div className="ad-up-row">
           <span className="ad-up-ic" aria-hidden>{working ? spin : picked ? picked.icon : icon}</span>
           <span className="ad-up-t">
-            <span className="ad-up-k">{label}<FieldMark required={required} optional={!required} /></span>
+            <span className="ad-up-k">{label}{unlabeled ? null : <FieldMark required={required} optional={!required} />}</span>
             <span className="ad-up-v" data-full="">{state ?? (picked ? picked.name : dry && local ? "صورةٌ جديدة" : "الصورة الحاليّة")}</span>
             {picked && !state ? <span className="ad-up-meta">{picked.meta}</span> : null}
           </span>

@@ -83,7 +83,7 @@ export function Screen() {
       );
 
     case "detail": {
-      const detail = route.id ? toElectionDetail(world, route.id) : null;
+      const detail = route.id ? toElectionDetail(world, route.id, actorId) : null;
       if (!detail) return <Alert tone="warning" title="تعذّر فتح الانتخاب">لا مقعدَ بهذا المعرّف في هذا السيناريو.</Alert>;
       return (
         <ElectionDetailView

@@ -157,7 +157,7 @@ function voters(n: number): string {
 }
 
 /** عينُ البطاقة: ما هذه الورقة قبل أن يُقرأ فيها اسم. */
-const eyebrow = (c: ResultCard): string => (c.confidence ? "نتيجةُ التزكية" : "نتيجةُ الانتخاب");
+const eyebrow = (c: ResultCard): string => (c.confidence ? "نتيجةُ تصويت الثقة" : "نتيجةُ الانتخاب");
 
 /**
  * سطرُ الحصيلة: تنافسٌ يُقال نيلًا من صندوق، وتزكيةٌ تُقال تأييدًا واعتراضًا.
@@ -223,7 +223,7 @@ export function resultMessage(c: ResultCard): string {
   const duty = c.roleName ? SEAT_DUTY[c.roleName] : undefined;
   const tail = duty ? `، ${g(c.gender, "ليتولّى", "لتتولّى")} ${duty}` : "";
 
-  const kind = c.confidence ? "تزكية" : "انتخاب";
+  const kind = c.confidence ? "تصويت الثقة على" : "انتخاب";
   const gained = c.confidence
     ? `${g(c.gender, "نال", "نالت")} ${name} تأييدَ ${ballotsAr(c.votes)}`
     : `${g(c.gender, "حازَ", "حازَت")} ${name} ثقةَ ${ballotsAr(c.votes)}`;

@@ -20,7 +20,7 @@ export function RunView({ items, error }: { items: RunItem[]; error: string | nu
 
       {error ? <Alert tone="warning" title="تعذّر جلب الانتخابات">{error}</Alert> : null}
       {!error && items.length === 0 ? (
-        <Alert tone="info" title="لا ترشّح مفتوح الآن">حين يُفتح بابُ ترشّحٍ لمنصبٍ في نطاقك، يظهر هنا لتقدّم بيانك.</Alert>
+        <Alert tone="info" title="لا ترشّح مفتوح الآن">حين يُفتح بابُ ترشّحٍ لمقعدٍ في نطاقك، يظهر هنا لتقدّم بيانك.</Alert>
       ) : null}
 
       <div className="opp-grid">

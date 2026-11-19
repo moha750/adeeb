@@ -201,6 +201,8 @@ describe("الخريطة والقرص", () => {
       "/dashboard/members/[status]": "حارسٌ بمتغيّرٍ نوعُه Section",
       // يحرس بيده على `view_election_candidates` لأنّه يفرّع بعدها بـ`manage_elections`
       "/dashboard/elections/[id]": "حارسٌ يدويّ على قفل القسم نفسِه",
+      // وصفحةُ الترشّح أختُها (٢٠٢٦-١١-١٧): البابُ نفسُه، ثمّ يقرّر فيها من يدير الانتخاب
+      "/dashboard/elections/[id]/candidates/[cid]": "حارسٌ يدويّ على قفل القسم نفسِه",
     };
 
     /**

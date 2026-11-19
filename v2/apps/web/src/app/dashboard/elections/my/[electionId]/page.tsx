@@ -1,14 +1,13 @@
-import { Alert } from "@adeeb/design-system";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { getCurrentAdmin } from "@/lib/auth";
-import { PageHeader } from "../../../_components/PageHeader";
 import { getMyCandidacies } from "../../member-data";
-import { CandidacyDetailView } from "./CandidacyDetailView";
+import { MyCandidacyRoom } from "@/app/_ad/rooms/MyCandidacyRoom";
+import { AdRoomError, AdRoomMissing } from "@/app/_ad/states";
 
 /**
- * **صفحةُ الترشّح** — تحت «سِجلّ ترشُّحي» (`/my/[electionId]`): الرحلةُ والبيانُ والتحكّم.
- * والتعديلُ صفحةٌ تليها (`/my/[electionId]/edit`). محروسةٌ بحارس السجلّ نفسِه، والترشّحُ
- * يُنتقى من قائمة العضو نفسِها — فلا يرى أحدٌ ترشّحَ غيره ولو خمّن العنوان.
+ * **صفحةُ الترشّح** — تحت «سِجلّ ترشُّحي» (`/my/[electionId]`)، بالهويّة (٢٠٢٦-١١-١٧، رحلةُ العضو ع٦): التذكرةُ بأفعالها، وما ينتظره،
+ * والبيانُ والملفّ، وطلبُ الاستبعاد وإجابتُه، والرحلة. والتعديلُ صفحةٌ تليها (`/my/[electionId]/edit`). محروسةٌ بحارس السجلّ نفسِه،
+ * والترشّحُ يُنتقى من قائمة العضو نفسِها — فلا يرى أحدٌ ترشّحَ غيره ولو خمّن العنوان.
  */
 export default async function CandidacyPage({ params }: { params: Promise<{ electionId: string }> }) {
   const denied = await denyUnless("/dashboard/elections/my");
@@ -20,15 +19,7 @@ export default async function CandidacyPage({ params }: { params: Promise<{ elec
   const { electionId } = await params;
   const { items, error } = await getMyCandidacies(me.id);
   const c = items.find((x) => x.electionId === electionId);
-
-  if (!c) {
-    return (
-      <>
-        <PageHeader title="الترشّح" />
-        <Alert tone="warning" title="تعذّر فتح الترشّح">{error ?? "لا ترشّحَ لك في هذا الانتخاب."}</Alert>
-      </>
-    );
-  }
-
-  return <CandidacyDetailView c={c} />;
+  if (error) return <AdRoomError title="الترشّح" navPath="/dashboard/elections/my" what="الترشّح" message={error} />;
+  if (!c) return <AdRoomMissing title="الترشّح" navPath="/dashboard/elections/my" what="الترشّح" desc="لا ترشّحَ لك في هذا الانتخاب." back={{ label: "سِجلّ ترشُّحي", href: "/dashboard/elections/my" }} />;
+  return <MyCandidacyRoom c={c} />;
 }

@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { STATEMENT_MAX, STATEMENT_MIN } from "@/app/dashboard/elections/vocab";
 import {
-  appointToSeat, cancelElection, castVote, createElection, declareWinner, finalizeConfidence,
-  openVoting, resolveDepartmentWinners, restoreCandidacy, reviewCandidate, setDeadline,
-  submitCandidacy, sweep, targetLabel, topCandidate, transitionElection, withdrawCandidacy,
+  answerFreeze, appointSeatHolder, appointToSeat, appointableMembers, approveFreeze, banFromCandidacy, cancelElection,
+  castVote, chooseInTie, createElection, decideFreeze, liftCandidacyBan, openRevote, openVoting, requestFreeze,
+  restoreCandidacy, reviewCandidate, setDeadline, settle, submitCandidacy, sweep, targetLabel,
+  transitionElection, withdrawCandidacy,
 } from "../rules";
 import { scenarioOf } from "../scenarios";
 import {
-  candidateWeight, choiceWeight, emptyWorld, isConfidence, memberIn, shiftWorld, voteWeight,
+  activeBanOf, candidateWeight, choiceWeight, eligibleToRun, emptyWorld, isConfidence, memberIn, shiftWorld,
   type SimWorld,
 } from "../world";
 
@@ -207,10 +208,10 @@ describe("reviewCandidate", () => {
     pending = w.candidates.find((c) => c.status === "pending")!.id;
   });
 
-  // السببُ إلزاميٌّ للرفض وطلب التعديل — يفرضه التريغر، ويُفحص **قبل** القدرة
-  it("لا رفضَ ولا طلبَ تعديلٍ بلا سبب", () => {
-    expect(reviewCandidate(w, "u-hrlead", pending, "rejected").message).toBe("اكتب سبب الرفض أو التعديل.");
-    expect(reviewCandidate(w, "u-hrlead", pending, "needs_edit", "   ").message).toBe("اكتب سبب الرفض أو التعديل.");
+  // السببُ إلزاميٌّ للاعتذار وطلب التعديل، ويُفحص **قبل** القدرة
+  it("لا اعتذارَ ولا طلبَ تعديلٍ بلا سبب", () => {
+    expect(reviewCandidate(w, "u-hrlead", pending, "rejected").message).toBe("اكتب سبب الاعتذار أو التعديل.");
+    expect(reviewCandidate(w, "u-hrlead", pending, "needs_edit", "   ").message).toBe("اكتب سبب الاعتذار أو التعديل.");
     expect(reviewCandidate(w, "u-hrlead", pending, "approved").ok).toBe(true); // والاعتمادُ بلا سبب
   });
 
@@ -227,17 +228,28 @@ describe("reviewCandidate", () => {
     expect(c.reviewedAt).toBe(NOW);
   });
 
-  // `enforce_candidate_status_transition` — «يحتاج تعديلًا» يُعتمَد أو يُرفَض، والمعتمَدُ لا يُنقَض
-  it("انتقالُ المراجعة محدود: المعتمَدُ والمرفوضُ والمنسحبُ نهايات", () => {
-    const approved = w.candidates.find((c) => c.status === "approved")!;
-    const needsEdit = w.candidates.find((c) => c.status === "needs_edit")!;
-    const rejected = w.candidates.find((c) => c.status === "rejected")!;
+  // المادة 14: طلبُ التعديل بمهلةٍ في المستقبل يحدّدها المراجع، والاعتذارُ بسببٍ من الثلاثة
+  it("طلبُ التعديل بمهلته، والاعتذارُ بسببه", () => {
+    expect(reviewCandidate(w, "u-hrlead", pending, "needs_edit", "اختصر الفقرة الأخيرة").message)
+      .toBe("حدّد مهلة التعديل موعدًا في المستقبل (المادة 14)");
+    expect(reviewCandidate(w, "u-hrlead", pending, "rejected", "البيان خارج المقعد").message)
+      .toContain("اختر سبب الاعتذار");
+    const r = reviewCandidate(w, "u-hrlead", pending, "needs_edit", "اختصر الفقرة الأخيرة", { editDueIso: iso(NOW + DAY) });
+    expect(r.ok, r.message).toBe(true);
+    const c = w.candidates.find((x) => x.id === pending)!;
+    expect(c.editDueAt).toBe(NOW + DAY);
+    expect(w.log.at(-1)!.payload).toMatchObject({ new_status: "needs_edit", edit_due: iso(NOW + DAY) });
+  });
 
-    expect(reviewCandidate(w, "u-hrlead", approved.id, "rejected", "سبب").message)
-      .toBe("انتقال مرشح غير مسموح: approved → rejected");
-    expect(reviewCandidate(w, "u-hrlead", rejected.id, "approved").message)
-      .toBe("انتقال مرشح غير مسموح: rejected → approved");
-    expect(reviewCandidate(w, "u-hrlead", needsEdit.id, "approved").ok).toBe(true);
+  // ولا يُعاد النظر في قرار: لا يُبتّ إلا فيما كان قيد المراجعة
+  it("لا يُبتّ إلّا في ترشّحٍ قيد المراجعة", () => {
+    for (const st of ["approved", "needs_edit", "rejected"] as const) {
+      const c = w.candidates.find((x) => x.status === st)!;
+      expect(reviewCandidate(w, "u-hrlead", c.id, "approved").message).toBe("لا يُبتّ إلا في ترشّحٍ قيد المراجعة");
+    }
+    const r = reviewCandidate(w, "u-hrlead", pending, "rejected", "البيان خارج المقعد", { rejectReason: "unrelated" });
+    expect(r.ok, r.message).toBe(true);
+    expect(w.candidates.find((x) => x.id === pending)!.rejectReason).toBe("unrelated");
   });
 });
 
@@ -279,10 +291,10 @@ describe("transitionElection", () => {
   it("ولا يفتح ولا معتمَدَ واحد", () => {
     const { w, id } = openSeat();
     submitCandidacy(w, "u-m1", id, PITCH, null);
-    reviewCandidate(w, "u-hrlead", w.candidates[0].id, "rejected", "سببٌ مكتوب");
+    reviewCandidate(w, "u-hrlead", w.candidates[0].id, "rejected", "سببٌ مكتوب", { rejectReason: "unrelated" });
     // بقي مرشّحٌ نشطٌ؟ لا — فيلزم مرشّحٌ آخر لإغلاق الباب
     submitCandidacy(w, "u-m2", id, PITCH, null);
-    reviewCandidate(w, "u-hrlead", w.candidates[1].id, "rejected", "سببٌ مكتوب");
+    reviewCandidate(w, "u-hrlead", w.candidates[1].id, "rejected", "سببٌ مكتوب", { rejectReason: "unrelated" });
     expect(transitionElection(w, "u-hrlead", id, "candidacy_closed").ok).toBe(false);
   });
 
@@ -331,7 +343,7 @@ describe("setDeadline", () => {
   });
 
   it("لا موعدَ إلّا لبابٍ مفتوح", () => {
-    const w = load("declare_winner"); // تصويتٌ مغلق
+    const w = load("joint_blocked"); // تصويتٌ مغلق
     expect(setDeadline(w, "u-hrlead", "e-lead-11", iso(NOW + DAY)).message)
       .toBe("لا موعدَ إلّا لبابٍ مفتوح (ترشّحًا أو تصويتًا).");
   });
@@ -413,7 +425,7 @@ describe("castVote", () => {
   });
 
   it("لا صوتَ وبابُ التصويت مغلق", () => {
-    const w = load("declare_winner"); // صندوقٌ أُغلق، و«ريم التنفيذيّة» لم تختم بطاقتها فيه
+    const w = load("joint_blocked"); // صندوقٌ أُغلق، و«ريم التنفيذيّة» لم تختم بطاقتها فيه
     expect(castVote(w, "u-exec", "e-lead-11", w.candidates[0].id).message).toBe("التصويت غير مفتوح");
   });
 
@@ -431,123 +443,65 @@ describe("castVote", () => {
 
 /* ══ التزكية ═════════════════════════════════════════════════════════ */
 
-describe("finalizeConfidence", () => {
-  /**
-   * `_finalize_confidence` — التزكيةُ رأيٌ لا اختيار: إن لم يغلب التأييدُ الاعتراضَ عند
-   * إغلاق التصويت **أُلغي الانتخابُ من نفسه** بسببٍ مسجَّل، وبقي المقعدُ فارغًا.
-   */
-  it("تسقط التزكيةُ إن لم يغلب التأييدُ عند إغلاق التصويت", () => {
+describe("الإعلانُ الآليّ لحظة الإغلاق (المادتان 25 و28)", () => {
+  /** `_resolve_department` — لا يُعلن أحدٌ بيده: يُغلَق التصويتُ فتُعلن المنصّةُ وتُسند المنصب. */
+  it("يُغلَق التصويتُ فيُعلَن المتصدّرُ ويُسنَد المنصب", () => {
+    const w = load("declare_winner");
+    const r = transitionElection(w, "u-hrlead", "e-lead-11", "voting_closed", null, { reason: "اكتمل نصاب اللجنة قبل الموعد" });
+    expect(r.ok, r.message).toBe(true);
+    const e = w.elections[0];
+    expect(e.status).toBe("completed");
+    expect(e.completedBy).toBe("winner");
+    expect(w.candidates.find((c) => c.id === e.winnerCandidateId)!.userId).toBe("u-m2");
+    expect(memberIn(w, "u-m2")!.roleName).toBe("committee_leader");
+    expect(w.log.some((x) => x.event === "winner_declared_auto" && x.payload.how === "top")).toBe(true);
+  });
+
+  it("وتسقط التزكيةُ إن لم يغلب التأييد، فيتعثّر المقعدُ ويبقى المرشّح معتمَدًا", () => {
     const w = load("confidence_falling"); // تأييدٌ ١ مقابل اعتراضٍ ٦
     expect(isConfidence(w, "e-dep-11")).toBe(true);
     expect(choiceWeight(w, "e-dep-11", "approve")).toBeLessThan(choiceWeight(w, "e-dep-11", "reject"));
-
-    expect(transitionElection(w, "u-hrlead", "e-dep-11", "voting_closed").ok).toBe(true);
+    transitionElection(w, "u-hrlead", "e-dep-11", "voting_closed");
     const e = w.elections[0];
-    expect(e.status).toBe("cancelled");
-    expect(e.cancelReason).toContain("سقطت التزكية");
-    expect(e.archivedAt).not.toBeNull();
-    expect(w.log.some((r) => r.event === "confidence_failed")).toBe(true);
+    expect(e.status).toBe("voting_closed");
+    expect(e.stallReason).toBe("confidence_failed");
+    expect(w.candidates.find((c) => c.electionId === "e-dep-11")!.status).toBe("approved");
   });
 
   it("ولا تسقط إن غلب التأييد", () => {
     const w = load("confidence_falling");
-    // يؤيّد الرئيسُ (٤) وقائدةُ الموارد (٣٫٥) فيغلب التأييدُ الاعتراضَ
     const c = w.candidates.find((x) => x.status === "approved")!;
-    castVote(w, "u-pres2" as string, "e-dep-11", c.id); // ناخبٌ لا وجودَ له: يُردّ فلا يبدّل شيئًا
     castVote(w, "u-hrlead", "e-dep-11", c.id);
     castVote(w, "u-exec", "e-dep-11", c.id);
     transitionElection(w, "u-hrlead", "e-dep-11", "voting_closed");
+    expect(w.elections[0].status).toBe("completed");
+  });
+
+  it("والتعادلُ يفتح للمجلس بدل الإعلان", () => {
+    const w = load("declare_tie"); // ٤ مقابل ٤
+    transitionElection(w, "u-hrlead", "e-lead-11", "voting_closed");
     expect(w.elections[0].status).toBe("voting_closed");
+    expect(w.ties).toHaveLength(1);
+    expect(w.ties[0].status).toBe("open");
+    expect(w.ties[0].candidateIds).toHaveLength(2);
   });
 
-  it("لا تُطبَّق على تنافسٍ ولا على صندوقٍ مفتوح", () => {
-    const many = load("self_candidate");
-    expect(finalizeConfidence(many, null, "e-lead-11")).toBe(false); // مفتوحٌ بعد
-    const one = load("confidence");
-    expect(finalizeConfidence(one, null, "e-dep-11")).toBe(false); // تصويتٌ جارٍ
-  });
-});
-
-/* ══ الإعلان والحسم ══════════════════════════════════════════════════ */
-
-describe("declareWinner", () => {
-  it("يُعلَن المتصدّرُ فيُسنَد المنصبُ ويُقفَل المقعد", () => {
-    const w = load("declare_winner");
-    const top = topCandidate(w, "e-lead-11")!;
-    expect(top.userId).toBe("u-m2"); // نورة: أعلى وزنًا وأعلى عددًا معًا
-
-    const r = declareWinner(w, "u-hrlead", "e-lead-11", top.id);
-    expect(r.ok, r.message).toBe(true);
-
-    const e = w.elections[0];
-    expect(e.status).toBe("completed");
-    expect(e.winnerCandidateId).toBe(top.id);
-    expect(e.archivedAt).toBe(NOW);
-    expect(w.assignments).toHaveLength(1);
-    expect(w.assignments[0]).toMatchObject({ userId: "u-m2", roleName: "committee_leader", committeeId: 11 });
-    // ومنصبُه الجديد يعلو منصبَه القديم في هذا العالم، فيتغيّر وزنُه من فوره
-    expect(memberIn(w, "u-m2")!.roleName).toBe("committee_leader");
-    expect(voteWeight(w, "u-m2")).toBe(2);
-  });
-
-  // `enforce_winner_declaration` — القاعدةُ تعرف المتصدّر، فالشريطُ يحمل زرًّا واحدًا باسمه
-  it("لا يُعلَن من ليس صاحبَ أعلى الأصوات", () => {
-    const w = load("declare_winner");
-    const loser = w.candidates.find((c) => c.userId === "u-m3")!;
-    expect(declareWinner(w, "u-hrlead", "e-lead-11", loser.id).message).toBe("الفائز المعلن ليس صاحب أعلى الأصوات");
-    expect(w.assignments).toHaveLength(0);
-  });
-
-  it("ولا يُعلَن مرّتين", () => {
-    const w = load("declare_winner");
-    const top = topCandidate(w, "e-lead-11")!;
-    declareWinner(w, "u-hrlead", "e-lead-11", top.id);
-    expect(declareWinner(w, "u-hrlead", "e-lead-11", top.id).message).toBe("الانتخاب مؤرشف");
-  });
-
-  it("ولا يُعلَن قبل إغلاق التصويت", () => {
-    const w = load("self_candidate");
-    expect(declareWinner(w, "u-hrlead", "e-lead-11", w.candidates[0].id).message)
-      .toBe("يجب أن يكون التصويت مغلقاً قبل إعلان الفائز");
-  });
-
-  it("ولا يُعلنه غيرُ مدير", () => {
-    const w = load("declare_winner");
-    expect(declareWinner(w, "u-m1", "e-lead-11", w.candidates[0].id).message).toBe("غير مصرح بإعلان الفائز");
-  });
-
-  /**
-   * **الحارسُ الأهمّ**: لا إعلانَ منفردًا ما دام في القسم مقعدٌ حيٌّ يخوضه أحدُ مرشّحيك —
-   * فقد يفوز بالاثنين والمفضَّلُ لا يُعرَف بعد. والشاشةُ تقول لك ما تفعله.
-   */
-  it("يُحجَب الإعلانُ المنفردُ إن شارك مرشّحُك مقعدًا حيًّا في القسم", () => {
+  // المادة 27: لا يُعلَن مقعدٌ يشارك مقعدًا جاريًا في القسم مرشّحًا، فإذا أُغلق حُسما معًا
+  it("لا يُعلَن مقعدٌ ينتظر مقعدًا آخر في القسم، ثمّ يُحسمان معًا", () => {
     const w = load("joint_blocked");
-    const top = topCandidate(w, "e-lead-11")!;
-    const r = declareWinner(w, "u-hrlead", "e-lead-11", top.id);
-    expect(r).toEqual({ ok: false, message: "في هذا القسم مقعدٌ آخر يخوضه أحدُ مرشّحيك؛ أعلِن مقاعد القسم معًا." });
+    settle(w);
+    expect(w.elections.find((e) => e.id === "e-lead-11")!.status).toBe("voting_closed");
+    transitionElection(w, "u-hrlead", "e-dep-11", "voting_closed");
+    const lead = w.elections.find((e) => e.id === "e-lead-11")!;
+    expect(lead.status).toBe("completed");
+    expect(w.candidates.find((c) => c.id === lead.winnerCandidateId)!.userId).toBe("u-m1");
+    expect(w.elections.find((e) => e.id === "e-dep-11")!.stallReason).toBe("no_votes");
   });
 
-  it("فإذا أُغلق المقعدُ الآخر صحّ الحسمُ الجماعيّ", () => {
-    const w = load("joint_blocked");
-    expect(transitionElection(w, "u-hrlead", "e-dep-11", "voting_closed").ok).toBe(true);
-    expect(resolveDepartmentWinners(w, "u-hrlead", 1).ok).toBe(true);
-  });
-});
-
-describe("resolveDepartmentWinners", () => {
-  /**
-   * `resolve_department_election_winners` — **حلقةٌ لا حالتان**: من تصدّر مقعدين أخذ مفضَّله
-   * وأُقصي من الآخر فيرتقي الوصيف، وقد يتصدّر الوصيفُ مقعدًا ثالثًا فتُعاد الكرّة.
-   */
-  it("يحسم القسمَ كلَّه: المفضَّلُ لصاحبه والوصيفُ يرتقي", () => {
+  it("من تصدّر مقعدين أخذ مفضَّله، والوصيفُ يرتقي", () => {
     const w = load("department_seats");
-    // أحمدُ (u-m1) تصدّر التنسيقَ والقيادةَ معًا، ومفضَّلُه القيادة
     expect(candidateWeight(w, w.candidates.find((c) => c.electionId === "e-head-1" && c.userId === "u-m1")!.id)).toBe(5);
-
-    const r = resolveDepartmentWinners(w, "u-pres", 1);
-    expect(r.ok, r.message).toBe(true);
-    expect(r.message).toContain("حُسم مَن تصدّر مقعدين بمفضَّله");
-
+    transitionElection(w, "u-hrlead", "e-lead-11", "voting_closed");
     const winnerOf = (id: string) => {
       const e = w.elections.find((x) => x.id === id)!;
       return w.candidates.find((c) => c.id === e.winnerCandidateId)!.userId;
@@ -555,29 +509,8 @@ describe("resolveDepartmentWinners", () => {
     expect(winnerOf("e-lead-11")).toBe("u-m1"); // مفضَّلُه
     expect(winnerOf("e-head-1")).toBe("u-m2");  // الوصيفُ ارتقى
     expect(winnerOf("e-dep-11")).toBe("u-m4");
-
-    expect(w.elections.every((e) => e.status === "completed")).toBe(true);
-    expect(w.assignments).toHaveLength(3);
-    // ولا يجمع أحدٌ مقعدين
     expect(new Set(w.assignments.map((a) => a.userId)).size).toBe(3);
-  });
-
-  it("لا يحسم والقسمُ فيه مقعدٌ لم يُغلق تصويتُه ويخوضه أحدُ هؤلاء", () => {
-    const w = load("joint_blocked");
-    const r = resolveDepartmentWinners(w, "u-hrlead", 1);
-    expect(r.ok).toBe(false);
-    expect(r.message).toContain("لم يُغلق تصويتُه بعد");
-  });
-
-  it("لا يحسم قسمًا لا مقعدَ فيه جاهز", () => {
-    const w = load("competition"); // ترشّحٌ مفتوح
-    expect(resolveDepartmentWinners(w, "u-hrlead", 1).message)
-      .toBe("لا مقاعدَ جاهزةً للإعلان في هذا القسم (أغلِق التصويت أوّلًا).");
-  });
-
-  it("ولا يحسمه غيرُ مدير", () => {
-    const w = load("department_seats");
-    expect(resolveDepartmentWinners(w, "u-m1", 1).message).toBe("غير مصرح بإعلان الفائز");
+    expect(w.log.some((x) => x.event === "winner_declared_auto" && x.payload.how === "after_27")).toBe(true);
   });
 });
 
@@ -590,7 +523,8 @@ describe("appointToSeat", () => {
     expect(r.ok, r.message).toBe(true);
     expect(w.assignments).toHaveLength(1);
     expect(w.assignments[0]).toMatchObject({ userId: "u-m7", roleName: "committee_leader", committeeId: 21 });
-    expect(w.elections[0].status).toBe("cancelled");
+    // ولم يعد التكليفُ يلغي الانتخاب (المادة 8)
+    expect(w.elections[0].status).toBe("candidacy_open");
     expect(w.log.some((x) => x.event === "seat_appointed")).toBe(true);
   });
 
@@ -618,10 +552,13 @@ describe("cancelElection", () => {
   it("يُلغى بسببٍ مكتوب، ويبقى المرشّحون والأصوات كما هم", () => {
     const w = load("self_candidate");
     const before = w.candidates.length;
-    const r = cancelElection(w, "u-hrlead", "e-lead-11", "تغيّرت هيكلةُ اللجنة");
+    expect(cancelElection(w, "u-hrlead", "e-lead-11", "تغيّرت هيكلةُ اللجنة").message).toContain("لا يُلغى الانتخاب إلا لتعثّره");
+    expect(cancelElection(w, "u-hrlead", "e-lead-11", "تغيّرت هيكلةُ اللجنة", "stalled").message).toContain("لم يتعثّر");
+    const r = cancelElection(w, "u-hrlead", "e-lead-11", "تغيّرت هيكلةُ اللجنة", "defect");
     expect(r.ok, r.message).toBe(true);
     expect(w.elections[0].status).toBe("cancelled");
     expect(w.elections[0].cancelReason).toBe("تغيّرت هيكلةُ اللجنة");
+    expect(w.elections[0].cancelBasis).toBe("defect");
     expect(w.candidates.length).toBe(before);
   });
 
@@ -631,6 +568,7 @@ describe("cancelElection", () => {
     expect(cancelElection(w, "u-m1", "e-lead-11", "سبب").message).toBe("غير مصرح بإلغاء الانتخاب");
     const done = load("archive");
     expect(cancelElection(done, "u-hrlead", "e-lead-11", "سبب").message).toBe("لا يمكن إلغاء انتخاب مكتمل");
+    expect(cancelElection(w, "u-hrlead", "e-lead-11", "قصير").message).toBe("اكتب سبب الإلغاء (10 أحرف على الأقلّ) (المادة 29)");
   });
 });
 
@@ -650,7 +588,8 @@ describe("sweep", () => {
     expect(w.elections.find((e) => e.id === "e-lead-11")!.status).toBe("candidacy_closed");
     expect(w.elections.find((e) => e.id === "e-lead-21")!.stalledAt).not.toBeNull();
     expect(w.elections.find((e) => e.id === "e-lead-21")!.status).toBe("candidacy_open"); // وقف ولم يُلغَ
-    expect(w.elections.find((e) => e.id === "e-dep-11")!.status).toBe("voting_closed");
+    // وأُغلق التصويتُ فأعلنت المنصّةُ متصدّرَه في الحال (المادة 28)
+    expect(w.elections.find((e) => e.id === "e-dep-11")!.status).toBe("completed");
     // ومقعدٌ بلا موعدٍ لا تلمسه الكنّاسة
     expect(w.elections.find((e) => e.id === "e-head-1")!.status).toBe("candidacy_open");
   });
@@ -695,5 +634,223 @@ describe("targetLabel", () => {
     for (const e of w.elections) {
       for (const bad of ["·", "|", "—"]) expect(targetLabel(e)).not.toContain(bad);
     }
+  });
+});
+
+/* ══ الأفعالُ الجديدة (دفعات ١–٥) ════════════════════════════════════ */
+
+const WHY = "سببٌ مكتوبٌ بطوله يكفي";
+
+describe("openRevote", () => {
+  it("يُفتح لمن بطل صوتُه وحده، ويُحسم حين يصوّتون", () => {
+    const w = load("revote_partial");
+    expect(openRevote(w, "u-m1", "e-dep-11", iso(NOW + DAY), WHY).message).toBe("غير مصرح بإعادة التصويت");
+    expect(openRevote(w, "u-hrlead", "e-dep-11", iso(NOW + DAY), "قصير").message).toBe("اكتب سبب إعادة التصويت (10 أحرف على الأقلّ).");
+    const r = openRevote(w, "u-hrlead", "e-dep-11", iso(NOW + DAY), WHY);
+    expect(r.ok, r.message).toBe(true);
+    const e = w.elections[0];
+    expect(e.status).toBe("voting_open");
+    expect(e.revoteOnly).toBe(true);
+    expect(e.revotePending).toBeNull();
+
+    const a = w.candidates.find((c) => c.userId === "u-m1")!;
+    expect(castVote(w, "u-hrmem", "e-dep-11", a.id).message).toBe("إعادة التصويت هذه لمن بطل صوته وحده (المادة 16)");
+    expect(castVote(w, "u-exec", "e-dep-11", a.id).message).toBe("بطاقتُك في هذا المقعد مختومةٌ، ولا يُعاد الصوت");
+    expect(castVote(w, "u-m4", "e-dep-11", a.id).ok).toBe(true);
+    expect(w.votes.at(-1)!.weight).toBe(1); // بوزنه الأوّل
+    expect(e.status).toBe("voting_open");
+    expect(castVote(w, "u-hrlead", "e-dep-11", a.id).ok).toBe(true);
+    // صوّت كلُّ من بطل صوتُه، فأُغلق التصويتُ وأُعلن أحمد (4 + 1 + 3.5)
+    expect(e.status).toBe("completed");
+    expect(e.winnerCandidateId).toBe(a.id);
+  });
+
+  it("ولا يُفتح ما لا إعادةَ تنتظر فيه، ولا بموعدٍ ماضٍ", () => {
+    const w = load("revote_partial");
+    expect(openRevote(w, "u-hrlead", "e-dep-11", iso(NOW - DAY), WHY).message).toBe("اختر لإغلاق إعادة التصويت موعدًا في المستقبل");
+    const plain = load("joint_blocked");
+    expect(openRevote(plain, "u-hrlead", "e-lead-11", iso(NOW + DAY), WHY).message).toBe("لا إعادة تصويتٍ تنتظر في هذا الانتخاب");
+  });
+
+  it("والإعادةُ تزكيةً مفتوحةٌ للناخبين كلّهم", () => {
+    const w = load("revote_full");
+    expect(openRevote(w, "u-hrlead", "e-lead-11", iso(NOW + DAY), WHY).ok).toBe(true);
+    expect(w.elections[0].revoteOnly).toBe(false);
+    const a = w.candidates.find((c) => c.status === "approved")!;
+    expect(castVote(w, "u-hrmem", "e-lead-11", a.id, "reject").ok).toBe(true);
+  });
+});
+
+describe("appointSeatHolder", () => {
+  it("يعيّن على المتعثّر فيكتمل الانتخابُ بالتعيين", () => {
+    const w = load("stall_no_votes");
+    expect(appointSeatHolder(w, "u-hrmem", "e-lead-12", "u-m5", WHY).message).toContain("لمديري الانتخابات الثلاثة");
+    expect(appointSeatHolder(w, "u-hrlead", "e-lead-12", "u-m5", "قصير").message).toBe("اكتب سبب التعيين (10 أحرف على الأقلّ).");
+    const r = appointSeatHolder(w, "u-hrlead", "e-lead-12", "u-m5", WHY);
+    expect(r.ok, r.message).toBe(true);
+    const e = w.elections[0];
+    expect(e).toMatchObject({ status: "completed", completedBy: "appointment", appointedUserId: "u-m5" });
+    expect(memberIn(w, "u-m5")!.roleName).toBe("committee_leader");
+    expect(w.log.some((x) => x.event === "completed_by_appointment")).toBe(true);
+  });
+
+  it("لا تعيينَ على مقعدٍ لم يتعثّر، ولا لمن سقطت تزكيتُه", () => {
+    expect(appointSeatHolder(load("joint_blocked"), "u-hrlead", "e-lead-11", "u-m4", WHY).message)
+      .toBe("لا يُعيَّن إلا على مقعدٍ تعثّر انتخابه، أو أُلغي لتعثّره (المادة 25)");
+    const w = load("stall_confidence");
+    expect(appointSeatHolder(w, "u-hrlead", "e-dep-11", "u-m2", WHY).message).toBe("من سقطت تزكيته في هذا الانتخاب لا يُعيَّن عليه (المادة 25)");
+    expect(appointableMembers(w, "e-dep-11").some((m) => m.id === "u-m2")).toBe(false);
+  });
+
+  it("ويصحّ على متعثّرٍ أُلغي لتعثّره", () => {
+    const w = load("stall_no_votes");
+    expect(cancelElection(w, "u-hrlead", "e-lead-12", WHY, "stalled").ok).toBe(true);
+    expect(appointSeatHolder(w, "u-hrlead", "e-lead-12", "u-m6", WHY).ok).toBe(true);
+  });
+});
+
+describe("إعادةُ فتح الباب بعد التصويت للمتعثّر", () => {
+  it("تبطل الأصواتُ كلُّها، وينتهي ترشّحُ من سقطت تزكيتُه", () => {
+    const w = load("stall_confidence");
+    const r = transitionElection(w, "u-hrlead", "e-dep-11", "candidacy_open", null, { reason: WHY, candidacyEndIso: iso(NOW + 3 * DAY) });
+    expect(r.ok, r.message).toBe(true);
+    const e = w.elections[0];
+    expect(e).toMatchObject({ status: "candidacy_open", stalledAt: null, stallReason: null, candidacyEnd: NOW + 3 * DAY });
+    expect(w.votes.every((v) => v.voidReason === "reopened")).toBe(true);
+    expect(w.candidates[0]).toMatchObject({ status: "ended", endReason: "confidence_failed" });
+  });
+});
+
+describe("chooseInTie", () => {
+  it("للمجلس وحده، باختيارٍ واحدٍ لا يُعدَّل، والأغلبيّةُ تعلن", () => {
+    const w = load("tie_open"); // اختارت الرئيسة التنفيذيّة أحمد
+    const [a, b] = w.ties[0].candidateIds;
+    expect(chooseInTie(w, "u-m3", 1, a, WHY).message).toBe("الفصل في التعادل للمجلس الإداري (المادة 26)");
+    expect(chooseInTie(w, "u-exec", 1, b, WHY).message).toBe("اخترتَ في هذا التعادل من قبل، ولا يُعدَّل الاختيار");
+    expect(chooseInTie(w, "u-pres", 1, "c-x", WHY).message).toBe("اختر من المتعادلين");
+    expect(chooseInTie(w, "u-pres", 1, b, "قصير").message).toBe("اكتب سبب اختيارك (10 أحرف على الأقلّ).");
+    expect(chooseInTie(w, "u-hrlead", 1, b, WHY).ok).toBe(true);
+    expect(w.ties[0].status).toBe("open"); // واحدٌ لكلٍّ: لا أغلبيّة
+    expect(chooseInTie(w, "u-pres", 1, a, WHY).ok).toBe(true);
+    expect(w.ties[0]).toMatchObject({ status: "decided", outcome: "majority", winnerCandidateId: a });
+    expect(w.elections[0].winnerCandidateId).toBe(a);
+  });
+
+  it("«أترك الأمر للأسبق» يُحسب للأسبق ترشّحًا", () => {
+    const w = load("tie_open");
+    const [a] = w.ties[0].candidateIds; // أحمدُ أسبقُ ترشّحًا
+    expect(chooseInTie(w, "u-hrlead", 1, null, WHY).ok).toBe(true);
+    expect(w.elections[0].winnerCandidateId).toBe(a);
+  });
+
+  it("ومضيُّ الأجل يُعلن الأسبق", () => {
+    const w = load("tie_open");
+    shiftWorld(w, DAY);
+    sweep(w);
+    expect(w.ties[0]).toMatchObject({ status: "decided", outcome: "earliest" });
+  });
+
+  it("والتعادلُ الموقوفُ بتجميدٍ لا يُحسم حتى يُرفع", () => {
+    const w = load("tie_paused");
+    const [a] = w.ties[0].candidateIds;
+    chooseInTie(w, "u-pres", 1, a, WHY);
+    chooseInTie(w, "u-exec", 1, a, WHY);
+    expect(w.ties[0].status).toBe("open");
+    expect(decideFreeze(w, "u-hrlead", 1, "lift", WHY).ok).toBe(true);
+    expect(w.ties[0]).toMatchObject({ status: "decided", winnerCandidateId: a, pausedAt: null });
+  });
+});
+
+describe("التجميد", () => {
+  it("يطلبه عضوُ الموارد، فيوافق القائد، فيُجمَّد بمهلة الإجابة", () => {
+    const w = load("cand_states");
+    const c = w.candidates.find((x) => x.userId === "u-m1")!; // قيد المراجعة
+    expect(requestFreeze(w, "u-m4", c.id, WHY, "6 hours", "1 day").message).toBe("التجميد لإدارة الموارد البشرية (المادة 16)");
+    expect(requestFreeze(w, "u-hrmem", c.id, WHY, "", "1 day").message).toBe("حدّد مهلة الإجابة وأجل القرار");
+    const r = requestFreeze(w, "u-hrmem", c.id, WHY, "6 hours", "1 day");
+    expect(r.ok, r.message).toBe(true);
+    const id = Number(r.id);
+    expect(c.status).toBe("pending");
+    expect(requestFreeze(w, "u-hrmem", c.id, WHY, "6 hours", "1 day").message).toBe("على هذا الترشّح تجميدٌ قائم أو طلبٌ ينتظر");
+    expect(approveFreeze(w, "u-hrmem", id, true).message).toContain("لقائد إدارة الموارد البشرية");
+    expect(approveFreeze(w, "u-hrlead", id, true).ok).toBe(true);
+    expect(c.status).toBe("frozen");
+    expect(w.freezes.find((f) => f.id === id)!.answerDue).toBe(NOW + 6 * 3_600_000);
+  });
+
+  it("وإن طلبه القائدُ جُمّد في الحال، والردُّ بسبب", () => {
+    const w = load("cand_states");
+    const c = w.candidates.find((x) => x.userId === "u-m1")!;
+    expect(requestFreeze(w, "u-hrlead", c.id, WHY, "06:00:00", "1 day").ok).toBe(true);
+    expect(c.status).toBe("frozen");
+    const req = w.freezes.find((f) => f.status === "requested")!;
+    expect(approveFreeze(w, "u-hrlead", req.id, false, "قصير").message).toBe("اكتب سبب رفض الطلب (10 أحرف على الأقلّ)");
+    expect(approveFreeze(w, "u-hrlead", req.id, false, WHY).ok).toBe(true);
+    expect(req).toMatchObject({ status: "closed", outcome: "declined" });
+  });
+
+  it("يجيب صاحبُه وحده، ولا استبعادَ قبل الإجابة", () => {
+    const w = load("cand_states");
+    const active = w.freezes.find((f) => f.status === "active")!;
+    const owner = w.candidates.find((c) => c.id === active.candidateId)!.userId;
+    expect(decideFreeze(w, "u-hrlead", active.id, "exclude", WHY).message).toBe("لا يُستبعد قبل أن يُجيب أو تمضي مهلة إجابته (المادة 16)");
+    expect(answerFreeze(w, "u-m1", active.id, WHY).message).toBe("الإجابة لصاحب الترشّح وحده");
+    expect(answerFreeze(w, owner, active.id, "قصير").message).toBe("اكتب إجابتك (10 أحرف على الأقلّ)");
+    expect(answerFreeze(w, owner, active.id, WHY).ok).toBe(true);
+    expect(active.status).toBe("answered");
+    expect(active.decideDue).toBe(NOW + DAY);
+    expect(decideFreeze(w, "u-hrlead", active.id, "exclude", WHY).ok).toBe(true);
+    expect(w.candidates.find((c) => c.id === active.candidateId)).toMatchObject({ status: "ended", endReason: "excluded" });
+  });
+
+  it("الرفعُ يعيد الترشّح إلى حاله، ومهلةُ التعديل تُكمَل من حيث وقفت", () => {
+    const w = load("cand_states");
+    const ed = w.candidates.find((c) => c.status === "needs_edit")!;
+    const left = ed.editDueAt! - NOW;
+    const r = requestFreeze(w, "u-hrlead", ed.id, WHY, "6 hours", "1 day");
+    shiftWorld(w, 3_600_000);
+    w.now = NOW;
+    expect(decideFreeze(w, "u-hrlead", Number(r.id), "lift", WHY).ok).toBe(true);
+    expect(ed.status).toBe("needs_edit");
+    expect(ed.editDueAt).toBe(NOW + left);
+  });
+
+  it("الكنّاسة: مضيُّ مهلة الإجابة يستبعد، ومضيُّ أجل القرار يرفع", () => {
+    const w = load("cand_states");
+    const active = w.freezes.find((f) => f.status === "active")!;
+    const answered = w.freezes.find((f) => f.status === "answered")!;
+    shiftWorld(w, DAY);
+    sweep(w);
+    expect(w.candidates.find((c) => c.id === active.candidateId)).toMatchObject({ status: "ended", endReason: "excluded" });
+    expect(active.outcome).toBe("auto_excluded");
+    expect(answered.outcome).toBe("auto_lifted");
+    expect(w.candidates.find((c) => c.id === answered.candidateId)!.status).toBe("approved");
+  });
+
+  it("والمجمَّدُ والتصويتُ جارٍ يغيب عن البطاقة", () => {
+    const w = load("self_candidate");
+    const c = w.candidates.find((x) => x.status === "approved" && x.userId !== "u-m1")!;
+    expect(requestFreeze(w, "u-hrlead", c.id, WHY, "6 hours", "1 day").ok).toBe(true);
+    expect(castVote(w, "u-m4", "e-lead-11", c.id).message).toBe("المرشح غير صالح في هذا الانتخاب");
+  });
+});
+
+describe("الحرمان من الترشّح", () => {
+  it("لرئيس أدِيب وحده، وينهي ما لم يُفتح تصويتُه", () => {
+    const w = load("competition");
+    const until = new Date(NOW + 30 * DAY).toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
+    expect(banFromCandidacy(w, "u-hrlead", "u-m1", WHY, until).message).toBe("الحرمان من الترشّح لرئيس أدِيب وحده (المادة 11)");
+    expect(banFromCandidacy(w, "u-pres", "u-m1", WHY, "2030-01-01").message).toBe("أجل الحرمان من اليوم إلى سنةٍ على الأكثر (المادة 11)");
+    const r = banFromCandidacy(w, "u-pres", "u-m1", WHY, until);
+    expect(r.ok, r.message).toBe(true);
+    expect(w.candidates.find((c) => c.userId === "u-m1")).toMatchObject({ status: "ended", endReason: "debarred" });
+    expect(activeBanOf(w, "u-m1")).not.toBeNull();
+    expect(banFromCandidacy(w, "u-pres", "u-m1", WHY, until).message).toBe("هذا العضو محرومٌ من الترشّح الآن");
+
+    // والمحرومُ لا يترشّح في مقعدٍ جديد
+    const fresh = createElection(w, "u-hrlead", { roleName: "deputy_committee_leader", committeeId: 11, candidacyEndIso: iso(NOW + 3 * DAY) });
+    expect(eligibleToRun(w, "u-m1", fresh.id!)).toBe(false);
+    expect(liftCandidacyBan(w, "u-pres", Number(r.id), WHY).ok).toBe(true);
+    expect(eligibleToRun(w, "u-m1", fresh.id!)).toBe(true);
   });
 });

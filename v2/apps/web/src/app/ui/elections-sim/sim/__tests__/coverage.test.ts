@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { COVERAGE, COVER_GROUPS } from "../coverage";
 import { SCENARIOS, scenarioOf } from "../scenarios";
-import { resolveDepartmentWinners, setSeatPreference, submitCandidacy, sweep } from "../rules";
+import { setSeatPreference, settle, submitCandidacy, sweep, transitionElection } from "../rules";
 import { shiftWorld, type SimWorld } from "../world";
 
 /**
@@ -28,10 +28,11 @@ const REACH: Record<string, (w: SimWorld) => void> = {
     expect(r.ok, r.message).toBe(true);
     setSeatPreference(w, "u-m1", 1, "e-head-1");
   },
-  // «اضغط إعلان فائزي القسم معًا» — فتُسنَد المناصب
+  // مقاعدُ القسم مغلقةٌ كلُّها، فتحسمها المنصّةُ في دقيقتها (المادتان 27 و28) وتُسنَد المناصب
   "ef-assign": (w) => {
-    const r = resolveDepartmentWinners(w, "u-pres", 1);
+    const r = transitionElection(w, "u-hrlead", "e-lead-11", "voting_closed", null, { reason: "اكتمل نصاب اللجنة قبل الموعد" });
     expect(r.ok, r.message).toBe(true);
+    settle(w);
   },
   // «قدِّم الساعةَ يومًا واحدًا ودع الكنّاسة تفعلها»
   "ef-sweep": (w) => {

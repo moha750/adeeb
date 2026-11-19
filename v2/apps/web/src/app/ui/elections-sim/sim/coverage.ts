@@ -58,15 +58,15 @@ export const COVERAGE: CoverItem[] = [
   { key: "vo-sole", group: "الاقتراع", label: "الوحيدُ يرى مقعدَه بلا صندوق", scenario: "sole_self", probe: (w) => anyElection(w, (e) => e.status === "voting_open"
     && w.candidates.some((c) => c.electionId === e.id && c.status === "approved" && soleCandidate(w, c.userId, e.id))) },
 
-  // الصدارةُ حالٌ تُختبَر: واحدٌ يُعلَن بزرٍّ باسمه، ومتساوون يُردّ فيهم القرارُ إلى المشرف
-  { key: "vo-lead", group: "الاقتراع", label: "متصدّرٌ واحدٌ في صندوقٍ مغلق", scenario: "declare_winner", probe: (w) => anyElection(w, (e) => {
-    if (e.status !== "voting_closed" || e.winnerCandidateId) return false;
+  // الصدارةُ حالٌ تُختبَر قبل الإغلاق: متصدّرٌ واحدٌ يُعلَن عند الإغلاق، ومتساوون يُفتح لهم تعادلُ المجلس
+  { key: "vo-lead", group: "الاقتراع", label: "متصدّرٌ واحدٌ في صندوقٍ جارٍ", scenario: "declare_winner", probe: (w) => anyElection(w, (e) => {
+    if (e.status !== "voting_open") return false;
     const ws = w.candidates.filter((c) => c.electionId === e.id && c.status === "approved").map((c) => candidateWeight(w, c.id));
     const top = Math.max(0, ...ws);
     return top > 0 && ws.filter((x) => x === top).length === 1;
   }) },
-  { key: "vo-tie", group: "الاقتراع", label: "تعادُلٌ في الصدارة", scenario: "declare_tie", probe: (w) => anyElection(w, (e) => {
-    if (e.status !== "voting_closed" || e.winnerCandidateId) return false;
+  { key: "vo-tie", group: "الاقتراع", label: "تعادُلٌ في صدارة صندوقٍ جارٍ", scenario: "declare_tie", probe: (w) => anyElection(w, (e) => {
+    if (e.status !== "voting_open") return false;
     const ws = w.candidates.filter((c) => c.electionId === e.id && c.status === "approved").map((c) => candidateWeight(w, c.id));
     const top = Math.max(0, ...ws);
     return top > 0 && ws.filter((x) => x === top).length > 1;
@@ -95,6 +95,29 @@ export const COVERAGE: CoverItem[] = [
   } },
   { key: "dp-pref", group: "القسم", label: "أفضليّةُ مقعدٍ مسجّلة", scenario: "preference", probe: (w) => w.candidates.some((c) => c.preferenceRank === 2) },
   { key: "dp-block", group: "القسم", label: "إعلانٌ منفردٌ محجوب", scenario: "joint_blocked", probe: (w) => anyElection(w, (e) => e.status === "voting_closed" && !e.winnerCandidateId) && anyElection(w, (e) => e.status === "voting_open") },
+
+  /* ── الجديد: حالاتُ المرشّح وأسبابُها (دفعات ١–٥) ───────────────── */
+  { key: "ca-editdue", group: "حالة المرشّح", label: "يحتاج تعديلًا بمهلةٍ حدّدها المراجع", scenario: "cand_states", probe: (w) => anyCandidate(w, (c) => c.status === "needs_edit" && !!c.editDueAt) },
+  { key: "ca-rejwhy", group: "حالة المرشّح", label: "معتذَرٌ عنه بسببٍ من الثلاثة", scenario: "cand_states", probe: (w) => anyCandidate(w, (c) => c.status === "rejected" && !!c.rejectReason) },
+  { key: "ca-frzreq", group: "حالة المرشّح", label: "تجميدٌ مطلوبٌ ينتظر موافقة القائد", scenario: "cand_states", probe: (w) => w.freezes.some((f) => f.status === "requested") },
+  { key: "ca-frz", group: "حالة المرشّح", label: "مجمَّدٌ ينتظر إجابته", scenario: "cand_states", probe: (w) => w.freezes.some((f) => f.status === "active") },
+  { key: "ca-frzans", group: "حالة المرشّح", label: "مجمَّدٌ أجاب وينتظر القرار", scenario: "cand_states", probe: (w) => w.freezes.some((f) => f.status === "answered") },
+  { key: "ca-ended", group: "حالة المرشّح", label: "منتهٍ بسببه", scenario: "cand_states", probe: (w) => anyCandidate(w, (c) => c.status === "ended" && !!c.endReason) },
+
+  /* ── الجديد: أطوارُ صفحة المدير (جدول المواصفة) ─────────────────── */
+  { key: "ph-blocked", group: "أطوار المدير", label: "فتحُ التصويت محجوبٌ بتعديلٍ أو تجميد", scenario: "closed_blocked", probe: (w) => anyElection(w, (e) => e.status === "candidacy_closed" && anyCandidate(w, (c) => c.electionId === e.id && (c.status === "needs_edit" || c.status === "frozen"))) },
+  { key: "ph-revonly", group: "أطوار المدير", label: "إعادةُ تصويتٍ مفتوحة لمن بطل صوته", scenario: "revote_only", probe: (w) => anyElection(w, (e) => e.status === "voting_open" && !!e.revoteOnly) },
+  { key: "ph-revpart", group: "أطوار المدير", label: "إعادةٌ تنتظر الفتح لمن بطل صوته", scenario: "revote_partial", probe: (w) => anyElection(w, (e) => e.revotePending === "partial") },
+  { key: "ph-revfull", group: "أطوار المدير", label: "إعادةٌ تنتظر الفتح تزكيةً للجميع", scenario: "revote_full", probe: (w) => anyElection(w, (e) => e.revotePending === "full") },
+  { key: "ph-void", group: "أطوار المدير", label: "أصواتٌ باطلةٌ تبقى في السجلّ", scenario: "revote_partial", probe: (w) => w.votes.some((v) => !!v.voidedAt) },
+  { key: "ph-tie", group: "أطوار المدير", label: "تعادلٌ مفتوحٌ للمجلس", scenario: "tie_open", probe: (w) => w.ties.some((t) => t.status === "open" && !t.pausedAt) },
+  { key: "ph-tiepause", group: "أطوار المدير", label: "تعادلٌ موقوفُ الأجل بتجميد", scenario: "tie_paused", probe: (w) => w.ties.some((t) => t.status === "open" && !!t.pausedAt) },
+  { key: "ph-linked", group: "أطوار المدير", label: "مقعدٌ ينتظر مقعدًا آخر في القسم", scenario: "linked_wait", probe: (w) => anyElection(w, (e) => e.status === "voting_closed" && !e.winnerCandidateId && !e.stalledAt
+    && anyElection(w, (o) => o.id !== e.id && o.status === "voting_open" && electionDepartment(o) === electionDepartment(e))) },
+  { key: "ph-stallvote", group: "أطوار المدير", label: "تعثّرٌ بعد التصويت (لا أصوات)", scenario: "stall_no_votes", probe: (w) => anyElection(w, (e) => e.status === "voting_closed" && e.stallReason === "no_votes") },
+  { key: "ph-stallconf", group: "أطوار المدير", label: "تعثّرٌ بسقوط التزكية", scenario: "stall_confidence", probe: (w) => anyElection(w, (e) => e.stallReason === "confidence_failed") },
+  { key: "ph-appoint", group: "أطوار المدير", label: "اكتمل بالتعيين", scenario: "completed_appointment", probe: (w) => anyElection(w, (e) => e.status === "completed" && e.completedBy === "appointment") },
+  { key: "ph-defect", group: "أطوار المدير", label: "ملغى بأساس «خلل» بعد التصويت", scenario: "cancelled_defect", probe: (w) => anyElection(w, (e) => e.status === "cancelled" && e.cancelBasis === "defect") },
 
   /* ── الأثر ───────────────────────────────────────────────────── */
   { key: "ef-assign", group: "الأثر", label: "منصبٌ أُسنِد (فوزًا أو تكليفًا)", scenario: "department_seats", probe: (w) => w.assignments.length > 0 },

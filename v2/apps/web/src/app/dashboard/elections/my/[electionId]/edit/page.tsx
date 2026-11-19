@@ -10,5 +10,5 @@ export default async function EditCandidacyPage({ params }: { params: Promise<{ 
   const denied = await denyUnless("/dashboard/elections/my");
   if (denied) return denied;
   const { electionId } = await params;
-  return <ApplyRouteBody electionId={electionId} />;
+  return <ApplyRouteBody electionId={electionId} edit />;
 }

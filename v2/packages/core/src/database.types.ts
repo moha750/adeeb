@@ -7059,10 +7059,6 @@ export type Database = {
       }
       hook_block_oauth_signup: { Args: { event: Json }; Returns: Json }
       increment_stat: { Args: { p_stat_type: string }; Returns: number }
-      increment_survey_views: {
-        Args: { survey_id: number }
-        Returns: undefined
-      }
       is_active_volunteer: { Args: { p_user: string }; Returns: boolean }
       is_adeeb_member: { Args: { p_user: string }; Returns: boolean }
       is_adeeb_staff: { Args: { p_user: string }; Returns: boolean }
@@ -7140,10 +7136,6 @@ export type Database = {
           p_user: string
         }
         Returns: Json
-      }
-      library_increment_views: {
-        Args: { p_book_id: string }
-        Returns: undefined
       }
       library_reorder_pages: {
         Args: { p_book_id: string; p_page_ids: string[] }

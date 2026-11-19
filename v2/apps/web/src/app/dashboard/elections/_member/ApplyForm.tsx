@@ -157,7 +157,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
         meta = await api.uploadCandidacyFile(userId, ctx.electionId, file);
         if (!meta) { toast.error("تعذّر رفع الملفّ، أعِد المحاولة"); return; }
       } else if (isEdit && ctx.existing?.fileUrl) {
-        meta = { url: ctx.existing.fileUrl, name: ctx.existing.fileName ?? "ملفّ الترشّح", size: null, mime: null };
+        meta = { url: ctx.existing.fileUrl, name: ctx.existing.fileName ?? "الملفّ الانتخابي", size: null, mime: null };
       }
       const r = isEdit
         ? await api.resubmitCandidacy(ctx.existing!.candidateId, s, meta)
@@ -181,7 +181,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
       <PageHeader title={isEdit ? "تعديل ترشُّحك" : "بيانُ ترشُّحك"} />
 
       <div style={{ display: "grid", gap: 14, maxWidth: 720 }}>
-        <Alert tone="info" title="المنصب المتقدَّم له">{ctx.position}</Alert>
+        <Alert tone="info" title="المقعد المتقدَّم له">{ctx.position}</Alert>
 
         {readOnly ? (
           <>
@@ -207,7 +207,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
               label="بيان الترشّح"
               icon={<PencilSimple />}
               innerIcon={<Note />}
-              placeholder="رؤيتُك للمنصب، وأهدافك، وخبرتك…"
+              placeholder="رؤيتُك للمقعد، وأهدافك، وخبرتك…"
               value={statement}
               onChange={(e) => setTyped(e.target.value)}
               rows={12}
@@ -279,7 +279,7 @@ export function ApplyForm({ ctx, userId, preview = false }: { ctx: ApplyContext;
         text={`بيانُك في «${ctx.position}» صار عند إدارة الموارد البشرية للمراجعة، وتتابع حالته في سِجلّ ترشُّحك.`}
         confirmLabel="سِجلّ ترشُّحي"
         onConfirm={() => go("/dashboard/elections/my", "سِجلّ ترشُّحي")}
-        cancelLabel="ترشّح لمنصبٍ آخر"
+        cancelLabel="ترشّح لمقعدٍ آخر"
         onCancel={() => go("/dashboard/elections/run", "باب الترشُّح")}
         single={ctx.otherOpen === 0}
       />

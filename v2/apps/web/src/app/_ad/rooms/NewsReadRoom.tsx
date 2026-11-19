@@ -212,7 +212,8 @@ export function NewsRead({ n, comments, more, siteKey, activity, coverage = "not
               return (
                 <PubCard key={m.id} href={newsHref(m)} cover={m.cover} placeholder={<Newspaper />}
                   tag={m.featured ? <><Star aria-hidden />{CATEGORY_META[m.category].featured}</> : CATEGORY_META[m.category].label}
-                  facts={[...(m.dateLabel ? [{ icon: <CalendarBlank />, text: m.dateLabel }] : []), { icon: <Clock />, text: arCount(m.readMinutes, AR_READ_MIN) }]}
+                  facts={[...(m.dateLabel ? [{ icon: <CalendarBlank />, text: m.dateLabel }] : []), { icon: <Clock />, text: arCount(m.readMinutes, AR_READ_MIN) },
+                    ...(m.views ? [{ icon: <Eye />, text: arCount(m.views, AR_VIEW) }] : [])]}
                   title={m.title} lines={by ? [{ icon: <Feather />, text: by }] : undefined} />
               );
             })}

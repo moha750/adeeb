@@ -21,8 +21,8 @@ import { STATEMENT_MAX, STATEMENT_MIN, type CandidateStatus, type ElectionStatus
 import { COMMITTEES, ROLES, committeeOf, departmentOf, type ElectedRole } from "./org";
 import {
   ACTIVE_CANDIDACY, LIVE_STATUSES, candidateWeight, choiceWeight, countActive, countApproved,
-  electionDepartment, eligibleToRun, eligibleToVote, isConfidence, isElectionAdmin, memberIn, membersIn,
-  nextId, notify, seatHolder, voteWeight, writeLog, type SimCandidate, type SimElection, type SimWorld,
+  electionDepartment, eligibleToRun, eligibleToVote, isConfidence, isElectionAdmin, memberIn, membersIn, soleCandidate,
+  activeBanOf, nextId, notify, riyadhDay, seatHolder, voteWeight, writeLog, type SimCandidate, type SimElection, type SimWorld,
 } from "./world";
 
 const ok = (message: string, id?: string): ElectionResult => ({ ok: true, message, id });
@@ -143,7 +143,11 @@ export function resubmitCandidacy(w: SimWorld, actorId: string, candidateId: str
   if (c.userId !== actorId) return no("لا يمكن تعديل ترشح مستخدم آخر");
   if (c.status !== "pending" && c.status !== "needs_edit") return no("لا يمكن تعديل الترشح في حالته الحالية");
   const e = w.elections.find((x) => x.id === c.electionId)!;
-  if (e.status !== "candidacy_open") return no("لا يمكن التعديل بعد إغلاق باب الترشّح");
+  // @db `resubmit_candidacy` (الدفعة الثانية): المطلوبُ تعديلُه يعدّل في مهلته ولو أُغلق الباب (المادة 14)
+  if (c.status === "needs_edit") {
+    if (e.status !== "candidacy_open" && e.status !== "candidacy_closed") return no("لا يمكن التعديل بعد فتح التصويت");
+    if (c.editDueAt && c.editDueAt <= w.now) return no("مضت مهلة التعديل");
+  } else if (e.status !== "candidacy_open") return no("لا يمكن التعديل بعد إغلاق باب الترشّح");
 
   const oldFile = c.fileUrl;
   const newFile = file?.url ?? null;
@@ -162,6 +166,7 @@ export function resubmitCandidacy(w: SimWorld, actorId: string, candidateId: str
   c.reviewNote = null;
   c.reviewedBy = null;
   c.reviewedAt = null;
+  c.editDueAt = null;
 
   writeLog(w, e.id, actorId, event, { candidate_id: candidateId, statement_changed: statementChanged, file_change: fileChange });
   return ok("حُفظ تعديل ترشّحك، وهو الآن قيد المراجعة.");
@@ -183,24 +188,35 @@ export function withdrawCandidacy(w: SimWorld, actorId: string, candidateId: str
 }
 
 /** @db `review_candidate` — والسببُ إلزاميٌّ للرفض وطلب التعديل (يفرضه التريغر). */
-export function reviewCandidate(w: SimWorld, actorId: string, candidateId: string, newStatus: "approved" | "rejected" | "needs_edit", note?: string): ElectionResult {
-  if ((newStatus === "rejected" || newStatus === "needs_edit") && !note?.trim()) return no("اكتب سبب الرفض أو التعديل.");
+export function reviewCandidate(
+  w: SimWorld, actorId: string, candidateId: string, newStatus: "approved" | "rejected" | "needs_edit", note?: string,
+  opts: { editDueIso?: string | null; rejectReason?: SimCandidate["rejectReason"] } = {},
+): ElectionResult {
+  if ((newStatus === "rejected" || newStatus === "needs_edit") && !note?.trim()) return no("اكتب سبب الاعتذار أو التعديل.");
   if (!isElectionAdmin(w, actorId)) return no("غير مصرح بمراجعة المرشحين");
 
   const c = w.candidates.find((x) => x.id === candidateId);
   if (!c) return no("المرشح غير موجود");
-  const allowed = (c.status === "pending" && ["approved", "rejected", "needs_edit"].includes(newStatus))
-    || (c.status === "needs_edit" && newStatus === "approved")
-    || (c.status === "needs_edit" && newStatus === "rejected");
-  if (!allowed) return no(`انتقال مرشح غير مسموح: ${c.status} → ${newStatus}`);
+  // @db `review_candidate` (الدفعة الثانية): لا يُبتّ إلا فيما كان قيد المراجعة، ولا يُعاد النظر في قرار (المادة 14)
+  if (c.status !== "pending") return no("لا يُبتّ إلا في ترشّحٍ قيد المراجعة");
+  const due = opts.editDueIso ? Date.parse(opts.editDueIso) : NaN;
+  if (newStatus === "needs_edit" && (!Number.isFinite(due) || due <= w.now)) return no("حدّد مهلة التعديل موعدًا في المستقبل (المادة 14)");
+  if (newStatus === "rejected" && !["ineligible", "statement_violation", "unrelated"].includes(opts.rejectReason ?? "")) {
+    return no("اختر سبب الاعتذار: لا يجوز له، أو بيانٌ يخالف الضوابط، أو لا يتّصل بالمقعد (المادة 14)");
+  }
 
   c.status = newStatus as CandidateStatus;
   c.reviewNote = note?.trim() || null;
   c.reviewedBy = actorId;
   c.reviewedAt = w.now;
-  writeLog(w, c.electionId, actorId, "candidate_reviewed", { candidate_id: candidateId, new_status: newStatus, note: note?.trim() ?? null });
+  c.editDueAt = newStatus === "needs_edit" ? due : null;
+  c.rejectReason = newStatus === "rejected" ? opts.rejectReason ?? null : null;
+  writeLog(w, c.electionId, actorId, "candidate_reviewed", {
+    candidate_id: candidateId, new_status: newStatus, note: note?.trim() ?? null,
+    edit_due: newStatus === "needs_edit" ? opts.editDueIso : undefined, reject_reason: c.rejectReason ?? undefined,
+  });
   notify(w, "candidate", "قرارٌ في ترشّحك", newStatus === "approved" ? "اعتُمد ترشّحك." : newStatus === "rejected" ? "اعتُذر عن ترشّحك." : "طُلب تعديل بيانك.");
-  return ok(newStatus === "approved" ? "اعتُمد المرشّح." : newStatus === "rejected" ? "رُفض المرشّح." : "طُلب تعديل الترشّح.");
+  return ok(newStatus === "approved" ? "اعتُمد المرشّح." : newStatus === "rejected" ? "اعتُذر عن الترشّح." : "طُلب تعديل الترشّح بمهلته.");
 }
 
 /** @db `restore_candidacy` — يعود «قيد المراجعة» ما دام بابُ الترشّح قائمًا. */
@@ -232,7 +248,7 @@ export function setSeatPreference(w: SimWorld, actorId: string, departmentId: nu
 /* ══ دورةُ الحياة ════════════════════════════════════════════════════ */
 
 /** @db `transition_election` + `enforce_election_status_transition` + `promote_to_voting_check`. */
-export function transitionElection(w: SimWorld, actorId: string, electionId: string, next: "candidacy_open" | "candidacy_closed" | "voting_closed" | "voting_open", votingEndIso?: string | null): ElectionResult {
+export function transitionElection(w: SimWorld, actorId: string, electionId: string, next: "candidacy_open" | "candidacy_closed" | "voting_closed" | "voting_open", votingEndIso?: string | null, opts: { reason?: string; candidacyEndIso?: string | null } = {}): ElectionResult {
   if (!isElectionAdmin(w, actorId)) return no("غير مصرح بتغيير حالة الانتخاب");
   const e = w.elections.find((x) => x.id === electionId);
   if (!e) return no("الانتخاب غير موجود");
@@ -251,11 +267,32 @@ export function transitionElection(w: SimWorld, actorId: string, electionId: str
     e.status = "voting_open";
     e.votingOpenedAt = w.now;
     e.votingEnd = end;
+  } else if (next === "candidacy_open" && e.status === "voting_closed") {
+    // @db الدفعة الرابعة §٩ — إعادةُ فتح الباب بعد التصويت للمتعثّر: تبطل الأصواتُ كلُّها،
+    // وينتهي ترشّحُ من سقطت تزكيتُه، ويبقى المعتمَدُ على حاله
+    if (!e.stalledAt || e.winnerCandidateId) return no("لا يُعاد فتح الترشّح بعد التصويت إلا لانتخابٍ متعثّر (المادة 25)");
+    const end = opts.candidacyEndIso ? Date.parse(opts.candidacyEndIso) : NaN;
+    if (!Number.isFinite(end) || end <= w.now) return no("اختر لإغلاق الباب المعاد فتحه موعدًا في المستقبل (المادة 23)");
+    if (!opts.reason || opts.reason.trim().length < 10) return no("اكتب سبب إعادة فتح الباب (10 أحرف على الأقلّ) (المادة 25)");
+    const failed = e.stallReason === "confidence_failed";
+    voidVotes(w, electionId, null, "reopened");
+    e.status = "candidacy_open";
+    e.candidacyEnd = end;
+    e.votingEnd = null;
+    e.votingOpenedAt = null;
+    e.stalledAt = null;
+    e.stallReason = null;
+    e.revotePending = null;
+    e.revoteOnly = false;
+    if (failed) {
+      for (const c of w.candidates.filter((x) => x.electionId === electionId && x.status === "approved")) endCandidacy(w, c.id, "confidence_failed", actorId);
+    }
   } else if (next === "candidacy_open") {
     if (e.status !== "candidacy_closed") return no(`انتقال غير مسموح للحالة: ${e.status} → ${next}`);
     e.status = "candidacy_open";
-    e.candidacyEnd = null;
+    e.candidacyEnd = opts.candidacyEndIso ? Date.parse(opts.candidacyEndIso) : null;
     e.stalledAt = null;
+    e.stallReason = null;
   } else if (next === "candidacy_closed") {
     if (e.status !== "candidacy_open") return no(`انتقال غير مسموح للحالة: ${e.status} → ${next}`);
     e.status = "candidacy_closed";
@@ -264,8 +301,11 @@ export function transitionElection(w: SimWorld, actorId: string, electionId: str
     e.status = "voting_closed";
   }
 
-  writeLog(w, electionId, actorId, "status_transition", { new_status: next, voting_end: votingEndIso ?? null, candidacy_end_cleared: next === "candidacy_open" });
-  if (next === "voting_closed") finalizeConfidence(w, actorId, electionId);
+  writeLog(w, electionId, actorId, "status_transition", {
+    new_status: next, voting_end: votingEndIso ?? null, candidacy_end: opts.candidacyEndIso ?? null,
+    early: next === "voting_closed" || next === "candidacy_closed" ? true : undefined, reason: opts.reason?.trim() || undefined,
+  });
+  if (next === "voting_closed") { e.revoteOnly = false; afterVotingClosed(w, electionId); }
 
   return ok(next === "candidacy_open"
     ? "أُعيد فتح الترشّح، ورُفع موعد الإغلاق فيُغلق بيدك أو بموعدٍ جديد تضربه."
@@ -303,37 +343,33 @@ export function setDeadline(w: SimWorld, actorId: string, electionId: string, is
 }
 
 /** @db `cancel_election` → `_cancel_election_apply` — يُحفظ المرشّحون والأصوات، ويُوقَف الانتخاب. */
-export function cancelElection(w: SimWorld, actorId: string, electionId: string, reason: string, event = "cancelled"): ElectionResult {
+export function cancelElection(w: SimWorld, actorId: string, electionId: string, reason: string, basis?: "stalled" | "defect"): ElectionResult {
   if (!reason?.trim()) return no("اكتب سبب الإلغاء.");
   if (!isElectionAdmin(w, actorId)) return no("غير مصرح بإلغاء الانتخاب");
   const e = w.elections.find((x) => x.id === electionId);
   if (!e) return no("الانتخاب غير موجود");
   if (e.status === "completed") return no("لا يمكن إلغاء انتخاب مكتمل");
-  applyCancel(w, actorId, e, reason.trim(), event);
+  if (e.status === "cancelled") return no("الانتخاب ملغًى من قبل");
+  if (reason.trim().length < 10) return no("اكتب سبب الإلغاء (10 أحرف على الأقلّ) (المادة 29)");
+  // @db الدفعة الثالثة — بعد فتح التصويت لا يُلغى إلا لتعثّره أو لخللٍ يمسّ صحّته (المادة 29)
+  if (e.status === "voting_open" || e.status === "voting_closed") {
+    if (basis !== "stalled" && basis !== "defect") return no("بعد فتح التصويت لا يُلغى الانتخاب إلا لتعثّره، أو لخللٍ يمسّ صحّته يُسمّى في القرار (المادة 29)");
+    if (basis === "stalled" && !e.stalledAt) return no("هذا الانتخاب لم يتعثّر؛ سمِّ الخلل الذي يمسّ صحّته (المادة 29)");
+  }
+  applyCancel(w, actorId, e, reason.trim(), basis ?? null);
   return ok("أُلغي الانتخاب.");
 }
 
-function applyCancel(w: SimWorld, actorId: string | null, e: SimElection, reason: string, event: string) {
+/** والمتعثّرُ يبقى متعثّرًا بعد إلغائه: يصحّ التعيينُ عليه بعده (المادة 25). */
+function applyCancel(w: SimWorld, actorId: string | null, e: SimElection, reason: string, basis: "stalled" | "defect" | null) {
   e.status = "cancelled";
   e.winnerCandidateId = null;
   e.winnerDeclaredAt = null;
-  e.stalledAt = null;
   e.archivedAt = e.archivedAt ?? w.now;
   e.cancelReason = reason;
-  writeLog(w, e.id, actorId, event, { reason });
-}
-
-/** @db `_finalize_confidence` — تسقط التزكيةُ عند إغلاق التصويت إن لم يغلب التأييدُ الاعتراض. */
-export function finalizeConfidence(w: SimWorld, actorId: string | null, electionId: string): boolean {
-  const e = w.elections.find((x) => x.id === electionId);
-  if (!e || e.status !== "voting_closed") return false;
-  if (!isConfidence(w, electionId)) return false;
-  const yes = choiceWeight(w, electionId, "approve");
-  const nay = choiceWeight(w, electionId, "reject");
-  if (yes > nay) return false;
-  applyCancel(w, actorId, e, `سقطت التزكية : لم يغلب التأييدُ الاعتراض (تأييد ${yes} مقابل ${nay})`, "confidence_failed");
-  notify(w, "election_participants", "سقطت التزكية", `لم يغلب التأييدُ الاعتراضَ في تزكية ${targetLabel(e)}. أُلغي الانتخاب وبقي المقعد فارغًا.`, "warning");
-  return true;
+  e.cancelBasis = basis;
+  for (const t of w.ties) if (t.electionId === e.id && t.status === "open") t.status = "void";
+  writeLog(w, e.id, actorId, "cancelled", { reason, basis: basis ?? undefined, was_stalled: !!e.stalledAt });
 }
 
 /* ══ التصويت ═════════════════════════════════════════════════════════ */
@@ -343,7 +379,8 @@ export function castVote(w: SimWorld, actorId: string, electionId: string, candi
   if (!["approve", "reject"].includes(choice)) return no("رأيٌ غير معروف في بطاقة الاقتراع");
   if (choice === "reject" && !isConfidence(w, electionId)) return no("الاعتراض لا يكون إلّا في تزكية مرشّحٍ وحيد");
   if (candidateId === null) return no("لا مرشّحَ في بطاقتك");
-  if (w.votes.some((v) => v.electionId === electionId && v.voterId === actorId)) {
+  // الصوتُ الباطلُ لا يحجب صاحبَه (المادة 16): يصوّت من جديد بوزنه الأوّل
+  if (w.votes.some((v) => v.electionId === electionId && v.voterId === actorId && !v.voidedAt)) {
     return no("بطاقتُك في هذا المقعد مختومةٌ، ولا يُعاد الصوت");
   }
 
@@ -354,172 +391,39 @@ export function castVote(w: SimWorld, actorId: string, electionId: string, candi
   const c = w.candidates.find((x) => x.id === candidateId);
   if (!c || c.electionId !== electionId || c.status !== "approved") return no("المرشح غير صالح في هذا الانتخاب");
   if (c.userId === actorId) return no("لا يمكنك التصويت لنفسك");
+  // @db `enforce_vote_eligibility` (الدفعة الرابعة): من بطل صوتُه بانتهاء ترشّح صاحبه يعود بوزنه ولقطته الأولى،
+  // وإعادةُ التصويت المقصورة لا يدخلها غيرُه
+  const prev = [...w.votes].reverse().find((v) => v.electionId === electionId && v.voterId === actorId && v.voidReason === "candidacy_ended") ?? null;
+  if (e.revoteOnly && !prev) return no("إعادة التصويت هذه لمن بطل صوته وحده (المادة 16)");
   // والأهليّةُ تحمل بندَ المرشّح الوحيد، فهي مَن يردّ بطاقتَه
-  if (!eligibleToVote(w, actorId, electionId)) return no("غير مؤهل للتصويت في هذا الانتخاب");
+  if (!prev && !eligibleToVote(w, actorId, electionId)) return no("غير مؤهل للتصويت في هذا الانتخاب");
 
   const m = memberIn(w, actorId);
   const id = nextId(w, "v");
   w.votes.push({
     id, electionId, voterId: actorId, candidateId,
-    weight: voteWeight(w, actorId), roleSnapshot: m?.roleName ?? "unknown", choice, at: w.now,
+    weight: prev?.weight ?? voteWeight(w, actorId), roleSnapshot: prev?.roleSnapshot ?? m?.roleName ?? "unknown", choice, at: w.now,
   });
   // السجلُّ يقول «صوّت» ولا يقول «بماذا» — والعرضُ يطويه أصلًا (سرّيّة الاقتراع)
   writeLog(w, electionId, actorId, "vote_cast", { vote_id: id });
 
+  // @db `close_voting_when_all_voted` — إذا صوّت الناخبون جميعًا أُغلق التصويت وحُسم في الحال
+  const electorate = e.revoteOnly
+    ? [...new Set(w.votes.filter((v) => v.electionId === electionId && v.voidReason === "candidacy_ended").map((v) => v.voterId))]
+    : membersIn(w).map((x) => x.id).filter((u) => eligibleToVote(w, u, electionId) && !soleCandidate(w, u, electionId));
+  if (electorate.length && electorate.every((u) => w.votes.some((v) => v.electionId === electionId && v.voterId === u && !v.voidedAt))) {
+    e.status = "voting_closed";
+    e.revoteOnly = false;
+    writeLog(w, electionId, null, "status_transition", { new_status: "voting_closed", auto: true, all_voted: true });
+    afterVotingClosed(w, electionId);
+  }
+
   return ok(choice === "reject" ? "سُجِّل اعتراضك، شكرًا لمشاركتك." : "سُجِّل صوتك، شكرًا لمشاركتك.");
 }
 
-/* ══ الإعلان والحسم ══════════════════════════════════════════════════ */
-
-/** @db `declare_winner_apply` + `enforce_winner_declaration` + `auto_grant_winner_role`. */
-function declareApply(w: SimWorld, actorId: string, electionId: string, candidateId: string): ElectionResult {
-  const e = w.elections.find((x) => x.id === electionId);
-  if (!e) return no("الانتخاب غير موجود");
-  if (e.archivedAt) return no("الانتخاب مؤرشف");
-  if (e.status !== "voting_closed") return no("يجب أن يكون التصويت مغلقاً قبل إعلان الفائز");
-  if (e.winnerCandidateId) return no("الفائز معلن مسبقاً");
-
-  const cand = w.candidates.find((c) => c.id === candidateId);
-  if (!cand || cand.electionId !== electionId || cand.status !== "approved") {
-    return no("الفائز المقترح ليس مرشحاً معتمداً في هذا الانتخاب");
-  }
-
-  // (١) التزكية: يُشترَط غلبةُ التأييد وحدَها، ولا يُنظَر في القسم
-  if (isConfidence(w, electionId)) {
-    if (!(choiceWeight(w, electionId, "approve") > choiceWeight(w, electionId, "reject"))) {
-      return no("سقطت التزكية: لم يغلب التأييدُ الاعتراض");
-    }
-  } else {
-    const dept = electionDepartment(e);
-    // (٢) لا يفوز بمقعدين في القسم نفسِه في الدورة نفسِها
-    const alreadyWon = w.elections.some((o) => {
-      if (o.id === e.id || o.status !== "completed") return false;
-      if (electionDepartment(o) !== dept) return false;
-      if ((o.winnerDeclaredAt ?? 0) < e.candidacyOpenedAt) return false;
-      const ow = w.candidates.find((c) => c.id === o.winnerCandidateId);
-      return ow?.userId === cand.userId;
-    });
-    if (alreadyWon) return no("هذا العضو فائزٌ بمقعدٍ آخر في هذا القسم؛ أعلِن الوصيفَ لهذا المقعد.");
-
-    // (٣) الأعلى وزنًا **بين غير المُقصَين** — فيصحّ إعلانُ الوصيف
-    const excluded = new Set(
-      w.candidates.filter((c) => c.electionId === electionId).filter((c) => w.elections.some((o) => {
-        if (o.id === e.id || o.status !== "completed") return false;
-        if (electionDepartment(o) !== dept) return false;
-        if ((o.winnerDeclaredAt ?? 0) < e.candidacyOpenedAt) return false;
-        const ow = w.candidates.find((x) => x.id === o.winnerCandidateId);
-        return ow?.userId === c.userId;
-      })).map((c) => c.id),
-    );
-    const top = w.candidates
-      .filter((c) => c.electionId === electionId && !excluded.has(c.id))
-      .reduce((best, c) => Math.max(best, candidateWeight(w, c.id)), 0);
-    if (top > candidateWeight(w, candidateId)) return no("الفائز المعلن ليس صاحب أعلى الأصوات");
-  }
-
-  e.winnerCandidateId = candidateId;
-  e.winnerDeclaredAt = w.now;
-  e.status = "completed";
-  e.archivedAt = w.now;
-  writeLog(w, electionId, actorId, "declare_winner", { candidate_id: candidateId, auto_archived: true });
-  writeLog(w, electionId, actorId, "archived", { auto: true, trigger: "declare_winner" });
-
-  assignPosition(w, cand.userId, e.targetRoleName, e.targetCommitteeId, e.targetDepartmentId, `تعيين تلقائيّ بعد الفوز في الانتخاب ${e.id}`);
-  writeLog(w, electionId, actorId, "winner_declared", { winner_user_id: cand.userId, role_name: e.targetRoleName });
-  notify(w, "election_participants", "أُعلن الفائز", `أُعلن فائزُ ${targetLabel(e)} وأُسنِد المنصب.`, "success");
-  return ok("أُعلن الفائز وأُسنِد المنصب.");
-}
-
-/** @db `declare_winner` — بابٌ محروس: لا إعلانَ منفردًا ما دام في القسم مقعدٌ حيٌّ يشاركه مرشّحًا. */
-export function declareWinner(w: SimWorld, actorId: string, electionId: string, candidateId: string): ElectionResult {
-  if (!isElectionAdmin(w, actorId)) return no("غير مصرح بإعلان الفائز");
-  const e = w.elections.find((x) => x.id === electionId);
-  if (!e) return no("الانتخاب غير موجود");
-
-  const dept = electionDepartment(e);
-  const mine = w.candidates.filter((c) => c.electionId === electionId && c.status === "approved").map((c) => c.userId);
-  const shared = w.elections.some((o) => {
-    if (o.id === e.id || o.archivedAt || !LIVE_STATUSES.includes(o.status)) return false;
-    if (electionDepartment(o) !== dept) return false;
-    return w.candidates.some((c) => c.electionId === o.id && mine.includes(c.userId) && ACTIVE_CANDIDACY.includes(c.status));
-  });
-  if (shared) return no("في هذا القسم مقعدٌ آخر يخوضه أحدُ مرشّحيك؛ أعلِن مقاعد القسم معًا.");
-
-  return declareApply(w, actorId, electionId, candidateId);
-}
-
-/**
- * @db `resolve_department_election_winners(department)` — حلقةٌ لا حالتان:
- * مَن تصدّر أكثر من مقعد أخذ مفضَّله وأُقصي من الباقي فيرتقي التالي، **وقد يتصدّر التالي مقعدًا
- * آخر فتُعاد الكرّة**؛ ثمّ يُعلَن بترتيب الحسم (المحتفَظ به أوّلًا) كي يصحّ الوصيف.
- */
-export function resolveDepartmentWinners(w: SimWorld, actorId: string, departmentId: number): ElectionResult {
-  if (!isElectionAdmin(w, actorId)) return no("غير مصرح بإعلان الفائز");
-
-  const seatRank = (role: ElectedRole) => (role === "department_head" ? 1 : role === "committee_leader" ? 2 : 3);
-  type Row = { electionId: string; candId: string; userId: string; pref: number; num: number; weight: number; seatRank: number; dropped: boolean };
-
-  const rows: Row[] = [];
-  for (const e of w.elections) {
-    if (e.status !== "voting_closed" || e.archivedAt || e.winnerCandidateId) continue;
-    if (electionDepartment(e) !== departmentId) continue;
-    for (const c of w.candidates.filter((x) => x.electionId === e.id && x.status === "approved")) {
-      rows.push({
-        electionId: e.id, candId: c.id, userId: c.userId, pref: c.preferenceRank ?? 2,
-        num: c.number, weight: candidateWeight(w, c.id), seatRank: seatRank(e.targetRoleName), dropped: false,
-      });
-    }
-  }
-  const seats = [...new Set(rows.map((r) => r.electionId))];
-  if (!seats.length) return no("لا مقاعدَ جاهزةً للإعلان في هذا القسم (أغلِق التصويت أوّلًا).");
-
-  const users = new Set(rows.map((r) => r.userId));
-  const blocked = w.elections.some((e) => {
-    if (e.archivedAt) return false;
-    if (!["candidacy_open", "candidacy_closed", "voting_open"].includes(e.status)) return false;
-    if (electionDepartment(e) !== departmentId) return false;
-    return w.candidates.some((c) => c.electionId === e.id && users.has(c.userId) && ACTIVE_CANDIDACY.includes(c.status));
-  });
-  if (blocked) return no("مقعدٌ آخر في القسم لم يُغلق تصويتُه بعد، وفيه أحدُ هؤلاء المرشّحين؛ أغلِقه أوّلًا.");
-
-  /** متصدّرُ كلّ مقعدٍ بين غير المُقصَين — بالوزن ثمّ برقم المرشّح. */
-  const leaders = () => {
-    const out = new Map<string, Row>();
-    for (const r of rows) {
-      if (r.dropped) continue;
-      const cur = out.get(r.electionId);
-      if (!cur || r.weight > cur.weight || (r.weight === cur.weight && r.num < cur.num)) out.set(r.electionId, r);
-    }
-    return out;
-  };
-
-  const order: string[] = [];
-  let shared = false;
-  for (let guard = 0; guard < 64; guard++) {
-    const top = leaders();
-    const bySeatCount = new Map<string, Row[]>();
-    for (const r of top.values()) bySeatCount.set(r.userId, [...(bySeatCount.get(r.userId) ?? []), r]);
-    const conflict = [...bySeatCount.entries()].find(([, list]) => list.length > 1);
-    if (!conflict) break;
-    shared = true;
-    const [userId, list] = conflict;
-    const keep = [...list].sort((a, b) => a.pref - b.pref || a.seatRank - b.seatRank)[0];
-    for (const r of rows) if (r.userId === userId && r.electionId !== keep.electionId) r.dropped = true;
-    order.push(keep.electionId);
-  }
-  for (const s of seats) if (!order.includes(s)) order.push(s);
-
-  const declared: string[] = [];
-  for (const electionId of order) {
-    const top = leaders().get(electionId);
-    if (!top) continue;
-    const r = declareApply(w, actorId, electionId, top.candId);
-    if (!r.ok) return no(r.message);
-    declared.push(electionId);
-  }
-  if (!declared.length) return no("لا مقاعدَ جاهزةً للإعلان في هذا القسم (أغلِق التصويت أوّلًا).");
-  return ok(shared ? "أُعلن فائزو القسم وأُسنِدت مناصبهم (حُسم مَن تصدّر مقعدين بمفضَّله)." : "أُعلن فائزو القسم وأُسنِدت مناصبهم.");
-}
+/* ══ الإعلان والحسم ══════════════════════════════════════════════════
+   سقط الإعلانُ باليد (المادة 28): المنصّةُ تعلن الفائز لحظة الإغلاق (`afterVotingClosed` أسفل الملفّ).
+   و`declareWinner`/`resolveDepartmentWinners` في المتجر تردّان بنصّ الفعل الخادميّ نفسِه. */
 
 /** @db `appoint_to_seat` — إسنادٌ عاديٌّ بلا مدّة، ثمّ يُوقَف الانتخاب بسببٍ مسجَّل. */
 export function appointToSeat(w: SimWorld, actorId: string, electionId: string, userId: string, reason: string): ElectionResult {
@@ -531,14 +435,15 @@ export function appointToSeat(w: SimWorld, actorId: string, electionId: string, 
   if (!e) return no("الانتخاب غير موجود");
   if (e.status === "completed") return no("هذا الانتخاب اكتمل بفائزٍ معلَن");
   if (e.status === "voting_open") return no("لا تُكلِّف والتصويتُ جارٍ؛ أغلِق التصويت أوّلًا");
+  if (failedConfidenceUser(w, electionId, userId)) return no("من سقطت تزكيته في هذا الانتخاب لا يُكلَّف به (المادة 25)");
   const m = memberIn(w, userId);
   if (!m) return no("العضو غير موجود");
 
   assignPosition(w, userId, e.targetRoleName, e.targetCommitteeId, e.targetDepartmentId, `تكليف على مقعدٍ تعثّر انتخابُه (${electionId}) : ${reason.trim()}`);
   writeLog(w, electionId, actorId, "seat_appointed", { user_id: userId, reason: reason.trim() });
-  if (e.status !== "cancelled") applyCancel(w, actorId, e, `كُلّف شاغلٌ للمقعد : ${reason.trim()}`, "cancelled");
-  notify(w, "election_voters", "كُلّف شاغلٌ للمقعد", `كُلّف ${m.name} بـ${targetLabel(e)} بعد تعثّر الانتخاب.`);
-  return ok("كُلّف العضو وأُسنِد المنصب، وأُوقف الانتخاب.");
+  // ولم يعد التكليفُ يلغي الانتخاب (المادة 8): يمضي بإعادة فتحه أو إلغائه بقرارٍ مستقلّ
+  notify(w, "election_voters", "كُلّف شاغلٌ للمقعد", `كُلّف ${m.name} بـ${targetLabel(e)}، والانتخابُ قائم.`);
+  return ok("كُلّف العضو وأُسنِد المنصب، والانتخاب قائم.");
 }
 
 /* ══ الكنّاسة ════════════════════════════════════════════════════════ */
@@ -552,15 +457,44 @@ export function sweep(w: SimWorld): { closedCandidacy: number; stalled: number; 
   let stalled = 0;
   let closedVoting = 0;
 
+  // @db `sweep_candidacy_deadlines` (الدفعة الثانية): مهلةُ التعديل، وطلباتُ التجميد البائتة، ومهلُ التجميد
+  for (const c of w.candidates) {
+    if (c.status !== "needs_edit" || !c.editDueAt || c.editDueAt > w.now) continue;
+    const e = w.elections.find((x) => x.id === c.electionId);
+    if (e && (e.status === "candidacy_open" || e.status === "candidacy_closed")) endCandidacy(w, c.id, "edit_expired", null);
+  }
+  for (const f of w.freezes) {
+    if (f.status === "closed") continue;
+    const e = w.elections.find((x) => x.id === f.electionId);
+    const c = w.candidates.find((x) => x.id === f.candidateId);
+    if (e && (e.status === "cancelled" || e.status === "completed")) { f.status = "closed"; f.outcome = "election_cancelled"; continue; }
+    if (f.status === "requested" && (!c || !["pending", "approved", "needs_edit"].includes(c.status) || !!e?.winnerCandidateId)) { f.status = "closed"; f.outcome = "stale"; continue; }
+    // مرآةُ الدفعة ٨: طلبٌ لم يُوافَق عليه خلال ٢٤ ساعة يسقط
+    if (f.status === "requested" && f.requestedAt + 24 * 3600_000 <= w.now) {
+      f.status = "closed"; f.outcome = "expired";
+      writeLog(w, f.electionId, null, "freeze_expired", { candidate_id: f.candidateId, freeze_id: f.id });
+    }
+  }
+  for (const f of w.freezes.filter((x) => x.status === "active" && (x.answerDue ?? Infinity) <= w.now)) {
+    excludeFrozen(w, f.id, null, "auto_excluded", "مضت مهلة الإجابة ولم يُجب");
+  }
+  for (const f of w.freezes.filter((x) => x.status === "answered" && (x.decideDue ?? Infinity) <= w.now)) {
+    liftFreeze(w, f.id, null, "auto_lifted", "مضى أجل القرار ولم تقرّر الإدارة");
+  }
+  for (const e of w.elections) {
+    if (e.status !== "candidacy_closed" || e.archivedAt || e.stalledAt || countActive(w, e.id) > 0) continue;
+    if (w.candidates.some((c) => c.electionId === e.id && c.status === "frozen")) continue;
+    stallElection(w, e.id, "no_live_after_close");
+    stalled += 1;
+  }
+
+  // @db `sweep_election_deadlines` (الدفعة الثالثة)
   for (const e of w.elections) {
     if (e.status !== "candidacy_open" || e.archivedAt || e.stalledAt) continue;
     if (e.candidacyEnd === null || e.candidacyEnd >= w.now) continue;
-    const count = countActive(w, e.id);
+    const count = countActive(w, e.id) + w.candidates.filter((c) => c.electionId === e.id && c.status === "frozen").length;
     if (count === 0) {
-      e.stalledAt = w.now;
-      writeLog(w, e.id, null, "candidacy_stalled", { active_count: 0 });
-      notify(w, "election_admins", "انتخابٌ بلا مرشّحين ينتظر قرارك",
-        `انتهت مهلةُ الترشّح لـ ${targetLabel(e)} ولم يتقدّم أحد. الانتخابُ واقفٌ حتّى تختار: تمديدُ المهلة، أو تكليفُ شاغل، أو إلغاءٌ بسبب.`, "warning");
+      stallElection(w, e.id, "no_candidates", { active_count: 0 });
       stalled += 1;
     } else {
       e.status = "candidacy_closed";
@@ -574,15 +508,22 @@ export function sweep(w: SimWorld): { closedCandidacy: number; stalled: number; 
     if (e.status !== "voting_open" || e.archivedAt) continue;
     if (e.votingEnd === null || e.votingEnd >= w.now) continue;
     e.status = "voting_closed";
+    e.revoteOnly = false;
     writeLog(w, e.id, null, "status_transition", { new_status: "voting_closed", auto: true });
+    notify(w, "election_participants", "انتهى التصويت", `انتهى التصويت لـ ${targetLabel(e)}.`);
+    afterVotingClosed(w, e.id);
     closedVoting += 1;
-    if (!finalizeConfidence(w, null, e.id)) {
-      notify(w, "election_participants", "انتهى التصويت تلقائياً", `انتهت فترة التصويت لـ ${targetLabel(e)}. بانتظار إعلان الفائز.`);
-    }
   }
 
-  if (closedCandidacy + stalled + closedVoting > 0) {
-    writeLog(w, null, null, "sweep_deadlines", { closed_candidacy: closedCandidacy, stalled_candidacy: stalled, closed_voting: closedVoting });
+  let ties = 0;
+  for (const t of w.ties.filter((x) => x.status === "open" && !x.pausedAt && x.dueAt <= w.now)) {
+    settleTie(w, t.id, tieEarliest(w, t.id), "earliest");
+    ties += 1;
+  }
+  settle(w);
+
+  if (closedCandidacy + stalled + closedVoting + ties > 0) {
+    writeLog(w, null, null, "sweep_deadlines", { closed_candidacy: closedCandidacy, stalled_candidacy: stalled, closed_voting: closedVoting, ties_settled: ties });
   }
   return { closedCandidacy, stalled, closedVoting };
 }
@@ -626,6 +567,7 @@ export function appointableMembers(w: SimWorld, electionId: string): { id: strin
   // الاسمُ وحدَه في التسمية، كما يُخرجها `getAppointableMembers` (وترتيبُها بالاسم)
   return membersIn(w)
     .filter((m) => inScope(m.committeeId))
+    .filter((m) => !failedConfidenceUser(w, electionId, m.id))
     .map((m) => ({ id: m.id, label: m.name }))
     .sort((a, b) => a.label.localeCompare(b.label, "ar"));
 }
@@ -639,3 +581,556 @@ export const topCandidate = (w: SimWorld, electionId: string): SimCandidate | nu
 /** حالةُ الانتخاب المعروضة — يقرؤها المحاكي ليعرف أيَّ شاشةٍ يُظهر. */
 export const statusOf = (w: SimWorld, electionId: string): ElectionStatus | null =>
   w.elections.find((e) => e.id === electionId)?.status ?? null;
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   القواعدُ الجديدة — دفعاتُ إصلاح الانتخابات ١–٥ (2026-11-16/17)، منقولةً عن دوالّها كما كُتبت
+   في `supabase/migrations/2026111*_elections_v2_0*`. وطُبّقت الدفعاتُ على القاعدة الحيّة في 2026-11-17،
+   فالمحاكي مرآتُها: كلُّ دالّةٍ تحمل اسمَ أصلها (`@db`)، ورسائلُ الرفض بنصّها، ومن غيّر أصلًا هناك غيّره هنا.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+const reasonOk = (s?: string | null) => !!s && s.trim().length >= 10;
+const roleOf = (w: SimWorld, u: string) => memberIn(w, u)?.roleName ?? "";
+/** @db `_is_hr_member` / `_is_hr_leader` */
+const isHrMember = (w: SimWorld, u: string) => ["hr_admin_member", "hr_committee_leader"].includes(roleOf(w, u));
+const isHrLeader = (w: SimWorld, u: string) => roleOf(w, u) === "hr_committee_leader";
+const isPresident = (w: SimWorld, u: string) => roleOf(w, u) === "club_president";
+/** @db `_is_live_candidacy` */
+const LIVE_CANDIDACY: CandidateStatus[] = ["pending", "approved", "needs_edit", "frozen"];
+
+/** @db `_council_members()` — مقاعدُ المجلس الإداريّ المشغولة (وقائدُ الجودة ليس في عالم المحاكي). */
+export const COUNCIL_ROLES = ["club_president", "executive_council_president", "hr_committee_leader"];
+export const councilMembers = (w: SimWorld) => membersIn(w).filter((m) => COUNCIL_ROLES.includes(m.roleName)).map((m) => m.id);
+
+/** مدّةٌ كما تقبلها القاعدةُ فترةً (`interval`): «6 hours»، «1 day»، «06:00:00». و`null` ما لم يُفهم. */
+export function intervalMs(s: string | null | undefined): number | null {
+  const t = (s ?? "").trim().toLowerCase();
+  const hms = /^(\d+):(\d{2})(?::(\d{2}))?$/.exec(t);
+  if (hms) return ((+hms[1]) * 3600 + (+hms[2]) * 60 + (+(hms[3] ?? 0))) * 1000;
+  const unit: Record<string, number> = { minute: 60_000, min: 60_000, hour: 3_600_000, hr: 3_600_000, day: 86_400_000, week: 604_800_000 };
+  let total = 0;
+  for (const m of t.matchAll(/(\d+(?:\.\d+)?)\s*(minute|min|hour|hr|day|week)s?/g)) total += +m[1] * unit[m[2]];
+  return total > 0 ? total : null;
+}
+
+/* ── البطلان والتعثّر والإعلان ──────────────────────────────────────────────────────────────── */
+
+/** @db `_void_votes` — الصوتُ لا يُحذف: يبطل ويبقى، ويُردّ مَن بطل صوتُه. */
+function voidVotes(w: SimWorld, electionId: string, candidateId: string | null, reason: "candidacy_ended" | "single_left" | "reopened"): string[] {
+  const hit = w.votes.filter((v) => v.electionId === electionId && !v.voidedAt && (candidateId === null || v.candidateId === candidateId));
+  for (const v of hit) { v.voidedAt = w.now; v.voidReason = reason; }
+  if (hit.length) writeLog(w, electionId, null, "votes_voided", { candidate_id: candidateId, reason, count: hit.length });
+  return [...new Set(hit.map((v) => v.voterId))];
+}
+
+/** @db `_stall_election` — يقف المقعدُ بسببه، ويُنادى من يديره (المادة 25). */
+export function stallElection(w: SimWorld, electionId: string, reason: NonNullable<SimElection["stallReason"]>, payload: Record<string, unknown> = {}) {
+  const e = w.elections.find((x) => x.id === electionId);
+  if (!e || e.stalledAt) return;
+  e.stalledAt = w.now;
+  e.stallReason = reason;
+  writeLog(w, electionId, null, "election_stalled", { reason, ...payload });
+  notify(w, "election_admins", "انتخابٌ متعثّر ينتظر قرارك", `تعثّر انتخاب ${targetLabel(e)}. اختر: إعادة فتح الباب بموعدٍ جديد، أو التعيين، أو الإلغاء (المادة 25).`, "warning");
+}
+
+/** @db `_declare_seat` + `auto_grant_winner_role` — المنصّةُ تعلن الفائز وتُسند المنصب (المادة 28). */
+function declareSeat(w: SimWorld, electionId: string, candidateId: string, how: string) {
+  const e = w.elections.find((x) => x.id === electionId);
+  const c = w.candidates.find((x) => x.id === candidateId);
+  if (!e || !c || e.status !== "voting_closed" || e.winnerCandidateId) return;
+  e.winnerCandidateId = candidateId;
+  e.winnerDeclaredAt = w.now;
+  e.status = "completed";
+  e.completedBy = "winner";
+  e.archivedAt = w.now;
+  writeLog(w, electionId, null, "winner_declared_auto", { candidate_id: candidateId, how });
+  assignPosition(w, c.userId, e.targetRoleName, e.targetCommitteeId, e.targetDepartmentId, `تعيين تلقائيّ بعد الفوز في الانتخاب ${e.id}`);
+  writeLog(w, electionId, null, "winner_declared", { winner_user_id: c.userId, role_name: e.targetRoleName });
+  notify(w, "election_participants", "أُعلن الفائز", `أعلنت المنصّة فائز ${targetLabel(e)}.`, "success");
+}
+
+/** @db `_end_candidacy` — ينتهي الترشّحُ بسببه، ويُغلق تجميدُه، ثمّ ما يلزم المقعدَ بعده. */
+export function endCandidacy(w: SimWorld, candidateId: string, reason: NonNullable<SimCandidate["endReason"]>, actorId: string | null, payload: Record<string, unknown> = {}): boolean {
+  const c = w.candidates.find((x) => x.id === candidateId);
+  if (!c || !LIVE_CANDIDACY.includes(c.status)) return false;
+  c.status = "ended";
+  c.endReason = reason;
+  c.endedAt = w.now;
+  for (const f of w.freezes) {
+    if (f.candidateId !== candidateId || f.status === "closed") continue;
+    f.status = "closed";
+    f.outcome = typeof payload["freeze_outcome"] === "string" ? (payload["freeze_outcome"] as string) : "ended";
+    f.decidedBy = f.decidedBy ?? actorId;
+  }
+  writeLog(w, c.electionId, actorId, "candidacy_ended", { candidate_id: candidateId, user_id: c.userId, reason, ...payload });
+  if (reason !== "kept_other_seat") afterCandidacyLost(w, c.electionId, candidateId);
+  return true;
+}
+
+/**
+ * @db `_after_candidacy_lost` — ما يقع للمقعد إذا انتهى ترشّحٌ والتصويتُ مفتوحٌ أو مغلقٌ لم يُعلَن (المادة 16):
+ * لا أحد ← تعثّر؛ واحدٌ ← تبطل الأصواتُ كلُّها وتُعاد تزكيةً؛ أكثر ← تبطل أصواتُ صاحبه وحدها، فإن كان
+ * التصويتُ مغلقًا انتظر من يفتح الإعادة لأصحابها.
+ */
+function afterCandidacyLost(w: SimWorld, electionId: string, candidateId: string) {
+  const e = w.elections.find((x) => x.id === electionId);
+  if (!e || (e.status !== "voting_open" && e.status !== "voting_closed") || e.winnerCandidateId) return;
+  for (const t of w.ties) if (t.electionId === electionId && t.status === "open") t.status = "void";
+
+  const left = w.candidates.filter((c) => c.electionId === electionId && (c.status === "approved" || c.status === "frozen")).length;
+  const close = (flag: string) => {
+    if (e.status !== "voting_open") return;
+    e.status = "voting_closed";
+    e.revoteOnly = false;
+    writeLog(w, electionId, null, "status_transition", { new_status: "voting_closed", auto: true, [flag]: true });
+  };
+  if (left === 0) {
+    close("none_left");
+    stallElection(w, electionId, "none_left_in_voting");
+  } else if (left === 1) {
+    const voters = voidVotes(w, electionId, null, "single_left");
+    close("single_left");
+    e.revotePending = "full";
+    e.revoteOnly = false;
+    if (voters.length) notify(w, "voided_voters", "بطل صوتك", `لم يبقَ في ${targetLabel(e)} إلا مرشّحٌ واحد، فبطلت أصواته كلّها، ويُعاد التصويت تزكيةً (المادة 16).`, "warning");
+    notify(w, "election_admins", "حدّد موعد إعادة التصويت", `لم يبقَ في ${targetLabel(e)} إلا مرشّحٌ واحد. افتح التصويت من أوّله تزكيةً بموعدٍ تحدّده (المادة 16).`, "warning");
+  } else {
+    const voters = voidVotes(w, electionId, candidateId, "candidacy_ended");
+    if (voters.length && e.status === "voting_closed") {
+      e.revotePending = "partial";
+      notify(w, "election_admins", "حدّد موعد إعادة التصويت", `بطلت أصوات مرشّحٍ انتهى ترشّحه في ${targetLabel(e)} بعد الإغلاق. افتحه لأصحابها وحدهم (المادة 16).`, "warning");
+    }
+    if (voters.length) notify(w, "voided_voters", "بطل صوتك", `انتهى ترشّح من صوّتَّ له في ${targetLabel(e)}، فبطل صوتك (المادة 16).`, "warning");
+  }
+}
+
+/* ── التعادل (المادة 26) ───────────────────────────────────────────────────────────────────────── */
+
+/** @db `_open_tie` — القرارُ للمجلس الإداري خلال أربعٍ وعشرين ساعة. */
+function openTie(w: SimWorld, electionId: string, candidateIds: string[]) {
+  const id = w.ties.reduce((m, t) => Math.max(m, t.id), 0) + 1;
+  const dueAt = w.now + 24 * 3_600_000;
+  w.ties.push({ id, electionId, candidateIds, openedAt: w.now, dueAt, status: "open", outcome: null, winnerCandidateId: null, pausedAt: null, choices: [] });
+  writeLog(w, electionId, null, "tie_opened", { tie_id: id, candidate_ids: candidateIds, due_at: new Date(dueAt).toISOString(), council_size: councilMembers(w).length });
+  const e = w.elections.find((x) => x.id === electionId)!;
+  notify(w, "council", "تعادلٌ ينتظر قرار المجلس", `تعادل المتصدّرون في ${targetLabel(e)}. اختر الفائز بسببٍ مكتوب خلال أربع وعشرين ساعة، وإلا فاز الأسبق ترشّحًا (المادة 26).`, "warning");
+}
+
+/** @db `_tie_earliest` — الأسبقُ ترشّحًا بين المتعادلين المعتمَدين. */
+function tieEarliest(w: SimWorld, tieId: number): string | null {
+  const t = w.ties.find((x) => x.id === tieId);
+  if (!t) return null;
+  return w.candidates
+    .filter((c) => t.candidateIds.includes(c.id) && c.status === "approved")
+    .sort((a, b) => a.submittedAt - b.submittedAt || a.id.localeCompare(b.id))[0]?.id ?? null;
+}
+
+/** @db `_settle_tie` */
+function settleTie(w: SimWorld, tieId: number, candidateId: string | null, outcome: "majority" | "president" | "earliest") {
+  const t = w.ties.find((x) => x.id === tieId);
+  if (!t || t.status !== "open" || !candidateId) return;
+  t.status = "decided";
+  t.outcome = outcome;
+  t.winnerCandidateId = candidateId;
+  writeLog(w, t.electionId, null, "tie_decided", { tie_id: tieId, outcome, candidate_id: candidateId });
+  declareSeat(w, t.electionId, candidateId, `tie_${outcome}`);
+}
+
+/** @db `_evaluate_tie` — الأغلبيّةُ من المقاعد المشغولة، فإن اختار الجميعُ وتساووا رجح رئيسُ أدِيب. */
+function evaluateTie(w: SimWorld, tieId: number) {
+  const t = w.ties.find((x) => x.id === tieId);
+  if (!t || t.status !== "open") return;
+  const council = councilMembers(w);
+  if (!council.length || t.pausedAt) return;
+  const earliest = tieEarliest(w, tieId);
+  const eff = t.choices.filter((c) => council.includes(c.memberId)).map((c) => ({ member: c.memberId, cand: c.candidateId ?? earliest }));
+  const counts = new Map<string | null, number>();
+  for (const x of eff) counts.set(x.cand, (counts.get(x.cand) ?? 0) + 1);
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return;
+  const [best, top] = ranked[0];
+  const nTop = ranked.filter(([, n]) => n === top).length;
+  if (top * 2 > council.length) { settleTie(w, tieId, best, "majority"); return; }
+  if (eff.length >= council.length && nTop > 1) {
+    const pres = eff.find((x) => roleOf(w, x.member) === "club_president")?.cand ?? null;
+    if (pres && counts.get(pres) === top) settleTie(w, tieId, pres, "president");
+  }
+}
+
+/* ── الحسم (المواد 26 و27 و28) ─────────────────────────────────────────────────────────────────── */
+
+/**
+ * @db `_resolve_department` — يأخذ مقاعد القسم التي أُغلق تصويتها ولم تُعلَن ولم تتعثّر ولا تعادل فيها
+ * ولا إعادةَ تنتظر، فيحجز ما فيه مجمَّد أو ما يشارك مقعدًا حيًّا مرشّحًا، ويُعثّر التزكية الساقطة،
+ * ويطبّق المادة 27 على من تصدّر أكثر من مقعد، ثمّ يُعلن، ثمّ يفتح التعادل.
+ */
+export function resolveSeats(w: SimWorld, electionId: string) {
+  const me = w.elections.find((x) => x.id === electionId);
+  if (!me) return;
+  const dept = electionDepartment(me);
+  const seats = w.elections.filter((e) => e.status === "voting_closed" && !e.archivedAt && !e.winnerCandidateId && !e.stalledAt
+    && !e.revotePending && !w.ties.some((t) => t.electionId === e.id && t.status === "open")
+    && (e.id === electionId || (dept !== null && electionDepartment(e) === dept)));
+  if (!seats.length) return;
+
+  // أ. الحجز
+  const blocked = new Set<string>();
+  for (const s of seats) {
+    const mine = w.candidates.filter((c) => c.electionId === s.id);
+    if (mine.some((c) => c.status === "frozen")) { blocked.add(s.id); continue; }
+    const users = mine.filter((c) => c.status === "approved" || c.status === "frozen").map((c) => c.userId);
+    const shares = w.candidates.some((b) => users.includes(b.userId) && b.electionId !== s.id && LIVE_CANDIDACY.includes(b.status) && (() => {
+      const o = w.elections.find((x) => x.id === b.electionId);
+      return !!o && !o.archivedAt && !o.stalledAt && ["candidacy_open", "candidacy_closed", "voting_open"].includes(o.status) && electionDepartment(o) === dept;
+    })());
+    if (shares) blocked.add(s.id);
+  }
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const s of seats) {
+      if (blocked.has(s.id)) continue;
+      const users = w.candidates.filter((c) => c.electionId === s.id && c.status === "approved").map((c) => c.userId);
+      if (w.candidates.some((b) => blocked.has(b.electionId) && users.includes(b.userId) && (b.status === "approved" || b.status === "frozen"))) {
+        blocked.add(s.id);
+        grew = true;
+      }
+    }
+  }
+  let live = seats.filter((s) => !blocked.has(s.id));
+
+  // ب. التزكية الساقطة تتعثّر
+  for (const s of live) {
+    if (!isConfidence(w, s.id)) continue;
+    const yes = choiceWeight(w, s.id, "approve");
+    const nay = choiceWeight(w, s.id, "reject");
+    if (yes <= nay) {
+      // ويبقى المرشّحُ معتمَدًا: ينتهي ترشّحه بسقوط التزكية حين يُعاد فتح الباب (`transition_election`)
+      stallElection(w, s.id, "confidence_failed", { approve_weight: yes, reject_weight: nay });
+    }
+  }
+  live = live.filter((s) => !s.stalledAt);
+
+  type Row = { eid: string; cid: string; uid: string; pref: number; sub: number; w: number; rk: number; conf: boolean; dropped: boolean };
+  const rk = (r: ElectedRole) => (r === "department_head" ? 1 : r === "committee_leader" ? 2 : 3);
+  const rows: Row[] = [];
+  for (const s of live) {
+    const conf = isConfidence(w, s.id);
+    for (const c of w.candidates.filter((x) => x.electionId === s.id && x.status === "approved")) {
+      rows.push({ eid: s.id, cid: c.id, uid: c.userId, pref: c.preferenceRank ?? 2, sub: c.submittedAt, w: candidateWeight(w, c.id), rk: rk(s.targetRoleName), conf, dropped: false });
+    }
+  }
+  const soleTop = (r: Row) => {
+    const peers = rows.filter((x) => x.eid === r.eid && !x.dropped);
+    const max = Math.max(...peers.map((x) => x.w));
+    return !r.dropped && r.w > 0 && r.w === max && peers.filter((x) => x.w === max).length === 1;
+  };
+
+  // ج. المادة 27 على المتصدّرين وحدهم
+  const order: string[] = [];
+  for (let guard = 0; guard < 64; guard++) {
+    const tops = rows.filter(soleTop);
+    const byUser = new Map<string, Row[]>();
+    for (const r of tops) byUser.set(r.uid, [...(byUser.get(r.uid) ?? []), r]);
+    const clash = [...byUser.entries()].find(([, l]) => l.length > 1);
+    if (!clash) break;
+    const [uid, list] = clash;
+    const keep = [...list].sort((a, b) => a.pref - b.pref || a.rk - b.rk || a.sub - b.sub)[0].eid;
+    for (const r of rows) {
+      if (r.uid !== uid || r.eid === keep) continue;
+      if (r.conf && !r.dropped) endCandidacy(w, r.cid, "kept_other_seat", null, { kept_election: keep });
+      r.dropped = true;
+    }
+    order.push(keep);
+  }
+  for (const s of [...live].sort((a, b) => rk(a.targetRoleName) - rk(b.targetRoleName) || a.id.localeCompare(b.id))) {
+    if (!order.includes(s.id)) order.push(s.id);
+  }
+
+  // د. الإعلان، ثمّ التعادل
+  const tied: string[] = [];
+  for (const pass of [1, 2] as const) {
+    for (const eid of pass === 1 ? order : tied) {
+      const seat = w.elections.find((x) => x.id === eid)!;
+      for (const r of rows) {
+        if (r.eid !== eid || r.dropped) continue;
+        const wonElsewhere = w.elections.some((o) => o.id !== eid && o.status === "completed" && !!o.winnerCandidateId
+          && electionDepartment(o) === dept && (o.winnerDeclaredAt ?? 0) >= seat.candidacyOpenedAt
+          && w.candidates.find((c) => c.id === o.winnerCandidateId)?.userId === r.uid);
+        if (wonElsewhere) r.dropped = true;
+      }
+      const mine = rows.filter((r) => r.eid === eid && !r.dropped);
+      const top = mine.length ? Math.max(...mine.map((r) => r.w)) : 0;
+      const atTop = mine.filter((r) => r.w === top);
+      if (top <= 0) {
+        stallElection(w, eid, rows.some((r) => r.eid === eid && r.w > 0) ? "none_left_after_27" : "no_votes");
+      } else if (atTop.length === 1) {
+        declareSeat(w, eid, atTop[0].cid, rows.some((r) => r.eid === eid && r.dropped && r.w > top) ? "after_27" : "top");
+      } else if (pass === 1) {
+        tied.push(eid);
+      } else {
+        openTie(w, eid, [...atTop].sort((a, b) => a.sub - b.sub || a.cid.localeCompare(b.cid)).map((r) => r.cid));
+      }
+    }
+  }
+}
+
+/** @db `_after_voting_closed` — الحسمُ بعد كلّ إغلاق، ولا يُفسد خطؤه الإغلاق: يُقيَّد ويُعاد. */
+export function afterVotingClosed(w: SimWorld, electionId: string) {
+  try {
+    resolveSeats(w, electionId);
+  } catch (err) {
+    writeLog(w, electionId, null, "resolve_failed", { error: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+/**
+ * ما تفعله كنّاسةُ القاعدة في دقيقتها بلا مرور زمن: تحسم كلَّ مقعدٍ أُغلق تصويتُه ولم يُحسم.
+ * والمتجرُ يُجريها بعد كلّ فعلٍ ناجح، فلا ينتظر المجرِّبُ دقيقةً لا تمرّ في المحاكي.
+ */
+export function settle(w: SimWorld) {
+  for (const e of w.elections) {
+    if (e.status !== "voting_closed" || e.archivedAt || e.winnerCandidateId || e.stalledAt || e.revotePending) continue;
+    if (w.ties.some((t) => t.electionId === e.id && t.status === "open")) continue;
+    afterVotingClosed(w, e.id);
+  }
+}
+
+/** @db `_failed_confidence_user` — مرشّحُ تزكيةٍ سقطت في هذا الانتخاب. */
+export const failedConfidenceUser = (w: SimWorld, electionId: string, userId: string) =>
+  w.elections.some((e) => e.id === electionId && e.stallReason === "confidence_failed")
+  && w.candidates.some((c) => c.electionId === electionId && c.userId === userId);
+
+/* ── الأفعالُ التسعة ───────────────────────────────────────────────────────────────────────────── */
+
+/** @db `open_revote` — لأصحاب الأصوات الباطلة وحدهم (`partial`)، أو من أوّله تزكيةً (`full`). */
+export function openRevote(w: SimWorld, actorId: string, electionId: string, votingEndIso: string, reason: string): ElectionResult {
+  if (!reasonOk(reason)) return no("اكتب سبب إعادة التصويت (10 أحرف على الأقلّ).");
+  if (!votingEndIso || Number.isNaN(Date.parse(votingEndIso))) return no("اختر موعد إغلاق إعادة التصويت.");
+  if (!isElectionAdmin(w, actorId)) return no("غير مصرح بإعادة التصويت");
+  const e = w.elections.find((x) => x.id === electionId);
+  if (!e) return no("الانتخاب غير موجود");
+  if (e.status !== "voting_closed" || !e.revotePending) return no("لا إعادة تصويتٍ تنتظر في هذا الانتخاب");
+  const end = Date.parse(votingEndIso);
+  if (end <= w.now) return no("اختر لإغلاق إعادة التصويت موعدًا في المستقبل");
+  const kind = e.revotePending;
+  e.status = "voting_open";
+  e.votingEnd = end;
+  e.revoteOnly = kind === "partial";
+  e.revotePending = null;
+  writeLog(w, electionId, actorId, "revote_opened", { kind, voting_end: votingEndIso, reason: reason.trim() });
+  notify(w, kind === "partial" ? "voided_voters" : "election_voters", "أُعيد فتح التصويت", `أُعيد فتح التصويت في ${targetLabel(e)}. ${reason.trim()}`, "info");
+  return ok("أُعيد فتح التصويت، وأُبلغ الناخبون.");
+}
+
+/** @db `appoint_seat_holder` — يُسند المقعدَ المتعثّر ويكتمل به الانتخاب «بالتعيين» (المادة 25). */
+export function appointSeatHolder(w: SimWorld, actorId: string, electionId: string, userId: string, reason: string): ElectionResult {
+  if (!userId) return no("اختر العضو.");
+  if (!reasonOk(reason)) return no("اكتب سبب التعيين (10 أحرف على الأقلّ).");
+  if (!isElectionAdmin(w, actorId)) return no("التعيين على المقعد المتعثّر لمديري الانتخابات الثلاثة وحدهم (المادة 25)");
+  const e = w.elections.find((x) => x.id === electionId);
+  if (!e) return no("الانتخاب غير موجود");
+  if (e.status === "completed") return no("هذا الانتخاب مكتمل");
+  if (!e.stalledAt) return no("لا يُعيَّن إلا على مقعدٍ تعثّر انتخابه، أو أُلغي لتعثّره (المادة 25)");
+  if (failedConfidenceUser(w, electionId, userId)) {
+    return no("من سقطت تزكيته في هذا الانتخاب لا يُعيَّن عليه (المادة 25)");
+  }
+  const m = memberIn(w, userId);
+  if (!m) return no("العضو غير موجود");
+
+  const from = e.status;
+  assignPosition(w, userId, e.targetRoleName, e.targetCommitteeId, e.targetDepartmentId, `تعيينٌ على مقعدٍ تعثّر انتخابه (${electionId}) : ${reason.trim()}`);
+  e.status = "completed";
+  e.completedBy = "appointment";
+  e.appointedUserId = userId;
+  e.archivedAt = e.archivedAt ?? w.now;
+  for (const t of w.ties) if (t.electionId === electionId && t.status === "open") t.status = "void";
+  writeLog(w, electionId, actorId, "completed_by_appointment", { user_id: userId, reason: reason.trim(), from_status: from });
+  notify(w, "election_voters", "اكتمل الانتخاب بالتعيين", `عُيّن ${m.name} على ${targetLabel(e)} بعد تعثّر انتخابه.`);
+  afterVotingClosed(w, electionId);
+  return ok("عُيّن العضو، واكتمل الانتخاب بالتعيين.");
+}
+
+/** @db `choose_in_tie` — اختيارٌ واحدٌ لكلّ عضو، بسببٍ لا يُعدَّل. */
+export function chooseInTie(w: SimWorld, actorId: string, tieId: number, candidateId: string | null, reason: string): ElectionResult {
+  if (!reasonOk(reason)) return no("اكتب سبب اختيارك (10 أحرف على الأقلّ).");
+  if (!councilMembers(w).includes(actorId)) return no("الفصل في التعادل للمجلس الإداري (المادة 26)");
+  const t = w.ties.find((x) => x.id === tieId);
+  if (!t || t.status !== "open") return no("لا تعادل قائم هنا");
+  if (t.dueAt <= w.now) return no("مضى أجل الفصل، ويفوز الأسبق ترشّحًا آليًّا");
+  if (candidateId !== null && !t.candidateIds.includes(candidateId)) return no("اختر من المتعادلين");
+  if (t.choices.some((c) => c.memberId === actorId)) return no("اخترتَ في هذا التعادل من قبل، ولا يُعدَّل الاختيار");
+  t.choices.push({ memberId: actorId, candidateId, reason: reason.trim(), at: w.now });
+  writeLog(w, t.electionId, actorId, "tie_choice", { tie_id: tieId, candidate_id: candidateId, deferred: candidateId === null, reason: reason.trim() });
+  evaluateTie(w, tieId);
+  return ok("أُرسل اختيارك.");
+}
+
+/* ── التجميد (المادة 16) ───────────────────────────────────────────────────────────────────────── */
+
+/** @db `_apply_freeze` — يُجمَّد الترشّح وتبدأ مهلةُ الإجابة، ويتوقّف أجلُ تعادلٍ هو فيه. */
+function applyFreeze(w: SimWorld, freezeId: number, approverId: string) {
+  const f = w.freezes.find((x) => x.id === freezeId)!;
+  const c = w.candidates.find((x) => x.id === f.candidateId)!;
+  f.priorStatus = c.status;
+  f.editRemaining = c.status === "needs_edit" && c.editDueAt ? Math.max(c.editDueAt - w.now, 0) : null;
+  c.status = "frozen";
+  f.status = "active";
+  f.answerDue = w.now + (intervalMs(f.answerWindow) ?? 0);
+  for (const t of w.ties) if (t.electionId === f.electionId && t.status === "open" && !t.pausedAt && t.candidateIds.includes(c.id)) t.pausedAt = w.now;
+  writeLog(w, f.electionId, approverId, "candidate_frozen", {
+    candidate_id: c.id, freeze_id: freezeId, reason: f.reason, requested_by: f.requestedBy, answer_due: new Date(f.answerDue).toISOString(),
+  });
+  notify(w, "candidate", "جُمّد ترشّحك", `جُمّد ترشّحك. السبب: ${f.reason}`, "warning");
+}
+
+/** @db `_lift_freeze` — يعود الترشّح إلى حاله، ويُكمل التعادلُ أجلَه، ويُعاد الحسم إن كان ينتظره. */
+function liftFreeze(w: SimWorld, freezeId: number, actorId: string | null, outcome: "lifted" | "auto_lifted", reason: string) {
+  const f = w.freezes.find((x) => x.id === freezeId);
+  if (!f || (f.status !== "active" && f.status !== "answered")) return;
+  const c = w.candidates.find((x) => x.id === f.candidateId);
+  if (c && c.status === "frozen") {
+    c.status = f.priorStatus ?? "approved";
+    c.editDueAt = c.status === "needs_edit" ? w.now + (f.editRemaining ?? 0) : null;
+  }
+  f.status = "closed";
+  f.outcome = outcome;
+  f.decidedBy = actorId;
+  f.decisionReason = reason;
+  writeLog(w, f.electionId, actorId, "freeze_lifted", { candidate_id: f.candidateId, freeze_id: freezeId, outcome, reason });
+  for (const t of w.ties) {
+    if (t.electionId !== f.electionId || t.status !== "open" || !t.pausedAt) continue;
+    if (w.candidates.some((x) => t.candidateIds.includes(x.id) && x.status === "frozen")) continue;
+    t.dueAt += w.now - t.pausedAt;
+    t.pausedAt = null;
+    evaluateTie(w, t.id);
+  }
+  afterVotingClosed(w, f.electionId);
+}
+
+/** @db `_exclude_frozen` — الاستبعادُ إنهاءٌ للترشّح بسببه، وتبطل أصواته (المادة 16). */
+function excludeFrozen(w: SimWorld, freezeId: number, actorId: string | null, outcome: "excluded" | "auto_excluded", reason: string) {
+  const f = w.freezes.find((x) => x.id === freezeId);
+  if (!f || (f.status !== "active" && f.status !== "answered")) return;
+  f.decisionReason = reason;
+  endCandidacy(w, f.candidateId, "excluded", actorId, { freeze_id: freezeId, freeze_outcome: outcome, note: reason });
+}
+
+/** @db `request_candidacy_freeze` — يطلبه عضوُ الموارد، وإن طلبه قائدُها جُمّد في الحال. */
+export function requestFreeze(w: SimWorld, actorId: string, candidateId: string, reason: string, answerWindow: string, decideWindow: string): ElectionResult {
+  if (!isHrMember(w, actorId)) return no("التجميد لإدارة الموارد البشرية (المادة 16)");
+  const c = w.candidates.find((x) => x.id === candidateId);
+  if (!c) return no("الترشح غير موجود");
+  const e = w.elections.find((x) => x.id === c.electionId)!;
+  if (!["pending", "approved", "needs_edit"].includes(c.status)) return no("لا يُجمَّد إلا ترشّحٌ قائم");
+  if (!["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"].includes(e.status) || e.winnerCandidateId) {
+    return no("لا تجميد بعد إعلان الفائز أو إلغاء الانتخاب");
+  }
+  if (!reasonOk(reason)) return no("اكتب سبب التجميد: الضابط الذي خالفه (10 أحرف على الأقلّ)");
+  if (!intervalMs(answerWindow) || !intervalMs(decideWindow)) return no("حدّد مهلة الإجابة وأجل القرار");
+  if (w.freezes.some((f) => f.candidateId === candidateId && f.status !== "closed")) return no("على هذا الترشّح تجميدٌ قائم أو طلبٌ ينتظر");
+
+  const id = w.freezes.reduce((m, f) => Math.max(m, f.id), 0) + 1;
+  w.freezes.push({
+    id, candidateId, electionId: c.electionId, status: "requested", reason: reason.trim(), answerWindow, decideWindow,
+    requestedBy: actorId, requestedAt: w.now, answerDue: null, answerText: null, answeredAt: null, decideDue: null,
+  });
+  writeLog(w, c.electionId, actorId, "freeze_requested", { candidate_id: candidateId, freeze_id: id, reason: reason.trim() });
+  if (isHrLeader(w, actorId)) {
+    applyFreeze(w, id, actorId);
+    return ok("جُمّد الترشّح، وأُبلغ صاحبه بالسبب ومهلة الإجابة.", String(id));
+  }
+  notify(w, "hr_leader", "طلب تجميدٍ ينتظر موافقتك", `طُلب تجميد ترشّحٍ في ${targetLabel(e)}.`, "warning");
+  return ok("أُرسل طلب التجميد إلى قائد الموارد البشرية.", String(id));
+}
+
+/** @db `approve_candidacy_freeze` — موافقةُ القائد تُجمّد، وردُّه بسبب. */
+export function approveFreeze(w: SimWorld, actorId: string, freezeId: number, approve: boolean, reason?: string): ElectionResult {
+  if (!isHrLeader(w, actorId)) return no("الموافقة على التجميد لقائد إدارة الموارد البشرية (المادة 16)");
+  const f = w.freezes.find((x) => x.id === freezeId);
+  if (!f || f.status !== "requested") return no("لا طلب تجميد ينتظر هنا");
+  if (approve) {
+    const c = w.candidates.find((x) => x.id === f.candidateId);
+    const e = w.elections.find((x) => x.id === f.electionId);
+    if (!c || !["pending", "approved", "needs_edit"].includes(c.status)
+      || !e || e.winnerCandidateId || !["candidacy_open", "candidacy_closed", "voting_open", "voting_closed"].includes(e.status)) {
+      return no("تغيّر حال الترشّح أو الانتخاب منذ الطلب");
+    }
+    applyFreeze(w, freezeId, actorId);
+    return ok("جُمّد الترشّح، وأُبلغ صاحبه بالسبب ومهلة الإجابة.");
+  }
+  if (!reasonOk(reason)) return no("اكتب سبب رفض الطلب (10 أحرف على الأقلّ)");
+  f.status = "closed";
+  f.outcome = "declined";
+  f.decidedBy = actorId;
+  f.decisionReason = reason!.trim();
+  writeLog(w, f.electionId, actorId, "freeze_declined", { candidate_id: f.candidateId, freeze_id: freezeId, reason: reason!.trim() });
+  return ok("رُدّ طلب التجميد.");
+}
+
+/** @db `answer_candidacy_freeze` — يجيب صاحبُ الترشّح قبل المهلة، فيبدأ أجلُ القرار. */
+export function answerFreeze(w: SimWorld, actorId: string, freezeId: number, text: string): ElectionResult {
+  const f = w.freezes.find((x) => x.id === freezeId);
+  if (!f) return no("التجميد غير موجود");
+  if (!w.candidates.some((c) => c.id === f.candidateId && c.userId === actorId)) return no("الإجابة لصاحب الترشّح وحده");
+  if (f.status !== "active") return no("لا تجميد ينتظر إجابتك");
+  if ((f.answerDue ?? 0) <= w.now) return no("مضت مهلة الإجابة");
+  if (!reasonOk(text)) return no("اكتب إجابتك (10 أحرف على الأقلّ)");
+  f.status = "answered";
+  f.answerText = text.trim();
+  f.answeredAt = w.now;
+  f.decideDue = w.now + (intervalMs(f.decideWindow) ?? 0);
+  writeLog(w, f.electionId, actorId, "freeze_answered", { candidate_id: f.candidateId, freeze_id: freezeId, decide_due: new Date(f.decideDue).toISOString() });
+  notify(w, "hr_leader", "أجاب المرشّح عن التجميد", "وصلت إجابة المرشّح، والقرار لك قبل أجله.", "info");
+  return ok("وصلت إجابتك، والقرار قبل أجله.");
+}
+
+/** @db `decide_candidacy_freeze` — رفعٌ أو استبعاد، ولا استبعاد قبل الإجابة. */
+export function decideFreeze(w: SimWorld, actorId: string, freezeId: number, outcome: "lift" | "exclude", reason: string): ElectionResult {
+  if (!isHrLeader(w, actorId)) return no("قرار التجميد لقائد إدارة الموارد البشرية");
+  const f = w.freezes.find((x) => x.id === freezeId);
+  if (!f || (f.status !== "active" && f.status !== "answered")) return no("لا تجميد قائم هنا");
+  if (!reasonOk(reason)) return no("اكتب سبب القرار (10 أحرف على الأقلّ)");
+  if (f.status === "answered" && (f.decideDue ?? 0) <= w.now) return no("مضى أجل القرار، فيُرفع التجميد آليًّا (المادة 16)");
+  if (outcome === "lift") {
+    liftFreeze(w, freezeId, actorId, "lifted", reason.trim());
+    return ok("رُفع التجميد، وعاد الترشّح إلى حاله.");
+  }
+  if (f.status !== "answered") return no("لا يُستبعد قبل أن يُجيب أو تمضي مهلة إجابته (المادة 16)");
+  excludeFrozen(w, freezeId, actorId, "excluded", reason.trim());
+  return ok("استُبعد المرشّح، وانتهى ترشّحه.");
+}
+
+/* ── الحرمان (المادة 11) ──────────────────────────────────────────────────────────────────────── */
+
+/** @db `ban_from_candidacy` — لرئيس أدِيب وحده، وأجلُه من اليوم إلى سنة، وينهي ما لم يُفتح تصويتُه. */
+export function banFromCandidacy(w: SimWorld, actorId: string, userId: string, reason: string, untilDate: string): ElectionResult {
+  if (!isPresident(w, actorId)) return no("الحرمان من الترشّح لرئيس أدِيب وحده (المادة 11)");
+  if (!userId || !memberIn(w, userId)) return no("العضو غير موجود");
+  if (!reasonOk(reason)) return no("اكتب سبب الحرمان (10 أحرف على الأقلّ)");
+  const today = riyadhDay(w.now);
+  const yearOn = riyadhDay(Date.parse(`${today}T12:00:00Z`) + 365 * 86_400_000);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(untilDate ?? "") || untilDate < today || untilDate > yearOn) {
+    return no("أجل الحرمان من اليوم إلى سنةٍ على الأكثر (المادة 11)");
+  }
+  if (activeBanOf(w, userId)) return no("هذا العضو محرومٌ من الترشّح الآن");
+  const id = w.bans.reduce((m, b) => Math.max(m, b.id), 0) + 1;
+  w.bans.push({ id, userId, reason: reason.trim(), until: untilDate, issuedBy: actorId, issuedAt: w.now, liftedAt: null, liftReason: null });
+  for (const c of w.candidates.filter((x) => x.userId === userId && LIVE_CANDIDACY.includes(x.status))) {
+    const e = w.elections.find((x) => x.id === c.electionId);
+    if (!e || e.archivedAt || !["candidacy_open", "candidacy_closed"].includes(e.status)) continue;
+    endCandidacy(w, c.id, "debarred", actorId, { ban_id: id });
+  }
+  notify(w, "banned", "حُرمتَ من الترشّح", `قرّر رئيس أدِيب حرمانك من الترشّح حتى ${untilDate}. السبب: ${reason.trim()}.`, "warning");
+  return ok("حُرم العضو من الترشّح، وأُبلغ بالسبب والأجل.", String(id));
+}
+
+/** @db `lift_candidacy_ban` */
+export function liftCandidacyBan(w: SimWorld, actorId: string, banId: number, reason: string): ElectionResult {
+  if (!isPresident(w, actorId)) return no("رفع الحرمان لرئيس أدِيب وحده (المادة 11)");
+  const b = w.bans.find((x) => x.id === banId);
+  if (!b || b.liftedAt) return no("لا حرمان قائم هنا");
+  if (!reasonOk(reason)) return no("اكتب سبب رفع الحرمان (10 أحرف على الأقلّ)");
+  b.liftedAt = w.now;
+  b.liftReason = reason.trim();
+  notify(w, "banned", "رُفع حرمانك من الترشّح", `رفع رئيس أدِيب حرمانك من الترشّح. السبب: ${reason.trim()}.`, "info");
+  return ok("رُفع الحرمان، وأُبلغ العضو.");
+}
