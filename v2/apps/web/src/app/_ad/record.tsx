@@ -14,21 +14,25 @@
  * (رُفض: «الملفّ» — لوحُ الغرفة وعمودان، رحلةُ الحجز في الجوّال بعد آخر مشارك؛ و«لوحُ السجلّ» — لوحٌ كحليٌّ كبيرٌ يطول بالبيانات.)
  */
 import type { ReactNode } from "react";
-import { crumbFor } from "@/app/dashboard/_shell/crumb";
+import { crumbFor, upFor } from "@/app/dashboard/_shell/crumb";
 import { useNav } from "@/app/dashboard/_shell/nav-context";
 import { usePathname } from "next/navigation";
-import { AdFigureRow, AdMetaList, PlateCrumb, cutOf, type AdFigure, type AdMeta, type AdStub } from "./primitives";
+import { ArrowRight } from "@/app/_components/glyphs";
+import { AdButton, AdFigureRow, AdMetaList, PlateCrumb, cutOf, type AdFigure, type AdMeta, type AdStub } from "./primitives";
 
 /** فتاتُ السجلّ من مساره (`path` حين يُعرض في غير مساره): بوّابة أدِيب › التفاعل › الفعاليّات — والاسمُ عنوانُ التذكرة */
 function useRecordCrumb(path: string | undefined, title: string) {
   const nav = useNav();
   const here = usePathname();
-  return crumbFor(path ?? here ?? "", nav, title)
-    .filter((st) => st.kind !== "leaf")
+  // **المسارُ كاملًا حتى السجلّ** (محمد ٢٠٢٦-١١-٢٠: «المفروض أن يكون المسار… الانتخابات، نائب لجنة التصوير»): الغرفةُ رابطًا، واسمُ
+  // السجلّ آخرَه. ويُسأل عمّا تحت الغرفة حين يُعرض السجلّ في مسارها نفسِه (`path`)، فتكون الغرفةُ رابطًا لا آخرَ المسار
+  // وعنوانُ القسم في الشريط («الانتخابات») يسقط هنا: الغرفةُ بعده تقوله («إدارة الانتخابات»)، فلا يتكرّر ولا يلتفّ (محمد ٢٠٢٦-١١-٢٠)
+  return crumbFor(path ? `${path}/record` : here ?? "", nav, title)
+    .filter((st) => st.kind !== "group")
     .map((st) => ({ label: st.label, href: st.kind === "link" ? st.href : undefined }));
 }
 
-export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures, trail }: {
+export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures, trail, back }: {
   path?: string;
   title: string;
   /** وصفُ السجلّ تحت اسمه (وصفُ الفرصة كما كتبه مشرفُها) */
@@ -46,8 +50,23 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
   figures?: AdFigure[];
   /** **مسارٌ أعمق من الغرفة** (صفحةُ ترشّحٍ داخل انتخاب، ٢٠٢٦-١١-١٧): «الانتخابات › منسّق قسم صناعة المحتوى» — والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ */
   trail?: { label: string; href: string }[];
+  /**
+   * **زرُّ العودة على كعب كلّ سجلّ** (فوق المسار، لا بين الأفعال) (محمد ٢٠٢٦-١١-٢٠: «أوافق جدًّا حتى على تعميمه»، بعد أن سأل في صفحة الانتخاب: «وين الزر
+   * لكي أعود للصفحة السابقة؟»). كان الرجوعُ رابطَ المسار الصغير فوق الكعب وحده («والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ»، ١١-١٧)،
+   * فلم يُرَ. يُشتقّ من المسار نفسه: أقربُ ما فوق السجلّ («العودة إلى الانتخابات»)، ويُسمّى بيد الغرفة إن كان مرجعُها غيرَه
+   * («العودة إلى سِجلّ ترشّحي»)، و`false` حيث لا رجوع.
+   */
+  back?: { label: string; href: string } | false;
 }) {
-  const crumb = [...useRecordCrumb(path, title), ...(trail ?? [])];
+  // المسارُ الأعمق (`trail`) قبل اسم السجلّ لا بعده: الغرفة › المقعد › ترشّحُ فلان
+  const base = useRecordCrumb(path, title);
+  const leaf = base.length && !base[base.length - 1].href ? base[base.length - 1] : null;
+  const crumb = [...(leaf ? base.slice(0, -1) : base), ...(trail ?? []), ...(leaf ? [leaf] : [])];
+  const here = usePathname();
+  // الأبُ: آخرُ المسار الأعمق إن كان (`trail`)، وإلّا الغرفةُ التي يُنسب إليها السجلّ. ومسارُها هو المسارُ نفسُه حين يُعرض السجلّ في
+  // غير مساره (`path` = الغرفة)، فيُسأل عمّا فوق مقطعٍ تحته ليُجاب بالغرفة لا بالبوّابة
+  const parent = trail?.length ? trail[trail.length - 1] : upFor(`${path ?? here ?? ""}/record`);
+  const ret = back === false ? null : back ?? (parent?.href ? { label: `العودة إلى ${parent.label}`, href: parent.href } : null);
   return (
     <section className="ad-card-wrap ad-rtk" aria-labelledby="ad-room-title">
       <article className="ad-card">
@@ -59,7 +78,14 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
             </span>
           )}
           <div className="ad-rtk-stub">
-            <PlateCrumb crumb={crumb} />
+            {/* **العودةُ على اللوح مع المسار لا بين الأفعال** (محمد ٢٠٢٦-١١-٢٠: «ألا ترى أن أصبحت الأزرار الآن مزدحمة؟» ثمّ «نوجد حلّ جذري»):
+                التنقّلُ مكانُه حيث المسار، فيبقى صفُّ الأفعال كما كان */}
+            {/* والعودةُ والمسارُ قطعةٌ واحدةٌ متلاصقة (كان بينهما فراغُ الكعب كلُّه، محمد: «لماذا هناك فراغ كبير بينه وبين المسار؟»)،
+                والزرُّ ممتدٌّ بعرض الكعب («لو الزر امتد يمكن يكون أجمل») */}
+            <div className="ad-rtk-nav">
+              {ret ? <span className="ad-rtk-back"><AdButton variant="inverse-quiet" size="sm" icon={<ArrowRight />} href={ret.href}>{ret.label}</AdButton></span> : null}
+              <PlateCrumb crumb={crumb} />
+            </div>
             {stub ? (
               <p className="ad-rtk-day">
                 {stub.icon ? <span className="ad-stub-icon" aria-hidden>{stub.icon}</span> : <b className="ad-num">{stub.big}</b>}

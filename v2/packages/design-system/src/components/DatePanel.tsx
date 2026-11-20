@@ -103,7 +103,8 @@ export function DatePanel({ type, value, min, max, today, onPick, onDone }: {
 
   /** والحدّان يُحترمان في الساعة أيضًا لا في اليوم وحده: ما قبل الأدنى يُردّ إليه، وما بعد الأعلى كذلك (القيمةُ نصٌّ يُقارَن بترتيبه) */
   const clamp = (v: string) => (min && v < min ? min : max && v > max ? max : v);
-  const emit = (day: string, h = hh, m = mm) => onPick(timeOnly ? `${pad(h)}:${pad(m)}` : withTime ? clamp(`${day}T${pad(h)}:${pad(m)}`) : day);
+  // والساعةُ وحدها تُحصر بحدّيها أيضًا («HH:MM» يُقارَن نصًّا كما يُقارَن اليومُ بساعته)
+  const emit = (day: string, h = hh, m = mm) => onPick(timeOnly ? clamp(`${pad(h)}:${pad(m)}`) : withTime ? clamp(`${day}T${pad(h)}:${pad(m)}`) : day);
   const move = (n: number) => setView((v) => {
     if (level === "months") return { ...v, y: v.y + n };
     if (level === "years") return { ...v, y: v.y + n * 12 };

@@ -111,20 +111,6 @@ export function ContestEditor({ target, games, onClose }: { target: ContestTarge
               error={err?.title}
               required
             />
-            <Textarea
-              className="form-full"
-              label="الجوائز"
-              icon={<Gift />}
-              innerIcon={<TextAlignLeft />}
-              rows={2}
-              placeholder="للأوّل كذا، وللثاني كذا، وللثالث كذا."
-              maxLength={LIMITS.note.max}
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-              error={err?.note}
-              helper={`${form.note.trim().length} من ${LIMITS.note.max}`}
-              required
-            />
             <Field
               label="تبدأ"
               type="datetime-local"
@@ -147,6 +133,20 @@ export function ContestEditor({ target, games, onClose }: { target: ContestTarge
               value={form.endsAt}
               onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
               error={err?.endsAt}
+              required
+            />
+            <Textarea
+              className="form-full"
+              label="الجوائز"
+              icon={<Gift />}
+              innerIcon={<TextAlignLeft />}
+              rows={2}
+              placeholder="للأوّل كذا، وللثاني كذا، وللثالث كذا."
+              maxLength={LIMITS.note.max}
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+              error={err?.note}
+              helper={`${form.note.trim().length} من ${LIMITS.note.max}`}
               required
             />
           </div>

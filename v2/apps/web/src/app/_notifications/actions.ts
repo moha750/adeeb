@@ -1,6 +1,6 @@
 "use server";
 
-import { getSessionAdmin } from "@/lib/auth";
+import { getCurrentAdmin } from "@/lib/auth";
 import { notificationsDb } from "@/lib/notifications/db";
 import { inboxPage, markRead, unreadCount } from "@/lib/notifications/inbox";
 import { bellPreview, previewItems } from "@/lib/notifications/preview";
@@ -14,13 +14,15 @@ import type { Gender, InboxFilter, InboxItem } from "@/lib/notifications/types";
  * ضاع فأُخرج منه صاحبُه) يبقى رمزُها صحيحَ التوقيع حتّى ينتهي عمرُه. والإبطالُ يكشفه `loadIdentity`
  * (`session_alive`)، وفيه الجنسُ الذي يُرسَم به النصّ (من المراجعة المستقلّة، ٢٠٢٦-١٠-١٠).
  *
- * ولمَ صاحبُ الجلسة لا «المُعايَن»؟ لأنّ المعاينة (`view-as`) استعارةُ هويّةٍ للنظر في اللوحة،
- * والجرسُ بريدُ صاحبه: لا يُقرأ بريدُ أحدٍ لأنّ مديرًا يعاين شاشتَه.
+ * **وأثناء المعاينة جرسُ المُعايَن** (محمد ٢٠٢٦-١١-٢٠: «هل الإشعارات الموجودة هي إشعاراتها؟»، والمعاينةُ كاملةٌ بقراره). كان
+ * بريدَ صاحب الجلسة («لا يُقرأ بريدُ أحدٍ لأنّ مديرًا يعاين شاشتَه»)، فرأى محمد معاينًا فاطمة إشعاراتِه هو. و`getCurrentAdmin`
+ * يُبطل المعاينةَ إن أُبطلت جلسةُ صاحبها كما كان. **إلّا أنّ فتحَ الجرس لا يقرأ عنه**: «قُرئ» أثرٌ يقع بلا قصد، فلا يفقد
+ * المُعايَنُ جديدَه لأنّ أحدًا عاين شاشتَه.
  */
 
-async function who(): Promise<{ id: string; gender: Gender } | null> {
-  const me = await getSessionAdmin();
-  return me ? { id: me.id, gender: me.gender } : null;
+async function who(): Promise<{ id: string; gender: Gender; previewing: boolean } | null> {
+  const me = await getCurrentAdmin();
+  return me ? { id: me.id, gender: me.gender, previewing: !!me.viewAs } : null;
 }
 
 export async function loadInboxSummary(): Promise<{ userId: string; unread: number } | null> {
@@ -56,6 +58,7 @@ export async function readNotes(ids: number[]): Promise<boolean> {
   const me = await who();
   const sb = notificationsDb();
   if (!me || !sb || !Array.isArray(ids)) return false;
+  if (me.previewing) return true;
   const clean = ids.filter((n) => Number.isSafeInteger(n) && n > 0).slice(0, 100);
   return clean.length ? markRead(sb, me.id, clean) : true;
 }
@@ -64,5 +67,6 @@ export async function readAllNotes(): Promise<boolean> {
   const me = await who();
   const sb = notificationsDb();
   if (!me || !sb) return false;
+  if (me.previewing) return true;
   return markRead(sb, me.id, "all");
 }

@@ -5,6 +5,12 @@ import { getLibraryManager } from "@/lib/library/authz";
 import { LibraryDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { AdRoomError } from "@/app/_ad/states";
+import { tabTitle } from "@/lib/tabTitle";
+
+// عنوانُ التبويب اسمُ ما يُحرَّر (محمد ٢٠٢٦-١١-٢٠)، وكانت «بوّابة أدِيب» وحدها
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  return tabTitle("library_books", "title", "id", (await params).id, "تحرير المنشور");
+}
 
 export default async function BookEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/library");

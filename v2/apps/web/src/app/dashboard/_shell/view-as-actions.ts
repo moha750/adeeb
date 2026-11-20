@@ -6,6 +6,7 @@ import { createAdeebServiceClient } from "@adeeb/core";
 import { getSessionAdmin } from "@/lib/auth";
 import { VIEW_AS_CAP, VIEW_AS_COOKIE } from "@/lib/view-as";
 import { positionLine } from "@/lib/positionLabel";
+import { previewBrowserAccess } from "@/lib/supabase/server";
 import { ensurePreviewUser, seatPreview, seatScope, vacatePreviewSeats } from "@/lib/preview-seat";
 
 export type ViewAsResult = { ok: boolean; message: string };
@@ -125,4 +126,9 @@ export async function stopViewAs(): Promise<ViewAsResult> {
   if (sb) await vacatePreviewSeats(sb);
   revalidatePath("/dashboard", "layout");
   return { ok: true, message: "عُدتَ إلى حسابك." };
+}
+
+/** تجديدُ رمز المعاينة في المتصفّح قبل أن ينقضي (`ViewAsBar` كلَّ ثماني دقائق). `null` إن انتهت المعاينة */
+export async function refreshPreviewAccess() {
+  return previewBrowserAccess();
 }

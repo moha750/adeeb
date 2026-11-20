@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { DashboardShell } from "./_shell/DashboardShell";
 import { AccessDenied } from "./_shell/AccessDenied";
 import { ViewAsBar } from "./_shell/ViewAsBar";
+import { previewBrowserAccess } from "@/lib/supabase/server";
 import { ToastProvider } from "./_components/ToastProvider";
 import { PwaIntro } from "@/app/_pwa/PwaIntro";
 import { awayIfNoSession, getCurrentAdmin, getSessionAdmin } from "@/lib/auth";
@@ -63,7 +64,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (session?.deletionRequestedAt) redirect("/me");
 
   // شريط المعاينة — يسبق حتّى بابَ الردّ: لو عاينتَ عضوًا لا لوحةَ له، رأيتَ ردَّه **ومعه مخرجُك**.
-  const bar = admin.viewAs ? <ViewAsBar targetName={admin.fullName} realName={admin.viewAs.realName} /> : null;
+  const bar = admin.viewAs ? <ViewAsBar targetName={admin.fullName} realName={admin.viewAs.realName} access={await previewBrowserAccess()} /> : null;
   if (!admin.isAdmin) return <>{bar}<AccessDenied name={admin.fullName} /></>;
 
   // حارس الهوية: كاشف العناصر الخام يعمل في اللوحة وقت التطوير فقط (مُطفأ في الإنتاج)

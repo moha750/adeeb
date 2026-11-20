@@ -5,6 +5,9 @@ import { getAnalytics, type Source } from "./data";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { ALL_DAYS, DEFAULT_PRESET, PRESETS, isDayKey, presetRange } from "@/lib/analyticsRange";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "إحصائيّات الزوّار، بوّابة أدِيب" };
+
 const SOURCES: Source[] = ["web", "app"];
 
 /**

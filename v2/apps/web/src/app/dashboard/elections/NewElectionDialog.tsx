@@ -96,7 +96,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
               icon={<CalendarBlank />}
               innerIcon={<Clock />}
               placeholder="اختر الموعد"
-              helper="يُغلق الباب تلقائيًّا عند موعده، ولك أن تغيّره بعد الفتح بسببٍ يُبلَّغ به المصوّتون."
+              helper="يُغلق تلقائيًّا، ويُعدَّل بعد الفتح بسببٍ يُبلَّغ به المصوّتون."
               value={candidacyEnd}
               onChange={(e) => setCandidacyEnd(e.target.value)}
               required

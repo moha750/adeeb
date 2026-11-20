@@ -3,6 +3,9 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { getMySheets } from "../data";
 import { RateView } from "./RateView";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "قيّم القيادات، بوّابة أدِيب" };
+
 /**
  * **قيّم القيادات** — لكلّ عضو (`view_own_membership`)، ولا يظهر في التنقّل إلّا حين تصدق إشارةُ `canRate`
  * (`scope.evaluation`): له أوراقٌ قائمةٌ في دورةٍ مفتوحة. والأوراقُ تُقرأ بالجلسة (`evaluation_my_sheets`

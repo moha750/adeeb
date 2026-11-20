@@ -68,9 +68,16 @@ target.
   Hiding a nav item is not a guard — `denyUnless` is.
 - Scope inside a room (who may edit whom) is decided by the **database** (RLS + SQL helpers like
   `can_edit_member_data`, `can_manage_tasks_of`, `membership_authority`), not by UI checks.
-- `lib/view-as.ts` implements "preview as member": the identity is swapped in the app layer only.
-  `auth.uid()` still reports the real viewer, so anything the DB computes from `auth.uid()`
-  reflects the previewer, not the previewed.
+- `lib/view-as.ts` implements "preview as member" — a **full** preview (owner, 2026-11-20): the
+  database reads *and acts* as the previewed person, nothing blocked. `lib/view-as-token.ts` mints a
+  10-minute HS256 JWT for them (signed with `SUPABASE_JWT_SECRET`, claims `is_preview` and
+  `previewed_by`); `createClient()` in `lib/supabase/server.ts` uses it whenever view-as is active
+  and permitted, so `auth.uid()` *is* the previewed person in RLS and RPCs. The browser gets the same
+  token through `ViewAsBar` (`lib/supabase/preview-access.ts`, refreshed every 8 minutes) and
+  `lib/supabase/client.ts` sends it on every request except `/auth/v1/`. Auth/session operations
+  (login, logout, callback, settings) use `createSessionClient()`, the real cookie session. The bell
+  shows the previewed person's notifications and does not mark them read. Without the secret, the
+  preview falls back to the old app-layer swap.
 - **Standings: the names people see** (owner decision 2026-10-08). Three, never overlapping, one
   pattern: **عضو أدِيب**, **متطوّع أدِيب**, **صديق أدِيب** (an account with no live membership
   and no active volunteering; formerly called «زائر» and «صاحب حساب»). Any `auth.users` row is a
@@ -329,6 +336,7 @@ be imported into client code.
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (browser + server clients). |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key; all RLS-respecting access. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Powers `createAdeebServiceClient` (identity + capability load, privileged server actions). Bypasses RLS. |
+| `SUPABASE_JWT_SECRET` | Server-only. The project's legacy JWT secret; signs the full-preview token (`lib/view-as-token.ts`). Never sent to the browser; only the minted 10-minute token is. |
 | `NEXT_PUBLIC_SITE_URL` | Origin for `metadataBase` / OG links. Falls back to `https://adeeb.club`. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile widget key (login, recovery, surveys, booking). |
 | `TURNSTILE_SECRET_KEY` | Server-side Turnstile verification for our own actions. |

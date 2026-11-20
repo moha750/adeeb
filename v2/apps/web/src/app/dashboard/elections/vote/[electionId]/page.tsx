@@ -5,6 +5,9 @@ import { BallotRoomAd } from "@/app/_ad/rooms/BallotRoomAd";
 import { SeatResultRoom } from "@/app/_ad/rooms/SeatResultRoom";
 import { AdRoomError, AdRoomMissing } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "ورقة التصويت، بوّابة أدِيب" };
+
 /** جملةُ «ليس لك» من مصدرها (`getBallot`): ما عداها خطأُ قراءةٍ حقيقيّ يُبلَّغ عنه */
 const NOT_YOURS = "هذا الاقتراع غير مفتوحٍ لك الآن.";
 

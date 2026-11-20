@@ -4,6 +4,9 @@ import { getFactForEdit } from "../../data";
 import { KnowledgeForm } from "../../KnowledgeForm";
 import { AdRoomError } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "تحرير الواقعة، بوّابة أدِيب" };
+
 export default async function EditFactPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/deebo/knowledge");
   if (denied) return denied;

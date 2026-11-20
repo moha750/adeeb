@@ -6,6 +6,12 @@ import { docContext, docs } from "@/lib/regulations/data";
 import { RegEditorRoom } from "@/app/_ad/rooms/RegEditorRoom";
 import { requestNow } from "@/app/_ad/now";
 import { getRoomDoc, riyadhToday } from "../data";
+import { tabTitle } from "@/lib/tabTitle";
+
+// عنوانُ التبويب اسمُ ما يُحرَّر (محمد ٢٠٢٦-١١-٢٠)، وكانت «بوّابة أدِيب» وحدها
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  return tabTitle("regulations", "title", "slug", (await params).slug, "تحرير النظام");
+}
 
 /**
  * **محرّرُ النظام على المنضدة** (`RegEditorRoom`، اعتمده محمد ٢٠٢٦-١١-١٦ بعد المختبر `/dashboard/ad/reg-editor`): الموادُّ قطعٌ تُحرَّر في

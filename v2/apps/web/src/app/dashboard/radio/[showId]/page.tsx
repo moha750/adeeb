@@ -5,6 +5,12 @@ import { getRadioManager } from "@/lib/radio/authz";
 import { RadioDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { AdRoomError } from "@/app/_ad/states";
+import { tabTitle } from "@/lib/tabTitle";
+
+// عنوانُ التبويب اسمُ ما يُحرَّر (محمد ٢٠٢٦-١١-٢٠)، وكانت «بوّابة أدِيب» وحدها
+export async function generateMetadata({ params }: { params: Promise<{ showId: string }> }) {
+  return tabTitle("radio_shows", "title", "id", (await params).showId, "تحرير البرنامج");
+}
 
 export default async function ShowEditorPage({ params }: { params: Promise<{ showId: string }> }) {
   const denied = await denyUnless("/dashboard/radio");

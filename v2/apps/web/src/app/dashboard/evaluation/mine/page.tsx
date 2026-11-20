@@ -3,6 +3,9 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { getMyComments, getMyResults } from "../data";
 import { MineView } from "./MineView";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "نتيجتي، بوّابة أدِيب" };
+
 /**
  * **نتيجتي** — للمقيَّم وحده (أحكامٌ عامّة: «يتسلّم كلُّ مقيَّمٍ نتيجتَه وحده»)، ولا يظهر في التنقّل إلّا حين
  * تصدق إشارةُ `hasResults`. النتائجُ وإجاباتُ السؤال المفتوح تُقرأ بالجلسة (`auth.uid()`)، بلا أسماء.

@@ -317,18 +317,7 @@ export function IssueWarningModal({
           tone={isFinal ? "danger" : undefined}
         />
 
-        <Textarea
-          label="سبب الإنذار"
-          icon={<ChatCenteredText />}
-          innerIcon={<NotePencil />}
-          placeholder="اكتب ما وقع بدقّة، هذا النصّ يُطبع في الخطاب ويُرسَل للعضو."
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={4}
-          required
-          helper="خمسة أحرف فأكثر."
-        />
-
+        {/* ترتيبُ النافذة (محمد ٢٠٢٦-١١-٢٠): مَن، ثمّ الاختياراتُ القصيرة، ثمّ النصُّ الطويل آخرَها؛ فالتاريخُ قبل السبب */}
         <Field
           label="تاريخ الواقعة"
           icon={<CalendarBlank />}
@@ -350,6 +339,18 @@ export function IssueWarningModal({
                 ? `إن اختلف عن تاريخ التسجيل، بين ${floor} واليوم.`
                 : "إن اختلف عن تاريخ التسجيل."
           }
+        />
+
+        <Textarea
+          label="سبب الإنذار"
+          icon={<ChatCenteredText />}
+          innerIcon={<NotePencil />}
+          placeholder="اكتب ما وقع بدقّة، هذا النصّ يُطبع في الخطاب ويُرسَل للعضو."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={4}
+          required
+          helper="خمسة أحرف فأكثر."
         />
       </Modal>
 
