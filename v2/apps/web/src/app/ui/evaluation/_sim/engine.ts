@@ -20,6 +20,7 @@
 import { CATALOG, type KindKey } from "@/lib/notifications/catalog";
 import type { Address, Gender, Level } from "@/lib/notifications/types";
 import { recordFor, type RecordResult } from "@/lib/evaluation/score";
+import { fmtDateOnly } from "@/lib/dates";
 import type { CycleRow, ElectorRow, MyResultRow, SheetRow, TargetRow } from "../../../dashboard/evaluation/data";
 import type { EvaluatedRole, Part, Verdict } from "../../../dashboard/evaluation/vocab";
 
@@ -454,7 +455,7 @@ function executeRemoval(st0: SimState, targetId: number, chosen: number | null):
   const back = { rank: "عضو", unit: committee(prev)!.name };
   const final = st.targets.find((x) => x.id === t.id)!.record!.final!;
   const r = emit(st, "evaluation.removed", { ...seatFacts(t), userId: t.userId, name: t.name, targetId: t.id, cycleId: 1, final, back, holdUntil: HOLD_UNTIL });
-  return happen(r.st, `استُبعد ${t.name} من «${rankWord(t.role)} ${t.unit}»، وعاد عضوًا في ${back.unit}.`, `وصله الخبرُ بالجرس والبريد، ووصل مديري التقييم. ولا يُفتح انتخابُ مقعده قبل ${HOLD_UNTIL}.`);
+  return happen(r.st, `استُبعد ${t.name} من «${rankWord(t.role)} ${t.unit}»، وعاد عضوًا في ${back.unit}.`, `وصله الخبرُ بالجرس والبريد، ووصل مديري التقييم. ولا يُفتح انتخابُ مقعده قبل ${fmtDateOnly(HOLD_UNTIL)}.`);
 }
 
 /** يعيد المقعد (`_evaluation_restore`): المجرِّبُ لا يشغل المقاعدَ بعد الاستبعاد، فالإعادةُ تنجح دائمًا هنا. */

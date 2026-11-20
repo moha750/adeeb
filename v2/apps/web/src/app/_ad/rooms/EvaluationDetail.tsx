@@ -62,7 +62,7 @@ function branchText(t: TargetRow): ReactNode {
 }
 
 /** رمزُ المقعد كرمزه في سطر الغرفة: البوصلةُ للمنسّق، والنجمةُ للقائد ونصفُها للنائب، والشخصُ لمن سواهم */
-const seatIcon = (seat?: string | null): ReactNode => {
+export const seatIcon = (seat?: string | null): ReactNode => {
   const t = seat ?? "";
   // كرمز الرتبة في تعيين المناصب (`AssignmentsRoom`): تاجٌ للرئيس، وحقيبةٌ للتنفيذيّ، وشعارا الإدارتين، وبوصلةٌ للمنسّق، ونجمةٌ للقائد ونصفُها للنائب
   if (t.startsWith("رئيس أد")) return <Crown />;

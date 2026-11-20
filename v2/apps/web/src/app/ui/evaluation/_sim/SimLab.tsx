@@ -1,26 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge, Button, CountBadge, Segmented, Select } from "@adeeb/design-system";
-import { Bell, EnvelopeSimple, SlidersHorizontal } from "@phosphor-icons/react";
-import { ArrowCounterClockwise, ArrowLeft } from "@/app/_components/glyphs";
+import { Select } from "@adeeb/design-system";
+import {
+  Bell, Briefcase, CalendarBlank, ChartBar, ClockCounterClockwise, CursorClick, DoorOpen, EnvelopeSimple, Gavel, HandPointing,
+  Hourglass, SlidersHorizontal, Smiley, UserCircle, UserSwitch, UsersThree,
+} from "@phosphor-icons/react";
+import { ArrowCounterClockwise, ArrowLeft, Star } from "@/app/_components/glyphs";
 import { percentText } from "@/lib/evaluation/score";
-import { Avatar } from "../../../dashboard/_components/Avatar";
-import { VERDICT_LABEL } from "../../../dashboard/evaluation/vocab";
+import { AdBadge, AdButton, AdRoom, AdStages, AdSwitch, RoomPlate, type AdStage } from "@/app/_ad/primitives";
+import { AdLine, AdSection } from "@/app/_ad/account";
+import { seatIcon } from "@/app/_ad/rooms/EvaluationDetail";
+import { verdictWord } from "../../../dashboard/evaluation/vocab";
 import {
   MOODS, PERSONAS, SCENES, STAGES, TURNOUTS, act, advance, applyScene, forecast, initialState, person, play, setCrowd, viewFor,
   type Act, type Mood, type SimState,
 } from "./engine";
 
 /**
- * **محاكي تقييم القيادات** (٢٠٢٦-١٠-٢٧). على اليمين لوحةُ المخرج: من تكون، وأين الزمن، وما يفعله الآخرون، وما جرى.
- * وعلى اليسار عينُ الشخص المتقمَّص (`SimView` في `iframe` بعرض الجهاز): لوحتُه كما ستكون، بجرسها وقائمتها.
+ * **تجربةُ تقييم القيادات** (٢٠٢٦-١٠-٢٧؛ على الهويّة ٢٠٢٦-١١-٢١ لأنّها تُرسَل للمجلس الإداريّ، محمد: «لا تفشلني»). على جهةٍ لوحةُ من يجرّب:
+ * كيف تجرّب، وأين الزمن، ومن تكون، وما يفعله الآخرون، وما جرى — كلُّها أقسامُ الهويّة وسطورُها، ومراحلُ الزمن «كعوبُ الأيّام». وعلى الأخرى
+ * عينُ الشخص المتقمَّص (`SimView` في `iframe` بعرض الجهاز): لوحتُه كما ستكون، بجرسها وقائمتها.
  * لا قاعدةَ ولا بريد: الحالُ كلُّها هنا، وتُمحى بإعادة التحميل أو «من البداية».
  */
 const SIZES = [
-  { value: "1280", label: "حاسوب" },
-  { value: "390", label: "جوّال" },
+  { key: "1280", label: "حاسوب" },
+  { key: "390", label: "جوّال" },
 ];
+/** أيّامُ الدورة المتخيَّلة: 20 إلى 24 يناير 2027، وما يقع في كلّ يوم برمزه */
+const STAGE_ICONS = [<Hourglass key="0" />, <DoorOpen key="1" />, <CalendarBlank key="2" />, <Bell key="3" />, <Gavel key="4" />];
+const GROUPS: { key: string; icon: React.ReactNode; sub: string }[] = [
+  { key: "الإدارة", icon: <Briefcase />, sub: "من يدير التقييم ومن يرى نتائجه" },
+  { key: "المقيَّمون", icon: <Star />, sub: "القادة والنوّاب والمنسّقون: يُقيَّمون، ومنهم من يقيّم غيره" },
+  { key: "الأعضاء", icon: <UsersThree />, sub: "العضو يقيّم قائد لجنته ونائبه ومنسّق قسمه" },
+];
+const dayOf = (i: number) => `2027-01-${String(20 + i).padStart(2, "0")}`;
 
 export function SimLab() {
   const [st, setSt] = useState<SimState>(() => initialState());
@@ -29,7 +43,7 @@ export function SimLab() {
   const [size, setSize] = useState("1280");
   const [run, setRun] = useState(1);
   const frame = useRef<HTMLIFrameElement>(null);
-  const panel = useRef<HTMLElement>(null);
+  const people = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   // الحالُ الحاضرة لمعالجات الرسائل: تُحدَّث بعد الرسم، ويكتبها معالجُ الفعل نفسُه فورًا
   const live = useRef({ st, who, run });
@@ -59,14 +73,14 @@ export function SimLab() {
     return () => window.removeEventListener("message", on);
   }, [post]);
 
-  // في الجوّال الشاشةُ فوق اللوحة: من اختار شخصًا يُعاد إلى الشاشة ليرى بعينه، لا يبقى في القائمة
+  // في الجوّال الشاشةُ فوق الأقسام: من اختار شخصًا يُعاد إلى الشاشة ليرى بعينه، ومن طلب التبديل يُنزَل إلى «أنت الآن»
   const narrow = () => typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches;
   const become = (id: string) => {
     setWho(id);
     setSt((s) => play(s, id));
     if (narrow()) stage.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const toPanel = () => panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const toPeople = () => people.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   const next = () => setSt((s) => play(advance(s), live.current.who));
   const restart = () => {
     setSt(applyScene(initialState(), scene));
@@ -75,149 +89,113 @@ export function SimLab() {
 
   const evaluated = Object.keys(st.crowd);
   const closed = st.stage === 4;
+  const nextLabel = closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`;
+  const stages: AdStage[] = STAGES.map((s, i) => ({
+    key: s.label, icon: STAGE_ICONS[i], label: s.hint, date: dayOf(i),
+    state: i < st.stage ? "past" : i === st.stage ? "now" : "next",
+  }));
+  const me = person(st, who);
 
   return (
     <div className="evsim">
-      <aside className="evsim-panel" ref={panel}>
-        <header className="evsim-head">
-          <p className="evsim-k">تجربة</p>
-          <h1>تقييم القيادات</h1>
-          <p className="evsim-sub">دورةٌ كاملة على أدِيبٍ صغير. الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، والأسماءُ والأرقامُ متخيَّلة، ولا شيء يُكتب أو يُرسَل.</p>
+      <AdRoom label="لوحة التجربة">
+        <div className="evsim-panel">
+          <RoomPlate title="جرّب تقييم القيادات" crumb={[{ label: "نادي أدِيب" }]} />
+
           {/* **دليلُ من يجرّب** (محمد ٢٠٢٦-١١-٢٠: المحاكي يُرسَل للمجلس الإداريّ ليجرّبوا النظام): ثلاثُ خطوات، لا شرحٌ للنظام */}
-          <ol className="evsim-guide">
-            <li><b>اختر من تكون</b><span>من «أنت الآن»: الرئيس، أو قائدٌ يُقيَّم، أو عضوٌ يقيّم قائده.</span></li>
-            <li><b>حرّك الزمن</b><span>«إلى 21 يناير» يفتح التقييم، ثمّ يومًا بعد يوم حتى يُغلق ويصدر الحكم.</span></li>
-            <li><b>جرّب وشاهد</b><span>قيّم، وافتح الجرس، وبدّل الشخص لترى ما رآه غيرُك. و«من البداية» يعيد كلَّ شيء.</span></li>
-          </ol>
-        </header>
+          <AdSection icon={<HandPointing />} title="كيف تجرّب" sub="دورةٌ كاملة على أدِيبٍ صغير: الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، والأسماءُ والأرقامُ متخيَّلة، ولا شيء يُكتب أو يُرسَل.">
+            <AdLine icon={<UserSwitch />} k="أوّلًا" v="اختر من تكون" sub="من الإدارة أو المقيَّمين أو الأعضاء أدناه: الرئيس، أو قائدٌ يُقيَّم، أو عضوٌ يقيّم قائده." />
+            <AdLine icon={<CalendarBlank />} k="ثانيًا" v="حرّك الزمن" sub={`«إلى ${STAGES[1].label}» يفتح التقييم، ثمّ يومًا بعد يوم حتى يُغلق ويصدر الحكم.`} />
+            <AdLine icon={<CursorClick />} k="ثالثًا" v="جرّب وشاهد" sub="قيّم، وافتح الجرس، وبدّل الشخص لترى ما رآه غيرُك. و«من البداية» يعيد كلَّ شيء." />
+          </AdSection>
 
-        <section className="evsim-sec">
-          <h2>الزمن</h2>
-          <ol className="evsim-clock">
-            {STAGES.map((s, i) => (
-              <li key={s.label} className={i < st.stage ? "past" : i === st.stage ? "now" : ""}>
-                <b>{s.label}</b>
-                <span>{s.hint}</span>
-              </li>
+          <AdSection icon={<CalendarBlank />} title="الزمن" sub={STAGES[st.stage].hint}
+            media={<AdStages stages={stages} label="أيّام الدورة" />}
+            foot={
+              <div className="evsim-acts">
+                <AdButton variant="fill" size="sm" icon={closed ? undefined : <ArrowLeft />} iconEnd disabled={closed} onClick={next}>{nextLabel}</AdButton>
+                <AdButton variant="line" size="sm" icon={<ArrowCounterClockwise />} onClick={restart}>من البداية</AdButton>
+              </div>
+            } />
+
+          <div className="evsim-people" ref={people}>
+            {GROUPS.map((g) => (
+              <AdSection key={g.key} icon={g.icon} title={g.key} sub={g.sub}>
+                {PERSONAS.filter((p) => p.group === g.key).map((p) => {
+                  const pp = person(st, p.id);
+                  const v = viewFor(st, p.id);
+                  const unread = v.notes.filter((n) => n.unread).length;
+                  const state = [v.pending ? `بقي ${v.pending} للتقييم` : "", unread ? `${unread === 1 ? "إشعارٌ جديد" : `${unread} إشعارات جديدة`}` : ""].filter(Boolean).join("، ");
+                  return (
+                    <AdLine key={p.id} icon={seatIcon(v.seatLine)} v={pp.name} k={state || undefined}
+                      sub={`${v.seatLine}، ${p.why}`} onClick={() => become(p.id)} current={who === p.id}
+                      act={who === p.id ? { icon: <UserCircle />, text: pp.gender === "female" ? "أنتِ" : "أنت", label: "أنت الآن" } : { icon: <UserSwitch />, text: pp.gender === "female" ? "كوني هي" : "كن هو", label: "تقمّص" }} />
+                  );
+                })}
+              </AdSection>
             ))}
-          </ol>
-          <div className="evsim-row">
-            <Button size="sm" disabled={closed} onClick={next}>
-              {closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`}
-              {closed ? null : <ArrowLeft aria-hidden />}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={restart}>
-              <ArrowCounterClockwise aria-hidden />
-              من البداية
-            </Button>
           </div>
-        </section>
 
-        <section className="evsim-sec">
-          <h2>أنت الآن</h2>
-          {["الإدارة", "المقيَّمون", "الأعضاء"].map((g) => (
-            <div key={g} className="evsim-group">
-              <div className="evsim-group-h">{g}</div>
-              {PERSONAS.filter((p) => p.group === g).map((p) => {
-                const me = person(st, p.id);
-                const v = viewFor(st, p.id);
-                const unread = v.notes.filter((n) => n.unread).length;
-                return (
-                  <button key={p.id} type="button" className={"evsim-who" + (who === p.id ? " on" : "")} onClick={() => become(p.id)}>
-                    <Avatar name={me.name} gender={me.gender} size="sm" />
-                    <span className="evsim-who-tx">
-                      <b>{me.name}</b>
-                      <span>{v.seatLine}، {p.why}</span>
-                    </span>
-                    <span className="evsim-who-n">
-                      {v.pending ? <Badge tone="info" variant="soft" size="sm">بقي {v.pending}</Badge> : null}
-                      {unread ? <span className="evsim-bell"><Bell aria-hidden /><CountBadge>{unread}</CountBadge></span> : null}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </section>
+          <AdSection icon={<Smiley />} title="ما يفعله الآخرون"
+            sub="من لم تتقمّصه يقيّم وحده بهذا الضبط، وتزداد أوراقُهم يومًا بعد يوم. ومن تقمّصته أثناء الأيام الثلاثة صارت أوراقُه بيدك."
+            media={
+              <div className="evsim-crowd">
+                <AdSwitch label="حالُ الدورة" positions={SCENES.map((s) => ({ key: s.key, label: s.label }))} position={scene}
+                  onPosition={(k) => { setScene(k); if (!closed) setSt((s) => applyScene(s, k)); }} />
+                <ol className="evsim-crowd-list">
+                  {evaluated.map((id) => {
+                    const p = person(st, id);
+                    const c = st.crowd[id];
+                    const t = st.targets.find((x) => x.userId === id);
+                    const f = t ? forecast(st, t.id) : null;
+                    return (
+                      <li key={id} className="evsim-crowd-i">
+                        <div className="evsim-crowd-t">
+                          <b>{p.name}</b>
+                          {t?.excluded ? <AdBadge>مستثنى</AdBadge> : null}
+                          {f ? (
+                            <span className="evsim-fc" data-out={f.verdict === "removed" || undefined}>
+                              <ChartBar aria-hidden />
+                              {/* الحكمُ ثمّ نسبتُه معزولةً بلا فاصلة: الفاصلةُ بجانب الرقم اللاتينيّ يقلبها اتّجاهُ النصّ */}
+                              {closed ? "" : "لو أُغلق الآن: "}
+                              <b>{verdictWord(f.verdict, p.gender)}</b>
+                              {f.final ? <bdi dir="ltr" className="lat">{percentText({ num: f.final[0], den: f.final[1] })}%</bdi> : null}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="evsim-crowd-f">
+                          <Select label="رضاهم" icon={<Smiley />} options={MOODS.map((m) => ({ value: m.value, label: m.label }))} value={c.mood} disabled={closed}
+                            onValueChange={(m) => setSt((s) => setCrowd(s, id, { mood: m as Mood }))} />
+                          <Select label="الأعضاء" icon={<UsersThree />} options={TURNOUTS.map((x) => ({ ...x }))} value={String(c.members)} disabled={closed}
+                            onValueChange={(m) => setSt((s) => setCrowd(s, id, { members: Number(m) }))} />
+                          <Select label="المجلس" icon={<Briefcase />} options={TURNOUTS.map((x) => ({ ...x }))} value={String(c.council)} disabled={closed}
+                            onValueChange={(m) => setSt((s) => setCrowd(s, id, { council: Number(m) }))} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            } />
 
-        <section className="evsim-sec">
-          <h2>ما يفعله الآخرون</h2>
-          <p className="evsim-note">من لم تتقمّصه يصوّت وحده بهذا الضبط، وتزداد أوراقُهم يومًا بعد يوم. ومن تقمّصته أثناء الأيام الثلاثة صارت أوراقُه بيدك.</p>
-          <Segmented
-            items={SCENES.map((s) => ({ value: s.key, label: s.label }))}
-            value={scene}
-            onValueChange={(k) => {
-              setScene(k);
-              if (!closed) setSt((s) => applyScene(s, k));
-            }}
-          />
-          <div className="evsim-crowd">
-            {evaluated.map((id) => {
-              const p = person(st, id);
-              const c = st.crowd[id];
-              const t = st.targets.find((x) => x.userId === id);
-              const f = t ? forecast(st, t.id) : null;
-              return (
-                <div key={id} className="evsim-crowd-row">
-                  <div className="evsim-crowd-h">
-                    <b>{p.name}</b>
-                    {t?.excluded ? <Badge tone="neutral" variant="soft" size="sm">مستثنى</Badge> : null}
-                    {f ? (
-                      <span className={"evsim-fc" + (f.verdict === "removed" ? " out" : "")}>
-                        {closed ? "" : "لو أُغلق الآن: "}
-                        {f.final ? <span className="font-latin" dir="ltr">{percentText({ num: f.final[0], den: f.final[1] })}%</span> : null}
-                        {" "}{VERDICT_LABEL[f.verdict]}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="evsim-crowd-c">
-                    <Select options={MOODS.map((m) => ({ value: m.value, label: m.label }))} value={c.mood} disabled={closed} onValueChange={(m) => setSt((s) => setCrowd(s, id, { mood: m as Mood }))} />
-                    <Select options={TURNOUTS.map((x) => ({ ...x, label: `الأعضاء: ${x.label}` }))} value={String(c.members)} disabled={closed} onValueChange={(m) => setSt((s) => setCrowd(s, id, { members: Number(m) }))} />
-                    <Select options={TURNOUTS.map((x) => ({ ...x, label: `المجلس: ${x.label}` }))} value={String(c.council)} disabled={closed} onValueChange={(m) => setSt((s) => setCrowd(s, id, { council: Number(m) }))} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="evsim-sec">
-          <h2>ما جرى</h2>
-          {st.log.length === 0 ? <p className="evsim-note">لم يحدث شيءٌ بعد. التقييمُ يُفتح يوم 21 يناير.</p> : null}
-          <ol className="evsim-log">
-            {st.log.map((h) => (
-              <li key={h.id}>
-                <span className="evsim-log-d">{STAGES[h.stage].label}</span>
-                <b>{h.text}</b>
-                {h.detail ? <span>{h.detail}</span> : null}
-              </li>
-            ))}
-          </ol>
-          {st.notes.some((n) => n.email) ? (
-            <p className="evsim-note">
-              <EnvelopeSimple aria-hidden /> البريدُ في الواقع يصل مع الجرس للاستبعاد والتصحيح وحدهما، ولا يُرسَل هنا.
-            </p>
-          ) : null}
-        </section>
-      </aside>
+          <AdSection icon={<ClockCounterClockwise />} title="ما جرى"
+            sub={st.log.length === 0 ? `لم يحدث شيءٌ بعد. التقييمُ يُفتح يوم ${STAGES[1].label}.` : st.notes.some((n) => n.email) ? "البريدُ في الواقع يصل مع الجرس للاستبعاد والتصحيح وحدهما، ولا يُرسَل هنا." : undefined}>
+            {st.log.length ? st.log.map((h) => (
+              <AdLine key={h.id} icon={h.detail?.includes("بريد") ? <EnvelopeSimple /> : STAGE_ICONS[h.stage]} k={STAGES[h.stage].label} v={h.text} sub={h.detail ?? undefined} />
+            )) : null}
+          </AdSection>
+        </div>
+      </AdRoom>
 
       <div className="evsim-stage" ref={stage}>
-        {/* في الجوّال: الشاشةُ أوّلًا، وفوقها ما يُحتاج في كلّ لحظة — الزمنُ والطريقُ إلى اللوحة */}
+        {/* في الجوّال: الشاشةُ أوّلًا، وفوقها ما يُحتاج في كلّ لحظة — الزمنُ والطريقُ إلى «أنت الآن» */}
         <div className="evsim-dock">
-          <Button size="sm" disabled={closed} onClick={next}>
-            {closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`}
-            {closed ? null : <ArrowLeft aria-hidden />}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={toPanel}>
-            <SlidersHorizontal aria-hidden />
-            غيّر الشخص والحالة
-          </Button>
+          <AdButton variant="fill" size="sm" icon={closed ? undefined : <ArrowLeft />} iconEnd disabled={closed} onClick={next}>{nextLabel}</AdButton>
+          <AdButton variant="line" size="sm" icon={<SlidersHorizontal />} onClick={toPeople}>غيّر الشخص</AdButton>
         </div>
         <div className="evsim-stage-h">
-          <span>
-            ترى بعين <b>{person(st, who).name}</b>
-          </span>
-          <Segmented items={SIZES} value={size} onValueChange={setSize} />
+          <span>ترى بعين <b>{me.name}</b></span>
+          <div className="evsim-size"><AdSwitch label="مقاس الشاشة" positions={SIZES} position={size} onPosition={setSize} /></div>
         </div>
         <iframe
           ref={frame}
