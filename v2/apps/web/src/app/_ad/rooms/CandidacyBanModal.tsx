@@ -78,10 +78,10 @@ export function CandidacyBanModal({ member, onClose }: { member: { id: string; n
           <Button variant="ghost" size="md" onClick={close} disabled={busy}>تراجع</Button>
         </>
       }>
-      <Textarea label="السبب" icon={<ChatText />} innerIcon={<Note />} placeholder={she ? "يصلها مع القرار…" : "يصله مع القرار…"} rows={3}
-        value={reason} onChange={(ev) => setReason(ev.target.value)} required helper={reasonHelper} />
       <Field label="آخر يوم في الحرمان" type="date" icon={<CalendarBlank />} innerIcon={<CalendarX />} placeholder="" dir="ltr"
         min={bounds.min} max={bounds.max} value={until} onChange={(ev) => setUntil(ev.target.value)} required helper="لا يجاوز سنةً من اليوم." />
+      <Textarea label="السبب" icon={<ChatText />} innerIcon={<Note />} placeholder={she ? "يصلها مع القرار…" : "يصله مع القرار…"} rows={3}
+        value={reason} onChange={(ev) => setReason(ev.target.value)} required helper={reasonHelper} />
       <p className="ad-elw-note">{she
         ? "ينتهي به كلُّ ترشّحٍ قائمٍ لها ما لم يُفتح تصويته، ولا تترشّح حتى يمضي أجله أو يُرفع."
         : "ينتهي به كلُّ ترشّحٍ قائمٍ له ما لم يُفتح تصويته، ولا يترشّح حتى يمضي أجله أو يُرفع."}</p>
