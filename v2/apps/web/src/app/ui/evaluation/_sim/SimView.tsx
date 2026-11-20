@@ -8,6 +8,7 @@ import { EmptyState } from "../../../dashboard/_components/EmptyState";
 import { PageHeader } from "../../../dashboard/_components/PageHeader";
 import { MineA } from "../../../dashboard/evaluation/_views/MineA";
 import { RateA } from "../../../dashboard/evaluation/_views/RateA";
+import { RateRoom } from "../../../_ad/rooms/RateRoom";
 import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
 import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
 import type { ElectorRow } from "../../../dashboard/evaluation/data";
@@ -81,8 +82,10 @@ export function SimView() {
 
   let body: React.ReactNode;
   if (page === "rate") {
+    const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const Rate = q?.get("look") === "new" ? RateRoom : RateA;
     body = v.sheets.length ? (
-      <RateA
+      <Rate
         sheets={v.sheets}
         dueOn={DUE}
         draftOwner={`sim${run}:${persona}`}
