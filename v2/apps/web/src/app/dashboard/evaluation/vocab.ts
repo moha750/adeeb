@@ -80,6 +80,15 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
   no_result: "بلا نتيجة",
 };
 
+/**
+ * **الحكمُ بجنس صاحبه** (محمد ٢٠٢٦-١١-٢٠: «مستبعَد، أليس المفروض أن تكون مستبعَدة؟»): «باقية» و«مستبعَدة» للمرأة، و«بلا نتيجة» للجميع.
+ * و`VERDICT_LABEL` باقٍ لما لا شخصَ فيه (عناوينُ الأعمدة، الإحصاء).
+ */
+export function verdictWord(v: Verdict, gender: "male" | "female" | null | undefined): string {
+  if (gender !== "female") return VERDICT_LABEL[v];
+  return v === "kept" ? "باقية" : v === "removed" ? "مستبعَدة" : VERDICT_LABEL[v];
+}
+
 export type Branch = "both" | "members_only" | "council_only" | "none";
 /** كيف حُسبت النتيجة (م٥): يُقرأ في الغرفة وفي «نتيجتي». */
 export const BRANCH_LABEL: Record<Branch, string> = {

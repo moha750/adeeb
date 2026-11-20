@@ -194,6 +194,10 @@ export type MyResultRow = {
   removed_at: string | null;
   restored_at: string | null;
   cancelled: Cancelled | null;
+  /** اللجنةُ التي عاد إليها المستبعَد عضوًا، وهل ينتظر لجنةً بعدُ (`20261120193547_evaluation_my_results_returned_to`).
+   *  اختياريّان: الحكمُ وحده يُكتب إن لم يعودا. */
+  returned_unit?: string | null;
+  awaiting_return?: boolean | null;
 };
 
 export async function getMyResults(): Promise<Read<MyResultRow[]>> {

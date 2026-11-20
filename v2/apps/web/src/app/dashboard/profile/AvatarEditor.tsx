@@ -7,7 +7,7 @@ import { Camera, MagnifyingGlassMinus, MagnifyingGlassPlus } from "@phosphor-ico
 import { ArrowCounterClockwise } from "@/app/_components/glyphs";
 import { Trash, UploadSimple } from "@/app/_components/glyphs";
 import { Avatar } from "../_components/Avatar";
-import { ConfirmDialog } from "../_components/ConfirmDialog";
+import { AdConfirm } from "@/app/_ad/primitives";
 import { DropdownMenu } from "../_components/DropdownMenu";
 import { useToast } from "../_components/ToastProvider";
 import { removeMyAvatar, uploadMyAvatar } from "./actions";
@@ -325,7 +325,7 @@ export function AvatarEditor({ name, gender, avatar, look = "row" }: { name: str
       </Modal>
 
       {/* الحذف صُلبٌ لا رجعةَ فيه — الملفّ يُمحى من التخزين، فيُقال ذلك قبل الضغط لا بعده */}
-      <ConfirmDialog
+      <AdConfirm
         open={confirmKill}
         onClose={() => setConfirmKill(false)}
         tone="danger"

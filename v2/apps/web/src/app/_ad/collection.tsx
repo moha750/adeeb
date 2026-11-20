@@ -84,7 +84,7 @@ export type TableSpec<T> = { head: string; headSortBy?: (item: T) => SortKey; co
 export function CollectionRoom<T>({
   navPath, title, action, extra, noun: nounAll, items, positions, defaultPosition,
   searchPlaceholder, matchSearch, filters = [], viewKey, initialView, emptyAll, createAction,
-  renderCard, renderRow, table: tableOf, notice, after, idOf, bulk, reorder, group: groupAll, head: recordHead, listOnly: onlyList, pageSize,
+  renderCard, renderRow, table: tableOf, notice, lead, after, idOf, bulk, reorder, group: groupAll, head: recordHead, listOnly: onlyList, pageSize,
 }: {
   /** سجلّاتٌ في الصفحة الواحدة (خمسون): وقائمةُ ما في السجلّ كلُّها صفحةٌ واحدة (`Infinity`) كما كانت — فـ«تحديدُ الكلّ» يحدّد المرحلةَ كلَّها */
   pageSize?: number;
@@ -129,6 +129,11 @@ export function CollectionRoom<T>({
   table?: TableSpec<T> | ((position: string) => TableSpec<T>);
   /** ما فوق القائمة — أو دالّةٌ تأخذ `choose` فتنقل إلى موضعٍ آخر بفعلٍ فيها («اعرض القيادات») */
   notice?: ReactNode | ((ctx: { choose: (key: string) => void }) => ReactNode);
+  /**
+   * **سياقُ الغرفة كلِّها بين لوحها ومواضعها** (٢٠٢٦-١١-٢٠، دورةُ التقييم بمراحلها): ما تُقرأ القائمةُ في ضوئه يأتي قبل المبدّل، لا
+   * بعده كتنبيهٍ يخصّ الموضع (`notice`)
+   */
+  lead?: ReactNode;
   /**
    * قسمٌ ثانٍ بعد القائمة داخل الغرفة نفسِها (سجلُّ أحداث الباركود «ما الذي جرى») — بعرضها وفجوتها. كان القسمُ يُلفّ مع الغرفة في
    * غرفةٍ ثانية فانكمشت الداخلةُ إلى عرض محتواها وسط الصفحة (وجده محمد ٢٠٢٦-١١-٠٢ بحساب أدِيب)
@@ -448,6 +453,9 @@ export function CollectionRoom<T>({
     return out;
   };
 
+  // **بلا سجلّاتٍ أصلًا: الفراغُ وحده بلا مبدّلٍ ولا أدوات** (قالبُ السجلّ ٢٠٢٦-١١-٠٧) — لرأس السجلّ، ولغرفةٍ لها قسمٌ يتقدّمها (`lead`:
+  // دورةُ التقييم القادمة، ٢٠٢٦-١١-٢٠: «الكلّ 0، دون النصف 0» وبحثٌ في لا شيء تحت قسمٍ يقول إنّها لم تُفتح). وبقيّةُ الغرف كما كانت
+  const bare = !!recordHead || !!lead;
   let body: ReactNode;
   if (items.length === 0) {
     body = <AdEmpty icon={roomIcon} title={emptyAll.title} desc={emptyAll.desc} action={createAction} />;
@@ -548,10 +556,11 @@ export function CollectionRoom<T>({
     <AdRoom label={title}>
       <div ref={head} className="ad-room-head">
         {recordHead ?? <RoomPlate title={title} crumb={crumb} action={action} extra={extra} />}
-        {plates.length > 1 && !(recordHead && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
+        {lead}
+        {plates.length > 1 && !(bare && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
       </div>
       {typeof notice === "function" ? notice({ choose }) : notice}
-      {current.board || (recordHead && items.length === 0) ? null : selectable && picked.length > 0 ? (
+      {current.board || (bare && items.length === 0) ? null : selectable && picked.length > 0 ? (
         <AdSelBar
           count={picked.length}
           noun={noun}

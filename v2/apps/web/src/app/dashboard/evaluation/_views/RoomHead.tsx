@@ -10,37 +10,13 @@ import { Alert, Badge, Button, Segmented, Stat } from "@adeeb/design-system";
 import { CalendarCheck, Gavel, LockKey, Notebook, UserCircleMinus, UserFocus, UsersThree, UserSwitch } from "@phosphor-icons/react";
 import { fmtDayMonth } from "@/lib/dates";
 import { PageHeader } from "../../_components/PageHeader";
-import type { CycleRow, ElectorRow, TargetRow } from "../data";
+import type { CycleRow, TargetRow } from "../data";
 import { CYCLE_STATUS_LABEL } from "../vocab";
 import { Of, cycleName, cycleShort, quorumLine } from "./parts";
-import type { DetailActions } from "./TargetDetail";
-
-export type RoomProps = {
-  cycles: CycleRow[];
-  cycleId: number;
-  onCycle: (id: number) => void;
-  targets: TargetRow[];
-  departments: Record<number, string>;
-  canManage: boolean;
-  canViewResults: boolean;
-  /** مقيِّمو مقيَّمٍ واحد يُجلبون عند فتح تفصيله (أسماءٌ وشقّ، ولا شيءَ عن مشاركتهم). */
-  loadElectorate: (targetId: number) => Promise<ElectorRow[]>;
-  /** بعد كلّ تصحيح: تُعاد قراءةُ الدورة (في الصفحة `router.refresh`). */
-  onChanged?: () => void;
-  people: { id: string; name: string }[];
-  committees: { id: number; name: string; department_id?: number | null }[];
-  actions: DetailActions;
-  /** يُفتح تفصيلُ هذا المقيَّم عند الرسم (المعرض). */
-  initialOpen?: number;
-};
+import { addDays, type RoomProps } from "../shared";
+export { addDays, type RoomProps };
 
 const STATUS_TONE = { scheduled: "neutral", open: "info", closed: "warning", executed: "success" } as const;
-
-/** «بعد يومين» على تاريخٍ بلا وقت: يُحسب بالتقويم لا بالساعة، فلا تزيحه منطقةُ الخادم. */
-export function addDays(dateOnly: string, n: number): string {
-  const [y, m, d] = dateOnly.slice(0, 10).split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
-}
 
 /**
  * شريطُ مشاركةِ شقٍّ: الممتلئُ أوراقُه، والنصابُ (للأعضاء وحدهم، م٥/1) خطٌّ عند منتصفه اسمُه **«النصف»** لا «النصاب»:

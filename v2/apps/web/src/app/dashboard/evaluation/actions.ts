@@ -6,6 +6,7 @@ import { evaluationService } from "@/lib/evaluation/db";
 import { recordFor, type TallyRow } from "@/lib/evaluation/score";
 import { kickDispatch } from "@/lib/notifications/emit";
 import { createClient } from "@/lib/supabase/server";
+import { readViewAsTarget } from "@/lib/view-as";
 import { MEMBER_ITEMS, COUNCIL_ITEMS } from "@/lib/evaluation/score";
 import { OPEN_MAX, type Part } from "./vocab";
 import { getElectorate, type ElectorRow } from "./data";
@@ -26,6 +27,22 @@ function rpcMessage(error: { message?: string } | null, fallback: string): strin
  * إرسالُ الورقة بجلسة صاحبها (م٢/4): القاعدةُ تقرأ المقيِّمَ من `auth.uid()`، وتتحقّق من اللقطة والموعد
  * والبنود، وتمنع الورقةَ الثانية. وهنا تُعاد التحقّقاتُ نفسُها شكلًا فلا يُطرَق الخادمُ بما يُرفض.
  */
+/** ورقتي كما أرسلتُها (`evaluation_my_ballot`): أرقامُها وجوابا سؤالَيها. `null` إن لم تكن، أو في جلسة معاينة. */
+export type MyBallot = { scores: number[]; keep: string | null; change: string | null };
+
+/**
+ * **«عرض تقييمي»** (محمد ٢٠٢٦-١١-٢٠): الورقةُ لصاحب الجلسة وحده، للقراءة. والمعاينةُ تُردّ هنا أيضًا (في وضع المعاينة القديم بلا سرّ
+ * التوقيع تبقى الجلسةُ جلسةَ المعاين، فكانت ستُعيد ورقتَه هو تحت اسم المُعايَن)، والقاعدةُ تردّها من رمزها.
+ */
+export async function getMyBallot(targetId: number): Promise<MyBallot | null> {
+  if (!Number.isInteger(targetId)) return null;
+  if (await readViewAsTarget()) return null;
+  const sb = await createClient();
+  const { data, error } = await sb.rpc("evaluation_my_ballot", { p_target: targetId });
+  const row = !error && Array.isArray(data) ? (data[0] as { scores: number[]; keep_text: string | null; change_text: string | null } | undefined) : undefined;
+  return row ? { scores: row.scores, keep: row.keep_text, change: row.change_text } : null;
+}
+
 export async function submitSheet(input: {
   targetId: number;
   part: Part;

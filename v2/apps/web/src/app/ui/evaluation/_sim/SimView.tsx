@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "@adeeb/design-system";
 import { IdentificationCard } from "@phosphor-icons/react";
 import type { InboxItem } from "@/lib/notifications/types";
 import { EmptyState } from "../../../dashboard/_components/EmptyState";
 import { PageHeader } from "../../../dashboard/_components/PageHeader";
-import { MineA } from "../../../dashboard/evaluation/_views/MineA";
-import { RateA } from "../../../dashboard/evaluation/_views/RateA";
-import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
+import type { SubmitFn } from "../../../dashboard/evaluation/shared";
+import { RateView } from "../../../dashboard/evaluation/rate/RateView";
+import { MineView } from "../../../dashboard/evaluation/mine/MineView";
+import { RateRoom } from "../../../_ad/rooms/RateRoom";
+import { MineRoom } from "../../../_ad/rooms/MineRoom";
+import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
 import type { ElectorRow } from "../../../dashboard/evaluation/data";
 import { LabShell } from "../_lab/LabShell";
 import { DEPARTMENTS, DUE, committeesForReturn, person, viewFor, type Act, type ActResult, type SimState } from "./engine";
@@ -80,31 +82,22 @@ export function SimView() {
 
   let body: React.ReactNode;
   if (page === "rate") {
+    const submit = (i: Parameters<SubmitFn>[0]) => send({ kind: "submit", as: persona, ...i });
     body = v.sheets.length ? (
-      <RateA
-        sheets={v.sheets}
-        dueOn={DUE}
-        draftOwner={`sim${run}:${persona}`}
-        onSubmit={(i) => send({ kind: "submit", as: persona, ...i })}
-      />
+      <RateRoom sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit}
+        loadMine={async (id) => (await send({ kind: "myBallot", as: persona, targetId: id })).ballot ?? null} />
     ) : (
-      <>
-        <PageHeader title="قيّم القيادات" />
-        <Alert tone="neutral">لا تقييمَ مفتوحٌ لك الآن.</Alert>
-      </>
+      <RateView sheets={[]} error={null} userId="" />
     );
   } else if (page === "mine") {
     body = v.results.length ? (
-      <MineA results={v.results} comments={v.comments} gender={me.gender} />
+      <MineRoom results={v.results} comments={v.comments} gender={me.gender} />
     ) : (
-      <>
-        <PageHeader title="نتيجتي" />
-        <Alert tone="neutral">لا نتيجةَ لك بعد.</Alert>
-      </>
+      <MineView results={[]} comments={{}} gender={me.gender} error={null} />
     );
   } else if (page === "room") {
     body = (
-      <RoomRows
+      <EvaluationRoom
         cycles={v.cycles}
         cycleId={cycleId}
         onCycle={setCycleId}

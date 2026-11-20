@@ -311,6 +311,8 @@
   color: var(--ad-on-pick);
 }
 .ad-btn.ad-btn-danger > svg { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
+/* ختمُ سطرٍ بحاله الخضراء («عرض تقييمي» على «قيّمت»، محمد ٢٠٢٦-١١-٢٠): الختمُ وحده، والصندوقُ بحبره */
+.ad-btn.ad-line-act[data-tone="ok"] > svg { background: var(--ad-dlg-light), var(--ad-ok-solid); color: var(--ad-on-fill); }
 .ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: calc(var(--space-1) * .75) var(--space-3); }
 .ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger) > svg { padding: calc(var(--space-1) * 1.25); border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75); }
 /* الرمزُ بعد الاسم: الحشوُ ينقلب معه */
@@ -1314,6 +1316,39 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .ad-td[data-tone="warn"] .ad-td-v { color: var(--ad-warn); }
 .ad-td[data-tone="bad"] .ad-td-v { color: var(--ad-bad); }
 .ad-td .ad-meter { inline-size: 100%; min-inline-size: calc(var(--space-16) + var(--space-8)); }
+/* **حدٌّ على الشريط: «القطعُ وكلمتُه»** (`AdMeterOf.mark`، اعتمده محمد ٢٠٢٦-١١-٢٠): الشريطُ مقطوعٌ عند الحدّ بفجوةٍ من أرض سطره
+   (`--m-ground`) كثقب التذكرة، وتحت القطع كلمتُه الصغيرة. والغلافُ يحجز سطرَ الكلمة، وشريطُ جاره في السطر يحجزه أيضًا فتقف الأشرطةُ على خطّ */
+.ad-meter-wrap { position: relative; display: block; inline-size: 100%; min-inline-size: calc(var(--space-16) + var(--space-8)); padding-block-end: calc(var(--ad-t-meta) * 1.4); }
+.ad-meter-wrap > .ad-meter { inline-size: 100%; min-inline-size: 0; }
+.ad-meter-mark { position: absolute; inset-block-start: 0; inline-size: var(--space-1); block-size: var(--space-2); background: var(--m-ground, var(--ad-sheet)); translate: -50% 0; }
+.ad-meter-mark:dir(rtl) { translate: 50% 0; }
+.ad-meter-mark[data-at="25"] { inset-inline-start: 25%; }
+.ad-meter-mark[data-at="40"] { inset-inline-start: 40%; }
+.ad-meter-mark[data-at="50"] { inset-inline-start: 50%; }
+.ad-meter-mark[data-at="75"] { inset-inline-start: 75%; }
+.ad-meter-mark > span { position: absolute; inset-block-start: calc(100% + var(--space-1) * .5); inset-inline-start: 50%; translate: -50% 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); white-space: nowrap; }
+.ad-meter-mark:dir(rtl) > span { translate: 50% 0; }
+.ad-tr:has(.ad-meter-wrap) .ad-td > .ad-meter { margin-block-end: calc(var(--ad-t-meta) * 1.4); }
+
+/* **المراحلُ بتواريخها: «كعوبُ الأيّام»** (`AdStages`، اعتمده محمد ٢٠٢٦-١١-٢٠): لكلّ مرحلةٍ كعبُ يومها واسمُها وسطرُ حالها
+   بأيقونته، والماضي يخفت اسمُه بلون الحبر والكعبُ كاملٌ */
+.ad-stages { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.ad-stage { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 0; }
+.ad-stage > .ad-td-stub { flex: none; }
+.ad-stage-t { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.ad-stage-t > b { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-stage-t > .ad-row-info { font-size: var(--ad-t-meta); }
+.ad-stage-t > .ad-row-info:not([data-tone]) { color: var(--ad-ink-2); }
+.ad-stage[data-state="past"] .ad-stage-t > b { color: var(--ad-ink-3); }
+
+/* في الغرفة الضيّقة: الرمزُ فوق الكلمة، فتتّسع المحطّاتُ الثلاث لأسمائها */
+@container ad-room (max-width: 36rem) {
+  /* الكعبُ فوق اسمه في الوسط، فلا تُقصّ «الحكم والتنفيذ» في ثلثٍ ضيّق */
+  .ad-stages { gap: var(--space-2); }
+  .ad-stage { flex-direction: column; gap: var(--space-2); text-align: center; }
+  .ad-stage-t { justify-items: center; }
+  .ad-stage-t > b { text-wrap: balance; }
+}
 .ad-row-acts { position: relative; z-index: var(--ad-z-over); display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
 /* خيطٌ يفصل البيانَ عن الأفعال (محمد ٢٠٢٦-١٠-٣١: «خطٌّ بين العنوان والأزرار»): في العريض عمودٌ قائمٌ قبل عمود الأفعال يمتدّ
    بطول الجدول (رأسُه معه)، وفي الضيّق خطٌّ فوق سطر الأفعال كقاع التذكرة */
@@ -1364,17 +1399,20 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .mdl.ad-dlg {
   --ad-tone: var(--ad-bad-solid);
   --ad-tone-ink: var(--ad-white);   /* الأبيضُ الصريح لا فولاذيُّ اللوح: هامشُ تباينٍ على الأحمر والأخضر */
+  /* الورقةُ من لون نافذتها كقالب النوافذ (محمد ٢٠٢٦-١١-٢٠، «ج»)، و`--dlg-hue` مصمتٌ لأنّ `--ad-tone` تدرّج */
+  --dlg-hue: var(--danger-500);
+  --dlg-paper: color-mix(in oklab, var(--dlg-hue) 6%, var(--ad-dlg-paper));
   overflow: hidden;
   border: 1px solid var(--ad-edge);
   border-radius: var(--ad-r-plate);
-  background: var(--ad-dlg-paper);
+  background: var(--dlg-paper);
   box-shadow: var(--ad-lift);
   color: var(--ad-ink);
   font-family: var(--font-body);
 }
 .mdl.ad-dlg.ad-dlg-tone-danger { --ad-ring: var(--ad-bad-ring); }
-.mdl.ad-dlg.ad-dlg-tone-warning { --ad-tone: var(--ad-warn-solid); --ad-tone-ink: var(--ad-warn-ink); --ad-ring: var(--ad-warn-ring); }
-.mdl.ad-dlg.ad-dlg-tone-success { --ad-tone: var(--ad-ok-solid); --ad-ring: var(--ad-ok-ring); }
+.mdl.ad-dlg.ad-dlg-tone-warning { --dlg-hue: var(--warning-500); --ad-tone: var(--ad-warn-solid); --ad-tone-ink: var(--ad-warn-ink); --ad-ring: var(--ad-warn-ring); }
+.mdl.ad-dlg.ad-dlg-tone-success { --dlg-hue: var(--success-600); --ad-tone: var(--ad-ok-solid); --ad-ring: var(--ad-ok-ring); }
 .ad-dlg :focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
 .ad-dlg-head {
   position: relative;
@@ -1424,6 +1462,9 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .ad-dlg-x { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-align: center; text-wrap: pretty; }
 .ad-dlg-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--space-2); }
 .ad-dlg-foot .ad-btn { inline-size: 100%; }
+/* الزرُّ الثاني من الورقة لا أبيضُ فوقها (كذيل قالب النوافذ): أرضُه الورقة وحدُّه خيطٌ بلون النافذة */
+.ad-dlg-foot .ad-btn-soft { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--dlg-hue) 26%, transparent); }
+.ad-dlg-foot .ad-btn-soft:hover:not(:disabled) { background: color-mix(in oklab, var(--dlg-hue) 12%, var(--ad-dlg-paper)); }
 /* الأساسيُّ هو المادّةُ نفسُها بضوئها (الخطِرُ `danger-fill`، والتحذيرُ والنجاحُ يلبسان `fill` لونَ رأسهما) */
 .ad-dlg-foot :is(.ad-btn-fill, .ad-btn-danger-fill) { background: var(--ad-dlg-light), var(--ad-tone); color: var(--ad-tone-ink); }
 .mdl.ad-dlg.ad-dlg-tone-danger .ad-dlg-foot .ad-btn-danger-fill:hover { background: var(--ad-bad-solid-hover); }
@@ -1820,6 +1861,7 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
   .ad-td-v { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
   .ad-td-sub { grid-column: 1 / -1; }
   .ad-td .ad-meter { grid-column: 1 / -1; inline-size: 100%; min-inline-size: 0; }
+  .ad-td .ad-meter-wrap { grid-column: 1 / -1; min-inline-size: 0; }
   /* «فتح المحرّر» باقٍ باسمه (محمد: «ليس الجميعُ سيفهم أنّ الضغطَ على العنوان يفتحه»): الأساسيُّ في البداية والبقيّةُ في الطرف */
   .ad-row-acts { justify-content: flex-start; padding-block-start: var(--space-3); border-block-start: 1px solid var(--ad-rule); }
   .ad-tr:not(.ad-thead):not(.ad-tfoot) > .ad-row-acts::before { display: none; }
@@ -1837,6 +1879,13 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
   .ad-td[data-text] .ad-td-v { margin-inline-start: auto; max-inline-size: 100%; white-space: normal; overflow-wrap: break-word; text-align: end; }
   .ad-td[data-text] .ad-td-sub { flex-basis: 100%; }
   .ad-td[data-text] + .ad-td:not([data-text]) { padding-inline-start: 0; border-inline-start: 0; }
+  /* **الرقمُ ذو الشريط سطرٌ كاملٌ على الجوّال** (محمد ٢٠٢٦-١١-٢٠، إدارة التقييم: «تحت بعض بدل أن تكون في صفّ»): ثلاثةُ أشرطةٍ في 390 بكسل
+     لا تتّسع لـ«10 من 13 عضوًا» ونسبتِها، فكان الثالثُ ينزل وحده سطرًا فيبدو الصفُّ مكسورًا. فكلٌّ بعرض السطر، والخيطُ بينها فوقها لا
+     بجانبها — كأرقام نافذة التفاصيل و«نتيجتي» على الجوّال. والرقمُ بلا شريطٍ يبقى حصّتَه */
+  .ad-td:not([data-text]):has(.ad-meter) { flex: 1 1 100%; padding-inline: 0; border-inline-start: 0; }
+  .ad-td:not([data-text]):has(.ad-meter) + .ad-td { padding-block-start: var(--space-2); border-block-start: 1px solid var(--ad-rule); }
+  /* وسطرُ «النصف» تحت الجار لا يُحجز: كلٌّ في سطره، فلا يقفان على خطٍّ واحد */
+  .ad-tr .ad-td:not([data-text]):has(.ad-meter) > .ad-meter { margin-block-end: 0; }
 }
 /* الترقيمُ في الضيّق: العدُّ سطرٌ، ثمّ السابقُ والحاليّةُ والتالي — الأرقامُ الأخرى تُبلغ بالسهمين */
 @container ad-room (max-width: 40rem) {
@@ -3083,15 +3132,21 @@ html[lang] .ad-sec[data-tone="bad"] .fld:is(:focus-within, :has(.asel-open)) .fl
   --win-tone: var(--ad-plate);
   --win-ink: var(--ad-plate-ink);
   --win-ink-2: var(--ad-plate-ink-2);
+  /* **الورقةُ من لون نافذتها** (محمد ٢٠٢٦-١١-٢٠، اختار «ج»: «جيم أصبح منطقيًّا»): كان الرأسُ مشبعًا والورقةُ بيضاءَ ناصعة فبدت
+     النافذةُ قطعتين، فصارت الورقةُ أثرًا خفيفًا من لون الرأس، ومعها زرُّ الذيل والمعلومةُ بلغة نافذتها (أدناه). اللونُ المصمت
+     `--win-hue` لأنّ `--win-tone` تدرّجٌ لا يُمزج، و`--win-mark` حبرُ الأيقونة والعنوان الصغير بنغمة النافذة */
+  --win-hue: var(--navy-600);
+  --win-mark: var(--ad-brand-2);
+  --win-paper: color-mix(in oklab, var(--win-hue) 6%, var(--ad-dlg-paper));
   overflow: hidden;
   border: 1px solid var(--ad-edge);
   border-radius: var(--ad-r-plate);
-  background: var(--ad-dlg-paper);
+  background: var(--win-paper);
   box-shadow: var(--ad-lift);
   color: var(--ad-ink);
   font-family: var(--font-body);
 }
-.mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-bad-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
+.mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) { --win-hue: var(--danger-500); --win-mark: var(--ad-bad); --win-tone: var(--ad-bad-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
 /* **النافذةُ الخطِرة بنغمةٍ واحدة** (محمد ٢٠٢٦-١١-١٧، اختار «ب»: «نافذةٌ حمراء وحقولُها زرقاء غيرُ جميل… إن كان رماديًّا فمحايد،
    أمّا أزرق فلا»): ما يحمل القرارَ أحمر (الرأس، والخيارُ المختار، ورمزُ الحقل، وزرُّ التأكيد)، وما سواه محايدٌ رماديّ لا أزرق —
    حدودُ الحقول، والوصف، وتلميحُ الحقل، والنصّ. فتُعاد أدوارُ الحبر والحدّ داخل النافذة إلى الرماديّ (في النهار؛ والليلُ حبرُه فولاذيٌّ محايد أصلًا) */
@@ -3107,8 +3162,8 @@ html:not([data-theme="dark"]) .mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) {
 html[lang] .mdl-tone-danger .fld .fld-lic { color: var(--ad-bad); }
 html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
 .mdl-tone-danger .ad-switch-seg[aria-pressed="true"] { background: var(--ad-dlg-light), var(--ad-bad-solid); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
-.mdl.mdl-tone-warning:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-warn-solid); --win-ink: var(--ad-warn-ink); --win-ink-2: color-mix(in oklab, var(--ad-warn-ink) 80%, transparent); }
-.mdl.mdl-tone-success:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-ok-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
+.mdl.mdl-tone-warning:not(.ad-dlg, .mdl-alert) { --win-hue: var(--warning-500); --win-mark: var(--ad-warn); --win-tone: var(--ad-warn-solid); --win-ink: var(--ad-warn-ink); --win-ink-2: color-mix(in oklab, var(--ad-warn-ink) 80%, transparent); }
+.mdl.mdl-tone-success:not(.ad-dlg, .mdl-alert) { --win-hue: var(--success-600); --win-mark: var(--ad-ok); --win-tone: var(--ad-ok-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
 /* النغمةُ في الرأس وحده: حقولُ النافذة النغميّة لا تُصبغ بها (كانت حقولُ «إنهاء العضوية» ورديّة) */
 .mdl[class*="mdl-tone-"]:not(.ad-dlg, .mdl-alert) { --fld-tint: var(--steel-50); --fld-tint-2: var(--steel-100); --fld-accent: var(--steel-600); }
 .mdl.pvb-modal:not(.ad-dlg, .mdl-alert) .mdl-body { padding-block-start: calc(var(--space-12) + var(--space-1)); }
@@ -3118,8 +3173,8 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-x { inline-size: var(--ad-ctl-sm); block-size: var(--ad-ctl-sm); border-radius: var(--ad-r-sm); background: var(--ad-plate-veil-2); box-shadow: inset 0 0 0 1px var(--ad-plate-hair); color: var(--win-ink); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-x:hover { background: var(--ad-plate-hair); color: var(--win-ink); }
 @media (pointer: coarse) { .mdl:not(.ad-dlg, .mdl-alert) .mdl-x { inline-size: var(--ad-ctl-touch); block-size: var(--ad-ctl-touch); } }
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-body { padding: var(--space-5) var(--win-pad); background: var(--ad-dlg-paper); }
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot { gap: var(--space-2); padding: var(--space-4) var(--win-pad) var(--space-5); border-block-start: 1px solid var(--ad-rule); border-radius: 0; background: var(--ad-dlg-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body { padding: var(--space-5) var(--win-pad); background: var(--win-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot { gap: var(--space-2); padding: var(--space-4) var(--win-pad) var(--space-5); border-block-start: 1px solid var(--ad-rule); border-radius: 0; background: var(--win-paper); }
 
 /* الأزرارُ بأزرار الهويّة، والأساسيُّ أوّلًا، والفعلان بعرضٍ واحد */
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > .abtn { flex: 1 1 0; min-block-size: var(--ad-ctl); border-radius: var(--ad-r-ctl); font-family: var(--font-body); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); }
@@ -3132,6 +3187,9 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .abtn-warning { background: var(--ad-dlg-light), var(--ad-warn-solid); color: var(--ad-warn-ink); box-shadow: none; }
 .mdl:not(.ad-dlg, .mdl-alert) :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral) { background: var(--ad-field); color: var(--ad-ink-head); border-color: transparent; box-shadow: inset 0 0 0 1px var(--ad-hair); }
 .mdl:not(.ad-dlg, .mdl-alert) :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral):hover:not(:disabled) { background: var(--ad-field-2); box-shadow: inset 0 0 0 1px var(--ad-hair-2); color: var(--ad-ink-head); }
+/* زرُّ الذيل من الورقة لا أبيضُ فوقها (محمد ٢٠٢٦-١١-٢٠: «عالجتَ شيئًا وتركتَ شيئًا»): أرضُه الورقة وحدُّه خيطٌ بلون النافذة */
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral) { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--win-hue) 26%, transparent); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral):hover:not(:disabled) { background: color-mix(in oklab, var(--win-hue) 12%, var(--ad-dlg-paper)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--win-hue) 34%, transparent); }
 
 /* رسالةُ النافذة: بين الحقول شريطٌ بعرض الورقة (لا حدّ ولا ظلّ ولا مربّعُ أيقونةٍ مصبوغ)، ونغمتُها في رمزها وتسميتها وصبغتها الخفيفة */
 /* **الشريطُ المضاء** (محمد ٢٠٢٦-١١-٢٠، اختار «ب٢» من أربعةٍ مبنيّة على «إبطال الشهادة»: «أجمل»): أرضُ النغمة كما كانت، وعليها
@@ -3173,6 +3231,11 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert-tone-info .aalert-ic { background: var(--ad-veil-2); color: var(--ad-ink-2); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert .aalert-title { font-family: var(--font-body); font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert .aalert-msg { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+/* المعلومةُ بلغة نافذتها (محمد ٢٠٢٦-١١-٢٠: «وبهذا يُعتمد»): على ورقةٍ مصبوغة كان مربّعُ الرمز الرماديُّ والعنوانُ الأزرق باردَين
+   كأنّهما من نافذةٍ أخرى. فيأخذان لونَ النافذة، ونصُّ المعلومة بالحبر الداكن لأنّه ما يُقرأ. والتنبيهُ الحقيقيّ بنغمةٍ أخرى
+   (الأحمرُ «هذا الإنذار سحب العضويّة») يبقى بلونه */
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert:not(.aalert-tone-danger) .aalert-ic { background: color-mix(in oklab, var(--win-mark) 12%, transparent); color: var(--win-mark); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert:not(.aalert-tone-danger) .aalert-title { color: var(--win-mark); }
 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-title::before,
 .mdl:not(.ad-dlg, .mdl-alert) .pvb-cover::before { content: ""; position: absolute; inset: 0; z-index: var(--ad-z-under); background: url("/brand/pattern-white.svg") no-repeat 18% 30% / var(--ad-plate-naqsh-size) auto; opacity: calc(var(--ad-plate-naqsh) * .7); pointer-events: none; }
@@ -3226,10 +3289,10 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head > div:has(> .mdl-title + .mdl-desc) > .mdl-title { position: static; isolation: auto; overflow: visible; padding: 0; background: none; }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head > div:has(> .mdl-title + .mdl-desc) > .mdl-desc { margin: 0; font-size: var(--ad-t-body); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--win-ink-2); text-wrap: pretty; }
 /* ونافذةٌ بلا عنوانٍ ظاهر يبقى سطرُها على الورق كما كان */
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-desc { margin: 0; padding: var(--space-5) var(--win-pad) 0; background: var(--ad-dlg-paper); font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-desc { margin: 0; padding: var(--space-5) var(--win-pad) 0; background: var(--win-paper); font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
 @media (pointer: coarse) { .mdl:not(.ad-dlg, .mdl-alert) { --win-xs: var(--ad-ctl-touch); } }
 /* نافذةٌ بلا عنوانٍ ظاهر (العنوانُ للقارئ الآليّ وحده): لا لوح، والزرُّ في سطرٍ وحده على الورق */
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-3) 0; background: var(--ad-dlg-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-3) 0; background: var(--win-paper); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-x { position: static; background: var(--ad-field); box-shadow: inset 0 0 0 1px var(--ad-hair); color: var(--ad-ink-2); }
 
 /* على الجوّال: لوحٌ يصعد من القاع بعرض الشاشة، ومقبضٌ في رأسه */
@@ -5523,3 +5586,204 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 .adp-ampm .ad-switch-seg { min-block-size: calc(var(--space-8) - var(--space-2)); padding-inline: var(--space-2); border-radius: calc(var(--ad-r-sm) - var(--space-1)); }
 .adp-foot { display: flex; align-items: center; gap: var(--space-2); padding-block-start: var(--space-2); border-block-start: 1px solid var(--ad-rule); }
 .adp-foot > .ad-btn-fill { margin-inline-end: auto; }
+
+/* **تفصيلُ المقيَّم** (`EvaluationDetail`، ٢٠٢٦-١١-٢٠): مجموعاتُ سطورٍ في نافذة الملفّ — عنوانُ المجموعة ثمّ سطورُها لصقَه،
+   والمجموعاتُ بينها فسحةُ المتن نفسُها (`.mdl-body`) */
+.ad-evd .ad-switch { margin-inline: auto; }
+@media (max-width: 40rem) {
+  /* أربعةُ تبويباتٍ في نافذة الجوّال (القرار أوّلُها): حشوةُ الجزء أضيق كي لا يُقصّ «المقيِّمون» */
+  .ad-evd .ad-switch-seg { padding-inline: var(--space-1); }
+}
+/* أرقامُ التذكرة بشرائطها في النافذة — القطعُ بلون ورقة النافذة لا بياض الكرت، والشريطُ يملأ عمودَه */
+.ad-evd { --m-ground: var(--win-paper); }
+.ad-evd .ad-figures { border-block-start: 0; padding-block-start: 0; }
+.ad-evd .ad-meter-row { display: block; }
+.ad-evd .ad-meter-row > .ad-meter { inline-size: 100%; }
+/* النهائيّةُ أعرضُ أرقام النافذة، وحكمُها بلونه مكانَ النسبة (الشريطُ كحليٌّ في كلّ حال: قاعدةُ الشريط) */
+.ad-evd-final .ad-figure-v { font-size: var(--ad-t-section); font-weight: var(--ad-w-black); }
+.ad-evd-final[data-verdict="removed"] .ad-meter-pct { color: var(--ad-bad); }
+.ad-evd-final[data-verdict="kept"] .ad-meter-pct { color: var(--ad-ok); }
+/* دال: **النافذةُ هي الوعاء، فلا كرتَ في داخلها** (قاعدةُ قالب النوافذ ٢٠٢٦-١١-٠٧: «لا كرتَ داخل كرت»؛ ونبّه محمد ٢٠٢٦-١١-٢٠ حين
+   خالفتُها). فالقسمُ يأخذ هيكلَ قسم «حسابي» — رأسٌ بمربّع رمزه واسمه وحاله، ثمّ أرقامُه، ثمّ سطرُه — بلا حدٍّ ولا أرضٍ ولا ظلّ، على ورقة
+   النافذة نفسِها، والأقسامُ يفصلها خيطٌ بعرض الورقة كما تفصل الخيوطُ سطورَ «حسابي» */
+.ad-evd .ad-sec { --m-ground: var(--win-paper); overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.ad-evd .ad-sec-head { padding: 0 0 var(--space-3); background: none; }
+.ad-evd .ad-sec:has(> .ad-lines) > .ad-sec-head { border-block-end: 0; }
+.ad-evd .ad-sec-media { padding: 0 0 var(--space-3); border-block-end: 0; }
+.ad-evd .ad-sec .ad-line-hit { padding-inline: 0; }
+.ad-evd .mdl-body > :is(.ad-sec, .ad-evd-raters) + :is(.ad-sec, .ad-evd-raters) {
+  margin-inline: calc(var(--win-pad) * -1);
+  padding-inline: var(--win-pad);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--ad-rule);
+}
+.ad-evd-figs { display: flex; flex-direction: column; gap: var(--space-4); }
+.ad-evd .ad-sec .ad-evd-final .ad-figure dt { display: none; } /* رأسُ الكرت يسمّيها */
+.ad-evd-raters .ad-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ad-evd-raters .ad-line { border-block-start: 1px solid var(--ad-rule); }
+.ad-evd-raters .ad-line:nth-child(-n + 2) { border-block-start: 0; }
+@media (max-width: 40rem) {
+  .ad-evd-raters .ad-lines { grid-template-columns: minmax(0, 1fr); }
+  .ad-evd-raters .ad-line:nth-child(2) { border-block-start: 1px solid var(--ad-rule); }
+}
+/* في نافذة الجوّال الرقمان تحت بعضهما: متجاورين انكسر «10 من 13 عضوًا» سطرين */
+@media (max-width: 40rem) {
+  .ad-evd .ad-figures { flex-direction: column; gap: var(--space-3); }
+  .ad-evd .ad-figure { padding-inline: 0; border-inline-start: 0; }
+}
+/* دال، الجولة الثانية (محمد ٢٠٢٦-١١-٢٠: «نعم» على الإصلاحات الثلاثة): الكحليُّ للّوح والتبويب المختار وحدهما — رأسُ القسم رمزُه صغيرًا
+   بحبر الورق لا مربّعًا من اللوح؛ والحكمُ لصقَ رقمه بلونه لا شارةً في الطرف الآخر؛ وطريقةُ الحساب حاشيةٌ خافتة لا سطرٌ بمربّع */
+/* والرمزُ على **المربّع المصبوغ** لا مربّعِ اللوح (محمد ٢٠٢٦-١١-٢٠: «نعم»): مربّعُ سطور «حسابي» نفسُه (`.ad-line-ic`) ومربّعُ رمز المعلومة في
+   الكرت (٢٠٢٦-١٠-٣٠) — فكلُّ رمزٍ في النافذة على مربّعٍ من مادّة الورقة، والكحليُّ للّوح والتبويب المختار وحدهما */
+.ad-evd .ad-sec-ic { inline-size: var(--space-8); block-size: var(--space-8); background: color-mix(in oklab, currentColor 12%, transparent); box-shadow: none; color: var(--ad-ink-2); }
+.ad-evd .ad-figure dt > svg {
+  box-sizing: content-box;
+  padding: calc(var(--space-1) * 1.25);
+  border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+.ad-evd .ad-sec-head { gap: var(--space-2); }
+.ad-evd-final .ad-meter-pct { margin-inline-start: 0; font-size: var(--ad-t-ui); }
+.ad-evd .ad-sec-foot { padding: 0; border: 0; background: none; }
+.ad-evd-note { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+/* **لماذا بدت «أوراق الأعضاء» مضغوطة** (محمد ٢٠٢٦-١١-٢٠): الرقمُ شبكةٌ (`.ad-figure` grid)، وسطرُ «النصف» تحت شريط الأعضاء يطيل عمودَه،
+   فيمتدّ جارُه إلى طوله وتتوزّع الزيادةُ على صفوفه الثلاثة — فصار المجلسُ رحبًا (32 لكلّ صفّ) والأعضاءُ بحجمهم (26). فالصفوفُ تبدأ من
+   الأعلى بحجمها في العمودين، ويحجز الشريطُ المجاور سطرَ الكلمة تحته كما يفعل سطرُ الجدول، فيقف الشريطان على خطٍّ واحد */
+.ad-evd .ad-figure { align-content: start; }
+.ad-evd .ad-figures:has(.ad-meter-wrap) .ad-meter-row > .ad-meter { margin-block-end: calc(var(--ad-t-meta) * 1.4); }
+
+/* ═══ قيّم القيادات (`RateRoom`، اعتمده محمد ٢٠٢٦-١١-٢٠) ═══
+   البندُ رقمُه على المربّع المصبوغ (مربّعُ سطور «حسابي»)، واسمُه ووصفُه، ثمّ المقياسُ **المبدّلُ نفسُه** خمسةَ أجزاءٍ برقمٍ فوق كلمته:
+   المختارُ قطعةٌ من اللوح كالموضع المختار في أيّ غرفة، فلا قطعةَ جديدة تُخترع للمقياس */
+.ad-rate { display: grid; gap: var(--space-5); }
+.ad-rate-qs { display: grid; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
+.ad-rate-q { display: grid; gap: var(--space-3); scroll-margin-block: var(--space-16); }
+.ad-rate-qh { display: flex; align-items: flex-start; gap: var(--space-3); }
+.ad-rate-n {
+  display: grid; place-items: center; flex: none;
+  inline-size: var(--space-8); block-size: var(--space-8);
+  border-radius: var(--ad-r-sm);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  color: var(--ad-ink-2);
+  font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold);
+}
+.ad-rate-n svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.ad-rate-q[data-state="done"] .ad-rate-n { color: var(--ad-ok); }
+.ad-rate-q[data-state="bad"] .ad-rate-n { background: var(--ad-bad-veil); color: var(--ad-bad); }
+.ad-rate-qt { display: grid; gap: 0; min-inline-size: 0; }
+.ad-rate-qt b { font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-rate-qt span { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-rate-scale .ad-switch-seg { flex-direction: column; gap: 0; min-block-size: calc(var(--ad-ctl) * 1.3); padding-block: var(--space-1); }
+.ad-rate-scale .ad-switch-seg b { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); }
+.ad-rate-scale .ad-switch-seg span { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); white-space: normal; text-align: center; }
+/* الخطأُ بلغة الحقل (`.fld.err`): حافّةُ الخطر لا الأحمرُ الصريح، وجملتُه تحت المقياس بمقاس سطر الوصف */
+.ad-rate-q[data-state="bad"] .ad-rate-scale { box-shadow: inset 0 0 0 1px var(--ad-bad-edge); }
+.ad-rate-err { margin-block-start: calc(var(--space-1) * -1); padding-inline: var(--space-1); font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-bad); }
+.ad-rate-open { display: grid; gap: var(--space-4); }
+/* في الجوّال حشوةُ الجزء أضيق: «ضعيف جدًا» (كلمةُ اللائحة) عرضُها 56 بكسل، وجزؤها 62 بحشوة 4 من كلّ جهة فانكسرت سطرين.
+   بحشوة 2 تتّسع سطرًا واحدًا على جوّال 390؛ وفي الأضيق يبقى الانكسارُ احتياطًا لا قصًّا */
+@media (max-width: 40rem) {
+  .ad-rate-scale .ad-switch-seg { padding-inline: calc(var(--space-1) * .5); }
+}
+/* «عرض تقييمي»: ورقةٌ تُقرأ — البنودُ يفصلها خيط، والدرجةُ شريطُ الهويّة بكلمته (ألف) أو شارةٌ في طرف البند (باء)، والإجابتان نصٌّ لا بئر */
+.ad-rate-vs { display: grid; margin: 0; padding: 0; list-style: none; }
+.ad-rate-v { display: flex; align-items: center; gap: var(--space-4); padding-block: var(--space-3); }
+.ad-rate-v + .ad-rate-v { border-block-start: 1px solid var(--ad-rule); }
+.ad-rate-v > .ad-rate-qt { flex: 1 1 0; }
+/* الدرجات: المُمتلئُ قطعةُ اللوح (درجاتُ الإنذار حمراءُ أو كهرمانيّة؛ والتقييمُ لا نغمةَ له) */
+.ad-rate-v > .ad-steps { flex: none; }
+.ad-rate-v .ad-steps-bar > i[data-on] { background: var(--ad-pick); box-shadow: none; }
+.ad-rate-v .ad-steps-l { font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+@media (max-width: 40rem) { .ad-rate-v .ad-steps-bar > i { inline-size: var(--space-4); } }
+/* **السؤالُ وجوابُه** (محمد ٢٠٢٦-١١-٢٠، «جيم بأيقونة» بعد اثني عشر شكلًا): الإجابتان بندان أخيران في قائمة البنود نفسِها بخيطها —
+   فلا قسمَ ثانيَ تحت الدرجات ولا حاويةً في النافذة. قبل كلٍّ رمزُه على المربّع المصبوغ (مربّعُ «المقيِّمون» في نافذة التفاصيل) يفرّق
+   كلامَك عن درجاتك بلا كسر؛ والسؤالُ عنوانُ البند، والجوابُ تحته على حدّ نصّه بحبر المتن، والفارغُ «لم تكتب شيئًا» خافتًا */
+.ad-rate-v.ad-rate-say { align-items: flex-start; }
+.ad-rate-say-ic {
+  display: grid; place-items: center; flex: none;
+  inline-size: var(--space-8); block-size: var(--space-8);
+  border-radius: var(--ad-r-sm);
+  background: color-mix(in oklab, currentColor 12%, transparent); color: var(--ad-ink-2);
+}
+.ad-rate-say-ic svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-rate-say > .ad-rate-qt .ad-rate-say-a { margin-block-start: var(--space-1); font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink); white-space: pre-line; }
+.ad-rate-say[data-empty] > .ad-rate-qt .ad-rate-say-a { color: var(--ad-ink-3); }
+
+/* ═══ نتيجتي (`MineRoom`، ٢٠٢٦-١١-٢٠، مسوّدةٌ للعرض) ═══
+   الأرقامُ أرقامُ نافذة التفاصيل بشرائطها في جسم القسم، والحكمُ لصقَ رقمه بلونه */
+.ad-mine { display: grid; gap: var(--space-5); }
+.ad-mine-figs .ad-figures { border-block-start: 0; padding-block-start: 0; }
+.ad-mine-figs .ad-meter-row { display: block; }
+.ad-mine-figs .ad-meter-row > .ad-meter { inline-size: 100%; }
+.ad-mine-figs .ad-figure { align-content: start; }
+.ad-mine-figs .ad-figures:has(.ad-meter-wrap) .ad-meter-row > .ad-meter { margin-block-end: calc(var(--ad-t-meta) * 1.4); }
+.ad-mine-figs .ad-evd-final .ad-figure dt { display: none; }
+/* رمزا الشقّين على المربّع المصبوغ، كنافذة التفاصيل (محمد ٢٠٢٦-١١-٢٠: «خلفيّةٌ وراء الأيقونة») */
+.ad-mine-figs .ad-figure dt > svg {
+  box-sizing: content-box;
+  padding: calc(var(--space-1) * 1.25);
+  border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+@media (max-width: 40rem) {
+  .ad-mine-figs .ad-figures { flex-direction: column; gap: var(--space-3); }
+  .ad-mine-figs .ad-figure { padding-inline: 0; border-inline-start: 0; }
+}
+
+/* ═══ تجربةُ تقييم القيادات للمجلس (`/ui/evaluation/sim`، محمد ٢٠٢٦-١١-٢٠؛ على الهويّة ٢٠٢٦-١١-٢١) ═══
+   عمودُ التجربة أرضُ الصفحة وعليه أقسامُ الهويّة، والعينُ إطارٌ واحدٌ بعرض الجهاز. وفي الجوّال العنوانُ ثمّ الشاشةُ وفوقها شريطُ الزمن،
+   ثمّ بقيّةُ الأقسام تحتها (`display: contents` يُخرج القطعَ من عمودها فيرتّبها `order`) */
+.evsim { display: grid; grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr); min-block-size: 100dvh; background: var(--ad-veil); color: var(--ad-ink); }
+.evsim > .ad-room { margin: 0; max-inline-size: none; }
+.evsim-panel {
+  position: sticky; inset-block-start: 0; max-block-size: 100dvh; overflow-y: auto;
+  /* `max-content`: الأقسامُ `overflow: hidden` فحدُّها الأدنى صفر، والعمودُ بارتفاع الشاشة كان يعصرها خيوطًا */
+  display: grid; grid-auto-rows: max-content; align-content: start; gap: var(--space-4); padding: var(--space-5) var(--space-4) var(--space-10);
+  border-inline-end: 1px solid var(--ad-rule);
+}
+.evsim-people { display: grid; gap: var(--space-4); scroll-margin-block-start: var(--space-16); }
+.evsim-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.evsim-crowd { display: grid; gap: var(--space-3); }
+.evsim-crowd-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.evsim-crowd-i { display: grid; gap: var(--space-3); padding-block: var(--space-4); }
+.evsim-crowd-i + .evsim-crowd-i { border-block-start: 1px solid var(--ad-rule); }
+.evsim-crowd-t { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.evsim-crowd-t > b { font-family: var(--font-display); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+.evsim-fc { display: inline-flex; align-items: center; gap: var(--space-1); margin-inline-start: auto; font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ok); }
+.evsim-fc[data-out] { color: var(--ad-bad); }
+.evsim-fc svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* الرضا سطرٌ بعرضه، والمشاركتان صفٌّ تحته: ثلاثٌ في صفٍّ تُقطع كلماتُها («المج…»)، وثلاثٌ تحت بعضها تطيل العمود سبعَ مرّات */
+.evsim-crowd-f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.evsim-crowd-f > :first-child { grid-column: 1 / -1; }
+/* خمسةُ أيّامٍ في عمودٍ ضيّق: كلُّ يومٍ سطرُه (كعبُه ثمّ اسمُه وحالُه)، لا خمسةُ كعوبٍ يركب بعضُها بعضًا */
+.evsim-panel .ad-stages { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--space-3); }
+.evsim-panel .ad-stage { flex-direction: row; text-align: start; gap: var(--space-3); }
+.evsim-panel .ad-stage-t { justify-items: start; }
+.evsim-stage { display: flex; flex-direction: column; gap: var(--space-3); min-inline-size: 0; padding: var(--space-5) var(--space-6); }
+.evsim-stage-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--ad-t-ui); color: var(--ad-ink-3); }
+.evsim-stage-h b { color: var(--ad-ink-head); font-weight: var(--ad-w-bold); }
+.evsim-size { inline-size: min(100%, 16rem); }
+.evsim-frame {
+  display: block; inline-size: min(var(--evsim-w, 1280px), 100%); block-size: calc(100dvh - var(--space-20)); margin-inline: auto;
+  border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-veil); box-shadow: var(--ad-rest);
+}
+.evsim-dock { display: none; }
+@media (max-width: 900px) {
+  .evsim { grid-template-columns: minmax(0, 1fr); }
+  .evsim > .ad-room { display: contents; }
+  .evsim-panel { display: contents; }
+  .evsim-panel > * { margin-inline: var(--space-4); }
+  .evsim-panel > .ad-plate { order: 0; margin-block-start: var(--space-4); }
+  .evsim > .evsim-stage { order: 1; padding: 0; gap: 0; }
+  .evsim-panel > :not(.ad-plate) { order: 2; }
+  .evsim-panel > :last-child { margin-block-end: var(--space-10); }
+  .evsim-dock {
+    position: sticky; inset-block-start: 0; z-index: var(--ad-z-over);
+    display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-4);
+    background: var(--ad-veil); box-shadow: 0 1px 0 var(--ad-rule);
+  }
+  .evsim-stage > .evsim-stage-h { padding: var(--space-2) var(--space-4); }
+  .evsim-size { display: none; }
+  /* الإطارُ يملأ ما تحت الشريط وسطر «ترى بعين»، فحين تبلغه الصفحةُ لا يبقى منه شيءٌ تحت حافّة الشاشة */
+  .evsim-stage > .evsim-frame { inline-size: 100%; block-size: calc(100dvh - var(--space-12) * 2); border-inline: 0; border-radius: 0; box-shadow: none; }
+}

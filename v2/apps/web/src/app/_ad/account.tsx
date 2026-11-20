@@ -452,6 +452,11 @@ export type AdLineAct = {
   icon: ReactNode; text?: string; label: string;
   /** الزرُّ وحده بنغمة الخطر («إنهاء» جلسة، «حذف» الحساب) والسطرُ بحبره — «كي لا يصرخ كلُّ شيء» (حسابي ٢٠٢٦-١٠-١٣). و`AdLine.danger` السطرُ كلُّه. */
   danger?: boolean;
+  /**
+   * **الختمُ بلون حال السطر** (محمد ٢٠٢٦-١١-٢٠، «عرض تقييمي» على سطر «قيّمت»: «لن يُقرأ حالةً لأنّ النصَّ واضحٌ وصريح»): الختمُ وحده
+   * أخضر والصندوقُ بحبره — كما يأخذ `danger` ختمَه الأحمر. يُعطى حين يكون الفعلُ فعلَ تلك الحال نفسِها.
+   */
+  tone?: "ok";
 };
 
 /**
@@ -481,7 +486,7 @@ export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, externa
         {sub ? <span className="ad-line-sub" data-tone={toneAt === "sub" ? tone : undefined}>{sub}</span> : null}
       </span>
       {act ? (
-        <span className={`ad-btn ${danger || act.danger ? "ad-btn-danger" : "ad-btn-soft"} ad-btn-sm ad-line-act`} aria-hidden>
+        <span className={`ad-btn ${danger || act.danger ? "ad-btn-danger" : "ad-btn-soft"} ad-btn-sm ad-line-act`} data-tone={act.tone} aria-hidden>
           {act.icon}{act.text}
         </span>
       ) : null}

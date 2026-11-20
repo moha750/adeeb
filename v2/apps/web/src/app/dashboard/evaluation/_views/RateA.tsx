@@ -14,11 +14,10 @@ import { CalendarBlank, LockSimple, PaperPlaneTilt } from "@phosphor-icons/react
 import { Avatar } from "../../_components/Avatar";
 import { useToast } from "../../_components/ToastProvider";
 import type { SheetRow } from "../data";
-import type { EvaluationResult } from "../actions";
-import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor, type Part } from "../vocab";
+import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor } from "../vocab";
 import { cycleName, lastDay, seatLine } from "./parts";
-
-export type SubmitFn = (input: { targetId: number; part: Part; scores: number[]; keep?: string | null; change?: string | null }) => Promise<EvaluationResult>;
+import type { SubmitFn } from "../shared";
+export type { SubmitFn };
 
 /**
  * `draftOwner`: معرّفُ المقيِّم، به تُحفظ الورقةُ مسوّدةً على الجهاز (`useDraft`) فلا يضيع ما عبّأه إن خرج قبل

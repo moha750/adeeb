@@ -751,7 +751,17 @@ export function AdInfo({ m }: { m: AdMeta }) {
  * **والشريطُ كحليٌّ دائمًا** (محمد ٢٠٢٦-١٠-٣٠): الحالُ تقولها الكلمةُ مكانَ النسبة لا اللون —
  * `full`: كلمةُ الامتلاء حين يكون خبرًا («مكتمل»)، و`note`: كلمةٌ حين لا تصحّ النسبةُ بعد («لم يبدأ»، والشريطُ فارغ).
  */
-export type AdMeterOf = { now: number; max: number; full?: string; note?: string };
+export type AdMeterOf = {
+  now: number; max: number; full?: string; note?: string;
+  /**
+   * **حدٌّ على الشريط: «القطعُ وكلمتُه»** (اعتمده محمد ٢٠٢٦-١١-٢٠، «النصف» في إدارة التقييم): الشريطُ مقطوعٌ عند الحدّ بفجوةٍ من أرض سطره
+   * كثقب التذكرة، وتحت القطع كلمتُه الصغيرة. الموضعُ نسبةٌ من ثلاث (ربعٌ ونصفٌ وثلاثة أرباع) لأنّه صنفٌ في `ad.css` لا قيمةٌ في السطر.
+   * (رُفض: خطٌّ رفيعٌ فوق الشريط — مستوردٌ من الغرفة القديمة؛ ودرجاتُ الحدّ — لا تتّسع للّجان الكبيرة؛ والكلمةُ وحدها — ضعيفة.)
+   */
+  mark?: { at: 25 | 40 | 50 | 75; label: ReactNode };
+  /** كلمةُ الحال مكانَ النسبة والشريطُ ممتلئٌ بقدره («بقي 3» قبل الحدّ) — قاعدةُ الشريط: «الحالُ كلمةٌ مكانَ النسبة» */
+  word?: string;
+};
 /**
  * `ltr`: قيمةٌ لاتينيّة (رقمٌ مرجعيّ، رمز) تُكتب بالخطّ اللاتينيّ من أوّلها إلى آخرها كالبريد في سطور المعلومات — كانت بخطّ المتن
  * العربيّ، فحروفُها بلاتينيّته المذيّلة وأرقامُها بأرقامه، خطّان في كلمةٍ واحدة (محمد ٢٠٢٦-١١-٠١).
@@ -768,7 +778,7 @@ function meterOf(of?: AdMeterOf) {
   if (!of || !(of.max > 0 || of.note)) return null;
   const full = !!of.full && of.max > 0 && of.now >= of.max;
   const pct = of.max > 0 ? Math.round((Math.min(of.now, of.max) / of.max) * 100) : 0;
-  return { of, full, pct, word: of.note ?? (full ? of.full : undefined) };
+  return { of, full, pct, word: of.note ?? of.word ?? (full ? of.full : undefined) };
 }
 /** `seed` (معرّفُ السجلّ): يُقصّ قماشُ الكعب من موضعٍ يخصّه — فالكعوبُ قطعٌ مختلفةٌ من قماشٍ واحد لا نسخٌ متطابقة. */
 /** ستّةُ مواضع قصٍّ ثابتة (`ad.css`)، يختار المعرّفُ أحدَها — ثابتٌ للسجلّ نفسه بين الزيارات. */
@@ -1023,7 +1033,13 @@ export function AdFigureRow({ figures }: { figures: AdFigure[] }) {
             </dd>
             {of && (
               <dd className="ad-meter-row">
-                <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
+                {/* الحدُّ على شريط الرقم كحدّه على شريط السطر (`AdRow`): القطعُ وكلمتُه — تفصيلُ المقيَّم ٢٠٢٦-١١-٢٠ */}
+                {of.mark ? (
+                  <span className="ad-meter-wrap" data-mark>
+                    <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
+                    <span className="ad-meter-mark" data-at={of.mark.at} aria-hidden><span>{of.mark.label}</span></span>
+                  </span>
+                ) : <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />}
               </dd>
             )}
           </div>
@@ -1231,13 +1247,45 @@ export function AdRow({
               {m && <span className="ad-meter-pct" data-word={m.of.note ? "note" : m.full ? "full" : undefined}>{m.word ?? fmtPct(m.pct)}</span>}
             </span>
             {c.sub && <span className="ad-td-sub">{c.sub}</span>}
-            {m && <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />}
+            {m && (m.of.mark ? (
+              <span className="ad-meter-wrap" data-mark>
+                <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />
+                <span className="ad-meter-mark" data-at={m.of.mark.at} aria-hidden><span>{m.of.mark.label}</span></span>
+              </span>
+            ) : <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />)}
           </div>
         );
       })}
       </div>
       <div className="ad-row-acts" role="cell">{acts}</div>
     </div>
+  );
+}
+
+/**
+ * **مراحلُ بتواريخها: «كعوبُ الأيّام»** (اعتمده محمد ٢٠٢٦-١١-٢٠ في إدارة التقييم، من ثلاثةٍ مبنيّة على الحاسوب والجوّال: الكعوب، ودرجاتُ
+ * الحدّ، والسطرُ المستورد من الحاليّ): لكلّ مرحلةٍ كعبُ يومها (قطعةُ الجدول المصغّرة: اليومُ وتحته الشهر)، وبجانبه اسمُها عريضًا، وتحته
+ * سطرُ حالها سطرَ معلوماتٍ بأيقونته (`AdInfo`): «مضت» خافتة، و«الآن» بالأخضر، و«لم تبدأ». والكعبُ كاملٌ لا يُبهت، والماضي يخفت اسمُه
+ * بلون الحبر. وفي الغرفة الضيّقة يقف الكعبُ فوق اسمه. (رُفض: أيقونةٌ قبل الاسم العريض — لا مثيلَ لها في الهويّة؛ وشفافيّةُ الكعب الماضي.)
+ */
+export type AdStage = { key: string; icon: ReactNode; label: string; date: string; state: "past" | "now" | "next" };
+const STAGE_WORD: Record<AdStage["state"], string> = { past: "مضت", now: "الآن", next: "لم تبدأ" };
+export function AdStages({ stages, label }: { stages: AdStage[]; label: string }) {
+  return (
+    <ol className="ad-stages" aria-label={label}>
+      {stages.map((s) => {
+        const d = dayParts(s.date);
+        return (
+          <li key={s.key} className="ad-stage" data-state={s.state} aria-current={s.state === "now" ? "step" : undefined}>
+            <AdStubTile seed={s.date.slice(0, 10)} stub={{ big: d.day, small: d.month.split(" ")[0] }} />
+            <span className="ad-stage-t">
+              <b>{s.label}</b>
+              <AdInfo m={{ icon: s.icon, text: STAGE_WORD[s.state], tone: s.state === "past" ? "muted" : s.state === "now" ? "ok" : undefined }} />
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

@@ -1,19 +1,23 @@
 "use client";
 
-import { Alert } from "@adeeb/design-system";
-import { PageHeader } from "../../_components/PageHeader";
+import { Gauge } from "@phosphor-icons/react";
+import { WarningCircle } from "@/app/_components/glyphs";
+import { AccountRoom } from "@/app/_ad/account";
+import { AdEmpty } from "@/app/_ad/primitives";
+import { MineRoom } from "@/app/_ad/rooms/MineRoom";
 import type { MyResultRow } from "../data";
-import { MineA, type MineProps } from "../_views/MineA";
+import type { MineProps } from "../shared";
 
-/** نتيجتي: «ميزان» (اختيار محمد ٢٠٢٦-١٠-٢٧). */
+/** نتيجتي على الهويّة (`_ad/rooms/MineRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «ميزان» (`_views/MineA`). */
 export function MineView({ results, comments, gender, error }: MineProps & { results: MyResultRow[]; error: string | null }) {
   if (error || results.length === 0) {
     return (
-      <>
-        <PageHeader title="نتيجتي" />
-        {error ? <Alert tone="warning">{error}</Alert> : <Alert tone="neutral">لا نتيجةَ لك بعد.</Alert>}
-      </>
+      <AccountRoom navPath="/dashboard/evaluation/mine" title="نتيجتي">
+        {error
+          ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة نتيجتك" desc={error} />
+          : <AdEmpty icon={<Gauge />} title="لا نتيجةَ لك بعد" desc="تصلك نتيجتُك هنا حين تُنفَّذ دورةٌ قيّمك فيها أعضاؤك والمجلس." />}
+      </AccountRoom>
     );
   }
-  return <MineA results={results} comments={comments} gender={gender} />;
+  return <MineRoom results={results} comments={comments} gender={gender} />;
 }

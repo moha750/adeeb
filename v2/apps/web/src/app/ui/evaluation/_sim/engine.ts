@@ -9,8 +9,9 @@
  * - **الشاشاتُ حقيقيّة**: «مسار» و«ميزان» و«أقسامٌ وصفوف» تُغذّى بأشكال `data.ts` نفسِها.
  *
  * **وما هو نسخةٌ من القاعدة** (فيُختبر هناك لا هنا): من يقيّم من (`_evaluation_raters`)، والاستثناءُ
- * بالأسابيع الأربعة، والعودةُ إلى اللجنة السابقة، ومنطقُ التصحيح. نُسخت قواعدُها كما هي، وبلا مشرفين
- * على اللجان (`committee_supervision`): لا أثرَ لهم في الصورة.
+ * بالأسابيع الأربعة، والعودةُ إلى اللجنة السابقة، ومنطقُ التصحيح. نُسخت قواعدُها كما هي، ومعها **المشرفون على اللجان**
+ * (`committee_supervision`، م٤؛ أُضيفوا ٢٠٢٦-١١-٢٠ حين سأل محمد: «كيف سيظهرون؟»): مشرفٌ من كلّ إدارة على كلّ لجنة، يقيّم قائدها ونائبها
+ * في شقّ المجلس ما دام في إدارته، ولا يقيّم المنسّق.
  *
  * **وأصواتُ الآخرين مشتقّةٌ لا مخزونة**: لكلّ مقيَّمٍ «مزاجٌ» و«مشاركة» يضبطهما المجرِّب، وتُحسب منهما أوراقُ
  * من لم يتقمّصه بعد، فتتغيّر المشاركةُ أمامه حين يغيّر الضبط. وتُجمَّد عند الإغلاق. ومن تقمّصه المجرِّبُ
@@ -19,6 +20,7 @@
 import { CATALOG, type KindKey } from "@/lib/notifications/catalog";
 import type { Address, Gender, Level } from "@/lib/notifications/types";
 import { recordFor, type RecordResult } from "@/lib/evaluation/score";
+import { fmtDateOnly } from "@/lib/dates";
 import type { CycleRow, ElectorRow, MyResultRow, SheetRow, TargetRow } from "../../../dashboard/evaluation/data";
 import type { EvaluatedRole, Part, Verdict } from "../../../dashboard/evaluation/vocab";
 
@@ -44,6 +46,14 @@ export const COMMITTEES: { id: number; name: string; department: number }[] = [
   { id: 21, name: "لجنة الفعاليات", department: 2 },
 ];
 const committee = (id: number | null) => COMMITTEES.find((c) => c.id === id) ?? null;
+/** الإدارتان (وحدتا إشراف، لا لجنتان تُقيَّم قيادتهما) */
+export const ADMIN_UNITS: Record<number, string> = { 91: "الموارد البشرية", 92: "الضمان والجودة" };
+/** من يشرف على أيّ لجنة: مشرفٌ من كلّ إدارة (`committee_supervision`) */
+export const SUPERVISION: { committee: number; supervisor: string }[] = [
+  { committee: 11, supervisor: "s_hr1" }, { committee: 11, supervisor: "s_qa1" },
+  { committee: 12, supervisor: "s_hr1" }, { committee: 12, supervisor: "s_qa2" },
+  { committee: 21, supervisor: "s_hr2" }, { committee: 21, supervisor: "s_qa2" },
+];
 
 const OLD = "2026-09-01T09:00:00Z";
 const seat = (role: Role, committee: number | null = null, department: number | null = null, extra: Partial<Seat> = {}): Seat => ({
@@ -85,6 +95,11 @@ export function initialPeople(): Person[] {
       ["c11a", "أحمد صالح الجهني", "male"], ["c11b", "لين عادل المطيري", "female"], ["c11c", "مازن طلال الشهري", "male"],
       ["c11d", "رهف عبد الإله السالم", "female"], ["c11e", "عمر ياسر الخالدي", "male"], ["c11f", "دانة فهد العمري", "female"],
     ].map(([id, n, g]) => P(id, n, g as "male" | "female", seat("committee_member", 11))),
+    // المشرفون: أعضاءٌ في الإدارتين، يشرف كلٌّ منهم على لجنةٍ أو اثنتين
+    P("s_hr1", "نوف خالد الرشيدي", "female", seat("committee_member", 91)),
+    P("s_hr2", "بدر سامي العنزي", "male", seat("committee_member", 91)),
+    P("s_qa1", "ليان محمد الدوسري", "female", seat("committee_member", 92)),
+    P("s_qa2", "حسن علي الشهراني", "male", seat("committee_member", 92)),
     ...[["c12a", "تركي ناصر السبيعي", "male"], ["c12b", "هيا ماجد الشمري", "female"], ["c12c", "يزيد عمر المالكي", "male"]]
       .map(([id, n, g]) => P(id, n, g as "male" | "female", seat("committee_member", 12))),
     ...[
@@ -233,6 +248,12 @@ export const person = (st: SimState, id: string) => st.people.find((p) => p.id =
 
 function ratersFor(people: Person[], t: { userId: string; role: EvaluatedRole; committee: number | null; department: number }): { rater: string; part: Part }[] {
   const council = new Set(people.filter((p) => holds(p, COUNCIL_ROLES)).map((p) => p.id));
+  // م٤: المشرفان على اللجنة ما داما في إدارتهما — للقائد والنائب وحدهما
+  if (t.role !== "department_head")
+    for (const x of SUPERVISION.filter((x) => x.committee === t.committee)) {
+      const sup = people.find((p) => p.id === x.supervisor);
+      if (sup && live(sup).some((s) => s.committee !== null && s.committee in ADMIN_UNITS)) council.add(sup.id);
+    }
   const members = new Set<string>();
   if (t.role !== "department_head") {
     const dept = committee(t.committee)?.department;
@@ -434,7 +455,7 @@ function executeRemoval(st0: SimState, targetId: number, chosen: number | null):
   const back = { rank: "عضو", unit: committee(prev)!.name };
   const final = st.targets.find((x) => x.id === t.id)!.record!.final!;
   const r = emit(st, "evaluation.removed", { ...seatFacts(t), userId: t.userId, name: t.name, targetId: t.id, cycleId: 1, final, back, holdUntil: HOLD_UNTIL });
-  return happen(r.st, `استُبعد ${t.name} من «${rankWord(t.role)} ${t.unit}»، وعاد عضوًا في ${back.unit}.`, `وصله الخبرُ بالجرس والبريد، ووصل مديري التقييم. ولا يُفتح انتخابُ مقعده قبل ${HOLD_UNTIL}.`);
+  return happen(r.st, `استُبعد ${t.name} من «${rankWord(t.role)} ${t.unit}»، وعاد عضوًا في ${back.unit}.`, `وصله الخبرُ بالجرس والبريد، ووصل مديري التقييم. ولا يُفتح انتخابُ مقعده قبل ${fmtDateOnly(HOLD_UNTIL)}.`);
 }
 
 /** يعيد المقعد (`_evaluation_restore`): المجرِّبُ لا يشغل المقاعدَ بعد الاستبعاد، فالإعادةُ تنجح دائمًا هنا. */
@@ -458,13 +479,19 @@ export type Act =
   | { kind: "recompute"; as: string; targetId: number; reason: string }
   | { kind: "chooseReturn"; as: string; targetId: number; committeeId: number }
   | { kind: "electorate"; targetId: number }
-  | { kind: "read"; as: string; note?: number };
+  | { kind: "read"; as: string; note?: number }
+  | { kind: "myBallot"; as: string; targetId: number };
 
-export type ActResult = { ok: boolean; message: string; electorate?: ElectorRow[] };
+export type ActResult = { ok: boolean; message: string; electorate?: ElectorRow[]; ballot?: { scores: number[]; keep: string | null; change: string | null } | null };
 
 export function act(st0: SimState, a: Act): { st: SimState; res: ActResult } {
   let st = st0;
   if (a.kind === "electorate") return { st, res: { ok: true, message: "", electorate: electorateRows(st, a.targetId) } };
+  // «عرض تقييمي»: ورقةُ المتقمَّص كما هي اليوم (المكتوبةُ أو المشتقّة)، كدالّة `evaluation_my_ballot`
+  if (a.kind === "myBallot") {
+    const b = ballotsNow(st).find((x) => x.target === a.targetId && x.rater === a.as);
+    return { st, res: { ok: true, message: "", ballot: b ? { scores: b.scores, keep: b.keep, change: b.change } : null } };
+  }
   if (a.kind === "read") {
     const hit = (n: Note) => n.to === a.as && (a.note === undefined || n.id === a.note);
     return { st: { ...st, notes: st.notes.map((n) => (hit(n) ? { ...n, unread: false } : n)) }, res: { ok: true, message: "" } };
@@ -611,6 +638,7 @@ export function viewFor(st: SimState, id: string): View {
       council_num: show(r.tally.cBallots) ? r.council?.[0] ?? null : null, council_den: show(r.tally.cBallots) ? r.council?.[1] ?? null : null,
       council_ballots: r.tally.cBallots, comments: bs.filter((b) => b.keep || b.change).length,
       removed_at: t.removedAt, restored_at: t.restoredAt, cancelled: null,
+      returned_unit: t.returnedTo ? committee(t.returnedTo)?.name ?? null : null, awaiting_return: t.awaiting,
     };
   });
   const comments = Object.fromEntries(
@@ -675,8 +703,10 @@ export function electorateRows(st: SimState, targetId: number): ElectorRow[] {
       const p = person(st, e.rater);
       const s = live(p).find((x) => x.role !== "committee_member") ?? live(p)[0];
       const unit = s ? unitOf(s) : null;
+      const t = st.targets.find((x) => x.id === targetId);
+      const supervisor = e.part === "council" && !!t?.committee && SUPERVISION.some((x) => x.committee === t.committee && x.supervisor === e.rater);
       return {
-        rater_id: e.rater, full_name: p.name, part: e.part, added_by_correction: e.added, removed: e.removed,
+        rater_id: e.rater, full_name: p.name, part: e.part, added_by_correction: e.added, removed: e.removed, supervisor,
         seat_title: s ? `${roleWord(s.role, "male")}${unit ? ` ${unit}` : ""}` : null, gender: p.gender,
       };
     });
@@ -693,5 +723,5 @@ const ROLE_WORD: Record<Role, [string, string]> = {
   committee_member: ["عضو", "عضو"],
 };
 export const roleWord = (r: Role, g: "male" | "female") => ROLE_WORD[r][g === "female" ? 1 : 0];
-const unitOf = (s: Seat) => (s.department ? DEPARTMENTS[s.department] : s.committee ? committee(s.committee)!.name : null);
+const unitOf = (s: Seat) => (s.department ? DEPARTMENTS[s.department] : s.committee ? committee(s.committee)?.name ?? ADMIN_UNITS[s.committee] ?? null : null);
 export const committeesForReturn = () => COMMITTEES.map((c) => ({ id: c.id, name: c.name, department_id: c.department }));

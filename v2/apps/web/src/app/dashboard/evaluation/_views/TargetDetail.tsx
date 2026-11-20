@@ -29,12 +29,8 @@ import type { ElectorRow, TargetRow } from "../data";
 import type { EvaluationResult } from "../actions";
 import { PART_WEIGHT, VERDICT_LABEL, partName, type EvaluatedRole, type Part, type Verdict } from "../vocab";
 import { Pct, frac, pctNumber, quorumLine, seatLine } from "./parts";
-
-export type DetailActions = {
-  correctRater: (i: { targetId: number; raterId: string; action: "remove" | "add"; part?: Part; reason: string }) => Promise<EvaluationResult>;
-  recompute: (targetId: number, reason: string) => Promise<EvaluationResult>;
-  chooseReturn: (targetId: number, committeeId: number) => Promise<EvaluationResult>;
-};
+import type { DetailActions } from "../shared";
+export type { DetailActions };
 
 export const VERDICT_TONE: Record<Verdict, "success" | "danger" | "neutral"> = { kept: "success", removed: "danger", no_result: "neutral" };
 
