@@ -1321,6 +1321,7 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .ad-meter-mark { position: absolute; inset-block-start: 0; inline-size: var(--space-1); block-size: var(--space-2); background: var(--m-ground, var(--ad-sheet)); translate: -50% 0; }
 .ad-meter-mark:dir(rtl) { translate: 50% 0; }
 .ad-meter-mark[data-at="25"] { inset-inline-start: 25%; }
+.ad-meter-mark[data-at="40"] { inset-inline-start: 40%; }
 .ad-meter-mark[data-at="50"] { inset-inline-start: 50%; }
 .ad-meter-mark[data-at="75"] { inset-inline-start: 75%; }
 .ad-meter-mark > span { position: absolute; inset-block-start: calc(100% + var(--space-1) * .5); inset-inline-start: 50%; translate: -50% 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); white-space: nowrap; }
@@ -5576,3 +5577,68 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 .adp-ampm .ad-switch-seg { min-block-size: calc(var(--space-8) - var(--space-2)); padding-inline: var(--space-2); border-radius: calc(var(--ad-r-sm) - var(--space-1)); }
 .adp-foot { display: flex; align-items: center; gap: var(--space-2); padding-block-start: var(--space-2); border-block-start: 1px solid var(--ad-rule); }
 .adp-foot > .ad-btn-fill { margin-inline-end: auto; }
+
+/* **تفصيلُ المقيَّم** (`EvaluationDetail`، ٢٠٢٦-١١-٢٠): مجموعاتُ سطورٍ في نافذة الملفّ — عنوانُ المجموعة ثمّ سطورُها لصقَه،
+   والمجموعاتُ بينها فسحةُ المتن نفسُها (`.mdl-body`) */
+.ad-evd .ad-switch { margin-inline: auto; }
+@media (max-width: 40rem) {
+  /* أربعةُ تبويباتٍ في نافذة الجوّال (القرار أوّلُها): حشوةُ الجزء أضيق كي لا يُقصّ «المقيِّمون» */
+  .ad-evd .ad-switch-seg { padding-inline: var(--space-1); }
+}
+/* أرقامُ التذكرة بشرائطها في النافذة — القطعُ بلون ورقة النافذة لا بياض الكرت، والشريطُ يملأ عمودَه */
+.ad-evd { --m-ground: var(--win-paper); }
+.ad-evd .ad-figures { border-block-start: 0; padding-block-start: 0; }
+.ad-evd .ad-meter-row { display: block; }
+.ad-evd .ad-meter-row > .ad-meter { inline-size: 100%; }
+/* النهائيّةُ أعرضُ أرقام النافذة، وحكمُها بلونه مكانَ النسبة (الشريطُ كحليٌّ في كلّ حال: قاعدةُ الشريط) */
+.ad-evd-final .ad-figure-v { font-size: var(--ad-t-section); font-weight: var(--ad-w-black); }
+.ad-evd-final[data-verdict="removed"] .ad-meter-pct { color: var(--ad-bad); }
+.ad-evd-final[data-verdict="kept"] .ad-meter-pct { color: var(--ad-ok); }
+/* دال: **النافذةُ هي الوعاء، فلا كرتَ في داخلها** (قاعدةُ قالب النوافذ ٢٠٢٦-١١-٠٧: «لا كرتَ داخل كرت»؛ ونبّه محمد ٢٠٢٦-١١-٢٠ حين
+   خالفتُها). فالقسمُ يأخذ هيكلَ قسم «حسابي» — رأسٌ بمربّع رمزه واسمه وحاله، ثمّ أرقامُه، ثمّ سطرُه — بلا حدٍّ ولا أرضٍ ولا ظلّ، على ورقة
+   النافذة نفسِها، والأقسامُ يفصلها خيطٌ بعرض الورقة كما تفصل الخيوطُ سطورَ «حسابي» */
+.ad-evd .ad-sec { --m-ground: var(--win-paper); overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.ad-evd .ad-sec-head { padding: 0 0 var(--space-3); background: none; }
+.ad-evd .ad-sec:has(> .ad-lines) > .ad-sec-head { border-block-end: 0; }
+.ad-evd .ad-sec-media { padding: 0 0 var(--space-3); border-block-end: 0; }
+.ad-evd .ad-sec .ad-line-hit { padding-inline: 0; }
+.ad-evd .mdl-body > :is(.ad-sec, .ad-evd-raters) + :is(.ad-sec, .ad-evd-raters) {
+  margin-inline: calc(var(--win-pad) * -1);
+  padding-inline: var(--win-pad);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--ad-rule);
+}
+.ad-evd-figs { display: flex; flex-direction: column; gap: var(--space-4); }
+.ad-evd .ad-sec .ad-evd-final .ad-figure dt { display: none; } /* رأسُ الكرت يسمّيها */
+.ad-evd-raters .ad-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ad-evd-raters .ad-line { border-block-start: 1px solid var(--ad-rule); }
+.ad-evd-raters .ad-line:nth-child(-n + 2) { border-block-start: 0; }
+@media (max-width: 40rem) {
+  .ad-evd-raters .ad-lines { grid-template-columns: minmax(0, 1fr); }
+  .ad-evd-raters .ad-line:nth-child(2) { border-block-start: 1px solid var(--ad-rule); }
+}
+/* في نافذة الجوّال الرقمان تحت بعضهما: متجاورين انكسر «10 من 13 عضوًا» سطرين */
+@media (max-width: 40rem) {
+  .ad-evd .ad-figures { flex-direction: column; gap: var(--space-3); }
+  .ad-evd .ad-figure { padding-inline: 0; border-inline-start: 0; }
+}
+/* دال، الجولة الثانية (محمد ٢٠٢٦-١١-٢٠: «نعم» على الإصلاحات الثلاثة): الكحليُّ للّوح والتبويب المختار وحدهما — رأسُ القسم رمزُه صغيرًا
+   بحبر الورق لا مربّعًا من اللوح؛ والحكمُ لصقَ رقمه بلونه لا شارةً في الطرف الآخر؛ وطريقةُ الحساب حاشيةٌ خافتة لا سطرٌ بمربّع */
+/* والرمزُ على **المربّع المصبوغ** لا مربّعِ اللوح (محمد ٢٠٢٦-١١-٢٠: «نعم»): مربّعُ سطور «حسابي» نفسُه (`.ad-line-ic`) ومربّعُ رمز المعلومة في
+   الكرت (٢٠٢٦-١٠-٣٠) — فكلُّ رمزٍ في النافذة على مربّعٍ من مادّة الورقة، والكحليُّ للّوح والتبويب المختار وحدهما */
+.ad-evd .ad-sec-ic { inline-size: var(--space-8); block-size: var(--space-8); background: color-mix(in oklab, currentColor 12%, transparent); box-shadow: none; color: var(--ad-ink-2); }
+.ad-evd .ad-figure dt > svg {
+  box-sizing: content-box;
+  padding: calc(var(--space-1) * 1.25);
+  border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+.ad-evd .ad-sec-head { gap: var(--space-2); }
+.ad-evd-final .ad-meter-pct { margin-inline-start: 0; font-size: var(--ad-t-ui); }
+.ad-evd .ad-sec-foot { padding: 0; border: 0; background: none; }
+.ad-evd-note { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+/* **لماذا بدت «أوراق الأعضاء» مضغوطة** (محمد ٢٠٢٦-١١-٢٠): الرقمُ شبكةٌ (`.ad-figure` grid)، وسطرُ «النصف» تحت شريط الأعضاء يطيل عمودَه،
+   فيمتدّ جارُه إلى طوله وتتوزّع الزيادةُ على صفوفه الثلاثة — فصار المجلسُ رحبًا (32 لكلّ صفّ) والأعضاءُ بحجمهم (26). فالصفوفُ تبدأ من
+   الأعلى بحجمها في العمودين، ويحجز الشريطُ المجاور سطرَ الكلمة تحته كما يفعل سطرُ الجدول، فيقف الشريطان على خطٍّ واحد */
+.ad-evd .ad-figure { align-content: start; }
+.ad-evd .ad-figures:has(.ad-meter-wrap) .ad-meter-row > .ad-meter { margin-block-end: calc(var(--ad-t-meta) * 1.4); }

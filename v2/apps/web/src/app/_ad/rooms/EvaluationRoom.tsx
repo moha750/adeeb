@@ -12,16 +12,16 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, IdentificationBadge, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
-import { Info, Star } from "@/app/_components/glyphs";
+import { DuotoneZone, Info, Star } from "@/app/_components/glyphs";
 import { fmtDayMonth } from "@/lib/dates";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 import { rankFor } from "@/lib/positionLabel";
 import { percentText } from "@/lib/evaluation/score";
 import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
-import { CYCLE_STATUS_LABEL, RANK, VERDICT_LABEL } from "@/app/dashboard/evaluation/vocab";
+import { CYCLE_STATUS_LABEL, RANK, verdictWord } from "@/app/dashboard/evaluation/vocab";
 import { cycleName, cycleShort, excludedWhy, frac, quorumLine } from "@/app/dashboard/evaluation/_views/parts";
 import { addDays, type RoomProps } from "@/app/dashboard/evaluation/_views/RoomHead";
-import { TargetDetail } from "@/app/dashboard/evaluation/_views/TargetDetail";
+import { EvaluationDetail, ofMembers } from "./EvaluationDetail";
 import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
 import { AdLine, AdSection } from "../account";
 import { CollectionRoom, type Position } from "../collection";
@@ -30,10 +30,6 @@ const NAV = "/dashboard/evaluation";
 const AR_TARGET: ArForms = ["مقيَّمٌ واحد", "مقيَّمان", "مقيَّمين", "مقيَّمًا"];
 const AR_RATER: ArForms = ["مقيِّمٌ واحد", "مقيِّمان", "مقيِّمين", "مقيِّمًا"];
 const AR_SHEET: ArForms = ["ورقةٌ واحدة", "ورقتان", "أوراق", "ورقةً"];
-
-/** «4 من 13 عضوًا»: المجموعُ بمعدوده بعد «من» (مجرورًا: «من عضوين»، «من 7 أعضاء»)، فيُقرأ الرقمُ أوراقًا لا درجة (محمد ٢٠٢٦-١١-٢٠: «غيرُ واضحة») */
-const ofMembers = (n: number, of: number) =>
-  of === 1 ? `${n} من عضوٍ واحد` : of === 2 ? `${n} من عضوين` : of <= 10 ? `${n} من ${of} أعضاء` : `${n} من ${of} عضوًا`;
 
 const VERDICT_TONE: Record<string, AdTone> = { kept: "ok", removed: "bad", no_result: "neutral" };
 const STATUS_TONE: Record<string, AdTone> = { scheduled: "neutral", open: "info", closed: "warn", executed: "ok" };
@@ -96,7 +92,7 @@ export function EvaluationRoom(props: RoomProps) {
   });
   const cellsOf = (t: TargetRow): AdCell[] => {
     const base = [
-      { label: "المنصب", text: true, value: <span className="ad-asg-seat">{rankIcon(t.role_name)}{rankFor(RANK[t.role_name], t.gender)}</span> },
+      { label: "المنصب", text: true, value: <span className="ad-asg-seat"><DuotoneZone>{rankIcon(t.role_name)}</DuotoneZone>{rankFor(RANK[t.role_name], t.gender)}</span> },
       members(t),
       council(t),
     ];
@@ -109,7 +105,7 @@ export function EvaluationRoom(props: RoomProps) {
     if (!results || !t.verdict) return null;
     return t.awaiting_return
       ? <AdBadge tone="warn" icon={<UserSwitch />}>ينتظر لجنة</AdBadge>
-      : <AdBadge tone={VERDICT_TONE[t.verdict]}>{VERDICT_LABEL[t.verdict]}</AdBadge>;
+      : <AdBadge tone={VERDICT_TONE[t.verdict]}>{verdictWord(t.verdict, t.gender)}</AdBadge>;
   };
   const subOf = (t: TargetRow): AdMeta[] => (t.excluded ? [{ icon: <CalendarX />, text: excludedWhy(t.gender, cycle.due_on), tone: "muted" }] : []);
   const row = (t: TargetRow) => (
@@ -220,7 +216,7 @@ export function EvaluationRoom(props: RoomProps) {
       />
 
       {open ? (
-        <TargetDetail target={open} electorate={electorate} people={props.people} committees={props.committees} departments={departments}
+        <EvaluationDetail target={open} electorate={electorate} people={props.people} committees={props.committees} departments={departments}
           canManage={canManage} canViewResults={canViewResults} closed={closed} actions={props.actions}
           onClose={() => setOpenId(null)} onDone={() => { void fetchElectorate(open.id); props.onChanged?.(); }} />
       ) : null}

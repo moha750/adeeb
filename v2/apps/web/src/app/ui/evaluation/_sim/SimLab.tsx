@@ -25,6 +25,8 @@ const SIZES = [
 export function SimLab() {
   const [st, setSt] = useState<SimState>(() => initialState());
   const [look, setLook] = useState("");
+  // يُقرأ بعد التركيب لا في أوّل رسم: الخادمُ لا يعرف عنوانَ الصفحة، فيختلف `src` العين بين الرسمين
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get("look") === "new") setLook(`?${q.toString()}`); }, []);
   const [who, setWho] = useState("mohammed");
   const [scene, setScene] = useState("all");

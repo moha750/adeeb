@@ -758,7 +758,7 @@ export type AdMeterOf = {
    * كثقب التذكرة، وتحت القطع كلمتُه الصغيرة. الموضعُ نسبةٌ من ثلاث (ربعٌ ونصفٌ وثلاثة أرباع) لأنّه صنفٌ في `ad.css` لا قيمةٌ في السطر.
    * (رُفض: خطٌّ رفيعٌ فوق الشريط — مستوردٌ من الغرفة القديمة؛ ودرجاتُ الحدّ — لا تتّسع للّجان الكبيرة؛ والكلمةُ وحدها — ضعيفة.)
    */
-  mark?: { at: 25 | 50 | 75; label: string };
+  mark?: { at: 25 | 40 | 50 | 75; label: ReactNode };
   /** كلمةُ الحال مكانَ النسبة والشريطُ ممتلئٌ بقدره («بقي 3» قبل الحدّ) — قاعدةُ الشريط: «الحالُ كلمةٌ مكانَ النسبة» */
   word?: string;
 };
@@ -1033,7 +1033,13 @@ export function AdFigureRow({ figures }: { figures: AdFigure[] }) {
             </dd>
             {of && (
               <dd className="ad-meter-row">
-                <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
+                {/* الحدُّ على شريط الرقم كحدّه على شريط السطر (`AdRow`): القطعُ وكلمتُه — تفصيلُ المقيَّم ٢٠٢٦-١١-٢٠ */}
+                {of.mark ? (
+                  <span className="ad-meter-wrap" data-mark>
+                    <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />
+                    <span className="ad-meter-mark" data-at={of.mark.at} aria-hidden><span>{of.mark.label}</span></span>
+                  </span>
+                ) : <meter className="ad-meter" min={0} max={Math.max(of.max, 1)} value={of.note ? 0 : Math.min(of.now, of.max)} aria-label={`${f.label}: ${word ?? fmtPct(pct)}`} />}
               </dd>
             )}
           </div>
