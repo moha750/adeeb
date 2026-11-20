@@ -177,7 +177,7 @@ function seedTie(w: SimWorld, electionId: string, candidateIds: string[], choice
 
 /* ══ الشاشاتُ التي يُفتح عليها السيناريو ═══════════════════════════ */
 
-export type ScreenKey = "list" | "detail" | "run" | "apply" | "my" | "candidacy" | "edit" | "vote" | "ballot";
+export type ScreenKey = "list" | "detail" | "candidate" | "run" | "apply" | "my" | "candidacy" | "edit" | "vote" | "ballot";
 
 export type Scenario = {
   key: string;

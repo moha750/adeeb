@@ -1824,6 +1824,9 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
   .ad-row-acts { justify-content: flex-start; padding-block-start: var(--space-3); border-block-start: 1px solid var(--ad-rule); }
   .ad-tr:not(.ad-thead):not(.ad-tfoot) > .ad-row-acts::before { display: none; }
   .ad-row-acts > .ad-btn:first-child { margin-inline-end: auto; }
+  /* سطرٌ بلا أفعال (تفصيل الأصوات) لا يُبقي في الضيّق قاعًا فارغًا بخطّه وحشوته تحت آخر معلومة (محمد ٢٠٢٦-١١-٢٠: «ليش في كذا تحت مثل الفراغ؟»).
+     وفي العريض يبقى خليّةً تحفظ عمودَها تحت رأسه */
+  .ad-row-acts:empty { display: none; }
 }
 /* **وفي الأضيق: الخليّةُ النصّيّة سطرٌ كاملٌ لا حصّة** — رمزُها واسمُها في أوّله، وقيمتُها في طرفه، وإن ضاق نزلت القيمةُ إلى سطرٍ
    تحته في الطرف نفسِه، كسطور المعلومات في التذكرة. والأرقامُ بعدها حصصُها كما هي */
@@ -1951,83 +1954,26 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
   .ad-group-head > .ad-steps { display: flex; align-items: center; gap: var(--space-2); padding-inline-start: calc(var(--space-10) + var(--space-1) + var(--space-3)); }
 }
 
-/* ═══ سجلُّ الأحداث (`_ad/log.tsx`؛ محمد ٢٠٢٦-١١-٠٢) ═══
-   خطٌّ زمنيٌّ واحد يمرّ في محورٍ بعرض الكعب المصغّر: كعوبُ الأيّام عليه (قطعةُ الجدول نفسُها)، ونقاطُ الوقائع تحت كلّ يوم.
-   الساعةُ قبل المحور، وما جرى بعده في عمودٍ واحد. ورقتُه ورقةُ الغرفة، ورأسُه كرأس مجموعة. */
-.ad-log {
-  --ad-log-time: calc(var(--space-16) + var(--space-2));
-  --ad-log-axis: calc(var(--ad-tile) * 1.2);
-  --ad-log-dot: var(--space-8);
-  --ad-log-line: calc(var(--space-1) / 2);
-  container: ad-log / inline-size;
-  display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-6) var(--space-6);
-  border: 1px solid var(--ad-edge);
-  border-radius: var(--ad-r-plate);
-  background: var(--ad-sheet);
-}
-/* داخل إطارٍ آخر (بندُ درج، نافذة): لا ورقةَ ولا إطار — الخطُّ وحده */
-.ad-log[data-bare] { padding: 0; border: 0; background: none; }
-.ad-log-more { display: flex; justify-content: center; padding-block-start: var(--space-4); border-block-start: 1px solid var(--ad-rule); }
-.ad-log-head { display: flex; align-items: center; gap: var(--space-3); padding-block-end: var(--space-4); border-block-end: 1px solid var(--ad-rule); }
-.ad-log-head-icon { display: grid; place-items: center; inline-size: var(--space-10); block-size: var(--space-10); border-radius: var(--ad-r-ctl); background: var(--ad-plate); color: var(--ad-plate-ink); box-shadow: var(--ad-lift); }
-.ad-log-head-icon > svg { inline-size: var(--space-5); block-size: var(--space-5); }
-.ad-log-title { margin: 0; font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
-.ad-log-count { margin-inline-start: auto; font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
-.ad-log-flow { display: grid; }
-.ad-log-list { display: grid; margin: 0; padding: 0; list-style: none; }
-.ad-log-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--ad-log-time) var(--ad-log-axis) minmax(0, 1fr);
-  column-gap: var(--space-3);
-  align-items: start;
-  margin: 0;
-  padding-block: var(--space-3);
-}
-/* الخطُّ في مركز المحور، متّصلٌ من كعب أوّل يومٍ إلى نقطة آخر واقعة */
-.ad-log-row::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: calc(var(--ad-log-time) + var(--space-3) + var(--ad-log-axis) / 2 - var(--ad-log-line) / 2);
-  inline-size: var(--ad-log-line);
-  background: var(--ad-rule);
-}
-.ad-log-flow > .ad-log-day:first-child::before { inset-block-start: 50%; }
-.ad-log-flow > .ad-log-list:last-child > .ad-log-item:last-child::before { inset-block-end: calc(100% - var(--space-3) - var(--ad-log-dot) / 2); }
-.ad-log-axis { position: relative; grid-column: 2; display: grid; justify-items: center; }
-/* اليوم: كعبُه على المحور، واسمُه بجانبه */
-.ad-log-day { align-items: center; padding-block: var(--space-4) var(--space-2); }
-.ad-log-flow > .ad-log-day:first-child { padding-block-start: 0; }
-.ad-log-day .ad-td-stub { box-shadow: var(--ad-rest), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-day-l { grid-column: 3; display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--ad-t-body); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
-.ad-log-day-n { font-size: var(--ad-t-meta); font-weight: var(--ad-w-regular); color: var(--ad-ink-3); }
-/* الواقعة */
-.ad-log-time { grid-column: 1; padding-block-start: var(--space-2); font-size: var(--ad-t-meta); line-height: var(--ad-lh-tight); color: var(--ad-ink-3); text-align: end; white-space: nowrap; }
-.ad-log-dot { display: grid; place-items: center; inline-size: var(--ad-log-dot); block-size: var(--ad-log-dot); border-radius: var(--ad-r-full); background: var(--ad-sheet); color: var(--ad-ink-2); box-shadow: inset 0 0 0 1px var(--ad-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-dot > svg { inline-size: var(--space-4); block-size: var(--space-4); }
-.ad-log-item[data-tone="warn"] .ad-log-dot { background: var(--ad-warn-soft); color: var(--ad-warn); box-shadow: inset 0 0 0 1px var(--ad-warn-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-item[data-tone="bad"] .ad-log-dot { background: var(--ad-bad-soft); color: var(--ad-bad); box-shadow: inset 0 0 0 1px var(--ad-bad-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-item[data-tone="info"] .ad-log-dot { background: var(--ad-info-soft); color: var(--ad-info); box-shadow: inset 0 0 0 1px var(--ad-info-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-item[data-tone="ok"] .ad-log-dot { background: var(--ad-ok-soft); color: var(--ad-ok); box-shadow: inset 0 0 0 1px var(--ad-ok-edge), 0 0 0 var(--space-1) var(--ad-sheet); }
-.ad-log-body { grid-column: 3; display: grid; gap: var(--space-2); min-inline-size: 0; padding-block-start: var(--space-1); }
-.ad-log-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
-.ad-log-obj { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+/* ═══ سجلُّ الأحداث (`_ad/log.tsx`؛ محمد ٢٠٢٦-١١-٠٢، وصار سطورًا ٢٠٢٦-١١-٢٠) ═══
+   سطورُ الهويّة نفسُها (`.ad-line`) كـ«رحلة ترشّحك»: عنوانُ اليوم شريطٌ بلون الحجاب، ورمزُ الواقعة بنغمتها في مربّعه، والفاعلُ والملاحظةُ
+   تحت جملتها كلٌّ بأيقونته، والساعةُ في طرف السطر. حلّ محلَّ الخطّ الزمنيّ بكعوب الأيّام (قرار محمد بعد المقارنة). */
+.ad-log-day { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-5); background: var(--ad-veil); font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-2); }
+.ad-log-day + .ad-line, .ad-line + .ad-log-day { border-block-start: 1px solid var(--ad-rule); }
+.ad-log-day small { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
+.ad-log .ad-line-ic[data-tone="ok"] { color: var(--ad-ok); }
+.ad-log .ad-line-ic[data-tone="warn"] { color: var(--ad-warn); }
+.ad-log .ad-line-ic[data-tone="bad"] { color: var(--ad-bad); }
+.ad-log .ad-line-ic[data-tone="info"] { color: var(--ad-info); }
+.ad-log .ad-line-hit { align-items: start; }
+.ad-log-v { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.ad-log-sub { padding-block-start: var(--space-1); }
+.ad-log-at { flex: none; align-self: start; padding-block-start: var(--space-1); font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); white-space: nowrap; }
+.ad-log-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); padding-inline-start: calc(var(--space-5) + var(--space-8) + var(--space-3)); }
+.ad-log-more { display: flex; justify-content: center; }
+.ad-log-bare .ad-log-more { padding-block-start: var(--space-4); border-block-start: 1px solid var(--ad-rule); }
 .ad-log-times { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); color: var(--ad-ink-3); }
-.ad-log-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-block-start: var(--space-1); }
 .ad-log-empty { display: grid; gap: var(--space-1); padding: var(--space-6); border-radius: var(--ad-r-ctl); background: var(--ad-veil); text-align: center; font-size: var(--ad-t-meta); color: var(--ad-ink-3); }
 .ad-log-empty > strong { font-size: var(--ad-t-body); color: var(--ad-ink-head); }
-/* ضيّقًا: الساعةُ تصعد فوق ما وقعت عليه، والمحورُ أوّلًا */
-@container ad-log (max-width: 34rem) {
-  .ad-log-row { grid-template-columns: var(--ad-log-axis) minmax(0, 1fr); }
-  .ad-log-row::before { inset-inline-start: calc(var(--ad-log-axis) / 2 - var(--ad-log-line) / 2); }
-  .ad-log-axis { grid-column: 1; grid-row: 1 / span 2; }
-  .ad-log-day-l { grid-column: 2; }
-  .ad-log-time { grid-column: 2; grid-row: 1; padding-block-start: var(--space-1); text-align: start; }
-  .ad-log-item .ad-log-body { grid-column: 2; grid-row: 2; padding-block-start: 0; }
-}
 
 /* ═══ صفحةُ الرؤية العامّة (`/vision`، `app/vision/_parts/VisionView.tsx`) ═══
    أقرّها محمد ٢٠٢٦-١١-٠٣ («نفّذ مقترحك»): الهلالُ حيًّا في رأسها — قطعةٌ لكلّ هدفٍ تُضاء حين يتحقّق —
@@ -5466,4 +5412,3 @@ html[lang] .ad-rich ol { list-style: decimal; }
 .ad-confetti { position: fixed; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; z-index: var(--z-toast);
   --cf-1: var(--steel-400); --cf-2: var(--navy-500); --cf-3: var(--success-300); --cf-4: var(--success-500); --cf-5: var(--warning-300); }
 :root[data-theme="dark"] .ad-confetti { --cf-1: var(--steel-300); --cf-2: var(--navy-400); }
-

@@ -132,7 +132,7 @@ function ScreenBar() {
   return (
     <div className="mb-4 flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        {SCREENS.map((s) => {
+        {SCREENS.filter((s) => !s.viaLink).map((s) => {
           const locked = !hasCap(world, actorId, s.cap);
           const hidden = !locked && !!s.signal && !s.signal(world, actorId);
           return (

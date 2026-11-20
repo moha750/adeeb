@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Gear, IdentificationBadge, Note, UserCircle } from "@phosphor-icons/react";
+import { Gear, Note, UserCircle } from "@phosphor-icons/react";
 import { CaretDown } from "@/app/_components/glyphs";
 import { AdLog, type AdLogEvent } from "@/app/_ad/log";
 import { AdButton, type AdMeta, type AdTone } from "@/app/_ad/primitives";
 import { arCount, type ArForms } from "@/lib/arabicCount";
+import { firstAndLastOf } from "@/lib/personName";
 import { KIND_TONE, type LogTone } from "./log";
 import { KIND_ICON } from "./logIcons";
 import type { ElectionLogEvent } from "./data";
 
 /**
- * سجلُّ الانتخاب — **مَن فعل ماذا**. القاعدةُ تكتب كلَّ فعلٍ بفاعله، وهذه الشاشةُ تُنطقه على **الخطّ الزمنيّ المشترك**
- * (`AdLog`، قاعدةُ محمد ٢٠٢٦-١١-٠٢: ما يجيب عن «مَن فعل ماذا ومتى» ويُقرأ ولا يُدار خطٌّ زمنيّ): كعوبُ الأيّام على المحور،
- * وتحت كلّ يومٍ وقائعُه الأحدثُ أوّلًا بساعتها.
+ * سجلُّ الانتخاب — **مَن فعل ماذا**. القاعدةُ تكتب كلَّ فعلٍ بفاعله، وهذه الشاشةُ تُنطقه على **السجلّ المشترك** (`AdLog`):
+ * شريطٌ لكلّ يوم، وتحته وقائعُه سطورًا الأحدثُ أوّلًا بساعتها (كان خطًّا زمنيًّا بكعوب الأيّام حتى ٢٠٢٦-١١-٢٠).
  *
  * والواقعةُ **جملتُها بصوت الإدارة** (`describeEvent` بـ`audience: "admin"` في `getElectionLog` — ورحلةُ العضو تُقرأ
  * بصوته في `JourneyBody` ولا تمرّ من هنا)، ونوعُها شارةً بنغمة طبيعته (`KIND_TONE`: الاعتمادُ أخضرُ والرفضُ أحمرُ حيثما
@@ -51,6 +51,20 @@ const TONE: Record<LogTone, AdTone> = { success: "ok", warning: "warn", danger: 
 const same = (a: ElectionLogEvent, b: ElectionLogEvent) =>
   a.kind === b.kind && a.label === b.label && a.candidateId === b.candidateId && a.actor === b.actor && !a.note && !b.note;
 
+/**
+ * **الاسمُ في متن الجملة لا تحتها** (محمد ٢٠٢٦-١١-٢٠): «اعتُمد ترشّح حنين الدوسري» لا «تمّ اعتماد الترشّح» وتحته اسمٌ رماديّ.
+ * والصياغةُ **لا تُجنَّس**: الاسمُ يدخل مضافًا إليه («ترشّح فلان»، «فوز فلان») فلا يُسأل أهو أم هي؛ و«انسحب المرشّح» يصير «سُحب ترشّح فلان»
+ * لا «انسحب حنين». وما سوى ذلك ممّا فاعلُه المرشّح يبقى بجملته ويُلحق به الاسمُ بعد نقطتين.
+ */
+function withSubject(label: string, name: string): string {
+  if (label === "تمّ اعتماد الترشّح") return `اعتُمد ترشّح ${name}`;
+  if (label === "تقدّم مرشّح جديد للمقعد") return `قُدّم ترشّح ${name} للمقعد`;
+  if (label === "انسحب المرشّح") return `سُحب ترشّح ${name}`;
+  if (label.startsWith("أُعلن الفائز")) return label.replace("الفائز", `فوز ${name}`);
+  if (label.includes("الترشّح") && !label.includes("الأسبقيّة في الترشّح")) return label.replace("الترشّح", `ترشّح ${name}`);
+  return `${label}: ${name}`;
+}
+
 export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0 }: Props) {
   const [all, setAll] = useState(false);
   const capped = initial > 0 && !all && events.length > initial;
@@ -59,13 +73,15 @@ export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0 }
 
   const event = (e: ElectionLogEvent): AdLogEvent => {
     const subject = e.candidateId ? subjectOf?.(e.candidateId) ?? null : null;
+    // **من وقع عليه الفعل في جملته** (محمد ٢٠٢٦-١١-٢٠): كان اسمُه في السطر الرماديّ تحت «تمّ اعتماد الترشّح» ثلاثَ مرّاتٍ متتالية، فلا
+    // يُعرف من اعتُمد إلّا بالتدقيق. وإن كان هو الفاعلَ نفسَه (تقدّم، انسحب، أجاب) سقط «بيد فلان»: الاسمُ مرّةً واحدة
+    const self = !!subject && e.actor === subject;
     const meta: AdMeta[] = [
-      { icon: e.actor ? <UserCircle /> : <Gear />, text: `بيد ${e.actor ?? SYSTEM}` },
-      ...(subject ? [{ icon: <IdentificationBadge />, text: subject }] : []),
+      ...(self ? [] : [{ icon: e.actor ? <UserCircle /> : <Gear />, text: `بيد ${e.actor ?? SYSTEM}` }]),
       ...(e.note ? [{ icon: <Note />, text: e.note }] : []),
     ];
     // بلا شارة نوع: الجملةُ نفسُها تقوله («تمّ اعتماد الترشّح»)، ورمزُ النقطة ونغمتُها يقولانه بلمحة
-    return { icon: KIND_ICON[e.kind], tone: TONE[KIND_TONE[e.kind]], title: e.label, meta };
+    return { icon: KIND_ICON[e.kind], tone: TONE[KIND_TONE[e.kind]], title: subject ? withSubject(e.label, firstAndLastOf(subject)) : e.label, meta };
   };
 
   return (

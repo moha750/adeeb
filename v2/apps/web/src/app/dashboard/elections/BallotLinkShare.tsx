@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Button, Card, CardBody, Field } from "@adeeb/design-system";
+import { Field, Modal } from "@adeeb/design-system";
 import { LinkSimple, PaperPlaneTilt, ShareNetwork } from "@phosphor-icons/react";
 import { Check } from "@/app/_components/glyphs";
+import { AdButton } from "@/app/_ad/primitives";
 import { copyText } from "@/lib/clipboard";
 
 /**
- * **رابطُ بطاقة الاقتراع يُنشَر ولا يُملى** (طلب المالك ٢٠٢٦-٠٨-١٥): حين يُفتح التصويت
- * يحتاج المسؤولُ أن يسوق ناخبي المقعد إلى بطاقتهم مباشرةً، فكان يُملي عليهم الطريق
+ * **رابطُ ورقة التصويت يُنشَر ولا يُملى** (طلب المالك ٢٠٢٦-٠٨-١٥): حين يُفتح التصويت
+ * يحتاج المسؤولُ أن يسوق المصوّتين في المقعد إلى ورقتهم مباشرةً، فكان يُملي عليهم الطريق
  * («ادخل اللوحة ثمّ التصويت ثمّ المقعد»). فصار الطريقُ رابطًا يُنسخ أو يُشارَك.
+ * **(٢٠٢٦-١١-٢٠) أُعيد بالهويّة نافذةً** يفتحها زرٌّ في تنبيه «التصويت مفتوح» بصفحة الانتخاب (قرار محمد)، بعد أن سقط
+ * مع الصفحة القديمة وكان فيها كرتًا ثابتًا.
  *
- * **والرابطُ لا يمنح أحدًا حقًّا**: من فتحه وهو في نطاق المقعد وجد بطاقتَه، ومن سواه رُدّ
+ * **والرابطُ لا يمنح أحدًا حقًّا**: من فتحه وهو في نطاق المقعد وجد ورقتَه، ومن سواه رُدّ
  * بجملة «هذا الاقتراع غير مفتوحٍ لك الآن» — الأهليّةُ والصوتُ الواحد حكمُ القاعدة
  * (`get_votable_elections_for_user` و`cast_vote`) لا حراسةُ سرٍّ في عنوان.
  *
@@ -19,7 +22,9 @@ import { copyText } from "@/lib/clipboard";
  * لا توجد يُنسَخ **الرابطُ وحدَه** (نصٌّ يُلصَق في أيّ قناة، لا جملةٌ تُحرَّر بعد لصقها).
  * سابقتُه `m/[slug]/ShareBar`.
  */
-export function BallotLinkShare({ electionId, position, votingEnd }: {
+export function BallotLinkShare({ open, onClose, electionId, position, votingEnd }: {
+  open: boolean;
+  onClose: () => void;
   electionId: string;
   position: string;
   votingEnd: string | null;
@@ -58,34 +63,29 @@ export function BallotLinkShare({ electionId, position, votingEnd }: {
     }
   };
 
+  // فعلان لا فعلٌ يتحوّل: المشاركةُ تسوق الرسالةَ إلى قناةٍ يختارها، والنسخُ يضع الرابطَ في يده. وحيث لا ورقةَ مشاركة
+  // (أغلبُ الحواسيب) يبقى النسخُ الفعلَ الأساسيّ، و«إغلاق» بجانبه
+  const copyBtn = (fill: boolean) => (
+    <AdButton variant={fill ? "fill" : "soft"} icon={copied ? <Check /> : <LinkSimple />} onClick={() => { void copy(); }}>
+      {copied ? "نُسخ الرابط" : "انسخ الرابط"}
+    </AdButton>
+  );
   return (
-    <Card>
-      <CardBody className="flex flex-col gap-3">
-        <Field
-          label="رابط بطاقة الاقتراع"
-          icon={<PaperPlaneTilt />}
-          innerIcon={<LinkSimple />}
-          placeholder="رابط التصويت"
-          charset="latin"
-          value={url}
-          readOnly
-          onFocus={(e) => e.currentTarget.select()}
-          helper="شاركه مع المصوّتين في هذا المقعد. من كان في نطاقه فتح بطاقتَه، ومن سواه رُدّ."
-        />
-        {/* فعلان لا فعلٌ يتحوّل : المشاركةُ تسوق الرسالةَ إلى قناةٍ يختارها، والنسخُ يضع
-            الرابطَ في يده ليصنع به ما شاء. وحيث لا ورقةَ مشاركة يبقى النسخُ وحدَه صدرًا. */}
-        <div className="btn-row">
-          {canShare ? (
-            <Button variant="primary" size="md" onClick={share}>
-              <ShareNetwork size={18} weight="fill" />شارك الرابط
-            </Button>
-          ) : null}
-          <Button variant={canShare ? "ghost" : "primary"} size="md" onClick={copy}>
-            {copied ? <Check size={18} /> : <LinkSimple size={18} weight="bold" />}
-            {copied ? "نُسخ الرابط" : "انسخ الرابط"}
-          </Button>
-        </div>
-      </CardBody>
-    </Card>
+    <Modal open={open} onClose={onClose} size="sm" title="رابط ورقة التصويت" description={position}
+      footer={canShare
+        ? <><AdButton variant="fill" icon={<ShareNetwork />} onClick={() => { void share(); }}>شارك الرابط</AdButton>{copyBtn(false)}</>
+        : <>{copyBtn(true)}<AdButton plain onClick={onClose}>إغلاق</AdButton></>}>
+      <Field
+        label="الرابط"
+        icon={<PaperPlaneTilt />}
+        innerIcon={<LinkSimple />}
+        placeholder="رابط التصويت"
+        charset="latin"
+        value={url}
+        readOnly
+        onFocus={(e) => e.currentTarget.select()}
+        helper="من فتحه وله صوتٌ في المقعد وجد ورقته، ومن سواه رُدّ."
+      />
+    </Modal>
   );
 }

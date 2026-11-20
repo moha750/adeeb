@@ -17,6 +17,7 @@ import { useElectionApi } from "@/app/dashboard/elections/actions-context";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { ActingModal } from "@/app/dashboard/members/assignments/ActingModal";
 import { ShareResultModal } from "@/app/dashboard/elections/ShareResultModal";
+import { BallotLinkShare } from "@/app/dashboard/elections/BallotLinkShare";
 import type { ResultCard } from "@/lib/elections/resultCard";
 import { fromClubInput, toClubInput } from "@/lib/dates";
 import { FormChoice } from "../form";
@@ -53,6 +54,7 @@ export function useElectionWindows(e: ElectionDetail, { readOnly = false, canApp
   const [basis, setBasis] = useState<string>("candidate_request");
   const [cancelBasis, setCancelBasis] = useState<string>("defect");
   const [share, setShare] = useState<ResultCard | null>(null);
+  const [ballotLink, setBallotLink] = useState(false);
   const [appointees, setAppointees] = useState<{ id: string; label: string; avatar?: string | null; gender?: "male" | "female" | null; held?: string | null }[] | null>(null);
 
   const open = (w: Win, preset?: { when?: string }) => {
@@ -94,6 +96,8 @@ export function useElectionWindows(e: ElectionDetail, { readOnly = false, canApp
     cancel: manage ? () => open({ kind: "cancel" }) : undefined,
     // التعادلُ لعضو المجلس الإداريّ ولو لم يكن ممّن يديرون الانتخاب (المادة ٢٦)، والقاعدةُ تحرسه
     chooseInTie: e.tie?.status === "open" && e.tie.isMember ? () => { open({ kind: "tie" }); setBasis(""); } : undefined,
+    // رابطُ الورقة يُنشَر ما دام التصويتُ مفتوحًا، لمن يدير الانتخاب (أُعيد ٢٠٢٦-١١-٢٠ بقرار محمد)
+    shareBallot: manage && e.status === "voting_open" ? () => setBallotLink(true) : undefined,
     share: e.status === "completed" && e.winnerName ? () => {
       const w = e.candidates.find((c) => c.id === e.winnerCandidateId);
       setShare({
@@ -241,6 +245,7 @@ export function useElectionWindows(e: ElectionDetail, { readOnly = false, canApp
     <>
       {body}
       <ShareResultModal card={share} open={share !== null} onClose={() => setShare(null)} />
+      {e.status === "voting_open" ? <BallotLinkShare open={ballotLink} onClose={() => setBallotLink(false)} electionId={e.id} position={e.positionLabel} votingEnd={e.votingEnd} /> : null}
     </>
   );
   return { on, windows };
