@@ -22,7 +22,7 @@ import { CYCLE_STATUS_LABEL, RANK, VERDICT_LABEL } from "@/app/dashboard/evaluat
 import { cycleName, cycleShort, excludedWhy, frac, quorumLine } from "@/app/dashboard/evaluation/_views/parts";
 import { addDays, type RoomProps } from "@/app/dashboard/evaluation/_views/RoomHead";
 import { TargetDetail } from "@/app/dashboard/evaluation/_views/TargetDetail";
-import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdStepsBar, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
+import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
 import { AdSection } from "../account";
 import { CollectionRoom, type Position } from "../collection";
 
@@ -40,11 +40,7 @@ const rankIcon = (role: string): ReactNode =>
 /** المجموعةُ: تنسيقُ القسم رأسٌ أعلى، واللجنةُ فرعٌ تحته (كتعيين المناصب) */
 type Unit = { key: string; title: string; sub: string; top: boolean; order: number };
 
-/** مقارنةٌ في المحاكي وحده (٢٠٢٦-١١-٢٠): علامةُ النصف حتى يختار محمد — ثمّ يُحذف ويبقى المختار. والمراحلُ حُسمت: «كعوبُ الأيّام» */
-export type EvaluationLook = { half?: "line" | "steps" | "words" };
-
-export function EvaluationRoom(props: RoomProps & { look?: EvaluationLook }) {
-  const look = { half: props.look?.half ?? "line" };
+export function EvaluationRoom(props: RoomProps) {
   const { cycles, cycleId, onCycle, targets, departments, canManage, canViewResults } = props;
   const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0];
   const [openId, setOpenId] = useState<number | null>(null);
@@ -81,28 +77,14 @@ export function EvaluationRoom(props: RoomProps & { look?: EvaluationLook }) {
   const unitOf = (t: TargetRow) => (t.role_name === "department_head" ? `d${t.department_id ?? 0}` : `d${t.department_id ?? 0}:${t.unit_name}`);
 
   // ── السطر ──
-  // خطُّ «النصف» على الشريط (محمد ٢٠٢٦-١٠-٢٨)، والجملةُ تحت الرقم ما دام دونه وحده: «بقي 3»، أو «لم يبلغ النصف» بعد الإغلاق
   const members = (t: TargetRow): AdCell => {
     const q = quorumLine(t.members_ballots, t.members_eligible, closed);
     const need = Math.max(1, Math.ceil(t.members_eligible / 2)) - t.members_ballots;
     const n = `${t.members_ballots} من ${t.members_eligible}`;
-    const tone = q.met ? undefined : closed ? "bad" as const : "warn" as const;
-    // «درجاتُ الحدّ» (قطعةُ رأس الإنذارات): قطعٌ بعدد النصف تمتلئ بالأوراق، وتحتها كلمتُها
-    if (look.half === "steps") {
-      const half = Math.max(1, Math.ceil(t.members_eligible / 2));
-      return {
-        label: "الأعضاء", text: true, tone,
-        value: <span className="ad-ev-half">{n}<AdStepsBar steps={{ now: Math.min(t.members_ballots, half), max: half, tone: q.met ? "ok" : tone, label: q.met ? "بلغ النصف" : closed ? "لم يبلغ النصف" : `بقي ${need} لبلوغ النصف` }} /></span>,
-      };
-    }
-    // الكلمةُ وحدها: الشريطُ كما هو، والنصفُ جملةٌ تحت الرقم
-    if (look.half === "words") {
-      return { label: "الأعضاء", value: n, of: { now: t.members_ballots, max: t.members_eligible }, sub: q.text, tone };
-    }
+    // «القطعُ وكلمتُه» (اعتمده محمد ٢٠٢٦-١١-٢٠): الشريطُ مقطوعٌ عند نصفه وتحت القطع «النصف»، وما بقي له كلمةٌ مكانَ النسبة
     return {
-      label: "الأعضاء", value: n,
-      of: { now: t.members_ballots, max: t.members_eligible, mark: { at: 50, label: "النصف" } },
-      sub: q.met ? undefined : closed ? "لم يبلغ النصف" : `بقي ${need}`, tone,
+      label: "الأعضاء", value: n, tone: q.met ? undefined : closed ? "bad" : "warn",
+      of: { now: t.members_ballots, max: t.members_eligible, mark: { at: 50, label: "النصف" }, word: q.met ? undefined : closed ? "لم يبلغه" : `بقي ${need}` },
     };
   };
   const council = (t: TargetRow): AdCell => ({

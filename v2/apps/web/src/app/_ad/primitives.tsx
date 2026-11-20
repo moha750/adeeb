@@ -754,10 +754,13 @@ export function AdInfo({ m }: { m: AdMeta }) {
 export type AdMeterOf = {
   now: number; max: number; full?: string; note?: string;
   /**
-   * **علامةُ حدٍّ على الشريط** (محمد ٢٠٢٦-١١-٢٠، خطُّ «النصف» في إدارة التقييم كما اعتمده ٢٠٢٦-١٠-٢٨): خطٌّ رفيعٌ عند الحدّ وكلمتُه
-   * الصغيرة تحته. الموضعُ نسبةٌ من ثلاث (ربعٌ ونصفٌ وثلاثة أرباع) لأنّ الموضعَ صنفٌ في `ad.css` لا قيمةٌ مكتوبةٌ في السطر
+   * **حدٌّ على الشريط: «القطعُ وكلمتُه»** (اعتمده محمد ٢٠٢٦-١١-٢٠، «النصف» في إدارة التقييم): الشريطُ مقطوعٌ عند الحدّ بفجوةٍ من أرض سطره
+   * كثقب التذكرة، وتحت القطع كلمتُه الصغيرة. الموضعُ نسبةٌ من ثلاث (ربعٌ ونصفٌ وثلاثة أرباع) لأنّه صنفٌ في `ad.css` لا قيمةٌ في السطر.
+   * (رُفض: خطٌّ رفيعٌ فوق الشريط — مستوردٌ من الغرفة القديمة؛ ودرجاتُ الحدّ — لا تتّسع للّجان الكبيرة؛ والكلمةُ وحدها — ضعيفة.)
    */
   mark?: { at: 25 | 50 | 75; label: string };
+  /** كلمةُ الحال مكانَ النسبة والشريطُ ممتلئٌ بقدره («بقي 3» قبل الحدّ) — قاعدةُ الشريط: «الحالُ كلمةٌ مكانَ النسبة» */
+  word?: string;
 };
 /**
  * `ltr`: قيمةٌ لاتينيّة (رقمٌ مرجعيّ، رمز) تُكتب بالخطّ اللاتينيّ من أوّلها إلى آخرها كالبريد في سطور المعلومات — كانت بخطّ المتن
@@ -775,7 +778,7 @@ function meterOf(of?: AdMeterOf) {
   if (!of || !(of.max > 0 || of.note)) return null;
   const full = !!of.full && of.max > 0 && of.now >= of.max;
   const pct = of.max > 0 ? Math.round((Math.min(of.now, of.max) / of.max) * 100) : 0;
-  return { of, full, pct, word: of.note ?? (full ? of.full : undefined) };
+  return { of, full, pct, word: of.note ?? of.word ?? (full ? of.full : undefined) };
 }
 /** `seed` (معرّفُ السجلّ): يُقصّ قماشُ الكعب من موضعٍ يخصّه — فالكعوبُ قطعٌ مختلفةٌ من قماشٍ واحد لا نسخٌ متطابقة. */
 /** ستّةُ مواضع قصٍّ ثابتة (`ad.css`)، يختار المعرّفُ أحدَها — ثابتٌ للسجلّ نفسه بين الزيارات. */
@@ -1281,7 +1284,7 @@ export function AdStages({ stages, label }: { stages: AdStage[]; label: string }
 }
 
 /** درجاتُ حدٍّ في رأس مجموعة: `max` قطعًا تمتلئ منها `now` بنغمتها، وتحتها `label` كلمةً (`AdGroupHead.steps`). */
-export type AdSteps = { now: number; max: number; tone?: "warn" | "bad" | "ok"; label: string };
+export type AdSteps = { now: number; max: number; tone?: "warn" | "bad"; label: string };
 
 /** الدرجاتُ قطعةً واحدة — في رأس المجموعة (غرفةُ الإنذارات)، وفي رأس القسم (`AdSection.steps`: «إنذاراتي» في «عضويتي»، ٢٠٢٦-١١-١٤) */
 export function AdStepsBar({ steps }: { steps: AdSteps }) {

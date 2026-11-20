@@ -9,7 +9,7 @@ import { PageHeader } from "../../../dashboard/_components/PageHeader";
 import { MineA } from "../../../dashboard/evaluation/_views/MineA";
 import { RateA } from "../../../dashboard/evaluation/_views/RateA";
 import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
-import { EvaluationRoom, type EvaluationLook } from "../../../_ad/rooms/EvaluationRoom";
+import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
 import type { ElectorRow } from "../../../dashboard/evaluation/data";
 import { LabShell } from "../_lab/LabShell";
 import { DEPARTMENTS, DUE, committeesForReturn, person, viewFor, type Act, type ActResult, type SimState } from "./engine";
@@ -105,11 +105,9 @@ export function SimView() {
     );
   } else if (page === "room") {
     // مقارنةُ الهويّة (٢٠٢٦-١١-٢٠): الغرفةُ الجديدة بالخصائص نفسِها، والحاليّةُ كما هي
-    const qs = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const Room = qs?.get("look") === "new" ? EvaluationRoom : RoomRows;
-    const look = { half: (qs?.get("half") ?? undefined) as EvaluationLook["half"] };
+    const Room = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new" ? EvaluationRoom : RoomRows;
     body = (
-      <Room look={look}
+      <Room
         cycles={v.cycles}
         cycleId={cycleId}
         onCycle={setCycleId}
