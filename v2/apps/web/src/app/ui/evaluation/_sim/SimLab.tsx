@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, Button, CountBadge, Segmented, Select } from "@adeeb/design-system";
-import { Bell, EnvelopeSimple } from "@phosphor-icons/react";
+import { Bell, EnvelopeSimple, SlidersHorizontal } from "@phosphor-icons/react";
 import { ArrowCounterClockwise, ArrowLeft } from "@/app/_components/glyphs";
 import { percentText } from "@/lib/evaluation/score";
 import { Avatar } from "../../../dashboard/_components/Avatar";
@@ -29,6 +29,8 @@ export function SimLab() {
   const [size, setSize] = useState("1280");
   const [run, setRun] = useState(1);
   const frame = useRef<HTMLIFrameElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   // الحالُ الحاضرة لمعالجات الرسائل: تُحدَّث بعد الرسم، ويكتبها معالجُ الفعل نفسُه فورًا
   const live = useRef({ st, who, run });
   useEffect(() => {
@@ -57,10 +59,15 @@ export function SimLab() {
     return () => window.removeEventListener("message", on);
   }, [post]);
 
+  // في الجوّال الشاشةُ فوق اللوحة: من اختار شخصًا يُعاد إلى الشاشة ليرى بعينه، لا يبقى في القائمة
+  const narrow = () => typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches;
   const become = (id: string) => {
     setWho(id);
     setSt((s) => play(s, id));
+    if (narrow()) stage.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  const toPanel = () => panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const next = () => setSt((s) => play(advance(s), live.current.who));
   const restart = () => {
     setSt(applyScene(initialState(), scene));
     setRun((r) => r + 1);
@@ -71,11 +78,17 @@ export function SimLab() {
 
   return (
     <div className="evsim">
-      <aside className="evsim-panel">
+      <aside className="evsim-panel" ref={panel}>
         <header className="evsim-head">
-          <p className="evsim-k">محاكي</p>
+          <p className="evsim-k">تجربة</p>
           <h1>تقييم القيادات</h1>
-          <p className="evsim-sub">دورةٌ كاملة على أدِيبٍ صغير. الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، ولا شيء يُكتب أو يُرسَل.</p>
+          <p className="evsim-sub">دورةٌ كاملة على أدِيبٍ صغير. الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، والأسماءُ والأرقامُ متخيَّلة، ولا شيء يُكتب أو يُرسَل.</p>
+          {/* **دليلُ من يجرّب** (محمد ٢٠٢٦-١١-٢٠: المحاكي يُرسَل للمجلس الإداريّ ليجرّبوا النظام): ثلاثُ خطوات، لا شرحٌ للنظام */}
+          <ol className="evsim-guide">
+            <li><b>اختر من تكون</b><span>من «أنت الآن»: الرئيس، أو قائدٌ يُقيَّم، أو عضوٌ يقيّم قائده.</span></li>
+            <li><b>حرّك الزمن</b><span>«إلى 21 يناير» يفتح التقييم، ثمّ يومًا بعد يوم حتى يُغلق ويصدر الحكم.</span></li>
+            <li><b>جرّب وشاهد</b><span>قيّم، وافتح الجرس، وبدّل الشخص لترى ما رآه غيرُك. و«من البداية» يعيد كلَّ شيء.</span></li>
+          </ol>
         </header>
 
         <section className="evsim-sec">
@@ -89,7 +102,7 @@ export function SimLab() {
             ))}
           </ol>
           <div className="evsim-row">
-            <Button size="sm" disabled={closed} onClick={() => setSt((s) => play(advance(s), live.current.who))}>
+            <Button size="sm" disabled={closed} onClick={next}>
               {closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`}
               {closed ? null : <ArrowLeft aria-hidden />}
             </Button>
@@ -188,7 +201,18 @@ export function SimLab() {
         </section>
       </aside>
 
-      <div className="evsim-stage">
+      <div className="evsim-stage" ref={stage}>
+        {/* في الجوّال: الشاشةُ أوّلًا، وفوقها ما يُحتاج في كلّ لحظة — الزمنُ والطريقُ إلى اللوحة */}
+        <div className="evsim-dock">
+          <Button size="sm" disabled={closed} onClick={next}>
+            {closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`}
+            {closed ? null : <ArrowLeft aria-hidden />}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={toPanel}>
+            <SlidersHorizontal aria-hidden />
+            غيّر الشخص والحالة
+          </Button>
+        </div>
         <div className="evsim-stage-h">
           <span>
             ترى بعين <b>{person(st, who).name}</b>
