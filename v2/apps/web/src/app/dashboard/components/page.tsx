@@ -10,6 +10,9 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { ComponentsGallery } from "./ComponentsGallery";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "معرض المكوّنات، بوّابة أدِيب" };
+
 export default async function ComponentsPage() {
   const denied = await denyUnless("/dashboard/components");
   if (denied) return denied;

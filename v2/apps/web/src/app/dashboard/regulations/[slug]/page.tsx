@@ -7,6 +7,9 @@ import { RegEditorRoom } from "@/app/_ad/rooms/RegEditorRoom";
 import { requestNow } from "@/app/_ad/now";
 import { getRoomDoc, riyadhToday } from "../data";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "تحرير النظام، بوّابة أدِيب" };
+
 /**
  * **محرّرُ النظام على المنضدة** (`RegEditorRoom`، اعتمده محمد ٢٠٢٦-١١-١٦ بعد المختبر `/dashboard/ad/reg-editor`): الموادُّ قطعٌ تُحرَّر في
  * موضعها بالمحرّر المرئيّ، والمنضدةُ تُري الوثيقةَ كما ستُقرأ. وما يحتاجه العارضُ العامّ (المعاينات، ومن يُحال إليه) يُحسب هنا كما في صفحة القراءة.

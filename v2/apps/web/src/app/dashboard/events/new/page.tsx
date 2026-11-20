@@ -6,6 +6,9 @@ import { EventsDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { AdRoomError } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "فعاليّة جديدة، بوّابة أدِيب" };
+
 export default async function NewEventPage() {
   const denied = await denyUnless("/dashboard/events");
   if (denied) return denied;

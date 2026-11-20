@@ -6,6 +6,9 @@ import { LibraryDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { AdRoomError } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "تحرير المنشور، بوّابة أدِيب" };
+
 export default async function BookEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/library");
   if (denied) return denied;

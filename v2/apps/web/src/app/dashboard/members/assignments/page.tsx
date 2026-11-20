@@ -8,6 +8,9 @@ import { unitIconNodes } from "@/lib/unitIconCatalog";
 import { AssignmentsRoom } from "@/app/_ad/rooms/AssignmentsRoom";
 import { AdNote, AdRoom, RoomPlate } from "@/app/_ad/primitives";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "تعيين المناصب، بوّابة أدِيب" };
+
 /**
  * «تعيين المناصب» على الهويّة الجديدة منذ ٢٠٢٦-١١-١٤ (`_ad/rooms/AssignmentsRoom`، قالبُ «قائمة السجلّات»: المقاعدُ سطورٌ تحت رؤوس
  * وحداتها). والقديمُ (`./AssignmentsView` بلوحة المقاعد) باقٍ على القرص حتى التنظيف، ويقرؤه معرضُ `/ui/seats` وحده.

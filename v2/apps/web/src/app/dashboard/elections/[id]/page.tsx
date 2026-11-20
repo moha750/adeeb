@@ -7,6 +7,9 @@ import { exclusionViewer } from "@/lib/elections/exclusion";
 import { AdRoomDenied, AdRoomError } from "@/app/_ad/states";
 import { requestNow } from "@/app/_ad/now";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "الانتخاب، بوّابة أدِيب" };
+
 export default async function ElectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // تفصيلُ الانتخاب غرفةُ الإدارة والاطّلاع: يفتحه حاملُ `view_election_candidates`
   // (المديرون وأعضاء الموارد). ويُصرِّفه من يدير الانتخاب: المديرون الثلاثة (`manage_elections`)،

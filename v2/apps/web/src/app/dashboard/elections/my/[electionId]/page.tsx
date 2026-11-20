@@ -4,6 +4,9 @@ import { getMyCandidacies } from "../../member-data";
 import { MyCandidacyRoom } from "@/app/_ad/rooms/MyCandidacyRoom";
 import { AdRoomError, AdRoomMissing } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "الترشّح، بوّابة أدِيب" };
+
 /**
  * **صفحةُ الترشّح** — تحت «سِجلّ ترشُّحي» (`/my/[electionId]`)، بالهويّة (٢٠٢٦-١١-١٧، رحلةُ العضو ع٦): التذكرةُ بأفعالها، وما ينتظره،
  * والبيانُ والملفّ، وطلبُ الاستبعاد وإجابتُه، والرحلة. والتعديلُ صفحةٌ تليها (`/my/[electionId]/edit`). محروسةٌ بحارس السجلّ نفسِه،

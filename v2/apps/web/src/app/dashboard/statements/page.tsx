@@ -3,6 +3,9 @@ import { getStatementsRoom } from "./data";
 import { StatementsRoom } from "@/app/_ad/rooms/StatementsRoom";
 import { requestNow } from "@/app/_ad/now";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "البيانات الصادرة، بوّابة أدِيب" };
+
 export const dynamic = "force-dynamic";
 
 /**

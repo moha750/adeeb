@@ -3,6 +3,9 @@ import { getEvaluationViewer } from "@/lib/evaluation/authz";
 import { getCorrectionPeople, getCycles, getDepartments, getReturnCommittees, getTargets } from "./data";
 import { RoomView } from "./RoomView";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "إدارة التقييم، بوّابة أدِيب" };
+
 /**
  * **إدارة التقييم** — بقفل النتائج (`view_leader_evaluation_results`: الرئيسان وقائدا الإدارتين). والتصحيحُ
  * واختيارُ لجنة المنسّق المستبعَد لصاحب `manage_leader_evaluation` وحده (الرئيسان وقائدُ الموارد)، تسأل عنه

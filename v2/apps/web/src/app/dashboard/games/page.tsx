@@ -4,6 +4,9 @@ import { PageHeader } from "../_components/PageHeader";
 import { getBoards, getContests, getDays, getGames, getMetrics } from "./data";
 import { GamesRoomView } from "./GamesRoomView";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "ألعاب أدِيب، بوّابة أدِيب" };
+
 export const dynamic = "force-dynamic";
 
 /**

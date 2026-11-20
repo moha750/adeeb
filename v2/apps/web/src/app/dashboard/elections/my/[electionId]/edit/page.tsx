@@ -1,6 +1,9 @@
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { ApplyRouteBody } from "../../../_member/ApplyRouteBody";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "بيان ترشّحك، بوّابة أدِيب" };
+
 /**
  * **تعديلُ** الترشّح — يلي صفحةَ الترشّح (`/my/[electionId]/edit`) فيقرأ فتاتُها «بوّابة أدِيب ‹
  * سِجلّ ترشُّحي ‹ بيان الترشّح» ويعود إليها. يصلها العضو من زرّ التعديل في صفحة ترشّحه.

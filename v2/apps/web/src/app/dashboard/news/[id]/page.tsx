@@ -8,6 +8,9 @@ import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { requestNow } from "@/app/_ad/now";
 import { AdRoomError } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "غرفة تحرير أدِيب، بوّابة أدِيب" };
+
 export default async function NewsEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/news");
   if (denied) return denied;

@@ -6,6 +6,9 @@ import { exclusionViewer } from "@/lib/elections/exclusion";
 import { CandidacyRoom } from "@/app/_ad/rooms/CandidacyRoom";
 import { AdRoomDenied, AdRoomError } from "@/app/_ad/states";
 
+// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
+export const metadata = { title: "الترشّح، بوّابة أدِيب" };
+
 /**
  * **صفحةُ الترشّح** (٢٠٢٦-١١-١٧): البيانُ والملفُّ والقرار، بعنوانٍ لكلّ ترشّح يفتحه سطرُ المرشّح في غرفة الانتخاب وإشعارُ تقدّمه.
  * بابُها بابُ صفحة الانتخاب نفسُه: يفتحها حاملُ `view_election_candidates`، ويقرّر فيها من يدير الانتخاب (المديرون الثلاثة، ومشرفُ اللجنة
