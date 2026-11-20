@@ -12,7 +12,8 @@ import type { ElectionCreateOptions } from "./data";
  * فتح انتخابٍ جديد — نافذةٌ لا صفحة: المُدخَل منصبٌ ونطاقٌ وموعدُ إغلاق ترشّح،
  * فمكوّنات المكتبة (Modal · Select · Field · Button) تكفيه بلا تخطيطٍ شارد.
  * الخيارات المعروضة **متاحة فعلًا** (فارغة بلا انتخاب نشط لمقعدها)، والقاعدة تبقى
- * الحكَم النهائيّ عند الإنشاء. والموعدُ اختياريّ: فارغُه بابٌ يُغلق بيد المشرف.
+ * الحكَم النهائيّ عند الإنشاء. **والموعدُ إلزاميّ** (المادتان ٨ و٢٣، و`open_election` ترفض بلاه): كانت الخانةُ تقول «بلا موعد
+ * (يُغلق بيدك)» وتَعِد بـ«مدّ 24 ساعة» لا أصل له في النظام ولا القاعدة (٢٠٢٦-١١-١٩).
  */
 export function NewElectionDialog({ open, onClose, options }: { open: boolean; onClose: () => void; options: ElectionCreateOptions }) {
   const toast = useToast();
@@ -61,7 +62,7 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
       footer={
         <>
           <Button variant="ghost" size="md" onClick={close} disabled={pending}>إلغاء</Button>
-          <Button variant="primary" size="md" onClick={submit} loading={pending} disabled={!role || !scopeId}>فتح باب الترشّح</Button>
+          <Button variant="primary" size="md" onClick={submit} loading={pending} disabled={!role || !scopeId || !candidacyEnd}>فتح باب الترشّح</Button>
         </>
       }
     >
@@ -94,11 +95,11 @@ export function NewElectionDialog({ open, onClose, options }: { open: boolean; o
               type="datetime-local"
               icon={<CalendarBlank />}
               innerIcon={<Clock />}
-              placeholder="بلا موعد (يُغلق بيدك)"
-              helper="عند الموعد يُغلق الباب تلقائيًّا، وإن قلّ المرشّحون عن اثنين مُدّ 24 ساعة مرّةً واحدة."
+              placeholder="اختر الموعد"
+              helper="يُغلق الباب تلقائيًّا عند موعده، ولك أن تغيّره بعد الفتح بسببٍ يُبلَّغ به المصوّتون."
               value={candidacyEnd}
               onChange={(e) => setCandidacyEnd(e.target.value)}
-              optional
+              required
             />
           </>
         )

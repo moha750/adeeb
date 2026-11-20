@@ -4,7 +4,7 @@ import { describeCandidates } from "@/lib/actingCandidates";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { createClient } from "@/lib/supabase/server";
 import { firstAndLastOf } from "@/lib/personName";
-import { positionLine, positionParts } from "@/lib/positionLabel";
+import { positionLine, positionParts, rankFor } from "@/lib/positionLabel";
 import { describeEvent, type LogKind } from "./log";
 import type { CandidateStatus, ElectionStatus } from "./vocab";
 import type { RejectReason } from "./actions";
@@ -820,7 +820,13 @@ export async function getAppointableMembers(electionId: string): Promise<{ membe
 
 export type VoteDetailRow = {
   voter: string;
-  /** رتبتُه **ساعةَ صوّت** لا اليوم — لقطةٌ محفوظةٌ في الصوت نفسِه. */
+  /** صورتُه وجنسُه لوجه السطر، كوجوه المرشّحين (محمد ٢٠٢٦-١١-٢٠: «لماذا الأفاتار بهذا الشكل؟») */
+  voterAvatar: string | null;
+  voterGender: "male" | "female" | null;
+  /**
+   * منصبُه **ساعةَ صوّت** لا اليوم: رتبتُه بجنسه ووحدتُها («قائدة لجنة التصميم»). الرتبةُ لقطةٌ في الصوت نفسِه، والوحدةُ كذلك منذ الدفعة ٩
+   * (٢٠٢٦-١١-٢٠؛ محمد: «قادة من؟ لماذا يكتب فقط الدور؟»)، وما قبلها تقرؤه الدالّةُ من سجلّ المناصب بتاريخ الصوت.
+   */
   voterRole: string | null;
   candidateNumber: number | null;
   candidate: string | null;
@@ -842,7 +848,7 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
   // رسالةُ الدالّة عربيّةٌ من عندنا، فتُعرَض كما هي وإلّا فاحتياطيٌّ نظيف
   if (error) return { rows: [], error: /[؀-ۿ]/.test(error.message ?? "") ? error.message : "تعذّر جلب تفصيل الأصوات." };
 
-  type Row = { voter_name: string | null; voter_role: string | null; candidate_number: number | null; candidate_name: string | null; vote_weight: number | string | null; vote_choice: string | null; voted_at: string; voided_at?: string | null; void_reason?: string | null };
+  type Row = { voter_id: string | null; voter_name: string | null; voter_role: string | null; voter_unit?: string | null; candidate_number: number | null; candidate_name: string | null; vote_weight: number | string | null; vote_choice: string | null; voted_at: string; voided_at?: string | null; void_reason?: string | null };
   const raw = (data ?? []) as Row[];
 
   // لقطةُ الرتبة محفوظةٌ بالاسم البرمجيّ (`club_president`)، والشاشةُ عربيّة — فتُترجم من
@@ -855,9 +861,24 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
     for (const r of rRes?.data ?? []) roleAr.set(r.role_name as string, (r.role_name_ar as string | null) ?? (r.role_name as string));
   }
 
-  const rows: VoteDetailRow[] = raw.map((r) => ({
+  // **وجهُ المصوّت** صورتُه أو أفتارُ جنسه، كما في سطور المرشّحين — كان الأفتارُ العامّ (شخصٌ بلا جنس) لأنّ الدالّة لا تُخرج إلّا الاسم
+  const voterIds = [...new Set(raw.map((r) => r.voter_id).filter((x): x is string => !!x))];
+  const faceById = new Map<string, { avatar: string | null; gender: "male" | "female" | null }>();
+  if (voterIds.length) {
+    const svc = service();
+    const pRes = svc ? await svc.from("profiles").select("id, avatar_url, gender").in("id", voterIds) : null;
+    for (const p of pRes?.data ?? []) {
+      faceById.set(p.id as string, { avatar: (p.avatar_url as string | null) ?? null, gender: p.gender === "male" || p.gender === "female" ? p.gender : null });
+    }
+  }
+
+  const rows: VoteDetailRow[] = raw.map((r) => {
+    const gender = (r.voter_id && faceById.get(r.voter_id)?.gender) || null;
+    return {
     voter: r.voter_name ? firstAndLastOf(r.voter_name) : "عضوٌ محذوف",
-    voterRole: r.voter_role ? roleAr.get(r.voter_role) ?? r.voter_role : null,
+    voterAvatar: (r.voter_id && faceById.get(r.voter_id)?.avatar) || null,
+    voterGender: gender,
+    voterRole: r.voter_role ? positionLine(rankFor(roleAr.get(r.voter_role) ?? r.voter_role, gender), r.voter_unit ?? null) : null,
     candidateNumber: r.candidate_number ?? null,
     candidate: r.candidate_name ? firstAndLastOf(r.candidate_name) : null,
     weight: Number(r.vote_weight ?? 0),
@@ -865,7 +886,8 @@ export async function getVoteDetail(id: string): Promise<{ rows: VoteDetailRow[]
     at: fmtDateTime(r.voted_at),
     voided: !!r.voided_at,
     voidReason: (r.void_reason ?? null) as VoteDetailRow["voidReason"],
-  }));
+    };
+  });
   return { rows, error: null };
 }
 

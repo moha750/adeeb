@@ -18,7 +18,7 @@ import { shiftWorld, type SimWorld } from "./world";
  */
 export const SIM_EPOCH = Date.UTC(2026, 7, 20, 9, 0, 0);
 
-export type SimRoute = { screen: ScreenKey; id?: string };
+export type SimRoute = { screen: ScreenKey; id?: string; cid?: string };
 
 /** سطرٌ في «ما جرى» — كلُّ فعلٍ تفعله في الغرفة يُكتب بنتيجته، فيُقرأ الأثرُ بلا تخمين. */
 export type SimEvent = { id: number; at: number; text: string; ok: boolean };
@@ -53,6 +53,8 @@ export function routeOf(href: string): SimRoute | null {
   const rest = p.slice("/dashboard/elections".length).split("/").filter(Boolean);
   if (!rest.length) return { screen: "list" };
   const [head, a, b] = rest;
+  // صفحةُ الترشّح للمدير: `/dashboard/elections/[id]/candidates/[cid]`
+  if (a === "candidates" && b) return { screen: "candidate", id: head, cid: b };
   if (head === "run") return a ? { screen: "apply", id: a } : { screen: "run" };
   if (head === "vote") return a ? { screen: "ballot", id: a } : { screen: "vote" };
   if (head === "my") return a ? (b === "edit" ? { screen: "edit", id: a } : { screen: "candidacy", id: a }) : { screen: "my" };

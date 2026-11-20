@@ -1,21 +1,21 @@
 {
-  "measured": "2026-11-15",
+  "measured": "2026-11-20",
   "metrics": {
-    "font-size-raw": 649,
-    "font-size-distinct": 83,
-    "padding-raw": 522,
-    "gap-raw": 673,
-    "line-height-raw": 237,
-    "font-weight-off-scale": 183,
+    "font-size-raw": 634,
+    "font-size-distinct": 82,
+    "padding-raw": 514,
+    "gap-raw": 650,
+    "line-height-raw": 229,
+    "font-weight-off-scale": 174,
     "radius-px": 57,
-    "z-index-raw": 106,
-    "hex-css": 212,
-    "rgb-css": 85,
+    "z-index-raw": 102,
+    "hex-css": 210,
+    "rgb-css": 83,
     "empty-classes": 17,
-    "inline-style": 114,
+    "inline-style": 100,
     "hex-tsx": 23,
     "arabic-digit-helpers": 3,
-    "tailwind-utilities": 1077,
-    "tailwind-text-size": 86
+    "tailwind-utilities": 977,
+    "tailwind-text-size": 78
   }
 }

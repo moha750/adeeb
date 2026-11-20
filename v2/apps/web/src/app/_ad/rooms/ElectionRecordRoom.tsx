@@ -97,6 +97,8 @@ export type ElectionOps = {
   acting?: () => void;
   cancel?: () => void;
   share?: () => void;
+  /** رابطُ ورقة التصويت يُنسخ أو يُشارَك، والتصويتُ مفتوح */
+  shareBallot?: () => void;
   /** اختيارُ عضو المجلس الإداريّ في التعادل (المادة ٢٦) */
   chooseInTie?: () => void;
 };
@@ -281,7 +283,12 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
         : <AdNote tone="info" label="أُغلق الباب" title="التصويتُ ينتظر أن تفتحه">{`في البطاقة ${arCount(approved.length, CANDIDATE)}${approved.length === 1 ? "، فالتصويتُ تصويتُ ثقة" : ""}.`}</AdNote>;
     }
     if (e.status === "voting_open" && e.revoteOnly) return <AdNote tone="info" label="إعادة تصويت" title="لمن بطل صوته وحده">يُغلق آليًّا حين يصوّتون جميعًا.</AdNote>;
-    if (e.status === "voting_open") return <AdNote tone="ok" label="التصويت مفتوح" title={`${arCount(e.votes, VOTE)} حتى الآن`}>يُغلق آليًّا حين يصوّت الجميع.</AdNote>;
+    if (e.status === "voting_open") return (
+      <AdNote tone="ok" label="التصويت مفتوح" title={`${arCount(e.votes, VOTE)} حتى الآن`}
+        action={on.shareBallot && !readOnly ? <AdButton size="sm" icon={<ShareNetwork />} onClick={on.shareBallot}>رابط ورقة التصويت</AdButton> : undefined}>
+        يُغلق آليًّا حين يصوّت الجميع.
+      </AdNote>
+    );
     if (e.status === "voting_closed" && e.jointBlocking) return <AdNote tone="info" label="أُغلق التصويت" title="ينتظر إغلاقَ مقعدٍ آخر في القسم يشاركه مرشّحًا" />;
     if (e.status === "voting_closed") return <AdNote tone="info" label="أُغلق التصويت" title="تُعلن المنصّةُ الفائز" />;
     return null;
@@ -368,13 +375,15 @@ export function ElectionVotes({ votes }: { votes: VoteDetailRow[] }) {
         columns={[{ key: "for", label: "لمن", icon: <ListChecks />, text: true }, { key: "w", label: "الوزن", icon: <Trophy /> }, { key: "at", label: "متى", icon: <Clock />, text: true }]}>
         {votes.map((v, i) => (
           <AdRow key={`${v.voter}-${v.at}-${i}`}
-            face={{ name: v.voter }}
+            face={{ name: v.voter, src: v.voterAvatar, gender: v.voterGender }}
             title={v.voter}
             badge={v.voided ? <AdBadge tone="neutral">باطل</AdBadge> : undefined}
             sub={[...(v.voterRole ? [{ icon: <UserCircle />, text: v.voterRole }] : []), ...(v.voided && v.voidReason ? [{ icon: <Info />, text: VOID_REASON[v.voidReason] ?? "بطل", tone: "warn" as const }] : [])]}
             cells={[
               { label: "لمن", value: v.choice === "reject" ? "اعتراض" : v.candidate ?? "—", text: true, tone: v.choice === "reject" ? "bad" : undefined },
-              { label: "الوزن", value: fmtNum(v.weight) },
+              // **الوزنُ مقابلَ اسمه** (محمد ٢٠٢٦-١١-٢٠ في الجوّال: «لماذا الوزن الرقم ليس مقابلًا له؟»): رقمٌ وحيدٌ بين خليّتين نصّيّتين
+              // كان يُرسم في الضيّق حصّةَ أرقام (اسمُه فوق قيمته). فيُعلَّم نصًّا: اسمُه في أوّل السطر وقيمتُه في طرفه كجارَيه، والجدولُ كما هو
+              { label: "الوزن", value: fmtNum(v.weight), text: true },
               { label: "متى", value: v.at, text: true },
             ]}
             acts={null}

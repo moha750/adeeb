@@ -7,7 +7,7 @@
 
 import { fmtDate, fmtMonthYear, fmtStamp } from "@/lib/dates";
 import { firstAndLastOf } from "@/lib/personName";
-import { positionLine, positionParts } from "@/lib/positionLabel";
+import { positionLine, positionParts, rankFor } from "@/lib/positionLabel";
 import { describeEvent, type LogKind } from "@/app/dashboard/elections/log";
 import type {
   AppointOption, CandidateRow, ElectionCreateOptions, ElectionDetail, ElectionLogEvent, ElectionRow, FreezeState, LinkedSeat, TieState, VoteDetailRow,
@@ -273,7 +273,9 @@ export function toVoteDetail(w: SimWorld, electionId: string): VoteDetailRow[] {
       const candMember = cand ? memberIn(w, cand.userId) : null;
       return {
         voter: firstAndLastOf(memberIn(w, v.voterId)?.name ?? "عضوٌ محذوف"),
-        voterRole: roleAr(v.roleSnapshot),
+        voterAvatar: null,
+        voterGender: memberIn(w, v.voterId)?.gender ?? null,
+        voterRole: rankFor(roleAr(v.roleSnapshot), memberIn(w, v.voterId)?.gender ?? null),
         candidateNumber: cand?.number ?? null,
         candidate: candMember ? firstAndLastOf(candMember.name) : null,
         weight: v.weight,

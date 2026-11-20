@@ -2,16 +2,18 @@
 
 import { Fragment, useMemo, type ReactNode } from "react";
 import { arCount, type ArForms } from "@/lib/arabicCount";
-import { AdBadge, AdButton, AdDayTile, AdInfo, type AdMeta, type AdTone } from "./primitives";
-import { dayName, fmtClock, localDay } from "./format";
+import { AdBadge, AdButton, AdInfo, type AdMeta, type AdTone } from "./primitives";
+import { dayName, fmtClock, fmtDayFull, localDay } from "./format";
 
 /**
  * **سجلُّ الأحداث** (محمد ٢٠٢٦-١١-٠٢: «إذا ترى أن نحتاج أن نصمّم سجلّ الأحداث فبسم الله»): ما جرى، مَن فعله، ومتى — لا سجلّاتٌ
- * تُدار بل وقائعُ تُقرأ. فشكلُه **خطٌّ زمنيٌّ واحد** لا جدول: يمرّ بكعوب الأيّام (قطعةُ الجدول نفسُها: رقمُ اليوم وتحته شهرُه،
- * وبجانبها «اليوم» أو «أمس» أو «الخميس») وبنقاط الوقائع تحت كلّ يوم، الأحدثُ أوّلًا. الواقعةُ: ساعتُها في البداية، ورمزُ
- * نوعها في نقطتها بنغمته، ثمّ ما وقعت عليه بخطّ العنوان ونوعُها شارةً وحالُها بجانبه، وما تغيّر ومَن فعله تحته — **في عمودٍ
- * واحدٍ تقرؤه العينُ نازلةً** لا في طرفٍ بعيد. والمتكرّرُ المتتالي (`same`) سطرٌ واحدٌ بعدده («4 مرّات»).
+ * تُدار بل وقائعُ تُقرأ، الأحدثُ أوّلًا. والمتكرّرُ المتتالي (`same`) سطرٌ واحدٌ بعدده («4 مرّات»).
  * كان «ما الذي جرى» جدولًا بستّة أعمدة — المعلومةُ نفسُها، لكنّ الجدولَ يقرأ كلَّ عمودٍ وحده، والواقعةُ جملةٌ تُقرأ مرّةً.
+ *
+ * **وشكلُه سطورُ الهويّة** (`.ad-line`، قرار محمد ٢٠٢٦-١١-٢٠ بعد مقارنةٍ على سجلّ انتخابٍ حقيقيّ: «أريح للعين وأفضل للقراءة»)، كـ«رحلة
+ * ترشّحك»، لا الخطُّ الزمنيّ بكعوب الأيّام الذي كان قبله: فلا يبقى للسجلّ شكلان في الموقع. كلُّ يومٍ شريطٌ هادئ («الأحد، 16 أغسطس 2026»
+ * وعددُ أحداثه)، والواقعةُ تحته: رمزُ نوعها بنغمته في مربّعه، ثمّ جملتُها، ثمّ الفاعلُ والملاحظةُ **كلٌّ بأيقونته** — وهو ما أبقاه محمد
+ * من الخطّ الزمنيّ («طريقة عرض الوقت وبيد الشخص أجمل») — والساعةُ وحدها في طرف السطر، فتُقرأ عمودًا تحت شريط اليوم.
  */
 export type AdLogEvent = {
   /** رمزُ نوع الواقعة في نقطتها */
@@ -61,7 +63,7 @@ export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now,
   bare?: boolean;
   /** عددُ الرأس حين يُعرض بعضُ السجلّ (`more`): الكلُّ لا المعروض */
   total?: number;
-  /** ذيلٌ داخل السجلّ تحت خطّه («عرض بقيّة السجلّ») */
+  /** ذيلٌ داخل السجلّ تحت سطوره («عرض بقيّة السجلّ») */
   more?: ReactNode;
 }) {
   const days = useMemo(() => {
@@ -77,69 +79,76 @@ export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now,
     }
     return out;
   }, [items, at, same]);
-
+  const lines = (
+    <ul className="ad-lines ad-log">
+      {days.map((d) => (
+        <Fragment key={d.key}>
+          {/* عنوانُ اليوم شريطٌ هادئ: يُعرَف به أين يبدأ يومٌ في عشرين حدثًا، ولا يزاحم كعبَ التذكرة في رأس الصفحة */}
+          <li className="ad-log-day">
+            <span>{`${dayName(d.iso, now)}، ${fmtDayFull(d.iso)}`}</span>
+            <small>{arCount(d.runs.reduce((n, r) => n + r.length, 0), noun)}</small>
+          </li>
+          {d.runs.map((run) => {
+            const it = run[0];
+            const e = event(it);
+            return (
+              <li key={idOf(it)} className="ad-line">
+                <div className="ad-line-hit">
+                  <span className="ad-line-ic" data-tone={e.tone === "neutral" ? undefined : e.tone} aria-hidden>{e.icon}</span>
+                  <span className="ad-line-kv">
+                    <span className="ad-line-v ad-log-v">
+                      <span>{e.title}</span>
+                      {e.label && <AdBadge tone={e.tone}>{e.label}</AdBadge>}
+                      {run.length > 1 && <span className="ad-log-times">{arCount(run.length, AR_TIMES)}</span>}
+                      {e.side}
+                    </span>
+                    {/* **كلُّ معلومةٍ بأيقونتها** كما كان في الخطّ الزمنيّ (محمد ٢٠٢٦-١١-٢٠: «طريقة عرض… بيد الشخص أجمل»): الفاعلُ
+                        والملاحظةُ في سطر المعلومات نفسِه، لا جملةً رماديّةً واحدة يُضغط فيها كلُّ شيء */}
+                    {(e.change || (e.meta && e.meta.length > 0)) && (
+                      <span className="ad-row-sub ad-log-sub">
+                        {e.change && <span className="ad-row-info">{e.changeIcon}<span>{e.change}</span></span>}
+                        {e.meta?.map((m) => <AdInfo key={m.text} m={m} />)}
+                      </span>
+                    )}
+                  </span>
+                  {/* والساعةُ في طرف السطر وحدها: تُقرأ عمودًا واحدًا تحت شريط اليوم */}
+                  <time className="ad-log-at" dateTime={at(it)}>{fmtClock(at(it))}</time>
+                </div>
+                {(e.open || e.acts) && (
+                  <div className="ad-log-acts">
+                    {e.open && (e.open.href ? (
+                      <a className="ad-btn ad-btn-soft ad-btn-sm" href={e.open.href} target="_blank" rel="noreferrer">{e.open.icon}{e.open.label}</a>
+                    ) : (
+                      <AdButton variant="soft" size="sm" icon={e.open.icon} onClick={e.open.onClick ?? (() => undefined)}>{e.open.label}</AdButton>
+                    ))}
+                    {e.acts}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </Fragment>
+      ))}
+    </ul>
+  );
+  const body = days.length === 0 && empty ? (
+    <div className="ad-log-empty"><strong>{empty.title}</strong><span>{empty.text}</span></div>
+  ) : lines;
+  if (bare) return <div className="ad-log-bare">{body}{more && <div className="ad-log-more">{more}</div>}</div>;
   return (
-    <section className="ad-log" data-bare={bare || undefined} aria-label={title}>
+    <section className="ad-sec" aria-label={title}>
       {title && (
-        <header className="ad-log-head">
-          <span className="ad-log-head-icon" aria-hidden>{icon}</span>
-          <h2 className="ad-log-title">{title}</h2>
-          {(total ?? items.length) > 0 && <span className="ad-log-count">{arCount(total ?? items.length, noun)}</span>}
+        <header className="ad-sec-head">
+          <span className="ad-sec-ic" aria-hidden>{icon}</span>
+          <span className="ad-sec-t">
+            <h2>{title}</h2>
+            {(total ?? items.length) > 0 ? <p>{arCount(total ?? items.length, noun)}</p> : null}
+          </span>
         </header>
       )}
-      {days.length === 0 && empty ? (
-        <div className="ad-log-empty">
-          <strong>{empty.title}</strong>
-          <span>{empty.text}</span>
-        </div>
-      ) : (
-        <div className="ad-log-flow">
-          {days.map((d) => (
-            <Fragment key={d.key}>
-              <h3 className="ad-log-row ad-log-day">
-                <span className="ad-log-axis"><AdDayTile iso={d.iso} /></span>
-                <span className="ad-log-day-l">
-                  {dayName(d.iso, now)}
-                  <span className="ad-log-day-n">{arCount(d.runs.reduce((n, r) => n + r.length, 0), noun)}</span>
-                </span>
-              </h3>
-              <ol className="ad-log-list">
-                {d.runs.map((run) => {
-                  const it = run[0];
-                  const e = event(it);
-                  return (
-                    <li key={idOf(it)} className="ad-log-row ad-log-item" data-tone={e.tone === "neutral" ? undefined : e.tone}>
-                      <time className="ad-log-time" dateTime={at(it)}>{fmtClock(at(it))}</time>
-                      <span className="ad-log-axis"><span className="ad-log-dot" aria-hidden>{e.icon}</span></span>
-                      <div className="ad-log-body">
-                        <div className="ad-log-line">
-                          <span className="ad-log-obj">{e.title}</span>
-                          {e.label && <AdBadge tone={e.tone}>{e.label}</AdBadge>}
-                          {run.length > 1 && <span className="ad-log-times">{arCount(run.length, AR_TIMES)}</span>}
-                          {e.side}
-                        </div>
-                        {(e.change || (e.meta && e.meta.length > 0) || e.open) && (
-                          <span className="ad-row-sub">
-                            {e.change && <span className="ad-row-info">{e.changeIcon}<span>{e.change}</span></span>}
-                            {e.meta?.map((m) => <AdInfo key={m.text} m={m} />)}
-                            {e.open && (e.open.href ? (
-                              <a className="ad-btn ad-btn-soft ad-btn-sm" href={e.open.href} target="_blank" rel="noreferrer">{e.open.icon}{e.open.label}</a>
-                            ) : (
-                              <AdButton variant="soft" size="sm" icon={e.open.icon} onClick={e.open.onClick ?? (() => undefined)}>{e.open.label}</AdButton>
-                            ))}
-                          </span>
-                        )}
-                        {e.acts && <div className="ad-log-acts">{e.acts}</div>}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </Fragment>
-          ))}
-        </div>
-      )}
-      {more && <div className="ad-log-more">{more}</div>}
+      {body}
+      {more && <div className="ad-sec-foot ad-log-more">{more}</div>}
     </section>
   );
+
 }
