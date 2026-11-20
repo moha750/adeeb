@@ -65,7 +65,7 @@ function withSubject(label: string, name: string): string {
   return `${label}: ${name}`;
 }
 
-export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0, foot }: Props & { foot?: ReactNode }) {
+export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0 }: Props) {
   const [all, setAll] = useState(false);
   const capped = initial > 0 && !all && events.length > initial;
   // الأحدثُ أوّلًا، والمعروضُ رأسُ القائمة: يُقتطع ذيلُها (وهو **أقدمُ** ما جرى) فيُفتح بزرٍّ تحته.
@@ -98,7 +98,6 @@ export function ElectionLog({ events, now, title, icon, subjectOf, initial = 0, 
         same={same}
         noun={AR_EVENT}
         now={now}
-        foot={foot}
         empty={{ title: "لا أحداث في هذا الانتخاب بعد", text: "كلُّ فعلٍ فيه يُقيَّد هنا بفاعله ولحظته." }}
         more={capped ? (
           <AdButton variant="soft" icon={<CaretDown />} onClick={() => setAll(true)}>

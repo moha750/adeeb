@@ -934,10 +934,6 @@
 .ad-meta-line { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; }
 .ad-meta-line > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ad-meta-line svg { inline-size: var(--space-4); block-size: var(--space-4); }
-/* فعلُ الحقيقة بجانبها (`AdMeta.act`): كلمةٌ بحبر الهويّة بخطٍّ تحتها، لا صندوقٌ يزاحم أفعالَ التذكرة */
-.ad-meta-line > .ad-meta-act { flex: none; padding: 0; border: 0; background: none; font: inherit; font-weight: var(--ad-w-bold); color: var(--ad-brand); cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: var(--space-1); }
-.ad-meta-line > .ad-meta-act:hover { color: var(--ad-ink-head); }
-.ad-meta-line > .ad-meta-act:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; border-radius: var(--ad-r-sm); }
 /* سطرُ الحال بلون حاله (رمزًا ونصًّا) — نغماتُ الحال نفسُها في الشارة والسطر الصادق */
 :is(.ad-meta-line, .ad-row-info)[data-tone="ok"] { color: var(--ad-ok); font-weight: var(--ad-w-medium); }
 :is(.ad-meta-line, .ad-row-info)[data-tone="warn"] { color: var(--ad-warn); font-weight: var(--ad-w-medium); }

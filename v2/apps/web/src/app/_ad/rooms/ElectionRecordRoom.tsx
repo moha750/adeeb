@@ -115,8 +115,7 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
   hrLeader?: boolean;
   on?: ElectionOps;
   /** السجلُّ والأصواتُ قطعتان قائمتان (`ElectionLog`، جدولُ الأصوات) يرسمهما صاحبُ الصفحة تحت المرشّحين */
-  /** أو دالّةٌ تأخذ قاعَ السجلّ («إلغاء الانتخاب») فتضعه تحته */
-  logView?: ReactNode | ((foot: ReactNode) => ReactNode);
+  logView?: ReactNode;
   votesView?: ReactNode;
 }) {
   const status = STATUS_META[e.status];
@@ -170,22 +169,14 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
     }
   })();
 
-  /*
-   * **في الرأس العودةُ والأساسيُّ وحدهما** (محمد ٢٠٢٦-١١-٢٠: «ألا ترى أن أصبحت الأزرار الآن مزدحمة؟»، وحلُّها حلُّ «صفحة ترشّحي»: «٣ أزرار
-   * مرّة كثير»). وما كان في «المزيد» يقف حيث يعمل: «تعديل الموعد» بجانب سطر الموعد، و«إعادة فتح الباب» في تنبيه «أُغلق الباب»،
-   * والتعيينُ والتكليف في تنبيه التعثّر، و«إلغاء الانتخاب» في قاع السجلّ كالانسحاب في قاع «رحلة ترشّحك». والمطّلِعُ لا يفعل، إلّا المشاركة
-   */
-  const opOf = (key: string) => (readOnly ? undefined : plan.more.find((o) => o.key === key));
+  // الأساسيُّ ظاهرٌ وما سواه في «المزيد» (`AdActs`، قاعدةُ أفعال السجلّ)؛ والإلغاءُ وحده صندوقُ الخطر بختمه. والمطّلِعُ لا يفعل، إلّا المشاركة
   const acts = (() => {
     const p = plan.primary;
     if (readOnly) return e.status === "completed" && p?.onClick ? <AdButton variant="fill" size="sm" icon={p.icon} onClick={p.onClick}>{p.label}</AdButton> : null;
-    return p ? <AdButton variant="fill" size="sm" icon={p.icon} onClick={p.onClick ?? (() => {})}>{p.label}</AdButton> : null;
+    if (p) return <AdActs primary={{ label: p.label, icon: p.icon, onClick: p.onClick ?? (() => {}) }} ops={plan.more} />;
+    const only = plan.more[0];
+    return only ? <AdButton variant="danger" size="sm" icon={only.icon} onClick={only.onClick ?? (() => {})}>{only.label}</AdButton> : null;
   })();
-  const deadlineAct = opOf("deadline") ? { label: "تعديل الموعد", onClick: opOf("deadline")!.onClick } : undefined;
-  const reopenAct = opOf("reopen");
-  const appointActs = plan.more.filter((o) => !readOnly && (o.key === "appoint" || o.key === "acting"));
-  const cancel = opOf("cancel");
-  const foot = cancel ? <AdButton variant="danger" size="sm" icon={cancel.icon} onClick={cancel.onClick ?? (() => {})}>{cancel.label}</AdButton> : null;
 
   /* ── الكعب: موعدُ الطور القائم، أو يومُ الإعلان أو الإلغاء ── */
   // الكعبُ أهمُّ معلومةٍ في السجلّ: موعدُ الطور القائم، أو يومُ انتهى (الباب أو التصويت)، أو يومُ الإعلان أو الإلغاء
@@ -204,8 +195,8 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
   const info: AdMeta[] = [
     ...(e.scopeLabel ? [{ icon: <UsersThree />, text: e.scopeLabel }] : []),
     ...(e.status === "candidacy_open" && !e.stalled
-      ? [e.candidacyEnd ? { icon: <Timer />, text: `يُغلق باب الترشّح ${e.candidacyEnd}`, act: deadlineAct } : { icon: <Hourglass />, text: "بلا موعد: تُغلقه إدارة الموارد البشرية", tone: "warn" as const, act: deadlineAct }] : []),
-    ...(e.status === "voting_open" && e.votingEnd ? [{ icon: <Timer />, text: `يُغلق التصويت ${e.votingEnd}، أو حين يصوّت الجميع`, act: deadlineAct }] : []),
+      ? [e.candidacyEnd ? { icon: <Timer />, text: `يُغلق باب الترشّح ${e.candidacyEnd}` } : { icon: <Hourglass />, text: "بلا موعد: تُغلقه إدارة الموارد البشرية", tone: "warn" as const }] : []),
+    ...(e.status === "voting_open" && e.votingEnd ? [{ icon: <Timer />, text: `يُغلق التصويت ${e.votingEnd}، أو حين يصوّت الجميع` }] : []),
     // **ما يحسم الفوز سطرًا واحدًا** («مصطلحات الانتخابات» ٢٠٢٦-١١-١٧، البند ١): الرقمان بجانب كلّ مرشّح لا يُفهمان بلا قاعدتهما (المادتان ١٩ و٢٦)
     ...(showTotals && votingStarted && e.status !== "cancelled"
       ? [{ icon: <Scales />, text: e.confidence ? "يُوزن كلّ صوتٍ بمنصب صاحبه، ويفوز إن زاد وزن التأييد على الاعتراض" : "يُوزن كلّ صوتٍ بمنصب صاحبه، ويفوز الأعلى وزنًا" }] : []),
@@ -266,8 +257,7 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
         </AdNote>
       );
     }
-    if (e.stalled) return <AdNote tone="warn" label="تعثّر المقعد" title={stallText}
-      action={appointActs.length ? <>{appointActs.map((o) => <AdButton key={o.key} size="sm" icon={o.icon} onClick={o.onClick ?? (() => {})}>{o.label}</AdButton>)}</> : undefined}>{canAppoint ? "أعِد فتح الباب بموعدٍ جديد، أو عيّن في المقعد، أو ألغِ الانتخاب." : "أعِد فتح الباب بموعدٍ جديد، أو ألغِ الانتخاب."}</AdNote>;
+    if (e.stalled) return <AdNote tone="warn" label="تعثّر المقعد" title={stallText}>{canAppoint ? "أعِد فتح الباب بموعدٍ جديد، أو عيّن في المقعد، أو ألغِ الانتخاب." : "أعِد فتح الباب بموعدٍ جديد، أو ألغِ الانتخاب."}</AdNote>;
     if (revote === "partial") return <AdNote tone="warn" label="أُغلق التصويت" title="انتهى ترشّحٌ بعد الإغلاق، فبطلت أصوات من صوّتوا له">افتح إعادة التصويت لهم وحدهم بموعدٍ وسبب.</AdNote>;
     if (revote === "full") return <AdNote tone="warn" label="أُغلق التصويت" title="لم يبقَ إلّا مرشّحٌ واحد، فيُعاد التصويت تصويتَ ثقة">افتح إعادة التصويت للجميع بموعدٍ وسبب.</AdNote>;
     if (tie) {
@@ -289,10 +279,8 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
     if (e.status === "candidacy_closed") {
       const stuck = e.candidates.filter((c) => c.status === "pending" || c.status === "needs_edit" || c.status === "frozen");
       return stuck.length
-        ? <AdNote tone="warn" label="أُغلق الباب" title="لا يُفتح التصويت قبل أن يُحسم كلُّ ترشّح"
-            action={reopenAct ? <AdButton size="sm" icon={reopenAct.icon} onClick={reopenAct.onClick ?? (() => {})}>{reopenAct.label}</AdButton> : undefined}>{stuck.map((c) => `${firstAndLastOf(c.name)}: ${candBadge(c).label}`).join("، ")}.</AdNote>
-        : <AdNote tone="info" label="أُغلق الباب" title="التصويتُ ينتظر أن تفتحه"
-            action={reopenAct ? <AdButton size="sm" icon={reopenAct.icon} onClick={reopenAct.onClick ?? (() => {})}>{reopenAct.label}</AdButton> : undefined}>{`في البطاقة ${arCount(approved.length, CANDIDATE)}${approved.length === 1 ? "، فالتصويتُ تصويتُ ثقة" : ""}.`}</AdNote>;
+        ? <AdNote tone="warn" label="أُغلق الباب" title="لا يُفتح التصويت قبل أن يُحسم كلُّ ترشّح">{stuck.map((c) => `${firstAndLastOf(c.name)}: ${candBadge(c).label}`).join("، ")}.</AdNote>
+        : <AdNote tone="info" label="أُغلق الباب" title="التصويتُ ينتظر أن تفتحه">{`في البطاقة ${arCount(approved.length, CANDIDATE)}${approved.length === 1 ? "، فالتصويتُ تصويتُ ثقة" : ""}.`}</AdNote>;
     }
     if (e.status === "voting_open" && e.revoteOnly) return <AdNote tone="info" label="إعادة تصويت" title="لمن بطل صوته وحده">يُغلق آليًّا حين يصوّتون جميعًا.</AdNote>;
     if (e.status === "voting_open") return (
@@ -359,7 +347,7 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
       table={table}
       renderCard={row}
       renderRow={row}
-      after={<>{votesView}{typeof logView === "function" ? logView(foot) : <>{logView}{foot ? <section className="ad-sec"><div className="ad-sec-foot ad-elw-pg-acts">{foot}</div></section> : null}</>}</>}
+      after={<>{votesView}{logView}</>}
     />
   );
 }
