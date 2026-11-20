@@ -1,16 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "@adeeb/design-system";
 import { IdentificationCard } from "@phosphor-icons/react";
 import type { InboxItem } from "@/lib/notifications/types";
 import { EmptyState } from "../../../dashboard/_components/EmptyState";
 import { PageHeader } from "../../../dashboard/_components/PageHeader";
-import { MineA } from "../../../dashboard/evaluation/_views/MineA";
-import { RateA, type SubmitFn } from "../../../dashboard/evaluation/_views/RateA";
+import type { SubmitFn } from "../../../dashboard/evaluation/_views/RateA";
+import { RateView } from "../../../dashboard/evaluation/rate/RateView";
+import { MineView } from "../../../dashboard/evaluation/mine/MineView";
 import { RateRoom } from "../../../_ad/rooms/RateRoom";
 import { MineRoom } from "../../../_ad/rooms/MineRoom";
-import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
 import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
 import type { ElectorRow } from "../../../dashboard/evaluation/data";
 import { LabShell } from "../_lab/LabShell";
@@ -83,37 +82,22 @@ export function SimView() {
 
   let body: React.ReactNode;
   if (page === "rate") {
-    const isNew = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new";
     const submit = (i: Parameters<SubmitFn>[0]) => send({ kind: "submit", as: persona, ...i });
     body = v.sheets.length ? (
-      isNew ? (
-        <RateRoom sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit}
-          loadMine={async (id) => (await send({ kind: "myBallot", as: persona, targetId: id })).ballot ?? null} />
-      ) : (
-        <RateA sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit} />
-      )
+      <RateRoom sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit}
+        loadMine={async (id) => (await send({ kind: "myBallot", as: persona, targetId: id })).ballot ?? null} />
     ) : (
-      <>
-        <PageHeader title="قيّم القيادات" />
-        <Alert tone="neutral">لا تقييمَ مفتوحٌ لك الآن.</Alert>
-      </>
+      <RateView sheets={[]} error={null} userId="" />
     );
   } else if (page === "mine") {
     body = v.results.length ? (
-      typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new"
-        ? <MineRoom results={v.results} comments={v.comments} gender={me.gender} />
-        : <MineA results={v.results} comments={v.comments} gender={me.gender} />
+      <MineRoom results={v.results} comments={v.comments} gender={me.gender} />
     ) : (
-      <>
-        <PageHeader title="نتيجتي" />
-        <Alert tone="neutral">لا نتيجةَ لك بعد.</Alert>
-      </>
+      <MineView results={[]} comments={{}} gender={me.gender} error={null} />
     );
   } else if (page === "room") {
-    // مقارنةُ الهويّة (٢٠٢٦-١١-٢٠): الغرفةُ الجديدة بالخصائص نفسِها، والحاليّةُ كما هي
-    const Room = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new" ? EvaluationRoom : RoomRows;
     body = (
-      <Room
+      <EvaluationRoom
         cycles={v.cycles}
         cycleId={cycleId}
         onCycle={setCycleId}

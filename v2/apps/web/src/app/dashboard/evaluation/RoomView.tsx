@@ -1,13 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Alert } from "@adeeb/design-system";
-import { PageHeader } from "../_components/PageHeader";
+import { ClipboardText } from "@phosphor-icons/react";
+import { WarningCircle } from "@/app/_components/glyphs";
+import { AccountRoom } from "@/app/_ad/account";
+import { AdEmpty } from "@/app/_ad/primitives";
+import { EvaluationRoom } from "@/app/_ad/rooms/EvaluationRoom";
 import { chooseReturn, correctRater, loadElectorate, recomputeTarget } from "./actions";
 import type { CycleRow, TargetRow } from "./data";
-import { RoomRows } from "./_views/RoomRows";
 
-/** غرفةُ الإدارة: «أقسامٌ وصفوف» (اختيار محمد ٢٠٢٦-١٠-٢٧). تبديلُ الدورة مسارٌ (`?cycle=`) لا حالة، فيُحفظ ويُرسَل. */
+/**
+ * غرفةُ الإدارة على الهويّة (`_ad/rooms/EvaluationRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «أقسامٌ وصفوف» (`_views/RoomRows`).
+ * تبديلُ الدورة مسارٌ (`?cycle=`) لا حالة، فيُحفظ ويُرسَل.
+ */
 export function RoomView(props: {
   cycles: CycleRow[];
   cycleId: number | null;
@@ -22,14 +27,15 @@ export function RoomView(props: {
   const router = useRouter();
   if (props.error || props.cycleId === null) {
     return (
-      <>
-        <PageHeader title="إدارة التقييم" />
-        <Alert tone={props.error ? "warning" : "neutral"}>{props.error ?? "لا دورةَ تقييمٍ بعد."}</Alert>
-      </>
+      <AccountRoom navPath="/dashboard/evaluation" title="إدارة التقييم">
+        {props.error
+          ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة التقييم" desc={props.error} />
+          : <AdEmpty icon={<ClipboardText />} title="لا دورةَ تقييمٍ بعد" desc="تُفتح أوّلُ دورةٍ في موعدها، ويُعرف مقيَّموها يومَ فتحها." />}
+      </AccountRoom>
     );
   }
   return (
-    <RoomRows
+    <EvaluationRoom
       cycles={props.cycles}
       cycleId={props.cycleId}
       onCycle={(id) => router.push(`/dashboard/evaluation?cycle=${id}`)}

@@ -453,6 +453,9 @@ export function CollectionRoom<T>({
     return out;
   };
 
+  // **بلا سجلّاتٍ أصلًا: الفراغُ وحده بلا مبدّلٍ ولا أدوات** (قالبُ السجلّ ٢٠٢٦-١١-٠٧) — لرأس السجلّ، ولغرفةٍ لها قسمٌ يتقدّمها (`lead`:
+  // دورةُ التقييم القادمة، ٢٠٢٦-١١-٢٠: «الكلّ 0، دون النصف 0» وبحثٌ في لا شيء تحت قسمٍ يقول إنّها لم تُفتح). وبقيّةُ الغرف كما كانت
+  const bare = !!recordHead || !!lead;
   let body: ReactNode;
   if (items.length === 0) {
     body = <AdEmpty icon={roomIcon} title={emptyAll.title} desc={emptyAll.desc} action={createAction} />;
@@ -554,10 +557,10 @@ export function CollectionRoom<T>({
       <div ref={head} className="ad-room-head">
         {recordHead ?? <RoomPlate title={title} crumb={crumb} action={action} extra={extra} />}
         {lead}
-        {plates.length > 1 && !(recordHead && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
+        {plates.length > 1 && !(bare && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
       </div>
       {typeof notice === "function" ? notice({ choose }) : notice}
-      {current.board || (recordHead && items.length === 0) ? null : selectable && picked.length > 0 ? (
+      {current.board || (bare && items.length === 0) ? null : selectable && picked.length > 0 ? (
         <AdSelBar
           count={picked.length}
           noun={noun}

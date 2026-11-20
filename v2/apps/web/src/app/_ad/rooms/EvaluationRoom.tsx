@@ -144,14 +144,15 @@ export function EvaluationRoom(props: RoomProps) {
     { key: "verdict", label: "الحكم والتنفيذ", date: addDays(cycle.due_on, 3), icon: <Gavel /> },
   ];
   const excludedN = targets.length - live.length;
-  const facts = [
+  // الدورةُ بلا مقيَّمين بعدُ (قادمة) لا تُعدّ أصفارًا («0 مقيَّمًا، 0 مقيِّمًا، 0 ورقةً»): مراحلُها وشارتُها وفراغُ القائمة تقول ما يُنتظر
+  const facts = targets.length === 0 ? undefined : [
     arCount(live.length, AR_TARGET),
     arCount(cycle.raters, AR_RATER),
     arCount(cycle.ballots, AR_SHEET),
     cycle.status === "executed" && canViewResults
       ? (cycle.removed ? `${cycle.removed} مستبعَد` : "لا مستبعَد")
       : excludedN ? `${excludedN} خارج الدورة` : null,
-  ].filter(Boolean).join("، ");
+  ].filter(Boolean).join("، ") || undefined;
   const sorted = [...cycles].sort((a, b) => a.due_on.localeCompare(b.due_on));
 
   // الحالُ بموعدها في الشارة، فلا تتكرّر الكلمةُ في السطر، والسطرُ للأرقام وحدها
