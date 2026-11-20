@@ -6,8 +6,8 @@
  * ناقص، والمسوّدةُ على الجهاز بمعرّف المقيِّم والمقيَّم (`useDraft`)، وبعد الإرسال تُطوى الورقةُ وتُفتح التي تليها.
  *
  * والشكلُ من قطع الهويّة لا من «مسار» القديم (اعتمده محمد ٢٠٢٦-١١-٢٠، «باء» من شكلين): لوحُ الغرفة، وقسمُ الدورة رأسَها، والمقيَّمون
- * **سطورُ «حسابي»** في قسمٍ واحد عددُ ما قيّمتَ تحت اسمه، والسطرُ يفتح ورقتَه في **نافذة** (قالبُ النوافذ) والإرسالُ في تذييلها، ثمّ تُغلق
- * فيصير السطرُ «قيّمت» أمام عينك. ورُدّ «ألف»: كلُّ مقيَّمٍ قسمٌ تنفتح ورقتُه في جسمه — «تنفتح قائمةٌ طويلة فتحسّ الصفحةَ تضيع منك».
+ * **سطورُ «حسابي»** في قسمٍ واحد عددُ ما قيّمتَ تحت اسمه، والسطرُ يفتح ورقتَه في **نافذة** (قالبُ النوافذ) والإرسالُ في تذييلها، ثمّ تصير
+ * إيصالًا بما أُرسل، وبإغلاقها يكون السطرُ «قيّمت» أمام عينك. ورُدّ «ألف»: كلُّ مقيَّمٍ قسمٌ تنفتح ورقتُه في جسمه — «تنفتح قائمةٌ طويلة فتحسّ الصفحةَ تضيع منك».
  * والمقياسُ **المبدّلُ نفسُه** (`.ad-switch`) خمسةَ أجزاءٍ برقمٍ فوق كلمته (كلماتُ اللائحة م٦/1 حرفًا)، والحقولُ حقولُ قالب النماذج.
  */
 import { useRef, useState, type ReactNode } from "react";
@@ -15,11 +15,11 @@ import { Alert, Button, Modal, Textarea } from "@adeeb/design-system";
 import { ChatCircleText, Compass, NotePencil, PaperPlaneTilt, Scales, StarHalf, UsersThree } from "@phosphor-icons/react";
 import { Check, DuotoneZone, PencilSimple, Star } from "@/app/_components/glyphs";
 import { useDraft } from "@/lib/useDraft";
-import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import type { SheetRow } from "@/app/dashboard/evaluation/data";
 import type { SubmitFn } from "@/app/dashboard/evaluation/_views/RateA";
 import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor } from "@/app/dashboard/evaluation/vocab";
 import { cycleName, lastDay, seatLine } from "@/app/dashboard/evaluation/_views/parts";
+import { AdNote } from "../primitives";
 import { AccountRoom, AdLine, AdSection } from "../account";
 
 const NAV = "/dashboard/evaluation/rate";
@@ -45,8 +45,9 @@ function useSheet(sheet: SheetRow, onSubmit: SubmitFn, onSent: () => void, draft
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** رسالةُ الوصول بعد الإرسال: النافذةُ تصير إيصالًا بما أُرسل (محمد ٢٠٢٦-١١-٢٠: «يرى التقييم الذي قيّمه كي يتأكّد») */
+  const [sent, setSent] = useState<string | null>(null);
   const refs = useRef<(HTMLLIElement | null)[]>([]);
-  const toast = useToast();
   const answered = cur.scores.filter((v) => v !== null).length;
 
   const pick = (i: number, v: number) => {
@@ -67,11 +68,11 @@ function useSheet(sheet: SheetRow, onSubmit: SubmitFn, onSent: () => void, draft
     setPending(false);
     if (!r.ok) return setError(r.message);
     draft.clear();
-    toast.success(r.message);
+    setSent(r.message);
     onSent();
   };
   const setRef = (i: number) => (el: HTMLElement | null) => { refs.current[i] = el as HTMLLIElement | null; };
-  return { items, cur, setTyped, tried, pending, error, setRef, answered, pick, send };
+  return { items, cur, setTyped, tried, pending, error, sent, setRef, answered, pick, send };
 }
 type SheetState = ReturnType<typeof useSheet>;
 
@@ -114,19 +115,47 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
   );
 }
 
-/** الورقةُ في نافذةٍ باسم صاحبها، والإرسالُ في تذييلها. */
+/**
+ * **الإيصال** (محمد ٢٠٢٦-١١-٢٠، الطريقُ الأوّل من اثنين): بعد الإرسال تبقى النافذةُ وتصير ورقةً تُقرأ — ما اخترتَه في كلّ بندٍ وما كتبتَه — من
+ * حال الصفحة نفسِها، فلا تقرأ القاعدةُ ورقةً بعد إرسالها (السرّيّة: لا دالّةَ تُعيد ورقةَ أحد، ولو لصاحبها؛ والمعاينةُ الكاملة تجعل المعاينَ
+ * صاحبَ الجلسة). ويبقى التقييمُ بلا تعديل (`evaluation_submit`: «التقييمُ لا يُعاد»). ورُدّ الطريقُ الثاني («اعرض تقييمي» متى شاء): بابٌ
+ * جديدٌ على أوراقٍ أُغلقت عمدًا.
+ */
+function Receipt({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
+  return (
+    <>
+      <AdNote tone="ok" title={s.sent ?? "وصل تقييمُك"}>هذا ما أرسلته، ولا يُعدَّل بعد الإرسال.</AdNote>
+      <ul className="ad-lines ad-rate-receipt">
+        {s.items.map((it, i) => {
+          const v = s.cur.scores[i] as 1 | 2 | 3 | 4 | 5;
+          return <AdLine key={it.key} icon={<Check />} k={it.label} v={`${v}، ${SCALE_LABELS[v]}`} />;
+        })}
+        {sheet.part === "members" ? (
+          <>
+            <AdLine icon={<ChatCircleText />} k={OPEN_QUESTION.keep} v={s.cur.keep.trim() || "لم تكتب شيئًا"} tone={s.cur.keep.trim() ? undefined : "muted"} read />
+            <AdLine icon={<ChatCircleText />} k={OPEN_QUESTION.change} v={s.cur.change.trim() || "لم تكتب شيئًا"} tone={s.cur.change.trim() ? undefined : "muted"} read />
+          </>
+        ) : null}
+      </ul>
+    </>
+  );
+}
+
+/** الورقةُ في نافذةٍ باسم صاحبها، والإرسالُ في تذييلها؛ وبعده إيصالُها والإغلاقُ وحده. */
 function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: SheetRow; onSubmit: SubmitFn; onSent: () => void; onClose: () => void; draftKey: string | null }) {
   const s = useSheet(sheet, onSubmit, onSent, draftKey);
   return (
     <Modal open onClose={onClose} size="md" className="ad-rate-win" busy={s.pending} title={`تقييم ${sheet.full_name}`}
       description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
-      footer={
+      footer={s.sent ? (
+        <Button variant="ghost" size="md" onClick={onClose}>إغلاق</Button>
+      ) : (
         <>
           <Button variant="primary" size="md" loading={s.pending} onClick={() => void s.send()}><PaperPlaneTilt aria-hidden />أرسل التقييم</Button>
           <Button variant="ghost" size="md" onClick={onClose} disabled={s.pending}>إغلاق</Button>
         </>
-      }>
-      <SheetBody sheet={sheet} s={s} />
+      )}>
+      {s.sent ? <Receipt sheet={sheet} s={s} /> : <SheetBody sheet={sheet} s={s} />}
       {s.error ? <Alert tone="danger" compact>{s.error}</Alert> : null}
     </Modal>
   );
@@ -140,11 +169,8 @@ export function RateRoom({ sheets, dueOn, onSubmit, draftOwner = null }: {
   const total = sheets.length;
   const finished = done.size;
   const key = (id: number) => (draftOwner ? `evaluation:${draftOwner}:${id}` : null);
-  // بعد الإرسال تُغلق النافذة ولا تُفتح ورقةُ التالي وحدها: ترى أنّك أنجزت، ثمّ تختار من تقيّم بعده
-  const afterSend = (id: number) => {
-    setDone(new Set(done).add(id));
-    setOpen(null);
-  };
+  // بعد الإرسال تبقى النافذةُ إيصالًا، ويصير السطرُ خلفها «قيّمت»؛ وإغلاقُها يعيدك إلى القائمة، ولا تُفتح ورقةُ التالي وحدها
+  const afterSend = (id: number) => setDone((d) => new Set(d).add(id));
   const last = lastDay(sheets[0]?.last_day ?? dueOn);
   const current = open === null ? null : sheets.find((x) => x.target_id === open) ?? null;
 
