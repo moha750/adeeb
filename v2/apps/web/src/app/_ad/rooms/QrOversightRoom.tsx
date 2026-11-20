@@ -320,7 +320,7 @@ export function QrOversightRoom({ data, serverNow, view }: { data: QrOversightDa
         onClose={() => setMoving(null)}
         size="sm"
         title="نقل ملكيّة الباركود"
-        description="ينتقل الباركود ومسحاتُه إلى صاحبٍ جديد، ويُقيَّد ذلك في السجلّ باسمك. والملصقُ المطبوعُ لا يتغيّر."
+        description="ينتقل بمسحاته، والملصقُ المطبوعُ لا يتغيّر."
         footer={
           <>
             <Button
@@ -345,7 +345,7 @@ export function QrOversightRoom({ data, serverNow, view }: { data: QrOversightDa
           options={data.candidates
             .filter((c) => c.id !== moving?.owner?.id)
             .map((c) => ({ value: c.id, label: c.name }))}
-          helper={moving ? `صاحبُه الآن: ${moving.owner?.name ?? "غيرُ معروف"}` : undefined}
+          helper={moving ? `صاحبُه الآن: ${moving.owner?.name ?? "غيرُ معروف"}، ويُقيَّد النقلُ باسمك.` : undefined}
         />
       </Modal>
 

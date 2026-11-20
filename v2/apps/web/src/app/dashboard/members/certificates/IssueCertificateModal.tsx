@@ -165,7 +165,7 @@ export function IssueCertificateModal({
       size="md"
       busy={pending}
       title="إصدار شهادة خبرة"
-      description="راجِع ما سيُرسَم على الورقة، فهي تُقدَّم لجهةٍ خارج النادي ولا تُصحَّح بعد خروجها."
+      description="راجِعها، فلا تُصحَّح بعد خروجها."
       footer={
         <>
           <Button variant="primary" size="md" loading={pending} disabled={!ready} onClick={submit}>

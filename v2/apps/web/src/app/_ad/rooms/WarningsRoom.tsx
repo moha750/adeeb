@@ -335,8 +335,8 @@ export function WarningsRoom({ rows, targets, limit, mayIssue, view }: {
         size="sm"
         busy={pending}
         className="mdl-tone-danger"
-        title={cancelling ? `إلغاء ${warningTitle(cancelling.ordinal ?? 1)}: ${cancelling.name}` : ""}
-        description="الملغى يبقى في السجلّ مشطوبًا، ويخرج من العدّ فتُعاد رتبةُ ما بعده."
+        title={cancelling ? `إلغاء ${warningTitle(cancelling.ordinal ?? 1)}: ${cancelling.name}` : "إلغاء الإنذار"}
+        description="يبقى مشطوبًا ويخرج من العدّ، فتُعاد رتبةُ ما بعده."
         footer={
           <>
             <Button variant="danger" size="md" loading={pending} disabled={cancelReason.trim().length < 5} onClick={submitCancel}>

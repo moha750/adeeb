@@ -58,7 +58,7 @@ export function CampaignFormModal({
       onClose={onClose}
       busy={pending}
       title={row ? "تعديل الحملة" : "حملةٌ جديدة"}
-      description="حاويةٌ تجمع ملصقاتِ عملٍ واحدٍ فتُقرأ مجموعةً، ويبقى لكلّ ملصقٍ رمزُه وعدّادُه."
+      description="تجمع ملصقاتِ عملٍ واحد، ولكلّ ملصقٍ رمزُه وعدّادُه."
       footer={
         <>
           <Button variant="primary" size="md" loading={pending} disabled={!name.trim()} onClick={save}>

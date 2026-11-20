@@ -167,7 +167,7 @@ export function QrStatsRoom({ stats, counts, week, range, canSettings, home }: {
         open={picking}
         onClose={() => setPicking(false)}
         title="مدّة مخصّصة"
-        description="اختر يومَي البداية والنهاية، من يوم إنشاء الباركود إلى اليوم."
+        description="تختار بين يوم إنشائه واليوم."
         size="sm"
         footer={
           <>
@@ -176,9 +176,9 @@ export function QrStatsRoom({ stats, counts, week, range, canSettings, home }: {
           </>
         }
       >
-        <Field label="من" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم"
+        <Field label="من" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />}
           value={from} min={born} max={to} onChange={(e) => setFrom(e.target.value)} />
-        <Field label="إلى" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم"
+        <Field label="إلى" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />}
           value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
       </Modal>
     </AdRoom>

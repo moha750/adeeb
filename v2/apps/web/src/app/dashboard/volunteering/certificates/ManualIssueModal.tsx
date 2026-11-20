@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Modal, Select, Textarea, type SelectOption } from "@adeeb/design-system";
+import { Alert, Button, Modal, Select, Textarea, type SelectOption } from "@adeeb/design-system";
 import { CalendarBlank, ChatCenteredText, HandHeart, NotePencil, SealCheck, UserCircle } from "@phosphor-icons/react";
 import { Avatar } from "../../_components/Avatar";
 import { useToast } from "../../_components/ToastProvider";
@@ -73,7 +73,7 @@ export function ManualIssueModal({ open, onClose, options }: {
       size="sm"
       busy={pending}
       title="إصدار شهادة"
-      description="لمن شارك ولم يقدّم من الموقع. يُسجَّل له طلبٌ مقبولٌ حاضرٌ باسمك، وتصدر شهادتُه برقمها وتظهر في حسابه."
+      description="لمن شارك ولم يقدّم من الموقع."
       footer={
         <>
           <Button variant="primary" size="md" loading={pending} disabled={!ready} onClick={submit}>
@@ -128,6 +128,8 @@ export function ManualIssueModal({ open, onClose, options }: {
         required
         helper="خمسة أحرف فأكثر. يُحفظ في ملاحظته الإداريّة ولا يراه المتطوّع."
       />
+      {/* ما يقع بالإصدار رسالةٌ آخرَ الجسم فوق زرّه، لا سطرُ الرأس (سطرٌ واحد، محمد ٢٠٢٦-١١-٢٠) */}
+      <Alert tone="info" title="عند الإصدار">يُسجَّل له طلبٌ مقبولٌ حاضرٌ باسمك، وتصدر شهادتُه برقمها وتظهر في حسابه.</Alert>
     </Modal>
   );
 }

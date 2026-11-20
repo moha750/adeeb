@@ -229,8 +229,8 @@ export function EventForm({ event, organizers, members = [] }: { event?: EventEd
       <FormSection id="when" icon={<CalendarBlank />} title="الموعد والمقاعد">
         <div className="form-grid">
           <Field className="form-full" type="date" label="التاريخ" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="اختر التاريخ" value={date} onChange={(e) => setDate(e.target.value)} required />
-          <Field type="time" label="وقت البداية" icon={<Clock />} innerIcon={<HourglassMedium />} placeholder="—" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
-          <Field type="time" label="وقت النهاية" icon={<Clock />} innerIcon={<Flag />} placeholder="—" value={endTime} onChange={(e) => setEndTime(e.target.value)} optional />
+          <Field type="time" placeholder="" label="وقت البداية" icon={<Clock />} innerIcon={<HourglassMedium />} value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+          <Field type="time" placeholder="" label="وقت النهاية" icon={<Clock />} innerIcon={<Flag />} value={endTime} onChange={(e) => setEndTime(e.target.value)} optional />
           <Select className="form-full" label="موجَّهة لـ" icon={<UsersThree />} options={AUDIENCE_OPTIONS} value={audience} onValueChange={changeAudience} helper="جمهور الفعاليّة؛ يُرفَض حجز الجنس المخالف." optional />
           <Field className="form-full" type="number" charset="digits" label="إجمالي المقاعد" icon={<Armchair />} innerIcon={<Hash />} placeholder="اتركه فارغًا لتسجيلٍ غير محدود" value={totalSeats} onChange={(e) => applyTotal(e.target.value)} optional />
           {!single ? (

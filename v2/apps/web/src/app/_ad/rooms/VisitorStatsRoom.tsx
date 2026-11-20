@@ -276,8 +276,8 @@ export function VisitorStatsRoom({ data, preset, source, compare }: { data: Anal
           <AdButton variant="fill" disabled={!from || !to || from > to} onClick={apply}>طبّق</AdButton>
           <AdButton plain variant="line" onClick={() => setPicking(false)}>إلغاء</AdButton>
         </>}>
-        <Field label="من" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم" value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
-        <Field label="إلى" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
+        <Field label="من" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />} value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
+        <Field label="إلى" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />} value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
       </Modal>
     </AdRoom>
   );

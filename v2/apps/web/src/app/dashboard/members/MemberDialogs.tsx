@@ -560,7 +560,8 @@ export function useMemberDialogs({ moveTargets = [], warningLimit = 3, confirm: 
         onClose={() => setMoving(null)}
         busy={acting}
         title={moving ? `نقل «${moving.name}» إلى لجنة أخرى` : "نقل إلى لجنة أخرى"}
-        description="يخرج من لجنته الحاليّة ويُضمّ إلى المختارة في خطوةٍ واحدة. ولا يمسّ ذلك حالتَه ولا بياناته."
+        // «يخرج من لجنته ويُضمّ إلى المختارة» يقوله العنوانُ نفسُه، فبقي في سطر الرأس ما لا يقوله (محمد ٢٠٢٦-١١-٢٠: سطرٌ واحد)
+        description="النقلُ لا يمسّ حالتَه ولا بياناته."
         size="sm"
         footer={
           <>

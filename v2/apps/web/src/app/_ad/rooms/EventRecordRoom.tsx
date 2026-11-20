@@ -292,7 +292,7 @@ export function EventRecordRoom({ detail }: { detail: EventDetail }) {
         onClose={() => setCancelTarget(null)}
         busy={pending}
         title="إلغاء حجز"
-        description={cancelTarget ? `إلغاء حجز «${cancelTarget.fullName ?? "مشارك"}»، سببٌ يُحفَظ في السجلّ.` : undefined}
+        description={cancelTarget ? `«${cancelTarget.fullName ?? "مشارك"}»` : undefined}
         size="sm"
         footer={
           <>
@@ -301,7 +301,7 @@ export function EventRecordRoom({ detail }: { detail: EventDetail }) {
           </>
         }
       >
-        <Textarea label="سبب الإلغاء" icon={<Prohibit />} innerIcon={<ChatText />} placeholder="اذكر سبب الإلغاء…" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} required />
+        <Textarea label="سبب الإلغاء" icon={<Prohibit />} innerIcon={<ChatText />} placeholder="اذكر سبب الإلغاء…" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} helper="يُحفظ في السجلّ." required />
       </Modal>
     </>
   );

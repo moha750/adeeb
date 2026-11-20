@@ -362,9 +362,8 @@ export function VolunteerCertificatesRoom({ room, today, manual, view }: {
         size="sm"
         busy={rowPending}
         title={asking?.kind === "withhold" ? "حجبُ الشهادة" : "ترشيحٌ للتميّز"}
-        description={asking ? `${asking.row.name}، ${asking.row.opportunity}. ${asking.kind === "withhold"
-          ? "استثناءٌ لمخالفةٍ صريحة: يُحفظ السببُ في السجلّ، ويراه صاحبُه. ويُرفع الحجبُ من سجلّ الفرصة."
-          : "تصدر الشهادةُ بختم «بتميّز»، وتُطبع جملتُك فيها كما تكتبها."}` : undefined}
+        // الرأسُ من يقع عليه الفعل، والشرحُ رسالةُ الجسم (سطرٌ واحد في الرأس، محمد ٢٠٢٦-١١-٢٠)
+        description={asking ? `${asking.row.name}، ${asking.row.opportunity}` : undefined}
         footer={
           <>
             {asking?.kind === "distinction" && asking.row.distinctionNote ? (
@@ -378,6 +377,11 @@ export function VolunteerCertificatesRoom({ room, today, manual, view }: {
           </>
         }
       >
+        {asking?.kind === "withhold" ? (
+          <Alert tone="warning" title="استثناءٌ لمخالفةٍ صريحة">يُحفظ السببُ في السجلّ ويراه صاحبُه، ويُرفع الحجبُ من سجلّ الفرصة.</Alert>
+        ) : (
+          <Alert tone="info" title="تصدر الشهادةُ بختم «بتميّز»">وتُطبع جملتُك فيها كما تكتبها.</Alert>
+        )}
         <Textarea
           label={asking?.kind === "withhold" ? "سببُ الحجب" : "سببُ تميّزه"}
           icon={asking?.kind === "withhold" ? <Prohibit /> : <Sparkle />} innerIcon={<PencilSimple />}
@@ -430,7 +434,8 @@ export function VolunteerCertificatesRoom({ room, today, manual, view }: {
         busy={pending}
         className="mdl-tone-danger"
         title="إبطال الشهادة"
-        description="لا تُمحى، تبقى في السجلّ مشطوبةً بسببها. ويعود صاحبُها إلى «جاهزة لم تصدر» حتى تُصدَر له من جديد أو تُحجب بسببها."
+        // سطرُ الرأس سطرٌ واحد، والشرحُ في رسالة الجسم (محمد ٢٠٢٦-١١-٢٠: سطرُ النافذة على لوحها، والطويلُ يُثقله)
+        description="لا تُمحى، تبقى في السجلّ مشطوبةً بسببها."
         footer={
           <>
             <Button variant="danger" size="md" loading={pending} disabled={reason.trim().length < 5} onClick={submitRevoke}>
@@ -442,7 +447,7 @@ export function VolunteerCertificatesRoom({ room, today, manual, view }: {
       >
         {revoking ? (
           <Alert tone="danger" title={<>{revoking.paperName}، <bdi dir="ltr" className="lat">{revoking.serial}</bdi></>}>
-            الورقةُ التي بيده لا تُسترجع؛ الإبطالُ يُعلن في السجلّ أنّها لم تعد معتمدة.
+            الورقةُ التي بيده لا تُسترجع؛ الإبطالُ يُعلن في السجلّ أنّها لم تعد معتمدة. ويعود صاحبُها إلى «جاهزة لم تصدر» حتى تُصدَر له من جديد أو تُحجب بسببها.
           </Alert>
         ) : null}
         <Textarea

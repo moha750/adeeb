@@ -289,7 +289,7 @@ export function AvatarEditor({ name, gender, avatar, look = "row" }: { name: str
         onClose={close}
         busy={saving}
         title="قصّ صورتك"
-        description="اسحب الصورة لتضبط موضعها، وكبّرها بالعجلة أو بالزرّين. ما يظهر في المربّع هو ما يُحفظ."
+        description="اسحبها وكبّرها، وما في المربّع يُحفظ."
         size="sm"
         // جسمٌ متوسّط: اللوح وأزرارُه بمقاسهما الطبيعيّ في وسط النافذة، لا ممتدَّين على الصفّ
         className="mdl-center"

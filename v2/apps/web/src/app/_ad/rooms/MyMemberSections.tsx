@@ -97,7 +97,7 @@ export function MyMemberSections({ profile }: { profile: MyProfile }) {
           <>
             <AdEditLine icon={<Cake />} k="تاريخ الميلاد" v={profile.birthDate ?? ""} empty="لم تُضِفه بعد" onOpen={open} busy={busy} error={err}
               onSave={save(() => badBirthDate(draft.birthDate))}
-              field={<Field label="تاريخ الميلاد" type="date" icon={<Cake />} innerIcon={<CalendarBlank />} placeholder="سنة/شهر/يوم" required
+              field={<Field label="تاريخ الميلاد" type="date" placeholder="" icon={<Cake />} innerIcon={<CalendarBlank />} required
                 value={draft.birthDate} onChange={(e) => setDraft({ ...draft, birthDate: e.target.value })} />} />
             <AdEditLine icon={<GraduationCap />} k="دراستك" v={study} empty="لم تُحدَّد بعد" onOpen={open} busy={busy} error={err}
               onSave={save(() => {

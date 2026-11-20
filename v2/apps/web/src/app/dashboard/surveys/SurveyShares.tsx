@@ -24,7 +24,7 @@ import type { SurveyShareCandidate, SurveyShareRow } from "./data";
 export const SURVEY_SHARE_WORDS: ShareWords = {
   panel: "شركاءُ الاستبيان",
   modal: "مشاركةُ الاستبيان",
-  modalNote: "الاستبيانُ يبقى لك، والشريكُ يقرأ أو يحرّر بحسب إذنك. ولا يراه غيرُ من تختار.",
+  modalNote: "الاستبيانُ يبقى لك، ولا يراه غيرُ من تختار.",
   emptyNote: "الاستبيانُ لك وحدك الآن. شارِكه مع عضوٍ ليقرأ نتائجه أو يحرّره معك، والملكيّةُ تبقى لك.",
   readLabel: "يقرأ النتائج",
   editLabel: "يحرّر الاستبيان",
