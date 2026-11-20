@@ -7,9 +7,12 @@ import { NewsroomDenied } from "../_guard";
 import { denyUnless } from "@/app/dashboard/_shell/guard";
 import { requestNow } from "@/app/_ad/now";
 import { AdRoomError } from "@/app/_ad/states";
+import { tabTitle } from "@/lib/tabTitle";
 
-// عنوانُ التبويب اسمُ الغرفة (محمد ٢٠٢٦-١١-٠٣)، وكانت «بوّابة أدِيب» وحدها (٢٠٢٦-١١-٢٠)
-export const metadata = { title: "غرفة تحرير أدِيب، بوّابة أدِيب" };
+// عنوانُ التبويب اسمُ ما يُحرَّر (محمد ٢٠٢٦-١١-٢٠)، وكانت «بوّابة أدِيب» وحدها
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  return tabTitle("news", "title", "id", (await params).id, "غرفة تحرير أدِيب");
+}
 
 export default async function NewsEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const denied = await denyUnless("/dashboard/news");
