@@ -19,7 +19,7 @@
 import { useState, useTransition } from "react";
 import { Modal } from "@adeeb/design-system";
 import { BookOpenText, CalendarX, FileDashed, FileText, Paperclip, Scales, ThumbsDown, ThumbsUp, Timer, Trophy } from "@phosphor-icons/react";
-import { ArrowRight, ArrowSquareOut, Check, Checks } from "@/app/_components/glyphs";
+import { ArrowSquareOut, Check, Checks } from "@/app/_components/glyphs";
 import type { BallotCandidate, MyVote, VoteItem } from "@/app/dashboard/elections/member-data";
 import { useElectionApi } from "@/app/dashboard/elections/actions-context";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
@@ -131,7 +131,7 @@ export function BallotRoomAd({ election: e, candidates: given, myVote, voterId, 
           ...(e.votingEnd ? [{ icon: <CalendarX />, text: `يُغلق التصويت ${e.votingEnd}، أو حين يصوّت الجميع` }] : []),
           { icon: <Scales />, text: sole ? "تصويتُ ثقة: مرشّحٌ واحد، تؤيّده أو تعترض" : `${candidates.length} مرشّحين، وصوتٌ واحد لمرشّحٍ واحد` },
         ]}
-        acts={<AdButton variant="soft" size="sm" icon={<ArrowRight />} href="/dashboard/elections/vote">العودة إلى التصويت</AdButton>}
+        back={{ label: "العودة إلى التصويت", href: "/dashboard/elections/vote" }}
       />
 
       {outcome ? null : <>

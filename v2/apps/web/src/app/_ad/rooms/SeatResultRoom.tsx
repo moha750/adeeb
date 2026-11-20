@@ -11,9 +11,8 @@
  * - **أُلغي:** تنبيهٌ بسببه ويومه (المادة ٢٩).
  */
 import { Scales, Trophy, UserCirclePlus } from "@phosphor-icons/react";
-import { ArrowRight } from "@/app/_components/glyphs";
 import type { SeatResult } from "@/app/dashboard/elections/member-data";
-import { AdBadge, AdButton, AdCard, AdNote, type AdMeta } from "../primitives";
+import { AdBadge, AdCard, AdNote, type AdMeta } from "../primitives";
 import { RecordTicket } from "../record";
 import { dayParts } from "../format";
 
@@ -42,7 +41,7 @@ export function SeatResultRoom({ r }: { r: SeatResult }) {
         stub={at ? (() => { const d = dayParts(at); return { big: d.day, small: d.month }; })() : undefined}
         chips={chip}
         info={[]}
-        acts={<AdButton variant="soft" size="sm" icon={<ArrowRight />} href="/dashboard/elections/vote">العودة إلى التصويت</AdButton>}
+        back={{ label: "العودة إلى التصويت", href: "/dashboard/elections/vote" }}
       />
 
       {r.status === "completed" && r.person ? (

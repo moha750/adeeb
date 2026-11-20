@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Field, Modal, Select, overBy } from "@adeeb/design-system";
 import { CalendarBlank, File as FileIcon, FilePdf, Globe, ImageSquare, LinkSimple, Palette, Pause, Play, QrCode, ShieldCheck, TextAa, UserCircle, UsersThree } from "@phosphor-icons/react";
-import { ArrowRight, PencilSimple, Plus, Trash, Warning } from "@/app/_components/glyphs";
+import { PencilSimple, Plus, Trash, Warning } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { fmtDate } from "@/lib/dates";
 import { QR_TITLE_MAX, checkTarget, qrFileType, targetHost, type QrKind } from "@/lib/qrLinks";
@@ -158,7 +158,7 @@ export function QrSettingsRoom({ link, schedules, shares = [], candidates = [], 
   return (
     <AdRoom label={link.title}>
       <RecordTicket title={link.title} seed={link.id} stub={qrStub(link)} chips={qrState(link)} info={[qrTarget(link)]}
-        acts={<AdButton variant="line" size="sm" icon={<ArrowRight />} href={home}>إلى الباركود</AdButton>} />
+        back={{ label: "العودة إلى الباركود", href: home }} />
 
       <AdSection icon={<QrCode />} title="الباركود" sub="اسمُه ووجهتُه وحالُه وشكلُه">
         <AdLine icon={<TextAa />} k="الاسم" v={link.title} sub="تعرفه به بين باركوداتك، ولا يراه من يمسحه"

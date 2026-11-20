@@ -14,10 +14,11 @@
  * (رُفض: «الملفّ» — لوحُ الغرفة وعمودان، رحلةُ الحجز في الجوّال بعد آخر مشارك؛ و«لوحُ السجلّ» — لوحٌ كحليٌّ كبيرٌ يطول بالبيانات.)
  */
 import type { ReactNode } from "react";
-import { crumbFor } from "@/app/dashboard/_shell/crumb";
+import { crumbFor, upFor } from "@/app/dashboard/_shell/crumb";
 import { useNav } from "@/app/dashboard/_shell/nav-context";
 import { usePathname } from "next/navigation";
-import { AdFigureRow, AdMetaList, PlateCrumb, cutOf, type AdFigure, type AdMeta, type AdStub } from "./primitives";
+import { ArrowRight } from "@/app/_components/glyphs";
+import { AdButton, AdFigureRow, AdMetaList, PlateCrumb, cutOf, type AdFigure, type AdMeta, type AdStub } from "./primitives";
 
 /** فتاتُ السجلّ من مساره (`path` حين يُعرض في غير مساره): بوّابة أدِيب › التفاعل › الفعاليّات — والاسمُ عنوانُ التذكرة */
 function useRecordCrumb(path: string | undefined, title: string) {
@@ -28,7 +29,7 @@ function useRecordCrumb(path: string | undefined, title: string) {
     .map((st) => ({ label: st.label, href: st.kind === "link" ? st.href : undefined }));
 }
 
-export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures, trail }: {
+export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts, info, figures, trail, back }: {
   path?: string;
   title: string;
   /** وصفُ السجلّ تحت اسمه (وصفُ الفرصة كما كتبه مشرفُها) */
@@ -46,8 +47,20 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
   figures?: AdFigure[];
   /** **مسارٌ أعمق من الغرفة** (صفحةُ ترشّحٍ داخل انتخاب، ٢٠٢٦-١١-١٧): «الانتخابات › منسّق قسم صناعة المحتوى» — والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ */
   trail?: { label: string; href: string }[];
+  /**
+   * **زرُّ العودة أوّلَ الأفعال في كلّ سجلّ** (محمد ٢٠٢٦-١١-٢٠: «أوافق جدًّا حتى على تعميمه»، بعد أن سأل في صفحة الانتخاب: «وين الزر
+   * لكي أعود للصفحة السابقة؟»). كان الرجوعُ رابطَ المسار الصغير فوق الكعب وحده («والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ»، ١١-١٧)،
+   * فلم يُرَ. يُشتقّ من المسار نفسه: أقربُ ما فوق السجلّ («العودة إلى الانتخابات»)، ويُسمّى بيد الغرفة إن كان مرجعُها غيرَه
+   * («العودة إلى سِجلّ ترشّحي»)، و`false` حيث لا رجوع.
+   */
+  back?: { label: string; href: string } | false;
 }) {
   const crumb = [...useRecordCrumb(path, title), ...(trail ?? [])];
+  const here = usePathname();
+  // الأبُ: آخرُ المسار الأعمق إن كان (`trail`)، وإلّا الغرفةُ التي يُنسب إليها السجلّ. ومسارُها هو المسارُ نفسُه حين يُعرض السجلّ في
+  // غير مساره (`path` = الغرفة)، فيُسأل عمّا فوق مقطعٍ تحته ليُجاب بالغرفة لا بالبوّابة
+  const parent = trail?.length ? trail[trail.length - 1] : upFor(`${path ?? here ?? ""}/record`);
+  const ret = back === false ? null : back ?? (parent?.href ? { label: `العودة إلى ${parent.label}`, href: parent.href } : null);
   return (
     <section className="ad-card-wrap ad-rtk" aria-labelledby="ad-room-title">
       <article className="ad-card">
@@ -72,7 +85,12 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
           <div className="ad-card-body ad-rtk-body">
             <div className="ad-rtk-top">
               {chips ? <span className="ad-chips">{chips}</span> : <span />}
-              {acts ? <span className="ad-rtk-acts">{acts}</span> : null}
+              {acts || ret ? (
+                <span className="ad-rtk-acts">
+                  {ret ? <AdButton variant="soft" size="sm" icon={<ArrowRight />} href={ret.href}>{ret.label}</AdButton> : null}
+                  {acts}
+                </span>
+              ) : null}
             </div>
             <h1 id="ad-room-title" className="ad-rtk-title">{title}</h1>
             {desc ? <p className="ad-rtk-desc">{desc}</p> : null}

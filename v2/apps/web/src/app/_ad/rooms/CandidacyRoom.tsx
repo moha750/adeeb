@@ -10,7 +10,7 @@
 import { useState, useTransition } from "react";
 import { Field, Textarea } from "@adeeb/design-system";
 import { Armchair, CalendarBlank, ChatText, Clock, FileText, LinkBreak, ListChecks, Note, Paperclip, UserMinus } from "@phosphor-icons/react";
-import { ArrowLeft, ArrowRight, ArrowSquareOut, Warning } from "@/app/_components/glyphs";
+import { ArrowLeft, ArrowSquareOut, Warning } from "@/app/_components/glyphs";
 import type { CandidateRow, ElectionDetail } from "@/app/dashboard/elections/data";
 import { useElectionApi } from "@/app/dashboard/elections/actions-context";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
@@ -88,10 +88,8 @@ export function CandidacyRoom({ election: e, candidate: c, readOnly = false, bac
         stub={c.submittedRaw ? (() => { const d = dayParts(c.submittedRaw); return { big: d.day, small: d.month }; })() : undefined}
         chips={<AdBadge tone={candBadge(c).tone}>{candBadge(c).label}</AdBadge>}
         // **الرجوعُ زرٌّ في التذكرة** (محمد ٢٠٢٦-١١-١٧: «لماذا بدل كلّ هذا لا يكون زرًّا؟») كرجوع حملة الباركود، والمسارُ باقٍ فوق الكعب
-        acts={<>
-          <AdButton variant="soft" size="sm" icon={<ArrowRight />} href={backHref}>العودة إلى الانتخاب</AdButton>
-          {canRequestOn(e, c, viewer) ? <ExclusionRequest candidate={c} isHrLeader={viewer.isHrLeader} /> : null}
-        </>}
+        back={{ label: "العودة إلى الانتخاب", href: backHref }}
+        acts={canRequestOn(e, c, viewer) ? <ExclusionRequest candidate={c} isHrLeader={viewer.isHrLeader} /> : undefined}
         // المقعدُ حقيقةٌ برمزها بجانب يوم التقدّم (محمد: «لماذا لا تكون أيقونةٌ ثانية باسم المنصب؟»)
         info={[
           { icon: <Armchair />, text: e.positionLabel },

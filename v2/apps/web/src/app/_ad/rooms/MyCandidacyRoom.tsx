@@ -10,7 +10,7 @@ import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Textarea } from "@adeeb/design-system";
 import { CalendarBlank, ChatText, FileText, Note, Paperclip, Path, PaperPlaneTilt } from "@phosphor-icons/react";
-import { ArrowRight, ArrowSquareOut, PencilSimple, Prohibit } from "@/app/_components/glyphs";
+import { ArrowSquareOut, PencilSimple, Prohibit } from "@/app/_components/glyphs";
 import type { CandidacyJourney } from "@/app/dashboard/elections/member-data";
 import { useElectionApi } from "@/app/dashboard/elections/actions-context";
 import { KIND_ICON } from "@/app/dashboard/elections/logIcons";
@@ -60,10 +60,8 @@ export function MyCandidacyRoom({ c }: { c: CandidacyJourney }) {
           ...(c.submittedIso ? [{ icon: <CalendarBlank />, text: `تقدّمت في ${fmtDayFull(c.submittedIso)}` }] : []),
           { icon: <Path />, text: c.cycle },
         ]}
-        acts={<>
-          <AdButton variant="soft" size="sm" icon={<ArrowRight />} href={fromRun ? "/dashboard/elections/run" : "/dashboard/elections/my"}>{fromRun ? "العودة إلى الترشّح" : "العودة إلى سِجلّ ترشّحي"}</AdButton>
-          {c.canEdit ? <AdButton variant="fill" size="sm" icon={<PencilSimple />} href={`/dashboard/elections/my/${c.electionId}/edit`}>تعديل الترشّح</AdButton> : null}
-        </>}
+        back={fromRun ? { label: "العودة إلى الترشّح", href: "/dashboard/elections/run" } : { label: "العودة إلى سِجلّ ترشّحي", href: "/dashboard/elections/my" }}
+        acts={c.canEdit ? <AdButton variant="fill" size="sm" icon={<PencilSimple />} href={`/dashboard/elections/my/${c.electionId}/edit`}>تعديل الترشّح</AdButton> : undefined}
       />
 
       {/* ما ينتظره سطرًا بنغمة حاله (رسالةُ `next` من مصدرها الواحد `journey.ts`، بجنس صاحبه). وطلبُ الاستبعاد يقوله قسمُه في الجانب
