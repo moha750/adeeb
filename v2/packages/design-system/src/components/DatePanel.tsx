@@ -249,7 +249,11 @@ export function DatePanel({ type, value, min, max, today, onPick, onDone }: {
                 <button type="button" aria-label="خمس دقائق أقلّ" onClick={() => emit(d0 || today, hh, ((Math.ceil(mm / 5) * 5 - 5) + 60) % 60)}><ToLeft /></button>
                 <input className="adp-min" inputMode="numeric" maxLength={2} aria-label="الدقيقة" value={minDraft ?? pad(mm)}
                   onFocus={(e) => { setMinDraft(pad(mm)); e.currentTarget.select(); }}
-                  onChange={(e) => setMinDraft(e.currentTarget.value.replace(/\D/g, "").slice(0, 2))}
+                  onChange={(e) => {
+                    // ما فوق ٥٩ لا يُكتب أصلًا (كان يُقبل «٨٨» ثمّ يصير ٥٩ عند Enter): الضغطةُ التي تتجاوزه تُهمَل، فـ«٨» ثمّ «٨» تبقى «٨» أي ٠٨
+                    const d = e.currentTarget.value.replace(/\D/g, "").slice(0, 2);
+                    if (d.length < 2 || +d <= 59) setMinDraft(d);
+                  }}
                   onBlur={commitMin}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") { e.preventDefault(); commitMin(); e.currentTarget.select(); }
