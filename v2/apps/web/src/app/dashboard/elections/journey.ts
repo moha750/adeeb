@@ -53,7 +53,7 @@ export function statusView(f: JourneyFacts): { label: string; tone: LogTone; nex
   }
   switch (status) {
     case "pending":
-      return { label: base.label, tone: base.tone, next: "طلبك تحت مراجعة إدارة الموارد البشرية. يمكنك تعديل أو تطوير ترشّحك خلال مراجعة ترشيحك.", future: election === "candidacy_open" ? "تصويت" : null };
+      return { label: base.label, tone: base.tone, next: "تراجع إدارة الموارد البشرية ترشّحك، ولك أن تعدّله ما دام قيد المراجعة.", future: election === "candidacy_open" ? "تصويت" : null };
     case "needs_edit": {
       // المهلةُ يحدّدها المراجع، والتعديلُ فيها ولو أُغلق الباب (المادة 14)
       const due = fmtStamp(f.editDueRaw ?? null);
