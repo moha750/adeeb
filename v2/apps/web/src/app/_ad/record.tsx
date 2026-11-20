@@ -48,7 +48,7 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
   /** **مسارٌ أعمق من الغرفة** (صفحةُ ترشّحٍ داخل انتخاب، ٢٠٢٦-١١-١٧): «الانتخابات › منسّق قسم صناعة المحتوى» — والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ */
   trail?: { label: string; href: string }[];
   /**
-   * **زرُّ العودة أوّلَ الأفعال في كلّ سجلّ** (محمد ٢٠٢٦-١١-٢٠: «أوافق جدًّا حتى على تعميمه»، بعد أن سأل في صفحة الانتخاب: «وين الزر
+   * **زرُّ العودة على كعب كلّ سجلّ** (فوق المسار، لا بين الأفعال) (محمد ٢٠٢٦-١١-٢٠: «أوافق جدًّا حتى على تعميمه»، بعد أن سأل في صفحة الانتخاب: «وين الزر
    * لكي أعود للصفحة السابقة؟»). كان الرجوعُ رابطَ المسار الصغير فوق الكعب وحده («والعودةُ تُضغط من المسار لا بزرٍّ ثانٍ»، ١١-١٧)،
    * فلم يُرَ. يُشتقّ من المسار نفسه: أقربُ ما فوق السجلّ («العودة إلى الانتخابات»)، ويُسمّى بيد الغرفة إن كان مرجعُها غيرَه
    * («العودة إلى سِجلّ ترشّحي»)، و`false` حيث لا رجوع.
@@ -72,7 +72,14 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
             </span>
           )}
           <div className="ad-rtk-stub">
-            <PlateCrumb crumb={crumb} />
+            {/* **العودةُ على اللوح مع المسار لا بين الأفعال** (محمد ٢٠٢٦-١١-٢٠: «ألا ترى أن أصبحت الأزرار الآن مزدحمة؟» ثمّ «نوجد حلّ جذري»):
+                التنقّلُ مكانُه حيث المسار، فيبقى صفُّ الأفعال كما كان */}
+            {/* والعودةُ والمسارُ قطعةٌ واحدةٌ متلاصقة (كان بينهما فراغُ الكعب كلُّه، محمد: «لماذا هناك فراغ كبير بينه وبين المسار؟»)،
+                والزرُّ ممتدٌّ بعرض الكعب («لو الزر امتد يمكن يكون أجمل») */}
+            <div className="ad-rtk-nav">
+              {ret ? <span className="ad-rtk-back"><AdButton variant="inverse-quiet" size="sm" icon={<ArrowRight />} href={ret.href}>{ret.label}</AdButton></span> : null}
+              <PlateCrumb crumb={crumb} />
+            </div>
             {stub ? (
               <p className="ad-rtk-day">
                 {stub.icon ? <span className="ad-stub-icon" aria-hidden>{stub.icon}</span> : <b className="ad-num">{stub.big}</b>}
@@ -85,12 +92,7 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
           <div className="ad-card-body ad-rtk-body">
             <div className="ad-rtk-top">
               {chips ? <span className="ad-chips">{chips}</span> : <span />}
-              {acts || ret ? (
-                <span className="ad-rtk-acts">
-                  {ret ? <AdButton variant="soft" size="sm" icon={<ArrowRight />} href={ret.href}>{ret.label}</AdButton> : null}
-                  {acts}
-                </span>
-              ) : null}
+              {acts ? <span className="ad-rtk-acts">{acts}</span> : null}
             </div>
             <h1 id="ad-room-title" className="ad-rtk-title">{title}</h1>
             {desc ? <p className="ad-rtk-desc">{desc}</p> : null}
