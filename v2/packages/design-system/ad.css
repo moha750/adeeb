@@ -3638,6 +3638,8 @@ html[lang] .fld .fld-wrap .fld-in:disabled { background: none; color: var(--ad-i
   .ad-rtk.ad-card-wrap:hover { translate: none; }
   .ad-rtk .ad-card:hover .ad-card-stub-media img { scale: 1; }
 }
+/* شريطُ المعاينة فوق الغرفة: تنبيهُ الصفحة نفسُه، وبينه وبين ما تحته مسافةُ الأقسام */
+.ad-viewas { margin-block-end: var(--space-4); }
 /* زرُّ العودة على لوح التذكرة: ممتدٌّ بعرض الكعب، والمسارُ ملاصقٌ تحته (قطعةٌ واحدة، لا فراغَ الكعب بينهما) */
 .ad-rtk-nav { display: grid; gap: var(--space-3); }
 .ad-rtk-back { display: flex; }

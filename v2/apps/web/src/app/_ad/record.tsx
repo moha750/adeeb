@@ -24,8 +24,11 @@ import { AdButton, AdFigureRow, AdMetaList, PlateCrumb, cutOf, type AdFigure, ty
 function useRecordCrumb(path: string | undefined, title: string) {
   const nav = useNav();
   const here = usePathname();
-  return crumbFor(path ?? here ?? "", nav, title)
-    .filter((st) => st.kind !== "leaf")
+  // **المسارُ كاملًا حتى السجلّ** (محمد ٢٠٢٦-١١-٢٠: «المفروض أن يكون المسار… الانتخابات، نائب لجنة التصوير»): الغرفةُ رابطًا، واسمُ
+  // السجلّ آخرَه. ويُسأل عمّا تحت الغرفة حين يُعرض السجلّ في مسارها نفسِه (`path`)، فتكون الغرفةُ رابطًا لا آخرَ المسار
+  // وعنوانُ القسم في الشريط («الانتخابات») يسقط هنا: الغرفةُ بعده تقوله («إدارة الانتخابات»)، فلا يتكرّر ولا يلتفّ (محمد ٢٠٢٦-١١-٢٠)
+  return crumbFor(path ? `${path}/record` : here ?? "", nav, title)
+    .filter((st) => st.kind !== "group")
     .map((st) => ({ label: st.label, href: st.kind === "link" ? st.href : undefined }));
 }
 
@@ -55,7 +58,10 @@ export function RecordTicket({ path, title, desc, seed, cover, stub, chips, acts
    */
   back?: { label: string; href: string } | false;
 }) {
-  const crumb = [...useRecordCrumb(path, title), ...(trail ?? [])];
+  // المسارُ الأعمق (`trail`) قبل اسم السجلّ لا بعده: الغرفة › المقعد › ترشّحُ فلان
+  const base = useRecordCrumb(path, title);
+  const leaf = base.length && !base[base.length - 1].href ? base[base.length - 1] : null;
+  const crumb = [...(leaf ? base.slice(0, -1) : base), ...(trail ?? []), ...(leaf ? [leaf] : [])];
   const here = usePathname();
   // الأبُ: آخرُ المسار الأعمق إن كان (`trail`)، وإلّا الغرفةُ التي يُنسب إليها السجلّ. ومسارُها هو المسارُ نفسُه حين يُعرض السجلّ في
   // غير مساره (`path` = الغرفة)، فيُسأل عمّا فوق مقطعٍ تحته ليُجاب بالغرفة لا بالبوّابة

@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient as createClient } from "@/lib/supabase/server";
 import { DASHBOARD_CAPS } from "./capabilities";
 import { VIEW_AS_CAP, readViewAsTarget } from "./view-as";
 

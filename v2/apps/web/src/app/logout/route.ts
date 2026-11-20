@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient as createClient } from "@/lib/supabase/server";
 
 /**
  * بابُ الخروج الخادميّ — **يُمحى الكوكي ثمّ يُردّ صاحبُه** (٢٠٢٦-٠٩-٢٤).

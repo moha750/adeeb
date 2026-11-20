@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient as createClient } from "@/lib/supabase/server";
 import { BIO_MAX, PROVIDER_LABEL, type ProviderKey } from "./vocab";
 
 export type SettingsResult = { ok: boolean; message: string };

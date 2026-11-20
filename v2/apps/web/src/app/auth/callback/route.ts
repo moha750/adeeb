@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient as createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safeNext";
 import { logSignin } from "@/lib/signinEvents";
 import { createAdeebServiceClient } from "@adeeb/core";

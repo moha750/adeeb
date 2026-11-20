@@ -1,5 +1,6 @@
 "use client";
 
+import { previewAccess } from "@/lib/supabase/preview-access";
 import { Suspense, lazy, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadClient } from "@/lib/supabase/lazy";
@@ -134,7 +135,8 @@ export function NotificationsBell() {
       if (!alive) return;
       sb = client;
       const { data } = await client.auth.getSession();
-      const token = data.session?.access_token;
+      // وأثناء المعاينة يسمع الجرسُ صفوفَ المُعايَن برمزه، كما يقرؤها الخادم
+      const token = previewAccess()?.token ?? data.session?.access_token;
       if (!alive || !token) return;
       await client.realtime.setAuth(token);
       if (!alive) return;
