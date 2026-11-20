@@ -21,7 +21,7 @@ import type { SheetRow } from "@/app/dashboard/evaluation/data";
 import type { SubmitFn } from "@/app/dashboard/evaluation/_views/RateA";
 import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor } from "@/app/dashboard/evaluation/vocab";
 import { cycleName, lastDay, seatLine } from "@/app/dashboard/evaluation/_views/parts";
-import { AdNote } from "../primitives";
+import { AdNote, AdStepsBar } from "../primitives";
 import { AccountRoom, AdLine, AdSection } from "../account";
 
 const NAV = "/dashboard/evaluation/rate";
@@ -116,6 +116,20 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
   );
 }
 
+/**
+ * **السؤالُ وجوابُه** (`AdAnswer`، ٢٠٢٦-١١-٢٠): السؤالُ عنوانٌ برمزه على المربّع المصبوغ، والجوابُ تحته على حدّ نصّه، والفارغُ «لم تكتب شيئًا»
+ * خافتًا. **معلّقةٌ بقرار محمد** («نؤجّلها»): اعتُمد هذا لأنّه «أنظفُها، بس غيرُ جميل»، بعد تسعة أشكالٍ رُدّت كلُّها — النصُّ السائب، والفقاعة،
+ * وخطُّ الاقتباس، والشريطُ المضاء، وعلامةُ الاقتباس، والورقة، والمنقوش، ولسانُ اللوح، والمعلَّقُ المصبوغ. يُعاد إليها بعين جديدة.
+ */
+function AdAnswer({ q, a }: { q: string; a: string | null }) {
+  return (
+    <figure className="ad-ans" data-empty={a ? undefined : ""}>
+      <figcaption className="ad-ans-q"><span className="ad-ans-ic" aria-hidden><ChatCircleText /></span>{q}</figcaption>
+      <blockquote className="ad-ans-a">{a ?? "لم تكتب شيئًا"}</blockquote>
+    </figure>
+  );
+}
+
 /** الورقةُ في نافذةٍ باسم صاحبها، والإرسالُ في تذييلها، ثمّ تُغلق. */
 function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: SheetRow; onSubmit: SubmitFn; onSent: () => void; onClose: () => void; draftKey: string | null }) {
   const s = useSheet(sheet, onSubmit, onSent, draftKey);
@@ -135,9 +149,13 @@ function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: Sh
 }
 
 /**
- * **«عرض تقييمي»** (محمد ٢٠٢٦-١١-٢٠): الورقةُ نفسُها بشكلها كما قيّمتَ — المقياسُ والمختارُ قطعةٌ من اللوح، والحقلان بما كُتب — مقفلةً لا تُلمس،
- * والإغلاقُ وحده. ولا شكلَ إيصالٍ جديد («طريقةُ العرض كإيصالٍ قبيحةٌ جدًّا»). والورقةُ من القاعدة لصاحب الجلسة وحده (`evaluation_my_ballot`)،
- * ولا تُعرض في جلسة معاينة.
+ * **«عرض تقييمي»** (محمد ٢٠٢٦-١١-٢٠): ورقتُك كما أرسلتَها **تُقرأ لا تُلمس**. رُدّ شكلان قبله: الإيصالُ سطورًا («قبيحٌ جدًّا»)، والورقةُ نفسُها
+ * مقفلة («مضلّل: لماذا الزرُّ لا يعمل؟ لماذا لا أستطيع الكتابة؟»). فلا مقياسَ بأزرار ولا حقلَ ببئر، والتنبيهُ يقول إنّ التقييمَ لا يُعدَّل.
+ * ورُدّ بعدهما «الشريط» و«الشارة» («ضعيفة بصريًّا… غير جميلة»)، والتنبيهُ فوقها (العنوانُ «تقييمك لريم» يكفي عنه)، و«الكعب».
+ * **واختار محمد «الدرجات»** (درجاتُ الإنذار في «عضويتي»: خمسٌ يمتلئ منها بقدرها): «القراءةُ الأساسيّة ليست الرقمَ ولا النصّ بل
+ * التلوين»، فسقط الرقمُ وبقيت الكلمة. والإجابتان **قطعةُ «السؤال وجوابه»** (`AdAnswer`، جديدة): رُدّ النصُّ السائب («سيّئةٌ جدًّا»)، ثمّ فقاعةُ
+ * الحوار (كلامٌ بين طرفين ينتظر ردًّا، ولا طرفَ ثانيَ هنا).
+ * والورقةُ من القاعدة لصاحب الجلسة وحده (`evaluation_my_ballot`)، ولا تُعرض في جلسة معاينة.
  */
 function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: number) => Promise<MyBallot | null>; onClose: () => void }) {
   const [b, setB] = useState<MyBallot | null | undefined>(undefined);
@@ -150,39 +168,29 @@ function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: numbe
   }, [sheet.target_id]);
   const items = itemsFor(sheet.part);
   return (
-    <Modal open onClose={onClose} size="md" className="ad-rate-win ad-rate-frozen" title={`تقييمك ${sheet.full_name}`}
+    <Modal open onClose={onClose} size="md" className="ad-rate-win ad-rate-view" title={`تقييمك لـ${sheet.full_name}`}
       description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
       footer={<Button variant="ghost" size="md" onClick={onClose}>إغلاق</Button>}>
       {b === undefined ? <AdNote tone="info" title="تُجلب ورقتك…" />
-        : b === null ? <AdNote tone="warn" title="لا تُعرض الورقة الآن" >إن كنت تعاين حساب غيرك فالأوراق لا تُعرض في المعاينة.</AdNote>
+        : b === null ? <AdNote tone="warn" title="لا تُعرض الورقة الآن">إن كنت تعاين حساب غيرك فالأوراق لا تُعرض في المعاينة.</AdNote>
         : (
           <>
-            <ol className="ad-rate-qs">
+            <ol className="ad-rate-vs">
               {items.map((it, i) => {
-                const v = b.scores[i];
-                const id = `ad-rate-v-${sheet.target_id}-${it.key}`;
+                const v = b.scores[i] as 1 | 2 | 3 | 4 | 5;
                 return (
-                  <li key={it.key} className="ad-rate-q" data-state="done">
-                    <div className="ad-rate-qh">
-                      <span className="ad-rate-n" aria-hidden><Check /></span>
-                      <span className="ad-rate-qt"><b id={id}>{it.label}</b><span>{it.hint}</span></span>
-                    </div>
-                    <div className="ad-switch ad-rate-scale" role="radiogroup" aria-labelledby={id} aria-readonly>
-                      {([1, 2, 3, 4, 5] as const).map((n) => (
-                        <button key={n} type="button" role="radio" aria-checked={v === n} disabled className={"ad-switch-seg" + (v === n ? " is-on" : "")}>
-                          <b className="lat">{n}</b>
-                          <span>{SCALE_LABELS[n]}</span>
-                        </button>
-                      ))}
-                    </div>
+                  <li key={it.key} className="ad-rate-v">
+                    <span className="ad-rate-qt"><b>{it.label}</b><span>{it.hint}</span></span>
+                    {/* الكلمةُ وحدها تحت الدرجات: الرقمُ يكرّر ما يقوله عددُ الممتلئ (محمد ٢٠٢٦-١١-٢٠)، ويبقى لقارئ الشاشة في وسمها */}
+                    <AdStepsBar steps={{ now: v, max: 5, label: SCALE_LABELS[v] }} />
                   </li>
                 );
               })}
             </ol>
             {sheet.part === "members" ? (
-              <div className="ad-rate-open">
-                <Textarea label={OPEN_QUESTION.keep} icon={<ChatCircleText />} innerIcon={<NotePencil />} rows={3} readOnly value={b.keep ?? ""} placeholder="لم تكتب شيئًا" />
-                <Textarea label={OPEN_QUESTION.change} icon={<ChatCircleText />} innerIcon={<NotePencil />} rows={3} readOnly value={b.change ?? ""} placeholder="لم تكتب شيئًا" />
+              <div className="ad-rate-answers">
+                <AdAnswer q={OPEN_QUESTION.keep} a={b.keep} />
+                <AdAnswer q={OPEN_QUESTION.change} a={b.change} />
               </div>
             ) : null}
           </>
@@ -223,7 +231,7 @@ export function RateRoom({ sheets, dueOn, onSubmit, loadMine, draftOwner = null 
               return (
                 <AdLine key={s.target_id} icon={rankIcon(s.role_name)} v={s.full_name} sub={isDone ? "قيّمت" : seatLine(s.role_name, s.unit_name, s.gender)}
                   tone={isDone ? "ok" : undefined} toneAt="sub"
-                  act={isDone ? { icon: <Eye />, text: "عرض تقييمي", label: `عرض تقييمك ${s.full_name}` } : { icon: <PencilSimple />, text: "قيّم", label: `قيّم ${s.full_name}` }}
+                  act={isDone ? { icon: <Eye />, text: "عرض تقييمي", label: `عرض تقييمك لـ${s.full_name}`, tone: "ok" } : { icon: <PencilSimple />, text: "قيّم", label: `قيّم ${s.full_name}` }}
                   onClick={() => (isDone ? setViewing(s.target_id) : setOpen(s.target_id))} />
               );
             })}
