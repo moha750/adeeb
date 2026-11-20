@@ -96,7 +96,12 @@ export function EvaluationRoom(props: RoomProps) {
     ];
     if (!results) return base;
     const f = frac(t.final_num, t.final_den);
-    return [...base, { label: "النتيجة", value: f ? `${percentText(f)}%` : "—", ltr: true }];
+    // النتيجةُ بشريطها وقطعِ حدّ الاستبعاد عند 40% كنافذة التفاصيل: كانت رقمًا وحده، فيقعد تحت اسم عموده بفراغٍ كبير بين جارَيه ذوَي الشريط
+    // (محمد ٢٠٢٦-١١-٢٠: «لماذا في عمود النتيجة gap؟»). والحكمُ شارةُ السطر، فلا كلمةَ مكانَ النسبة
+    return [...base, {
+      label: "النتيجة", value: f ? `${percentText(f)}%` : "—", ltr: true,
+      of: { now: f ? (f.num / f.den) * 100 : 0, max: 100, word: "", mark: { at: 40, label: "الحدّ" } },
+    }];
   };
   const badgeOf = (t: TargetRow) => {
     if (t.excluded) return <AdBadge icon={<CalendarX />}>خارج هذه الدورة</AdBadge>;
