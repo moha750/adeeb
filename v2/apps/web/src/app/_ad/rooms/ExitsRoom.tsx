@@ -158,7 +158,7 @@ export function ExitsRoom({ data, serverNow, view }: { data: ExitsData; serverNo
         onClose={() => setReject(null)}
         busy={busy}
         title="ردُّ الطلب"
-        description="يصل سببُك إلى صاحب الطلب، فاكتبه له لا للسجلّ."
+        description="يصل سببُك إلى صاحب الطلب."
         size="sm"
         footer={
           <>
@@ -184,7 +184,7 @@ export function ExitsRoom({ data, serverNow, view }: { data: ExitsData; serverNo
           required
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          helper={`مطلوب، ${EXIT_REASON_MIN} محارف على الأقلّ.`}
+          helper={`${EXIT_REASON_MIN} محارف على الأقلّ، تكتبه له لا للسجلّ.`}
         />
       </Modal>
     </>

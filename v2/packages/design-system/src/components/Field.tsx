@@ -1,11 +1,13 @@
 "use client";
 
-import { forwardRef, useRef, useState, type CSSProperties, type InputEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type InputEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../lib/cn";
 import { useCharsetGuard, type FieldCharset } from "../lib/charset";
 import { CharsetWhisper, KeyboardGlyph } from "./CharsetWhisper";
 import { FieldMark } from "./FieldMark";
 import { FieldCount, overMessage, useFieldCount, type FieldCountRule } from "./FieldCount";
+import { AnchoredPopover } from "./AnchoredPopover";
+import { DatePanel } from "./DatePanel";
 
 export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   /** تسمية ثابتة أعلى الحقل. */
@@ -57,6 +59,20 @@ const EyeOff = () => (
   </svg>
 );
 
+/** **قيمةُ التاريخ بلغة الهويّة** (٢٠٢٦-١١-٢٠): المتصفّحُ يرسم «يوم/شهر/سنة --:--» فارغًا و«2026/11/23 11:25 ص» ممتلئًا. القيمةُ
+ * `YYYY-MM-DDTHH:mm` بلا منطقة، فتُقرأ كما هي (`UTC` في الصياغة نفسِها) فلا تنزاح في خادمٍ ولا جهاز. */
+const DT_DAY = new Intl.DateTimeFormat("ar-SA-u-nu-latn-ca-gregory", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const DT_TIME = new Intl.DateTimeFormat("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC" });
+function dateLikeText(type: string | undefined, v: string): string | null {
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/);
+  const t = v.match(/^(\d{2}):(\d{2})/);
+  if (type === "time" && t) return DT_TIME.format(new Date(Date.UTC(2000, 0, 1, +t[1], +t[2])));
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], m[4] ? +m[4] : 0, m[5] ? +m[5] : 0));
+  return type === "datetime-local" && m[4] ? `${DT_DAY.format(d)}، ${DT_TIME.format(d)}` : DT_DAY.format(d);
+}
+const DT_EMPTY: Record<string, string> = { date: "اختر اليوم", time: "اختر الساعة", "datetime-local": "اختر اليوم والساعة", month: "اختر الشهر" };
+
 /**
  * حقل إدخال العلامة — نظام الحقل المعتمَد على لوح الهوية: تسمية ثابتة أعلى + أيقونة هويّة بجانبها ·
  * سطح مسطّح · تركيز فولاذيّ · استدارة 16 · حالات الخطأ/النجاح بلون الدلالة 600.
@@ -74,22 +90,68 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   const cs = charset ?? (hasEye ? "latin" : undefined);
   const { guard, whisper, leaving, hush } = useCharsetGuard<HTMLInputElement>(cs, onBeforeInput, onChange);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLLabelElement>(null);
+  const inRef = useRef<HTMLInputElement | null>(null);
+  const [dpOpen, setDpOpen] = useState(false);
+  /** اسمُ اللوح المنبثق تسميةُ حقله («آخر موعد للتسجيل»)، فيعرف القارئُ الآليّ أيَّ تاريخٍ يختار */
+  const lblId = useId();
   const counted = useFieldCount<HTMLInputElement>(count, props.value, props.defaultValue);
   /** **التاريخُ الفارغ بلون التلميح** (`data-empty`): المتصفّح يرسم «يوم/شهر/سنة» نصًّا، فلا يعرفه `:placeholder-shown` */
-  const dateLike = type === "date" || type === "time" || type === "datetime-local" || type === "month" || type === "week";
-  const [typedEmpty, setTypedEmpty] = useState(() => !props.defaultValue);
-  const empty = dateLike && (props.value !== undefined ? props.value === "" || props.value === null : typedEmpty);
+  // والأسبوعُ (`week`) ليس منها: ترقيمٌ أوروبيّ لا حقلَ منه عندنا، فيبقى حقلًا عاديًّا للمتصفّح
+  const dateLike = type === "date" || type === "time" || type === "datetime-local" || type === "month";
+  /**
+   * **القيمةُ الحقيقيّةُ ما في الحقل الأصليّ** لا ما في الخصائص (المراجعة ٢٠٢٦-١١-٢٠): `register()` بقيمه الأولى و`reset()` و`setValue()`
+   * وإعادةُ النموذج تكتب في الحقل بلا حدث، والمتصفّحُ يمسح ما لا يقبله (ثوانٍ، أو `…Z`)؛ فكانت الجملةُ تقول «اختر اليوم» والمُرسَلُ قيمة،
+   * أو تقول قيمةً والمُرسَلُ فارغ. فتُقرأ القيمةُ منه بعد كلّ رسم، وعند الإدخال، وبعد إعادة النموذج، وحين يُفتح اللوح.
+   */
+  const [live, setLive] = useState(() => String(props.value ?? props.defaultValue ?? ""));
+  const readLive = () => { const el = inRef.current; if (el && dateLike) setLive(el.value); };
+  useLayoutEffect(() => { const el = inRef.current; if (el && dateLike && el.value !== live) setLive(el.value); });
+  useEffect(() => {
+    const form = dateLike ? inRef.current?.form : null;
+    if (!form) return;
+    const onReset = () => setTimeout(readLive, 0);
+    form.addEventListener("reset", onReset);
+    return () => form.removeEventListener("reset", onReset);
+  });
+  const empty = dateLike && !live;
   const handleInput = (e: InputEvent<HTMLInputElement>) => {
     counted.onInput?.(e);
-    if (dateLike && props.value === undefined) setTypedEmpty(!e.currentTarget.value);
+    if (dateLike) setLive(e.currentTarget.value);
     onInput?.(e);
   };
+  const dtValue = dateLike ? live : "";
+  /** تقويمُ الهويّة بدل تقويم المتصفّح، في الحاسوب واللمس معًا (`DatePanel`) */
+  const openOwn = (e: { preventDefault: () => void }) => {
+    if (!dateLike || props.disabled || props.readOnly) return;
+    e.preventDefault();
+    readLive();
+    setDpOpen(true);
+  };
+  /** يُغلق اللوح، ويردّ التركيزَ إلى الحقل إن أُغلق بالمفاتيح أو بالاختيار (لا بالنقر خارجه، فذاك ذهب إلى حيث نقر) */
+  const closeOwn = (refocus: boolean) => {
+    setDpOpen(false);
+    if (refocus) requestAnimationFrame(() => inRef.current?.focus({ preventScroll: true }));
+  };
+  /** القيمةُ تُكتب في الحقل الأصليّ ويُطلَق حدثُه، فيسمعها `onChange` كما لو اختارها المتصفّح */
+  const pick = (v: string) => {
+    const el = inRef.current;
+    if (!el) return;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(el, v);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const riyadhToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const dtShown = dateLike ? (empty ? (placeholder || DT_EMPTY[type!] || "") : dateLikeText(type, dtValue) ?? dtValue) : "";
   /** ما زاد على الحدّ خطأٌ برسالته الواحدة («زاد ٥ أحرف»)، إلّا أن يقول النموذجُ خطأً غيرَه (`FieldCount`) */
   const err = error ?? (counted.over ? overMessage(counted.over) : undefined);
   const msg = err ?? helper;
   return (
-    <label className={cn("fld", err ? "err" : undefined, success && !err ? "ok" : undefined, className)}>
-      <span className="fld-lbl">
+    <label ref={rootRef} className={cn("fld", err ? "err" : undefined, success && !err ? "ok" : undefined, className)}
+      // البئرُ كلُّه يفتح التقويم (التسميةُ والقيمة)، لا ما تحته من وصف
+      onMouseDownCapture={dateLike ? (e) => { if (e.button === 0 && !(e.target as HTMLElement).closest(".fld-help, .fld-under, .adp-pop")) openOwn(e); } : undefined}
+      onClickCapture={dateLike ? (e) => { if (!(e.target as HTMLElement).closest(".adp-pop")) e.preventDefault(); } : undefined}
+      onKeyDownCapture={dateLike ? (e) => { if ((e.key === "Enter" || e.key === " ") && !(e.target as HTMLElement).closest(".adp-pop")) openOwn(e); } : undefined}>
+      <span className="fld-lbl" id={lblId}>
         <span className="fld-lic" aria-hidden="true">{icon}</span>
         {label}
         <FieldMark optional={optional} required={required} />
@@ -97,6 +159,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
       <div
         ref={wrapRef}
         className={cn("fld-wrap", whisper ? "fld-warn" : undefined)}
+
         /* مكانُ اللصيقة يُحجَز بعرضها لا برقمٍ يُخمَّن: `ch` عرضُ الصفر في خطّ الحقل نفسه، فيتّسع المحجوز بها. */
         style={prefix ? ({ "--fld-pre-w": `${prefix.length}ch` } as CSSProperties) : undefined}
       >
@@ -105,7 +168,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         {/* بلا `aria-hidden`: الغلاف `<label>` فيلتحق نصُّها باسم الحقل المنطوق — وهو المراد (ق٣: «رقم الجوّال +966») */}
         {prefix ? <span className="fld-pre">{prefix}</span> : null}
         <input
-          ref={ref}
+          ref={(el) => {
+            inRef.current = el;
+            if (typeof ref === "function") ref(el);
+            else if (ref) ref.current = el;
+          }}
           className="fld-in"
           type={hasEye && shown ? "text" : type}
           placeholder={placeholder}
@@ -117,8 +184,12 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           {...props}
           {...guard}
           data-empty={empty ? "" : undefined}
+          aria-haspopup={dateLike ? "dialog" : undefined}
+          aria-expanded={dateLike ? dpOpen : undefined}
           onInput={counted.onInput || dateLike ? handleInput : onInput}
         />
+        {/* قراءةُ التاريخ بالهويّة فوق الحقل الأصليّ، والنقرُ يمرّ إليه فيفتح تقويمَ الهويّة */}
+        {dateLike ? <span className="fld-dt" aria-hidden="true" data-empty={empty ? "" : undefined} suppressHydrationWarning>{dtShown}</span> : null}
         {hasEye ? (
           <button
             type="button"
@@ -133,6 +204,12 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         ) : null}
       </div>
       <CharsetWhisper text={whisper} anchorRef={wrapRef} leaving={leaving} onHush={hush} />
+      {dateLike && dpOpen ? (
+        <AnchoredPopover open anchorRef={rootRef} onDismiss={(r) => closeOwn(r !== "pointer")} align="start" className="adp-pop" role="dialog" ariaLabelledby={lblId}>
+          <DatePanel type={type!} value={dtValue} min={typeof props.min === "string" ? props.min : undefined} max={typeof props.max === "string" ? props.max : undefined}
+            today={riyadhToday()} onPick={pick} onDone={(kb) => closeOwn(kb)} />
+        </AnchoredPopover>
+      ) : null}
       {count ? (
         <span className="fld-under">{msg ? <span className="fld-help">{msg}</span> : null}<FieldCount rule={count} text={counted.text} /></span>
       ) : msg ? <span className="fld-help">{msg}</span> : null}

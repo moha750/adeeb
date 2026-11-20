@@ -338,7 +338,7 @@ export function MyAccountRoom({ account, avatar, standing, settings, member }: {
       </AdCols>
 
       <Modal open={mailOpen} onClose={closeMail} busy={busy} size="sm" title="تغيير بريد الدخول"
-        description="يُرسَل رابطُ تأكيدٍ إلى العنوان الجديد، ولا يسري التغيير قبل فتحه."
+        description="لا يسري التغيير قبل فتح رابط التأكيد."
         footer={<>
           <Button variant="primary" loading={busy} onClick={submitEmail}>إرسال رابط التأكيد</Button>
           <Button variant="ghost" onClick={closeMail} disabled={busy}>إلغاء</Button>
@@ -346,7 +346,7 @@ export function MyAccountRoom({ account, avatar, standing, settings, member }: {
         {/* النافذةُ بتنبيهها القديم حتى نبلغ قالبَ النوافذ: تنبيهُ الهويّة ورقةٌ تُوضع على الصفحة، وفي النافذة ورقةٌ فوق ورقة (محمد ٢٠٢٦-١١-٠٥: «غريب») */}
         {mailErr ? <Alert tone="danger">{mailErr}</Alert> : null}
         <Field label="البريد الجديد" type="email" charset="latin" icon={<Envelope />} innerIcon={<At />} placeholder="you@example.com"
-          value={email} onChange={(e) => setEmail(e.target.value)} required />
+          value={email} onChange={(e) => setEmail(e.target.value)} helper="يصله رابطُ التأكيد." required />
       </Modal>
 
       <Modal open={passOpen} onClose={closePass} busy={busy} size="sm" title="تغيير كلمة المرور"

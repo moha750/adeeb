@@ -82,11 +82,11 @@ export function RangePicker({
 
           <div className="drng-dates">
             <Field
-              label="من" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم"
+              label="من" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />}
               value={from} max={to} onChange={(e) => setFrom(e.target.value)}
             />
             <Field
-              label="إلى" type="date" icon={<CalendarBlank />} innerIcon={<CalendarDots />} placeholder="سنة/شهر/يوم"
+              label="إلى" type="date" placeholder="" icon={<CalendarBlank />} innerIcon={<CalendarDots />}
               value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)}
             />
           </div>

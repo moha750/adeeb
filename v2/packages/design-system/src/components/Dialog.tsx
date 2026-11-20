@@ -124,13 +124,16 @@ export function Dialog({
       if (e.key === "Escape") {
         // **ما انفتح داخل النافذة يُغلق أوّلًا** (٢٠٢٦-١١-١٣): قائمةُ حقلٍ مفتوحةٌ (`aria-expanded`) تأخذ Escape لنفسها، وكانت النافذةُ
         // تلتقطه قبلها (الالتقاطُ على الوثيقة) فتُغلَق كلُّها ويضيع ما كُتب فيها
-        if ((e.target as Element | null)?.closest?.('[aria-expanded="true"]')) return;
+        // وكذا ما انفتح من النافذة في طبقةٍ فوقها (`.apop`، كتقويم الهويّة ٢٠٢٦-١١-٢٠): التركيزُ فيه خارجَ الصندوق، فيُغلقه Escape وحده
+        if ((e.target as Element | null)?.closest?.('[aria-expanded="true"], .apop')) return;
         // نبتلعه في الحالين — حتى في الانشغال — كي لا يلتقطه حوارٌ أعلى فيُغلق بدلًا منّا
         e.stopPropagation();
         if (!busy) onClose();
         return;
       }
       if (e.key !== "Tab") return;
+      // ولوحٌ منبثقٌ يدير Tab في نفسه (تقويمُ الهويّة): التركيزُ فيه خارجَ الصندوق، فلا يُسحب منه إلى آخر النافذة
+      if ((e.target as Element | null)?.closest?.(".apop")) return;
       const root = contentRef.current;
       if (!root) return;
       const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(

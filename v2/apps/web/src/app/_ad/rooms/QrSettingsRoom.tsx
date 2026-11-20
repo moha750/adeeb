@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field, Modal, Select, overBy } from "@adeeb/design-system";
+import { Alert, Button, Field, Modal, Select, overBy } from "@adeeb/design-system";
 import { CalendarBlank, File as FileIcon, FilePdf, Globe, ImageSquare, LinkSimple, Palette, Pause, Play, QrCode, ShieldCheck, TextAa, UserCircle, UsersThree } from "@phosphor-icons/react";
 import { ArrowRight, PencilSimple, Plus, Trash, Warning } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
@@ -30,7 +30,7 @@ import { qrFileLabel } from "@/app/dashboard/tools/qr/QrTarget";
 import { killText } from "@/app/dashboard/tools/qr/copy";
 import type { QrLinkRow, QrSchedule, QrShare } from "@/app/dashboard/tools/qr/data";
 import type { QrOwnerBrief } from "@/app/dashboard/tools/qr/oversight/data";
-import { AdButton, AdConfirm, AdNote, AdRoom } from "../primitives";
+import { AdButton, AdConfirm, AdRoom } from "../primitives";
 import { AdLine, AdSection } from "../account";
 import { FormChoice } from "../form";
 import { AdUpload } from "../upload";
@@ -218,8 +218,7 @@ export function QrSettingsRoom({ link, schedules, shares = [], candidates = [], 
 
       {/* نافذةُ الاسم والوجهة: «رابط / ملف» مبدّلُ النافذة، والملفُّ حقلُ الرفع المعتمد (كانا بطاقتي راديو وزرَّ مرفقٍ من الهويّة القديمة) */}
       <Modal open={editing} onClose={() => setEditing(false)} size="md" busy={spin("edit")} title="تعديل وجهة الباركود"
-        description={isFile ? "الملفُّ يتبدّل والباركود المطبوعُ لا يتغيّر، فمن يمسحه بعد الحفظ يرى الملف الجديد."
-          : "الوجهةُ تتبدّل والباركود المطبوعُ لا يتغيّر، فمن يمسحه بعد الحفظ يصل إلى الوجهة الجديدة."}
+        description={isFile ? "الملفُّ يتبدّل، والباركود المطبوعُ لا يتغيّر." : "الوجهةُ تتبدّل، والباركود المطبوعُ لا يتغيّر."}
         footer={(
           <>
             <Button variant="primary" size="md" loading={spin("edit")} disabled={!ready} onClick={saveEdit}>حفظ</Button>
@@ -247,7 +246,7 @@ export function QrSettingsRoom({ link, schedules, shares = [], candidates = [], 
       </Modal>
 
       <Modal open={winOpen} onClose={() => setWinOpen(false)} size="md" busy={spin("win")} title="نافذةُ وجهة"
-        description="وجهةٌ تسري بين وقتين ثمّ تنتهي، والملصقُ المطبوعُ لا يتغيّر. والأوقاتُ بتوقيت الرياض."
+        description="وجهةٌ تسري بين وقتين ثمّ تنتهي، والملصقُ المطبوعُ لا يتغيّر."
         footer={(
           <>
             <Button variant="primary" size="md" loading={spin("win")} disabled={!wReady} onClick={addWindow}>أضف النافذة</Button>
@@ -258,21 +257,20 @@ export function QrSettingsRoom({ link, schedules, shares = [], candidates = [], 
           <Field className="form-full" label="الوجهة في هذه النافذة" icon={<LinkSimple />} innerIcon={<Globe />} placeholder="https://adeeb.club/register" dir="ltr"
             value={wTarget} onChange={(e) => setWTarget(e.target.value)} error={wBad ?? undefined} helper="حيثما يصل من يمسح الباركود أثناء هذه المدّة." required />
           <Field className="form-full" label="تبدأ" type="datetime-local" icon={<CalendarBlank />} innerIcon={<CalendarBlank />} placeholder="" dir="ltr"
-            value={startsAt} onChange={(e) => setStartsAt(e.target.value)} helper="اتركها فارغةً لتسري من الآن." optional />
+            value={startsAt} onChange={(e) => setStartsAt(e.target.value)} helper="بتوقيت الرياض. اتركها فارغةً لتسري من الآن." optional />
           <Field className="form-full" label="تنتهي" type="datetime-local" icon={<CalendarBlank />} innerIcon={<CalendarBlank />} placeholder="" dir="ltr"
-            value={endsAt} onChange={(e) => setEndsAt(e.target.value)} helper="اتركها فارغةً فتبقى إلى أن تحذفها." optional />
+            value={endsAt} onChange={(e) => setEndsAt(e.target.value)} helper="بتوقيت الرياض. اتركها فارغةً فتبقى إلى أن تحذفها." optional />
           <Field className="form-full" label="ملاحظة" icon={<TextAa />} innerIcon={<TextAa />} placeholder="مثال: نافذة التسجيل" value={note}
             onChange={(e) => setNote(e.target.value.slice(0, 120))} helper="تكتبها لنفسك لتعرف لماذا أنشأتها." optional />
           {!startsAt && !endsAt ? (
-            <div className="form-full">
-              <AdNote tone="info" title="نافذةٌ بلا وقتين">نافذةٌ بلا بدايةٍ ولا نهايةٍ تعني تبديلَ الوجهة إلى الأبد، وذلك يُفعَل من «الوجهة» في أعلى الصفحة لا من هنا.</AdNote>
-            </div>
+            // رسالةُ النافذة شريطٌ مصبوغٌ بعرض الورقة (قالبُ النافذة) لا كرتُ تنبيهٍ في كرت (محمد ٢٠٢٦-١١-٢٠: «لماذا هنا تنبيهٌ وهناك شكلٌ آخر؟»)
+            <Alert className="form-full" tone="info" title="نافذةٌ بلا وقتين">نافذةٌ بلا بدايةٍ ولا نهايةٍ تعني تبديلَ الوجهة إلى الأبد، وذلك يُفعَل من «الوجهة» في أعلى الصفحة لا من هنا.</Alert>
           ) : null}
         </div>
       </Modal>
 
       <Modal open={shareOpen} onClose={() => setShareOpen(false)} size="sm" busy={spin("share")} title="مشاركةُ الباركود"
-        description="الملكيّةُ تبقى لك، والشريكُ يقرأ أو يحرّر بحسب إذنك. وكلُّ تغييرٍ يُقيَّد في السجلّ باسم فاعله."
+        description="الملكيّةُ تبقى لك، وكلُّ تغييرٍ يُقيَّد باسم فاعله."
         footer={(
           <>
             <Button variant="primary" size="md" loading={spin("share")} disabled={!who}

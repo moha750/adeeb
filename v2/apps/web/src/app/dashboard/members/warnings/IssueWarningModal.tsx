@@ -206,9 +206,8 @@ export function IssueWarningModal({
         size="md"
         className={issued.terminated ? "mdl-tone-danger" : undefined}
         title={`سُجِّل ${warningTitle(issued.ordinal)}: ${issued.target.name}`}
-        description={canSend
-          ? "بقي أن يبلغ صاحبَه: أرسِله عبر واتساب، أو نزّل الخطاب وأرفقه بنفسك."
-          : "بقي أن يبلغ صاحبَه: نزّل الخطاب، ثمّ افتح محادثته وأرفقه بالرسالة."}
+        // كيف يبلغه تقوله أزرارُ الذيل نفسُها (إرسال، تنزيل، فتح واتساب)، فبقي في سطر الرأس ما لا تقوله (سطرٌ واحد، ٢٠٢٦-١١-٢٠)
+        description="بقي أن يبلغ صاحبَه."
         footer={
           <>
             {canSend ? (
