@@ -181,7 +181,7 @@ export function ElectionRecordRoom({ election: e, readOnly = false, canAppoint =
     if (readOnly) return e.status === "completed" && p?.onClick ? <AdButton variant="fill" size="sm" icon={p.icon} onClick={p.onClick}>{p.label}</AdButton> : null;
     return p ? <AdButton variant="fill" size="sm" icon={p.icon} onClick={p.onClick ?? (() => {})}>{p.label}</AdButton> : null;
   })();
-  const deadlineAct = opOf("deadline") ? { label: "تعديل الموعد", onClick: opOf("deadline")!.onClick } : undefined;
+  const deadlineAct = opOf("deadline") ? { label: "تعديل الموعد", icon: <CalendarBlank />, onClick: opOf("deadline")!.onClick } : undefined;
   const reopenAct = opOf("reopen");
   const appointActs = plan.more.filter((o) => !readOnly && (o.key === "appoint" || o.key === "acting"));
   const cancel = opOf("cancel");

@@ -13,7 +13,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Modal, Textarea, matchesSearch } from "@adeeb/design-system";
-import { Armchair, CalendarBlank, Certificate, ChatText, Copy, MapPin, Phone, Ticket, UserCheck, UserCircle, UserMinus, WhatsappLogo } from "@phosphor-icons/react";
+import { Armchair, CalendarBlank, Certificate, ChatText, Copy, MapPin, MapTrifold, Phone, Ticket, UserCheck, UserCircle, UserMinus, WhatsappLogo } from "@phosphor-icons/react";
 import { ArrowUUpLeft, Check, CheckCircle, PencilSimple, Prohibit } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { waHref } from "@/lib/whatsapp";
@@ -217,7 +217,7 @@ export function EventRecordRoom({ detail }: { detail: EventDetail }) {
   const info: AdMeta[] = [
     { icon: <CalendarBlank />, text: whenOf(detail) },
     // «الخريطة» بجانب المكان لا في رأس التذكرة (محمد ٢٠٢٦-١١-٢٠، العودةُ والأساسيُّ وحدهما في الرأس)
-    ...(detail.location ? [{ icon: <MapPin />, text: detail.location, act: detail.locationUrl ? { label: "الخريطة", href: detail.locationUrl, external: true } : undefined }] : []),
+    ...(detail.location ? [{ icon: <MapPin />, text: detail.location, act: detail.locationUrl ? { label: "الخريطة", icon: <MapTrifold />, href: detail.locationUrl, external: true } : undefined }] : []),
     ...(seats ? [{ icon: <Armchair />, text: seats }] : []),
     ...(drop ? [{ icon: <UserMinus />, text: drop, tone: "warn" as const }] : []),
   ];

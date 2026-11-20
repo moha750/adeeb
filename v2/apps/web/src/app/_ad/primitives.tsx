@@ -745,7 +745,7 @@ export type AdMeta = {
    * **فعلُ الحقيقة بجانبها** (محمد ٢٠٢٦-١١-٢٠، «ثلاثةُ أزرارٍ مرّة كثير» حين جاء زرُّ العودة): ما يغيّر هذه الحقيقةَ وحدها يقف
    * في سطرها لا في رأس التذكرة — «تعديل الموعد» بجانب «يُغلق باب الترشّح…»، و«الخريطة» بجانب المكان. وفي `AdMetaList` وحده.
    */
-  act?: { label: string; href?: string; onClick?: () => void; external?: boolean };
+  act?: { label: string; icon: ReactNode; href?: string; onClick?: () => void; external?: boolean };
 };
 /** نصُّ المعلومة: معزولٌ باتّجاهه إن كان لاتينيًّا */
 const metaText = (m: AdMeta) => (m.ltr ? <bdi dir="ltr" className="lat">{m.text}</bdi> : m.text);
@@ -1005,9 +1005,14 @@ export function AdMetaList({ meta }: { meta: AdMeta[] }) {
     <ul className="ad-meta">
       {meta.map((m) => (
         <li key={m.text} className="ad-meta-line" data-tone={m.tone}>{m.icon}<span title={m.text}>{metaText(m)}</span>
-          {m.act ? (m.act.href
-            ? <a className="ad-meta-act" href={m.act.href} {...(m.act.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{m.act.label}</a>
-            : <button type="button" className="ad-meta-act" onClick={m.act.onClick}>{m.act.label}</button>) : null}
+          {/* **زرٌّ من الهويّة بختمه لا كلمةٌ بخطٍّ تحتها** (محمد ٢٠٢٦-١١-٢٠، وقالها مرارًا: «لا يكون هناك خط تحت الكلمة والزر أوضح») */}
+          {m.act ? (
+            <span className="ad-meta-act">
+              {m.act.href
+                ? <AdButton variant="soft" size="sm" icon={m.act.icon} href={m.act.href} external={m.act.external}>{m.act.label}</AdButton>
+                : <AdButton variant="soft" size="sm" icon={m.act.icon} onClick={m.act.onClick ?? (() => {})}>{m.act.label}</AdButton>}
+            </span>
+          ) : null}
         </li>
       ))}
     </ul>
