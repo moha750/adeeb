@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, IdentificationBadge, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
-import { Star } from "@/app/_components/glyphs";
+import { Info, Star } from "@/app/_components/glyphs";
 import { fmtDayMonth } from "@/lib/dates";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 import { rankFor } from "@/lib/positionLabel";
@@ -23,13 +23,17 @@ import { cycleName, cycleShort, excludedWhy, frac, quorumLine } from "@/app/dash
 import { addDays, type RoomProps } from "@/app/dashboard/evaluation/_views/RoomHead";
 import { TargetDetail } from "@/app/dashboard/evaluation/_views/TargetDetail";
 import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
-import { AdSection } from "../account";
+import { AdLine, AdSection } from "../account";
 import { CollectionRoom, type Position } from "../collection";
 
 const NAV = "/dashboard/evaluation";
 const AR_TARGET: ArForms = ["مقيَّمٌ واحد", "مقيَّمان", "مقيَّمين", "مقيَّمًا"];
 const AR_RATER: ArForms = ["مقيِّمٌ واحد", "مقيِّمان", "مقيِّمين", "مقيِّمًا"];
 const AR_SHEET: ArForms = ["ورقةٌ واحدة", "ورقتان", "أوراق", "ورقةً"];
+
+/** «4 من 13 عضوًا»: المجموعُ بمعدوده بعد «من» (مجرورًا: «من عضوين»، «من 7 أعضاء»)، فيُقرأ الرقمُ أوراقًا لا درجة (محمد ٢٠٢٦-١١-٢٠: «غيرُ واضحة») */
+const ofMembers = (n: number, of: number) =>
+  of === 1 ? `${n} من عضوٍ واحد` : of === 2 ? `${n} من عضوين` : of <= 10 ? `${n} من ${of} أعضاء` : `${n} من ${of} عضوًا`;
 
 const VERDICT_TONE: Record<string, AdTone> = { kept: "ok", removed: "bad", no_result: "neutral" };
 const STATUS_TONE: Record<string, AdTone> = { scheduled: "neutral", open: "info", closed: "warn", executed: "ok" };
@@ -80,15 +84,15 @@ export function EvaluationRoom(props: RoomProps) {
   const members = (t: TargetRow): AdCell => {
     const q = quorumLine(t.members_ballots, t.members_eligible, closed);
     const need = Math.max(1, Math.ceil(t.members_eligible / 2)) - t.members_ballots;
-    const n = `${t.members_ballots} من ${t.members_eligible}`;
+    const n = ofMembers(t.members_ballots, t.members_eligible);
     // «القطعُ وكلمتُه» (اعتمده محمد ٢٠٢٦-١١-٢٠): الشريطُ مقطوعٌ عند نصفه وتحت القطع «النصف»، وما بقي له كلمةٌ مكانَ النسبة
     return {
-      label: "الأعضاء", value: n, tone: q.met ? undefined : closed ? "bad" : "warn",
+      label: "أوراق الأعضاء", value: n, tone: q.met ? undefined : closed ? "bad" : "warn",
       of: { now: t.members_ballots, max: t.members_eligible, mark: { at: 50, label: "النصف" }, word: q.met ? undefined : closed ? "لم يبلغه" : `بقي ${need}` },
     };
   };
   const council = (t: TargetRow): AdCell => ({
-    label: "المجلس", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible },
+    label: "أوراق المجلس", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible },
   });
   const cellsOf = (t: TargetRow): AdCell[] => {
     const base = [
@@ -170,7 +174,10 @@ export function EvaluationRoom(props: RoomProps) {
         act={<AdBadge tone={STATUS_TONE[cycle.status]}>{statusWord}</AdBadge>}
         media={<AdStages label="مراحل الدورة" stages={steps.map((s, i) => ({
           key: s.key, icon: s.icon, label: s.label, date: s.date, state: i < at ? "past" : i === at ? "now" : "next",
-        }))} />} />
+        }))} />}>
+        {/* القاعدةُ مرّةً واحدة فوق القائمة (محمد ٢٠٢٦-١١-٢٠): من يقيّم، ومتى يُعتدّ بأوراق الأعضاء (م٥/1؛ `lib/evaluation/score.ts`) */}
+        <AdLine icon={<Info />} read v="يقيّم كلَّ قائدٍ أعضاءُ لجنته والمجلسُ الإداري. ولا يُعتدّ بأوراق الأعضاء إلّا إن شارك نصفُهم، وإلّا حُكم بأوراق المجلس وحدها." />
+      </AdSection>
     </>
   );
   const notice = waiting.length ? (
@@ -186,8 +193,8 @@ export function EvaluationRoom(props: RoomProps) {
 
   const columns = [
     { key: "seat", label: "المنصب", icon: <IdentificationBadge />, text: true },
-    { key: "members", label: "الأعضاء", icon: <UsersThree /> },
-    { key: "council", label: "المجلس", icon: <Scales /> },
+    { key: "members", label: "أوراق الأعضاء", icon: <UsersThree /> },
+    { key: "council", label: "أوراق المجلس", icon: <Scales /> },
     ...(results ? [{ key: "score", label: "النتيجة", icon: <ChartBar /> }] : []),
   ];
 
