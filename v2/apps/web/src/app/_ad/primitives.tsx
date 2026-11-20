@@ -739,7 +739,14 @@ export type AdMetaTone = "ok" | "warn" | "bad" | "muted";
  * `ltr`: نصٌّ لاتينيٌّ يُعزَل باتّجاهه (بريد، معرّف، رابط) فلا تنقلب أجزاؤه في السطر العربيّ.
  * `clip`: سطرٌ واحدٌ مقصوصٌ في السطر أيضًا (نصُّ رسالة) — والكرتُ يقصّ سطورَه كلَّها أصلًا، واسمُه كاملًا في التلميح.
  */
-export type AdMeta = { icon: ReactNode; text: string; tone?: AdMetaTone; ltr?: boolean; clip?: boolean };
+export type AdMeta = {
+  icon: ReactNode; text: string; tone?: AdMetaTone; ltr?: boolean; clip?: boolean;
+  /**
+   * **فعلُ الحقيقة بجانبها** (محمد ٢٠٢٦-١١-٢٠، «ثلاثةُ أزرارٍ مرّة كثير» حين جاء زرُّ العودة): ما يغيّر هذه الحقيقةَ وحدها يقف
+   * في سطرها لا في رأس التذكرة — «تعديل الموعد» بجانب «يُغلق باب الترشّح…»، و«الخريطة» بجانب المكان. وفي `AdMetaList` وحده.
+   */
+  act?: { label: string; href?: string; onClick?: () => void; external?: boolean };
+};
 /** نصُّ المعلومة: معزولٌ باتّجاهه إن كان لاتينيًّا */
 const metaText = (m: AdMeta) => (m.ltr ? <bdi dir="ltr" className="lat">{m.text}</bdi> : m.text);
 /** معلومةٌ واحدةٌ برمزها في سطر المعلومات (`.ad-row-sub`) — كما في السطر ورأس المجموعة وسجلّ الأحداث. */
@@ -997,7 +1004,11 @@ export function AdMetaList({ meta }: { meta: AdMeta[] }) {
   return (
     <ul className="ad-meta">
       {meta.map((m) => (
-        <li key={m.text} className="ad-meta-line" data-tone={m.tone}>{m.icon}<span title={m.text}>{metaText(m)}</span></li>
+        <li key={m.text} className="ad-meta-line" data-tone={m.tone}>{m.icon}<span title={m.text}>{metaText(m)}</span>
+          {m.act ? (m.act.href
+            ? <a className="ad-meta-act" href={m.act.href} {...(m.act.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{m.act.label}</a>
+            : <button type="button" className="ad-meta-act" onClick={m.act.onClick}>{m.act.label}</button>) : null}
+        </li>
       ))}
     </ul>
   );

@@ -302,12 +302,7 @@ export function OpportunityRecordRoom({ opp, rows, now }: { opp: OppDetail; rows
       seed={opp.id}
       stub={oppStub(card)}
       chips={oppChips(card, now.day)}
-      acts={
-        <>
-          <AdButton variant="fill" size="sm" icon={<PencilSimple />} href={`/dashboard/volunteering/${opp.id}/edit`}>تعديل</AdButton>
-          {canEnd ? <AdButton variant="danger" size="sm" icon={<FlagCheckered />} onClick={() => setEnding(true)}>إنهاءُ الفرصة</AdButton> : null}
-        </>
-      }
+      acts={<AdButton variant="fill" size="sm" icon={<PencilSimple />} href={`/dashboard/volunteering/${opp.id}/edit`}>تعديل</AdButton>}
       info={info}
       figures={oppFigures(card, now.day)}
     />
@@ -337,6 +332,8 @@ export function OpportunityRecordRoom({ opp, rows, now }: { opp: OppDetail; rows
         table={{ head: "المتطوّع", stub: { key: "face", label: "", icon: <UserCircle /> }, columns: [] }}
         renderCard={row}
         renderRow={row}
+        // «إنهاءُ الفرصة» في قاع الصفحة لا في رأسها: فعلٌ نادرٌ لا رجعة فيه، كالانسحاب في قاع «رحلة ترشّحك» (محمد ٢٠٢٦-١١-٢٠)
+        after={canEnd ? <section className="ad-sec"><div className="ad-sec-foot ad-elw-pg-acts"><AdButton variant="danger" size="sm" icon={<FlagCheckered />} onClick={() => setEnding(true)}>إنهاءُ الفرصة</AdButton></div></section> : undefined}
       />
       <Modal
         open={ask !== null}

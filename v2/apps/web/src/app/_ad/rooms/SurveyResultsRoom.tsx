@@ -372,12 +372,8 @@ export function SurveyResultsRoom({ agg, responses, canEdit, survey, serverNow }
         // الكعبُ عددُ هذا الاستبيان نفسِه لا عددُ صفّه في الغرفة: ذاك يُعدّ في طلبٍ واحدٍ لكلّ استبياناتك وقد يُقصّ عند ألف صفّ
         stub={{ big: fmtNum(t.responses), small: arCounted(t.responses, RESP_NOUN) }}
         chips={survey ? surveyChips(survey) : <AdBadge>{status.label}</AdBadge>}
-        acts={
-          <>
-            <AdButton variant="fill" size="sm" icon={<DownloadSimple />} onClick={onExport}>تصدير CSV</AdButton>
-            {canEdit ? <AdButton variant="soft" size="sm" icon={<PencilSimple />} href={`/dashboard/surveys/${agg.id}/edit`}>تحرير</AdButton> : null}
-          </>
-        }
+        // «تصدير CSV» في رأس قسم الإجابات حيث تُصدَّر (كان مكرّرًا هنا)، فيبقى في الرأس العودةُ والأساسيّ (محمد ٢٠٢٦-١١-٢٠)
+        acts={canEdit ? <AdButton variant="fill" size="sm" icon={<PencilSimple />} href={`/dashboard/surveys/${agg.id}/edit`}>تحرير</AdButton> : undefined}
         info={info}
         figures={figures}
       />

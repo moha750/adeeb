@@ -46,7 +46,7 @@ const AR_TIMES: ArForms = ["مرّةً واحدة", "مرّتان", "مرّات"
  * السجلُّ قسمٌ في صفحة: `title` و`icon` رأسُه و`empty` فراغُه («ما الذي جرى» تحت الباركودات)، وبلا رأسٍ حيث يسمّيه ما حوله.
  * **ولا رابطَ فيه** (محمد ٢٠٢٦-١١-٠٢): ما يُفتح إلى صفحته سجلٌّ في قائمة السجلّات لا واقعةٌ هنا.
  */
-export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now, empty, bare, total, more }: {
+export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now, empty, bare, total, more, foot }: {
   title?: string;
   icon?: ReactNode;
   items: T[];
@@ -57,6 +57,8 @@ export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now,
   same?: (a: T, b: T) => boolean;
   noun: ArForms;
   /** ساعةُ الطلب (`requestNow`) لا ساعةُ الجهاز: «اليوم» في الخادم هو «اليوم» بعد الإماهة */
+  /** **قاعُ القسم لفعلٍ نادرٍ لا رجعة فيه** («إلغاء الانتخاب»، كالانسحاب في قاع «رحلة ترشّحك»): تحت السجلّ لا في رأس الصفحة */
+  foot?: ReactNode;
   now: number;
   empty?: { title: string; text: string };
   /** بلا ورقةٍ ولا إطار: السجلُّ داخل إطارٍ آخر (بندُ درج، نافذة) فلا يكون إطارًا في إطار */
@@ -148,6 +150,7 @@ export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now,
       )}
       {body}
       {more && <div className="ad-sec-foot ad-log-more">{more}</div>}
+      {foot ? <div className="ad-sec-foot ad-elw-pg-acts">{foot}</div> : null}
     </section>
   );
 

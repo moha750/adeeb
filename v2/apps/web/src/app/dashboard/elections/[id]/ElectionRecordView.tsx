@@ -22,7 +22,7 @@ export function ElectionRecordView({ election, log, logError, votes, votesError,
       <ElectionRecordRoom election={election} readOnly={readOnly} canAppoint={canAppoint} liveTotals={liveTotals} hrLeader={hrLeader} on={on}
         votesView={votesError ? <AdNote tone="warn" label="تفصيل الأصوات" title="تعذّر جلبه">{votesError}</AdNote> : <ElectionVotes votes={votes} />}
         logView={logError ? <AdNote tone="warn" label="سجلّ الانتخاب" title="تعذّر جلبه">{logError}</AdNote>
-          : <ElectionLog title="سجلّ الانتخاب" icon={<ClockCounterClockwise />} events={log} now={serverNow} subjectOf={subject} initial={6} />} />
+          : (foot) => <ElectionLog title="سجلّ الانتخاب" icon={<ClockCounterClockwise />} events={log} now={serverNow} subjectOf={subject} initial={6} foot={foot} />} />
       {windows}
     </>
   );
