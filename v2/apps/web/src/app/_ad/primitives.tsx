@@ -751,7 +751,14 @@ export function AdInfo({ m }: { m: AdMeta }) {
  * **والشريطُ كحليٌّ دائمًا** (محمد ٢٠٢٦-١٠-٣٠): الحالُ تقولها الكلمةُ مكانَ النسبة لا اللون —
  * `full`: كلمةُ الامتلاء حين يكون خبرًا («مكتمل»)، و`note`: كلمةٌ حين لا تصحّ النسبةُ بعد («لم يبدأ»، والشريطُ فارغ).
  */
-export type AdMeterOf = { now: number; max: number; full?: string; note?: string };
+export type AdMeterOf = {
+  now: number; max: number; full?: string; note?: string;
+  /**
+   * **علامةُ حدٍّ على الشريط** (محمد ٢٠٢٦-١١-٢٠، خطُّ «النصف» في إدارة التقييم كما اعتمده ٢٠٢٦-١٠-٢٨): خطٌّ رفيعٌ عند الحدّ وكلمتُه
+   * الصغيرة تحته. الموضعُ نسبةٌ من ثلاث (ربعٌ ونصفٌ وثلاثة أرباع) لأنّ الموضعَ صنفٌ في `ad.css` لا قيمةٌ مكتوبةٌ في السطر
+   */
+  mark?: { at: 25 | 50 | 75; label: string };
+};
 /**
  * `ltr`: قيمةٌ لاتينيّة (رقمٌ مرجعيّ، رمز) تُكتب بالخطّ اللاتينيّ من أوّلها إلى آخرها كالبريد في سطور المعلومات — كانت بخطّ المتن
  * العربيّ، فحروفُها بلاتينيّته المذيّلة وأرقامُها بأرقامه، خطّان في كلمةٍ واحدة (محمد ٢٠٢٦-١١-٠١).
@@ -1231,7 +1238,12 @@ export function AdRow({
               {m && <span className="ad-meter-pct" data-word={m.of.note ? "note" : m.full ? "full" : undefined}>{m.word ?? fmtPct(m.pct)}</span>}
             </span>
             {c.sub && <span className="ad-td-sub">{c.sub}</span>}
-            {m && <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />}
+            {m && (m.of.mark ? (
+              <span className="ad-meter-wrap" data-mark>
+                <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />
+                <span className="ad-meter-mark" data-at={m.of.mark.at} aria-hidden><span>{m.of.mark.label}</span></span>
+              </span>
+            ) : <meter className="ad-meter" min={0} max={Math.max(m.of.max, 1)} value={m.of.note ? 0 : Math.min(m.of.now, m.of.max)} aria-label={`${c.label}: ${m.word ?? fmtPct(m.pct)}`} />)}
           </div>
         );
       })}
@@ -1241,8 +1253,35 @@ export function AdRow({
   );
 }
 
+/**
+ * **مراحلُ بتواريخها: «كعوبُ الأيّام»** (اعتمده محمد ٢٠٢٦-١١-٢٠ في إدارة التقييم، من ثلاثةٍ مبنيّة على الحاسوب والجوّال: الكعوب، ودرجاتُ
+ * الحدّ، والسطرُ المستورد من الحاليّ): لكلّ مرحلةٍ كعبُ يومها (قطعةُ الجدول المصغّرة: اليومُ وتحته الشهر)، وبجانبه اسمُها عريضًا، وتحته
+ * سطرُ حالها سطرَ معلوماتٍ بأيقونته (`AdInfo`): «مضت» خافتة، و«الآن» بالأخضر، و«لم تبدأ». والكعبُ كاملٌ لا يُبهت، والماضي يخفت اسمُه
+ * بلون الحبر. وفي الغرفة الضيّقة يقف الكعبُ فوق اسمه. (رُفض: أيقونةٌ قبل الاسم العريض — لا مثيلَ لها في الهويّة؛ وشفافيّةُ الكعب الماضي.)
+ */
+export type AdStage = { key: string; icon: ReactNode; label: string; date: string; state: "past" | "now" | "next" };
+const STAGE_WORD: Record<AdStage["state"], string> = { past: "مضت", now: "الآن", next: "لم تبدأ" };
+export function AdStages({ stages, label }: { stages: AdStage[]; label: string }) {
+  return (
+    <ol className="ad-stages" aria-label={label}>
+      {stages.map((s) => {
+        const d = dayParts(s.date);
+        return (
+          <li key={s.key} className="ad-stage" data-state={s.state} aria-current={s.state === "now" ? "step" : undefined}>
+            <AdStubTile seed={s.date.slice(0, 10)} stub={{ big: d.day, small: d.month.split(" ")[0] }} />
+            <span className="ad-stage-t">
+              <b>{s.label}</b>
+              <AdInfo m={{ icon: s.icon, text: STAGE_WORD[s.state], tone: s.state === "past" ? "muted" : s.state === "now" ? "ok" : undefined }} />
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /** درجاتُ حدٍّ في رأس مجموعة: `max` قطعًا تمتلئ منها `now` بنغمتها، وتحتها `label` كلمةً (`AdGroupHead.steps`). */
-export type AdSteps = { now: number; max: number; tone?: "warn" | "bad"; label: string };
+export type AdSteps = { now: number; max: number; tone?: "warn" | "bad" | "ok"; label: string };
 
 /** الدرجاتُ قطعةً واحدة — في رأس المجموعة (غرفةُ الإنذارات)، وفي رأس القسم (`AdSection.steps`: «إنذاراتي» في «عضويتي»، ٢٠٢٦-١١-١٤) */
 export function AdStepsBar({ steps }: { steps: AdSteps }) {

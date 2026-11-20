@@ -24,6 +24,8 @@ const SIZES = [
 
 export function SimLab() {
   const [st, setSt] = useState<SimState>(() => initialState());
+  const [look, setLook] = useState("");
+  useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get("look") === "new") setLook(`?${q.toString()}`); }, []);
   const [who, setWho] = useState("mohammed");
   const [scene, setScene] = useState("all");
   const [size, setSize] = useState("1280");
@@ -199,7 +201,8 @@ export function SimLab() {
           ref={frame}
           className="evsim-frame"
           style={{ ["--evsim-w" as string]: `${size}px` }}
-          src="/ui/evaluation/sim/view"
+          // مقارنةُ الهويّة (٢٠٢٦-١١-٢٠): `?look=new` في الصفحة الأمّ يفتح العينَ على غرفة الإدارة الجديدة
+          src={`/ui/evaluation/sim/view${look}`}
           title="عين الشخص المتقمَّص"
           onLoad={() => post(live.current.st, live.current.who, live.current.run)}
         />
