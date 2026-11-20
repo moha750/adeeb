@@ -194,8 +194,8 @@ export type MyResultRow = {
   removed_at: string | null;
   restored_at: string | null;
   cancelled: Cancelled | null;
-  /** اللجنةُ التي عاد إليها المستبعَد عضوًا، وهل ينتظر لجنةً بعدُ (`20261120193000_evaluation_my_results_returned_to`).
-   *  اختياريّان: قبل تطبيق الترحيل لا تُعيدهما الدالّة، فلا يُكتب السطر. */
+  /** اللجنةُ التي عاد إليها المستبعَد عضوًا، وهل ينتظر لجنةً بعدُ (`20261120193547_evaluation_my_results_returned_to`).
+   *  اختياريّان: الحكمُ وحده يُكتب إن لم يعودا. */
   returned_unit?: string | null;
   awaiting_return?: boolean | null;
 };

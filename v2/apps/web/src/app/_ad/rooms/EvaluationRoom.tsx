@@ -11,15 +11,14 @@
  * «خارج هذه الدورة» لا كرتٌ في الذيل.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, IdentificationBadge, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
+import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
 import { DuotoneZone, Info, Star } from "@/app/_components/glyphs";
 import { fmtDayMonth } from "@/lib/dates";
 import { arCount, type ArForms } from "@/lib/arabicCount";
-import { rankFor } from "@/lib/positionLabel";
 import { percentText } from "@/lib/evaluation/score";
 import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
-import { CYCLE_STATUS_LABEL, RANK, verdictWord } from "@/app/dashboard/evaluation/vocab";
-import { cycleName, cycleShort, excludedWhy, frac, quorumLine } from "@/app/dashboard/evaluation/_views/parts";
+import { CYCLE_STATUS_LABEL, verdictWord } from "@/app/dashboard/evaluation/vocab";
+import { cycleName, cycleShort, excludedWhy, frac, quorumLine, seatLine } from "@/app/dashboard/evaluation/_views/parts";
 import { addDays, type RoomProps } from "@/app/dashboard/evaluation/_views/RoomHead";
 import { EvaluationDetail, ofMembers } from "./EvaluationDetail";
 import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
@@ -92,7 +91,6 @@ export function EvaluationRoom(props: RoomProps) {
   });
   const cellsOf = (t: TargetRow): AdCell[] => {
     const base = [
-      { label: "المنصب", text: true, value: <span className="ad-asg-seat"><DuotoneZone>{rankIcon(t.role_name)}</DuotoneZone>{rankFor(RANK[t.role_name], t.gender)}</span> },
       members(t),
       council(t),
     ];
@@ -107,7 +105,11 @@ export function EvaluationRoom(props: RoomProps) {
       ? <AdBadge tone="warn" icon={<UserSwitch />}>ينتظر لجنة</AdBadge>
       : <AdBadge tone={VERDICT_TONE[t.verdict]}>{verdictWord(t.verdict, t.gender)}</AdBadge>;
   };
-  const subOf = (t: TargetRow): AdMeta[] => (t.excluded ? [{ icon: <CalendarX />, text: excludedWhy(t.gender, cycle.due_on), tone: "muted" }] : []);
+  // **المنصبُ تحت الاسم لا عمودًا** (محمد ٢٠٢٦-١١-٢٠: «نورة عبد الله القحطاني، قائدة لجنة كذا… فيفرغ المكانُ لأوراق الأعضاء وأوراق المجلس»)
+  const subOf = (t: TargetRow): AdMeta[] => [
+    { icon: <DuotoneZone>{rankIcon(t.role_name)}</DuotoneZone>, text: seatLine(t.role_name, t.unit_name, t.gender) },
+    ...(t.excluded ? [{ icon: <CalendarX />, text: excludedWhy(t.gender, cycle.due_on), tone: "muted" as const }] : []),
+  ];
   const row = (t: TargetRow) => (
     <AdRow key={t.id} face={{ name: t.full_name, gender: t.gender }} title={t.full_name} onOpen={() => openTarget(t.id)}
       badge={badgeOf(t)} sub={subOf(t)} cells={cellsOf(t)}
@@ -189,7 +191,6 @@ export function EvaluationRoom(props: RoomProps) {
   ) : undefined;
 
   const columns = [
-    { key: "seat", label: "المنصب", icon: <IdentificationBadge />, text: true },
     { key: "members", label: "أوراق الأعضاء", icon: <UsersThree /> },
     { key: "council", label: "أوراق المجلس", icon: <Scales /> },
     ...(results ? [{ key: "score", label: "النتيجة", icon: <ChartBar /> }] : []),
