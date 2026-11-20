@@ -7,7 +7,7 @@ import type { InboxItem } from "@/lib/notifications/types";
 import { EmptyState } from "../../../dashboard/_components/EmptyState";
 import { PageHeader } from "../../../dashboard/_components/PageHeader";
 import { MineA } from "../../../dashboard/evaluation/_views/MineA";
-import { RateA } from "../../../dashboard/evaluation/_views/RateA";
+import { RateA, type SubmitFn } from "../../../dashboard/evaluation/_views/RateA";
 import { RateRoom } from "../../../_ad/rooms/RateRoom";
 import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
 import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
@@ -82,15 +82,15 @@ export function SimView() {
 
   let body: React.ReactNode;
   if (page === "rate") {
-    const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const Rate = q?.get("look") === "new" ? RateRoom : RateA;
+    const isNew = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new";
+    const submit = (i: Parameters<SubmitFn>[0]) => send({ kind: "submit", as: persona, ...i });
     body = v.sheets.length ? (
-      <Rate
-        sheets={v.sheets}
-        dueOn={DUE}
-        draftOwner={`sim${run}:${persona}`}
-        onSubmit={(i) => send({ kind: "submit", as: persona, ...i })}
-      />
+      isNew ? (
+        <RateRoom sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit}
+          loadMine={async (id) => (await send({ kind: "myBallot", as: persona, targetId: id })).ballot ?? null} />
+      ) : (
+        <RateA sheets={v.sheets} dueOn={DUE} draftOwner={`sim${run}:${persona}`} onSubmit={submit} />
+      )
     ) : (
       <>
         <PageHeader title="قيّم القيادات" />

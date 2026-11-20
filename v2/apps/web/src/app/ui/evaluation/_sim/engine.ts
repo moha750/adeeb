@@ -478,13 +478,19 @@ export type Act =
   | { kind: "recompute"; as: string; targetId: number; reason: string }
   | { kind: "chooseReturn"; as: string; targetId: number; committeeId: number }
   | { kind: "electorate"; targetId: number }
-  | { kind: "read"; as: string; note?: number };
+  | { kind: "read"; as: string; note?: number }
+  | { kind: "myBallot"; as: string; targetId: number };
 
-export type ActResult = { ok: boolean; message: string; electorate?: ElectorRow[] };
+export type ActResult = { ok: boolean; message: string; electorate?: ElectorRow[]; ballot?: { scores: number[]; keep: string | null; change: string | null } | null };
 
 export function act(st0: SimState, a: Act): { st: SimState; res: ActResult } {
   let st = st0;
   if (a.kind === "electorate") return { st, res: { ok: true, message: "", electorate: electorateRows(st, a.targetId) } };
+  // «عرض تقييمي»: ورقةُ المتقمَّص كما هي اليوم (المكتوبةُ أو المشتقّة)، كدالّة `evaluation_my_ballot`
+  if (a.kind === "myBallot") {
+    const b = ballotsNow(st).find((x) => x.target === a.targetId && x.rater === a.as);
+    return { st, res: { ok: true, message: "", ballot: b ? { scores: b.scores, keep: b.keep, change: b.change } : null } };
+  }
   if (a.kind === "read") {
     const hit = (n: Note) => n.to === a.as && (a.note === undefined || n.id === a.note);
     return { st: { ...st, notes: st.notes.map((n) => (hit(n) ? { ...n, unread: false } : n)) }, res: { ok: true, message: "" } };

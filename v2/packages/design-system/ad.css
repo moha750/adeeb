@@ -5674,3 +5674,6 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 @media (max-width: 40rem) {
   .ad-rate-scale .ad-switch-seg { padding-inline: calc(var(--space-1) * .5); }
 }
+/* «عرض تقييمي»: الورقةُ نفسُها مقفلة — الأجزاءُ لا تُلمس ولا تبهت، فالمختارُ يبقى قطعةَ اللوح كما اختيرت */
+.ad-rate-frozen .ad-switch-seg:disabled { cursor: default; opacity: 1; }
+.ad-rate-frozen .ad-switch-seg:disabled:not(.is-on):hover { background: none; color: inherit; }

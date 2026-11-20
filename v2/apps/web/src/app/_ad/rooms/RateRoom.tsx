@@ -10,11 +10,13 @@
  * إيصالًا بما أُرسل، وبإغلاقها يكون السطرُ «قيّمت» أمام عينك. ورُدّ «ألف»: كلُّ مقيَّمٍ قسمٌ تنفتح ورقتُه في جسمه — «تنفتح قائمةٌ طويلة فتحسّ الصفحةَ تضيع منك».
  * والمقياسُ **المبدّلُ نفسُه** (`.ad-switch`) خمسةَ أجزاءٍ برقمٍ فوق كلمته (كلماتُ اللائحة م٦/1 حرفًا)، والحقولُ حقولُ قالب النماذج.
  */
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert, Button, Modal, Textarea } from "@adeeb/design-system";
 import { ChatCircleText, Compass, NotePencil, PaperPlaneTilt, Scales, StarHalf, UsersThree } from "@phosphor-icons/react";
-import { Check, DuotoneZone, PencilSimple, Star } from "@/app/_components/glyphs";
+import { Check, DuotoneZone, Eye, PencilSimple, Star } from "@/app/_components/glyphs";
 import { useDraft } from "@/lib/useDraft";
+import { useToast } from "@/app/dashboard/_components/ToastProvider";
+import type { MyBallot } from "@/app/dashboard/evaluation/actions";
 import type { SheetRow } from "@/app/dashboard/evaluation/data";
 import type { SubmitFn } from "@/app/dashboard/evaluation/_views/RateA";
 import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor } from "@/app/dashboard/evaluation/vocab";
@@ -45,8 +47,7 @@ function useSheet(sheet: SheetRow, onSubmit: SubmitFn, onSent: () => void, draft
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** رسالةُ الوصول بعد الإرسال: النافذةُ تصير إيصالًا بما أُرسل (محمد ٢٠٢٦-١١-٢٠: «يرى التقييم الذي قيّمه كي يتأكّد») */
-  const [sent, setSent] = useState<string | null>(null);
+  const toast = useToast();
   const refs = useRef<(HTMLLIElement | null)[]>([]);
   const answered = cur.scores.filter((v) => v !== null).length;
 
@@ -68,11 +69,11 @@ function useSheet(sheet: SheetRow, onSubmit: SubmitFn, onSent: () => void, draft
     setPending(false);
     if (!r.ok) return setError(r.message);
     draft.clear();
-    setSent(r.message);
+    toast.success(r.message);
     onSent();
   };
   const setRef = (i: number) => (el: HTMLElement | null) => { refs.current[i] = el as HTMLLIElement | null; };
-  return { items, cur, setTyped, tried, pending, error, sent, setRef, answered, pick, send };
+  return { items, cur, setTyped, tried, pending, error, setRef, answered, pick, send };
 }
 type SheetState = ReturnType<typeof useSheet>;
 
@@ -115,64 +116,100 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
   );
 }
 
-/**
- * **الإيصال** (محمد ٢٠٢٦-١١-٢٠، الطريقُ الأوّل من اثنين): بعد الإرسال تبقى النافذةُ وتصير ورقةً تُقرأ — ما اخترتَه في كلّ بندٍ وما كتبتَه — من
- * حال الصفحة نفسِها، فلا تقرأ القاعدةُ ورقةً بعد إرسالها (السرّيّة: لا دالّةَ تُعيد ورقةَ أحد، ولو لصاحبها؛ والمعاينةُ الكاملة تجعل المعاينَ
- * صاحبَ الجلسة). ويبقى التقييمُ بلا تعديل (`evaluation_submit`: «التقييمُ لا يُعاد»). ورُدّ الطريقُ الثاني («اعرض تقييمي» متى شاء): بابٌ
- * جديدٌ على أوراقٍ أُغلقت عمدًا.
- */
-function Receipt({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
-  return (
-    <>
-      <AdNote tone="ok" title={s.sent ?? "وصل تقييمُك"}>هذا ما أرسلته، ولا يُعدَّل بعد الإرسال.</AdNote>
-      <ul className="ad-lines ad-rate-receipt">
-        {s.items.map((it, i) => {
-          const v = s.cur.scores[i] as 1 | 2 | 3 | 4 | 5;
-          return <AdLine key={it.key} icon={<Check />} k={it.label} v={`${v}، ${SCALE_LABELS[v]}`} />;
-        })}
-        {sheet.part === "members" ? (
-          <>
-            <AdLine icon={<ChatCircleText />} k={OPEN_QUESTION.keep} v={s.cur.keep.trim() || "لم تكتب شيئًا"} tone={s.cur.keep.trim() ? undefined : "muted"} read />
-            <AdLine icon={<ChatCircleText />} k={OPEN_QUESTION.change} v={s.cur.change.trim() || "لم تكتب شيئًا"} tone={s.cur.change.trim() ? undefined : "muted"} read />
-          </>
-        ) : null}
-      </ul>
-    </>
-  );
-}
-
-/** الورقةُ في نافذةٍ باسم صاحبها، والإرسالُ في تذييلها؛ وبعده إيصالُها والإغلاقُ وحده. */
+/** الورقةُ في نافذةٍ باسم صاحبها، والإرسالُ في تذييلها، ثمّ تُغلق. */
 function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: SheetRow; onSubmit: SubmitFn; onSent: () => void; onClose: () => void; draftKey: string | null }) {
   const s = useSheet(sheet, onSubmit, onSent, draftKey);
   return (
     <Modal open onClose={onClose} size="md" className="ad-rate-win" busy={s.pending} title={`تقييم ${sheet.full_name}`}
       description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
-      footer={s.sent ? (
-        <Button variant="ghost" size="md" onClick={onClose}>إغلاق</Button>
-      ) : (
+      footer={
         <>
           <Button variant="primary" size="md" loading={s.pending} onClick={() => void s.send()}><PaperPlaneTilt aria-hidden />أرسل التقييم</Button>
           <Button variant="ghost" size="md" onClick={onClose} disabled={s.pending}>إغلاق</Button>
         </>
-      )}>
-      {s.sent ? <Receipt sheet={sheet} s={s} /> : <SheetBody sheet={sheet} s={s} />}
+      }>
+      <SheetBody sheet={sheet} s={s} />
       {s.error ? <Alert tone="danger" compact>{s.error}</Alert> : null}
     </Modal>
   );
 }
 
-export function RateRoom({ sheets, dueOn, onSubmit, draftOwner = null }: {
+/**
+ * **«عرض تقييمي»** (محمد ٢٠٢٦-١١-٢٠): الورقةُ نفسُها بشكلها كما قيّمتَ — المقياسُ والمختارُ قطعةٌ من اللوح، والحقلان بما كُتب — مقفلةً لا تُلمس،
+ * والإغلاقُ وحده. ولا شكلَ إيصالٍ جديد («طريقةُ العرض كإيصالٍ قبيحةٌ جدًّا»). والورقةُ من القاعدة لصاحب الجلسة وحده (`evaluation_my_ballot`)،
+ * ولا تُعرض في جلسة معاينة.
+ */
+function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: number) => Promise<MyBallot | null>; onClose: () => void }) {
+  const [b, setB] = useState<MyBallot | null | undefined>(undefined);
+  // تُجلب مرّةً لكلّ ورقة: الدالّةُ تُعاد مع كلّ رسمٍ للصفحة، فلا تكون سببًا لجلبٍ آخر
+  const loader = useRef(load);
+  useEffect(() => {
+    let live = true;
+    void loader.current(sheet.target_id).then((x) => { if (live) setB(x); });
+    return () => { live = false; };
+  }, [sheet.target_id]);
+  const items = itemsFor(sheet.part);
+  return (
+    <Modal open onClose={onClose} size="md" className="ad-rate-win ad-rate-frozen" title={`تقييمك ${sheet.full_name}`}
+      description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
+      footer={<Button variant="ghost" size="md" onClick={onClose}>إغلاق</Button>}>
+      {b === undefined ? <AdNote tone="info" title="تُجلب ورقتك…" />
+        : b === null ? <AdNote tone="warn" title="لا تُعرض الورقة الآن" >إن كنت تعاين حساب غيرك فالأوراق لا تُعرض في المعاينة.</AdNote>
+        : (
+          <>
+            <ol className="ad-rate-qs">
+              {items.map((it, i) => {
+                const v = b.scores[i];
+                const id = `ad-rate-v-${sheet.target_id}-${it.key}`;
+                return (
+                  <li key={it.key} className="ad-rate-q" data-state="done">
+                    <div className="ad-rate-qh">
+                      <span className="ad-rate-n" aria-hidden><Check /></span>
+                      <span className="ad-rate-qt"><b id={id}>{it.label}</b><span>{it.hint}</span></span>
+                    </div>
+                    <div className="ad-switch ad-rate-scale" role="radiogroup" aria-labelledby={id} aria-readonly>
+                      {([1, 2, 3, 4, 5] as const).map((n) => (
+                        <button key={n} type="button" role="radio" aria-checked={v === n} disabled className={"ad-switch-seg" + (v === n ? " is-on" : "")}>
+                          <b className="lat">{n}</b>
+                          <span>{SCALE_LABELS[n]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+            {sheet.part === "members" ? (
+              <div className="ad-rate-open">
+                <Textarea label={OPEN_QUESTION.keep} icon={<ChatCircleText />} innerIcon={<NotePencil />} rows={3} readOnly value={b.keep ?? ""} placeholder="لم تكتب شيئًا" />
+                <Textarea label={OPEN_QUESTION.change} icon={<ChatCircleText />} innerIcon={<NotePencil />} rows={3} readOnly value={b.change ?? ""} placeholder="لم تكتب شيئًا" />
+              </div>
+            ) : null}
+          </>
+        )}
+    </Modal>
+  );
+}
+
+export function RateRoom({ sheets, dueOn, onSubmit, loadMine, draftOwner = null }: {
   sheets: SheetRow[]; dueOn: string; onSubmit: SubmitFn; draftOwner?: string | null;
+  /** ورقتي كما أرسلتُها: `getMyBallot` في الصفحة، وورقةُ المتقمَّص في المحاكي */
+  loadMine: (targetId: number) => Promise<MyBallot | null>;
 }) {
   const [done, setDone] = useState<Set<number>>(() => new Set(sheets.filter((s) => s.done).map((s) => s.target_id)));
   const [open, setOpen] = useState<number | null>(null);
   const total = sheets.length;
   const finished = done.size;
   const key = (id: number) => (draftOwner ? `evaluation:${draftOwner}:${id}` : null);
-  // بعد الإرسال تبقى النافذةُ إيصالًا، ويصير السطرُ خلفها «قيّمت»؛ وإغلاقُها يعيدك إلى القائمة، ولا تُفتح ورقةُ التالي وحدها
-  const afterSend = (id: number) => setDone((d) => new Set(d).add(id));
+  const [viewing, setViewing] = useState<number | null>(null);
+  // بعد الإرسال تُغلق النافذةُ ويصير السطرُ «قيّمت» بفعل «عرض تقييمي»، ولا تُفتح ورقةُ التالي وحدها: ترى أنّك أنجزت، ثمّ تختار
+  const afterSend = (id: number) => {
+    setDone((d) => new Set(d).add(id));
+    setOpen(null);
+  };
   const last = lastDay(sheets[0]?.last_day ?? dueOn);
   const current = open === null ? null : sheets.find((x) => x.target_id === open) ?? null;
+  const viewed = viewing === null ? null : sheets.find((x) => x.target_id === viewing) ?? null;
 
   return (
     <AccountRoom navPath={NAV} title="قيّم القيادات">
@@ -185,15 +222,16 @@ export function RateRoom({ sheets, dueOn, onSubmit, draftOwner = null }: {
               const isDone = done.has(s.target_id);
               return (
                 <AdLine key={s.target_id} icon={rankIcon(s.role_name)} v={s.full_name} sub={isDone ? "قيّمت" : seatLine(s.role_name, s.unit_name, s.gender)}
-                  tone={isDone ? "ok" : undefined} toneAt="sub" disabled={isDone}
-                  act={isDone ? undefined : { icon: <PencilSimple />, text: "قيّم", label: `قيّم ${s.full_name}` }}
-                  onClick={isDone ? undefined : () => setOpen(s.target_id)} />
+                  tone={isDone ? "ok" : undefined} toneAt="sub"
+                  act={isDone ? { icon: <Eye />, text: "عرض تقييمي", label: `عرض تقييمك ${s.full_name}` } : { icon: <PencilSimple />, text: "قيّم", label: `قيّم ${s.full_name}` }}
+                  onClick={() => (isDone ? setViewing(s.target_id) : setOpen(s.target_id))} />
               );
             })}
           </AdSection>
         </DuotoneZone>
       </div>
       {current ? <WindowSheet sheet={current} onSubmit={onSubmit} onSent={() => afterSend(current.target_id)} onClose={() => setOpen(null)} draftKey={key(current.target_id)} /> : null}
+      {viewed ? <ViewSheet sheet={viewed} load={loadMine} onClose={() => setViewing(null)} /> : null}
     </AccountRoom>
   );
 }
