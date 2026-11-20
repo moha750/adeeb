@@ -19,6 +19,6 @@ export default async function BookEditorPage({ params }: { params: Promise<{ id:
   if (error) return <AdRoomError title="تحرير المنشور" navPath="/dashboard/library" what="المنشور" message={error} />;
   if (!book) notFound();
 
-  // **المحرّرُ على المنضدة** (اعتمده محمد ٢٠٢٦-١١-١٦). و`BookEditorView` القديمُ باقٍ في ملفّه بلا مستعمِلٍ حتى يقرّر حذفَه
+  // **المحرّرُ على المنضدة** (اعتمده محمد ٢٠٢٦-١١-١٦). و`BookEditorView` القديمُ نُقل للحذف بقراره (٢٠٢٦-١١-٢٠)
   return <BookEditorRoom book={book} initialPages={pages} />;
 }

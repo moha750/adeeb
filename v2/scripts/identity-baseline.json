@@ -12,10 +12,10 @@
     "hex-css": 210,
     "rgb-css": 83,
     "empty-classes": 17,
-    "inline-style": 100,
+    "inline-style": 93,
     "hex-tsx": 23,
     "arabic-digit-helpers": 3,
-    "tailwind-utilities": 977,
-    "tailwind-text-size": 78
+    "tailwind-utilities": 852,
+    "tailwind-text-size": 72
   }
 }

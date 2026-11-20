@@ -19,7 +19,7 @@ export default async function ShowEditorPage({ params }: { params: Promise<{ sho
   if (error) return <AdRoomError title="البرنامج" navPath="/dashboard/radio" what="البرنامج" message={error} />;
   if (!data) notFound();
 
-  // **محرّرُ البرنامج على المنضدة** (`ShowEditorRoom`، اعتمده محمد ٢٠٢٦-١١-١٦ بعد المختبر `/dashboard/ad/show-editor`). و`ShowEditorView` القديمُ باقٍ بلا مستعمِل
+  // **محرّرُ البرنامج على المنضدة** (`ShowEditorRoom`، اعتمده محمد ٢٠٢٦-١١-١٦ بعد المختبر `/dashboard/ad/show-editor`). و`ShowEditorView` القديمُ نُقل للحذف بقراره (٢٠٢٦-١١-٢٠)
   return (
     <ShowEditorRoom
       show={data.show}
