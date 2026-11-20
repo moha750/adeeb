@@ -116,6 +116,14 @@ export function DatePanel({ type, value, min, max, today, onPick, onDone }: {
   const pm = hh >= 12;
   const h12 = hh % 12 === 0 ? 12 : hh % 12;
   const setHour = (h: number) => emit(d0 || today, (h % 12) + (pm ? 12 : 0));
+  /** ما يُكتب في الدقيقة قبل اعتماده (يُعتمد بالخروج منها أو Enter)، ويُحصر بين ٠ و٥٩ */
+  const [minDraft, setMinDraft] = useState<string | null>(null);
+  const commitMin = () => {
+    if (minDraft === null) return;
+    const n = minDraft === "" ? mm : Math.min(59, +minDraft);
+    setMinDraft(null);
+    if (n !== mm) emit(d0 || today, hh, n);
+  };
 
   /**
    * **لوحةُ المفاتيح** (سهولةُ الوصول قبل التعميم): الأسهمُ تنقل بين الأيّام (اليمينُ أمسٌ واليسارُ غدٌ في الاتّجاه العربيّ، والأعلى
@@ -149,9 +157,9 @@ export function DatePanel({ type, value, min, max, today, onPick, onDone }: {
   const onRootKey = (e: KeyboardEvent<HTMLDivElement>) => {
     byPointer.current = false;
     if (e.key !== "Tab") return;
-    const items = [...(root.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled, [tabindex='-1'])") ?? [])];
+    const items = [...(root.current?.querySelectorAll<HTMLElement>("button:not(:disabled, [tabindex='-1']), input") ?? [])];
     if (!items.length) return;
-    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    const i = items.indexOf(document.activeElement as HTMLElement);
     e.preventDefault();
     items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]?.focus();
   };
@@ -235,10 +243,19 @@ export function DatePanel({ type, value, min, max, today, onPick, onDone }: {
                 <button type="button" aria-label="ساعة أكثر" onClick={() => setHour(h12 === 12 ? 1 : h12 + 1)}><ToRight /></button>
               </div>
               <b className="adp-colon">:</b>
+              {/* الدقيقةُ حرّة (محمد ٢٠٢٦-١١-٢٠): السهمان طريقٌ سريعٌ بخطوة خمس، ومن خارجها يُردّ إلى أقرب خمس في جهته (١٢ ← ١٥ أو ١٠)،
+                  والرقمُ نفسُه يُكتب (٠–٥٩) لما لا تبلغه الخمسات: «١١:٥٩ م» آخرُ دقيقةٍ في مواعيد الإغلاق */}
               <div className="adp-step">
-                <button type="button" aria-label="خمس دقائق أقلّ" onClick={() => emit(d0 || today, hh, (mm + 55) % 60)}><ToLeft /></button>
-                <b aria-live="polite">{pad(mm)}</b>
-                <button type="button" aria-label="خمس دقائق أكثر" onClick={() => emit(d0 || today, hh, (mm + 5) % 60)}><ToRight /></button>
+                <button type="button" aria-label="خمس دقائق أقلّ" onClick={() => emit(d0 || today, hh, ((Math.ceil(mm / 5) * 5 - 5) + 60) % 60)}><ToLeft /></button>
+                <input className="adp-min" inputMode="numeric" maxLength={2} aria-label="الدقيقة" value={minDraft ?? pad(mm)}
+                  onFocus={(e) => { setMinDraft(pad(mm)); e.currentTarget.select(); }}
+                  onChange={(e) => setMinDraft(e.currentTarget.value.replace(/\D/g, "").slice(0, 2))}
+                  onBlur={commitMin}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); commitMin(); e.currentTarget.select(); }
+                    else if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); const m = (mm + (e.key === "ArrowUp" ? 1 : 59)) % 60; setMinDraft(pad(m)); emit(d0 || today, hh, m); }
+                  }} />
+                <button type="button" aria-label="خمس دقائق أكثر" onClick={() => emit(d0 || today, hh, (Math.floor(mm / 5) * 5 + 5) % 60)}><ToRight /></button>
               </div>
             </div>
             <div className="ad-switch adp-ampm" role="group" aria-label="صباحًا أو مساءً">
