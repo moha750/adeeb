@@ -1364,17 +1364,20 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .mdl.ad-dlg {
   --ad-tone: var(--ad-bad-solid);
   --ad-tone-ink: var(--ad-white);   /* الأبيضُ الصريح لا فولاذيُّ اللوح: هامشُ تباينٍ على الأحمر والأخضر */
+  /* الورقةُ من لون نافذتها كقالب النوافذ (محمد ٢٠٢٦-١١-٢٠، «ج»)، و`--dlg-hue` مصمتٌ لأنّ `--ad-tone` تدرّج */
+  --dlg-hue: var(--danger-500);
+  --dlg-paper: color-mix(in oklab, var(--dlg-hue) 6%, var(--ad-dlg-paper));
   overflow: hidden;
   border: 1px solid var(--ad-edge);
   border-radius: var(--ad-r-plate);
-  background: var(--ad-dlg-paper);
+  background: var(--dlg-paper);
   box-shadow: var(--ad-lift);
   color: var(--ad-ink);
   font-family: var(--font-body);
 }
 .mdl.ad-dlg.ad-dlg-tone-danger { --ad-ring: var(--ad-bad-ring); }
-.mdl.ad-dlg.ad-dlg-tone-warning { --ad-tone: var(--ad-warn-solid); --ad-tone-ink: var(--ad-warn-ink); --ad-ring: var(--ad-warn-ring); }
-.mdl.ad-dlg.ad-dlg-tone-success { --ad-tone: var(--ad-ok-solid); --ad-ring: var(--ad-ok-ring); }
+.mdl.ad-dlg.ad-dlg-tone-warning { --dlg-hue: var(--warning-500); --ad-tone: var(--ad-warn-solid); --ad-tone-ink: var(--ad-warn-ink); --ad-ring: var(--ad-warn-ring); }
+.mdl.ad-dlg.ad-dlg-tone-success { --dlg-hue: var(--success-600); --ad-tone: var(--ad-ok-solid); --ad-ring: var(--ad-ok-ring); }
 .ad-dlg :focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
 .ad-dlg-head {
   position: relative;
@@ -1424,6 +1427,9 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 .ad-dlg-x { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-align: center; text-wrap: pretty; }
 .ad-dlg-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--space-2); }
 .ad-dlg-foot .ad-btn { inline-size: 100%; }
+/* الزرُّ الثاني من الورقة لا أبيضُ فوقها (كذيل قالب النوافذ): أرضُه الورقة وحدُّه خيطٌ بلون النافذة */
+.ad-dlg-foot .ad-btn-soft { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--dlg-hue) 26%, transparent); }
+.ad-dlg-foot .ad-btn-soft:hover:not(:disabled) { background: color-mix(in oklab, var(--dlg-hue) 12%, var(--ad-dlg-paper)); }
 /* الأساسيُّ هو المادّةُ نفسُها بضوئها (الخطِرُ `danger-fill`، والتحذيرُ والنجاحُ يلبسان `fill` لونَ رأسهما) */
 .ad-dlg-foot :is(.ad-btn-fill, .ad-btn-danger-fill) { background: var(--ad-dlg-light), var(--ad-tone); color: var(--ad-tone-ink); }
 .mdl.ad-dlg.ad-dlg-tone-danger .ad-dlg-foot .ad-btn-danger-fill:hover { background: var(--ad-bad-solid-hover); }
@@ -3083,15 +3089,21 @@ html[lang] .ad-sec[data-tone="bad"] .fld:is(:focus-within, :has(.asel-open)) .fl
   --win-tone: var(--ad-plate);
   --win-ink: var(--ad-plate-ink);
   --win-ink-2: var(--ad-plate-ink-2);
+  /* **الورقةُ من لون نافذتها** (محمد ٢٠٢٦-١١-٢٠، اختار «ج»: «جيم أصبح منطقيًّا»): كان الرأسُ مشبعًا والورقةُ بيضاءَ ناصعة فبدت
+     النافذةُ قطعتين، فصارت الورقةُ أثرًا خفيفًا من لون الرأس، ومعها زرُّ الذيل والمعلومةُ بلغة نافذتها (أدناه). اللونُ المصمت
+     `--win-hue` لأنّ `--win-tone` تدرّجٌ لا يُمزج، و`--win-mark` حبرُ الأيقونة والعنوان الصغير بنغمة النافذة */
+  --win-hue: var(--navy-600);
+  --win-mark: var(--ad-brand-2);
+  --win-paper: color-mix(in oklab, var(--win-hue) 6%, var(--ad-dlg-paper));
   overflow: hidden;
   border: 1px solid var(--ad-edge);
   border-radius: var(--ad-r-plate);
-  background: var(--ad-dlg-paper);
+  background: var(--win-paper);
   box-shadow: var(--ad-lift);
   color: var(--ad-ink);
   font-family: var(--font-body);
 }
-.mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-bad-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
+.mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) { --win-hue: var(--danger-500); --win-mark: var(--ad-bad); --win-tone: var(--ad-bad-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
 /* **النافذةُ الخطِرة بنغمةٍ واحدة** (محمد ٢٠٢٦-١١-١٧، اختار «ب»: «نافذةٌ حمراء وحقولُها زرقاء غيرُ جميل… إن كان رماديًّا فمحايد،
    أمّا أزرق فلا»): ما يحمل القرارَ أحمر (الرأس، والخيارُ المختار، ورمزُ الحقل، وزرُّ التأكيد)، وما سواه محايدٌ رماديّ لا أزرق —
    حدودُ الحقول، والوصف، وتلميحُ الحقل، والنصّ. فتُعاد أدوارُ الحبر والحدّ داخل النافذة إلى الرماديّ (في النهار؛ والليلُ حبرُه فولاذيٌّ محايد أصلًا) */
@@ -3107,8 +3119,8 @@ html:not([data-theme="dark"]) .mdl.mdl-tone-danger:not(.ad-dlg, .mdl-alert) {
 html[lang] .mdl-tone-danger .fld .fld-lic { color: var(--ad-bad); }
 html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
 .mdl-tone-danger .ad-switch-seg[aria-pressed="true"] { background: var(--ad-dlg-light), var(--ad-bad-solid); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
-.mdl.mdl-tone-warning:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-warn-solid); --win-ink: var(--ad-warn-ink); --win-ink-2: color-mix(in oklab, var(--ad-warn-ink) 80%, transparent); }
-.mdl.mdl-tone-success:not(.ad-dlg, .mdl-alert) { --win-tone: var(--ad-ok-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
+.mdl.mdl-tone-warning:not(.ad-dlg, .mdl-alert) { --win-hue: var(--warning-500); --win-mark: var(--ad-warn); --win-tone: var(--ad-warn-solid); --win-ink: var(--ad-warn-ink); --win-ink-2: color-mix(in oklab, var(--ad-warn-ink) 80%, transparent); }
+.mdl.mdl-tone-success:not(.ad-dlg, .mdl-alert) { --win-hue: var(--success-600); --win-mark: var(--ad-ok); --win-tone: var(--ad-ok-solid); --win-ink: var(--ad-white); --win-ink-2: color-mix(in oklab, var(--ad-white) 82%, transparent); }
 /* النغمةُ في الرأس وحده: حقولُ النافذة النغميّة لا تُصبغ بها (كانت حقولُ «إنهاء العضوية» ورديّة) */
 .mdl[class*="mdl-tone-"]:not(.ad-dlg, .mdl-alert) { --fld-tint: var(--steel-50); --fld-tint-2: var(--steel-100); --fld-accent: var(--steel-600); }
 .mdl.pvb-modal:not(.ad-dlg, .mdl-alert) .mdl-body { padding-block-start: calc(var(--space-12) + var(--space-1)); }
@@ -3118,8 +3130,8 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-x { inline-size: var(--ad-ctl-sm); block-size: var(--ad-ctl-sm); border-radius: var(--ad-r-sm); background: var(--ad-plate-veil-2); box-shadow: inset 0 0 0 1px var(--ad-plate-hair); color: var(--win-ink); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-x:hover { background: var(--ad-plate-hair); color: var(--win-ink); }
 @media (pointer: coarse) { .mdl:not(.ad-dlg, .mdl-alert) .mdl-x { inline-size: var(--ad-ctl-touch); block-size: var(--ad-ctl-touch); } }
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-body { padding: var(--space-5) var(--win-pad); background: var(--ad-dlg-paper); }
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot { gap: var(--space-2); padding: var(--space-4) var(--win-pad) var(--space-5); border-block-start: 1px solid var(--ad-rule); border-radius: 0; background: var(--ad-dlg-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body { padding: var(--space-5) var(--win-pad); background: var(--win-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot { gap: var(--space-2); padding: var(--space-4) var(--win-pad) var(--space-5); border-block-start: 1px solid var(--ad-rule); border-radius: 0; background: var(--win-paper); }
 
 /* الأزرارُ بأزرار الهويّة، والأساسيُّ أوّلًا، والفعلان بعرضٍ واحد */
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > .abtn { flex: 1 1 0; min-block-size: var(--ad-ctl); border-radius: var(--ad-r-ctl); font-family: var(--font-body); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); }
@@ -3132,6 +3144,9 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .abtn-warning { background: var(--ad-dlg-light), var(--ad-warn-solid); color: var(--ad-warn-ink); box-shadow: none; }
 .mdl:not(.ad-dlg, .mdl-alert) :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral) { background: var(--ad-field); color: var(--ad-ink-head); border-color: transparent; box-shadow: inset 0 0 0 1px var(--ad-hair); }
 .mdl:not(.ad-dlg, .mdl-alert) :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral):hover:not(:disabled) { background: var(--ad-field-2); box-shadow: inset 0 0 0 1px var(--ad-hair-2); color: var(--ad-ink-head); }
+/* زرُّ الذيل من الورقة لا أبيضُ فوقها (محمد ٢٠٢٦-١١-٢٠: «عالجتَ شيئًا وتركتَ شيئًا»): أرضُه الورقة وحدُّه خيطٌ بلون النافذة */
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral) { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--win-hue) 26%, transparent); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-foot > :is([class*="abtn-ghost"], .abtn-outline, .abtn-secondary, .abtn-neutral):hover:not(:disabled) { background: color-mix(in oklab, var(--win-hue) 12%, var(--ad-dlg-paper)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--win-hue) 34%, transparent); }
 
 /* رسالةُ النافذة: بين الحقول شريطٌ بعرض الورقة (لا حدّ ولا ظلّ ولا مربّعُ أيقونةٍ مصبوغ)، ونغمتُها في رمزها وتسميتها وصبغتها الخفيفة */
 /* **الشريطُ المضاء** (محمد ٢٠٢٦-١١-٢٠، اختار «ب٢» من أربعةٍ مبنيّة على «إبطال الشهادة»: «أجمل»): أرضُ النغمة كما كانت، وعليها
@@ -3173,6 +3188,11 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert-tone-info .aalert-ic { background: var(--ad-veil-2); color: var(--ad-ink-2); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert .aalert-title { font-family: var(--font-body); font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert .aalert-msg { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+/* المعلومةُ بلغة نافذتها (محمد ٢٠٢٦-١١-٢٠: «وبهذا يُعتمد»): على ورقةٍ مصبوغة كان مربّعُ الرمز الرماديُّ والعنوانُ الأزرق باردَين
+   كأنّهما من نافذةٍ أخرى. فيأخذان لونَ النافذة، ونصُّ المعلومة بالحبر الداكن لأنّه ما يُقرأ. والتنبيهُ الحقيقيّ بنغمةٍ أخرى
+   (الأحمرُ «هذا الإنذار سحب العضويّة») يبقى بلونه */
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert:not(.aalert-tone-danger) .aalert-ic { background: color-mix(in oklab, var(--win-mark) 12%, transparent); color: var(--win-mark); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-body:not(:has(> :not(.aalert))) > .aalert:not(.aalert-tone-danger) .aalert-title { color: var(--win-mark); }
 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-title::before,
 .mdl:not(.ad-dlg, .mdl-alert) .pvb-cover::before { content: ""; position: absolute; inset: 0; z-index: var(--ad-z-under); background: url("/brand/pattern-white.svg") no-repeat 18% 30% / var(--ad-plate-naqsh-size) auto; opacity: calc(var(--ad-plate-naqsh) * .7); pointer-events: none; }
@@ -3226,10 +3246,10 @@ html[lang] .mdl-tone-danger .fld:is(:focus-within, :has(.asel-open)) .fld-lic { 
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head > div:has(> .mdl-title + .mdl-desc) > .mdl-title { position: static; isolation: auto; overflow: visible; padding: 0; background: none; }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head > div:has(> .mdl-title + .mdl-desc) > .mdl-desc { margin: 0; font-size: var(--ad-t-body); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--win-ink-2); text-wrap: pretty; }
 /* ونافذةٌ بلا عنوانٍ ظاهر يبقى سطرُها على الورق كما كان */
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-desc { margin: 0; padding: var(--space-5) var(--win-pad) 0; background: var(--ad-dlg-paper); font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-desc { margin: 0; padding: var(--space-5) var(--win-pad) 0; background: var(--win-paper); font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
 @media (pointer: coarse) { .mdl:not(.ad-dlg, .mdl-alert) { --win-xs: var(--ad-ctl-touch); } }
 /* نافذةٌ بلا عنوانٍ ظاهر (العنوانُ للقارئ الآليّ وحده): لا لوح، والزرُّ في سطرٍ وحده على الورق */
-.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-3) 0; background: var(--ad-dlg-paper); }
+.mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-3) 0; background: var(--win-paper); }
 .mdl:not(.ad-dlg, .mdl-alert) .mdl-head:not(:has(.mdl-title)) .mdl-x { position: static; background: var(--ad-field); box-shadow: inset 0 0 0 1px var(--ad-hair); color: var(--ad-ink-2); }
 
 /* على الجوّال: لوحٌ يصعد من القاع بعرض الشاشة، ومقبضٌ في رأسه */
