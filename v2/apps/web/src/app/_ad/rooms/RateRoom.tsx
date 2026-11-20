@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert, Button, Modal, Textarea } from "@adeeb/design-system";
-import { ChatCircleText, Compass, NotePencil, PaperPlaneTilt, Scales, StarHalf, UsersThree } from "@phosphor-icons/react";
+import { ChatCircleText, Compass, Lightbulb, NotePencil, PaperPlaneTilt, Scales, StarHalf, ThumbsUp, UsersThree } from "@phosphor-icons/react";
 import { Check, DuotoneZone, Eye, PencilSimple, Star } from "@/app/_components/glyphs";
 import { useDraft } from "@/lib/useDraft";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
@@ -117,16 +117,19 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
 }
 
 /**
- * **السؤالُ وجوابُه** (`AdAnswer`، ٢٠٢٦-١١-٢٠): السؤالُ عنوانٌ برمزه على المربّع المصبوغ، والجوابُ تحته على حدّ نصّه، والفارغُ «لم تكتب شيئًا»
- * خافتًا. **معلّقةٌ بقرار محمد** («نؤجّلها»): اعتُمد هذا لأنّه «أنظفُها، بس غيرُ جميل»، بعد تسعة أشكالٍ رُدّت كلُّها — النصُّ السائب، والفقاعة،
- * وخطُّ الاقتباس، والشريطُ المضاء، وعلامةُ الاقتباس، والورقة، والمنقوش، ولسانُ اللوح، والمعلَّقُ المصبوغ. يُعاد إليها بعين جديدة.
+ * **السؤالُ وجوابُه** (`SayItem`، محمد ٢٠٢٦-١١-٢٠: «جيم بأيقونة»): الإجابةُ **بندٌ في قائمة البنود نفسِها** لا قطعةٌ تحتها — رمزُها على المربّع
+ * المصبوغ، والسؤالُ عنوانُها، والجوابُ تحته، والفارغُ «لم تكتب شيئًا» خافتًا. اعتُمد بعد اثني عشر شكلًا رُدّت: النصُّ السائب، والفقاعة،
+ * وخطُّ الاقتباس، والشريطُ المضاء، وعلامةُ الاقتباس، والورقة، والمنقوش، ولسانُ اللوح، والمعلَّقُ المصبوغ، ثمّ من البحث «سطرُ الملخّص»
+ * (GOV.UK) و«كلامُك أوّلًا» (Typeform)، و«امتدادُ البنود» بلا رمز. والرمزان: الإبهامُ لما يستمرّ، والمصباحُ لما يتغيّر (اقتراحٌ لا عيب).
  */
-function AdAnswer({ q, a }: { q: string; a: string | null }) {
+function SayItem({ q, a, icon }: { q: string; a: string | null; icon: ReactNode }) {
+  // الفارغُ قد يأتي نصًّا خاليًا لا `null` (حقلٌ لُمس ثمّ مُسح)، فالحكمُ على ما بعد التشذيب
+  const said = a?.trim() ? a.trim() : null;
   return (
-    <figure className="ad-ans" data-empty={a ? undefined : ""}>
-      <figcaption className="ad-ans-q"><span className="ad-ans-ic" aria-hidden><ChatCircleText /></span>{q}</figcaption>
-      <blockquote className="ad-ans-a">{a ?? "لم تكتب شيئًا"}</blockquote>
-    </figure>
+    <li className="ad-rate-v ad-rate-say" data-empty={said ? undefined : ""}>
+      <span className="ad-rate-say-ic" aria-hidden>{icon}</span>
+      <span className="ad-rate-qt"><b>{q}</b><span className="ad-rate-say-a">{said ?? "لم تكتب شيئًا"}</span></span>
+    </li>
   );
 }
 
@@ -153,8 +156,7 @@ function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: Sh
  * مقفلة («مضلّل: لماذا الزرُّ لا يعمل؟ لماذا لا أستطيع الكتابة؟»). فلا مقياسَ بأزرار ولا حقلَ ببئر، والتنبيهُ يقول إنّ التقييمَ لا يُعدَّل.
  * ورُدّ بعدهما «الشريط» و«الشارة» («ضعيفة بصريًّا… غير جميلة»)، والتنبيهُ فوقها (العنوانُ «تقييمك لريم» يكفي عنه)، و«الكعب».
  * **واختار محمد «الدرجات»** (درجاتُ الإنذار في «عضويتي»: خمسٌ يمتلئ منها بقدرها): «القراءةُ الأساسيّة ليست الرقمَ ولا النصّ بل
- * التلوين»، فسقط الرقمُ وبقيت الكلمة. والإجابتان **قطعةُ «السؤال وجوابه»** (`AdAnswer`، جديدة): رُدّ النصُّ السائب («سيّئةٌ جدًّا»)، ثمّ فقاعةُ
- * الحوار (كلامٌ بين طرفين ينتظر ردًّا، ولا طرفَ ثانيَ هنا).
+ * التلوين»، فسقط الرقمُ وبقيت الكلمة. والإجابتان **بندان أخيران في القائمة نفسِها** (`SayItem`)، ولكلٍّ رمزُه.
  * والورقةُ من القاعدة لصاحب الجلسة وحده (`evaluation_my_ballot`)، ولا تُعرض في جلسة معاينة.
  */
 function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: number) => Promise<MyBallot | null>; onClose: () => void }) {
@@ -186,13 +188,13 @@ function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: numbe
                   </li>
                 );
               })}
+              {sheet.part === "members" ? (
+                <>
+                  <SayItem q={OPEN_QUESTION.keep} a={b.keep} icon={<ThumbsUp />} />
+                  <SayItem q={OPEN_QUESTION.change} a={b.change} icon={<Lightbulb />} />
+                </>
+              ) : null}
             </ol>
-            {sheet.part === "members" ? (
-              <div className="ad-rate-answers">
-                <AdAnswer q={OPEN_QUESTION.keep} a={b.keep} />
-                <AdAnswer q={OPEN_QUESTION.change} a={b.change} />
-              </div>
-            ) : null}
           </>
         )}
     </Modal>
