@@ -1879,6 +1879,13 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
   .ad-td[data-text] .ad-td-v { margin-inline-start: auto; max-inline-size: 100%; white-space: normal; overflow-wrap: break-word; text-align: end; }
   .ad-td[data-text] .ad-td-sub { flex-basis: 100%; }
   .ad-td[data-text] + .ad-td:not([data-text]) { padding-inline-start: 0; border-inline-start: 0; }
+  /* **الرقمُ ذو الشريط سطرٌ كاملٌ على الجوّال** (محمد ٢٠٢٦-١١-٢٠، إدارة التقييم: «تحت بعض بدل أن تكون في صفّ»): ثلاثةُ أشرطةٍ في 390 بكسل
+     لا تتّسع لـ«10 من 13 عضوًا» ونسبتِها، فكان الثالثُ ينزل وحده سطرًا فيبدو الصفُّ مكسورًا. فكلٌّ بعرض السطر، والخيطُ بينها فوقها لا
+     بجانبها — كأرقام نافذة التفاصيل و«نتيجتي» على الجوّال. والرقمُ بلا شريطٍ يبقى حصّتَه */
+  .ad-td:not([data-text]):has(.ad-meter) { flex: 1 1 100%; padding-inline: 0; border-inline-start: 0; }
+  .ad-td:not([data-text]):has(.ad-meter) + .ad-td { padding-block-start: var(--space-2); border-block-start: 1px solid var(--ad-rule); }
+  /* وسطرُ «النصف» تحت الجار لا يُحجز: كلٌّ في سطره، فلا يقفان على خطٍّ واحد */
+  .ad-tr .ad-td:not([data-text]):has(.ad-meter) > .ad-meter { margin-block-end: 0; }
 }
 /* الترقيمُ في الضيّق: العدُّ سطرٌ، ثمّ السابقُ والحاليّةُ والتالي — الأرقامُ الأخرى تُبلغ بالسهمين */
 @container ad-room (max-width: 40rem) {
