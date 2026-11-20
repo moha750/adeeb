@@ -5,7 +5,7 @@
  * (`_ad/rooms/MembersRoom.tsx`): الملفُّ الشخصيّ وتعديلُه (والإضافة)، وسببُ الإنهاء، والإنهاءُ والنقلُ إلى المتطوّعين، والنقلُ إلى
  * لجنةٍ أخرى، وإعادةُ العضويّة، وإصدارُ الإنذار وشهادةِ الخبرة — بحالاتها ورسائلها و`router.refresh` بعدها. فالقديمةُ والجديدةُ
  * تفتحان النوافذَ نفسَها، ولا تُكتب مرّتين.
- * وتأكيدُ الإعادة وحده يُمرَّر (`confirm`): `ConfirmDialog` في القديمة، و`AdConfirm` في القالب — بديلُه بواجهته نفسِها.
+ * وتأكيدُ الإعادة وحده يُمرَّر (`confirm`)، والأصلُ `AdConfirm` (٢٠٢٦-١١-٢٠: سقط `ConfirmDialog` القديم من البوّابة).
  */
 import { useEffect, useState, useTransition, type ComponentProps, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
@@ -18,7 +18,7 @@ import {
 import {
   ArrowCounterClockwise, ArrowsClockwise, PencilSimple, Prohibit, Star, WarningCircle,
 } from "@/app/_components/glyphs";
-import { ConfirmDialog } from "../_components/ConfirmDialog";
+import { AdConfirm } from "@/app/_ad/primitives";
 import { IssueWarningModal } from "./warnings/IssueWarningModal";
 import { IssueCertificateModal } from "./certificates/IssueCertificateModal";
 import { Avatar } from "../_components/Avatar";
@@ -194,13 +194,13 @@ function ProfileBody({ member, onMove }: { member: MemberRow; onMove?: () => voi
   );
 }
 
-/** نافذةُ تأكيد الإعادة: `ConfirmDialog` أو بديلُه في القالب (`AdConfirm`) — الواجهةُ واحدة. */
-type ConfirmLike = ComponentType<ComponentProps<typeof ConfirmDialog>>;
+/** نافذةُ تأكيد الإعادة: `AdConfirm`، أو ما كان بواجهته. */
+type ConfirmLike = ComponentType<ComponentProps<typeof AdConfirm>>;
 
 /**
  * حالاتُ النوافذ وأفعالُها، وما يُرسم منها (`dialogs`) — يضعه المستدعي آخرَ شاشته. و`open*` تفتح كلٌّ نافذتَها على صفٍّ بعينه.
  */
-export function useMemberDialogs({ moveTargets = [], warningLimit = 3, confirm: Confirm = ConfirmDialog }: {
+export function useMemberDialogs({ moveTargets = [], warningLimit = 3, confirm: Confirm = AdConfirm }: {
   /** وجهاتُ النقل — بلاها لا يُعرض «نقل إلى لجنة أخرى» في الملفّ. */
   moveTargets?: MoveTarget[];
   /** حدُّ الإنذارات — يمرّ إلى نافذة الإصدار. */

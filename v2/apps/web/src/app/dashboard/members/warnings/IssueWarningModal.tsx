@@ -6,7 +6,7 @@ import {
   CalendarBlank, ChatCenteredText, NotePencil, Tag, User, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { DownloadSimple, Warning } from "@/app/_components/glyphs";
 import { Avatar } from "../../_components/Avatar";
-import { ConfirmDialog } from "../../_components/ConfirmDialog";
+import { AdConfirm } from "@/app/_ad/primitives";
 import { useToast } from "../../_components/ToastProvider";
 import { WARNING_CATEGORIES, ordinalWord, remainingText, warningTitle } from "@/lib/warnings/vocab";
 import { downloadWarningLetter, renderWarningLetter } from "@/lib/warnings/letter";
@@ -354,7 +354,7 @@ export function IssueWarningModal({
         />
       </Modal>
 
-      <ConfirmDialog
+      <AdConfirm
         open={confirm}
         onClose={() => setConfirm(false)}
         tone="danger"
