@@ -18,9 +18,8 @@ import { useDraft } from "@/lib/useDraft";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import type { MyBallot } from "@/app/dashboard/evaluation/actions";
 import type { SheetRow } from "@/app/dashboard/evaluation/data";
-import type { SubmitFn } from "@/app/dashboard/evaluation/_views/RateA";
 import { OPEN_MAX, OPEN_QUESTION, SCALE_LABELS, itemsFor } from "@/app/dashboard/evaluation/vocab";
-import { cycleName, lastDay, seatLine } from "@/app/dashboard/evaluation/_views/parts";
+import { cycleName, lastDay, seatLine, type SubmitFn } from "@/app/dashboard/evaluation/shared";
 import { AdNote, AdStepsBar } from "../primitives";
 import { AccountRoom, AdLine, AdSection } from "../account";
 
@@ -86,13 +85,16 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
         {items.map((it, i) => {
           const v = cur.scores[i];
           const id = `ad-rate-${sheet.target_id}-${it.key}`;
+          const bad = v === null && tried;
           return (
-            <li key={it.key} className="ad-rate-q" data-state={v !== null ? "done" : tried ? "bad" : undefined} ref={setRef(i)}>
+            // الخطأُ بلغة الحقل في الهويّة (محمد ٢٠٢٦-١١-٢٠: «هل هذه من الهويّة؟»): حدٌّ بحافّة الخطر لا بالأحمر الصريح، ومربّعُ الرقم
+            // على صبغة الخطر، **وجملتُه تحت المقياس** كما يقع الخطأُ تحت البئر — لا لونٌ وحده لا يقول ما الناقص
+            <li key={it.key} className="ad-rate-q" data-state={v !== null ? "done" : bad ? "bad" : undefined} ref={setRef(i)}>
               <div className="ad-rate-qh">
                 <span className="ad-rate-n" aria-hidden>{v !== null ? <Check /> : <span className="lat">{i + 1}</span>}</span>
                 <span className="ad-rate-qt"><b id={id}>{it.label}</b><span>{it.hint}</span></span>
               </div>
-              <div className="ad-switch ad-rate-scale" role="radiogroup" aria-labelledby={id}>
+              <div className="ad-switch ad-rate-scale" role="radiogroup" aria-labelledby={id} aria-invalid={bad || undefined} aria-describedby={bad ? `${id}-err` : undefined}>
                 {([1, 2, 3, 4, 5] as const).map((n) => (
                   <button key={n} type="button" role="radio" aria-checked={v === n} className={"ad-switch-seg" + (v === n ? " is-on" : "")} onClick={() => pick(i, n)}>
                     <b className="lat">{n}</b>
@@ -100,6 +102,7 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
                   </button>
                 ))}
               </div>
+              {bad ? <p className="ad-rate-err" id={`${id}-err`}>اختر درجةً لهذا البند</p> : null}
             </li>
           );
         })}

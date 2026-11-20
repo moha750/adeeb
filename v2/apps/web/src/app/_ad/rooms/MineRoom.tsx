@@ -16,8 +16,7 @@ import { ArrowsClockwise } from "@/app/_components/glyphs";
 import { percentText, type Fraction } from "@/lib/evaluation/score";
 import type { MyResultRow } from "@/app/dashboard/evaluation/data";
 import { partName, verdictWord } from "@/app/dashboard/evaluation/vocab";
-import { cycleName, cycleShort, frac, seatLine } from "@/app/dashboard/evaluation/_views/parts";
-import { hiddenWhy, verdictSentence, type MineProps } from "@/app/dashboard/evaluation/_views/MineA";
+import { cycleName, cycleShort, frac, hiddenWhy, seatLine, verdictSentence, type MineProps } from "@/app/dashboard/evaluation/shared";
 import { AdEmpty, AdFigureRow, AdSwitch } from "../primitives";
 import { AccountRoom, AdLine, AdSection } from "../account";
 

@@ -6,7 +6,7 @@ import { AccountRoom } from "@/app/_ad/account";
 import { AdEmpty } from "@/app/_ad/primitives";
 import { MineRoom } from "@/app/_ad/rooms/MineRoom";
 import type { MyResultRow } from "../data";
-import type { MineProps } from "../_views/MineA";
+import type { MineProps } from "../shared";
 
 /** نتيجتي على الهويّة (`_ad/rooms/MineRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «ميزان» (`_views/MineA`). */
 export function MineView({ results, comments, gender, error }: MineProps & { results: MyResultRow[]; error: string | null }) {

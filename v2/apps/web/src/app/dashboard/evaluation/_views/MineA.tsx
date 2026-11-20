@@ -8,24 +8,10 @@
 import { useState } from "react";
 import { Quotes } from "@phosphor-icons/react";
 import { PageHeader } from "../../_components/PageHeader";
-import type { MyResultRow } from "../data";
-import { BRANCH_LABEL, PART_WEIGHT, VERDICT_LABEL, partName, type Verdict } from "../vocab";
+import { BRANCH_LABEL, PART_WEIGHT, VERDICT_LABEL, partName } from "../vocab";
 import { Of, Pct, cycleName, cycleShort, frac, pctNumber, seatLine } from "./parts";
-
-export type MineProps = {
-  results: MyResultRow[];
-  /** إجاباتُ السؤال المفتوح لكلّ دورة (بمعرّف المقيَّم فيها)، بلا أسماء وبترتيبٍ عشوائيّ (م١٠/2). */
-  comments: Record<number, { keep_text: string | null; change_text: string | null }[]>;
-  gender: "male" | "female" | null;
-};
-
-/** الحكمُ جملةً بجنس صاحبه. */
-export function verdictSentence(v: Verdict, g: "male" | "female" | null): string {
-  const f = g === "female";
-  if (v === "kept") return f ? "باقيةٌ في منصبكِ" : "باقٍ في منصبك";
-  if (v === "removed") return f ? "استُبعدتِ من المنصب" : "استُبعدتَ من المنصب";
-  return "لا نتيجة في هذه الدورة";
-}
+import { hiddenWhy, verdictSentence, type MineProps } from "../shared";
+export { hiddenWhy, verdictSentence, type MineProps };
 
 /** نقطةٌ على نصف الدائرة عند نسبة (0 يمينًا، 100 يسارًا: كاتّجاه القراءة). */
 function arcPoint(pct: number, r: number): [number, number] {
@@ -120,13 +106,6 @@ export function MineA({ results, comments, gender }: MineProps) {
       ) : null}
     </>
   );
-}
-
-/** لماذا لا يُعرض الشقّ: لم يشارك أحد، أو سقط نصابُ الأعضاء (م٥/1)، أو أوراقُه دون ثلاث (المسألة ٣). */
-export function hiddenWhy(p: "members" | "council", n: number, r: MyResultRow): string {
-  if (n === 0) return "لم يشارك أحد";
-  if (p === "members" && (r.branch === "council_only" || r.branch === "none")) return "لم يشارك نصفُهم";
-  return "لا تُعرض لأنّ أوراقها أقلّ من ثلاث";
 }
 
 /** شَرطةُ الحدّ عموديّةٌ على القوس عند النسبة */

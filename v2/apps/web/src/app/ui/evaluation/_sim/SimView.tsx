@@ -5,7 +5,7 @@ import { IdentificationCard } from "@phosphor-icons/react";
 import type { InboxItem } from "@/lib/notifications/types";
 import { EmptyState } from "../../../dashboard/_components/EmptyState";
 import { PageHeader } from "../../../dashboard/_components/PageHeader";
-import type { SubmitFn } from "../../../dashboard/evaluation/_views/RateA";
+import type { SubmitFn } from "../../../dashboard/evaluation/shared";
 import { RateView } from "../../../dashboard/evaluation/rate/RateView";
 import { MineView } from "../../../dashboard/evaluation/mine/MineView";
 import { RateRoom } from "../../../_ad/rooms/RateRoom";

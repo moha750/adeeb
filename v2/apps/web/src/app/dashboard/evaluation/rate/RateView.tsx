@@ -7,7 +7,7 @@ import { AdEmpty } from "@/app/_ad/primitives";
 import { RateRoom } from "@/app/_ad/rooms/RateRoom";
 import { getMyBallot, submitSheet } from "../actions";
 import type { SheetRow } from "../data";
-import { addDays } from "../_views/RoomHead";
+import { addDays } from "../shared";
 
 /** صفحةُ المقيِّم على الهويّة (`_ad/rooms/RateRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «مسار» (`_views/RateA`). وورقتُه تُحفظ مسوّدةً بمعرّفه. */
 export function RateView({ sheets, error, userId }: { sheets: SheetRow[]; error: string | null; userId: string }) {
