@@ -9,6 +9,7 @@ import { PageHeader } from "../../../dashboard/_components/PageHeader";
 import { MineA } from "../../../dashboard/evaluation/_views/MineA";
 import { RateA, type SubmitFn } from "../../../dashboard/evaluation/_views/RateA";
 import { RateRoom } from "../../../_ad/rooms/RateRoom";
+import { MineRoom } from "../../../_ad/rooms/MineRoom";
 import { RoomRows } from "../../../dashboard/evaluation/_views/RoomRows";
 import { EvaluationRoom } from "../../../_ad/rooms/EvaluationRoom";
 import type { ElectorRow } from "../../../dashboard/evaluation/data";
@@ -99,7 +100,9 @@ export function SimView() {
     );
   } else if (page === "mine") {
     body = v.results.length ? (
-      <MineA results={v.results} comments={v.comments} gender={me.gender} />
+      typeof window !== "undefined" && new URLSearchParams(window.location.search).get("look") === "new"
+        ? <MineRoom results={v.results} comments={v.comments} gender={me.gender} />
+        : <MineA results={v.results} comments={v.comments} gender={me.gender} />
     ) : (
       <>
         <PageHeader title="نتيجتي" />

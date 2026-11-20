@@ -637,6 +637,7 @@ export function viewFor(st: SimState, id: string): View {
       council_num: show(r.tally.cBallots) ? r.council?.[0] ?? null : null, council_den: show(r.tally.cBallots) ? r.council?.[1] ?? null : null,
       council_ballots: r.tally.cBallots, comments: bs.filter((b) => b.keep || b.change).length,
       removed_at: t.removedAt, restored_at: t.restoredAt, cancelled: null,
+      returned_unit: t.returnedTo ? committee(t.returnedTo)?.name ?? null : null, awaiting_return: t.awaiting,
     };
   });
   const comments = Object.fromEntries(
