@@ -20,11 +20,11 @@ export function frac(num: number | null | undefined, den: number | null | undefi
 }
 
 /**
- * «التقييم الشهري، نوفمبر 2026»: الدورةُ تُسمّى بشهر موعدها، و«الشهري» يقول إنّها تعود كلَّ شهر (كانت «الربعي» حتى قرار
- * المجلس الإداريّ ٢٠٢٦-١١-٢١).
+ * «تقييم نوفمبر 2026»: الدورةُ تُسمّى بشهرها وحده (المجلس الإداريّ ٢٠٢٦-١١-٢١: كلمةُ «الدورة» غيرُ واضحة، و«الورقة» كذلك؛
+ * فصارتا «تقييم الشهر» و«التقييم» في كلّ ما يُقرأ، وبقيتا في الكود والقاعدة اسمين داخليّين). وكانت «التقييم الربعي، يناير 2027».
  * و`cycleShort` («يناير 2027») حيث الصفحةُ كلُّها عن التقييم: أزرارُ التبديل وسطورُ الدورات.
  */
-export const cycleName = (dueOn: string) => `التقييم الشهري، ${fmtMonthYear(dueOn)}`;
+export const cycleName = (dueOn: string) => `تقييم ${fmtMonthYear(dueOn)}`;
 export const cycleShort = (dueOn: string) => fmtMonthYear(dueOn);
 
 /** آخرُ يومٍ يُقبل فيه التقييم («25 نوفمبر 2026»): الإغلاقُ منتصفُ الليل التالي. */
@@ -77,14 +77,14 @@ export function verdictSentence(v: Verdict, g: "male" | "female" | null): string
   const f = g === "female";
   if (v === "kept") return f ? "باقيةٌ في منصبكِ" : "باقٍ في منصبك";
   if (v === "removed") return f ? "استُبعدتِ من المنصب" : "استُبعدتَ من المنصب";
-  return "لا نتيجة في هذه الدورة";
+  return "لا نتيجة في تقييم هذا الشهر";
 }
 
 /** لماذا لا يُعرض الشقّ: لم يشارك أحد، أو سقط نصابُ الأعضاء (م٥/1)، أو أوراقُه دون ثلاث (المسألة ٣). */
 export function hiddenWhy(p: "members" | "council", n: number, r: MyResultRow): string {
   if (n === 0) return "لم يشارك أحد";
   if (p === "members" && (r.branch === "council_only" || r.branch === "none")) return "لم يشارك نصفُهم";
-  return "لا تُعرض لأنّ أوراقها أقلّ من ثلاث";
+  return "لا تُعرض لأنّ تقييماتها أقلّ من ثلاثة";
 }
 
 export type DetailActions = {

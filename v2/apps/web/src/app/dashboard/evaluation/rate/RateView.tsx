@@ -15,8 +15,8 @@ export function RateView({ sheets, error, userId }: { sheets: SheetRow[]; error:
     return (
       <AccountRoom navPath="/dashboard/evaluation/rate" title="قيّم القيادات">
         {error
-          ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة أوراقك" desc={error} />
-          : <AdEmpty icon={<ClipboardText />} title="لا تقييمَ مفتوحٌ لك الآن" desc="تصلك ورقةُ كلِّ قائدٍ تقيّمه يومَ تُفتح الدورة، ويصلك تنبيهٌ بها." />}
+          ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة تقييماتك" desc={error} />
+          : <AdEmpty icon={<ClipboardText />} title="لا تقييمَ مفتوحٌ لك الآن" desc="يظهر لك هنا كلُّ قائدٍ تقيّمه يومَ يُفتح التقييم، ويصلك تنبيهٌ به." />}
       </AccountRoom>
     );
   }

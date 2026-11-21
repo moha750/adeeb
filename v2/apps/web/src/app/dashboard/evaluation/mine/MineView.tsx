@@ -15,7 +15,7 @@ export function MineView({ results, comments, gender, error }: MineProps & { res
       <AccountRoom navPath="/dashboard/evaluation/mine" title="نتيجتي">
         {error
           ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة نتيجتك" desc={error} />
-          : <AdEmpty icon={<Gauge />} title="لا نتيجةَ لك بعد" desc="تصلك نتيجتُك هنا حين تُنفَّذ دورةٌ قيّمك فيها أعضاؤك والمجلس." />}
+          : <AdEmpty icon={<Gauge />} title="لا نتيجةَ لك بعد" desc="تصلك نتيجتُك هنا حين يُنفَّذ تقييمٌ قيّمك فيه أعضاؤك والمجلس." />}
       </AccountRoom>
     );
   }

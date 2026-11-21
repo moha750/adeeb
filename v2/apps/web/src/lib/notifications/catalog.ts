@@ -623,7 +623,7 @@ export const CATALOG = {
         level: "important",
         to: (f) => f.raters.map((user) => ({ user })),
         // نصُّ «أ» (محمد ٢٠٢٦-١٠-٢٩): الحدثُ باسمه، والمطلوبُ وموعدُه، والطمأنة. كان «لك تقييمٌ مفتوحٌ للقيادات» فلم يُفهم
-        text: (f, g) => ({ title: "بدأ التقييم الشهري للقيادات", body: `${fm(g, "قيّم", "قيّمي")} من تشملهم ورقتك قبل نهاية ${fmtDateOnly(f.lastDay)}. تقييمك سرّي.` }),
+        text: (f, g) => ({ title: "بدأ التقييم الشهري للقيادات", body: `${fm(g, "قيّم", "قيّمي")} من عليك تقييمهم قبل نهاية ${fmtDateOnly(f.lastDay)}. تقييمك سرّي.` }),
         href: () => "/dashboard/evaluation/rate",
         expires: (f) => new Date(f.closesAt),
       },
@@ -635,7 +635,7 @@ export const CATALOG = {
    */
   "evaluation.reminder": defineKind<{ cycleId: number; closesAt: string; lastDay: string; raters: string[] }>({
     section: "evaluation",
-    when: "بقي يومٌ على إغلاق التقييم ولم يُكمل المقيِّمُ أوراقه",
+    when: "بقي يومٌ على إغلاق التقييم ولم يُكمل المقيِّمُ تقييماته",
     sample: { cycleId: 1, closesAt: "2026-11-25T21:00:00Z", lastDay: "2026-11-25", raters: [SAMPLE_USER] },
     audiences: [
       {
@@ -654,14 +654,14 @@ export const CATALOG = {
    */
   "evaluation.blocked": defineKind<{ cycleId: number; dueOn: string }>({
     section: "evaluation",
-    when: "حلّ موعدُ دورةٍ والدورةُ السابقةُ لم تُنفَّذ",
+    when: "حلّ موعدُ تقييم الشهر وتقييمُ الشهر السابق لم يُنفَّذ",
     sample: { cycleId: 2, dueOn: "2026-12-22" },
     audiences: [
       {
         key: "hr",
         level: "critical",
         to: () => [{ seat: "hr_committee_leader" }],
-        text: (f) => ({ title: "لم يُفتح تقييمُ القيادات في موعده", body: `موعدُه ${fmtDateOnly(f.dueOn)}، والدورةُ السابقةُ لم تُنفَّذ بعد.` }),
+        text: (f) => ({ title: "لم يُفتح تقييمُ القيادات في موعده", body: `موعدُه ${fmtDateOnly(f.dueOn)}، وتقييمُ الشهر السابق لم يُنفَّذ بعد.` }),
         href: () => "/dashboard/evaluation",
       },
     ],
@@ -682,7 +682,7 @@ export const CATALOG = {
         text: (f, g) =>
           f.verdict === "kept" && f.final
             ? { title: `${fm(g, "نتيجتك", "نتيجتكِ")} في تقييم القيادات ${percentText({ num: f.final[0], den: f.final[1] })}%`, body: `${fm(g, "وأنت باقٍ", "وأنتِ باقيةٌ")} في منصب «${seat(f, g)}».` }
-            : { title: `لا نتيجةَ ${fm(g, "لك", "لكِ")} في تقييم القيادات هذه الدورة`, body: "لم يكتمل ما تُحسب به." },
+            : { title: `لا نتيجةَ ${fm(g, "لك", "لكِ")} في تقييم القيادات هذا الشهر`, body: "لم يكتمل ما تُحسب به." },
         href: () => "/dashboard/evaluation/mine",
       },
     ],
@@ -773,14 +773,14 @@ export const CATALOG = {
   /** **نصابٌ سقط دورتين** (م٥/4): يُثبته قائدُ الضمان في تقريره إلى المجلس الإداريّ. */
   "evaluation.quorum_missed": defineKind<{ unit: string; cycleId: number; dueOn: string }>({
     section: "evaluation",
-    when: "لم يشارك نصفُ الأعضاء في تقييم وحدةٍ دورتين متتاليتين",
+    when: "لم يشارك نصفُ الأعضاء في تقييم وحدةٍ شهرين متتاليين",
     sample: { unit: "لجنة الضيافة", cycleId: 2, dueOn: "2026-12-22" },
     audiences: [
       {
         key: "qa",
         level: "important",
         to: () => [{ seat: "qa_committee_leader" }],
-        text: (f) => ({ title: `لم يشارك نصفُ الأعضاء في تقييم ${f.unit} دورتين متتاليتين`, body: "يُثبَت في تقرير الضمان إلى المجلس الإداري." }),
+        text: (f) => ({ title: `لم يشارك نصفُ الأعضاء في تقييم ${f.unit} شهرين متتاليين`, body: "يُثبَت في تقرير الضمان إلى المجلس الإداري." }),
         href: () => "/dashboard/evaluation",
       },
     ],

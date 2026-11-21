@@ -168,7 +168,7 @@ export const SCENES: { key: string; label: string; crowd: (who: string) => Crowd
       : w === "reem" ? { mood: "edge", members: 0.75, council: 1 }
       : { mood: "good", members: 0.75, council: 1 },
   },
-  { key: "calm", label: "دورةٌ هادئة", crowd: () => ({ mood: "good", members: 0.75, council: 1 }) },
+  { key: "calm", label: "شهرٌ هادئ", crowd: () => ({ mood: "good", members: 0.75, council: 1 }) },
   { key: "silent", label: "لم يشارك أحد", crowd: () => ({ mood: "good", members: 0, council: 0 }) },
 ];
 
@@ -406,7 +406,7 @@ export function advance(st0: SimState): SimState {
     st = { ...st, stage: next };
     if (pending.length) {
       const r = emit(st, "evaluation.reminder", { cycleId: 1, closesAt: CLOSES, lastDay: LAST_DAY, raters: pending });
-      st = happen(r.st, "آخر يوم: ذُكّر من بقيت له أوراق.", `${r.count} إشعارًا «اليومُ آخرُ أيّام تقييم القيادات».`);
+      st = happen(r.st, "آخر يوم: ذُكّر من بقيت عليه تقييمات.", `${r.count} إشعارًا «اليومُ آخرُ أيّام تقييم القيادات».`);
     }
     return st;
   }
