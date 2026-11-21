@@ -1,6 +1,6 @@
 /**
  * **ما تتشاركه شاشاتُ التقييم** (٢٠٢٦-١١-٢٠): الكلماتُ والحسابُ والأنواع التي تقرؤها الغرفُ الجديدة (`_ad/rooms/Evaluation*`،
- * `RateRoom`، `MineRoom`) والشاشاتُ القديمة في `_views/` معًا. نُقلت من هناك لتُحذف تلك يومًا ولا يسقط معها هذا. لا هيئةَ هنا ولا JSX.
+ * `RateRoom`، `MineRoom`) وصفحاتُ `dashboard/evaluation`. نُقلت من الشاشات الأولى (`_views/`، حُذفت ٢٠٢٦-١١-٢١). لا هيئةَ هنا ولا JSX.
  */
 import { fmtDateOnly, fmtMonthYear } from "@/lib/dates";
 import type { Fraction } from "@/lib/evaluation/score";
