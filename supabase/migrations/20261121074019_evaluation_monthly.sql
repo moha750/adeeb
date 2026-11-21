@@ -8,8 +8,6 @@
 -- ١) الموعد: يومُ 22 من كلّ شهر، لا قبل 22 نوفمبر 2026. والنافذةُ أربعةُ أيّام: الإغلاقُ 00:00 من اليوم الخامس (كانت ثلاثة)
 alter table public.evaluation_cycles drop constraint evaluation_cycles_due_quarter;
 alter table public.evaluation_cycles drop constraint evaluation_cycles_window;
-alter table public.evaluation_cycles add constraint evaluation_cycles_due_monthly
-  check (extract(day from due_on) = 22 and due_on >= date '2026-11-22');
 
 comment on table public.evaluation_cycles is
   'دوراتُ تقييم القيادات الشهريّ (لائحة تقييم القيادات، م٢، بتعديل ٢٠٢٦-١١-٢١): تُفتح يومَ 22 من كلّ شهر وآخرُ أيّامها 25، تُنشأ وتُفتح وتُغلق بالمؤقّت `evaluation-tick`، ويُحكم فيها صباحَ 26.';
@@ -51,6 +49,9 @@ begin
   end if;
 end $$;
 
+-- القيدان الجديدان بعد نقل الدورة: قبلها كانت تخالفهما
+alter table public.evaluation_cycles add constraint evaluation_cycles_due_monthly
+  check (extract(day from due_on) = 22 and due_on >= date '2026-11-22');
 alter table public.evaluation_cycles add constraint evaluation_cycles_window
   check (opens_at = (due_on::timestamp at time zone 'Asia/Riyadh')
          and closes_at = ((due_on + 4)::timestamp at time zone 'Asia/Riyadh'));
