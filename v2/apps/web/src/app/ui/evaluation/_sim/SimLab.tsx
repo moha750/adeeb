@@ -27,14 +27,13 @@ const SIZES = [
   { key: "1280", label: "حاسوب" },
   { key: "390", label: "جوّال" },
 ];
-/** أيّامُ الدورة المتخيَّلة: 20 إلى 24 يناير 2027، وما يقع في كلّ يوم برمزه */
+/** أيّامُ الدورة المتخيَّلة (21 إلى 26 نوفمبر 2026)، وما يقع في كلّ يوم برمزه */
 const STAGE_ICONS = [<Hourglass key="0" />, <DoorOpen key="1" />, <CalendarBlank key="2" />, <Bell key="3" />, <Gavel key="4" />];
 const GROUPS: { key: string; icon: React.ReactNode; sub: string }[] = [
   { key: "الإدارة", icon: <Briefcase />, sub: "من يدير التقييم ومن يرى نتائجه" },
   { key: "المقيَّمون", icon: <Star />, sub: "القادة والنوّاب والمنسّقون: يُقيَّمون، ومنهم من يقيّم غيره" },
   { key: "الأعضاء", icon: <UsersThree />, sub: "العضو يقيّم قائد لجنته ونائبه ومنسّق قسمه" },
 ];
-const dayOf = (i: number) => `2027-01-${String(20 + i).padStart(2, "0")}`;
 
 export function SimLab() {
   const [st, setSt] = useState<SimState>(() => initialState());
@@ -91,7 +90,7 @@ export function SimLab() {
   const closed = st.stage === 4;
   const nextLabel = closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`;
   const stages: AdStage[] = STAGES.map((s, i) => ({
-    key: s.label, icon: STAGE_ICONS[i], label: s.hint, date: dayOf(i),
+    key: s.label, icon: STAGE_ICONS[i], label: s.hint, date: s.date,
     state: i < st.stage ? "past" : i === st.stage ? "now" : "next",
   }));
   const me = person(st, who);

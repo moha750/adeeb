@@ -72,7 +72,7 @@ export const PERSONAS: { id: string; group: string; why: string }[] = [
   { id: "reem", group: "المقيَّمون", why: "نائبة لجنة التصوير" },
   { id: "noura", group: "المقيَّمون", why: "قائدة لجنةٍ صغيرة: يصعب أن يشارك نصفُها" },
   { id: "sultan", group: "المقيَّمون", why: "قائدٌ كان عضوًا في لجنته" },
-  { id: "jood", group: "المقيَّمون", why: "نائبةٌ عُيّنت قبل الموعد بأسبوعين" },
+  { id: "jood", group: "المقيَّمون", why: "نائبةٌ عُيّنت قبل الموعد بعشرة أيام" },
   { id: "abeer", group: "الأعضاء", why: "عضوة في لجنة التصوير" },
 ];
 
@@ -88,7 +88,7 @@ export function initialPeople(): Person[] {
     P("reem", "ريم سعد العتيبي", "female", seat("deputy_committee_leader", 11)),
     P("noura", "نورة عبد الله القحطاني", "female", seat("committee_leader", 12)),
     P("sultan", "سلطان فهد الدوسري", "male", seat("committee_leader", 21), seat("committee_member", 21, null, { active: false })),
-    P("jood", "جود فارس الحربي", "female", seat("deputy_committee_leader", 21, null, { assignedAt: "2027-01-07T09:00:00Z" })),
+    P("jood", "جود فارس الحربي", "female", seat("deputy_committee_leader", 21, null, { assignedAt: "2026-11-12T09:00:00Z" })),
     P("abeer", "عبير ناصر القرني", "female", seat("committee_member", 11)),
     // الجمهور: يقيّمون ولا يُتقمَّصون
     ...[
@@ -118,19 +118,22 @@ export const holds = (p: Person, roles: Role[]) => live(p).some((s) => roles.inc
 
 // ══ الزمن ═════════════════════════════════════════════════════════════════
 
-export const DUE = "2027-01-21";
-const OPENS = "2027-01-20T21:00:00Z";
-const CLOSES = "2027-01-23T21:00:00Z";
-const LAST_DAY = "2027-01-23";
-const HOLD_UNTIL = "2027-01-31";
+export const DUE = "2026-11-22";
+const OPENS = "2026-11-21T21:00:00Z";
+const CLOSES = "2026-11-24T21:00:00Z";
+const LAST_DAY = "2026-11-24";
+/** الحكمُ يومَ 26 (00:10 بتوقيت الرياض)، ومهلةُ الانتخاب سبعةُ أيّامٍ بعده */
+const VERDICT_AT = "2026-11-25T21:10:00Z";
+const HOLD_UNTIL = "2026-12-03";
 
 /** المراحل: قبل الموعد، فالأيّامُ الثلاثة، فالحكمُ والتنفيذ (بعد الإغلاق بدقائق، م٩/2). */
 export const STAGES = [
-  { label: "20 يناير", hint: "قبل الموعد بيوم" },
-  { label: "21 يناير", hint: "فُتح التقييم" },
-  { label: "22 يناير", hint: "اليوم الثاني" },
-  { label: "23 يناير", hint: "آخر يوم، والتذكير" },
-  { label: "24 يناير", hint: "أُغلق، وصدر الحكم ونُفّذ" },
+  // أيّامُ الدورة الشهريّة الثابتة (المجلس الإداريّ ٢٠٢٦-١١-٢١): الفتحُ 22، وآخرُ يومٍ 24، والإغلاقُ بانتهائه، والحكمُ 26
+  { label: "21 نوفمبر", hint: "قبل الموعد بيوم", date: "2026-11-21" },
+  { label: "22 نوفمبر", hint: "فُتح التقييم", date: "2026-11-22" },
+  { label: "23 نوفمبر", hint: "اليوم الثاني", date: "2026-11-23" },
+  { label: "24 نوفمبر", hint: "آخر يوم، والتذكير", date: "2026-11-24" },
+  { label: "26 نوفمبر", hint: "أُغلق يوم 25، وصدر الحكم ونُفّذ", date: "2026-11-26" },
 ] as const;
 export type Stage = 0 | 1 | 2 | 3 | 4;
 
@@ -381,7 +384,7 @@ export function advance(st0: SimState): SimState {
         const t: Target = {
           id: id++, userId: p.id, role, committee: role === "department_head" ? null : s.committee, department: dept,
           unit: role === "department_head" ? DEPARTMENTS[dept] : committee(s.committee)!.name, name: p.name, gender: p.gender,
-          excluded: Date.parse(s.assignedAt) > Date.parse(OPENS) - 28 * 864e5 ? "recent" : null,
+          excluded: Date.parse(s.assignedAt) > Date.parse(OPENS) - 14 * 864e5 ? "recent" : null,
           record: null, removedAt: null, returnedTo: null, awaiting: false, restoredAt: null,
         };
         targets.push(t);
@@ -449,9 +452,9 @@ function executeRemoval(st0: SimState, targetId: number, chosen: number | null):
   const seats = p.seats
     .map((s) => (s.active && s.role === t.role && s.committee === t.committee && s.department === (t.role === "department_head" ? t.department : null) ? { ...s, active: false } : s))
     .filter((s) => !(s.role === "committee_member" && s.committee === prev));
-  seats.push(seat("committee_member", prev, null, { assignedAt: "2027-01-23T21:10:00Z" }));
+  seats.push(seat("committee_member", prev, null, { assignedAt: VERDICT_AT }));
   st = { ...st, people: st.people.map((x) => (x.id === p.id ? { ...x, seats } : x)) };
-  st = setTarget(st, t.id, { removedAt: "2027-01-23T21:10:00Z", returnedTo: prev, awaiting: false });
+  st = setTarget(st, t.id, { removedAt: VERDICT_AT, returnedTo: prev, awaiting: false });
   const back = { rank: "عضو", unit: committee(prev)!.name };
   const final = st.targets.find((x) => x.id === t.id)!.record!.final!;
   const r = emit(st, "evaluation.removed", { ...seatFacts(t), userId: t.userId, name: t.name, targetId: t.id, cycleId: 1, final, back, holdUntil: HOLD_UNTIL });
@@ -656,7 +659,7 @@ export function viewFor(st: SimState, id: string): View {
   const cycle: CycleRow = {
     id: 1, due_on: DUE, opens_at: OPENS, closes_at: CLOSES,
     status: st.stage === 0 ? "scheduled" : st.stage === 4 ? "executed" : "open",
-    executed_at: st.stage === 4 ? "2027-01-23T21:10:00Z" : null, blocked: false,
+    executed_at: st.stage === 4 ? VERDICT_AT : null, blocked: false,
     targets: live_.length, excluded: st.targets.length - live_.length,
     raters: new Set(st.electorate.filter((e) => !e.removed).map((e) => e.rater)).size,
     ballots: ballots.filter((b) => st.electorate.some((e) => e.target === b.target && e.rater === b.rater && !e.removed)).length,
@@ -664,7 +667,7 @@ export function viewFor(st: SimState, id: string): View {
   };
   // بعد التنفيذ تُكتب الدورةُ التالية (`_evaluation_ensure_cycle`)
   const cycles: CycleRow[] = st.stage === 4
-    ? [{ ...cycle, id: 2, due_on: "2027-04-21", opens_at: "2027-04-20T21:00:00Z", closes_at: "2027-04-23T21:00:00Z", status: "scheduled", executed_at: null, targets: 0, excluded: 0, raters: 0, ballots: 0, kept: 0, removed: 0, no_result: 0 }, cycle]
+    ? [{ ...cycle, id: 2, due_on: "2026-12-22", opens_at: "2026-12-21T21:00:00Z", closes_at: "2026-12-24T21:00:00Z", status: "scheduled", executed_at: null, targets: 0, excluded: 0, raters: 0, ballots: 0, kept: 0, removed: 0, no_result: 0 }, cycle]
     : [cycle];
 
   const targets: TargetRow[] = st.targets.map((t) => {

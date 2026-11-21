@@ -18,7 +18,7 @@ import { arCount, type ArForms } from "@/lib/arabicCount";
 import { percentText } from "@/lib/evaluation/score";
 import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
 import { CYCLE_STATUS_LABEL, verdictWord } from "@/app/dashboard/evaluation/vocab";
-import { addDays, cycleName, cycleShort, excludedWhy, frac, quorumLine, seatLine, type RoomProps } from "@/app/dashboard/evaluation/shared";
+import { addDays, cycleName, cycleShort, excludedWhy, frac, quorumLine, seatLine, VERDICT_OFFSET, type RoomProps } from "@/app/dashboard/evaluation/shared";
 import { EvaluationDetail, ofMembers } from "./EvaluationDetail";
 import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
 import { AdLine, AdSection } from "../account";
@@ -147,7 +147,7 @@ export function EvaluationRoom(props: RoomProps) {
   const steps = [
     { key: "open", label: "الفتح", date: cycle.due_on, icon: <CalendarCheck /> },
     { key: "last", label: "آخر يوم", date: addDays(cycle.due_on, 2), icon: <LockKey /> },
-    { key: "verdict", label: "الحكم والتنفيذ", date: addDays(cycle.due_on, 3), icon: <Gavel /> },
+    { key: "verdict", label: "الحكم والتنفيذ", date: addDays(cycle.due_on, VERDICT_OFFSET), icon: <Gavel /> },
   ];
   const excludedN = targets.length - live.length;
   // الدورةُ بلا مقيَّمين بعدُ (قادمة) لا تُعدّ أصفارًا («0 مقيَّمًا، 0 مقيِّمًا، 0 ورقةً»): مراحلُها وشارتُها وفراغُ القائمة تقول ما يُنتظر
@@ -165,7 +165,7 @@ export function EvaluationRoom(props: RoomProps) {
   const statusWord =
     cycle.status === "open" ? `مفتوحة حتى ${fmtDayMonth(addDays(cycle.due_on, 2))}`
       : cycle.status === "scheduled" ? `تُفتح ${fmtDayMonth(cycle.due_on)}`
-        : cycle.status === "closed" ? `مغلقة، والحكم ${fmtDayMonth(addDays(cycle.due_on, 3))}`
+        : cycle.status === "closed" ? `مغلقة، والحكم ${fmtDayMonth(addDays(cycle.due_on, VERDICT_OFFSET))}`
           : CYCLE_STATUS_LABEL[cycle.status];
   const lead = (
     <>

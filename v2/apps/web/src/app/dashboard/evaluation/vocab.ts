@@ -101,7 +101,7 @@ export const BRANCH_LABEL: Record<Branch, string> = {
 
 export type Excluded = "recent";
 export const EXCLUDED_LABEL: Record<Excluded, string> = {
-  recent: "شغل منصبه قبل الموعد بأقل من 4 أسابيع",
+  recent: "شغل منصبه قبل الموعد بأقل من أسبوعين",
 };
 
 export type Cancelled = "seat_ended" | "membership_ended";
