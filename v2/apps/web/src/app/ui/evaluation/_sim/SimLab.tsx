@@ -27,14 +27,13 @@ const SIZES = [
   { key: "1280", label: "حاسوب" },
   { key: "390", label: "جوّال" },
 ];
-/** أيّامُ الدورة المتخيَّلة: 20 إلى 24 يناير 2027، وما يقع في كلّ يوم برمزه */
+/** أيّامُ الدورة المتخيَّلة (21 إلى 26 نوفمبر 2026)، وما يقع في كلّ يوم برمزه */
 const STAGE_ICONS = [<Hourglass key="0" />, <DoorOpen key="1" />, <CalendarBlank key="2" />, <Bell key="3" />, <Gavel key="4" />];
 const GROUPS: { key: string; icon: React.ReactNode; sub: string }[] = [
   { key: "الإدارة", icon: <Briefcase />, sub: "من يدير التقييم ومن يرى نتائجه" },
   { key: "المقيَّمون", icon: <Star />, sub: "القادة والنوّاب والمنسّقون: يُقيَّمون، ومنهم من يقيّم غيره" },
   { key: "الأعضاء", icon: <UsersThree />, sub: "العضو يقيّم قائد لجنته ونائبه ومنسّق قسمه" },
 ];
-const dayOf = (i: number) => `2027-01-${String(20 + i).padStart(2, "0")}`;
 
 export function SimLab() {
   const [st, setSt] = useState<SimState>(() => initialState());
@@ -89,9 +88,9 @@ export function SimLab() {
 
   const evaluated = Object.keys(st.crowd);
   const closed = st.stage === 4;
-  const nextLabel = closed ? "انتهت الدورة" : `إلى ${STAGES[st.stage + 1].label}`;
+  const nextLabel = closed ? "انتهى التقييم" : `إلى ${STAGES[st.stage + 1].label}`;
   const stages: AdStage[] = STAGES.map((s, i) => ({
-    key: s.label, icon: STAGE_ICONS[i], label: s.hint, date: dayOf(i),
+    key: s.label, icon: STAGE_ICONS[i], label: s.hint, date: s.date,
     state: i < st.stage ? "past" : i === st.stage ? "now" : "next",
   }));
   const me = person(st, who);
@@ -103,14 +102,14 @@ export function SimLab() {
           <RoomPlate title="جرّب تقييم القيادات" crumb={[{ label: "نادي أدِيب" }]} />
 
           {/* **دليلُ من يجرّب** (محمد ٢٠٢٦-١١-٢٠: المحاكي يُرسَل للمجلس الإداريّ ليجرّبوا النظام): ثلاثُ خطوات، لا شرحٌ للنظام */}
-          <AdSection icon={<HandPointing />} title="كيف تجرّب" sub="دورةٌ كاملة على أدِيبٍ صغير: الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، والأسماءُ والأرقامُ متخيَّلة، ولا شيء يُكتب أو يُرسَل.">
+          <AdSection icon={<HandPointing />} title="كيف تجرّب" sub="تقييمُ شهرٍ كامل على أدِيبٍ صغير: الشاشاتُ والحسابُ ونصوصُ الإشعارات حقيقيّة، والأسماءُ والأرقامُ متخيَّلة، ولا شيء يُكتب أو يُرسَل.">
             <AdLine icon={<UserSwitch />} k="أوّلًا" v="اختر من تكون" sub="من الإدارة أو المقيَّمين أو الأعضاء أدناه: الرئيس، أو قائدٌ يُقيَّم، أو عضوٌ يقيّم قائده." />
             <AdLine icon={<CalendarBlank />} k="ثانيًا" v="حرّك الزمن" sub={`«إلى ${STAGES[1].label}» يفتح التقييم، ثمّ يومًا بعد يوم حتى يُغلق ويصدر الحكم.`} />
             <AdLine icon={<CursorClick />} k="ثالثًا" v="جرّب وشاهد" sub="قيّم، وافتح الجرس، وبدّل الشخص لترى ما رآه غيرُك. و«من البداية» يعيد كلَّ شيء." />
           </AdSection>
 
           <AdSection icon={<CalendarBlank />} title="الزمن" sub={STAGES[st.stage].hint}
-            media={<AdStages stages={stages} label="أيّام الدورة" />}
+            media={<AdStages stages={stages} label="أيّام التقييم" />}
             foot={
               <div className="evsim-acts">
                 <AdButton variant="fill" size="sm" icon={closed ? undefined : <ArrowLeft />} iconEnd disabled={closed} onClick={next}>{nextLabel}</AdButton>
@@ -137,10 +136,10 @@ export function SimLab() {
           </div>
 
           <AdSection icon={<Smiley />} title="ما يفعله الآخرون"
-            sub="من لم تتقمّصه يقيّم وحده بهذا الضبط، وتزداد أوراقُهم يومًا بعد يوم. ومن تقمّصته أثناء الأيام الثلاثة صارت أوراقُه بيدك."
+            sub="من لم تتقمّصه يقيّم وحده بهذا الضبط، وتزداد تقييماتُهم يومًا بعد يوم. ومن تقمّصته أثناء أيّام التقييم صارت تقييماتُه بيدك."
             media={
               <div className="evsim-crowd">
-                <AdSwitch label="حالُ الدورة" positions={SCENES.map((s) => ({ key: s.key, label: s.label }))} position={scene}
+                <AdSwitch label="حالُ التقييم" positions={SCENES.map((s) => ({ key: s.key, label: s.label }))} position={scene}
                   onPosition={(k) => { setScene(k); if (!closed) setSt((s) => applyScene(s, k)); }} />
                 <ol className="evsim-crowd-list">
                   {evaluated.map((id) => {

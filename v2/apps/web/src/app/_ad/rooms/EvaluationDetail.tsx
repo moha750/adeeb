@@ -57,7 +57,7 @@ function branchText(t: TargetRow): ReactNode {
   if (t.branch === "both") return <>حُسبت من الشقّين: {P(70)} ل{m} و{P(30)} للمجلس الإداري.</>;
   if (t.branch === "members_only") return `لم يقيّمه أحدٌ من المجلس الإداري، فحُسبت من ${m} وحدهم.`;
   if (t.branch === "council_only") return `لم يشارك نصفُ ${m}، فحُسبت من المجلس الإداري وحده.`;
-  if (t.branch === "none") return "لم يكتمل ما تُحسب به، فلا نتيجة في هذه الدورة.";
+  if (t.branch === "none") return "لم يكتمل ما تُحسب به، فلا نتيجة في تقييم هذا الشهر.";
   return null;
 }
 
@@ -115,9 +115,9 @@ function ParticipationCard({ t, closed }: { t: TargetRow; closed: boolean }) {
     <AdSection icon={<UsersThree />} title="المشاركة" sub={q.text}
       media={
         <AdFigureRow figures={[
-          { icon: <UsersThree />, label: `أوراق ${partName("members", t.role_name)}`, value: `${t.members_ballots} من ${t.members_eligible}`,
+          { icon: <UsersThree />, label: `تقييمات ${partName("members", t.role_name)}`, value: `${t.members_ballots} من ${t.members_eligible}`,
             of: { now: t.members_ballots, max: t.members_eligible, word: q.met ? undefined : closed ? "لم يبلغه" : `بقي ${need - t.members_ballots}`, mark: { at: 50, label: "النصف" } } },
-          { icon: <Scales />, label: "أوراق المجلس الإداري", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible } },
+          { icon: <Scales />, label: "تقييمات المجلس الإداري", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible } },
         ]} />
       } />
   );
@@ -189,8 +189,8 @@ export function EvaluationDetail(props: Props) {
   const after = decided ? " ثمّ يُعاد الحساب، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم." : "";
   const fixHint: Record<Fix, string> = {
     remove: `من دخل المقيِّمين بالخطأ: يُبطَل ما كتبه إن كان قيّم.${after}`,
-    add: `من سقط من المقيِّمين بالخطأ: يُضاف إليهم${decided ? " ويُحسب في عددهم" : " ويقيّم ما بقيت الدورةُ مفتوحة"}.${after}`,
-    recompute: "يُعاد الحسابُ بالأوراق الحاضرة، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم.",
+    add: `من سقط من المقيِّمين بالخطأ: يُضاف إليهم${decided ? " ويُحسب في عددهم" : " ويقيّم ما بقي التقييمُ مفتوحًا"}.${after}`,
+    recompute: "يُعاد الحسابُ بالتقييمات الحاضرة، فيُعاد إلى منصبه أو يُستبعد إن تغيّر الحكم.",
   };
   const sorted = [...props.committees].sort(
     (a, b) => Number(b.department_id === t.department_id) - Number(a.department_id === t.department_id) || a.name.localeCompare(b.name, "ar"),

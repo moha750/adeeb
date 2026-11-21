@@ -30,7 +30,7 @@ export function RoomView(props: {
       <AccountRoom navPath="/dashboard/evaluation" title="إدارة التقييم">
         {props.error
           ? <AdEmpty icon={<WarningCircle />} title="تعذّرت قراءة التقييم" desc={props.error} />
-          : <AdEmpty icon={<ClipboardText />} title="لا دورةَ تقييمٍ بعد" desc="تُفتح أوّلُ دورةٍ في موعدها، ويُعرف مقيَّموها يومَ فتحها." />}
+          : <AdEmpty icon={<ClipboardText />} title="لا تقييمَ بعد" desc="يُفتح أوّلُ تقييمٍ في موعده، ويُعرف مقيَّموه يومَ فتحه." />}
       </AccountRoom>
     );
   }

@@ -11,7 +11,7 @@ describe("محاكي تقييم القيادات", () => {
     expect(v.canRate || v.hasResults).toBe(false);
   });
 
-  it("الفتح: لقطةٌ واستثناءُ من عُيّن قبل أربعة أسابيع، وإشعارٌ لكلّ مقيِّم", () => {
+  it("الفتح: لقطةٌ واستثناءُ من عُيّن قبل أسبوعين، وإشعارٌ لكلّ مقيِّم", () => {
     const st = advance(initialState());
     const jood = st.targets.find((t) => t.userId === "jood")!;
     expect(jood.excluded).toBe("recent");
@@ -19,7 +19,7 @@ describe("محاكي تقييم القيادات", () => {
     const abeer = viewFor(st, "abeer");
     // عبير في لجنة التصوير: تقيّم قائدَها ونائبتَها ومنسّقَ قسمها
     expect(abeer.sheets.map((s) => s.full_name).sort()).toEqual(["ريم سعد العتيبي", "عبد الرحمن خالد الشيخ", "فيصل محمد الحمد"].sort());
-    expect(abeer.notes[0].title).toBe("بدأ التقييم الربعي للقيادات");
+    expect(abeer.notes[0].title).toBe("بدأ التقييم الشهري للقيادات");
   });
 
   it("من تُقمِّص يقيّم بيده، وورقتُه تُحسب", () => {

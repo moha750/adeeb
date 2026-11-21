@@ -35,7 +35,7 @@ export async function getCycles(): Promise<Read<CycleRow[]>> {
   const svc = evaluationService();
   if (!svc) return fail([], "إعداد الخادم ناقص (مفتاح الخدمة).");
   const { data, error } = await svc.rpc("evaluation_admin_cycles");
-  if (error) return fail([], "تعذّرت قراءة دورات التقييم.");
+  if (error) return fail([], "تعذّرت قراءة مواعيد التقييم.");
   return { data: (data ?? []) as CycleRow[], error: null };
 }
 
@@ -169,7 +169,7 @@ export type SheetRow = {
 export async function getMySheets(): Promise<Read<SheetRow[]>> {
   const sb = await createClient();
   const { data, error } = await sb.rpc("evaluation_my_sheets");
-  if (error) return fail([], "تعذّرت قراءة أوراق التقييم.");
+  if (error) return fail([], "تعذّرت قراءة التقييمات.");
   return { data: (data ?? []) as SheetRow[], error: null };
 }
 

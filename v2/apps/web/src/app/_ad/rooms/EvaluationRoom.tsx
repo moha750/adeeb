@@ -8,7 +8,7 @@
  * والشكلُ **قالبُ «قائمة السجلّات»** كتعيين المناصب (محمد ٢٠٢٦-١١-١٤: «هل نحن محتاجون فعلًا أن يكون لها مكوّنٌ خاصّ؟»): المقيَّمُ سجلّ،
  * وسجلّاتُ الوحدة تحت رأسها (تنسيقُ القسم، ثمّ كلُّ لجنةٍ فرعًا منه)، والمشاركةُ عمودان بشريطهما («الأعضاء»، «المجلس»)، والنتيجةُ
  * والحكمُ بعد التنفيذ. وكروتُ الإحصاء الأربعة صارت سطرًا في قسم الدورة (لا كروتَ إحصاءٍ في الهويّة)، والمستثنى موضعٌ نادر
- * «خارج هذه الدورة» لا كرتٌ في الذيل.
+ * «خارج تقييم هذا الشهر» لا كرتٌ في الذيل.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
@@ -18,7 +18,7 @@ import { arCount, type ArForms } from "@/lib/arabicCount";
 import { percentText } from "@/lib/evaluation/score";
 import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
 import { CYCLE_STATUS_LABEL, verdictWord } from "@/app/dashboard/evaluation/vocab";
-import { addDays, cycleName, cycleShort, excludedWhy, frac, quorumLine, seatLine, type RoomProps } from "@/app/dashboard/evaluation/shared";
+import { addDays, cycleName, cycleShort, excludedWhy, frac, quorumLine, seatLine, LAST_DAY_OFFSET, VERDICT_OFFSET, type RoomProps } from "@/app/dashboard/evaluation/shared";
 import { EvaluationDetail, ofMembers } from "./EvaluationDetail";
 import { AdBadge, AdButton, AdGroupHead, AdNote, AdRow, AdStages, AdSwitch, type AdCell, type AdMeta, type AdTone } from "../primitives";
 import { AdLine, AdSection } from "../account";
@@ -27,7 +27,7 @@ import { CollectionRoom, type Position } from "../collection";
 const NAV = "/dashboard/evaluation";
 const AR_TARGET: ArForms = ["مقيَّمٌ واحد", "مقيَّمان", "مقيَّمين", "مقيَّمًا"];
 const AR_RATER: ArForms = ["مقيِّمٌ واحد", "مقيِّمان", "مقيِّمين", "مقيِّمًا"];
-const AR_SHEET: ArForms = ["ورقةٌ واحدة", "ورقتان", "أوراق", "ورقةً"];
+const AR_SHEET: ArForms = ["تقييمٌ واحد", "تقييمان", "تقييمات", "تقييمًا"];
 
 const VERDICT_TONE: Record<string, AdTone> = { kept: "ok", removed: "bad", no_result: "neutral" };
 const STATUS_TONE: Record<string, AdTone> = { scheduled: "neutral", open: "info", closed: "warn", executed: "ok" };
@@ -81,12 +81,12 @@ export function EvaluationRoom(props: RoomProps) {
     const n = ofMembers(t.members_ballots, t.members_eligible);
     // «القطعُ وكلمتُه» (اعتمده محمد ٢٠٢٦-١١-٢٠): الشريطُ مقطوعٌ عند نصفه وتحت القطع «النصف»، وما بقي له كلمةٌ مكانَ النسبة
     return {
-      label: "أوراق الأعضاء", value: n, tone: q.met ? undefined : closed ? "bad" : "warn",
+      label: "تقييمات الأعضاء", value: n, tone: q.met ? undefined : closed ? "bad" : "warn",
       of: { now: t.members_ballots, max: t.members_eligible, mark: { at: 50, label: "النصف" }, word: q.met ? undefined : closed ? "لم يبلغه" : `بقي ${need}` },
     };
   };
   const council = (t: TargetRow): AdCell => ({
-    label: "أوراق المجلس", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible },
+    label: "تقييمات المجلس", value: `${t.council_ballots} من ${t.council_eligible}`, of: { now: t.council_ballots, max: t.council_eligible },
   });
   const cellsOf = (t: TargetRow): AdCell[] => {
     const base = [
@@ -103,7 +103,7 @@ export function EvaluationRoom(props: RoomProps) {
     }];
   };
   const badgeOf = (t: TargetRow) => {
-    if (t.excluded) return <AdBadge icon={<CalendarX />}>خارج هذه الدورة</AdBadge>;
+    if (t.excluded) return <AdBadge icon={<CalendarX />}>خارج تقييم هذا الشهر</AdBadge>;
     if (!results || !t.verdict) return null;
     return t.awaiting_return
       ? <AdBadge tone="warn" icon={<UserSwitch />}>ينتظر لجنة</AdBadge>
@@ -131,23 +131,23 @@ export function EvaluationRoom(props: RoomProps) {
   // ── المواضع ──
   const POS: Position<TargetRow>[] = results
     ? [
-      { key: "all", label: "الكلّ", match: (t) => !t.excluded, empty: "لا مقيَّمين في هذه الدورة." },
+      { key: "all", label: "الكلّ", match: (t) => !t.excluded, empty: "لا مقيَّمين في تقييم هذا الشهر." },
       { key: "kept", label: "باقون", match: (t) => !t.excluded && t.verdict === "kept", empty: "لا أحد." },
       { key: "removed", label: "مستبعَدون", match: (t) => !t.excluded && t.verdict === "removed", empty: "لم يُستبعد أحد." },
-      { key: "excluded", label: "خارج هذه الدورة", match: (t) => !!t.excluded, empty: "لا مستثنى.", rare: true },
+      { key: "excluded", label: "خارج تقييم هذا الشهر", match: (t) => !!t.excluded, empty: "لا مستثنى.", rare: true },
     ]
     : [
-      { key: "all", label: "الكلّ", match: (t) => !t.excluded, empty: "لا مقيَّمين في هذه الدورة." },
+      { key: "all", label: "الكلّ", match: (t) => !t.excluded, empty: "لا مقيَّمين في تقييم هذا الشهر." },
       { key: "short", label: "دون النصف", match: (t) => !t.excluded && !quorumLine(t.members_ballots, t.members_eligible, closed).met, empty: "بلغ الجميعُ النصف." },
-      { key: "excluded", label: "خارج هذه الدورة", match: (t) => !!t.excluded, empty: "لا مستثنى.", rare: true },
+      { key: "excluded", label: "خارج تقييم هذا الشهر", match: (t) => !!t.excluded, empty: "لا مستثنى.", rare: true },
     ];
 
   // ── الدورة: مراحلُها سطورًا، وأرقامُها جملةً، والدوراتُ مبدّلٌ إن تعدّدت ──
   const at = { scheduled: -1, open: 1, closed: 2, executed: 3 }[cycle.status];
   const steps = [
     { key: "open", label: "الفتح", date: cycle.due_on, icon: <CalendarCheck /> },
-    { key: "last", label: "آخر يوم", date: addDays(cycle.due_on, 2), icon: <LockKey /> },
-    { key: "verdict", label: "الحكم والتنفيذ", date: addDays(cycle.due_on, 3), icon: <Gavel /> },
+    { key: "last", label: "آخر يوم", date: addDays(cycle.due_on, LAST_DAY_OFFSET), icon: <LockKey /> },
+    { key: "verdict", label: "الحكم والتنفيذ", date: addDays(cycle.due_on, VERDICT_OFFSET), icon: <Gavel /> },
   ];
   const excludedN = targets.length - live.length;
   // الدورةُ بلا مقيَّمين بعدُ (قادمة) لا تُعدّ أصفارًا («0 مقيَّمًا، 0 مقيِّمًا، 0 ورقةً»): مراحلُها وشارتُها وفراغُ القائمة تقول ما يُنتظر
@@ -157,29 +157,29 @@ export function EvaluationRoom(props: RoomProps) {
     arCount(cycle.ballots, AR_SHEET),
     cycle.status === "executed" && canViewResults
       ? (cycle.removed ? `${cycle.removed} مستبعَد` : "لا مستبعَد")
-      : excludedN ? `${excludedN} خارج الدورة` : null,
+      : excludedN ? `${excludedN} خارج تقييم الشهر` : null,
   ].filter(Boolean).join("، ") || undefined;
   const sorted = [...cycles].sort((a, b) => a.due_on.localeCompare(b.due_on));
 
   // الحالُ بموعدها في الشارة، فلا تتكرّر الكلمةُ في السطر، والسطرُ للأرقام وحدها
   const statusWord =
-    cycle.status === "open" ? `مفتوحة حتى ${fmtDayMonth(addDays(cycle.due_on, 2))}`
+    cycle.status === "open" ? `مفتوحة حتى ${fmtDayMonth(addDays(cycle.due_on, LAST_DAY_OFFSET))}`
       : cycle.status === "scheduled" ? `تُفتح ${fmtDayMonth(cycle.due_on)}`
-        : cycle.status === "closed" ? `مغلقة، والحكم ${fmtDayMonth(addDays(cycle.due_on, 3))}`
+        : cycle.status === "closed" ? `مغلقة، والحكم ${fmtDayMonth(addDays(cycle.due_on, VERDICT_OFFSET))}`
           : CYCLE_STATUS_LABEL[cycle.status];
   const lead = (
     <>
       {cycles.length > 1 ? (
-        <AdSwitch label="الدورات" positions={sorted.map((c) => ({ key: String(c.id), label: cycleShort(c.due_on) }))}
+        <AdSwitch label="الأشهر" positions={sorted.map((c) => ({ key: String(c.id), label: cycleShort(c.due_on) }))}
           position={String(cycle.id)} onPosition={(k) => onCycle(Number(k))} />
       ) : null}
       <AdSection icon={<Scales />} title={cycleName(cycle.due_on)} sub={facts}
         act={<AdBadge tone={STATUS_TONE[cycle.status]}>{statusWord}</AdBadge>}
-        media={<AdStages label="مراحل الدورة" stages={steps.map((s, i) => ({
+        media={<AdStages label="مراحل التقييم" stages={steps.map((s, i) => ({
           key: s.key, icon: s.icon, label: s.label, date: s.date, state: i < at ? "past" : i === at ? "now" : "next",
         }))} />}>
         {/* القاعدةُ مرّةً واحدة فوق القائمة (محمد ٢٠٢٦-١١-٢٠): من يقيّم، ومتى يُعتدّ بأوراق الأعضاء (م٥/1؛ `lib/evaluation/score.ts`) */}
-        <AdLine icon={<Info />} read v="يقيّم كلَّ قائدٍ أعضاءُ لجنته والمجلسُ الإداري. ولا يُعتدّ بأوراق الأعضاء إلّا إن شارك نصفُهم، وإلّا حُكم بأوراق المجلس وحدها." />
+        <AdLine icon={<Info />} read v="يقيّم كلَّ قائدٍ أعضاءُ لجنته والمجلسُ الإداري. ولا يُعتدّ بتقييمات الأعضاء إلّا إن شارك نصفُهم، وإلّا حُكم بتقييمات المجلس وحدها." />
       </AdSection>
     </>
   );
@@ -195,8 +195,8 @@ export function EvaluationRoom(props: RoomProps) {
   ) : undefined;
 
   const columns = [
-    { key: "members", label: "أوراق الأعضاء", icon: <UsersThree /> },
-    { key: "council", label: "أوراق المجلس", icon: <Scales /> },
+    { key: "members", label: "تقييمات الأعضاء", icon: <UsersThree /> },
+    { key: "council", label: "تقييمات المجلس", icon: <Scales /> },
     ...(results ? [{ key: "score", label: "النتيجة", icon: <ChartBar /> }] : []),
   ];
 
@@ -214,7 +214,7 @@ export function EvaluationRoom(props: RoomProps) {
         listOnly
         group={{ of: unitOf, head: headOf, order: (a, b) => units.get(unitOf(a[0]))!.order - units.get(unitOf(b[0]))!.order }}
         table={{ head: "المقيَّم", stub: { key: "face", label: "", icon: <UserCircle /> }, columns }}
-        emptyAll={{ title: "لا مقيَّمين بعد", desc: cycle.status === "scheduled" ? `تُفتح الدورةُ في ${fmtDayMonth(cycle.due_on)}، ويُعرف مقيَّموها يومَ فتحها.` : "لم يُسجَّل في هذه الدورة مقيَّم." }}
+        emptyAll={{ title: "لا مقيَّمين بعد", desc: cycle.status === "scheduled" ? `يُفتح التقييمُ في ${fmtDayMonth(cycle.due_on)}، ويُعرف مقيَّموه يومَ فتحه.` : "لم يُسجَّل في تقييم هذا الشهر مقيَّم." }}
         lead={lead}
         notice={notice}
         renderCard={row}

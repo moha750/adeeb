@@ -73,7 +73,7 @@ function Voices({ keep, change }: { keep: string[]; change: string[] }) {
   if (!keep.length && !change.length) {
     return (
       <AdSection icon={<ChatCircleText />} title="ما قاله أعضاؤك"
-        media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب أحدٌ شيئًا" desc="السؤالان اختياريّان للأعضاء، ولم يُجب عنهما أحدٌ في هذه الدورة." />} />
+        media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب أحدٌ شيئًا" desc="السؤالان اختياريّان للأعضاء، ولم يُجب عنهما أحدٌ في تقييم هذا الشهر." />} />
     );
   }
   return (
@@ -100,7 +100,7 @@ export function MineRoom({ results, comments, gender }: MineProps) {
   const keep = said.map((c) => c.keep_text).filter(Boolean) as string[];
   const change = said.map((c) => c.change_text).filter(Boolean) as string[];
   const head = results.length > 1
-    ? <AdSwitch label="الدورات" positions={results.map((x) => ({ key: String(x.target_id), label: cycleShort(x.due_on) }))} position={String(r.target_id)} onPosition={(k) => setSel(Number(k))} />
+    ? <AdSwitch label="الأشهر" positions={results.map((x) => ({ key: String(x.target_id), label: cycleShort(x.due_on) }))} position={String(r.target_id)} onPosition={(k) => setSel(Number(k))} />
     : undefined;
 
   return (

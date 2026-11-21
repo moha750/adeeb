@@ -176,8 +176,8 @@ function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: numbe
     <Modal open onClose={onClose} size="md" className="ad-rate-win ad-rate-view" title={`تقييمك لـ${sheet.full_name}`}
       description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
       footer={<Button variant="ghost" size="md" onClick={onClose}>إغلاق</Button>}>
-      {b === undefined ? <AdNote tone="info" title="تُجلب ورقتك…" />
-        : b === null ? <AdNote tone="warn" title="لا تُعرض الورقة الآن">إن كنت تعاين حساب غيرك فالأوراق لا تُعرض في المعاينة.</AdNote>
+      {b === undefined ? <AdNote tone="info" title="يُجلب تقييمك…" />
+        : b === null ? <AdNote tone="warn" title="لا يُعرض تقييمك الآن">إن كنت تعاين حساب غيرك فالتقييمات لا تُعرض في المعاينة.</AdNote>
         : (
           <>
             <ol className="ad-rate-vs">

@@ -2234,9 +2234,11 @@ a.vz-arch-row:hover { border-color: var(--ad-edge-ctl); }
 .ad-sec-head:has(> .ad-sec-act) > .ad-sec-t { flex: 1 1 0; }
 .ad-sec-act { display: flex; flex: none; margin-inline-start: auto; }
 /* وفي الغرفة الضيّقة ينزل سطرًا بعرض القسم كفعل قسم النموذج: بجانب العنوان كان يعصر وصفَه عمودًا من أربعة أسطر */
+/* والشارةُ ليست فعلًا: تبقى مقابلَ عنوانها في كلّ عرض («تُفتح 21 يناير» بجانب اسم الدورة، المجلس الإداريّ ٢٠٢٦-١١-٢١: لماذا ليست مقابلَه؟)
+   — النزولُ سطرًا كاملًا للزرّ وحده، وكانت القاعدةُ تُنزل كلَّ ما في الطرف */
 @container ad-room (max-width: 40rem) {
-  .ad-sec-head:has(> .ad-sec-act) { flex-wrap: wrap; }
-  .ad-sec-act { flex: 1 1 100%; }
+  .ad-sec-head:has(> .ad-sec-act > .ad-btn) { flex-wrap: wrap; }
+  .ad-sec-act:has(> .ad-btn) { flex: 1 1 100%; }
   .ad-sec-act > .ad-btn:only-child { inline-size: 100%; justify-content: center; }
 }
 .ad-sec-ic {
