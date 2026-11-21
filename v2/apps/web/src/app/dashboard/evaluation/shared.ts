@@ -27,15 +27,15 @@ export function frac(num: number | null | undefined, den: number | null | undefi
 export const cycleName = (dueOn: string) => `التقييم الشهري، ${fmtMonthYear(dueOn)}`;
 export const cycleShort = (dueOn: string) => fmtMonthYear(dueOn);
 
-/** آخرُ يومٍ يُقبل فيه التقييم («24 نوفمبر 2026»): الإغلاقُ منتصفُ الليل التالي. */
+/** آخرُ يومٍ يُقبل فيه التقييم («25 نوفمبر 2026»): الإغلاقُ منتصفُ الليل التالي. */
 export const lastDay = (d: string) => fmtDateOnly(d);
 
 /**
- * **أيّامُ الدورة الثابتة** (المجلس الإداريّ ٢٠٢٦-١١-٢١): يُفتح يومَ 22 من كلّ شهر، وآخرُ يومٍ 24، ويُغلق بانتهائه، ويُحكم يومَ 26.
- * مرآةُ `_evaluation_next_due` وقيدِ `evaluation_cycles_due_monthly` ومؤقّتِ `evaluation-execute` في القاعدة.
+ * **أيّامُ الدورة الثابتة** (المجلس الإداريّ ومحمد ٢٠٢٦-١١-٢١): يُفتح يومَ 22 من كلّ شهر، وآخرُ يومٍ 25 (أربعةُ أيّام)، ويُغلق
+ * بانتهائه، ويُحكم صباحَ 26. مرآةُ `_evaluation_next_due` وقيدَي `evaluation_cycles_due_monthly` و`evaluation_cycles_window` في القاعدة.
  */
 export const DUE_DAY = 22;
-export const LAST_DAY_OFFSET = 2;
+export const LAST_DAY_OFFSET = 3;
 export const VERDICT_OFFSET = 4;
 
 /** موعدُ الدورة التالية: يومُ 22 من الشهر التالي (م٢/2 بتعديل ٢٠٢٦-١١-٢١). */

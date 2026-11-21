@@ -10,9 +10,6 @@ import { recordFor, type TallyRow } from "./score";
  * حكمٍ بمجاميعه الحاضرة، ويرفض قيدُها «باقيًا» نتيجتُه 40% أو أقلّ. ونداءٌ مكرَّرٌ لا يضرّ: الدورةُ
  * المنفَّذة لا تُعاد.
  */
-/** يومٌ بين الإغلاق (00:00 من 25) والحكم (00:00 من 26)، والمؤقّتُ في القاعدة يطرق بالشرط نفسِه */
-const VERDICT_AFTER_CLOSE_MS = 24 * 60 * 60 * 1000;
-
 export type ExecuteSummary = { cycles: number; removed: number; awaitingReturn: number; errors: string[] };
 
 export async function executeClosedCycles(): Promise<ExecuteSummary> {
@@ -24,8 +21,7 @@ export async function executeClosedCycles(): Promise<ExecuteSummary> {
     .from("evaluation_cycles")
     .select("id")
     .eq("status", "closed")
-    // الحكمُ يومَ 26 لا ساعةَ الإغلاق (التقييم الشهريّ ٢٠٢٦-١١-٢١): يُغلق بانتهاء 24، ويومٌ كاملٌ بينه وبين الحكم
-    .lte("closes_at", new Date(Date.now() - VERDICT_AFTER_CLOSE_MS).toISOString())
+    .lte("closes_at", new Date().toISOString())
     .order("due_on");
   if (error) return { ...out, errors: [error.message] };
 

@@ -120,20 +120,21 @@ export const holds = (p: Person, roles: Role[]) => live(p).some((s) => roles.inc
 
 export const DUE = "2026-11-22";
 const OPENS = "2026-11-21T21:00:00Z";
-const CLOSES = "2026-11-24T21:00:00Z";
-const LAST_DAY = "2026-11-24";
+const CLOSES = "2026-11-25T21:00:00Z";
+const LAST_DAY = "2026-11-25";
 /** الحكمُ يومَ 26 (00:10 بتوقيت الرياض)، ومهلةُ الانتخاب سبعةُ أيّامٍ بعده */
 const VERDICT_AT = "2026-11-25T21:10:00Z";
 const HOLD_UNTIL = "2026-12-03";
 
 /** المراحل: قبل الموعد، فالأيّامُ الثلاثة، فالحكمُ والتنفيذ (بعد الإغلاق بدقائق، م٩/2). */
 export const STAGES = [
-  // أيّامُ الدورة الشهريّة الثابتة (المجلس الإداريّ ٢٠٢٦-١١-٢١): الفتحُ 22، وآخرُ يومٍ 24، والإغلاقُ بانتهائه، والحكمُ 26
+  // أيّامُ الدورة الشهريّة الثابتة (٢٠٢٦-١١-٢١): الفتحُ 22، وآخرُ يومٍ 25، والإغلاقُ بانتهائه، والحكمُ صباحَ 26.
+  // خمسُ محطّاتٍ لا ستّ: اليومان الثاني والثالث محطّةٌ واحدة، فلا يُضغط «التالي» على يومٍ لا يجري فيه شيء
   { label: "21 نوفمبر", hint: "قبل الموعد بيوم", date: "2026-11-21" },
   { label: "22 نوفمبر", hint: "فُتح التقييم", date: "2026-11-22" },
-  { label: "23 نوفمبر", hint: "اليوم الثاني", date: "2026-11-23" },
-  { label: "24 نوفمبر", hint: "آخر يوم، والتذكير", date: "2026-11-24" },
-  { label: "26 نوفمبر", hint: "أُغلق يوم 25، وصدر الحكم ونُفّذ", date: "2026-11-26" },
+  { label: "23 نوفمبر", hint: "اليومان الثاني والثالث", date: "2026-11-23" },
+  { label: "25 نوفمبر", hint: "آخر يوم، والتذكير", date: "2026-11-25" },
+  { label: "26 نوفمبر", hint: "أُغلق، وصدر الحكم ونُفّذ", date: "2026-11-26" },
 ] as const;
 export type Stage = 0 | 1 | 2 | 3 | 4;
 
@@ -667,7 +668,7 @@ export function viewFor(st: SimState, id: string): View {
   };
   // بعد التنفيذ تُكتب الدورةُ التالية (`_evaluation_ensure_cycle`)
   const cycles: CycleRow[] = st.stage === 4
-    ? [{ ...cycle, id: 2, due_on: "2026-12-22", opens_at: "2026-12-21T21:00:00Z", closes_at: "2026-12-24T21:00:00Z", status: "scheduled", executed_at: null, targets: 0, excluded: 0, raters: 0, ballots: 0, kept: 0, removed: 0, no_result: 0 }, cycle]
+    ? [{ ...cycle, id: 2, due_on: "2026-12-22", opens_at: "2026-12-21T21:00:00Z", closes_at: "2026-12-25T21:00:00Z", status: "scheduled", executed_at: null, targets: 0, excluded: 0, raters: 0, ballots: 0, kept: 0, removed: 0, no_result: 0 }, cycle]
     : [cycle];
 
   const targets: TargetRow[] = st.targets.map((t) => {

@@ -7,7 +7,7 @@ import { AdEmpty } from "@/app/_ad/primitives";
 import { RateRoom } from "@/app/_ad/rooms/RateRoom";
 import { getMyBallot, submitSheet } from "../actions";
 import type { SheetRow } from "../data";
-import { addDays } from "../shared";
+import { addDays, LAST_DAY_OFFSET } from "../shared";
 
 /** صفحةُ المقيِّم على الهويّة (`_ad/rooms/RateRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «مسار» (`_views/RateA`). وورقتُه تُحفظ مسوّدةً بمعرّفه. */
 export function RateView({ sheets, error, userId }: { sheets: SheetRow[]; error: string | null; userId: string }) {
@@ -20,5 +20,5 @@ export function RateView({ sheets, error, userId }: { sheets: SheetRow[]; error:
       </AccountRoom>
     );
   }
-  return <RateRoom sheets={sheets} dueOn={addDays(sheets[0].last_day, -2)} onSubmit={submitSheet} loadMine={getMyBallot} draftOwner={userId} />;
+  return <RateRoom sheets={sheets} dueOn={addDays(sheets[0].last_day, -LAST_DAY_OFFSET)} onSubmit={submitSheet} loadMine={getMyBallot} draftOwner={userId} />;
 }

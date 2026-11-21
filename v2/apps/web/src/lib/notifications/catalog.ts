@@ -616,7 +616,7 @@ export const CATALOG = {
   "evaluation.opened": defineKind<{ cycleId: number; closesAt: string; lastDay: string; raters: string[] }>({
     section: "evaluation",
     when: "فُتح التقييمُ الشهريّ للقيادات",
-    sample: { cycleId: 1, closesAt: "2026-11-24T21:00:00Z", lastDay: "2026-11-24", raters: [SAMPLE_USER] },
+    sample: { cycleId: 1, closesAt: "2026-11-25T21:00:00Z", lastDay: "2026-11-25", raters: [SAMPLE_USER] },
     audiences: [
       {
         key: "rater",
@@ -636,7 +636,7 @@ export const CATALOG = {
   "evaluation.reminder": defineKind<{ cycleId: number; closesAt: string; lastDay: string; raters: string[] }>({
     section: "evaluation",
     when: "بقي يومٌ على إغلاق التقييم ولم يُكمل المقيِّمُ أوراقه",
-    sample: { cycleId: 1, closesAt: "2026-11-24T21:00:00Z", lastDay: "2026-11-24", raters: [SAMPLE_USER] },
+    sample: { cycleId: 1, closesAt: "2026-11-25T21:00:00Z", lastDay: "2026-11-25", raters: [SAMPLE_USER] },
     audiences: [
       {
         key: "rater",
