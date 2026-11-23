@@ -2,10 +2,12 @@
 //
 // ═══ القاعدة كلُّها في سطرين ═══
 //
-//   مسمّى **شخص**  = رتبتُه + وحدةُ إسناده        «عضو» + «لجنة التصميم»
+//   مسمّى **شخص**  = رتبتُه بجنسه + وحدةُ إسناده   «قائدة» + «لجنة التصميم»
 //   مسمّى **مقعد**  = رتبتُه + وحدتُه الملازمة      «قائد» + «إدارة الموارد البشرية»
 //
-// لا استثناء ولا إسكات ولا حيلة. وهذا كلُّ ما في الملفّ.
+// إلّا **المسمّى التامّ** (رتبةٌ من أكثر من كلمة: «مشرف الموارد البشرية»، «عضو تنفيذي»،
+// «رئيس أدِيب») فيُقال وحدَه بلا وحدة (توحيد المسمّيات 2026-11-23). والتوأمُ في القاعدة
+// `position_title` و`rank_for`: يطبّقان القاعدةَ نفسها والتأنيثَ نفسه.
 //
 // ═══ ما كان قبل اليوم (20260811) ═══
 //
@@ -26,14 +28,24 @@
 // نقيّ بلا استيراد خادميّ — يستورده الخادم والنموذج معًا بأمان.
 
 /**
+ * **المسمّى التامّ** (قرار التوحيد 2026-11-23): الرتبةُ في `roles.role_name_ar` إمّا **مجرّدة**
+ * — كلمةٌ واحدة: قائد، نائب، عضو، منسّق — فتُلحق بها وحدةُ الإسناد («قائد لجنة التصميم»)، وإمّا
+ * **مسمًّى تامّ** — أكثرُ من كلمة: رئيس أدِيب، الرئيس التنفيذي، مشرف الموارد البشرية، عضو تنفيذي —
+ * فلا يُلحق به شيء. فالمشرفُ «مشرف الموارد البشرية» أيًّا كانت لجانُه، لا «مشرف الموارد البشرية
+ * إدارة الموارد البشرية». والقاعدةُ نفسُها في توأمها `position_title` في القاعدة.
+ */
+export function isFullTitle(rank?: string | null): boolean {
+  return /\s/.test((rank ?? "").trim());
+}
+
+/**
  * مسمّى **المقعد** — رتبتُه ووحدتُه الملازمة. يُستعمل حيث لا شاغلَ يُقرأ منه إسناد:
- * كتالوج الأدوار، وشاشةُ الصلاحيّات، ولوحةُ السلطة.
+ * كتالوج الأدوار، وشاشةُ الصلاحيّات، ولوحةُ السلطة. والمسمّى التامّ يُقال وحدَه.
  *
  * ولا يُستعمل لشخص: وحدةُ الشخص من خانة إسناده وحدها.
  */
 export function seatName(roleAr: string, homeName?: string | null): string {
-  const h = (homeName ?? "").trim();
-  return h ? `${roleAr.trim()} ${h}` : roleAr.trim();
+  return positionLine(roleAr, homeName) ?? roleAr.trim();
 }
 
 /**
@@ -42,48 +54,69 @@ export function seatName(roleAr: string, homeName?: string | null): string {
  * النقطةُ تفصل خبرين متجاورين، والرتبةُ ووحدتُها خبرٌ واحد: مضافٌ ومضافٌ إليه. فمن
  * وضع نقطةً بينهما قطع القائدَ عن لجنته وجعلهما شيئين، والوصلُ أبلغ.
  *
+ * **الجنس** (2026-11-23): كلّ مسمّى شخصٍ يُقال بجنس شاغله، في كلّ مكان. فمن عرض شخصًا مرّر
+ * جنسَه، ومن سمّى مقعدًا بلا شاغل لم يمرّره فبقي على المذكّر.
+ *
  * تُرجع `null` إن لم يبقَ نصّ، فتختار الشاشةُ كلمةَ الغياب التي تليق بها
  * («غير متوفّر» · «بلا موقع»).
  */
-export function positionLine(rank?: string | null, unitName?: string | null): string | null {
-  const p = positionParts(rank, unitName);
+export function positionLine(rank?: string | null, unitName?: string | null, gender?: Gender): string | null {
+  const p = positionParts(rank, unitName, gender);
   return [p.title, p.scope].filter(Boolean).join(" ").trim() || null;
 }
 
 /**
  * **المسمّى بالتكليف** (20261010) — «قائد لجنة التسويق تكليفًا». التكليفُ مقعدٌ مؤقّتٌ فوق المنصب
  * الأصيل، ويُقال بلفظه حيث يُقال المسمّى (قرار المالك: الشهادة والوسام والملفّ والمجلس). اللاحقةُ
- * في آخر الجملة، فلا تمسّ تأنيث الرتبة في أوّلها (`rankFor`). وتوأمُها في القاعدة `position_title_of`.
+ * في آخر الجملة، فلا تمسّ تأنيث الرتبة في أوّلها (`rankFor`). وتوأمُها في القاعدة `position_title`.
  */
 export function actingLine(line: string | null, acting?: boolean | null): string | null {
   return line && acting ? `${line} تكليفًا` : line;
 }
 
 /**
+ * **مسمّى الشخص كاملًا** — رتبتُه بجنسه، ووحدتُه إن كانت رتبتُه مجرّدة، و«تكليفًا» إن كان مكلَّفًا.
+ * هو ما يُقال في البوّابة والملفّ العامّ والشهادة والرسائل، وتوأمُه `position_title` في القاعدة.
+ */
+export function personTitle(
+  rank: string | null | undefined,
+  unitName: string | null | undefined,
+  gender?: Gender,
+  acting?: boolean | null,
+): string | null {
+  return actingLine(positionLine(rank, unitName, gender), acting);
+}
+
+/**
  * القطعتان — لمن يعرضهما مفترقتين لا جملةً واحدة (جدولٌ يُبرز الرتبة ثمّ يُتبعها وحدتَها ·
  * كرتٌ يضع كلًّا في سطر · محطّةُ مسيرة). و`positionLine` وصلُ هاتين بمسافة.
  *
- * ولم يبقَ فيها بعد اليوم إلّا التشذيب: لا دمجَ تماسٍّ (سقط بتصحيح «منسّق قسم» ← «منسّق»
- * وقيدِ `roles_rank_is_bare`)، ولا إسكاتَ وحدة (سقط بحذف الازدواجيّة). فمن خاط الرتبةَ
- * بوحدتها بيده اليوم **أصاب** — لأنّه لم يبقَ ما يُخطئ فيه.
+ * والمسمّى التامّ لا نطاقَ له (`scope: null`): وحدتُه في اسمه.
  */
-export function positionParts(rank?: string | null, unitName?: string | null): { title: string; scope: string | null } {
-  return { title: (rank ?? "").trim(), scope: (unitName ?? "").trim() || null };
+export function positionParts(
+  rank?: string | null,
+  unitName?: string | null,
+  gender?: Gender,
+): { title: string; scope: string | null } {
+  const r = (rank ?? "").trim();
+  return { title: rankFor(r, gender), scope: isFullTitle(r) ? null : (unitName ?? "").trim() || null };
 }
+
+type Gender = "male" | "female" | string | null | undefined;
 
 /**
  * **الرتبةُ بجنس شاغلها** — «قائد» ← «قائدة». والرتبةُ أوّلُ كلمةٍ في المسمّى، وهي وحدَها
  * ما يُؤنَّث («قائد لجنة التصميم» ← «قائدة لجنة التصميم»)، فتصلح للرتبة المجرّدة وللمسمّى.
  *
- * **إلّا «عضو»**: هو للرجل والمرأة، فهو الأصحّ لغةً (قرار المالك ٢٠٢٦-١٠-٠٨، كما في «عضو أدِيب»).
- * والمجهولُ جنسُه يأخذ المذكّر: لا نخترع له جنسًا.
+ * **إلّا «عضو»**: هو للرجل والمرأة، فهو الأصحّ لغةً (قرار المالك ٢٠٢٦-١٠-٠٨، كما في «عضو أدِيب»)،
+ * فـ«عضو تنفيذي» و«عضو لجنة التصميم» للمرأة كما هما. والمجهولُ جنسُه يأخذ المذكّر.
  *
- * كانت الخريطةُ في نداء الإنذارات وحدَه، فلمّا احتاجتها صفحةُ الهيكلة صعدت إلى هنا (٢٠٢٦-١٠-٠٩)
- * كي لا يكون للتأنيث جوابان.
+ * والخريطتان توأمُهما `rank_for` في القاعدة: من زاد هنا رتبةً زادها هناك.
  */
 const FEMININE_RANK: Record<string, string> = {
   "قائد": "قائدة", "نائب": "نائبة",
   "منسّق": "منسّقة", "منسق": "منسقة", "رئيس": "رئيسة",
+  "مشرف": "مشرفة",
 };
 
 /** مسمًّى يُؤنَّث كلُّه لا أوّلُ كلمته: «الرئيس التنفيذي» ← «الرئيسة التنفيذية» (٢٠٢٦-١٠-١٠). */
@@ -92,7 +125,7 @@ const FEMININE_TITLE: Record<string, string> = {
   "الرئيس التنفيذيّ": "الرئيسة التنفيذيّة",
 };
 
-export function rankFor(title: string, gender?: "male" | "female" | string | null): string {
+export function rankFor(title: string, gender?: Gender): string {
   if (gender !== "female") return title;
   const whole = Object.keys(FEMININE_TITLE).find((t) => title === t || title.startsWith(`${t} `));
   if (whole) return FEMININE_TITLE[whole] + title.slice(whole.length);

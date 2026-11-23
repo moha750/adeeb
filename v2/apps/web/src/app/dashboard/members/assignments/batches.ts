@@ -49,7 +49,7 @@ export async function getScheduledBatches(org: OrgData, meId: string | null): Pr
         name: p?.full_name ?? "عضو",
         avatar: p?.avatar_url ?? null,
         gender: gender(p?.gender),
-        to: positionLine(roleAr.get(m.roleName ?? "") ?? m.roleName, unit) ?? "",
+        to: positionLine(roleAr.get(m.roleName ?? "") ?? m.roleName, unit, p?.gender) ?? "",
       };
     });
     return {

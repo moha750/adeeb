@@ -183,7 +183,7 @@ export function IssueWarningModal({
   const memberOptions: SelectOption[] = targets.map((t) => ({
     value: t.id,
     label: t.name,
-    hint: positionLine(t.roleAr, t.scope) ?? undefined,
+    hint: positionLine(t.roleAr, t.scope, t.gender) ?? undefined,
     group: t.activeCount > 0 ? "عليهم إنذارات سارية" : "بلا إنذارات",
     icon: <Avatar name={t.name} src={t.avatar ?? undefined} gender={t.gender} size="xs" />,
   }));

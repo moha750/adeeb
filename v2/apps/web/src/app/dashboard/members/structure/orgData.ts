@@ -92,6 +92,7 @@ export async function getOrgData(): Promise<OrgData> {
   const deptAr = new Map((d.data ?? []).map((x) => [x.id, x.name_ar]));
   // **شخصٌ لا مقعد**: رتبتُه كما هي، ووحدتُه من خانة إسناده (20260811)
   const roleAr = new Map((r.data ?? []).map((x) => [x.role_name, x.role_name_ar || x.role_name]));
+  const genderOf = new Map((p.data ?? []).map((x) => [x.id, x.gender as string | null]));
   const held = new Map<string, string>();
   const heldRole = new Map<string, string>();
   for (const row of [...userRoles, ...frozenRoles]) {
@@ -99,7 +100,7 @@ export async function getOrgData(): Promise<OrgData> {
     const unitName = row.committee_id != null ? comAr.get(row.committee_id) ?? null
       : row.department_id != null ? deptAr.get(row.department_id) ?? null
         : null;
-    held.set(row.user_id, positionLine(roleAr.get(row.role_name), unitName) ?? "");
+    held.set(row.user_id, positionLine(roleAr.get(row.role_name), unitName, genderOf.get(row.user_id)) ?? "");
     heldRole.set(row.user_id, row.role_name);
   }
 

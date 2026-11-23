@@ -80,7 +80,7 @@ export function MyVolunteerRoom({ view }: { view: VolunteerView }) {
       : await sb.rpc("excuse_my_application", { p_id: target.id, p_reason: reason.trim() });
     setBusy(false);
     if (error) { setErr(rpcError(error.message)); return; }
-    toast.success(target.act === "withdraw" ? "سُحب طلبك." : "وصل اعتذارُك إلى المشرف.");
+    toast.success(target.act === "withdraw" ? "سُحب طلبك." : "وصل اعتذارُك إلى مسؤول الفرصة.");
     setTarget(null);
     setReason("");
     router.refresh();
@@ -206,7 +206,7 @@ export function MyVolunteerRoom({ view }: { view: VolunteerView }) {
     >
       <AdCols>{body}</AdCols>
 
-      {/* السحبُ والاعتذارُ نافذةُ القديمة حرفًا: الاعتذارُ بسببٍ يقرؤه المشرف */}
+      {/* السحبُ والاعتذارُ نافذةُ القديمة حرفًا: الاعتذارُ بسببٍ يقرؤه مسؤول الفرصة */}
       <Modal open={target !== null} onClose={close} busy={busy} size="sm" className="mdl-tone-danger"
         title={target?.act === "withdraw" ? "سحب الطلب" : "الاعتذار عن المشاركة"}
         footer={<>
@@ -216,12 +216,12 @@ export function MyVolunteerRoom({ view }: { view: VolunteerView }) {
         <p>
           {target?.act === "withdraw"
             ? `يُسحب طلبك على «${target?.title}» قبل مراجعته، ولك أن تقدّم ثانيةً ما دامت مفتوحة.`
-            : `يصل اعتذارُك عن «${target?.title}» إلى المشرف، ويُخلى مكانُك لغيرك.`}
+            : `يصل اعتذارُك عن «${target?.title}» إلى مسؤول الفرصة، ويُخلى مكانُك لغيرك.`}
         </p>
         {/* النافذةُ بتنبيهها القديم حتى نبلغ قالبَ النوافذ: تنبيهُ الهويّة ورقةٌ تُوضع على الصفحة، وفي النافذة ورقةٌ فوق ورقة (محمد ٢٠٢٦-١١-٠٥: «غريب») */}
         {err ? <Alert tone="danger">{err}</Alert> : null}
         {target?.act === "excuse"
-          ? <Textarea label="سبب الاعتذار" icon={<ChatText />} innerIcon={<Question />} placeholder="سطرٌ يقرؤه المشرف" rows={2}
+          ? <Textarea label="سبب الاعتذار" icon={<ChatText />} innerIcon={<Question />} placeholder="سطرٌ يقرؤه مسؤول الفرصة" rows={2}
               value={reason} onChange={(e) => setReason(e.target.value)} required />
           : null}
       </Modal>

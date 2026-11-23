@@ -14,7 +14,7 @@ const RPC_ERRORS: Record<string, string> = {
   PERIOD_FULL: "اكتمل عددُ فترةٍ اخترتها. اختر غيرها.",
   REASON_REQUIRED: "اكتب سببَ اعتذارك.",
   NOT_EXCUSABLE: "لا يُعتذر عن هذا التقديم. حدّث الصفحة.",
-  ALREADY_STARTED: "بدأ موعدُك، فلا يُعتذر عنه الآن. تواصل مع المشرف.",
+  ALREADY_STARTED: "بدأ موعدُك، فلا يُعتذر عنه الآن. تواصل مع مسؤول الفرصة.",
 };
 
 export function rpcError(raw: string | null | undefined): string {

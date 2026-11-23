@@ -101,7 +101,7 @@ export function ExclusionSection({ candidate: c, isHrLeader }: { candidate: Cand
   if (f.status === "requested") {
     return (
       <>
-        <AdSection icon={<Prohibit />} title="طلب استبعاد" sub={`${isHrLeader ? "ينتظر موافقتك" : "ينتظر موافقة قائد الموارد البشرية"}${lapse ? ` حتى ${lapse}، وإلّا سقط` : ""}`} tone="bad">{facts}</AdSection>
+        <AdSection icon={<Prohibit />} title="طلب استبعاد" sub={`${isHrLeader ? "ينتظر موافقتك" : "ينتظر موافقة قائد إدارة الموارد البشرية"}${lapse ? ` حتى ${lapse}، وإلّا سقط` : ""}`} tone="bad">{facts}</AdSection>
         {/* قرارُ القائد قسمٌ وحده بعد الحقائق، كـ«قرارك في الترشّح»: يُقرأ الطلبُ أوّلًا ثمّ يُحكم فيه */}
         {isHrLeader ? (
           <AdSection icon={<Scales />} title="قرارك في الطلب" sub={he("الموافقةُ تُمهِله في الحال.", "الموافقةُ تُمهِلها في الحال.")}

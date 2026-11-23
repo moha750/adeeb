@@ -20,7 +20,7 @@
  */
 import type { IconKey } from "@/app/dashboard/_shell/icons";
 import { fmtDateOnly, fmtStamp } from "@/lib/dates";
-import { positionLine, rankFor } from "@/lib/positionLabel";
+import { positionLine } from "@/lib/positionLabel";
 import type { Fact, MailMood } from "@/lib/email/layout";
 import type { Address, Gender, Level } from "./types";
 import { explainEmailError } from "@/lib/email/errors";
@@ -101,8 +101,8 @@ export function defineKind<F>(k: Kind<F>): Kind<F> {
 // ══ المناصب: أدواتُ النصّ ════════════════════════════════════════════════════
 /** حقائقُ المقعد كما تكتبها القاعدة (`_position_facts`): رتبةٌ عاريةٌ ووحدتُها. */
 type Seat = { rank: string; unit: string | null };
-/** «نائب لجنة التأليف» بجنس القارئ: الرتبةُ تُؤنَّث (`rankFor`) والوحدةُ على حالها. */
-const seat = (s: Seat, g: Gender) => positionLine(rankFor(s.rank, g), s.unit) ?? s.rank;
+/** «نائبة لجنة التأليف» بجنس القارئ، و«مشرفة الموارد البشرية» بلا وحدة: القاعدةُ كلُّها في `positionLine`. */
+const seat = (s: Seat, g: Gender) => positionLine(s.rank, s.unit, g) ?? s.rank;
 /** صيغةُ المذكّر أو المؤنّث، ومن لا جنسَ في ملفّه يأخذ المذكّر. */
 const fm = (g: Gender, m: string, f: string) => (g === "female" ? f : m);
 /** غرفةُ «حسابي»: حيث يرى العضوُ منصبَه. */

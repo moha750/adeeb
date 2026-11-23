@@ -21,7 +21,7 @@ import { useShare } from "@/app/news/[slug]/_parts/useShare";
 import { fmtDate, fmtDateOnly } from "@/lib/dates";
 import { visitsSentence, type ProfileVisits } from "@/lib/profileVisits";
 import { formatDegree, SOCIAL_KEYS, socialLabel, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
-import { actingLine, positionLine } from "@/lib/positionLabel";
+import { personTitle } from "@/lib/positionLabel";
 import type { PublicProfile } from "@/app/m/[slug]/data";
 import { AdButton, AdNote } from "../primitives";
 import { AdIdCard, AdLine, AdSection } from "../account";
@@ -87,7 +87,7 @@ export function MemberPublic({ me }: { me: PublicProfile }) {
   const links = SOCIAL_KEYS.map((key) => ({ key, handle: me.links[key] ?? null })).filter((s): s is { key: SocialKey; handle: string } => Boolean(s.handle));
 
   const facts: PubReadFact[] = [
-    ...me.positions.map((p) => ({ icon: <IdentificationBadge />, text: actingLine(positionLine(p.roleAr, p.unitName), p.acting) ?? "" })).filter((f) => f.text),
+    ...me.positions.map((p) => ({ icon: <IdentificationBadge />, text: personTitle(p.roleAr, p.unitName, me.gender, p.acting) ?? "" })).filter((f) => f.text),
     ...(tenure ? [{ icon: <CalendarBlank />, text: tenure }] : []),
   ];
 

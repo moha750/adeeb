@@ -163,7 +163,7 @@ export function CertificatesRoom({ certs, volunteer, member, error }: { certs: P
             </div>
             <Row Icon={SealCheck} k="موثّقة برقمها" v={cur.serial} ltr tone="ok" sub="من يفتح رابطها يتحقّق منها"
               act={{ Icon: Copy, label: "نسخ رابط التحقّق", text: "نسخ" }} onClick={copy} />
-            {cur.quote ? <Row Icon={Quotes} k="كلمةُ المشرف" v={`«${cur.quote}»`} sub="كما طُبعت في شهادتك" /> : null}
+            {cur.quote ? <Row Icon={Quotes} k="كلمةُ مسؤول الفرصة" v={`«${cur.quote}»`} sub="كما طُبعت في شهادتك" /> : null}
             <Row Icon={ImageIcon} k="صورة" v="بجودة الطباعة" sub="للمشاركة في حساباتك"
               act={{ Icon: DownloadSimple, label: "تنزيلها صورة", text: busy === "png" ? "يُجهَّز…" : "تنزيل" }} disabled={busy !== null} onClick={() => get("png")} />
             <Row Icon={FilePdf} k="PDF" v="للطباعة والإرسال"

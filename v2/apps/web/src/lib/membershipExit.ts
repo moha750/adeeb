@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { fmtDate } from "./dates";
+import { seatName } from "./positionLabel";
 
 /**
  * **بابُ الخروج الذي يراه صاحبُ الحساب** — قراءةٌ واحدةٌ تقرؤها ثلاثُ شاشات.
@@ -29,15 +30,22 @@ export type ExitRequest = {
 
 /**
  * أسماءُ القاضين كما تُعرَض. والقاعدةُ تُخرج مفاتيحَ الأدوار (`exit_decider_roles`)، وتُسمّى
- * ههنا بأسمائها الكاملة لا بـ`role_name_ar` وحدَه: ذاك يقول «قائد» لقائد الموارد وقائد
- * الضمان معًا، فلا يُفرَّق بينهما في جملةٍ تُقرأ.
+ * باسم المقعد كاملًا (`seatName`: رتبتُه ووحدتُه الملازمة) لا بـ`role_name_ar` وحدَه: ذاك يقول
+ * «قائد» لقائد الموارد وقائد الضمان معًا. وكانت الأسماءُ هنا محفورةً باليد، فصارت من الكتالوج
+ * (توحيد المسمّيات 2026-11-23): مصدرٌ واحدٌ لا نسخةٌ تشيخ.
  */
-const DECIDER_AR: Record<string, string> = {
-  club_president: "رئيس أدِيب",
-  executive_council_president: "الرئيس التنفيذي",
-  hr_committee_leader: "قائد إدارة الموارد البشرية",
-  qa_committee_leader: "قائد إدارة الضمان والجودة",
-};
+async function deciderNames(sb: Awaited<ReturnType<typeof createClient>>, keys: string[]): Promise<string[]> {
+  if (!keys.length) return [];
+  const { data: roles } = await sb.from("roles").select("role_name, role_name_ar, home_committee_id").in("role_name", keys);
+  const homes = [...new Set((roles ?? []).map((r) => r.home_committee_id as number | null).filter((v): v is number => v != null))];
+  const { data: units } = homes.length ? await sb.from("committees").select("id, committee_name_ar").in("id", homes) : { data: [] };
+  const unit = new Map(((units ?? []) as { id: number; committee_name_ar: string }[]).map((c) => [c.id, c.committee_name_ar]));
+  const byKey = new Map((roles ?? []).map((r) => [r.role_name as string, seatName(
+    (r.role_name_ar as string | null) ?? (r.role_name as string),
+    r.home_committee_id != null ? unit.get(r.home_committee_id as number) ?? null : null,
+  )]));
+  return keys.map((k) => byKey.get(k) ?? k);
+}
 
 export type MyExit = {
   door: ExitDoor;
@@ -78,7 +86,7 @@ export async function getMyExit(): Promise<MyExit> {
 
   return {
     door: ((doorRes.data as string | null) ?? "delete") as ExitDoor,
-    deciders: ((decRes.data as string[] | null) ?? []).map((r) => DECIDER_AR[r] ?? r),
+    deciders: await deciderNames(sb, (decRes.data as string[] | null) ?? []),
     pending: pending ? shape(pending) : null,
     lastAnswer: answered ? shape(answered) : null,
   };

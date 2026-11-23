@@ -20,7 +20,6 @@ import { categoryLabel, remainingText, toneOf, warningTitle } from "@/lib/warnin
 import { downloadCertificatePdf } from "@/lib/certificates/letter";
 import { downloadWarningLetter } from "@/lib/warnings/letter";
 import { fmtDateOnly } from "@/lib/dates";
-import { rankFor } from "@/lib/positionLabel";
 import type { Membership } from "@/app/dashboard/_membership/data";
 import { AdBadge, AdCard, type AdMeta, type AdTone } from "../primitives";
 import { AccountRoom, AdCols, AdLine, AdRoomBand, AdSection } from "../account";
@@ -85,7 +84,7 @@ export function MembershipRoom({ membership: m }: { membership: Membership }) {
 
   const meta: AdMeta[] = [
     // الرتبةُ بجنس صاحبها («قائدة لجنة التصميم») — كانت تُقال مذكّرةً على بطاقة المرأة
-    { icon: <Briefcase />, text: m.role ? rankFor(m.role, m.gender) : "لا منصب حاليّ", tone: m.role ? undefined : "muted" },
+    { icon: <Briefcase />, text: m.role ?? "لا منصب حاليّ", tone: m.role ? undefined : "muted" },
     { icon: <CalendarBlank />, text: m.joined ? `عضوٌ منذ ${m.joined}` : "تاريخُ الانضمام غير مسجّل", tone: m.joined ? undefined : "muted" },
     ...(m.duration ? [{ icon: <HourglassMedium />, text: `${m.duration} في أدِيب` }] : []),
   ];
@@ -107,7 +106,7 @@ export function MembershipRoom({ membership: m }: { membership: Membership }) {
   const journey = (
     <AdSection icon={<Path />} title="مسيرتي في أدِيب" sub="انضمامك وما تلاه من مناصب">
       {m.journey.length ? m.journey.map((s) => (
-        <AdLine key={s.key} icon={s.kind === "join" ? <Flag /> : <Star />} k={s.date} v={s.kind === "role" ? rankFor(s.title, m.gender) : s.title}
+        <AdLine key={s.key} icon={s.kind === "join" ? <Flag /> : <Star />} k={s.date} v={s.title}
           sub={s.current ? (s.scope ? `حاليّ، ${s.scope}` : "حاليّ") : s.scope ?? undefined}
           tone={s.current ? "ok" : undefined} toneAt="sub" />
       )) : (

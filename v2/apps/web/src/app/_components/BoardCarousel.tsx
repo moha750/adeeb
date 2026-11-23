@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { XLogo, LinkedinLogo, User } from "@phosphor-icons/react";
 import { CarouselNav, useInView, useNearView } from "@adeeb/design-system";
 import { toLatinDigits } from "@adeeb/core/digits";
-import { actingLine, positionLine } from "@/lib/positionLabel";
+import { personTitle } from "@/lib/positionLabel";
 import { avatarFace } from "@/lib/avatarFace";
 import { REDUCE_MOTION, useMediaFlag } from "@/lib/useMediaFlag";
 
@@ -213,7 +213,7 @@ export function BoardCarousel({ members }: { members: Member[] }) {
             const face = avatarFace(m.avatar_url, m.gender);
             const tw = socialUrl(m.twitter_account, "tw");
             const li = socialUrl(m.linkedin_account, "in");
-            const roleLine = actingLine(positionLine(m.role_ar, m.unit_name), m.is_acting);
+            const roleLine = personTitle(m.role_ar, m.unit_name, m.gender, m.is_acting);
             return (
               <div
                 key={m.id}

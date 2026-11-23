@@ -61,7 +61,7 @@ export function SupervisionModal({
   const title = !state
     ? ""
     : state.kind === "recruit"
-      ? `تعيين عضو إداريّ في ${unit.name}`
+      ? `تعيين ${unit.memberRoleAr}`
       : state.kind === "expel"
         ? `إخراج ${state.member.name} من الإدارة`
         : state.kind === "remove"
@@ -147,7 +147,7 @@ export function SupervisionModal({
                 />
                 {vacates ? <p className="org-modal-warn">{`سيُخلى مقعده «${vacates}» بنقله، ويبقى فارغًا حتى يُعيَّن بديل.`}</p> : null}
                 {unit.supervises ? <p className="org-modal-warn">
-                  {`التعيينُ انتماءٌ لا توزيع: يصير عضوًا إداريًّا في ${unit.name} بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
+                  {`التعيينُ انتماءٌ لا توزيع: يصير «${unit.memberRoleAr}» بلا لجنة، ثمّ تُسنِد إليه ما تشاء من مقاعد الإشراف.`}
                 </p> : null}
               </>
             ) : (
@@ -169,7 +169,7 @@ export function SupervisionModal({
               />
             ) : (
               <p className="org-modal-warn">
-                لا عضو في {unit.name} بعد، عيّن عضوًا إداريًّا أوّلًا، فالتوزيع لا يقع إلّا على أعضائك.
+                لا أحد في {unit.name} بعد، عيّن «{unit.memberRoleAr}» أوّلًا، فالتوزيع لا يقع إلّا على أهل إدارتك.
               </p>
             )
           ) : null}
