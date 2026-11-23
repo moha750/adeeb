@@ -11,10 +11,11 @@ import { ICON_WEIGHT } from "@/lib/iconWeight";
  * ⚠️ الرسمُ مكتوبٌ هنا لا في متن القاعدة، فتعديلُ الباب الثالث يعدّله معه.
  */
 const BOARD = ["الرئيس التنفيذي", "قائد إدارة الموارد البشرية", "قائد إدارة الضمان والجودة"];
-const DIRS: Array<{ name: string; line: "solid" | "dashed" }> = [
-  { name: "الإدارة التنفيذية", line: "solid" },
-  { name: "إدارة الموارد البشرية", line: "dashed" },
-  { name: "إدارة الضمان والجودة", line: "dashed" },
+// ومقاعدُ كلّ إدارة بمسمّياتها (توحيد المسمّيات 2026-11-23): المشرفون للموارد والضمان، والأعضاءُ التنفيذيّون للتنفيذيّة.
+const DIRS: Array<{ name: string; line: "solid" | "dashed"; seats: string }> = [
+  { name: "الإدارة التنفيذية", line: "solid", seats: "قائد وأعضاء تنفيذيون" },
+  { name: "إدارة الموارد البشرية", line: "dashed", seats: "قائد ومشرفون" },
+  { name: "إدارة الضمان والجودة", line: "dashed", seats: "قائد ومشرفون" },
 ];
 
 export function RegStructure({ caption }: { caption: string }) {
@@ -46,7 +47,7 @@ export function RegStructure({ caption }: { caption: string }) {
                 <UsersFour weight={ICON_WEIGHT} />
               </span>
               <b>{d.name}</b>
-              <small>قائد وأعضاء</small>
+              <small>{d.seats}</small>
             </li>
           ))}
         </ul>
