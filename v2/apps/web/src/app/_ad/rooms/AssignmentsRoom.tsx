@@ -22,7 +22,7 @@ import {
 import { ArrowLeft, ArrowsClockwise, PencilSimple, Plus, Star, Trash } from "@/app/_components/glyphs";
 import { clubDayKey, daysBetweenKeys, fmtDateOnly } from "@/lib/dates";
 import { AR_SEAT, arCount, type ArForms } from "@/lib/arabicCount";
-import { rankFor } from "@/lib/positionLabel";
+import { positionParts, rankFor } from "@/lib/positionLabel";
 import { UnitIcon, UnitIconNodesProvider } from "@/app/dashboard/_components/UnitIcon";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import {
@@ -56,9 +56,8 @@ function rankIcon(roleName: string): ReactNode {
     default: return <UserCircle />;
   }
 }
-/** المسمّى المجرّد في وحدته (الوحدةُ يقولها عنوانُ المجموعة)، بجنس شاغله */
-// الرتبةُ مجرّدةً بلا «ال» كي يؤنّثها `rankFor` («قائدة»، «نائبة»، «منسّقة») — بـ«ال» كانت تمرّ مذكّرةً (المراجع ٢٠٢٦-١١-١٤)
-const RANK_TITLE: Record<string, string> = { department_head: "منسّق", committee_leader: "قائد", deputy_committee_leader: "نائب" };
+/** المسمّى المجرّد في وحدته (الوحدةُ يقولها عنوانُ المجموعة)، بجنس شاغله: «قائدة»، «نائبة»، «مشرفة الموارد البشرية».
+ *  من الكتالوج (`roles.role_name_ar` عبر `positionParts`) لا من خريطةٍ محفورة هنا (توحيد المسمّيات 2026-11-23). */
 
 /** المنصبان الثابتان: لا يُزالان ولا يُستبدلان من هنا (`20261010091310_top_seats_fixed`، قرار المالك) — توأمُ `PROTECTED` في القاعدة */
 const FIXED = new Set(["club_president", "executive_council_president"]);
@@ -249,7 +248,7 @@ export function AssignmentsRoom({ positions, units, members, canEditUnits, iconN
     return who ? { name: who.name, src: who.avatar, gender: who.gender } : { name: "", vacant: true };
   };
   // المنصبُ عمودٌ باسمه لا سطرٌ تحت الاسم: كان السطرُ يترك وسطَه فارغًا عريضًا بين الاسم والأفعال (محمد ٢٠٢٦-١١-١٤)
-  const seatOf = (x: Seat) => rankFor(RANK_TITLE[x.p.roleName] ?? x.p.roleAr, (x.h ?? x.owner)?.gender ?? null);
+  const seatOf = (x: Seat) => rankFor(positionParts(x.p.roleAr, x.p.scope).title, (x.h ?? x.owner)?.gender ?? null);
   const row = (x: Seat) => (
     <AdRow key={x.id} face={face(x)} title={(x.h ?? x.owner)?.name ?? "فارغ"} badge={state(x)} sub={info(x)}
       cells={[{ label: "المنصب", text: true, value: <span className="ad-asg-seat">{rankIcon(x.p.roleName)}{seatOf(x)}</span> }]} acts={actsOf(x)} />
