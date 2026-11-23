@@ -64,7 +64,7 @@ function StepButtons({ r, h }: { r: CertQueueRow; h: AwaitHandlers }) {
  *   فلا يُعرف أنّه يُضغط. ولم يصر زرًّا رابعًا في السطر: الملفُّ يُفتح أحيانًا، والحكمُ عملُ الطابور.
  * - **ما ينتظره** سطرٌ تحته، و**واتساب** زرٌّ في آخر خانته لمن شكّ في حضوره. والجوّالُ نصًّا أُزيل بأمر المالك
  *   ٢٠٢٦-١٠-٠٣: الزرُّ يحمله، فكان الرقمُ تكرارًا يزحم السطر.
- * - **ملاحظةُ المشرف** إن كُتبت سطرٌ كاملٌ تحته يلتفّ ولا يُقصّ: هي أوّلُ ما يُقرأ قبل الحكم.
+ * - **ملاحظةُ مسؤول الفرصة** إن كُتبت سطرٌ كاملٌ تحته يلتفّ ولا يُقصّ: هي أوّلُ ما يُقرأ قبل الحكم.
  */
 /** وجهُ المتطوّع واسمُه وحالُه (وما بعدها خافتًا) — داخلَ زرّ الملفّ أو بلا زرّ، والسهمُ لا يُرسَم إلّا حيث يُفتح شيء. */
 function Person({ r, status, aside, link = false }: { r: CertQueueRow; status: string; aside?: string | null; link?: boolean }) {
@@ -117,7 +117,7 @@ function QueueRow({ r, h }: { r: CertQueueRow; h: AwaitHandlers }) {
       {r.adminNote ? (
         <p className="vwq-note">
           <NotePencil aria-hidden />
-          <span><b>ملاحظةُ المشرف:</b> {r.adminNote}</span>
+          <span><b>ملاحظةُ مسؤول الفرصة:</b> {r.adminNote}</span>
         </p>
       ) : null}
       <span className="vwq-acts"><StepButtons r={r} h={h} /></span>

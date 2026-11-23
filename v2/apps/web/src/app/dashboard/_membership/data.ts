@@ -9,7 +9,7 @@ import { fmtDateOnly, fmtDate } from "@/lib/dates";
 import { arCount } from "@/lib/arabicCount";
 import { MEMBER_STATUS_OF, type MemberStatus } from "@/lib/memberStatus";
 import { roleRank } from "@/lib/roleOrder";
-import { actingLine, positionLine, positionParts } from "@/lib/positionLabel";
+import { actingLine, isFullTitle, personTitle, rankFor } from "@/lib/positionLabel";
 import { membershipDuration } from "@adeeb/core/membership";
 
 /** محطّةٌ في المسيرة: الانضمام، أو تولّي منصب. */
@@ -170,15 +170,17 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       : []),
     ...groupList.map((g, i) => {
       const units = [...new Set(g.items.map(unitOf).filter(Boolean) as string[])];
-      const title = actingLine(roleAr.get(g.roleName) ?? g.roleName, g.acting) ?? g.roleName;
-      // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر»
-      const rawScope = units.length ? units.join("، ") : councilOf(g.roleName);
-      // المحطّة تضع الرتبةَ في سطرٍ ونطاقَها تحته، فلا تصلهما — فالقطعتان من المصدر
-      // الواحد (`positionParts`) لا نصّان يُركَّبان هنا.
+      const rank = roleAr.get(g.roleName) ?? g.roleName;
+      // الرتبةُ بجنس صاحبها، و«تكليفًا» بعدها (2026-11-23)
+      const title = actingLine(rankFor(rank, p.gender), g.acting) ?? rank;
+      // بلا وحدةٍ يقع المنصب في مجلسه مباشرةً (الإدارة العليا) — فيُقال المجلس لا «غير متوفّر».
+      // والمسمّى التامّ («مشرفة الموارد البشرية»، «عضو تنفيذي») وحدتُه في اسمه، فتحته مجلسُه كالرئيسين.
+      const scope = units.length && !isFullTitle(rank) ? units.join("، ") : councilOf(g.roleName);
       return {
         key: `role-${i}`,
         kind: "role" as const,
-        ...positionParts(title, rawScope),
+        title,
+        scope,
         date: fmtDate(g.at),
         at: Date.parse(g.at ?? "") || 0,
         current: g.active,
@@ -234,7 +236,7 @@ export async function getMyMembership(): Promise<{ membership: Membership | null
       avatar: p.avatar_url ?? null,
       gender: p.gender === "male" || p.gender === "female" ? p.gender : null,
       status: MEMBER_STATUS_OF[p.account_status] ?? "inactive",
-      role: current ? actingLine(positionLine(roleAr.get(current.roleName) ?? current.roleName, currentUnit), current.acting) : null,
+      role: current ? personTitle(roleAr.get(current.roleName) ?? current.roleName, currentUnit, p.gender, current.acting) : null,
       joined: fmtDateOnly(p.joined_date),
       duration: membershipDuration(p.joined_date, Date.now()),
       journey,

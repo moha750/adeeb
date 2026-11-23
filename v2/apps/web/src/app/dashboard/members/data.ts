@@ -218,14 +218,14 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       lastRole.set(ur.user_id, { role_name: ur.role_name, department_id: ur.department_id, committee_id: ur.committee_id, at, rank });
     }
   }
-  const pastLine = (id: string): string | null => {
+  const pastLine = (id: string, gender: string | null): string | null => {
     const lr = lastRole.get(id);
     if (!lr) return null;
     const r = roleByName.get(lr.role_name);
     const unit = lr.committee_id != null
       ? committeeName.get(lr.committee_id) ?? null
       : lr.department_id != null ? deptById.get(lr.department_id) ?? null : null;
-    return positionLine(r ? (r.role_name_ar ?? r.role_name) : null, unit);
+    return positionLine(r ? (r.role_name_ar ?? r.role_name) : null, unit, gender);
   };
 
   const members: MemberRow[] = (pRes.data ?? []).map((p) => {
@@ -280,7 +280,7 @@ export async function getMembers(): Promise<{ members: MemberRow[]; warningLimit
       committeeId: br?.committee_id ?? null,
       roleName: br?.role_name ?? null,
       canMove: mayMove && br?.role_name === "committee_member" && movable.has(p.id),
-      lastPosition: p.account_status === "suspended" && !br ? pastLine(p.id) : null,
+      lastPosition: p.account_status === "suspended" && !br ? pastLine(p.id, p.gender ?? null) : null,
     };
   });
 

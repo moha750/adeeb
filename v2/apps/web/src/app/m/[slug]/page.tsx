@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import "@adeeb/design-system/ad.css";
 import { Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
-import { actingLine, positionLine } from "@/lib/positionLabel";
+import { personTitle } from "@/lib/positionLabel";
 import { shareOg } from "@/lib/share";
 import { getPublicProfile, type PublicPosition } from "./data";
 import { MemberPublic } from "@/app/_ad/rooms/MemberPublicRoom";
@@ -11,10 +11,10 @@ import { MemberPublic } from "@/app/_ad/rooms/MemberPublicRoom";
 export const revalidate = 300;
 
 /** سطرُ التعريف: المنصبُ الأوّل (والقيادةُ متقدّمةٌ في الترتيب من القاعدة). */
-function headline(positions: PublicPosition[]) {
+function headline(positions: PublicPosition[], gender: string | null) {
   const p = positions[0];
   if (!p) return "عضوٌ في نادي أدِيب";
-  return actingLine(positionLine(p.roleAr, p.unitName), p.acting) ?? "عضوٌ في نادي أدِيب";
+  return personTitle(p.roleAr, p.unitName, gender, p.acting) ?? "عضوٌ في نادي أدِيب";
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const me = await getPublicProfile(decodeURIComponent(slug));
   if (!me) return { title: "صفحة عضو، أدِيب" };
 
-  const line = headline(me.positions);
+  const line = headline(me.positions, me.gender);
   return {
     title: `${me.name}، أدِيب`,
     description: me.bio ?? `${line} في نادي أدِيب.`,

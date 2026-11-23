@@ -194,7 +194,7 @@ function UnitList({ units, members, initial, view }: { units: UnitData[]; member
   const unitOf = (m: Item) => byId.get(m.unitId)?.unit ?? cur.unit;
   const face = (m: Item) => ({ src: m.avatar, gender: m.gender, name: m.name });
   /**
-   * **لا شارةَ مقعدٍ على كلّ كرت**: المقعدُ واحدٌ للجميع («عضو إدارة الموارد البشرية») يقوله عنوانُ الغرفة وموضعُها، فتكرارُه على كلّ
+   * **لا شارةَ مقعدٍ على كلّ كرت**: المقعدُ واحدٌ للجميع («مشرف الموارد البشرية») يقوله عنوانُ الغرفة وموضعُها، فتكرارُه على كلّ
    * كرتٍ معلومةٌ مكرّرة (قاعدة «الرقمُ الذي يكرّر جملةً بجانبه يُحذف»). والذي يميّز صاحبَه وحدَه «تكليفًا».
    */
   const where = (m: Item) => (m.acting ? <AdBadge>تكليفًا</AdBadge> : null);
@@ -217,7 +217,7 @@ function UnitList({ units, members, initial, view }: { units: UnitData[]; member
       <AdButton variant="danger" size="sm" icon={<SignOut />} onClick={() => openExpel(m)}>إخراج</AdButton>
     );
 
-  const create = <AdButton variant="fill" icon={<UserPlus />} onClick={recruit}>تعيين عضو إداريّ</AdButton>;
+  const create = <AdButton variant="fill" icon={<UserPlus />} onClick={recruit}>{`تعيين ${cur.unit.memberRoleAr}`}</AdButton>;
 
   return (
     <>
@@ -225,7 +225,8 @@ function UnitList({ units, members, initial, view }: { units: UnitData[]; member
         navPath={UNIT_ROOM.navPath}
         // العنوانُ اسمُ الإدارة المعروضة — فيعرف الداخلُ أيَّها يدير بلا سطرٍ يشرح (كما كان رأسُها)
         title={cur.unit.name}
-        action={{ label: "تعيين عضو إداريّ", icon: <UserPlus />, onClick: recruit }}
+        // مسمّى المقعد من الكتالوج: «مشرف الموارد البشرية»، «عضو تنفيذي» (توحيد المسمّيات 2026-11-23)
+        action={{ label: `تعيين ${cur.unit.memberRoleAr}`, icon: <UserPlus />, onClick: recruit }}
         // كان زرًّا هادئًا بجانب الضمّ في رأس قسم الأعضاء؛ واللوحُ يحمل فعلًا ثانيًا هادئًا بجانب الأساسيّ
         extra={actableOf(cur.unit) ? { label: "تكليف", icon: <UserSwitch />, onClick: () => openActing(cur.unit) } : undefined}
         noun={AR_MEMBER}

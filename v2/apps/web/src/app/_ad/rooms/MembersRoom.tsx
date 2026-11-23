@@ -276,7 +276,7 @@ export function MembersRoom({
     const icon = s === 0 ? <Crown /> : s === 1 ? <CrownSimple /> : undefined;
     return (
       <>
-        <AdBadge icon={icon}>{former(m) ? m.lastPosition ?? "بلا موقع" : positionLine(m.role, m.committee) ?? "بلا موقع"}</AdBadge>
+        <AdBadge icon={icon}>{former(m) ? m.lastPosition ?? "بلا موقع" : positionLine(m.role, m.committee, m.gender) ?? "بلا موقع"}</AdBadge>
         {you}
       </>
     );

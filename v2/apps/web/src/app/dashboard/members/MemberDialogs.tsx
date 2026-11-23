@@ -24,7 +24,7 @@ import { IssueCertificateModal } from "./certificates/IssueCertificateModal";
 import { Avatar } from "../_components/Avatar";
 import { useToast } from "../_components/ToastProvider";
 import { Cell } from "../_components/Cell";
-import { positionLine } from "@/lib/positionLabel";
+import { positionLine, rankFor } from "@/lib/positionLabel";
 import { ARABIC_NAME_HINT, arabicNameError } from "@/lib/personName";
 import { Section } from "../_components/Section";
 import { SOCIAL_ICON } from "../_components/socialIcons";
@@ -145,12 +145,12 @@ function ProfileBody({ member, onMove }: { member: MemberRow; onMove?: () => voi
       {/* الرأس كتلةٌ واحدة: إيقاعُه الداخليّ أضيق من فجوة الجسم، فلو تفرّق أبناؤه لفرّقت بينهم */}
       <div className="pvb-head">
         <div className="pvb-name">{member.name}</div>
-        <div className="pvb-role">{positionLine(member.role, member.committee) ?? "غير متوفّر"}</div>
+        <div className="pvb-role">{positionLine(member.role, member.committee, member.gender) ?? "غير متوفّر"}</div>
         <div className="pvb-badges"><Badge tone={MEMBER_STATUS[member.status].tone} variant="soft" dot live={member.status === "active"}>{MEMBER_STATUS[member.status].label}</Badge></div>
       </div>
       <div className="pva-sections">
         <Section icon={<IdentificationCard />} title="بيانات العضويّة">
-          <Cell label="الدور" icon={<Star />} value={member.role} />
+          <Cell label="الدور" icon={<Star />} value={member.role ? rankFor(member.role, member.gender) : member.role} />
           <Cell label="تاريخ الانضمام" icon={<CalendarBlank />} value={member.joined} />
           {member.dept ? <Cell full label="القسم" icon={<Buildings />} value={member.dept} /> : null}
           {/* رُكنُ اللجنة يقول فعلَها لمن يملكه: من فتح الملفّ فرأى لجنته يطلب تغييرها من حيث

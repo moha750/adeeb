@@ -27,7 +27,7 @@ const TONE: Record<string, "brand" | "warning" | "danger"> = { active: "brand", 
 
 export function MemberCard({ member, onOpen, actions, onRestore, onReason, contactHref }: Props) {
   const suspended = member.status === "suspended";
-  const roleLine = positionLine(member.role, member.committee) ?? "غير متوفّر";
+  const roleLine = positionLine(member.role, member.committee, member.gender) ?? "غير متوفّر";
   const tone = TONE[member.status];
   // القائمة تتبع نغمة الكرت — و«brand» هي مظهر القائمة الافتراضيّ (فولاذيّ) فلا تُمرَّر نغمةً،
   // كما في الجدول (SURFACE_TONE.active = undefined). نغمةٌ باسمٍ آخر للشيء نفسه تُفرِّق ما هو واحد.

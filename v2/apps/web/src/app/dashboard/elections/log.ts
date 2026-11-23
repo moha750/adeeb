@@ -152,7 +152,7 @@ export function describeEvent(row: LogRow, opts: DescribeOpts = {}): LogFacts {
       return facts("restore", admin ? "بقي الترشّح بعد نقل منصب صاحبه بغير طلبه" : "بقي ترشّحك بعد نقل منصبك بغير طلبك", { candidateId });
 
     /* ── التجميد (المادة 16). وطالبُه لا يُذكر للمرشّح: القاعدةُ تنزع `requested_by` من سجلّه ── */
-    case "freeze_requested": return facts("stall", "طُلب استبعاد الترشّح، وينتظر موافقة قائد الموارد البشرية", { candidateId, note });
+    case "freeze_requested": return facts("stall", "طُلب استبعاد الترشّح، وينتظر موافقة قائد إدارة الموارد البشرية", { candidateId, note });
     case "freeze_declined": return facts("restore", "رُدّ طلب الاستبعاد", { candidateId, note });
     // يسقط الطلبُ إن لم يُوافَق عليه خلال ٢٤ ساعة (الدفعة ٨، ٢٠٢٦-١١-١٩)
     case "freeze_expired": return facts("restore", "سقط طلب الاستبعاد: لم يُوافَق عليه خلال 24 ساعة", { candidateId });

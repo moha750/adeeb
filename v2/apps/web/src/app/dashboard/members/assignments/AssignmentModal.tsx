@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Field, IconButton, Modal, ModalSectionHeading, Select, type SelectOption } from "@adeeb/design-system";
 import { ArrowsLeftRight, Briefcase, CalendarBlank, CalendarCheck, Gavel, IdentificationBadge, ListChecks, NotePencil, UserPlus, UserSwitch } from "@phosphor-icons/react";
 import { ArrowLeft, Plus, Trash } from "@/app/_components/glyphs";
-import { positionLine } from "@/lib/positionLabel";
+import { positionLine, positionParts } from "@/lib/positionLabel";
 import { clubDayKey } from "@/lib/dates";
 import { Avatar } from "../../_components/Avatar";
 import type { Holder, Position, RawCommittee, RawDept } from "../structure/model";
@@ -63,6 +63,8 @@ const seatKeyOf = (roleName: string, committeeId: number | null, departmentId: n
 function buildSeats(positions: Position[], committees: RawCommittee[], departments: RawDept[]): Seat[] {
   const deptName = new Map(departments.map((d) => [d.id, d.name_ar ?? `قسم #${d.id}`]));
   const comById = new Map(committees.map((c) => [c.id, c]));
+  // رتبةُ مقعد العضويّة من الكتالوج لا محفورة: عضويّةُ الإدارة «مشرف الموارد البشرية» لا «عضو» (2026-11-23)
+  const rankOf = new Map(positions.map((p) => [p.roleName, p.roleAr]));
   const groupOf = (committeeId: number | null, departmentId: number | null, council: Position["council"]) => {
     if (departmentId != null) return deptName.get(departmentId) ?? COUNCIL_AR[council];
     const c = committeeId != null ? comById.get(committeeId) : undefined;
@@ -91,7 +93,7 @@ function buildSeats(positions: Position[], committees: RawCommittee[], departmen
     seen.add(key);
     out.push({
       key, roleName: c.member_role_name, committeeId: c.id, departmentId: null,
-      label: positionLine("عضو", c.committee_name_ar) ?? "عضو", group: groupOf(c.id, null, c.council_id === "administrative" ? "administrative" : "executive"),
+      label: positionLine(rankOf.get(c.member_role_name) ?? "عضو", c.committee_name_ar) ?? "عضو", group: groupOf(c.id, null, c.council_id === "administrative" ? "administrative" : "executive"),
       singleton: false, holders: [], prerequisite: null, requiresMembership: false,
     });
   }
@@ -332,8 +334,8 @@ export function AssignmentModal({
       onClose={onClose}
       busy={busy}
       className={tone ? `mdl-tone-${tone}` : undefined}
-      title={p ? `${verb} ${p.roleAr}` : verb}
-      description={p ? `«${p.scope}»` : undefined}
+      title={p ? `${verb} ${positionParts(p.roleAr, p.scope).title}` : verb}
+      description={p && positionParts(p.roleAr, p.scope).scope ? `«${p.scope}»` : undefined}
       // الإسنادُ أعرض: حقلا القرار يتجاوران ويبقى التاريخُ مقروءًا كاملًا. والإزالةُ تأكيدٌ ضيّق
       size={isRemove ? "sm" : "md"}
       footer={

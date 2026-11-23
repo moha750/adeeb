@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 import { DASHBOARD_CAPS } from "@/lib/capabilities";
 import { createAdeebServiceClient } from "@adeeb/core";
-import { actingLine, positionLine } from "@/lib/positionLabel";
+import { personTitle } from "@/lib/positionLabel";
 import { roleRank } from "@/lib/roleOrder";
 import { getSessionClaims } from "@/lib/auth";
 import { isLiveMembership } from "@/lib/memberRecord";
@@ -69,7 +69,7 @@ export type MeBrief = {
  * قائمٍ بالترتيب القياسيّ** (بالاسم لا برقم — `role_level` أُعدم)، و**وحدةً واحدةً لا سردًا**:
  * من امتدّ منصبُه على وحداتٍ عدّة تبقى رتبتُه عاريةً (سطرٌ واحدٌ لا يحتمل تسعةَ أسماء).
  */
-async function currentPosition(sb: ReturnType<typeof createAdeebServiceClient>, userId: string) {
+async function currentPosition(sb: ReturnType<typeof createAdeebServiceClient>, userId: string, gender: string | null) {
   const { data: rows } = await sb
     .from("user_roles")
     .select("role_name, department_id, committee_id, is_acting")
@@ -104,7 +104,7 @@ async function currentPosition(sb: ReturnType<typeof createAdeebServiceClient>, 
   ].filter((v): v is string => !!v);
   const unit = units.length === 1 ? units[0] : null;
 
-  return actingLine(positionLine((roleRes.data as { role_name_ar: string | null } | null)?.role_name_ar ?? top, unit), acting);
+  return personTitle((roleRes.data as { role_name_ar: string | null } | null)?.role_name_ar ?? top, unit, gender, acting);
 }
 
 function service() {
@@ -149,7 +149,7 @@ export async function GET() {
     isMember: member,
     hasPortal: member || (await hasDashboardKeys(sb, claims.sub)),
     // المنصبُ يُسأل عنه لمن انضمّ وحدَه: لا مناصبَ لصاحب حسابٍ ليس عضوًا، فلا استعلامَ يُهدر.
-    position: member ? await currentPosition(sb, claims.sub) : null,
+    position: member ? await currentPosition(sb, claims.sub, data?.gender ?? null) : null,
     standing: member ? "member" : volunteer ? "volunteer" : "account",
   };
   return NextResponse.json({ viewer }, { headers });

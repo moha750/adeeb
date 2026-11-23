@@ -56,7 +56,7 @@ const tableCols: Column<MemberRow>[] = [
     render: (m) => (
       <div className="dt-mem">
         <Avatar name={m.name} size="sm" />
-        <span className="dt-mm"><b>{m.name}</b><span>{positionLine(m.role, m.committee) ?? "غير متوفّر"}</span></span>
+        <span className="dt-mm"><b>{m.name}</b><span>{positionLine(m.role, m.committee, m.gender) ?? "غير متوفّر"}</span></span>
       </div>
     ),
   },

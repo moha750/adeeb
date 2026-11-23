@@ -180,7 +180,7 @@ export function WarningsRoom({ rows, targets, limit, mayIssue, view }: {
         <AdGroupHead
           title={r.name}
           lead={<Avatar src={r.avatar ?? undefined} name={r.name} gender={r.gender} />}
-          sub={[{ icon: <IdentificationCard />, text: positionLine(r.roleAr, r.scope) ?? "بلا موقع" }]}
+          sub={[{ icon: <IdentificationCard />, text: positionLine(r.roleAr, r.scope, r.gender) ?? "بلا موقع" }]}
           steps={{ now: r.activeCount, max: limit, tone: RANK_TONE[toneOf(r.activeCount, limit)], label: remainingText(r.activeCount, limit) }}
         />
       );

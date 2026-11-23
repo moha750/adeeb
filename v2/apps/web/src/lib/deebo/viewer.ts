@@ -2,7 +2,7 @@ import "server-only";
 
 import { createAdeebServiceClient } from "@adeeb/core";
 import { firstAndLastOf } from "@/lib/personName";
-import { actingLine, positionLine } from "@/lib/positionLabel";
+import { personTitle } from "@/lib/positionLabel";
 import { isLiveMembership } from "@/lib/memberRecord";
 import { standingName, type AdeebStanding } from "@/lib/standing";
 
@@ -45,7 +45,7 @@ export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | nul
 
   // خمسُ قراءاتٍ صغيرةٍ لصفٍّ واحدٍ أو صفرٍ في كلٍّ منها، وتجري معًا.
   const [profileRes, seatRes, memberRes, volunteerRes] = await Promise.all([
-    sb.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    sb.from("profiles").select("full_name, gender").eq("id", userId).maybeSingle(),
     sb
       .from("user_roles")
       .select("role_name, committee_id, department_id, is_acting")
@@ -88,7 +88,7 @@ export async function loadDeeboViewer(userId: string): Promise<DeeboViewer | nul
       (comRes.data as { committee_name_ar?: string } | null)?.committee_name_ar ??
       (deptRes.data as { name_ar?: string } | null)?.name_ar ??
       null;
-    position = actingLine(positionLine(roleRes.data?.role_name_ar ?? null, unit), seat.is_acting);
+    position = personTitle(roleRes.data?.role_name_ar ?? null, unit, profileRes.data?.gender ?? null, seat.is_acting);
   }
 
   const standing: DeeboViewer["standing"] = isLiveMembership(memberRes.data)

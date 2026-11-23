@@ -165,10 +165,10 @@ export function VolunteerCertificatesRoom({ room, today, manual, view }: {
 
   /** الشارةُ: التميّزُ لمن رُشّح له (كانت «الشهادةُ جاهزة بتميّز»)؛ وحالُ الطابور يقولها موضعُه فلا تتكرّر على كلّ سطر. */
   const queueChips = (x: Queue) => (x.kind === "owed" && x.r.distinctionNote ? <AdBadge tone="ok" icon={<Sparkle />}>بتميّز</AdBadge> : undefined);
-  /** السطور: فترتُه (الحضورُ للفترة)، ثمّ ملاحظةُ المشرف (أوّلُ ما يُقرأ قبل الحكم) أو جملةُ تميّزه. */
+  /** السطور: فترتُه (الحضورُ للفترة)، ثمّ ملاحظةُ مسؤول الفرصة (أوّلُ ما يُقرأ قبل الحكم) أو جملةُ تميّزه. */
   const queueInfo = (x: Queue): AdMeta[] => [
     ...(x.r.period ? [{ icon: <CalendarBlank />, text: x.r.period }] : []),
-    ...(x.kind === "await" && x.r.adminNote ? [{ icon: <NotePencil />, text: `ملاحظةُ المشرف: ${x.r.adminNote}` }] : []),
+    ...(x.kind === "await" && x.r.adminNote ? [{ icon: <NotePencil />, text: `ملاحظةُ مسؤول الفرصة: ${x.r.adminNote}` }] : []),
     ...(x.kind === "owed" && x.r.distinctionNote ? [{ icon: <Sparkle />, text: `تميّزه: ${x.r.distinctionNote}` }] : []),
   ];
   /**

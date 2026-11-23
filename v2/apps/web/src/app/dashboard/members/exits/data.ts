@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { fmtDate, fmtSince } from "@/lib/dates";
-import { actingLine } from "@/lib/positionLabel";
+import { actingLine, rankFor } from "@/lib/positionLabel";
 
 /**
  * **طلباتُ إنهاء العضويّة** — ما يراه القاضي فيها.
@@ -70,13 +70,15 @@ export async function getExitRequests(): Promise<ExitsData> {
 
   if (svc && ids.length) {
     const [pRes, rRes] = await Promise.all([
-      svc.from("profiles").select("id, full_name").in("id", ids),
+      svc.from("profiles").select("id, full_name, gender").in("id", ids),
       // والأصيلُ المجمَّد مقعدُه وإن انطفأ، والتكليفُ يُوسَم «تكليفًا» فلا يُحسب منصبًا ثانيًا
       svc.from("user_roles").select("user_id, role_name, is_acting").in("user_id", ids)
         .or("is_active.eq.true,frozen_by.not.is.null").order("is_acting"),
     ]);
-    for (const p of (pRes.data ?? []) as { id: string; full_name: string | null }[]) {
+    const genderOf = new Map<string, string | null>();
+    for (const p of (pRes.data ?? []) as { id: string; full_name: string | null; gender: string | null }[]) {
       names.set(p.id, p.full_name ?? "بلا اسم");
+      genderOf.set(p.id, p.gender);
     }
     // أسماءُ الأدوار بالعربيّة تُقرأ من جدولها، فلا تُكتب ههنا نسخةٌ ثانيةٌ تشيخ
     const roleNames = [...new Set(((rRes.data ?? []) as { role_name: string }[]).map((r) => r.role_name))];
@@ -87,7 +89,7 @@ export async function getExitRequests(): Promise<ExitsData> {
       .map((r) => [r.role_name, r.role_name_ar]));
     for (const r of (rRes.data ?? []) as { user_id: string; role_name: string; is_acting: boolean }[]) {
       const list = seats.get(r.user_id) ?? [];
-      list.push(actingLine(ar.get(r.role_name) ?? r.role_name, r.is_acting) ?? r.role_name);
+      list.push(actingLine(rankFor(ar.get(r.role_name) ?? r.role_name, genderOf.get(r.user_id)), r.is_acting) ?? r.role_name);
       seats.set(r.user_id, list);
     }
   }

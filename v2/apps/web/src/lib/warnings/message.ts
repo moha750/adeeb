@@ -10,7 +10,7 @@
  * يبقى صادقًا ولو انتقل صاحبه بعده. **واللجنة لا تُذكر في النصّ** (قرار المالك): تبقى في السجلّ.
  */
 import { fmtDate } from "@/lib/dates";
-import { positionLine, rankFor } from "@/lib/positionLabel";
+import { positionLine } from "@/lib/positionLabel";
 import { CHARTER, countWord, observationSentence, ordinalWord } from "./vocab";
 
 export type Gender = "male" | "female" | null;
@@ -51,11 +51,11 @@ const g = (gender: Gender, male: string, female: string): string => (gender === 
  * المصدر الواحد، ولم يبقَ هنا إلّا ما يخصّ النداء وحده: **تأنيث الرتبة**.
  */
 export function salutation(l: Pick<WarningLetter, "name" | "gender" | "role" | "committee">): string {
-  const title = positionLine(l.role, l.committee);
+  const title = positionLine(l.role, l.committee, l.gender);
   // بلا منصب: «الأدِيب» و«الأدِيبة» — نسبةٌ إلى النادي لا نداءٌ عامّ (قرار المالك)
   if (!title) return `${g(l.gender, "الأدِيب", "الأدِيبة")} ${l.name}`;
-  // التأنيث من المصدر الواحد (`rankFor`): الرتبةُ أوّلُ كلمةٍ في المسمّى، و«عضو» للجنسين
-  return `${rankFor(title, l.gender)} ${l.name}`;
+  // التأنيث من المصدر الواحد (`positionLine` بالجنس): و«عضو» للجنسين
+  return `${title} ${l.name}`;
 }
 
 /** التحيّة — سطرٌ قائمٌ بذاته يعلو النداء (كما في البوست). */
