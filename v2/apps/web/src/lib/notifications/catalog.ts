@@ -623,7 +623,7 @@ export const CATALOG = {
         level: "important",
         to: (f) => f.raters.map((user) => ({ user })),
         // نصُّ «أ» (محمد ٢٠٢٦-١٠-٢٩): الحدثُ باسمه، والمطلوبُ وموعدُه، والطمأنة. كان «لك تقييمٌ مفتوحٌ للقيادات» فلم يُفهم
-        text: (f, g) => ({ title: "بدأ التقييم الشهري للقيادات", body: `${fm(g, "قيّم", "قيّمي")} من عليك تقييمهم قبل نهاية ${fmtDateOnly(f.lastDay)}. تقييمك سرّي.` }),
+        text: (f, g) => ({ title: "بدأ التقييم الشهري للقيادات", body: `${fm(g, "قيّم", "قيّمي")} من عليك تقييمهم قبل نهاية ${fmtDateOnly(f.lastDay)}. لا يطّلع على تقييمك إلا الرئيسان.` }),
         href: () => "/dashboard/evaluation/rate",
         expires: (f) => new Date(f.closesAt),
       },
@@ -642,7 +642,7 @@ export const CATALOG = {
         key: "rater",
         level: "important",
         to: (f) => f.raters.map((user) => ({ user })),
-        text: (f, g) => ({ title: "اليوم آخر أيام التقييم الشهري للقيادات", body: `${fm(g, "بقي لك", "بقي لكِ")} تقييمٌ لم ${fm(g, "تُرسله", "تُرسليه")}، ويُغلق التقييم الليلة. تقييمك سرّي.` }),
+        text: (f, g) => ({ title: "اليوم آخر أيام التقييم الشهري للقيادات", body: `${fm(g, "بقي لك", "بقي لكِ")} تقييمٌ لم ${fm(g, "تُرسله", "تُرسليه")}، ويُغلق التقييم الليلة. لا يطّلع على تقييمك إلا الرئيسان.` }),
         href: () => "/dashboard/evaluation/rate",
         expires: (f) => new Date(f.closesAt),
       },

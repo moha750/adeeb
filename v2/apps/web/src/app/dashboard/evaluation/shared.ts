@@ -80,13 +80,6 @@ export function verdictSentence(v: Verdict, g: "male" | "female" | null): string
   return "لا نتيجة في تقييم هذا الشهر";
 }
 
-/** لماذا لا يُعرض الشقّ: لم يشارك أحد، أو سقط نصابُ الأعضاء (م٥/1)، أو أوراقُه دون ثلاث (المسألة ٣). */
-export function hiddenWhy(p: "members" | "council", n: number, r: MyResultRow): string {
-  if (n === 0) return "لم يشارك أحد";
-  if (p === "members" && (r.branch === "council_only" || r.branch === "none")) return "لم يشارك نصفُهم";
-  return "لا تُعرض لأنّ تقييماتها أقلّ من ثلاثة";
-}
-
 export type DetailActions = {
   correctRater: (i: { targetId: number; raterId: string; action: "remove" | "add"; part?: Part; reason: string }) => Promise<EvaluationResult>;
   recompute: (targetId: number, reason: string) => Promise<EvaluationResult>;

@@ -11,12 +11,12 @@
  * «حُسبت من الشقّين»: ما يقوله الشقُّ المخفيُّ بكلمته تحت شريطه يكفي عنها.
  */
 import { useState } from "react";
-import { ChatCircleText, Gauge, Scales, UsersThree, Wrench } from "@phosphor-icons/react";
+import { ChatCircleText, Gauge, Wrench } from "@phosphor-icons/react";
 import { ArrowsClockwise } from "@/app/_components/glyphs";
 import { percentText, type Fraction } from "@/lib/evaluation/score";
 import type { MyResultRow } from "@/app/dashboard/evaluation/data";
-import { partName, verdictWord } from "@/app/dashboard/evaluation/vocab";
-import { cycleName, cycleShort, frac, hiddenWhy, seatLine, verdictSentence, type MineProps } from "@/app/dashboard/evaluation/shared";
+import { verdictWord } from "@/app/dashboard/evaluation/vocab";
+import { cycleName, cycleShort, frac, seatLine, verdictSentence, type MineProps } from "@/app/dashboard/evaluation/shared";
 import { AdEmpty, AdFigureRow, AdSwitch } from "../primitives";
 import { AccountRoom, AdLine, AdSection } from "../account";
 
@@ -37,16 +37,12 @@ function title(r: MyResultRow, gender: MineProps["gender"]): string {
   return verdictSentence(r.verdict, gender);
 }
 
+/**
+ * **النهائيّةُ وحدها** (محمد ٢٠٢٦-١١-٢٣، باقيًا كان أو مستبعَدًا): لا نسبةَ أعضاء القسم ولا المجلس. والشقّان مع النهائيّة كانا يكشفان
+ * المخفيَّ منهما بالحساب (النهائيّة = 70% أعضاء + 30% مجلس)، فسقطا كلاهما، ولا يبقى ما يُستخرج منه تقييمُ قلّةٍ قيّموه.
+ */
 function Result({ r, gender }: { r: MyResultRow; gender: MineProps["gender"] }) {
   const f = frac(r.final_num, r.final_den);
-  const parts = (["members", "council"] as const).map((p) => {
-    const pf = p === "members" ? frac(r.members_num, r.members_den) : frac(r.council_num, r.council_den);
-    const n = (p === "members" ? r.members_ballots : r.council_ballots) ?? 0;
-    return {
-      icon: p === "members" ? <UsersThree /> : <Scales />, label: partName(p, r.role_name), ltr: true,
-      value: pf ? `${percentText(pf)}%` : "—", of: { now: pctOf(pf), max: 100, word: pf ? "" : hiddenWhy(p, n, r) },
-    };
-  });
   return (
     <AdSection icon={<Gauge />} title={title(r, gender)} sub={`${seatLine(r.role_name, r.unit_name, gender)}، ${cycleName(r.due_on)}`}
       media={
@@ -57,7 +53,6 @@ function Result({ r, gender }: { r: MyResultRow; gender: MineProps["gender"] }) 
               of: { now: pctOf(f), max: 100, word: verdictWord(r.verdict, gender), mark: { at: 40, label: <>حدّ الاستبعاد {P(40)}</> } },
             }]} />
           </div>
-          <AdFigureRow figures={parts} />
         </div>
       } />
   );
@@ -68,12 +63,14 @@ function Result({ r, gender }: { r: MyResultRow; gender: MineProps["gender"] }) 
  * فراغُ القسم المعتمد (`AdEmpty` في جسمه، كقسم «الملفّ الانتخابي» بلا ملف) لا قسمٌ يختفي.
  */
 function Voices({ keep, change }: { keep: string[]; change: string[] }) {
-  const said = (n: number) => `قاله ${n === 1 ? "عضوٌ واحد" : n === 2 ? "عضوان" : `${n} أعضاء`}، بلا أسماء`;
+  // من الأعضاء والمجلس معًا منذ ٢٠٢٦-١١-٢٢ (م٧/3)، مخلوطين بلا أسماء: فالمعدودُ «مقيِّم» لا «عضو»
+  // بلا «بلا أسماء» (محمد ٢٠٢٦-١١-٢٣): العددُ وحده
+  const said = (n: number) => `قاله ${n === 1 ? "مقيِّمٌ واحد" : n === 2 ? "مقيِّمان" : n <= 10 ? `${n} مقيِّمين` : `${n} مقيِّمًا`}`;
   // **ولم يكتب أحدٌ في أيٍّ منهما:** قسمٌ واحدٌ بفراغه، لا فراغان كبيران متتاليان يقولان الشيءَ نفسَه
   if (!keep.length && !change.length) {
     return (
-      <AdSection icon={<ChatCircleText />} title="ما قاله أعضاؤك"
-        media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب أحدٌ شيئًا" desc="السؤالان اختياريّان للأعضاء، ولم يُجب عنهما أحدٌ في تقييم هذا الشهر." />} />
+      <AdSection icon={<ChatCircleText />} title="ما قاله مقيِّموك"
+        media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب أحدٌ شيئًا" desc="السؤالان اختياريّان، ولم يُجب عنهما أحدٌ في تقييم هذا الشهر." />} />
     );
   }
   return (
@@ -85,7 +82,7 @@ function Voices({ keep, change }: { keep: string[]; change: string[] }) {
           </AdSection>
         ) : (
           <AdSection key={c.k} icon={c.icon} title={c.t}
-            media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب فيه أحد" desc="السؤالُ اختياريّ، وكتب أعضاؤك في السؤال الآخر وحده." />} />
+            media={<AdEmpty icon={<ChatCircleText />} title="لم يكتب فيه أحد" desc="السؤالُ اختياريّ، وكتب مقيِّموك في السؤال الآخر وحده." />} />
         ),
       )}
     </>

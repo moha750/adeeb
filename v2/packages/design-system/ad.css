@@ -5624,6 +5624,9 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 .ad-evd-raters .ad-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ad-evd-raters .ad-line { border-block-start: 1px solid var(--ad-rule); }
 .ad-evd-raters .ad-line:nth-child(-n + 2) { border-block-start: 0; }
+/* الكشف (٢٠٢٦-١١-٢٣): السطرُ يحمل زرَّ «تقييمه» فيضيق في العمودين ويُكسَر الاسم، فالقائمةُ عمودٌ واحد */
+.ad-evd-raters[data-seen] .ad-lines { grid-template-columns: minmax(0, 1fr); }
+.ad-evd-raters[data-seen] .ad-line:nth-child(2) { border-block-start: 1px solid var(--ad-rule); }
 @media (max-width: 40rem) {
   .ad-evd-raters .ad-lines { grid-template-columns: minmax(0, 1fr); }
   .ad-evd-raters .ad-line:nth-child(2) { border-block-start: 1px solid var(--ad-rule); }
