@@ -29,7 +29,8 @@ export default async function EvaluationRoomPage({ searchParams }: { searchParam
   const canManage = viewer?.canManage ?? false;
   const canViewResults = viewer?.canViewResults ?? false;
   const [targets, departments, committees, people] = await Promise.all([
-    pick ? getTargets(pick.id, canViewResults) : Promise.resolve({ data: [], error: null }),
+    // من يرى من قيّم ولا يرى تقييماتهم (قائدا الموارد والضمان) تُنزع عنه الشقوقُ القليلة (الكشف، ٢٠٢٦-١١-٢٣)
+    pick ? getTargets(pick.id, canViewResults, !!viewer?.seesParticipation && !viewer.seesBallots) : Promise.resolve({ data: [], error: null }),
     getDepartments(),
     canManage ? getReturnCommittees() : Promise.resolve({ data: [], error: null }),
     canManage ? getCorrectionPeople() : Promise.resolve([]),

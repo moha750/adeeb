@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Buildings, CalendarCheck, CalendarX, ChartBar, Compass, Gavel, LockKey, Scales, StarHalf, UserCircle, UsersThree, UserSwitch } from "@phosphor-icons/react";
 import { DuotoneZone, Info, Star } from "@/app/_components/glyphs";
-import { fmtDayMonth } from "@/lib/dates";
+import { clubDayKey, fmtDayMonth } from "@/lib/dates";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 import { percentText } from "@/lib/evaluation/score";
 import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
@@ -105,7 +105,8 @@ export function EvaluationRoom(props: RoomProps) {
   const badgeOf = (t: TargetRow) => {
     if (t.excluded) return <AdBadge icon={<CalendarX />}>خارج تقييم هذا الشهر</AdBadge>;
     if (!results || !t.verdict) return null;
-    return t.awaiting_return
+    // «ينتظر لجنة» لمن يختارها وحده (الرئيسان وقائد الموارد)؛ وقائدةُ الجودة لا تحكم فيها، فترى الحكمَ وحده (محمد ٢٠٢٦-١١-٢٣)
+    return t.awaiting_return && canManage
       ? <AdBadge tone="warn" icon={<UserSwitch />}>ينتظر لجنة</AdBadge>
       : <AdBadge tone={VERDICT_TONE[t.verdict]}>{verdictWord(t.verdict, t.gender)}</AdBadge>;
   };
@@ -143,7 +144,10 @@ export function EvaluationRoom(props: RoomProps) {
     ];
 
   // ── الدورة: مراحلُها سطورًا، وأرقامُها جملةً، والدوراتُ مبدّلٌ إن تعدّدت ──
-  const at = { scheduled: -1, open: 1, closed: 2, executed: 3 }[cycle.status];
+  // المفتوحةُ «الآن» على الفتح حتى يأتي آخرُ يوم، فعليه: كانت على «آخر يوم» من أوّل يوم، فقُرئت «اليوم 25» (مراجعةُ المحاكي ٢٠٢٦-١١-٢٢)
+  const today = clubDayKey(new Date().toISOString());
+  const at = cycle.status === "open" ? (today >= addDays(cycle.due_on, LAST_DAY_OFFSET) ? 1 : 0)
+    : { scheduled: -1, closed: 2, executed: 3 }[cycle.status];
   const steps = [
     { key: "open", label: "الفتح", date: cycle.due_on, icon: <CalendarCheck /> },
     { key: "last", label: "آخر يوم", date: addDays(cycle.due_on, LAST_DAY_OFFSET), icon: <LockKey /> },
@@ -156,7 +160,7 @@ export function EvaluationRoom(props: RoomProps) {
     arCount(cycle.raters, AR_RATER),
     arCount(cycle.ballots, AR_SHEET),
     cycle.status === "executed" && canViewResults
-      ? (cycle.removed ? `${cycle.removed} مستبعَد` : "لا مستبعَد")
+      ? (cycle.removed ? arCount(cycle.removed, ["مستبعَدٌ واحد", "مستبعَدان", "مستبعَدين", "مستبعَدًا"]) : "لا مستبعَد")
       : excludedN ? `${excludedN} خارج تقييم الشهر` : null,
   ].filter(Boolean).join("، ") || undefined;
   const sorted = [...cycles].sort((a, b) => a.due_on.localeCompare(b.due_on));

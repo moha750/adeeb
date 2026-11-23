@@ -12,7 +12,8 @@
  */
 import { useState, type ReactNode } from "react";
 import { Alert, Button, Modal, Select, Textarea } from "@adeeb/design-system";
-import { ArrowsClockwise, DuotoneZone, Star } from "@/app/_components/glyphs";
+import { ArrowRight, ArrowsClockwise, DuotoneZone, Eye, Star } from "@/app/_components/glyphs";
+import { BallotList } from "./RateRoom";
 import { Briefcase, Compass, Crown, SealCheck, Gauge, NotePencil, Scales, StarHalf, UserCircle, UserMinus, UserPlus, UserSwitch, UsersThree, Wrench } from "@phosphor-icons/react";
 import { rankFor } from "@/lib/positionLabel";
 import { percentText, type Fraction } from "@/lib/evaluation/score";
@@ -21,7 +22,7 @@ import type { ElectorRow, TargetRow } from "@/app/dashboard/evaluation/data";
 import type { EvaluationResult } from "@/app/dashboard/evaluation/actions";
 import { partName, verdictWord, type Part } from "@/app/dashboard/evaluation/vocab";
 import { frac, quorumLine, seatLine, type DetailActions } from "@/app/dashboard/evaluation/shared";
-import { AdFigureRow, AdNote, AdSwitch } from "../primitives";
+import { AdButton, AdFigureRow, AdNote, AdSwitch } from "../primitives";
 import { AdLine, AdSection } from "../account";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 
@@ -100,7 +101,9 @@ function ResultCard({ t }: { t: TargetRow }) {
           </div>
           <AdFigureRow figures={(["members", "council"] as const).map((p) => {
             const pf = part(p);
-            return { icon: p === "members" ? <UsersThree /> : <Scales />, label: partName(p, t.role_name), ltr: true, value: pf ? `${percentText(pf)}%` : "—", of: { now: fracPct(pf), max: 100, word: pf ? "" : "لا يُحتسب" } };
+            // الكشف: إن قيّم في شقٍّ واحدٌ أو اثنان أُخفي الشقّان عن قائدَي الموارد والضمان، فلا يُقرأ «لا يُحتسب» وهو محتسَب
+            const hid = t.hidden?.[p];
+            return { icon: p === "members" ? <UsersThree /> : <Scales />, label: partName(p, t.role_name), ltr: true, value: pf ? `${percentText(pf)}%` : "—", of: { now: fracPct(pf), max: 100, word: pf ? "" : hid ? "مخفيّ" : "لا يُحتسب" } };
           })} />
         </div>
       } />
@@ -124,26 +127,56 @@ function ParticipationCard({ t, closed }: { t: TargetRow; closed: boolean }) {
 }
 
 function RatersCards({ electorate, t }: { electorate: ElectorRow[] | null; t: TargetRow }) {
+  // الكشف (محمد ٢٠٢٦-١١-٢٢): الرئيسان يفتحان تقييمَ من قيّم في مكانه، لا نافذةً فوق النافذة
+  const [seeing, setSeeing] = useState<ElectorRow | null>(null);
   if (electorate === null) return <AdSection icon={<UsersThree />} title="المقيِّمون" sub="يُجلبون…" />;
+  if (seeing?.ballot) {
+    return (
+      <DuotoneZone>
+        <div className="ad-evd-raters" data-seen>
+          <AdSection icon={<Eye />} title={`تقييم ${seeing.full_name ?? "حسابٍ محذوف"}`}
+            sub={seeing.seat_title ? rankFor(seeing.seat_title, seeing.gender) : undefined}
+            media={<BallotList part={seeing.part} ballot={seeing.ballot} />}
+            foot={<AdButton variant="line" size="sm" icon={<ArrowRight />} onClick={() => setSeeing(null)}>كل المقيِّمين</AdButton>} />
+        </div>
+      </DuotoneZone>
+    );
+  }
   const groups = [
     { key: "members", title: partName("members", t.role_name), icon: <UsersThree />, list: electorate.filter((e) => e.part === "members") },
-    { key: "council", title: "المجلس الإداري", icon: <Scales />, list: electorate.filter((e) => e.part === "council" && !e.supervisor) },
+    { key: "council", title: "المجلس الإداري", icon: <Scales />, list: electorate.filter((e) => e.part === "council" && !e.supervisor && !e.executive) },
     { key: "sup", title: "المشرفون على اللجنة", icon: <UserCircle />, list: electorate.filter((e) => e.part === "council" && e.supervisor) },
-  ].filter((g) => g.key !== "sup" || g.list.length > 0);
+    // م٤ المعدّلة (محمد ٢٠٢٦-١١-٢٢): في شقّ المجلس وليسوا من المجلس الإداريّ، فيُجمعون تحت اسمهم كالمشرفين
+    { key: "exec", title: "إداريو الإدارة التنفيذية", icon: <Briefcase />, list: electorate.filter((e) => e.part === "council" && e.executive && !e.supervisor) },
+  ].filter((g) => (g.key !== "sup" && g.key !== "exec") || g.list.length > 0);
+  // الكشف: «قيّم» و«لم يقيّم» تصل حين يحقّ للناظر أن يراها، فيُعدّ من قيّم في كلّ قسم
+  const seesRated = electorate.some((e) => e.rated !== undefined && e.rated !== null);
   // **منطقةُ duotone**: النجمةُ هنا رتبةٌ لا «مميّز» (استثناءُ `glyphs.tsx`)، فكانت بوزن الاستثناء الرفيع بين رموزٍ مصمتة (محمد ٢٠٢٦-١١-٢٠:
   // «أحجامها والحدّ فيها يختلف»)
   return (
     <DuotoneZone>
       {groups.map((g) => {
-        const n = g.list.filter((e) => !e.removed).length;
+        const live = g.list.filter((e) => !e.removed);
+        const n = live.length;
+        const done = live.filter((e) => e.rated).length;
+        const sub = !n ? "لا أحد" : seesRated ? `قيّم ${done} من ${n}` : arCount(n, AR_RATER);
         return (
-          <div key={g.key} className="ad-evd-raters">
-            <AdSection icon={g.icon} title={g.title} sub={n ? arCount(n, AR_RATER) : "لا أحد"}>
-              {g.list.length ? g.list.map((e) => (
-                <AdLine key={e.rater_id ?? e.full_name} icon={seatIcon(e.seat_title)} v={e.full_name ?? "حسابٌ محذوف"}
-                  sub={e.removed ? "أُخرج بالتصحيح" : e.added_by_correction ? "أُضيف بالتصحيح" : e.seat_title ? rankFor(e.seat_title, e.gender) : undefined}
-                  tone={e.removed ? "muted" : e.added_by_correction ? "ok" : undefined} toneAt="sub" />
-              )) : null}
+          <div key={g.key} className="ad-evd-raters" data-seen={seesRated || undefined}>
+            <AdSection icon={g.icon} title={g.title} sub={sub}>
+              {g.list.length ? g.list.map((e) => {
+                const seat = e.seat_title ? rankFor(e.seat_title, e.gender) : undefined;
+                const said = e.removed ? "أُخرج بالتصحيح" : e.added_by_correction ? "أُضيف بالتصحيح" : seat;
+                const status = e.removed || e.rated === undefined || e.rated === null ? undefined : e.rated ? (e.gender === "female" ? "قيّمت" : "قيّم") : (e.gender === "female" ? "لم تقيّم" : "لم يقيّم");
+                return (
+                  // مع الكشف: المنصبُ فوق الاسم، والحالُ تحته بلونها (قيّم بلون التمام، ولم يقيّم خافتة)، فيُقرأ السطرُ «من، وهل قيّم»
+                  <AdLine key={e.rater_id ?? e.full_name} icon={seatIcon(e.seat_title)} v={e.full_name ?? "حسابٌ محذوف"}
+                    k={status ? seat : undefined} sub={status ?? said}
+                    tone={e.removed ? "muted" : e.added_by_correction ? "ok" : status ? (e.rated ? "ok" : "muted") : undefined} toneAt="sub"
+                    onClick={e.ballot ? () => setSeeing(e) : undefined}
+                    // أخضرُ كـ«عرض تقييمي» في «قيّم القيادات» (محمد ٢٠٢٦-١١-٢٣): العينُ على تقييمٍ اكتمل حالٌ منتهية، والأزرقُ لفعلٍ لم يتمّ
+                    act={e.ballot ? { icon: <Eye />, text: e.gender === "female" ? "تقييمها" : "تقييمه", label: e.gender === "female" ? "عرض تقييمها" : "عرض تقييمه", tone: "ok" } : undefined} />
+                );
+              }) : null}
             </AdSection>
           </div>
         );

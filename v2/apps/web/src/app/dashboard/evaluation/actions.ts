@@ -58,8 +58,9 @@ export async function submitSheet(input: {
   ) {
     return { ok: false, message: "قيّم كلَّ البنود من 1 إلى 5." };
   }
-  const keep = input.part === "members" ? input.keep?.trim() || null : null;
-  const change = input.part === "members" ? input.change?.trim() || null : null;
+  // السؤالُ المفتوح للشقّين (م٦/4 وم٧/3 المعدّلة، محمد ٢٠٢٦-١١-٢٢)
+  const keep = input.keep?.trim() || null;
+  const change = input.change?.trim() || null;
   if ((keep?.length ?? 0) > OPEN_MAX || (change?.length ?? 0) > OPEN_MAX) {
     return { ok: false, message: "الإجابةُ أطولُ من ألف حرف." };
   }
@@ -179,5 +180,5 @@ export async function chooseReturn(targetId: number, committeeId: number): Promi
 export async function loadElectorate(targetId: number): Promise<ElectorRow[]> {
   const viewer = await getEvaluationViewer();
   if (!viewer) return [];
-  return (await getElectorate(targetId)).data;
+  return (await getElectorate(targetId, { participation: viewer.seesParticipation, ballots: viewer.seesBallots })).data;
 }

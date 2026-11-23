@@ -68,18 +68,36 @@ export type TargetRow = {
   returned_to: number | null;
   awaiting_return: boolean;
   restored_at: string | null;
+  /**
+   * **ما يُخفى من الأرقام عن قائدَي الموارد والضمان** (الكشف، محمد ٢٠٢٦-١١-٢٣): هما يريان من قيّم،
+   * فشقٌّ قيّم فيه واحدٌ أو اثنان يكشف رقمُه تقييمَ صاحبه. فيُخفى الشقّان كلاهما، وتبقى النهائيّةُ والحكم (محمد ٢٠٢٦-١١-٢٣).
+   */
+  hidden?: { members?: boolean; council?: boolean };
 };
 
 /**
  * مقيَّمو دورة. **النتائجُ تُنزع لمن لا يملك `view_leader_evaluation_results`** (أحكامٌ عامّة: «يطّلع على
  * النتائج التفصيليّة الرئيسان وقائدا الإدارتين»)، فلا تبلغ متصفّحَه أصلًا.
  */
-export async function getTargets(cycleId: number, withResults: boolean): Promise<Read<TargetRow[]>> {
+export async function getTargets(cycleId: number, withResults: boolean, hideFew = false): Promise<Read<TargetRow[]>> {
   const svc = evaluationService();
   if (!svc) return fail([], "إعداد الخادم ناقص (مفتاح الخدمة).");
   const { data, error } = await svc.rpc("evaluation_admin_targets", { p_cycle: cycleId });
   if (error) return fail([], "تعذّرت قراءة المقيَّمين.");
   const rows = (data ?? []) as TargetRow[];
+  // **قائدا الموارد والضمان** يريان من قيّم ولا يريان ماذا أعطى (الكشف، ٢٠٢٦-١١-٢٣): شقٌّ قيّم فيه واحدٌ أو اثنان يكشف رقمُه
+  // تقييمَهما، فيُنزع الشقّان كلاهما (من النهائيّة والشقّ الظاهر يُحسب المخفيّ)، وتبقى النهائيّةُ والحكم (محمد: «لا داعي لإخفاء النتيجة»)
+  const few = (n: number) => n >= 1 && n <= 2;
+  if (withResults && hideFew) {
+    return {
+      data: rows.map((r) =>
+        r.verdict !== null && (few(r.members_ballots) || few(r.council_ballots))
+          ? { ...r, members_num: null, members_den: null, council_num: null, council_den: null, hidden: { members: true, council: true } }
+          : r,
+      ),
+      error: null,
+    };
+  }
   if (withResults) return { data: rows, error: null };
   return {
     data: rows.map((r) => ({
@@ -106,18 +124,44 @@ export type ElectorRow = {
   added_by_correction: boolean;
   removed: boolean;
   supervisor?: boolean;
+  /** في شقّ المجلس لأنّه إداريٌّ في الإدارة التنفيذيّة (م٤ المعدّلة، محمد ٢٠٢٦-١١-٢٢)، فيُجمع تحت اسم إدارته. */
+  executive?: boolean;
   /** منصبُه الحاضر بمسمّى المنصّة (`position_title_of`)، يُؤنَّث بجنسه في الواجهة (`rankFor`). */
   seat_title?: string | null;
   gender?: "male" | "female" | null;
+  /** **الكشف** (محمد ٢٠٢٦-١١-٢٣): هل قيّم؟ لصاحب `view_leader_evaluation_participation`. */
+  rated?: boolean | null;
+  /** **الكشف**: تقييمُه كما أرسله، لصاحب `view_leader_evaluation_ballots` (الرئيسان). */
+  ballot?: { scores: number[]; keep: string | null; change: string | null } | null;
 };
 
-/** مقيِّمو مقيَّمٍ واحد لباب التصحيح: أسماؤهم وشقُّهم، ولا شيءَ عن مشاركتهم. */
-export async function getElectorate(targetId: number): Promise<Read<ElectorRow[]>> {
+/**
+ * مقيِّمو مقيَّمٍ واحد: أسماؤهم وشقُّهم، ومعها **بقدر قدرة الناظر** (الكشف، محمد ٢٠٢٦-١١-٢٣): «قيّم أو لم يقيّم» لصاحب
+ * `seesParticipation`، وتقييمُه كلُّه لصاحب `seesBallots`. وما لا يحقّ للناظر لا يُجلب أصلًا، فلا يبلغ متصفّحَه.
+ */
+export async function getElectorate(targetId: number, sees: { participation: boolean; ballots: boolean }): Promise<Read<ElectorRow[]>> {
   const svc = evaluationService();
   if (!svc) return fail([], "إعداد الخادم ناقص (مفتاح الخدمة).");
-  const { data, error } = await svc.rpc("evaluation_admin_electorate", { p_target: targetId });
-  if (error) return fail([], "تعذّرت قراءة المقيِّمين.");
-  return { data: (data ?? []) as ElectorRow[], error: null };
+  const [el, bs] = await Promise.all([
+    svc.rpc("evaluation_admin_electorate", { p_target: targetId }),
+    sees.participation ? svc.rpc("evaluation_admin_ballots", { p_target: targetId }) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (el.error || bs.error) return fail([], "تعذّرت قراءة المقيِّمين.");
+  const rows = (el.data ?? []) as ElectorRow[];
+  if (!sees.participation) return { data: rows, error: null };
+  type B = { rater_id: string; scores: number[]; keep_text: string | null; change_text: string | null };
+  const by = new Map(((bs.data ?? []) as B[]).map((b) => [b.rater_id, b]));
+  return {
+    data: rows.map((r) => {
+      const b = r.rater_id ? by.get(r.rater_id) : undefined;
+      return {
+        ...r,
+        rated: !!b,
+        ...(sees.ballots && b ? { ballot: { scores: b.scores, keep: b.keep_text, change: b.change_text } } : {}),
+      };
+    }),
+    error: null,
+  };
 }
 
 export type LogRow = { at: string; event: string; target_id: number | null; actor_name: string | null; reason: string | null; details: Record<string, unknown> };
@@ -182,13 +226,9 @@ export type MyResultRow = {
   branch: Branch | null;
   final_num: number | null;
   final_den: number | null;
-  /** يُخفى الشقُّ إن كانت فيه أقلُّ من ثلاث أوراق (قرار محمد، المسألة ٣): لا يُكشف تقييمُ صاحب الورقة. */
-  members_num: number | null;
-  members_den: number | null;
+  /** النهائيّةُ وحدها بلا الشقّين (محمد ٢٠٢٦-١١-٢٣؛ `20261123135950_evaluation_disclosure`): الشقّان معها كانا يكشفان المخفيَّ بالحساب. */
   members_ballots: number | null;
   members_eligible: number | null;
-  council_num: number | null;
-  council_den: number | null;
   council_ballots: number | null;
   comments: number;
   removed_at: string | null;

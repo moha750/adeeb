@@ -2,7 +2,7 @@
 
 /**
  * **قيّم القيادات على الهويّة الجديدة** (٢٠٢٦-١١-٢٠، مسوّدةٌ للعرض) — السلوكُ سلوكُ `dashboard/evaluation/_views/RateA.tsx` حرفًا: ورقةٌ لكلّ
- * مقيَّم ببنود شقّه (م٦/2 أو م٧/2) على المقياس الخماسيّ (م٦/1، بلا «لم أتعامل معه»)، والسؤالان المفتوحان لشقّ الأعضاء وحده، ولا يُرسل
+ * مقيَّم ببنود شقّه (م٦/2 أو م٧/2) على المقياس الخماسيّ (م٦/1، بلا «لم أتعامل معه»)، والسؤالان المفتوحان للشقّين (للأعضاء وحدهم حتى ٢٠٢٦-١١-٢٢)، ولا يُرسل
  * ناقص، والمسوّدةُ على الجهاز بمعرّف المقيِّم والمقيَّم (`useDraft`)، وبعد الإرسال تُطوى الورقةُ وتُفتح التي تليها.
  *
  * والشكلُ من قطع الهويّة لا من «مسار» القديم (اعتمده محمد ٢٠٢٦-١١-٢٠، «باء» من شكلين): لوحُ الغرفة، وقسمُ الدورة رأسَها، والمقيَّمون
@@ -107,14 +107,13 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
           );
         })}
       </ol>
-      {sheet.part === "members" ? (
-        <div className="ad-rate-open" ref={setRef(items.length)}>
-          <Textarea label={OPEN_QUESTION.keep} icon={<ChatCircleText />} innerIcon={<NotePencil />} optional rows={3} count={{ max: OPEN_MAX }} placeholder="اكتب ما تريد أن يستمر"
-            value={cur.keep} onChange={(e) => setTyped({ ...cur, keep: e.target.value })} />
-          <Textarea label={OPEN_QUESTION.change} icon={<ChatCircleText />} innerIcon={<NotePencil />} optional rows={3} count={{ max: OPEN_MAX }} placeholder="اكتب ما يحتاج إلى تغيير"
-            value={cur.change} onChange={(e) => setTyped({ ...cur, change: e.target.value })} />
-        </div>
-      ) : null}
+      {/* السؤالُ المفتوح للشقّين (م٦/4 وم٧/3 المعدّلة، محمد ٢٠٢٦-١١-٢٢) */}
+      <div className="ad-rate-open" ref={setRef(items.length)}>
+        <Textarea label={OPEN_QUESTION.keep} icon={<ChatCircleText />} innerIcon={<NotePencil />} optional rows={3} count={{ max: OPEN_MAX }} placeholder="اكتب ما تريد أن يستمر"
+          value={cur.keep} onChange={(e) => setTyped({ ...cur, keep: e.target.value })} />
+        <Textarea label={OPEN_QUESTION.change} icon={<ChatCircleText />} innerIcon={<NotePencil />} optional rows={3} count={{ max: OPEN_MAX }} placeholder="اكتب ما يحتاج إلى تغيير"
+          value={cur.change} onChange={(e) => setTyped({ ...cur, change: e.target.value })} />
+      </div>
     </>
   );
 }
@@ -155,6 +154,30 @@ function WindowSheet({ sheet, onSubmit, onSent, onClose, draftKey }: { sheet: Sh
 }
 
 /**
+ * **التقييمُ كما أُرسل، قراءةً**: البنودُ بدرجاتها ثمّ الإجابتان. يقرؤه صاحبُه في «عرض تقييمي»، والرئيسان في نافذة التفصيل
+ * (الكشف، محمد ٢٠٢٦-١١-٢٢) — شكلٌ واحدٌ للتقييم المقروء أينما ظهر.
+ */
+export function BallotList({ part, ballot: b }: { part: SheetRow["part"]; ballot: MyBallot }) {
+  const items = itemsFor(part);
+  return (
+    <ol className="ad-rate-vs">
+      {items.map((it, i) => {
+        const v = b.scores[i] as 1 | 2 | 3 | 4 | 5;
+        return (
+          <li key={it.key} className="ad-rate-v">
+            <span className="ad-rate-qt"><b>{it.label}</b><span>{it.hint}</span></span>
+            {/* الكلمةُ وحدها تحت الدرجات: الرقمُ يكرّر ما يقوله عددُ الممتلئ (محمد ٢٠٢٦-١١-٢٠)، ويبقى لقارئ الشاشة في وسمها */}
+            <AdStepsBar steps={{ now: v, max: 5, label: SCALE_LABELS[v] }} />
+          </li>
+        );
+      })}
+      <SayItem q={OPEN_QUESTION.keep} a={b.keep} icon={<ThumbsUp />} />
+      <SayItem q={OPEN_QUESTION.change} a={b.change} icon={<Lightbulb />} />
+    </ol>
+  );
+}
+
+/**
  * **«عرض تقييمي»** (محمد ٢٠٢٦-١١-٢٠): ورقتُك كما أرسلتَها **تُقرأ لا تُلمس**. رُدّ شكلان قبله: الإيصالُ سطورًا («قبيحٌ جدًّا»)، والورقةُ نفسُها
  * مقفلة («مضلّل: لماذا الزرُّ لا يعمل؟ لماذا لا أستطيع الكتابة؟»). فلا مقياسَ بأزرار ولا حقلَ ببئر، والتنبيهُ يقول إنّ التقييمَ لا يُعدَّل.
  * ورُدّ بعدهما «الشريط» و«الشارة» («ضعيفة بصريًّا… غير جميلة»)، والتنبيهُ فوقها (العنوانُ «تقييمك لريم» يكفي عنه)، و«الكعب».
@@ -171,7 +194,6 @@ function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: numbe
     void loader.current(sheet.target_id).then((x) => { if (live) setB(x); });
     return () => { live = false; };
   }, [sheet.target_id]);
-  const items = itemsFor(sheet.part);
   return (
     <Modal open onClose={onClose} size="md" className="ad-rate-win ad-rate-view" title={`تقييمك لـ${sheet.full_name}`}
       description={seatLine(sheet.role_name, sheet.unit_name, sheet.gender)}
@@ -179,26 +201,7 @@ function ViewSheet({ sheet, load, onClose }: { sheet: SheetRow; load: (id: numbe
       {b === undefined ? <AdNote tone="info" title="يُجلب تقييمك…" />
         : b === null ? <AdNote tone="warn" title="لا يُعرض تقييمك الآن">إن كنت تعاين حساب غيرك فالتقييمات لا تُعرض في المعاينة.</AdNote>
         : (
-          <>
-            <ol className="ad-rate-vs">
-              {items.map((it, i) => {
-                const v = b.scores[i] as 1 | 2 | 3 | 4 | 5;
-                return (
-                  <li key={it.key} className="ad-rate-v">
-                    <span className="ad-rate-qt"><b>{it.label}</b><span>{it.hint}</span></span>
-                    {/* الكلمةُ وحدها تحت الدرجات: الرقمُ يكرّر ما يقوله عددُ الممتلئ (محمد ٢٠٢٦-١١-٢٠)، ويبقى لقارئ الشاشة في وسمها */}
-                    <AdStepsBar steps={{ now: v, max: 5, label: SCALE_LABELS[v] }} />
-                  </li>
-                );
-              })}
-              {sheet.part === "members" ? (
-                <>
-                  <SayItem q={OPEN_QUESTION.keep} a={b.keep} icon={<ThumbsUp />} />
-                  <SayItem q={OPEN_QUESTION.change} a={b.change} icon={<Lightbulb />} />
-                </>
-              ) : null}
-            </ol>
-          </>
+          <BallotList part={sheet.part} ballot={b} />
         )}
     </Modal>
   );
