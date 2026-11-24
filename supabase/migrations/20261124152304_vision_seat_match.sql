@@ -1,7 +1,8 @@
--- حسابٌ باسمٍ قريب من مقعدٍ مكتوب في فريق رؤية (محمد ٢٠٢٦-١١-٢٣): حين يسجّل عضوٌ (أو يتغيّر اسمه) ويقرب اسمُه — الأوّلُ والعائلة
--- بعد توحيد الإملاء — من اسمٍ مكتوبٍ بلا حساب في فريق رؤيةٍ سارية أو قيد الكتابة، يُشعَر من يُعدّ الرؤى ليتأكّد ويربط بنقرة.
--- اقتراحٌ لا ربط: لا يتغيّر المقعد هنا. ونظيرُ المفتاح في الكود `lib/vision/seatMatch.ts` — يتغيّران معًا.
--- يُطبَّق مع الرفع: الموقعُ المنشور لا يعرف نوع الإشعار `vision.seat_match` قبله.
+-- حسابٌ باسمٍ قريب من مقعدٍ مكتوب في فريق رؤية (محمد ٢٠٢٦-١١-٢٣): حين يسجّل عضوٌ (أو يتغيّر اسمه) ويقرب اسمُه (الأوّلُ والعائلة
+-- بعد توحيد الإملاء) من اسمٍ مكتوبٍ بلا حساب في فريق رؤيةٍ سارية أو قيد الكتابة، يُشعَر من يُعدّ الرؤى ممّن يرى تلك الرؤية ليتأكّد ويربط بنقرة.
+-- اقتراحٌ لا ربط: لا يتغيّر المقعد هنا. ونظيرُ المفتاح في الكود `lib/vision/seatMatch.ts`، يتغيّران معًا.
+-- طُبّق بعد دمج #25 (٢٠٢٦-١١-٢٤)، حين صار الموقعُ المنشور يعرف نوع الإشعار `vision.seat_match`.
+-- والحروفُ الخفيّة (علاماتُ الاتّجاه والتطويل والتشكيل) مكتوبةٌ بأرقامها لا بأعيانها، فلا تضيع في النسخ.
 
 create or replace function public.vision_name_key(p_name text)
 returns text language plpgsql immutable set search_path to 'public', 'pg_temp' as $$
@@ -23,7 +24,6 @@ begin
   return names[1] || '|' || names[array_length(names, 1)];
 end;
 $$;
-
 create or replace function public.vision_seat_match_on_profile()
 returns trigger language plpgsql security definer set search_path to 'public', 'pg_temp' as $$
 declare k text; r record; v_to jsonb;
@@ -59,7 +59,6 @@ end;
 $$;
 revoke all on function public.vision_seat_match_on_profile() from public, anon, authenticated;
 
-drop trigger if exists profiles_vision_seat_match on public.profiles;
-create trigger profiles_vision_seat_match
+create or replace trigger profiles_vision_seat_match
   after insert or update of full_name, joined_date, account_status on public.profiles
   for each row execute function public.vision_seat_match_on_profile();
