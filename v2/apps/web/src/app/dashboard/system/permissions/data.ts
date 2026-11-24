@@ -2,7 +2,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { ROLE_ORDER } from "@/lib/roleOrder";
-import { DASHBOARD_CAPS, STANDING_CAPS } from "@/lib/capabilities";
+import { DASHBOARD_CAPS, DERIVED_CAPS } from "@/lib/capabilities";
 import { seatScope, type SeatScope } from "@/lib/preview-seat";
 import { seatName } from "@/lib/positionLabel";
 import type { PermRole, Capability } from "./vocab";
@@ -43,9 +43,9 @@ export async function getPermissionMatrix(): Promise<PermMatrix> {
 
   const [rRes, pRes, rpRes, cRes] = await Promise.all([
     sb.from("roles").select("role_name, role_name_ar, home_committee_id"),
-    // مفاتيحُ المكانة (بوّابة أدِيب) مشتقّةٌ لا تُمنح بدور، فلا تُعرَض هنا
+    // المفاتيحُ المشتقّة (المكانة، وفريقُ الرؤية) لا تُمنح بدور، فلا تُعرَض هنا
     sb.from("permissions").select("id, permission_key, permission_name_ar, category")
-      .in("permission_key", DASHBOARD_CAPS.filter((c) => !STANDING_CAPS.includes(c))),
+      .in("permission_key", DASHBOARD_CAPS.filter((c) => !DERIVED_CAPS.includes(c))),
     sb.from("role_permissions").select("role_name, permission_id"),
     sb.from("committees").select("id, committee_name_ar"),
   ]);

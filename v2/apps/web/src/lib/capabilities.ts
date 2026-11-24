@@ -126,8 +126,12 @@ export const SECTION_CAP = {
   "/dashboard/evaluation/rate": "view_own_membership",
   "/dashboard/evaluation/mine": "view_own_membership",
   // **متابعة الرؤية** (٢٠٢٦-١١-٠٣): حالُ أهداف الرؤية السارية ونصُّها وموعدُها، فتُضاء قطعتُها في هلال صفحة `/vision`.
-  // لقائد الضمان والجودة الذي يتابعها وللرئيسين (`manage_vision`، `20261103153757_visions.sql`).
-  "/dashboard/vision": "manage_vision",
+  // بابُها لفريق الرؤية نفسِه (٢٠٢٦-١١-٢٢، سقط «خطُّ المتابعة»): `work_vision` مشتقٌّ لمن له مقعدٌ في فريق الرؤية السارية
+  // وللرئيسين (`manage_vision`: يسمّيان الفريق)، وكلٌّ يرى ويفعل بقدر مقعده (`vision_access`، `20261122110810_vision_workflow.sql`).
+  "/dashboard/vision": "work_vision",
+  // **الرؤى** (٢٠٢٦-١١-٢٣): إعدادُ الرؤية القادمة وأرشيفُ الرؤى، لمن يُعدّها (`draft_vision`: إدارةُ الضمان والجودة والرئيسان).
+  // والغرفةُ تسأل مفتاحَها هي، وما وراءها في القاعدة (`vision_plan_*`).
+  "/dashboard/vision/plans": "draft_vision",
   "/dashboard/website/works": "manage_works",
   "/dashboard/website/achievements": "manage_achievements",
   "/dashboard/website/sponsors": "manage_sponsors",
@@ -202,6 +206,13 @@ export function canOpen(caps: readonly string[], href: NavHref): boolean {
  * تُربط)، ولا يُعدّ حملُها «مفتاحَ غرفة عمل» في اختيار الإطار.
  */
 export const STANDING_CAPS: readonly string[] = ["use_portal", "view_own_volunteering"];
+
+/**
+ * **المفاتيحُ المشتقّة كلُّها** — مفاتيحُ المكانة، و`work_vision` (٢٠٢٦-١١-٢٢): يُحسب من مقعد صاحبه في فريق الرؤية السارية (وللرئيسين)،
+ * فلا يُعرَض في لوحة «الصلاحيات» ولا يُربط بدور. لكنّه **مفتاحُ غرفة عمل** لا مكانة: من حمله رأى الشريطَ الجانبيّ وفيه «متابعة الرؤية»
+ * (ولو كان متطوّعًا لا عضوًا)، فلا يدخل `STANDING_CAPS`.
+ */
+export const DERIVED_CAPS: readonly string[] = [...STANDING_CAPS, "work_vision"];
 
 /**
  * **أيرى صاحبُ هذه القدرات اللوحةَ بشريطها الجانبيّ؟** — من حمل مفتاحًا واحدًا لغرفة عمل (أيَّ قدرةٍ

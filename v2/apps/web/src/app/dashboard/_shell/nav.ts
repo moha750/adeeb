@@ -93,6 +93,8 @@ export const NAV: NavGroup[] = [
     head: "الرؤية",
     items: [
       { label: "متابعة الرؤية", icon: "vision", href: "/dashboard/vision" },
+      // «الرؤى» (محمد ٢٠٢٦-١١-٢٣): إعدادُ الرؤية القادمة وأرشيفُ ما مضى، لمن يُعدّها وحده (`draft_vision`: الضمانُ والجودة والرئيسان)
+      { label: "الرؤى", icon: "visions", href: "/dashboard/vision/plans" },
     ],
   },
   {

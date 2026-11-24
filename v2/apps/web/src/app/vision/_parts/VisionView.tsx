@@ -4,18 +4,19 @@ import { ArrowLeft } from "@/app/_components/glyphs";
 import { Avatar } from "@/app/dashboard/_components/Avatar";
 import { arCount } from "@/lib/arabicCount";
 import { clubDayKey, daysBetweenKeys, fmtDateOnly } from "@/lib/dates";
-import { VISION_STORIES, type StoryCard } from "@/lib/vision/stories";
-import type { CoreTeam, TeamGroup } from "@/lib/vision/team";
+import type { CoreTeam } from "@/lib/vision/team";
 import type { PubPerson } from "@/app/structure/data";
-import { countsOf, type PublicGoal, type PublicTrack, type PublicVision } from "@/lib/vision/types";
+import { markConstruct, type VisionMarkShape } from "@/lib/vision/mark";
+import { countsOf, type PublicGoal, type PublicTrack, type PublicVision, type StoryCard } from "@/lib/vision/types";
 import { GOAL_STATUS, VISION_PATH } from "@/lib/vision/vocab";
+import { visionSpan, visionTo } from "@/lib/vision/span";
 import { VisionCountdown } from "./VisionCountdown";
 import { VisionMark } from "./VisionMark";
 import { trackIcon } from "./trackIcon";
 
 /**
  * **صفحةُ الرؤية** — تُعرّف الأعضاءَ بالرؤية وتتابعها أمامهم (اقتراحٌ أقرّه محمد ٢٠٢٦-١١-٠٣: «نفّذ مقترحك»):
- * الهلالُ حيًّا في رأسها (قطعةٌ لكلّ هدفٍ تُضاء حين يتحقّق)، ثمّ فكرةُ الشعار، فالمساراتُ بأهدافها وحالها،
+ * علامتُها حيّةً في رأسها (قطعةٌ لكلّ هدفٍ تُضاء حين يتحقّق — الهلالُ أو رسمُ رؤيتها)، ثمّ فكرةُ الشعار، فالمساراتُ بأهدافها وحالها،
  * ففريقُ الرؤية من الهيكل، فسياسةُ «رؤى أدِيب» وما مضى منها.
  *
  * مكوّنٌ خادميٌّ بلا خطّافات، وأصنافُه `.vz-*` في `ad.css` من رموز الهويّة وحدها. ولا يُعرض للناس
@@ -24,7 +25,7 @@ import { trackIcon } from "./trackIcon";
 
 const ORDINAL = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن"];
 
-export function VisionView({ v, team, now }: { v: PublicVision; team: { core: CoreTeam | null; oversight: TeamGroup[] } | null; now: number }) {
+export function VisionView({ v, team, now }: { v: PublicVision; team: { core: CoreTeam | null } | null; now: number }) {
   const counts = countsOf(v.tracks);
   const goals = v.tracks.flatMap((t) => t.goals);
   const total = goals.length;
@@ -33,20 +34,21 @@ export function VisionView({ v, team, now }: { v: PublicVision; team: { core: Co
   const on = v.tracks.map((t) => t.goals.map((g) => g.status === "done"));
   const titles = v.tracks.map((t) => t.goals.map((g) => `${g.title}، ${GOAL_STATUS[g.status].label}`));
   const hrefs = v.tracks.map((t) => t.goals.map((g) => `#goal-${g.id}`));
-  const stories = VISION_STORIES[v.slug];
+  const stories = v.stories ?? [];
+  const noun = v.mark_noun;
 
   return (
     <Container>
       <div className="vz-page">
         <Hero v={v} now={now} counts={counts} on={on} titles={titles} hrefs={hrefs} total={total} done={done} active={active} />
-        {stories ? <Ideas stories={stories} counts={counts} total={total} trackCount={v.tracks.length} /> : null}
+        {stories.length ? <Ideas stories={stories} mark={v.mark} deck={v.idea_deck} counts={counts} total={total} trackCount={v.tracks.length} /> : null}
         <section className="vz-sec" id="tracks" aria-labelledby="vz-tracks-h">
-          <LandingHeading eyebrow="المسارات" title={<span id="vz-tracks-h">المسارات والأهداف</span>} deck={`${arCount(v.tracks.length, ["مسارٌ واحد", "مساران", "مسارات", "مسارًا"])}، لكل مسار طبقة في الهلال، ولكل هدف قطعة فيها.`} />
+          <LandingHeading eyebrow="المسارات" title={<span id="vz-tracks-h">المسارات والأهداف</span>} deck={`${arCount(v.tracks.length, ["مسارٌ واحد", "مساران", "مسارات", "مسارًا"])}، لكل مسار طبقة في ${noun}، ولكل هدف قطعة فيها.`} />
           <div className="vz-tracks">
-            {v.tracks.map((t, i) => <Track key={t.position} t={t} layer={i} counts={counts} />)}
+            {v.tracks.map((t, i) => <Track key={t.position} t={t} layer={i} counts={counts} mark={v.mark} />)}
           </div>
         </section>
-        {team && (team.core || team.oversight.length) ? <Team team={team} tracks={v.tracks} /> : null}
+        {team?.core ? <Team core={team.core} tracks={v.tracks} /> : null}
         <Policy v={v} total={total} done={done} />
       </div>
     </Container>
@@ -72,15 +74,15 @@ function Hero({ v, now, counts, on, titles, hrefs, total, done, active }: {
         <div className="vz-hero-id">
           <p className="vz-eyebrow">{closed ? "رؤية منتهية من رؤى أدِيب" : "الرؤية السارية في أدِيب"}</p>
           <h1 className="vz-title" id="vz-name">{v.name}</h1>
-          <p className="vz-period">من {fmtDateOnly(v.starts_on)} حتى {v.horizon_label}</p>
+          {v.slogan ? <p className="vz-slogan">{v.slogan}</p> : null}
+          <p className="vz-period">{visionSpan(v.starts_on, v.starts_label, v.horizon_on, v.horizon_label)}</p>
           <p className="vz-lead">
-            {arCount(v.tracks.length, ["مسارٌ واحد", "مساران", "مسارات", "مسارًا"])} و{arCount(total, ["هدفٌ واحد", "هدفان", "أهداف", "هدفًا"])}، لكل هدف قطعة في الهلال لا تُضاء إلا حين يتحقق.
+            {arCount(v.tracks.length, ["مسارٌ واحد", "مساران", "مسارات", "مسارًا"])} و{arCount(total, ["هدفٌ واحد", "هدفان", "أهداف", "هدفًا"])}، لكل هدف قطعة في {v.mark_noun}{" "}لا&nbsp;تُضاء إلا حين يتحقق.
           </p>
           {closed ? null : (
             <div className="vz-countdown">
-              <p className="vz-count-l">{toStart > 0 ? "تبدأ الرؤية بعد" : `يبقى حتى ${v.horizon_label}`}</p>
+              <p className="vz-count-l">{toStart > 0 ? "تبدأ الرؤية بعد" : `يبقى حتى ${visionTo(v.horizon_on, v.horizon_label)}`}</p>
               <VisionCountdown target={`${toStart > 0 ? v.starts_on : v.horizon_on}T00:00:00+03:00`} now={now} />
-              {toStart > 0 ? null : <p className="vz-count-note">بتقويم أم القرى، وقد يتقدم يومًا أو يتأخر برؤية الهلال.</p>}
             </div>
           )}
           <dl className="vz-pace">
@@ -100,29 +102,29 @@ function Hero({ v, now, counts, on, titles, hrefs, total, done, active }: {
             </div>
           </dl>
         </div>
-        <VisionMark className="vz-hero-mark" counts={counts} on={on} titles={titles} hrefs={hrefs} label={`هلال ${v.name}: تحقّق ${done} من ${total}`} />
+        <VisionMark className="vz-hero-mark" mark={v.mark} counts={counts} on={on} titles={titles} hrefs={hrefs} label={`${markConstruct(v.mark_noun)} ${v.name}: تحقّق ${done} من ${total}`} />
       </div>
     </section>
   );
 }
 
-/** هلالُ بطاقة الفكرة: كلُّه، أو طبقةٌ وطبقة، أو قطعةٌ واحدة */
+/** علامةُ بطاقة الفكرة: كلُّها، أو طبقةٌ وطبقة، أو قطعةٌ واحدة */
 function storyOn(art: StoryCard["art"], counts: number[]): boolean[][] {
   if (art === "all") return counts.map((n) => Array(n).fill(true));
   if (art === "layers") return counts.map((n, k) => Array(n).fill(k % 2 === 0));
   return counts.map((n, k) => Array.from({ length: n }, (_, i) => k === 0 && i === Math.floor(n / 2)));
 }
 
-function Ideas({ stories, counts, total, trackCount }: { stories: StoryCard[]; counts: number[]; total: number; trackCount: number }) {
+function Ideas({ stories, mark, deck, counts, total, trackCount }: { stories: StoryCard[]; mark: VisionMarkShape; deck: string | null; counts: number[]; total: number; trackCount: number }) {
   const fill = (s: string) => s.replaceAll("{total}", String(total)).replaceAll("{tracks}", String(trackCount));
   return (
     <section className="vz-sec" id="idea" aria-labelledby="vz-idea-h">
-      <LandingHeading eyebrow="الشعار" title={<span id="vz-idea-h">فكرة الشعار</span>} deck="هلال من فسيفساء، يكتمل بما يتحقق من أهداف الرؤية." />
+      <LandingHeading eyebrow="الشعار" title={<span id="vz-idea-h">فكرة الشعار</span>} deck={deck ?? undefined} />
       <ol className="vz-ideas">
-        {stories.map((s) => (
-          <li key={s.title} className="vz-idea">
+        {stories.map((s, i) => (
+          <li key={i} className="vz-idea">
             <div className="ad-plate vz-idea-art" aria-hidden>
-              <VisionMark counts={counts} on={storyOn(s.art, counts)} />
+              <VisionMark mark={mark} counts={counts} on={storyOn(s.art, counts)} />
             </div>
             <div className="vz-idea-b">
               <h3 className="vz-idea-t">{s.title}</h3>
@@ -135,7 +137,7 @@ function Ideas({ stories, counts, total, trackCount }: { stories: StoryCard[]; c
   );
 }
 
-function Track({ t, layer, counts }: { t: PublicTrack; layer: number; counts: number[] }) {
+function Track({ t, layer, counts, mark }: { t: PublicTrack; layer: number; counts: number[]; mark: VisionMarkShape }) {
   const done = t.goals.filter((g) => g.status === "done").length;
   const n = t.goals.length;
   const on = counts.map((c, k) => (k === layer ? t.goals.map((g) => g.status === "done") : Array(c).fill(false)));
@@ -149,7 +151,7 @@ function Track({ t, layer, counts }: { t: PublicTrack; layer: number; counts: nu
   return (
     <article className="vz-track" aria-labelledby={hid}>
       <header className="vz-track-head">
-        <VisionMark className="vz-track-mark" counts={counts} on={on} focus={layer} paper />
+        <VisionMark className="vz-track-mark" mark={mark} counts={counts} on={on} focus={layer} paper />
         <div className="vz-track-id">
           <span className="vz-track-ord">
             {trackIcon(t.icon)}
@@ -231,17 +233,14 @@ function Vacant({ name, role }: { name: string; role: string }) {
 const byGender = (p: PubPerson | null, male: string, female: string) => (p?.gender === "female" ? female : male);
 
 /**
- * **فريقُ الرؤية** (معاينةٌ لمحمد ٢٠٢٦-١١-٠٣): من يعمل عليها أوّلًا — المشرفُ العامّ وقائدُ الرؤية، وقائدٌ لكلّ مسار
- * (طبقتُه من الهلال) — ثمّ **خطُّ المتابعة** بأسماء الجهات وحدها بلا أشخاص (طلبُه): الإدارةُ التنفيذيّة تنفّذ،
- * والضمانُ والجودة تتابع، والمجلسُ الإداريّ يطّلع.
+ * **فريقُ الرؤية** (معاينةٌ لمحمد ٢٠٢٦-١١-٠٣): المشرفُ العامّ وقائدُ الرؤية، وقائدٌ لكلّ مسار (طبقتُه من العلامة). وهو الذي
+ * ينفّذ ويؤكّد ما يتحقّق (٢٠٢٦-١١-٢٢)، فسقط «خطُّ المتابعة» الذي كان تحته.
  */
-function Team({ team, tracks }: { team: { core: CoreTeam | null; oversight: TeamGroup[] }; tracks: PublicTrack[] }) {
-  const { core, oversight } = team;
+function Team({ core, tracks }: { core: CoreTeam; tracks: PublicTrack[] }) {
   return (
     <section className="vz-sec" id="team" aria-labelledby="vz-team-h">
-      <LandingHeading eyebrow="الفريق" title={<span id="vz-team-h">فريق الرؤية</span>} deck="فريق يعمل على الرؤية، ومن خلفه خط يتابعها." />
-      {core ? (
-        <div className="vz-core">
+      <LandingHeading eyebrow="الفريق" title={<span id="vz-team-h">فريق الرؤية</span>} deck="فريق يعمل على الرؤية، ويؤكّد ما يتحقّق منها." />
+      <div className="vz-core">
           <div className="vz-core-heads">
             <div className="vz-crew vz-head">
               <span className="vz-crew-verb">{byGender(core.supervisor, "المشرف العام", "المشرفة العامة")}</span>
@@ -264,27 +263,13 @@ function Team({ team, tracks }: { team: { core: CoreTeam | null; oversight: Team
             })}
           </ul>
         </div>
-      ) : null}
-      {oversight.length ? (
-        <>
-          <h3 className="vz-sub">خط المتابعة</h3>
-          <ol className="vz-line">
-            {oversight.map((gr) => (
-              <li key={gr.key} className="vz-line-step">
-                <span className="vz-crew-verb">{gr.verb}</span>
-                <span className="vz-line-n">{gr.name}</span>
-              </li>
-            ))}
-          </ol>
-        </>
-      ) : null}
     </section>
   );
 }
 
 function Policy({ v, total, done }: { v: PublicVision; total: number; done: number }) {
   const rows = [
-    { slug: v.slug, name: v.name, starts_on: v.starts_on, horizon_label: v.horizon_label, status: v.status, total, done, current: true },
+    { slug: v.slug, name: v.name, starts_on: v.starts_on, starts_label: v.starts_label, horizon_label: v.horizon_label, horizon_on: v.horizon_on, status: v.status, total, done, current: true },
     ...v.archive.map((a) => ({ ...a, current: false })),
   ];
   return (
@@ -300,7 +285,7 @@ function Policy({ v, total, done }: { v: PublicVision; total: number; done: numb
               <>
                 <span className="vz-arch-tx">
                   <span className="vz-arch-n">{r.name}</span>
-                  <span className="vz-arch-p">من {fmtDateOnly(r.starts_on)} حتى {r.horizon_label}</span>
+                  <span className="vz-arch-p">{visionSpan(r.starts_on, r.starts_label, r.horizon_on, r.horizon_label)}</span>
                 </span>
                 <span className="vz-arch-c">
                   <span className="ad-badge" data-tone={r.status === "active" ? "info" : undefined}>{r.status === "active" ? "سارية" : "منتهية"}</span>

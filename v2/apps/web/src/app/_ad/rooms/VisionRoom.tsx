@@ -2,27 +2,33 @@
 
 /**
  * **غرفةُ «متابعة الرؤية»** (٢٠٢٦-١١-٠٣؛ بُنيت مع الصفحة العلنيّة حين قال محمد: «نفّذ مقترحك») — على قالب «قائمة السجلّات».
- * الإدارةُ التنفيذيّة تنفّذ، **وإدارةُ الضمان والجودة تتابع من هنا** (والرئيسان معها): تغيّر حالَ كلّ هدف — لم يبدأ، قيد العمل،
- * تحقّق — فتُضاء قطعتُه في هلال `/vision` لحظةَ الحفظ، وتسجّل موعدَه الذي يضعه المجلسُ الإداريّ، وتصحّح نصَّه.
+ * **فريقُ الرؤية ينفّذ ويؤكّد** (٢٠٢٦-١١-٢٢، سقط «خطُّ المتابعة»): قائدُ المسار يرى مسارَه ويغيّر حالَ أهدافه حتى «أُنجز» بدليله،
+ * والمشرفُ العامّ وقائدُ الرؤية يريان كلَّ شيء ويؤكّدان «تحقّق» — فتُضاء القطعةُ في هلال `/vision` — أو يُرجعان بسبب، ويصحّحان
+ * النصَّ والموعد. **ولا يؤكّد أحدٌ ما رفعه** (قيدٌ في القاعدة)، وكلُّ فعلٍ في «سجلّ الرؤية».
+ * **مساحةُ عمل الفريق وحدها** (محمد ٢٠٢٦-١١-٢٣): تسميةُ الفريق وإغلاقُ الرؤية وإعدادُ القادمة في «الرؤى» (`VisionPlanRoom`)، لا هنا.
  *
- * الأهدافُ تحت مساراتها: رأسُ المسار طبقتُه من الهلال وما تحقّق منها. والفعلُ الظاهرُ في كلّ سطرٍ خطوتُه التالية
- * («بدأ العمل» ثمّ «تحقّق»)، و«تحقّق» بتأكيدٍ لأنّه يُعلَن للأعضاء في الصفحة العلنيّة.
+ * الأهدافُ تحت مساراتها: رأسُ المسار طبقتُه من الهلال وما تحقّق منها. والفعلُ الظاهرُ في كلّ سطرٍ خطوتُه التالية لصاحب المقعد
+ * («بدأ العمل» ثمّ «أُنجز» ثمّ «تحقّق»)، و«تحقّق» بتأكيدٍ لأنّه يُعلَن للأعضاء في الصفحة العلنيّة.
  * ولا إضافةَ ولا حذفَ: عددُ الأهداف عددُ قطع الشعار المنشور (`dashboard/vision/actions.ts`).
  */
-import { useMemo, useState, useTransition } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarBlank, ClockCounterClockwise, Flag, Hash, Play, SealCheck, Target, TextAlignRight, UserCircle } from "@phosphor-icons/react";
+import { CalendarBlank, ClockCounterClockwise, Flag, Hash, NotePencil, Play, SealCheck, Target, TextAlignRight, UserCircle } from "@phosphor-icons/react";
 import { Button, Field, Modal, Textarea, matchesSearch } from "@adeeb/design-system";
-import { ArrowCounterClockwise, ArrowSquareOut, PencilSimple } from "@/app/_components/glyphs";
+import { ArrowCounterClockwise, ArrowSquareOut, ArrowUUpLeft, Checks, PencilSimple } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { VisionMark } from "@/app/vision/_parts/VisionMark";
-import type { VisionGoalRow, VisionRoomData } from "@/app/dashboard/vision/data";
-import { setGoalStatus, updateGoal, type GoalInput, type VisionResult } from "@/app/dashboard/vision/actions";
+import type { VisionGoalRow, VisionLogRow, VisionRoomData } from "@/app/dashboard/vision/data";
+import { goalAct, updateGoal, type GoalInput, type VisionResult } from "@/app/dashboard/vision/actions";
 import { arCount, arCounted, type ArForms } from "@/lib/arabicCount";
 import { clubDayKey, daysBetweenKeys, fmtDateOnly } from "@/lib/dates";
-import { GOAL_STATUS, VISION_PATH, type GoalStatus } from "@/lib/vision/vocab";
+import { GOAL_STATUS, VISION_PATH, type GoalAct } from "@/lib/vision/vocab";
 import type { RoomView } from "../view";
-import { AdActs, AdBadge, AdCard, AdConfirm, AdGroupHead, AdRow, type AdMeta, type AdOp } from "../primitives";
+import { AdActs, AdBadge, AdCard, AdConfirm, AdGroupHead, AdRow, type AdAction, type AdMeta, type AdOp } from "../primitives";
+import { AdLog } from "../log";
+import { AR_LOG, visionLogEvent, visionLogSame } from "./visionLog";
+import { markConstruct } from "@/lib/vision/mark";
+import { visionSpan } from "@/lib/vision/span";
 import { CollectionRoom, type Position } from "../collection";
 import { VISION_ROOM } from "./vision.meta";
 
@@ -34,32 +40,35 @@ const POSITIONS: Position<VisionGoalRow>[] = [
   { key: "all", label: "الكلّ", match: () => true, empty: "لا أهداف في الرؤية." },
   { key: "pending", label: "لم يبدأ", match: (g) => g.status === "pending", empty: "كلُّ الأهداف بدأ العمل عليها." },
   { key: "active", label: "قيد العمل", match: (g) => g.status === "active", empty: "لا هدف قيد العمل الآن." },
+  { key: "reported", label: "أُنجز", match: (g) => g.status === "reported", empty: "لا هدف بانتظار التأكيد." },
   { key: "done", label: "تحقّق", match: (g) => g.status === "done", empty: "لم يتحقّق هدفٌ بعد." },
 ];
 
 const EMPTY_FORM: GoalInput = { title: "", detail: "", target: "", owner: "", baseline: "", dueOn: "" };
 
-export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomView }) {
+
+export function VisionRoom({ data, view, now }: { data: VisionRoomData; view?: RoomView; now: number }) {
   const toast = useToast();
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [confirm, setConfirm] = useState<{ g: VisionGoalRow; to: GoalStatus } | null>(null);
+  /** تأكيدُ «تحقّق» وإلغاؤه: كلاهما يُعلَن أو يُطفأ في الصفحة العلنيّة */
+  const [confirm, setConfirm] = useState<{ g: VisionGoalRow; act: "confirm" | "unconfirm" } | null>(null);
+  /** «أُنجز» بدليله، والإرجاعُ بسببه */
+  const [noting, setNoting] = useState<{ g: VisionGoalRow; act: "report" | "return" } | null>(null);
+  const [note, setNote] = useState("");
   const [editing, setEditing] = useState<VisionGoalRow | null>(null);
   const [form, setForm] = useState<GoalInput>(EMPTY_FORM);
-  const { vision, counts, goals } = data;
+  const { vision, counts, goals, access } = data;
+  /** المشرفُ العامّ وقائدُ الرؤية: يؤكّدان ويُرجعان ويصحّحان، ويرفعان «أُنجز» عن أيّ مسار */
+  const confirmer = access.supervisor || access.leader;
+  const live = vision.status === "active";
+  const noun = vision.markNoun;
+  const trackSide = (g: VisionGoalRow) => confirmer || access.tracks.includes(g.trackId);
 
-  const layerOf = useMemo(() => {
-    const order = [...new Set(goals.map((g) => g.trackPosition))].sort((a, b) => a - b);
-    return new Map(order.map((p, i) => [p, i]));
-  }, [goals]);
-  const onByLayer = useMemo(() => {
-    const out = counts.map((n) => Array<boolean>(n).fill(false));
-    for (const g of goals) {
-      const k = layerOf.get(g.trackPosition) ?? 0;
-      out[k][g.position - 1] = g.status === "done";
-    }
-    return out;
-  }, [counts, goals, layerOf]);
+
+  // طبقةُ المسار بترتيبه بين المسارات كلّها (لا بين ما يراه قائدُ مسارٍ وحده)، والمضاءُ من الخادم للهلال كلّه
+  const layerOf = useMemo(() => new Map(data.tracks.map((t, i) => [t.position, i])), [data.tracks]);
+  const onByLayer = data.lit;
   const tally = useMemo(() => {
     const m = new Map<number, { n: number; done: number }>();
     for (const g of goals) {
@@ -77,35 +86,60 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
       if (r.ok) { toast.success(r.message); after?.(); router.refresh(); } else toast.error(r.message);
     });
 
-  const move = (g: VisionGoalRow, to: GoalStatus) => {
-    // «تحقّق» يُعلَن للأعضاء، وإرجاعُ المتحقّق يُطفئ قطعةً رآها الناس — كلاهما بتأكيد؛ والبدءُ بلا تأكيد
-    if (to === "done" || g.status === "done") setConfirm({ g, to });
-    else run(() => setGoalStatus(g.id, to));
+  const go = (g: VisionGoalRow, a: GoalAct, n?: string, after?: () => void) =>
+    run(() => goalAct(g.id, a, n), after);
+
+  const act = (g: VisionGoalRow, a: GoalAct) => {
+    // «تحقّق» يُعلَن للأعضاء، وإلغاؤه يُطفئ قطعةً رآها الناس — كلاهما بتأكيد؛ و«أُنجز» والإرجاعُ بنافذة ملاحظتهما
+    if (a === "confirm" || a === "unconfirm") setConfirm({ g, act: a });
+    else if (a === "report" || a === "return") { setNote(""); setNoting({ g, act: a }); }
+    else go(g, a);
   };
   const openEdit = (g: VisionGoalRow) => {
     setForm({ title: g.title, detail: g.detail ?? "", target: g.target, owner: g.owner, baseline: g.baseline ?? "", dueOn: g.dueOn ?? "" });
     setEditing(g);
   };
 
-  /** الفعلُ الظاهر خطوةُ الهدف التالية، والباقي في «المزيد» */
+  /**
+   * **الفعلُ الظاهر خطوةُ الهدف التالية لصاحب المقعد**، والباقي في «المزيد». ومن لا فعلَ له في الهدف (الرئيسُ بلا مقعد) لا يرى
+   * زرًّا: الحالُ في الشارة تكفيه. و«أُنجز» المرفوعُ ينتظر: من رفعه أو قائدُ مساره يسحبه، والمؤكِّدُ يؤكّده أو يُرجعه بسبب.
+   */
   const acts = (g: VisionGoalRow, inRow?: boolean) => {
-    const edit: AdOp = { key: "edit", label: "تعديل الهدف", icon: <PencilSimple />, onClick: () => openEdit(g) };
-    if (g.status === "pending") {
-      return (
-        <AdActs inRow={inRow} primary={{ label: "بدأ العمل", icon: <Play />, onClick: () => move(g, "active") }}
-          ops={[{ key: "done", label: "تحقّق", icon: <SealCheck />, onClick: () => move(g, "done") }, edit]} />
-      );
+    // المنتهيةُ تجمّدت أهدافُها: تُقرأ ولا يُفعل فيها شيء
+    if (!live) return null;
+    const edit: AdOp[] = [{ key: "edit", label: "تعديل الهدف", icon: <PencilSimple />, onClick: () => openEdit(g) }];
+    const side = trackSide(g);
+    const mine = g.reportedById === access.userId;
+    let primary: AdAction | null = null;
+    const ops: AdOp[] = [];
+    if (g.status === "pending" && side) {
+      primary = { label: "بدأ العمل", icon: <Play />, onClick: () => act(g, "start") };
+      ops.push({ key: "report", label: "أُنجز", icon: <Checks />, onClick: () => act(g, "report") });
+    } else if (g.status === "active" && side) {
+      primary = { label: "أُنجز", icon: <Checks />, onClick: () => act(g, "report") };
+      ops.push({ key: "back", label: "إرجاع إلى «لم يبدأ»", icon: <ArrowCounterClockwise />, onClick: () => act(g, "unstart") });
+    } else if (g.status === "reported") {
+      // من رفعه لا يؤكّده، ولو كان المشرفَ العامّ (القاعدة تمنعه، والزرُّ لا يُعرض عليه)
+      if (confirmer && !mine) {
+        primary = { label: "تحقّق", icon: <SealCheck />, onClick: () => act(g, "confirm") };
+        ops.push({ key: "return", label: "إرجاع بسبب", icon: <ArrowUUpLeft />, onClick: () => act(g, "return") });
+      }
+      // السحبُ لمن رفعه أو لقائد مساره؛ والمؤكِّدُ يُرجع بسببٍ يصل صاحبَه لا يسحب بصمت (قيدٌ في القاعدة أيضًا)
+      if (mine || access.tracks.includes(g.trackId)) ops.push({ key: "withdraw", label: "سحب «أُنجز»", icon: <ArrowCounterClockwise />, onClick: () => act(g, "withdraw") });
+    } else if (g.status === "done" && confirmer) {
+      ops.push({ key: "undo", label: "إلغاء التحقّق", icon: <ArrowCounterClockwise />, onClick: () => act(g, "unconfirm") });
     }
-    if (g.status === "active") {
-      return (
-        <AdActs inRow={inRow} primary={{ label: "تحقّق", icon: <SealCheck />, onClick: () => move(g, "done") }}
-          ops={[edit, { key: "back", label: "إرجاع إلى «لم يبدأ»", icon: <ArrowCounterClockwise />, onClick: () => move(g, "pending") }]} />
-      );
+    // ومن يصحّح ولا خطوةَ له في الهدف فتعديلُه هو الظاهر، وإلّا فالتعديلُ في «المزيد»
+    const editOp = confirmer ? edit : [];
+    if (!primary && editOp.length) primary = { label: "تعديل", icon: <PencilSimple />, onClick: () => openEdit(g) };
+    else ops.push(...editOp);
+    if (!primary) {
+      // فعلٌ واحدٌ في «المزيد» وحده لا يُخبّأ: يصير هو الظاهر
+      const first = ops.shift();
+      if (!first?.onClick) return null;
+      primary = { label: first.label, icon: first.icon, onClick: first.onClick };
     }
-    return (
-      <AdActs inRow={inRow} primary={{ label: "تعديل", icon: <PencilSimple />, onClick: () => openEdit(g) }}
-        ops={[{ key: "undo", label: "إلغاء التحقّق", icon: <ArrowCounterClockwise />, onClick: () => move(g, "active") }]} />
-    );
+    return <AdActs inRow={inRow} primary={primary} ops={ops} />;
   };
 
   const today = clubDayKey(new Date().toISOString());
@@ -115,10 +149,13 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
       { icon: <Target />, text: `المستهدف: ${g.target}` },
       { icon: <UserCircle />, text: g.owner },
       g.status === "done" && g.doneAt
-        ? { icon: <SealCheck />, text: `تحقّق ${fmtDateOnly(clubDayKey(g.doneAt))}`, tone: "ok" as const }
+        ? { icon: <SealCheck />, text: `تحقّق ${fmtDateOnly(clubDayKey(g.doneAt))}${g.confirmedBy ? `، أكّده ${g.confirmedBy}` : ""}`, tone: "ok" as const }
+        : g.status === "reported"
+          ? { icon: <Checks />, text: `أُنجز${g.reportedBy ? ` برفع ${g.reportedBy}` : ""}، بانتظار التأكيد`, tone: "warn" as const }
         : g.dueOn
           ? { icon: <CalendarBlank />, text: `${late ? "فات موعده" : "الموعد"} ${fmtDateOnly(g.dueOn)}`, tone: late ? ("bad" as const) : undefined }
           : { icon: <CalendarBlank />, text: "بلا موعد بعد", tone: "muted" as const },
+      ...(g.status === "reported" && g.reportNote ? [{ icon: <NotePencil />, text: `الدليل: ${g.reportNote}`, clip: true }] : []),
       ...(g.baseline ? [{ icon: <Flag />, text: `عند البدء: ${g.baseline}`, clip: true }] : []),
       ...(g.updatedBy ? [{ icon: <ClockCounterClockwise />, text: `آخر تحديث: ${g.updatedBy}` }] : []),
     ];
@@ -137,7 +174,7 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
       return (
         <AdGroupHead
           title={`المسار ${ORDINAL[k] ?? k + 1}: ${g.trackName}`}
-          lead={<VisionMark className="vz-group-mark" counts={counts} on={onByLayer} focus={k} paper />}
+          lead={<VisionMark className="vz-group-mark" mark={vision.mark} counts={counts} on={onByLayer} focus={k} paper />}
           sub={[{ icon: <Hash />, text: arCount(t.n, NOUN) }]}
           figure={{ icon: <SealCheck />, label: "تحقّق", value: `${t.done} من ${t.n}`, of: { now: t.done, max: t.n, full: "مكتمل" } }}
         />
@@ -148,18 +185,24 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
   const total = goals.length;
   const done = goals.filter((g) => g.status === "done").length;
   const active = goals.filter((g) => g.status === "active").length;
+  const waiting = goals.filter((g) => g.status === "reported").length;
+  const seesAll = access.president || access.drafter || confirmer;
+  const litAll = onByLayer.flat().filter(Boolean).length;
+  const totalAll = counts.reduce((a, b) => a + b, 0);
+  const mineNames = data.tracks.filter((t) => access.tracks.includes(t.id)).map((t) => `مسار ${t.name}`).join(" و");
   const toEnd = daysBetweenKeys(today, vision.horizonOn);
   const notice = (
-    <section className="vz-room-note" aria-label={`هلال ${vision.name}`}>
-      <VisionMark className="vz-room-mark" counts={counts} on={onByLayer} paper label={`تحقّق ${done} من ${total}`} />
+    <section className="vz-room-note" aria-label={`${markConstruct(noun)} ${vision.name}`}>
+      <VisionMark className="vz-room-mark" mark={vision.mark} counts={counts} on={onByLayer} paper label={`تحقّق ${litAll} من ${totalAll}`} />
       <div className="vz-room-tx">
         <strong className="vz-room-name">{vision.name}</strong>
         <span className="vz-room-line">
-          من {fmtDateOnly(vision.startsOn)} حتى {vision.horizonLabel}
+          {visionSpan(vision.startsOn, vision.startsLabel, vision.horizonOn, vision.horizonLabel)}
           {vision.status === "active" && toEnd >= 0 ? `، يبقى ${toEnd} ${arCounted(toEnd, DAY)} تقريبًا` : ""}
         </span>
         <span className="vz-room-line">
-          تحقّق {done} من {total}، وقيد العمل {active}. وكل هدف يتحقق تُضاء قطعته في هلال صفحة الرؤية العلنية.
+          {/* قائدُ المسار يرى مسارَه وحده: أرقامُه أرقامُ مساره، والهلالُ بجانبها هلالُ الرؤية كلّها */}
+          {seesAll ? "" : `في ${mineNames}: `}تحقّق {done} من {total}{live ? `، وقيد العمل ${active}${waiting ? `، وبانتظار التأكيد ${waiting}` : ""}. وكل هدف يتحقق تُضاء قطعته في ${markConstruct(noun)} صفحة الرؤية العلنية.` : ". انتهت الرؤية، وتجمّدت أهدافها كما هي."}
         </span>
       </div>
     </section>
@@ -167,17 +210,32 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
 
   const set = (k: keyof GoalInput) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const confirmText = confirm
-    ? confirm.to === "done"
-      ? `ستُضاء قطعةُ «${confirm.g.title}» في هلال صفحة الرؤية، ويراها الأعضاء متحقّقًا.`
-      : `ستُطفأ قطعةُ «${confirm.g.title}» في الهلال، ويعود الهدف «${GOAL_STATUS[confirm.to].label}».`
+    ? confirm.act === "confirm"
+      ? `ستُضاء قطعةُ «${confirm.g.title}» في ${markConstruct(noun)} صفحة الرؤية، ويراها الأعضاء متحقّقًا، ويُشعَر من رفعه.`
+      : `ستُطفأ قطعةُ «${confirm.g.title}» في ${noun}، ويعود الهدف «${GOAL_STATUS.active.label}».`
     : undefined;
-
   return (
     <>
       <CollectionRoom<VisionGoalRow>
         navPath={VISION_ROOM.navPath}
         title={VISION_ROOM.title}
+        // الإدارةُ (الفريق، والإغلاق، والرؤى القادمة) في «الرؤى»؛ وهنا صفحةُ الرؤية العلنيّة لكلّ من في الفريق
         extra={{ label: "صفحة الرؤية", icon: <ArrowSquareOut />, href: VISION_PATH }}
+        // **سجلُّ الرؤية في آخر التبويب** (محمد ٢٠٢٦-١١-٢٢: «توقّعتُ أن يكون في نهاية التبويب قسمًا»): كلُّ فعلٍ بفاعله ووقته
+        after={
+          <AdLog<VisionLogRow>
+            title="سجلّ الرؤية"
+            icon={<ClockCounterClockwise />}
+            items={data.log}
+            at={(l) => l.at}
+            idOf={(l) => String(l.id)}
+            event={(l) => visionLogEvent(l, data.tracks)}
+            same={visionLogSame}
+            noun={AR_LOG}
+            now={now}
+            empty={{ title: "لا شيء في السجلّ بعد", text: "كل تغيير في حال هدف أو نصه أو في فريق الرؤية يُقيَّد هنا بفاعله ووقته." }}
+          />
+        }
         noun={NOUN}
         items={goals}
         positions={POSITIONS}
@@ -192,13 +250,13 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
         table={{ head: "الهدف", stub: { key: "n", label: "الرقم", icon: <Hash /> }, columns: [] }}
         emptyAll={{ title: "لا أهداف بعد", desc: "تُكتب أهداف الرؤية حين يعتمدها المجلس الإداري." }}
         renderCard={(g) => (
-          <AdCard key={g.id} seed={String(g.id)} stub={stubOf(g)} chips={badge(g)} title={g.title} onOpen={() => openEdit(g)} meta={info(g)} foot={acts(g)} />
+          <AdCard key={g.id} seed={String(g.id)} stub={stubOf(g)} chips={badge(g)} title={g.title} onOpen={confirmer && live ? () => openEdit(g) : undefined} meta={info(g)} foot={acts(g)} />
         )}
         renderRow={(g) => (
           <AdRow
             key={g.id}
             title={g.title}
-            onOpen={() => openEdit(g)}
+            onOpen={confirmer && live ? () => openEdit(g) : undefined}
             stub={{ ...stubOf(g), seed: String(g.id) }}
             badge={badge(g)}
             sub={info(g)}
@@ -211,17 +269,50 @@ export function VisionRoom({ data, view }: { data: VisionRoomData; view?: RoomVi
       <AdConfirm
         open={confirm !== null}
         onClose={() => setConfirm(null)}
-        tone={confirm?.to === "done" ? "success" : "warning"}
-        icon={confirm?.to === "done" ? <SealCheck /> : <ArrowCounterClockwise />}
-        title={confirm?.to === "done" ? "تحقّق الهدف؟" : "إلغاء التحقّق؟"}
+        tone={confirm?.act === "confirm" ? "success" : "warning"}
+        icon={confirm?.act === "confirm" ? <SealCheck /> : <ArrowCounterClockwise />}
+        title={confirm?.act === "confirm" ? "تحقّق الهدف؟" : "إلغاء التحقّق؟"}
         text={confirmText}
-        confirmLabel={confirm?.to === "done" ? "نعم، تحقّق" : "إلغاء التحقّق"}
+        confirmLabel={confirm?.act === "confirm" ? "نعم، تحقّق" : "إلغاء التحقّق"}
         loading={pending}
         onConfirm={() => {
           if (!confirm) return;
-          run(() => setGoalStatus(confirm.g.id, confirm.to), () => setConfirm(null));
+          go(confirm.g, confirm.act, undefined, () => setConfirm(null));
         }}
       />
+
+
+      {/* «أُنجز» بدليله (اختياريّ يعين على التأكيد)، والإرجاعُ بسببه (مطلوب: يصل قائدَ المسار) */}
+      <Modal
+        open={noting !== null}
+        onClose={() => setNoting(null)}
+        busy={pending}
+        size="md"
+        title={noting?.act === "return" ? "إرجاع الهدف" : "أُنجز الهدف"}
+        description={noting
+          ? noting.act === "return"
+            ? `يعود «${noting.g.title}» إلى «قيد العمل»، ويصل السبب إلى من رفعه.`
+            : `يصل المشرف العام وقائد الرؤية ليؤكّدا «${noting.g.title}»، ولا تُضاء قطعته حتى يُؤكَّد.`
+          : undefined}
+        footer={
+          <>
+            <Button variant="primary" size="md" loading={pending}
+              onClick={() => noting && go(noting.g, noting.act, note, () => setNoting(null))}>
+              {noting?.act === "return" ? "إرجاع" : "أُنجز"}
+            </Button>
+            <Button variant="ghost" size="md" onClick={() => setNoting(null)} disabled={pending}>إلغاء</Button>
+          </>
+        }
+      >
+        {noting?.act === "return" ? (
+          <Textarea className="form-full" label="سبب الإرجاع" icon={<ArrowUUpLeft />} innerIcon={<PencilSimple />} placeholder="ما الذي ينقص الهدف ليتحقّق؟"
+            rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} required />
+        ) : (
+          <Textarea className="form-full" label="الدليل" icon={<NotePencil />} innerIcon={<PencilSimple />} placeholder="رابط الخبر أو الصور، أو ما يثبت الإنجاز"
+            helper="يعين من يؤكّد الهدف." rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} optional />
+        )}
+      </Modal>
+
 
       <Modal
         open={editing !== null}

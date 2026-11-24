@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdeebServiceClient } from "@adeeb/core";
 import type { PersonOption } from "@adeeb/design-system";
+import { actingLine, positionLine, rankFor } from "./positionLabel";
 
 /**
  * **بِركةُ النسبة: من يجوز أن يُنسَب إليه عمل.**
@@ -77,4 +78,54 @@ export async function getCreditPeople(): Promise<CreditPerson[]> {
     push(v, VOLUNTEERS_GROUP, "متطوّع");
   }
   return out;
+}
+
+/**
+ * **المنصبُ تحت الاسم لا الوحدة** — لمنتقٍ يختار لمقعد قيادة (فريقُ الرؤية، ٢٠٢٦-١١-٢٢): «قائدة لجنة السُفراء»
+ * لا «لجنة السُفراء»، و«الرئيسة التنفيذية» و«رئيس أدِيب» وكانا بلا وصف (مقعداهما بلا لجنة).
+ *
+ * المسمّى كما تقوله `position_title_of` في القاعدة: رتبةُ كلّ مقعدٍ حيّ ووحدةُ إسناده، والتكليفُ بلفظه آخرًا،
+ * والمقاعدُ موصولةٌ بالواو (الأصيلُ قبل التكليف ثمّ الأقدم) — ويُؤنَّث كلُّ مقعدٍ بجنس صاحبه (`rankFor`)، وهو ما لا تفعله الدالّة.
+ * ومن لا مقعدَ حيًّا له يبقى وصفُه الأوّل (وحدتُه، أو «متطوّع»).
+ */
+export async function withPositionTitles(people: CreditPerson[]): Promise<CreditPerson[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[^A-Za-z0-9._-]/g, "");
+  if (!url || !key || !people.length) return people;
+  const sb = createAdeebServiceClient(url, key);
+
+  const [urRes, rRes, cRes, dRes] = await Promise.all([
+    // الحيُّ كما في الدالّة: الساري، والمجمَّدُ ما دام مجمَّدًا
+    sb.from("user_roles").select("user_id, role_name, committee_id, department_id, is_acting, assigned_at")
+      .or("is_active.eq.true,frozen_by.not.is.null"),
+    sb.from("roles").select("role_name, role_name_ar"),
+    sb.from("committees").select("id, committee_name_ar"),
+    sb.from("departments").select("id, name_ar"),
+  ]);
+  if (urRes.error || rRes.error || cRes.error || dRes.error) return people;
+
+  const rankAr = new Map((rRes.data ?? []).map((r) => [r.role_name as string, (r.role_name_ar as string | null) ?? ""]));
+  const committee = new Map((cRes.data ?? []).map((c) => [c.id as number, c.committee_name_ar as string]));
+  const dept = new Map((dRes.data ?? []).map((d) => [d.id as number, d.name_ar as string]));
+
+  type Seat = { acting: boolean; at: string; title: string };
+  const seats = new Map<string, Seat[]>();
+  for (const r of (urRes.data ?? []) as { user_id: string; role_name: string; committee_id: number | null; department_id: number | null; is_acting: boolean | null; assigned_at: string | null }[]) {
+    const unit = r.committee_id != null ? committee.get(r.committee_id) : r.department_id != null ? dept.get(r.department_id) : null;
+    const title = positionLine(rankAr.get(r.role_name), unit);
+    if (!title) continue;
+    const list = seats.get(r.user_id) ?? [];
+    list.push({ acting: !!r.is_acting, at: r.assigned_at ?? "", title });
+    seats.set(r.user_id, list);
+  }
+
+  return people.map((p) => {
+    const list = p.id ? seats.get(p.id) : undefined;
+    if (!list?.length) return p;
+    const line = [...list]
+      .sort((a, b) => Number(a.acting) - Number(b.acting) || a.at.localeCompare(b.at))
+      .map((s) => actingLine(rankFor(s.title, p.gender), s.acting))
+      .join(" و");
+    return { ...p, hint: line };
+  });
 }

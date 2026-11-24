@@ -133,7 +133,8 @@ export function Dialog({
         // **ما انفتح داخل النافذة يُغلق أوّلًا** (٢٠٢٦-١١-١٣): قائمةُ حقلٍ مفتوحةٌ (`aria-expanded`) تأخذ Escape لنفسها، وكانت النافذةُ
         // تلتقطه قبلها (الالتقاطُ على الوثيقة) فتُغلَق كلُّها ويضيع ما كُتب فيها
         // وكذا ما انفتح من النافذة في طبقةٍ فوقها (`.apop`، كتقويم الهويّة ٢٠٢٦-١١-٢٠): التركيزُ فيه خارجَ الصندوق، فيُغلقه Escape وحده
-        if ((e.target as Element | null)?.closest?.('[aria-expanded="true"], .apop')) return;
+        // وما يقول إنّه يأخذ Escape لنفسه (`data-holds-esc`: «تغيير» في منتقي الأشخاص يُتراجَع عنه به، ٢٠٢٦-١١-٢٢)
+        if ((e.target as Element | null)?.closest?.('[aria-expanded="true"], .apop, [data-holds-esc]')) return;
         // نبتلعه في الحالين — حتى في الانشغال — كي لا يلتقطه حوارٌ أعلى فيُغلق بدلًا منّا
         e.stopPropagation();
         if (!busy) onClose();

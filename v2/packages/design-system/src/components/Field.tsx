@@ -184,8 +184,10 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           {...props}
           {...guard}
           data-empty={empty ? "" : undefined}
-          aria-haspopup={dateLike ? "dialog" : undefined}
-          aria-expanded={dateLike ? dpOpen : undefined}
+          /* حقلُ التاريخ وحده يقول تقويمَه؛ وغيرُه يبقى له ما أعطاه صاحبُه — كان `undefined` يمحو `aria-expanded` منتقي الأشخاص
+             (combobox)، فلا يعرف القارئُ الآليّ أنّ قائمتَه مفتوحة، وتظنّ النافذةُ أنّ Escape لها فتُغلَق كلُّها (٢٠٢٦-١١-٢٢) */
+          aria-haspopup={dateLike ? "dialog" : props["aria-haspopup"]}
+          aria-expanded={dateLike ? dpOpen : props["aria-expanded"]}
           onInput={counted.onInput || dateLike ? handleInput : onInput}
         />
         {/* قراءةُ التاريخ بالهويّة فوق الحقل الأصليّ، والنقرُ يمرّ إليه فيفتح تقويمَ الهويّة */}
