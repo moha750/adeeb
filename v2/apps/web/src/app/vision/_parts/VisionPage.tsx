@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { Alert, Ambient, Container, Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { requestNow } from "@/app/_ad/now";
-import { fmtDateOnly } from "@/lib/dates";
 import { shareOg } from "@/lib/share";
 import { getPublicVision } from "@/lib/vision/data";
 import { VISION_PATH } from "@/lib/vision/vocab";
-import { getVisionTeam } from "@/lib/vision/team";
+import { visionSpan } from "@/lib/vision/span";
+import { coreTeam } from "@/lib/vision/team";
 import type { PublicVision } from "@/lib/vision/types";
 import { VisionView } from "./VisionView";
 
@@ -16,7 +16,7 @@ import { VisionView } from "./VisionView";
  */
 export function visionDescription(v: PublicVision): string {
   const n = v.tracks.reduce((a, t) => a + t.goals.length, 0);
-  return `${v.name}: رؤية نادي أدِيب من ${fmtDateOnly(v.starts_on)} حتى ${v.horizon_label}، بمساراتها وأهدافها الـ${n} وما تحقق منها، وفريقها.`;
+  return `${v.name}: رؤية نادي أدِيب ${visionSpan(v.starts_on, v.starts_label, v.horizon_on, v.horizon_label)}، بمساراتها وأهدافها الـ${n} وما تحقق منها، وفريقها.`;
 }
 
 export async function visionMetadata(slug?: string): Promise<Metadata> {
@@ -29,16 +29,15 @@ export async function visionMetadata(slug?: string): Promise<Metadata> {
 
 export async function VisionPage({ slug }: { slug?: string }) {
   const [{ data, error }, now] = await Promise.all([getPublicVision(slug), requestNow()]);
-  const team = data ? await getVisionTeam(data.slug) : { data: null, error: null };
+  const team = data ? { core: coreTeam(data) } : null;
   if (error) console.error("[vision] get_public_vision:", error);
-  if (team.error) console.error("[vision] team:", team.error);
   return (
     <>
       <SiteHeader />
       <main className="amb-host">
         <Ambient />
         {data ? (
-          <VisionView v={data} team={team.data} now={now} />
+          <VisionView v={data} team={team} now={now} />
         ) : (
           <Container>
             <div className="vz-page">

@@ -2,7 +2,8 @@
 
 import { Fragment, useMemo, type ReactNode } from "react";
 import { arCount, type ArForms } from "@/lib/arabicCount";
-import { AdBadge, AdButton, AdInfo, type AdMeta, type AdTone } from "./primitives";
+import { ClockCounterClockwise } from "@phosphor-icons/react";
+import { AdBadge, AdButton, AdEmpty, AdInfo, type AdMeta, type AdTone } from "./primitives";
 import { dayName, fmtClock, fmtDayFull, localDay } from "./format";
 
 /**
@@ -131,8 +132,10 @@ export function AdLog<T>({ title, icon, items, at, idOf, event, same, noun, now,
       ))}
     </ul>
   );
+  // **فراغُه فراغُ الهويّة** (محمد ٢٠٢٦-١١-٢٢: «كان يأخذ أيقونة كبيرة»): «القطعة» برمز السجلّ نفسِه، لا صندوقٌ باهتٌ خاصٌّ به —
+  // وفي القسم وفي السجلّ بلا إطار يسقط صندوقُها، فلا يكون إطارًا في إطار
   const body = days.length === 0 && empty ? (
-    <div className="ad-log-empty"><strong>{empty.title}</strong><span>{empty.text}</span></div>
+    <AdEmpty icon={icon ?? <ClockCounterClockwise />} title={empty.title} desc={empty.text} />
   ) : lines;
   if (bare) return <div className="ad-log-bare">{body}{more && <div className="ad-log-more">{more}</div>}</div>;
   return (

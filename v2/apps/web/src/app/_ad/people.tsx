@@ -7,20 +7,22 @@
  *   المجموعة برمزه وخطّه («أعضاء أدِيب»، «متطوّعو أدِيب»)، والوجهُ في أوّل السطر، والوصفُ بجانب الاسم.
  * - ومن ليس من أدِيب يُكتب اسمُه كما هو (`free`): سطرٌ أوّلَ القائمة «أضف «…» كما كُتب».
  * - **والمختارون سطورُ «حسابي»** (`AdLine`، اختارها محمد ٢٠٢٦-١١-١٣ من اتّجاهين — والآخرُ قطعُ المرشّح المفعَّل، رُدّ: أربعُ قطعٍ كحليّةٍ في نموذجٍ
- *   هادئ، ولا تقول مَن المعروض): رمزُ الدور، ثمّ الاسم، وفعلُه «إزالة» — والأوّلُ يقول إنّه المعروض (`lead`). والواحدُ (المصوّر) سطرٌ بـ«تغيير».
+ *   هادئ، ولا تقول مَن المعروض): رمزُ الدور، ثمّ الاسم، وفعلُه «إزالة» — والأوّلُ يقول إنّه المعروض (`lead`). والواحدُ (المصوّر) سطرٌ بـ«تغيير»،
+ *   و«إزالة» بجانبه إن لم يكن الحقلُ مطلوبًا.
  * القيمةُ معرّفات (`id`)، وفي النسبة الحرّة المعرّفُ هو الاسمُ نفسُه.
  */
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { AnchoredPopover, Field, matchesSearch } from "@adeeb/design-system";
 import { MagnifyingGlass, PencilSimple, Plus, X } from "@/app/_components/glyphs";
 import { AdLine } from "./account";
+import { AdButton } from "./primitives";
 
 export type AdPerson = { id: string; name: string; hint?: string; group?: string; face?: ReactNode };
 
 type Row = { type: "head"; label: string } | { type: "opt"; p: AdPerson; i: number } | { type: "free"; name: string; i: number };
 
 export function AdPeoplePicker({
-  label, icon, roleIcon, people, value, onChange, single, free, placeholder, helper, required, optional, lead, groupIcon,
+  label, icon, roleIcon, people, value, onChange, single, free, freeHint = "من خارج أدِيب", freeHintInList = true, placeholder, helper, required, optional, lead, groupIcon, below,
 }: {
   label: string;
   icon: ReactNode;
@@ -31,6 +33,12 @@ export function AdPeoplePicker({
   onChange: (ids: string[]) => void;
   single?: boolean;
   free?: boolean;
+  /** وصفُ الاسم المكتوب كما هو: «من خارج أدِيب» للضيف والمصوّر الزائر، و«بلا حساب» لمن هو من أدِيب ولم يسجّل (فريقُ الرؤية) */
+  freeHint?: string;
+  /** يُكتب الوصفُ أيضًا تحت «أضف … كما كُتب» في القائمة؟ (فريقُ الرؤية لا: يكفيه مرّةً تحت الاسم، محمد ٢٠٢٦-١١-٢٢) */
+  freeHintInList?: boolean;
+  /** ما يلحق بسطر المختار في بطاقته نفسها (جنسُ من لا حساب له في فريق الرؤية): تحت اسمه، فيُقرأ منه لا منفصلًا عنه */
+  below?: ReactNode;
   placeholder: string;
   helper?: string;
   required?: boolean;
@@ -56,7 +64,7 @@ export function AdPeoplePicker({
   }, []);
 
   const byId = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
-  const chosen = value.map((v) => byId.get(v) ?? { id: v, name: v, hint: "من خارج أدِيب" });
+  const chosen = value.map((v) => byId.get(v) ?? { id: v, name: v, hint: freeHint });
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
     let i = 0;
@@ -79,23 +87,41 @@ export function AdPeoplePicker({
   // ولا صفَّ مُنارًا عند الفتح بلا بحث (قاعدةُ القائمة: «لا صفّ مُنارٌ عند الفتح بالنقر»)، والبحثُ يُنير أوّلَ من طابقه
   const at = hl >= 0 ? hl : q.trim() && firstPerson && firstPerson.type === "opt" ? firstPerson.i : -1;
 
+  /**
+   * **الواحدُ يُبدَّل لا يُضاف إليه** (المصوّر): ما دام مختارًا فهو وحده بلا حقلِ بحثٍ تحته، و«تغيير» يعيد الحقلَ ويركّز فيه.
+   * **و«تغيير» تغييرٌ لا إزالة** (محمد ٢٠٢٦-١١-٢٢: «عندما أضغط تغيير وكأنها إزالة. غريب»): المختارُ باقٍ حتى يُختار غيرُه، ومن تراجع
+   * (Escape، أو خرج من الحقل بلا اختيار) عاد إليه كما كان. والإفراغُ فعلُ «إزالة» بجانبه، ولا يظهر في الحقل المطلوب.
+   */
+  const [editing, setEditing] = useState(false);
+  const solo = single && value.length > 0 && !editing;
+  const removable = single && !required;
+  const refocus = useRef(false);
+  /** بعد الإزالة يُركَّز الحقلُ ولا تُفتح القائمة: من أفرغ المقعدَ لم يطلب بديلًا بعد */
+  const quiet = useRef(false);
+  /** ومن تراجع عن «تغيير» بلوحة المفاتيح عاد تركيزُه إلى السطر لا إلى الصفحة */
+  const backToLine = useRef(false);
   const add = (pid: string) => {
     onChange(single ? [pid] : [...value, pid]);
     setQ("");
     setHl(-1);
-    if (single) setOpen(false);
+    // والحقلُ يغيب بعد الاختيار فيسقط التركيزُ إلى الصفحة: يعود إلى السطر (كما في التراجع)
+    if (single) { setOpen(false); setEditing(false); backToLine.current = true; }
     input.current?.focus();
   };
   const drop = (pid: string) => onChange(value.filter((v) => v !== pid));
-  /** **الواحدُ يُبدَّل لا يُضاف إليه** (المصوّر): ما دام مختارًا فهو وحده بلا حقلِ بحثٍ تحته، و«تغيير» يعيد الحقلَ ويركّز فيه */
-  const solo = single && value.length > 0;
-  const refocus = useRef(false);
   useEffect(() => {
-    if (!refocus.current || solo) return;
+    if (solo) {
+      if (backToLine.current) box.current?.querySelector<HTMLElement>(".ad-pp-lines .ad-line-hit")?.focus();
+      backToLine.current = false;
+      return;
+    }
+    if (!refocus.current) return;
     refocus.current = false;
     input.current?.focus();
   }, [solo]);
-  const change = () => { refocus.current = true; onChange([]); };
+  const change = () => { refocus.current = true; quiet.current = false; setEditing(true); };
+  const remove = () => { refocus.current = true; quiet.current = true; setEditing(false); onChange([]); };
+  const cancelEdit = () => { setEditing(false); setQ(""); setHl(-1); setOpen(false); };
   const pickAt = (i: number) => {
     const r = rows.find((x) => x.type !== "head" && x.i === i);
     if (!r || r.type === "head") return;
@@ -107,7 +133,12 @@ export function AdPeoplePicker({
     else if (e.key === "ArrowUp") { e.preventDefault(); setHl(Math.max(at - 1, 0)); }
     else if (e.key === "Enter") { if (open && count && at >= 0) { e.preventDefault(); pickAt(at); } }
     // داخل نافذةٍ يُغلق Escape القائمةَ وحدها لا النافذة
-    else if (e.key === "Escape") { if (open) { e.preventDefault(); e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); setOpen(false); } }
+    // وساعةَ «تغيير» هو تراجعٌ كلُّه بضغطةٍ واحدة: تُغلق القائمةُ ويعود المختارُ كما كان، والنافذةُ باقية
+    else if (e.key === "Escape") {
+      if (open || editing) { e.preventDefault(); e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }
+      if (editing) { backToLine.current = true; cancelEdit(); }
+      else if (open) setOpen(false);
+    }
     else if (e.key === "Backspace" && !q && value.length && !single) drop(value[value.length - 1]);
   };
 
@@ -116,20 +147,36 @@ export function AdPeoplePicker({
       {chosen.map((p, i) => (
         <AdLine key={p.id} icon={roleIcon} k={single ? label : i === 0 && lead ? lead : p.hint} v={p.name} sub={single ? p.hint : undefined}
           act={single ? { icon: <PencilSimple />, text: "تغيير", label: `تغيير ${label}` } : { icon: <X />, text: "إزالة", label: `إزالة ${p.name}` }}
-          onClick={() => (single ? change() : drop(p.id))} />
+          onClick={() => (single ? change() : drop(p.id))}
+          aside={removable ? <span className="ad-pp-x"><AdButton variant="soft" size="sm" icon={<X />} onClick={remove}>إزالة<span className="ad-sr">{` ${label}`}</span></AdButton></span> : undefined} />
       ))}
+      {below ? <li className="ad-pp-below">{below}</li> : null}
+      {/* وفي الضيّق (الهاتف) ينزل الفعلان سطرًا في آخر البطاقة متجاورَين بشكلٍ واحد، كسطور المعرض (كان الاسمُ يُعصر في ثلاثة أسطر)،
+          وبعد ما يلحق بالسطر (الجنس): بياناتُ الشخص أوّلًا ثمّ أفعالُه */}
+      {removable ? (
+        <li className="ad-pp-row">
+          <AdButton variant="soft" size="sm" icon={<PencilSimple />} onClick={change}>تغيير<span className="ad-sr">{` ${label}`}</span></AdButton>
+          <AdButton variant="soft" size="sm" icon={<X />} onClick={remove}>إزالة<span className="ad-sr">{` ${label}`}</span></AdButton>
+        </li>
+      ) : null}
     </ul>
   );
 
   return (
-    <div ref={box} className="ad-pp form-full" data-open={open || undefined} data-solo={solo || undefined}>
+    // ساعةَ «تغيير» لا يأخذ النقرُ في الحقل (تسميتُه نصفُ بئره، ووصفُه) التركيزَ منه، وإلّا عُدّ خروجًا فأُلغي التغيير
+    <div ref={box} className="ad-pp form-full" data-open={open || undefined} data-solo={solo || undefined}
+      onMouseDown={editing ? (e) => { if (e.target !== input.current) e.preventDefault(); } : undefined}>
       {/* الحقلُ يبقى مركَّبًا ويُخفى (لا يُزال): مرساةُ القائمة تُقرأ منه مرّةً حين يركّب */}
       <Field ref={input} label={label} icon={icon} innerIcon={<MagnifyingGlass />} placeholder={placeholder}
-        required={required} optional={optional} helper={helper} value={q}
+        required={required} optional={optional} value={q}
+        /* النافذةُ لا تأخذ Escape ما دام «تغيير» قائمًا ولو أُغلقت القائمة: هو تراجعُه (`Dialog`) */
+        data-holds-esc={editing || undefined}
+        helper={editing && chosen[0] ? `يبقى «${chosen[0].name}» ما لم تختر غيره.` : helper}
         role="combobox" aria-expanded={open} aria-controls={`${id}-l`} aria-autocomplete="list"
         aria-activedescendant={open && count && at >= 0 ? `${id}-o${at}` : undefined}
         onChange={(e) => { setQ(e.target.value); setHl(-1); setOpen(true); }}
-        onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onBlur={() => setOpen(false)} onKeyDown={onKey} />
+        onFocus={() => { if (quiet.current) { quiet.current = false; return; } setOpen(true); }} onClick={() => setOpen(true)}
+        onBlur={() => { setOpen(false); if (editing) cancelEdit(); }} onKeyDown={onKey} />
       <AnchoredPopover open={open} anchorRef={anchor} topRef={top} matchWidth className="asel-panel ad-pp-panel" role="listbox"
         id={`${id}-l`} reflowKey={rows.length} onDismiss={() => setOpen(false)}>
         {/* الضغطُ داخل القائمة لا يأخذ التركيزَ من الحقل (فلا يغلقها خروجُه منه) */}
@@ -144,7 +191,7 @@ export function AdPeoplePicker({
               {r.type === "free" ? (
                 <>
                   <span className="asel-oic"><Plus /></span>
-                  <span className="asel-txt">{`أضف «${r.name}» كما كُتب`}<span className="asel-hint">من خارج أدِيب</span></span>
+                  <span className="asel-txt">{`أضف «${r.name}» كما كُتب`}{freeHintInList ? <span className="asel-hint">{freeHint}</span> : null}</span>
                 </>
               ) : (
                 <>
@@ -156,7 +203,8 @@ export function AdPeoplePicker({
           ))}
         </div>
       </AnchoredPopover>
-      {chosenEl}
+      {/* ساعةَ «تغيير» يغيب السطرُ ويقول وصفُ الحقل مَن الباقي («يبقى «…» ما لم تختر غيره») */}
+      {editing ? null : chosenEl}
     </div>
   );
 }

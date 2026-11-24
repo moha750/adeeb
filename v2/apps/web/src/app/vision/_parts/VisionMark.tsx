@@ -1,10 +1,12 @@
-import { hilal } from "@/lib/vision/geometry";
+import { markGeometry, type VisionMarkShape } from "@/lib/vision/mark";
 
 /**
- * **هلالُ الرؤية** — علامتُها حيّةً من بياناتها: قطعةٌ لكلّ هدف تُضاء حين يتحقّق (`on`)، وطبقةٌ لكلّ مسار.
+ * **علامةُ الرؤية** — حيّةً من بياناتها: قطعةٌ لكلّ هدف تُضاء حين يتحقّق (`on`)، وطبقةٌ لكلّ مسار. والعلامةُ علامةُ رؤيتها
+ * (`mark`، محمد ٢٠٢٦-١١-٢٢: «لكلّ رؤيةٍ علامتها»): هلالُ الفسيفساء المبنيّ، أو رسمُ المصمّم المرفوع — والرسمُ هنا واحدٌ لهما.
  * بلا حالٍ ولا خطّافات: ترسمه الصفحةُ العلنيّة على الخادم وغرفةُ المتابعة في البوّابة بالمكوّن نفسِه.
  *
- * - `counts`: عددُ أهداف كلّ مسارٍ بترتيبه (الأوّلُ الطبقةُ الخارجيّة).
+ * - `mark`: شكلُ العلامة (بلاه الهلال).
+ * - `counts`: عددُ أهداف كلّ مسارٍ بترتيبه (الأوّلُ الطبقةُ الخارجيّة في الهلال).
  * - `on[track][goal]`: المتحقّقُ يُضاء، والباقي باهتٌ يُرى شكلُه ولا يُضاء.
  * - `focus`: مسارٌ واحدٌ تُرى طبقتُه وتخفت البقيّة (رأسُ المسار في الصفحة والغرفة).
  * - `paper`: على الورقة (حبرُ الهويّة الكحليّ) لا على اللوح (حبرُه الأبيض).
@@ -15,8 +17,9 @@ import { hilal } from "@/lib/vision/geometry";
  * الألوانُ من أدوار الهويّة في `ad.css` (`.vz-tile`)، فالوضعُ الداكن يتبعها بلا سطرٍ هنا.
  */
 export function VisionMark({
-  counts, on, focus, paper, titles, hrefs, label, className,
+  mark, counts, on, focus, paper, titles, hrefs, label, className,
 }: {
+  mark?: VisionMarkShape | null;
   counts: number[];
   on?: boolean[][];
   focus?: number;
@@ -26,7 +29,7 @@ export function VisionMark({
   label?: string;
   className?: string;
 }) {
-  const h = hilal(counts);
+  const h = markGeometry(mark, counts);
   return (
     <svg
       className={"vz-mark" + (className ? ` ${className}` : "")}

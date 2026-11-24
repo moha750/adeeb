@@ -42,6 +42,8 @@ export const SECTIONS = {
   evaluation: { label: "تقييم القيادات", icon: "evaluation", unit: "إدارة الموارد البشرية" },
   // الانتخابات (٢٠٢٦-١١-١٧): يديرها مديرو الانتخابات ومشرفو اللجان من الموارد البشريّة، ولا بريدَ لها بعد
   elections: { label: "الانتخابات", icon: "vote", unit: "إدارة الموارد البشرية" },
+  // الرؤية (٢٠٢٦-١١-٢٤): تكتبها إدارةُ الضمان والجودة وتطلقها، فتوقّع بريدَ التكليف في فريقها
+  vision: { label: "الرؤية", icon: "vision", unit: "إدارة الضمان والجودة" },
 } as const satisfies Record<string, { label: string; icon: IconKey; unit: string | null }>;
 
 export type Section = keyof typeof SECTIONS;
@@ -147,6 +149,17 @@ const reopenEnd = (f: { candidacy_end?: string; new_end?: string }) => f.candida
 
 /** جملةٌ يكتبها المدير بلا نقطة، تُختم قبل أن تتلوها جملة. */
 const dot = (t: string) => (/[.!؟]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
+
+// ══ الرؤية: أدواتُ النصّ (٢٠٢٦-١١-٢٢) ═══════════════════════════════════════════════
+/** غرفةُ «متابعة الرؤية»: حيث يرى الفريقُ أهدافه ويفعل */
+const VISION_ROOM_PATH = "/dashboard/vision";
+/** «الرؤى»: مسوّداتُ الرؤى ودورتُها */
+const VISION_PLANS_PATH = "/dashboard/vision/plans";
+/** المقعدُ بجنس قارئه: «قائدة مسار الأثر»، «المشرف العام» */
+const visionSeat = (f: { seat: "supervisor" | "leader" | "track"; track: string | null }, g: Gender) =>
+  f.seat === "supervisor" ? fm(g, "المشرف العام", "المشرفة العامة")
+    : f.seat === "leader" ? fm(g, "قائد الرؤية", "قائدة الرؤية")
+      : `${fm(g, "قائد", "قائدة")} مسار ${f.track ?? ""}`.trim();
 
 export const CATALOG = {
   /**
@@ -1395,6 +1408,203 @@ export const CATALOG = {
         to: (f) => [{ user: f.userId }],
         text: (f, g) => ({ title: `رُفع ${fm(g, "حرمانك", "حرمانكِ")} من الترشّح`, body: `السبب: ${f.reason}` }),
         href: () => ACCOUNT,
+      },
+    ],
+  }),
+
+  /* ══ الرؤية (محمد ٢٠٢٦-١١-٢٢: «نعم، موافق ونفّذ») ══
+     فريقُ الرؤية ينفّذ ويؤكّد: قائدُ المسار يرفع «أُنجز»، والمشرفُ العامّ وقائدُ الرؤية يؤكّدان «تحقّق» أو يُرجعان بسبب.
+     والإشعاراتُ تُغلق الدائرة: «أُنجز» لا يبقى معلّقًا لا يراه أحد، والقائدُ يعرف ما صار لإنجازه. تُطلَق من `dashboard/vision/actions.ts`. */
+
+  /**
+   * **سُمّيتَ في فريق الرؤية** — يطلقه حفظُ الفريق (`save_vision_team`) لكلّ من صار في مقعدٍ لم يكن فيه، ومنه من رُبط مقعدُه
+   * المكتوبُ باسمه بحسابه حين سجّل. **مهمّ وبريدًا**: تكليفٌ يُحفَظ، كإسناد المنصب.
+   */
+  "vision.seat_assigned": defineKind<{ userId: string; vision: string; seat: "supervisor" | "leader" | "track"; track: string | null }>({
+    section: "vision",
+    when: "سُمّي عضوٌ في مقعدٍ من فريق الرؤية السارية، أو أُطلقت رؤيةٌ هو في فريقها",
+    sample: { userId: SAMPLE_USER, vision: "رؤية الهلال", seat: "track", track: "الأثر" },
+    audiences: [
+      {
+        key: "member",
+        level: "important",
+        email: true,
+        to: (f) => [{ user: f.userId }],
+        text: (f, g) => ({
+          title: `${visionSeat(f, g)} في ${f.vision}`,
+          body: f.seat === "track"
+            ? `${fm(g, "كُلّفت", "كُلّفتِ")} به في فريق الرؤية، ${fm(g, "تحدّث", "تحدّثين")} حالَ أهداف ${fm(g, "مسارك", "مساركِ")} في تبويب «متابعة الرؤية».`
+            : `${fm(g, "كُلّفت", "كُلّفتِ")} به في فريق الرؤية، ${fm(g, "تؤكّد", "تؤكّدين")} ما يُنجَز من المسارات كلّها في تبويب «متابعة الرؤية».`,
+        }),
+        mail: (f, g) => ({
+          mood: "congratulations",
+          lead: `${fm(g, "يسرّنا إبلاغك", "يسرّنا إبلاغكِ")} بتكليفٍ في فريق الرؤية في نادي أدِيب، وهذه تفاصيله:`,
+          facts: [
+            { label: "المقعد", value: visionSeat(f, g) },
+            { label: "الرؤية", value: f.vision },
+          ],
+        }),
+        href: () => VISION_ROOM_PATH,
+      },
+    ],
+  }),
+
+  /**
+   * **أُنجز هدفٌ، بانتظار تأكيدك** — يطلقه رفعُ «أُنجز». يصل المشرفَ العامّ وقائدَ الرؤية **سوى من رفعه** (لا يؤكّد أحدٌ ما رفعه).
+   */
+  "vision.goal_reported": defineKind<{ goalId: number; title: string; track: string; by: string; byFemale: boolean; to: string[] }>({
+    section: "vision",
+    when: "رفع قائدُ مسارٍ هدفًا من أهدافه «أُنجز»",
+    sample: { goalId: 12, title: "فعالية متوسطة في منتصف كل شهر", track: "الأثر", by: "أسيل الصنيخ", byFemale: true, to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "confirmers",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f, g) => ({
+          title: `${f.by} ${f.byFemale ? "أنجزت" : "أنجز"} «${f.title}»`,
+          body: `من مسار ${f.track}، ${fm(g, "بانتظار تأكيدك", "بانتظار تأكيدكِ")}.`,
+        }),
+        href: () => VISION_ROOM_PATH,
+      },
+    ],
+  }),
+
+  /** **تحقّق هدفُك** — يطلقه تأكيدُ «تحقّق». يصل قادةَ المسار ومن رفعه، سوى من أكّده. */
+  "vision.goal_confirmed": defineKind<{ goalId: number; title: string; track: string; by: string; byFemale: boolean; to: string[] }>({
+    section: "vision",
+    when: "أكّد المشرفُ العامّ أو قائدُ الرؤية هدفًا «تحقّق»",
+    sample: { goalId: 12, title: "فعالية متوسطة في منتصف كل شهر", track: "الأثر", by: "نوره الصالح", byFemale: true, to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "track",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f) => ({
+          title: `تحقّق «${f.title}»`,
+          body: `${f.by} ${f.byFemale ? "أكّدته" : "أكّده"}، وأُضيئت قطعتُه في علامة الرؤية.`,
+        }),
+        href: () => VISION_ROOM_PATH,
+      },
+    ],
+  }),
+
+  /** **أُرجع هدفُك** — يطلقه إرجاعُ ما رُفع «أُنجز» إلى «قيد العمل»، وسببُه مكتوبٌ لا يُترك. يصل قادةَ المسار ومن رفعه. */
+  "vision.goal_returned": defineKind<{ goalId: number; title: string; track: string; by: string; byFemale: boolean; reason: string; to: string[] }>({
+    section: "vision",
+    when: "أرجع المشرفُ العامّ أو قائدُ الرؤية هدفًا رُفع «أُنجز» إلى «قيد العمل»",
+    sample: { goalId: 12, title: "فعالية متوسطة في منتصف كل شهر", track: "الأثر", by: "نوره الصالح", byFemale: true, reason: "ينقصه رابط الخبر المنشور", to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "track",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f) => ({
+          title: `أُرجع «${f.title}» إلى «قيد العمل»`,
+          body: `${f.by} ${f.byFemale ? "أرجعته" : "أرجعه"}، والسبب: ${dot(f.reason)}`,
+        }),
+        href: () => VISION_ROOM_PATH,
+      },
+    ],
+  }),
+
+  /* ══ دورةُ حياة الرؤية (محمد ٢٠٢٦-١١-٢٢: «نبني كل شيء من الآن») ══
+     إدارةُ الضمان والجودة تكتب المسوّدة وترسلها، والرئيسان يوافقان معًا أو يُعيدانها بملاحظة. تُطلَق من `dashboard/vision/plans/actions.ts`. */
+
+  /** **مسوّدةُ رؤيةٍ تنتظر موافقتك** — يطلقه الإرسال. يصل الرئيسين سوى من أرسلها. */
+  "vision.plan_submitted": defineKind<{ planId: number; vision: string; by: string; byFemale: boolean; to: string[] }>({
+    section: "vision",
+    when: "أُرسلت مسوّدةُ رؤيةٍ جديدةٍ للرئيسين",
+    sample: { planId: 2, vision: "رؤية الربيع", by: "محمد المطر", byFemale: false, to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "presidents",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f, g) => ({
+          title: `«${f.vision}» ${fm(g, "تنتظر موافقتك", "تنتظر موافقتكِ")}`,
+          body: `${f.by} ${f.byFemale ? "أرسلت" : "أرسل"} مسوّدة الرؤية، ولا تُطلَق حتى يوافق الرئيسان معًا.`,
+        }),
+        href: (f) => `${VISION_PLANS_PATH}/${f.planId}`,
+      },
+    ],
+  }),
+
+  /**
+   * **حسابٌ باسمٍ قريب من مقعدٍ مكتوب** (محمد ٢٠٢٦-١١-٢٣) — يطلقه تسجيلُ عضوٍ يقرب اسمُه (الأوّلُ والعائلة) من اسمٍ مكتوبٍ في فريق رؤيةٍ
+   * سارية أو قيد الكتابة (`vision_name_key` في القاعدة). يصل من يُعدّ الرؤى (الضمانُ والجودة والرئيسان)، ونبرتُه اقتراحٌ لا جزم: يتأكّد ثمّ يربط.
+   */
+  "vision.seat_match": defineKind<{ planId: number; vision: string; seat: "supervisor" | "leader" | "track"; track: string | null; written: string; person: string; to: string[] }>({
+    section: "vision",
+    when: "سجّل في البوابة حسابٌ باسمٍ قريب من اسمٍ مكتوبٍ في فريق رؤية",
+    sample: { planId: 1, vision: "رؤية الهلال", seat: "track", track: "الصدى", written: "محمد السماعيل", person: "محمد عبدالله السماعيل", to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "drafter",
+        level: "normal",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f, g) => ({
+          title: `حسابٌ باسمٍ قريب من «${f.written}»`,
+          body: `سجّل في البوابة «${f.person}»، واسمه قريب من «${f.written}»، ${visionSeat(f, null)} في ${f.vision}. ${fm(g, "تأكّد", "تأكّدي")} أنه هو، ثم ${fm(g, "اربطه", "اربطيه")} بمقعده.`,
+        }),
+        href: (f) => `${VISION_PLANS_PATH}/${f.planId}`,
+      },
+    ],
+  }),
+
+  /** **أُعيدت مسوّدتُك** — يطلقه إعادةُ أحد الرئيسين لها بملاحظةٍ مكتوبة. يصل من أرسلها. */
+  "vision.plan_sent_back": defineKind<{ planId: number; vision: string; by: string; byFemale: boolean; note: string; to: string[] }>({
+    section: "vision",
+    when: "أعاد أحد الرئيسين مسوّدة رؤيةٍ بملاحظة (يصل صاحبَها: إدارةَ الضمان والجودة كلَّها إن كانت مسوّدتها، ومن أرسلها، ومن كان وافق)",
+    sample: { planId: 2, vision: "رؤية الربيع", by: "بشائر الحداد", byFemale: true, note: "ينقص مسار الأثر هدفُ الحضور", to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "drafter",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f) => ({
+          title: `أُعيدت مسوّدة «${f.vision}»`,
+          body: `${f.by} ${f.byFemale ? "أعادتها" : "أعادها"}: ${dot(f.note)}`,
+        }),
+        href: (f) => `${VISION_PLANS_PATH}/${f.planId}`,
+      },
+    ],
+  }),
+
+  /** **وافق أحد الرئيسين، والمسوّدة بانتظارك** (محمد ٢٠٢٦-١١-٢٤) — يطلقه الموافقةُ الأولى. يصل الرئيسَ الآخر وحده. */
+  "vision.plan_half_approved": defineKind<{ planId: number; vision: string; seat: "club_president" | "executive_council_president"; by: string; byFemale: boolean; to: string[] }>({
+    section: "vision",
+    when: "وافق أحد الرئيسين على مسوّدة رؤية، وبقي الآخر",
+    sample: { planId: 2, vision: "رؤية الربيع", seat: "club_president", by: "محمد إسماعيل المطر", byFemale: false, to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "president",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f, g) => ({
+          title: `«${f.vision}» ${fm(g, "بانتظار موافقتك", "بانتظار موافقتكِ")}`,
+          body: `${f.byFemale ? "وافقت" : "وافق"} ${f.seat === "club_president" ? (f.byFemale ? "رئيسة أدِيب" : "رئيس أدِيب") : (f.byFemale ? "الرئيسة التنفيذية" : "الرئيس التنفيذي")} (${f.by})، ولا تُطلق حتى ${fm(g, "توافق", "توافقي")} أيضًا.`,
+        }),
+        href: (f) => `${VISION_PLANS_PATH}/${f.planId}`,
+      },
+    ],
+  }),
+
+  /** **وافق الرئيسان على مسوّدتك** — يطلقه الموافقةُ الثانية. يصل من أرسلها. */
+  "vision.plan_approved": defineKind<{ planId: number; vision: string; to: string[] }>({
+    section: "vision",
+    when: "وافق الرئيسان معًا على مسوّدة رؤية (يصل صاحبَها: إدارةَ الضمان والجودة كلَّها إن كانت مسوّدتها، ومن أرسلها)",
+    sample: { planId: 2, vision: "رؤية الربيع", to: [SAMPLE_USER] },
+    audiences: [
+      {
+        key: "drafter",
+        level: "important",
+        to: (f) => f.to.map((user) => ({ user })),
+        text: (f) => ({
+          title: `وافق الرئيسان على «${f.vision}»`,
+          body: "تُطلَق متى شئتم فتصير رؤيةَ أدِيب، وإن كانت في أدِيب رؤيةٌ سارية فبعد إغلاقها.",
+        }),
+        href: (f) => `${VISION_PLANS_PATH}/${f.planId}`,
       },
     ],
   }),
