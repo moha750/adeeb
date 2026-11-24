@@ -3,8 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Field } from "@adeeb/design-system";
-import { At, Envelope, Hash, Key, Lock } from "@phosphor-icons/react";
+import { Field } from "@adeeb/design-system";
+import { At, Envelope, Hash, Key, Lock, Password, PaperPlaneTilt, UserPlus } from "@phosphor-icons/react";
+import { ArrowClockwise } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { CAPTCHA_PENDING, toArabicAuthError, toArabicCodeError, waitSeconds } from "@/lib/authErrors";
 import { EMAIL_HINT, emailError, isEmail } from "@/lib/fieldFormats";
@@ -15,7 +16,7 @@ import { NO_ACCOUNT, PROVIDER_NAME, SIGNUP_EMAIL_KEY, isNoAccountError, isProvid
 import { readLastSignin, rememberSignin } from "@/lib/lastSignin";
 import { CELEBRATE_MS, setDeeboMood } from "@/lib/deeboMood";
 import { TurnstileWidget, useTurnstileWait } from "@/app/_components/Turnstile";
-import { AltLink, Back, Chip, Fields, Head, Note } from "@/app/_door/parts";
+import { AltLink, Back, Btn, Chip, Fields, Head, Note } from "@/app/_door/parts";
 import { useGreeting } from "@/app/_door/DeeboFace";
 import { DoorWays } from "@/app/_door/DoorWays";
 
@@ -187,9 +188,9 @@ export function PortalFlow() {
           tone="warn"
           title="ليس لك حسابٌ في أدِيب"
           actions={
-            <Button type="button" variant="primary" size="sm" loading={creating} onClick={createAccount}>
+            <Btn type="button" variant="primary" size="sm" icon={<UserPlus />} loading={creating} onClick={createAccount}>
               {noAccount === "email" ? "أنشئ حسابك" : `أنشئ حسابك بـ${PROVIDER_NAME[noAccount]}`}
-            </Button>
+            </Btn>
           }
         >
           {noAccount === "email" ? "لا حسابَ بهذا البريد." : `لا حسابَ في أدِيب بحسابك في ${PROVIDER_NAME[noAccount]}.`}
@@ -198,7 +199,7 @@ export function PortalFlow() {
     </>
   );
   const emailChip = <Chip ltr label="تغيير البريد" onEdit={() => go("email")}>{email.trim()}</Chip>;
-  const alt = <AltLink lead="ليس لك حساب؟" href={signupHref}>أنشئ حسابًا</AltLink>;
+  const alt = <AltLink lead="ليس لك حسابٌ بعد؟" href={signupHref}>أنشئ حسابًا</AltLink>;
 
   return (
     <>
@@ -208,7 +209,6 @@ export function PortalFlow() {
           <Head kicker={greet ?? "\u00a0"} sub="كيف تحبّ أن تدخل؟">نوّرت أدِيب</Head>
           {notices}
           <DoorWays intent="login" next={next} onEmail={() => go("email")} onError={setErr} />
-          {alt}
         </section>
       ) : null}
 
@@ -226,17 +226,16 @@ export function PortalFlow() {
               error={emailError(email, emailTouched)} required
             />
             <div className="door-pair">
-              <Button type={preferCode ? "button" : "submit"} variant={preferCode ? "ghost" : "primary"} size="lg" disabled={!email.trim() || pending}
+              <Btn type={preferCode ? "button" : "submit"} variant={preferCode ? "ghost" : "primary"} size="lg" icon={<Password />} disabled={!email.trim() || pending}
                 onClick={preferCode ? () => { if (emailOk()) go("password"); } : undefined}>
                 بكلمة المرور
-              </Button>
-              <Button type={preferCode ? "submit" : "button"} variant={preferCode ? "primary" : "ghost"} size="lg" disabled={!email.trim()} loading={pending}
+              </Btn>
+              <Btn type={preferCode ? "submit" : "button"} variant={preferCode ? "primary" : "ghost"} size="lg" icon={<PaperPlaneTilt />} disabled={!email.trim()} loading={pending}
                 onClick={preferCode ? undefined : sendCode}>
                 أرسل لي رمزًا
-              </Button>
+              </Btn>
             </div>
           </Fields>
-          {alt}
         </form>
       ) : null}
 
@@ -252,7 +251,7 @@ export function PortalFlow() {
               value={pw} onChange={(e) => setPw(e.target.value)} {...on("password")} required
             />
             <Link href="/forgot-password" className="door-forgot">نسيت كلمة المرور؟</Link>
-            <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!pw}>دخول</Button>
+            <Btn type="submit" variant="primary" size="lg" loading={pending} disabled={!pw}>دخول</Btn>
           </Fields>
         </form>
       ) : null}
@@ -269,10 +268,10 @@ export function PortalFlow() {
               value={code} onChange={(e) => setCode(e.target.value)} {...on("email")} required
             />
             <div className="door-pair">
-              <Button type="submit" variant="primary" size="lg" loading={pending} disabled={code.trim().length !== 6}>دخول</Button>
-              <Button type="button" variant="ghost" size="lg" disabled={pending || left > 0} onClick={sendCode}>
+              <Btn type="submit" variant="primary" size="lg" loading={pending} disabled={code.trim().length !== 6}>دخول</Btn>
+              <Btn type="button" variant="ghost" size="lg" icon={<ArrowClockwise />} disabled={pending || left > 0} onClick={sendCode}>
                 {left > 0 ? `إعادة الإرسال بعد ${left}` : "إعادة الإرسال"}
-              </Button>
+              </Btn>
             </div>
           </Fields>
         </form>
@@ -286,6 +285,8 @@ export function PortalFlow() {
           <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
         </div>
       ) : null}
+      {/* «ليس لك حساب؟» بعد الدرع لا قبله (محمد ٢٠٢٦-١١-٢٣: كان التحدّي يظهر ملتصقًا تحته) — فالتحقّقُ يلي الطرقَ مباشرةً */}
+      {step === "ways" || step === "email" ? alt : null}
     </>
   );
 }

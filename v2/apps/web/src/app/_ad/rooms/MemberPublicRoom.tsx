@@ -7,10 +7,10 @@
  * وبجانبها **الأوسمةُ** سطورًا (المنولُ بتاريخه، والمقفلُ بما بقي له)، ثمّ **«عنه»** (الدراسة، وحساباتُه).
  *
  * كانت (`m/[slug]/ProfileView`) ثلاثةَ كروتٍ من الهويّة القديمة متراكبةً في عمودٍ ضيّق، و«انشر صفحتك» يقولها لكلّ زائر وهي لصاحبها.
- * **والحجبُ في القاعدة لا هنا** (`get_public_profile`): لا بريدَ ولا جوّالَ ولا ميلادَ ولا إنذار، ولا يُنشر إلّا من له منصبٌ قائم.
+ * **والحجبُ في القاعدة لا هنا** (`get_public_profile`): لا بريدَ ولا جوّالَ ولا ميلادَ ولا إنذار، ولا يُنشر إلّا من له منصبٌ قائمٌ أو تطوّعٌ نشط (١١-٢٤: بطاقتُه «متطوّع أدِيب»، وحقائقُه فرصُه وساعاتُه).
  */
 import {
-  CalendarBlank, CalendarCheck, Compass, DotsThree, Fire, GraduationCap, IdentificationBadge, InstagramLogo, LinkSimple, LinkedinLogo,
+  CalendarBlank, CalendarCheck, Compass, DotsThree, Fire, GraduationCap, HandHeart, Hourglass, IdentificationBadge, InstagramLogo, LinkSimple, LinkedinLogo,
   Medal, Megaphone, Repeat, ShareNetwork, Ticket, TiktokLogo, UserCircle, WhatsappLogo, XLogo,
 } from "@phosphor-icons/react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -22,6 +22,8 @@ import { fmtDate, fmtDateOnly } from "@/lib/dates";
 import { visitsSentence, type ProfileVisits } from "@/lib/profileVisits";
 import { formatDegree, SOCIAL_KEYS, socialLabel, socialLabelOf, socialUrl, type SocialKey } from "@/lib/membershipFields";
 import { personTitle } from "@/lib/positionLabel";
+import { standingName } from "@/lib/standing";
+import { arCount, type ArForms } from "@/lib/arabicCount";
 import type { PublicProfile } from "@/app/m/[slug]/data";
 import { AdButton, AdNote } from "../primitives";
 import { AdIdCard, AdLine, AdSection } from "../account";
@@ -33,6 +35,9 @@ const BADGE_ICONS: Record<string, ReactNode> = {
 };
 const SOCIAL_ICONS: Record<SocialKey, ReactNode> = { twitter: <XLogo />, instagram: <InstagramLogo />, tiktok: <TiktokLogo />, linkedin: <LinkedinLogo /> };
 
+const AR_OPPORTUNITY: ArForms = ["فرصةٌ تطوّعيّةٌ واحدة", "فرصتان تطوّعيّتان", "فرص تطوّعيّة", "فرصةً تطوّعيّة"];
+const AR_HOURS: ArForms = ["ساعةُ تطوّعٍ واحدة", "ساعتا تطوّع", "ساعات تطوّع", "ساعةَ تطوّع"];
+
 /** «في أدِيب منذ 10 أشهر» — مدّةُ الخدمة بالسنة والشهر (كما كانت) */
 function tenureLabel(joinedDate: string | null): string | null {
   if (!joinedDate) return null;
@@ -42,11 +47,13 @@ function tenureLabel(joinedDate: string | null): string | null {
   let months = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m);
   if (now.getDate() < d) months -= 1;
   if (months < 1) return "انضمّ هذا الشهر";
-  if (months < 12) return `في أدِيب منذ ${months} أشهر`;
+  // «منذ شهرين» لا «منذ 2 أشهر» (١١-٢٤): المعدودُ بصيغته بعد «منذ»
+  const monthWord = (n: number) => (n === 1 ? "شهر" : n === 2 ? "شهرين" : n <= 10 ? `${n} أشهر` : `${n} شهرًا`);
+  if (months < 12) return `في أدِيب منذ ${monthWord(months)}`;
   const years = Math.floor(months / 12);
   const rest = months % 12;
-  const yearWord = years === 1 ? "سنة" : years === 2 ? "سنتين" : `${years} سنوات`;
-  return rest ? `في أدِيب منذ ${yearWord} و${rest} أشهر` : `في أدِيب منذ ${yearWord}`;
+  const yearWord = years === 1 ? "سنة" : years === 2 ? "سنتين" : years <= 10 ? `${years} سنوات` : `${years} سنةً`;
+  return rest ? `في أدِيب منذ ${yearWord} و${monthWord(rest)}` : `في أدِيب منذ ${yearWord}`;
 }
 
 /**
@@ -82,13 +89,18 @@ export function MemberPublic({ me }: { me: PublicProfile }) {
   // **بضمير صاحبها** (كانت «أوسمتُه» و«نال» و«عنه» لكلّ أحد)
   const she = me.gender === "female";
   const earned = me.badges.filter((b) => b.earnedAt);
-  const tenure = tenureLabel(me.joinedDate);
+  // **المتطوّعُ أيضًا** (محمد ١١-٢٤): بطاقتُه «متطوّع أدِيب» منذ تطوّعه، وحقائقُه ما عمل — الفرصُ التي حضرها وساعاتُه من شهاداته
+  const vol = me.standing === "volunteer" ? me.volunteer : null;
+  const since = vol ? vol.since : me.joinedDate;
+  const tenure = tenureLabel(since);
   const study = [formatDegree(me.degree), me.college, me.major].filter(Boolean).join("، ");
   const links = SOCIAL_KEYS.map((key) => ({ key, handle: me.links[key] ?? null })).filter((s): s is { key: SocialKey; handle: string } => Boolean(s.handle));
 
   const facts: PubReadFact[] = [
     ...me.positions.map((p) => ({ icon: <IdentificationBadge />, text: personTitle(p.roleAr, p.unitName, me.gender, p.acting) ?? "" })).filter((f) => f.text),
     ...(tenure ? [{ icon: <CalendarBlank />, text: tenure }] : []),
+    ...(vol && vol.joined > 0 ? [{ icon: <HandHeart />, text: arCount(vol.joined, AR_OPPORTUNITY) }] : []),
+    ...(vol && vol.hours > 0 ? [{ icon: <Hourglass />, text: arCount(Number(vol.hours), AR_HOURS) }] : []),
   ];
 
   const share = useShare(`/m/${encodeURIComponent(me.slug)}`, `${me.name}، في نادي أدِيب`);
@@ -102,7 +114,7 @@ export function MemberPublic({ me }: { me: PublicProfile }) {
   const side = (
     <div className="ad-mp-side">
       <AdIdCard plate name={me.name} avatar={me.avatar} gender={me.gender === "female" ? "female" : me.gender === "male" ? "male" : null}
-        standing="عضو أدِيب" since={me.joinedDate ? `منذ ${fmtDateOnly(me.joinedDate)}` : undefined} />
+        standing={standingName(vol ? "volunteer" : "member", me.gender === "female" ? "female" : "male")} since={since ? `منذ ${fmtDateOnly(since)}` : undefined} />
       {/* «شارك» لا «انشر صفحتك»: قارئُها غالبًا غيرُ صاحبها (قطعةُ «شارك الكتيّب» نفسُها) */}
       <DropdownMenu ariaLabel="شارك الصفحة" triggerClassName="ad-btn ad-btn-line ad-book-share" trigger={<><ShareNetwork aria-hidden />شارك الصفحة</>}
         groups={[{ items: shareItems }]} />
@@ -110,7 +122,7 @@ export function MemberPublic({ me }: { me: PublicProfile }) {
   );
 
   return (
-    // «عضو أدِيب» على البطاقة وحدها: شارةُ اللوح كانت تكرّرها فوقها بسطرين
+    // المنزلةُ («عضو أدِيب» أو «متطوّع أدِيب») على البطاقة وحدها: شارةُ اللوح كانت تكرّرها فوقها بسطرين
     <PubRead title={me.name} dek={me.bio ?? undefined} facts={facts} side={side}>
       {own ? (
         <AdNote tone="info" title="هذه صفحتك كما يراها الناس" action={(

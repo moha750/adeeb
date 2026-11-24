@@ -17,7 +17,7 @@ import { BookOpenText, CalendarBlank, ClockCounterClockwise, Notepad, SealCheck,
 import { ArrowSquareOut, Check, Eye, PencilSimple, Plus, Trash } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { RegBlocks, RegTextProvider, type RegTextContext } from "@/app/regulations/_parts/RegText";
-import type { RegDocProps } from "@/app/regulations/_parts/RegDoc";
+import type { RegDocProps } from "@/app/regulations/_parts/RegRead";
 import { fmtDateOnly } from "@/lib/dates";
 import { arCount, type ArForms } from "@/lib/arabicCount";
 import { blocksToMarkup, markupToBlocks } from "@/lib/regulations/edit";

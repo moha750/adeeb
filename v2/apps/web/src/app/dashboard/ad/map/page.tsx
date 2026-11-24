@@ -38,8 +38,9 @@ const PAGES: { group: string; items: { path: string; name: string; kind: Kind; n
   { group: "الأدوات والأبواب", items: [
     { path: "/login", name: "الدخول", kind: "keep" },
     { path: "/signup", name: "إنشاء حساب", kind: "keep" },
+    { path: "/join/apply", name: "التطوّع", kind: "keep", note: "تكملة إنشاء الحساب" },
     { path: "/forgot-password", name: "نسيت كلمة المرور", kind: "keep" },
-    { path: "/complete", name: "إكمال البيانات", kind: "template", note: "قالب الأداة" },
+    { path: "/complete", name: "إكمال البيانات", kind: "template", note: "بابٌ من أبواب الحساب" },
     { path: "/verify", name: "التحقّق من شهادة", kind: "template", note: "قالب الأداة" },
     { path: "/deebo", name: "ديبو", kind: "keep" },
     { path: "/app", name: "أدِيب على جوّالك", kind: "template", note: "قالب الأداة" },

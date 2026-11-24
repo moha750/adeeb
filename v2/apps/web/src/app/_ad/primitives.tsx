@@ -52,7 +52,7 @@ type BtnVariant = "fill" | "inverse" | "inverse-quiet" | "line" | "soft" | "quie
  *  `busy`: الفعلُ يجري — دوّارةٌ مكانَ الرمز (أو قبل الاسم إن لم يكن له رمز)، والنقرُ لا يُكرَّر.
  *  `held`: موقوفٌ مؤقّتًا (إلغاءُ نافذةٍ يجري فعلُها). **وكلاهما `aria-disabled` لا `disabled`**: الزرُّ المعطَّل يُسقط التركيزَ
  *  إلى أوّل الصفحة، فيخرج من النافذة المفتوحة ولا يعود (المراجعة المستقلّة). */
-type BtnBase = { variant?: BtnVariant; size?: "sm"; icon?: ReactNode; iconEnd?: boolean; children: ReactNode; done?: boolean; first?: boolean; busy?: boolean; held?: boolean;
+type BtnBase = { variant?: BtnVariant; size?: "sm" | "lg"; icon?: ReactNode; iconEnd?: boolean; children: ReactNode; done?: boolean; first?: boolean; busy?: boolean; held?: boolean;
   /** رابطٌ خارج الموقع (الخريطة): يُفتح في تبويبٍ جديد كما كان الرابطُ في الصفحات القديمة */
   external?: boolean;
   /**
@@ -70,13 +70,23 @@ type BtnProps = BtnBase &
  * فتح المحرّر، عرض النتائج) فلا يحتاج ختمًا، والثانويُّ الصندوقُ الأبيضُ الذي لا لونَ فيه **فيحمل ختمًا من اللوح** في مربّع
  * أيقونته (إلغاء النشر، تحرير، مسح الكلّ). فلا يتنافس مربّعان في قاعٍ واحد، والرتبةُ ظاهرة: اللوحُ ثمّ الختمُ ثمّ «المزيد».
  */
-const btnClass = (v: BtnVariant, size?: "sm", end?: boolean) => `ad-btn ad-btn-${v}${size ? " ad-btn-sm" : ""}${end ? " ad-btn-end" : ""}`;
+const btnClass = (v: BtnVariant, size?: "sm" | "lg", end?: boolean) => `ad-btn ad-btn-${v}${size ? ` ad-btn-${size}` : ""}${end ? " ad-btn-end" : ""}`;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- `plain` علامةٌ للحارس لا للرسم، فتُنزع من الخصائص
 export function AdButton({ variant = "line", size, icon, iconEnd, children, done, first, busy, held, external, plain: _plain, pressed, ...rest }: BtnProps) {
   if ("href" in rest && rest.href && external) {
     return (
       <a href={rest.href} target="_blank" rel="noopener noreferrer" className={btnClass(variant, size, iconEnd)}>
+        {!iconEnd && icon}
+        {children}
+        {iconEnd && icon}
+      </a>
+    );
+  }
+  // علامةٌ في الصفحة نفسِها رابطٌ عاديّ لا `Link`: الموجِّهُ يقفز إليها قفزًا، والانزلاقُ يتولّاه `SmoothScroll` (١١-٢٤)
+  if ("href" in rest && rest.href?.startsWith("#")) {
+    return (
+      <a href={rest.href} className={btnClass(variant, size, iconEnd)} data-done={done || undefined}>
         {!iconEnd && icon}
         {children}
         {iconEnd && icon}

@@ -192,11 +192,11 @@ export function HomeSummaryRoom({ m }: { m: HomeModel }) {
     <section className="ad-hs-unit" aria-label="فرصٌ تناسب رغباتك">
       <AdGroupTitle icon={<HandHeart />} more={moreOf(opps.length, m.oppsTotal, "كل الفرص المفتوحة", "/dashboard/volunteer")}>فرصٌ تناسب رغباتك</AdGroupTitle>
       {m.prefs?.length ? (
-        <AdNote tone="info" icon={<Heart />} label="رغباتك" title={m.prefs.join("، ")} action={<AdButton href="/join" size="sm" icon={<PencilSimple />}>تعديل رغباتك</AdButton>}>
+        <AdNote tone="info" icon={<Heart />} label="رغباتك" title={m.prefs.join("، ")} action={<AdButton href="/join/apply" size="sm" icon={<PencilSimple />}>تعديل رغباتك</AdButton>}>
           ما يوافقها من الفرص يأتي أوّلًا.
         </AdNote>
       ) : (
-        <AdNote tone="info" icon={<Heart />} label="رغباتك" title="غير محدّدة بعد." action={<AdButton href="/join" size="sm" icon={<PencilSimple />}>تحديد رغباتك</AdButton>}>
+        <AdNote tone="info" icon={<Heart />} label="رغباتك" title="غير محدّدة بعد." action={<AdButton href="/join/apply" size="sm" icon={<PencilSimple />}>تحديد رغباتك</AdButton>}>
           بها نقدّم لك ما يوافقها من الفرص أوّلًا.
         </AdNote>
       )}

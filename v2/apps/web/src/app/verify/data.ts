@@ -15,6 +15,8 @@ export type VerifyResult =
   | { state: "error"; message: string }
   | {
       state: "valid" | "revoked";
+      /** نوعُها من القاعدة: شهادةُ خبرةٍ (منصب) أو مشاركةٍ تطوّعيّة (فرصة) */
+      kind: "experience" | "participation";
       serial: string;
       /** اسمُ صاحبها اليوم — وبه تُرسَم الورقةُ إن تغيّر بعد الإصدار. */
       holderName: string;
@@ -48,7 +50,7 @@ export async function verifyCertificate(code: string | undefined): Promise<Verif
   if (error) return { state: "error", message: error.message };
 
   const r = (data ?? {}) as {
-    found?: boolean; valid?: boolean; serial?: string; holder_name?: string; position_title?: string;
+    found?: boolean; valid?: boolean; kind?: string; serial?: string; holder_name?: string; position_title?: string;
     former_names?: { name?: string; until?: string }[];
     period_from?: string; period_to?: string; issued_on?: string; revoked_on?: string | null;
     hours?: number | string | null; distinction?: string | null;
@@ -57,6 +59,7 @@ export async function verifyCertificate(code: string | undefined): Promise<Verif
 
   return {
     state: r.valid ? "valid" : "revoked",
+    kind: r.kind === "participation" ? "participation" : "experience",
     serial: r.serial ?? serial,
     holderName: r.holder_name ?? "",
     formerNames: (r.former_names ?? [])

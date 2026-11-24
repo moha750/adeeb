@@ -45,7 +45,7 @@ export function PortalHome({ view, card }: {
     <Card>
       <CardHeader variant="soft" icon={<MagnifyingGlass aria-hidden />} title="فرصٌ تناسب رغباتك" />
       {view.prefs && !view.waiting.length ? (
-        <Row Icon={HandHeart} k="رغباتك" v={view.prefs.join("، ") || "لم ترتّبها بعد"} act={EDIT} href="/join" />
+        <Row Icon={HandHeart} k="رغباتك" v={view.prefs.join("، ") || "لم ترتّبها بعد"} act={EDIT} href="/join/apply" />
       ) : null}
       {view.opps.length ? view.opps.map((o) => (
         <Row key={o.id} Icon={UsersThree} k={[o.committee, o.fit ? "من رغباتك" : null].filter(Boolean).join("، ") || "فرصة"} v={o.title} sub={o.sub}
