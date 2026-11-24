@@ -35,6 +35,8 @@ export interface AnchoredPopoverProps {
   role?: string;
   id?: string;
   ariaLabelledby?: string;
+  /** قائمةُ اختيارٍ متعدّد (`Select multiple`) */
+  ariaMultiselectable?: boolean;
   tabIndex?: number;
   /** إعادة حساب الموضع حين يتبدّل هذا (ارتفاع اللوحة يتغيّر: بحث/تصفية). */
   reflowKey?: unknown;
@@ -64,6 +66,7 @@ export function AnchoredPopover({
   role,
   id,
   ariaLabelledby,
+  ariaMultiselectable,
   tabIndex,
   reflowKey,
   onKeyDown,
@@ -180,6 +183,7 @@ export function AnchoredPopover({
       id={id}
       role={role}
       aria-labelledby={ariaLabelledby}
+      aria-multiselectable={ariaMultiselectable}
       tabIndex={tabIndex}
       className={"apop" + (className ? " " + className : "")}
       data-side={pos ? (pos.below ? "below" : "above") : undefined}

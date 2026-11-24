@@ -650,13 +650,18 @@
 .ad-fpanel-opts { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 /* المرشّحُ الطويل في اللوحة زرُّ الشريط نفسُه: أداةٌ مصبوغةٌ على الصفحة البيضاء، بعرض اسمه لا بعرض اللوحة */
 /* الطويلُ في اللوحة حقلٌ بعرض صفّه (محمد ٢٠٢٦-١٠-٣١): قيمتُه في أوّله، وسهمُه أو ✕ في آخره */
-.ad-fpanel .ad-filter { justify-self: stretch; --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
-.ad-fpanel .ad-filter-btn { justify-content: space-between; }
-.ad-fpanel .ad-filter:not(.is-on) .ad-filter-v { font-weight: var(--ad-w-medium); }
+/* **القيدُ صفُّ اللوحة لا اللوحةُ العائمة** (٢٠٢٦-١١-٢٤): هيئةُ الحقل لصفّه أينما وقع صفُّ اللوحة.
+   وصبغتُه وحدها للوحة: في غيرها يأخذ صبغةَ مكانه كما تأخذها حبّاتُ صفّه */
+.ad-fpanel .ad-filter { --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
+.ad-fpanel-row > .ad-filter { justify-self: stretch; }
+.ad-fpanel-row > .ad-filter > .ad-filter-btn { justify-content: space-between; }
+.ad-fpanel-row > .ad-filter:not(.is-on) .ad-filter-v { font-weight: var(--ad-w-medium); }
 /* والمختارُ فيه قطعةُ لوحٍ كالمرشّح المُفعَّل في الشريط وكالحبّة المختارة فوقه (محمد ٢٠٢٦-١٠-٣١: «لا يشبه»؛ كان قيمةً على
    حقلٍ مصبوغ فاختلف المختاران في لوحةٍ واحدة). وارتفاعُه وزاويتُه ارتفاعُ الحبّات وزاويتُها، فلا يكون أثقلَ منها إلّا بعرضه */
-.ad-fpanel .ad-filter { border-radius: var(--ad-r-sm); }
-.ad-fpanel .ad-filter-btn { min-block-size: var(--ad-ctl-sm); }
+.ad-fpanel-row > .ad-filter { border-radius: var(--ad-r-sm); }
+.ad-fpanel-row > .ad-filter > .ad-filter-btn { min-block-size: var(--ad-ctl-sm); }
+/* وعلى اللمس يطول كما تطول حبّاتُه (`.ad-fopt`)، فلا يقصر عنها في صفٍّ واحد (٢٠٢٦-١١-٢٤: كان 32 وحبّاتُه 42) */
+@media (pointer: coarse) { .ad-fpanel-row > .ad-filter > .ad-filter-btn { min-block-size: var(--ad-ctl); } }
 .ad-fpanel-grp { display: contents; }
 .ad-fpanel-g { flex-basis: 100%; margin-block-start: var(--space-1); font-size: var(--ad-t-badge); color: var(--ad-ink-3); }
 /* **قائمةُ الاختيار هي قائمةُ «المزيد» نفسُها** (محمد ٢٠٢٦-١٠-٣١: «الأجملُ ما كان في المزيد»): صفحتُها وصفوفُها ومرورُها أصنافُ
@@ -6577,3 +6582,18 @@ a.ad-dc-card:hover .ad-dc-card-go { transform: translateX(calc(var(--space-1) * 
   .ad-db-out .ad-db-lbl { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ad-db-out .ad-btn { padding-inline: var(--space-3); }
 }
+
+/* ═══ BEGIN التصدير (مسارُ «التصدير»، `volunteers/ExportWindow.tsx`، ٢٠٢٦-١١-٢٤) — هذه الكتلةُ وحدها لهذا المسار ═══
+   لا قاعدةَ هنا: النافذةُ حقولُ النوافذ المعتمدة (`Select`) في `.form-grid`، فلا يُكتب لها شيءٌ يخصّها. */
+/* ═══ END التصدير ═══ */
+
+/* ═══ BEGIN بئرُ الاختيار (`AdCheckWell` في `_ad/checks.tsx`، ٢٠٢٦-١١-٢٤) ═══
+   بئرُ الحقل نفسُه، وقيمتُه مربّعاتُ اختيارٍ في أعمدةٍ بقدر العرض. والمربّعُ في رأس البئر لا في وسطه (كالنصّ الطويل): البئرُ يطول بخياراته */
+html[lang] .fld.ad-cw .fld-lic { top: var(--space-3); translate: none; }
+html[lang] .fld.ad-cw > .fld-lbl { display: flex; align-items: center; gap: var(--space-2); }
+.ad-cw-l { flex: none; }
+.ad-cw-act { margin-inline-start: auto; }
+html[lang] .fld.ad-cw > .ad-cw-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: var(--space-2) var(--space-4); padding-block: var(--space-2) var(--space-3); }
+/* ‏7.5rem: عمودان في الجوّال (البئرُ نحو 280) لا عمودٌ طويلٌ من ثلاث عشرة لجنة، وثلاثةٌ في النافذة العريضة */
+.ad-cw[data-disabled] > .ad-cw-opts { opacity: .55; }
+/* ═══ END بئرُ الاختيار ═══ */

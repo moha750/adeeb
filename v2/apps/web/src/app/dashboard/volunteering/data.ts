@@ -207,6 +207,15 @@ export type VolunteerRow = {
   certificates: number;
 
   trace: VolunteerTrace;
+
+  /**
+   * **الطوابعُ خامًا (ISO)** لتصدير السجلّ (`lib/volunteersExport.ts`، ٢٠٢٦-١١-٢٤): ما فوقها نصوصٌ منسّقةٌ للعرض، والملفُّ يكتب
+   * تواريخَ يُفرز بها في Excel، ومرشّحُ المدّة يقيس بيوم الرياض. فلا يُعاد تحليلُ نصٍّ عربيٍّ منسَّق.
+   */
+  appliedIso: string;
+  endedIso: string | null;
+  lastSignInIso: string | null;
+  prefsUpdatedIso: string | null;
 };
 
 /** صفوفٌ خام كما تردّها القاعدة — تُسمّى مرّةً هنا، فلا يتكرّر وصفُها في كلّ سطر. */
@@ -717,6 +726,11 @@ export async function listVolunteers(only?: string): Promise<VolunteerRow[]> {
       attended: count((x) => x.attendance === "attended"),
       absent: count((x) => x.attendance === "absent"),
       certificates: myCerts.filter((c) => c.status !== "revoked").length,
+
+      appliedIso: r.applied_at,
+      endedIso: r.ended_at,
+      lastSignInIso: a?.lastSignInAt ?? null,
+      prefsUpdatedIso: myPrefs.length ? (myPrefs.map((x) => x.updated_at).sort().at(-1) as string) : null,
 
       trace: {
         reservations: myRes.filter((x) => x.status !== "cancelled").length,
