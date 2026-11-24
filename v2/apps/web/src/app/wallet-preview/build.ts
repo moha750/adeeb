@@ -6,7 +6,7 @@ import { CATALOG, GOAL, type Mode, serialFor, type DemoMember } from "./demo";
 import { passJson } from "./pass";
 import { brandIcon, pointsLadder, stampStrip } from "./png";
 import { authTokenFor } from "./store";
-import { zip, type ZipEntry } from "./zip";
+import { zip, type ZipEntry } from "@/lib/zip";
 
 /**
  * بناءُ الحزمة الموقَّعة — **مصدرٌ واحدٌ لمَخرَجين**: زرُّ التنزيل في الصفحة، وخدمةُ الويب

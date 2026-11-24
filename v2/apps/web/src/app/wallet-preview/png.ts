@@ -15,7 +15,7 @@
 import { deflateSync } from "node:zlib";
 import { LOGO_SIDE, logoAlpha } from "./logo";
 import { PATTERN_H, PATTERN_W, patternAlpha } from "./pattern";
-import { crc32 } from "./zip";
+import { crc32 } from "@/lib/zip";
 
 /** كتلة PNG: طول + وسم + بيانات + CRC (على الوسم والبيانات معًا). */
 function chunk(type: string, data: Buffer): Buffer {

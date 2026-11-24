@@ -74,6 +74,13 @@ export type FilterDef<T> = {
 
 const PAGE_SIZE = 50;
 
+/**
+ * **ما تعرضه الغرفةُ الآن** (مسارُ «التصدير»، ٢٠٢٦-١١-٢٤): الموضعُ، ومعرّفاتُ ما فيه بعد البحث والتصفية بترتيبه المرئيّ (الصفحاتُ كلُّها
+ * لا الظاهرةُ وحدها)، والمحدَّدُ منها. يُعطى لمن يطلبه وحده — فعلُ اللوح دالّةً (`action`) والأفعالُ الجماعيّة (`bulk`) — ولا يتغيّر
+ * شيءٌ في غرفةٍ لا تطلبه. وبلا `idOf` لا معرّفات.
+ */
+export type RoomScope = { position: string; ids: string[]; picked: string[]; filtering: boolean };
+
 /** قيمةُ الترتيب: رقمٌ (يبدأ بالأكبر) أو نصٌّ (يبدأ بالألف) — كما كانت الجداولُ القديمة (`toggleSorting`). */
 export type SortKey = number | string;
 /** عمودُ الجدول، وإن أُعطي `sortBy` رُتّب الجدولُ به من رأسه. */
@@ -98,7 +105,8 @@ export function CollectionRoom<T>({
   /** مسارُ الغرفة في خريطة التنقّل — منه الفتات (بوّابة أدِيب › المجموعة)، والاسمُ نفسُه عنوانُ اللوح. */
   navPath?: string;
   title: string;
-  action?: AdAction;
+  /** فعلُ اللوح، أو دالّةٌ تأخذ ما تعرضه الغرفةُ الآن (`RoomScope`) فتعطيه — «تصدير» ما في الغرفة ببحثه وتصفيته */
+  action?: AdAction | ((scope: RoomScope) => AdAction);
   /** فعلٌ ثانٍ هادئٌ على اللوح (`RoomPlate.extra`) */
   extra?: AdAction;
   /** اسمُ السجلّ بصيغ العدّ الأربع من مصدرها الواحد (`lib/arabicCount`): «خبرٌ واحد، خبران، أخبار، خبرًا». */
@@ -163,8 +171,11 @@ export function CollectionRoom<T>({
   };
   /** معرّفُ السجلّ — للتحديد الجماعيّ */
   idOf?: (item: T) => string;
-  /** الأفعالُ الجماعيّة على المحدَّد؛ بدونها لا تحديدَ في الغرفة. و`position` الموضعُ الحاليّ (فعلُ كلّ مرحلةٍ في صفحة السجلّ) */
-  bulk?: (ids: string[], position: string) => AdOp[];
+  /**
+   * الأفعالُ الجماعيّة على المحدَّد؛ بدونها لا تحديدَ في الغرفة. و`position` الموضعُ الحاليّ (فعلُ كلّ مرحلةٍ في صفحة السجلّ)، و`scope`
+   * ما تعرضه الغرفةُ الآن لمن يحتاجه (نافذةُ التصدير تعرض «ما في الغرفة الآن» بجانب المحدَّدين)
+   */
+  bulk?: (ids: string[], position: string, scope: RoomScope) => AdOp[];
   /**
    * غرفةٌ ترتيبُها يدويّ (يحدّد ترتيبَ قسمها في الموقع): كعبُ كلّ سجلٍّ مقبضٌ يُسحب في القائمة نفسِها، والحفظُ عند الإفلات
    * (`reorder.tsx`). ويتطلّب `idOf`، و`items` بترتيبها المحفوظ
@@ -440,6 +451,9 @@ export function CollectionRoom<T>({
   // المحدَّدُ ما بقي منه في القائمة: سجلٌّ خرج من الموضع بعد فعلٍ (أُرشف فانتقل) لا يبقى محدَّدًا بلا علامة
   const rowIds = new Set(idOf ? rows.map((i) => idOf(i)) : []);
   const picked = [...sel].filter((id) => rowIds.has(id));
+  // ما تعرضه الغرفةُ الآن — يُبنى لمن يطلبه وحده (فعلُ لوحٍ دالّة، أو أفعالٌ جماعيّة)، وغيرُهما لا يتغيّر فيه شيء
+  const scopeNow = (): RoomScope => ({ position: current.key, ids: idOf ? rows.map((i) => idOf(i)) : [], picked, filtering });
+  const plateAction = typeof action === "function" ? action(scopeNow()) : action;
 
   /** السجلّاتُ الظاهرةُ مقسومةً على مجموعاتها بترتيبها — ورأسُ كلّ مجموعةٍ من سجلّاتها كلِّها لا من صفحتها وحدها */
   const segments = (list: T[]) => {
@@ -555,7 +569,7 @@ export function CollectionRoom<T>({
     <AdPickScope value={selectable ? { selected: sel, toggle } : null}>
     <AdRoom label={title}>
       <div ref={head} className="ad-room-head">
-        {recordHead ?? <RoomPlate title={title} crumb={crumb} action={action} extra={extra} />}
+        {recordHead ?? <RoomPlate title={title} crumb={crumb} action={plateAction} extra={extra} />}
         {lead}
         {plates.length > 1 && !(bare && items.length === 0) && <AdSwitch positions={plates} position={current.key} onPosition={choose} />}
       </div>
@@ -565,7 +579,7 @@ export function CollectionRoom<T>({
           count={picked.length}
           noun={noun}
           // الفعلُ الجماعيّ الذي يعود بنجاحه (`true`) يُسقط التحديدَ في الحال: لا يبقى الشريطُ قائمًا يُرسَل منه الشيءُ نفسُه مرّتين
-          ops={bulkOps(picked, current.key).map((o) => ({ ...o, onClick: async () => { if ((await (o.onClick?.() as unknown)) === true) unpick(); } }))}
+          ops={bulkOps(picked, current.key, scopeNow()).map((o) => ({ ...o, onClick: async () => { if ((await (o.onClick?.() as unknown)) === true) unpick(); } }))}
           // الشريطُ يعود شريطَ أدوات فيختفي الزرّ: التركيزُ إلى البحث لا إلى أوّل الصفحة
           onClear={() => { unpick(); requestAnimationFrame(() => head.current?.parentElement?.querySelector<HTMLInputElement>(".ad-search-input")?.focus()); }}
         />

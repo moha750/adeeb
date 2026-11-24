@@ -38,6 +38,16 @@ export interface SelectProps {
   /** وسم الإلزام (نجمة حمراء) بعد التسمية. */
   required?: boolean;
   className?: string;
+  /**
+   * **الاختيارُ المتعدّد** (٢٠٢٦-١١-٢٤، نافذةُ التصدير: «لو أردتُ أكثرَ من لجنة؟»): القائمةُ نفسُها، والنقرُ يضيف ويرفع ولا يُغلقها،
+   * وكلُّ مختارٍ بعلامته. والحقلُ المغلق يقول ما اختير («التصوير، الرواة») أو ما يلخّصه `summary` حين يكثر. وفارغًا يقول `emptyLabel`
+   * (مثل «الكلّ») بحبر القيمة لا خافتًا: الفراغُ هنا اختيارٌ لا نقص، وصفُّه أوّلُ القائمة يرفع ما اختير.
+   */
+  multiple?: boolean;
+  values?: string[];
+  onValuesChange?: (values: string[]) => void;
+  emptyLabel?: string;
+  summary?: (chosen: SelectOption[]) => string;
 }
 
 const Chev = () => (
@@ -77,6 +87,11 @@ export function Select({
   optional,
   required,
   className,
+  multiple = false,
+  values,
+  onValuesChange,
+  emptyLabel,
+  summary,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const [internal, setInternal] = useState(defaultValue ?? "");
@@ -93,7 +108,9 @@ export function Select({
   const searchRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const selected = options.find((o) => o.value === val);
+  const selected = multiple ? undefined : options.find((o) => o.value === val);
+  const many = multiple ? options.filter((o) => (values ?? []).includes(o.value)) : [];
+  const isSel = (v: string) => (multiple ? (values ?? []).includes(v) : v === val);
 
   const filtered = useMemo(() => {
     if (!searchable || !query.trim()) return options;
@@ -117,6 +134,12 @@ export function Select({
   }, [filtered]);
 
   const choose = (v: string) => {
+    // المتعدّد: يضيف أو يرفع، والقائمةُ مفتوحةٌ حتى يُفرغ منها
+    if (multiple) {
+      const cur = values ?? [];
+      onValuesChange?.(cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]);
+      return;
+    }
     if (value === undefined) setInternal(v);
     onValueChange?.(v);
     setOpen(false);
@@ -129,7 +152,7 @@ export function Select({
   useEffect(() => {
     // يُغلق فيُمحى بحثُه: من أعاد الفتح يرى الخيارات كلّها لا بقيّةَ بحثٍ مضى
     if (!open) { setQuery(""); return; }
-    const cur = filtered.findIndex((o) => o.value === val);
+    const cur = filtered.findIndex((o) => isSel(o.value));
     setHl(byKey.current ? (cur >= 0 ? cur : 0) : -1);
     byKey.current = false;
     if (cur >= 0) setTimeout(() => panelRef.current?.querySelector<HTMLElement>(".asel-sel")?.scrollIntoView({ block: "nearest" }), 0);
@@ -166,7 +189,7 @@ export function Select({
     } else if (e.key === "Enter") {
       e.preventDefault();
       // لا صفَّ مُنارٌ (فُتحت بالنقر): Enter يُبقي المختار، أو يأخذ الأوّل — كما كان قبل أن تُطفأ الإنارةُ عند الفتح
-      const o = hl >= 0 ? filtered[hl] : filtered.find((x) => x.value === val) ?? filtered[0];
+      const o = hl >= 0 ? filtered[hl] : filtered.find((x) => isSel(x.value)) ?? filtered[0];
       if (o) choose(o.value);
     }
   };
@@ -185,7 +208,7 @@ export function Select({
         className={cn(
           "asel",
           open ? "asel-open" : undefined,
-          selected ? "asel-filled" : undefined,
+          selected || many.length > 0 ? "asel-filled" : undefined,
           error ? "asel-error" : undefined,
           disabled ? "asel-disabled" : undefined,
         )}
@@ -202,12 +225,16 @@ export function Select({
       >
         {/* التلميح يبقى بعد الاختيار: الحقلُ المغلق هو ما يراه المستخدم لحظةَ الإرسال. */}
         <span className="asel-value">
-          {selected ? selected.label : <span className="asel-ph">{placeholder ?? "اختر"}</span>}
+          {multiple
+            ? many.length > 0
+              ? (summary ? summary(many) : many.map((o) => o.label).join("، "))
+              : emptyLabel ?? <span className="asel-ph">{placeholder ?? "اختر"}</span>
+            : selected ? selected.label : <span className="asel-ph">{placeholder ?? "اختر"}</span>}
           {selected?.hint ? <span className="asel-vhint">{selected.hint}</span> : null}
         </span>
         <span className="asel-chev"><Chev /></span>
       </button>
-      {name ? <input type="hidden" name={name} value={val} readOnly /> : null}
+      {name ? <input type="hidden" name={name} value={multiple ? (values ?? []).join(",") : val} readOnly /> : null}
 
       <AnchoredPopover
         open={open && !disabled}
@@ -220,6 +247,7 @@ export function Select({
         matchWidth
         className={cn("asel-panel", tone && `asel-tone-${tone}`)}
         role="listbox"
+        ariaMultiselectable={multiple || undefined}
         reflowKey={seq.length}
         panelRef={(el) => {
           panelRef.current = el;
@@ -242,6 +270,18 @@ export function Select({
           ) : null}
           <div className="asel-list">
           {seq.length === 0 ? <div className="asel-empty">لا نتائج</div> : null}
+          {multiple && emptyLabel && !query.trim() ? (
+            <div
+              role="option"
+              aria-selected={many.length === 0}
+              className={cn("asel-opt", many.length === 0 ? "asel-sel" : undefined)}
+              onMouseEnter={() => setHl(-1)}
+              onClick={() => onValuesChange?.([])}
+            >
+              <span className="asel-txt">{emptyLabel}</span>
+              <span className="asel-ck"><Check /></span>
+            </div>
+          ) : null}
           {seq.map((row, i) =>
             row.type === "header" ? (
               <div className="asel-gh" key={`h-${i}`}>{row.icon ? <span className="asel-gi" aria-hidden>{row.icon}</span> : null}<span>{row.label}</span></div>
@@ -249,10 +289,10 @@ export function Select({
               <div
                 key={row.opt.value}
                 role="option"
-                aria-selected={row.opt.value === val}
+                aria-selected={isSel(row.opt.value)}
                 className={cn(
                   "asel-opt",
-                  row.opt.value === val ? "asel-sel" : undefined,
+                  isSel(row.opt.value) ? "asel-sel" : undefined,
                   row.index === hl ? "asel-hl" : undefined,
                 )}
                 onMouseEnter={() => setHl(row.index)}

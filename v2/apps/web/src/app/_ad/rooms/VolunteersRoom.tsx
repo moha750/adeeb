@@ -7,52 +7,46 @@
  * و**إهداءُ العضويّة** لمن يملكه (`canGrant` من الصفحة) واللجنةُ المقترحةُ رغبتُه الأولى، و**إنهاءُ التطوّع** بسببٍ مكتوب —
  * ونافذتُهما نافذةُ الغرفة القديمة كما هي (فيها حقلٌ لا يحمله `AdConfirm`).
  *
+ * **والتصدير** (مسارُ «التصدير»، اعتمده محمد ٢٠٢٦-١١-٢٤): «تصدير» فعلُ اللوح (الغرفةُ بلا إنشاء، والتصديرُ فعلُها كلُّها)، وفي الجدول
+ * تحديدٌ فعلُه الوحيد «تصدير» — وكلاهما يفتح نافذةً واحدة (`ExportWindow`) تُخرج ملفَّ Excel من الخادم (`volunteers/export.ts`).
+ *
  * **والإحصاءُ القديم**: عددُ الكشف عددُ موضعه، و«لم يشارك ولا مرّة» حالٌ تقود إلى فعلٍ (يُدعى إلى الفرص القادمة) فصار موضعًا
  * بعدده. و«دخل في آخر ثلاثين يومًا» والرغبةُ الأولى والمدنُ والجنسُ مجاميعُ وتوزيعاتٌ لا حال: مكانُها صفحةُ الإحصاء.
  */
 import type { RoomView } from "../view";
 import { VOLUNTEERS_ROOM } from "./volunteers.meta";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Modal, Select, Textarea, matchesSearch } from "@adeeb/design-system";
 import {
   CalendarPlus, CalendarX, Certificate, IdentificationBadge, ClipboardText, Envelope, Gift, HandHeart, ListNumbers, Phone, SignIn,
   UserCircle,
 } from "@phosphor-icons/react";
-import { PencilSimple } from "@/app/_components/glyphs";
+import { DownloadSimple, PencilSimple } from "@/app/_components/glyphs";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import { endVolunteering, grantMembership } from "@/app/dashboard/volunteering/actions";
 import type { VolunteerRow } from "@/app/dashboard/volunteering/data";
 import { VolunteerHero, VolunteerRecord } from "@/app/dashboard/volunteering/volunteers/VolunteerRecord";
+import { ExportWindow, type ExportOpen } from "@/app/dashboard/volunteering/volunteers/ExportWindow";
+import { exportVolunteers, type ExportResult } from "@/app/dashboard/volunteering/volunteers/export";
+import { participated, promoted, timesOf, type ExportSpec } from "@/lib/volunteersExport";
 import { AR_VOLUNTEER } from "@/lib/arabicCount";
 import { AdActs, AdCard, AdRow, type AdAction, type AdFigure, type AdMeta, type AdOp } from "../primitives";
-import { CollectionRoom, type Position } from "../collection";
+import { CollectionRoom, type Position, type RoomScope } from "../collection";
 import { fmtNum } from "../format";
 
 type Ask = { kind: "grant" | "end"; row: VolunteerRow } | null;
 
-/** شارك فعلًا: طلبٌ مقبولٌ أُكّد حضورُه — حكمُ «لم يشارك ولا مرّة» القديم (`stats.idle`). */
-const participated = (v: VolunteerRow) => v.apps.some((a) => a.status === "accepted" && a.attendance === "attended");
-
 /**
- * **كم مرّةً شارك** (`VolunteerCard`، المالك ٢٠٢٦-١٠-٠٣): فرصٌ أُكّد حضورُه فيها، تُعدّ بالفرصة لا بالفترة (فترتان من فرصةٍ مشاركةٌ
- * واحدة)، كما تُعدّ الشهادة.
+ * «شارك فعلًا» (`participated`، حكمُ «لم يشارك ولا مرّة» القديم)، و«كم مرّةً شارك» (`timesOf`: فرصٌ أُكّد حضورُه فيها، تُعدّ بالفرصة لا
+ * بالفترة، المالك ٢٠٢٦-١٠-٠٣)، و«من نال العضويّة ترقّى ولم يخرج» (`promoted`، محمد ٢٠٢٦-١١-٠٣) — مصدرُها `lib/volunteersExport.ts`،
+ * فما تقوله مواضعُ الغرفة وأرقامُها هو ما يكتبه ملفُّ التصدير.
  */
-const timesOf = (v: VolunteerRow) =>
-  new Set(v.apps.filter((a) => a.status === "accepted" && a.attendance === "attended").map((a) => a.opportunityId)).size;
 
 /**
  * **المواضع: تبويبا الكشف القديم، وبينهما «لم يشارك ولا مرّة»** — كان أوسطَ كاردات الإحصاء بنغمة التحذير («تحتاج إجراءً منك»)
  * باسمه الذي اختاره المالك (٢٠٢٦-١٠-٠٣)، فصار موضعًا بعدده من المتطوّعين النشطين: هم من يُدعَون إلى الفرص القادمة.
  */
-/**
- * **من نال العضويّة ترقّى ولم يخرج** (محمد ٢٠٢٦-١١-٠٣): إهداءُ العضويّة (`grant_membership_to_volunteer`) يُطفئ تطوّعَه ويكتب سببًا
- * ثابتًا «نال العضويّة» — فكان يظهر في «سابقون» بسطر «سببُ انتهاء التطوّع: نال العضويّة» كأنّه أُنهي. وذلك النصُّ الثابت علامتُه الوحيدة
- * في القاعدة (لا عمودَ لنوع الانتهاء)، فإن تغيّر في الدالّة تغيّر هنا.
- */
-const PROMOTED = "نال العضويّة";
-const promoted = (v: VolunteerRow) => v.status === "former" && v.endReason?.trim() === PROMOTED;
-
 const POSITIONS: Position<VolunteerRow>[] = [
   { key: "active", label: "متطوّعون", match: (v) => v.status === "active", empty: "لا متطوّعين هنا." },
   { key: "idle", label: "لم يشارك ولا مرّة", match: (v) => v.status === "active" && !participated(v), empty: "شارك كلُّ متطوّعٍ مرّةً على الأقلّ." },
@@ -60,13 +54,17 @@ const POSITIONS: Position<VolunteerRow>[] = [
   { key: "former", label: "سابقون", match: (v) => v.status === "former" && !promoted(v), empty: "لا متطوّعين سابقين." },
 ];
 
-/** `canGrant`: يملك `manage_membership_applications` (الصفحة)، وبلاها لا يظهر الإهداء. و`serverNow` يمرّره كلُّ مسارٍ على القالب. */
-export function VolunteersRoom({ rows, committees, canGrant, view }: {
+/**
+ * `canGrant`: يملك `manage_membership_applications` (الصفحة)، وبلاها لا يظهر الإهداء. و`serverNow` يمرّره كلُّ مسارٍ على القالب.
+ * و`exporter`: طريقُ ملفّ التصدير — إجراءُ الخادم الحقيقيّ إن لم يُمرَّر، ومختبرُ التطوير (`/export-lab`) يمرّر طريقَه ببياناته الوهميّة.
+ */
+export function VolunteersRoom({ rows, committees, canGrant, view, exporter }: {
   rows: VolunteerRow[];
   committees: { id: number; name: string }[];
   canGrant: boolean;
   serverNow: number;
   view?: RoomView;
+  exporter?: (spec: ExportSpec) => Promise<ExportResult>;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -75,6 +73,13 @@ export function VolunteersRoom({ rows, committees, canGrant, view }: {
   const [record, setRecord] = useState<VolunteerRow | null>(null);
   const [committee, setCommittee] = useState("");
   const [reason, setReason] = useState("");
+  const [exp, setExp] = useState<ExportOpen | null>(null);
+  // **`?f=dry` في التطوير وحده**: الملفُّ يخرج ولا يُسجَّل التصدير — للفحص بلا كتابةٍ في القاعدة الحيّة. والإنتاجُ يُهمله (والخادمُ كذلك)
+  const sp = useSearchParams();
+  const dry = process.env.NODE_ENV !== "production" && sp.get("f") === "dry";
+  const run = exporter ?? ((spec: ExportSpec) => exportVolunteers(spec, { dry }));
+  /** «تصدير» من اللوح يفتح على ما في الغرفة الآن، ومن شريط المحدَّد على المحدَّدين — والنافذةُ تعرض الثلاثة */
+  const openExport = (scope: RoomScope, initial: ExportOpen["initial"]) => setExp({ initial, room: scope.ids, picked: scope.picked });
 
   const openAsk = (kind: "grant" | "end", row: VolunteerRow) => {
     setCommittee(row.prefs[0] ? String(row.prefs[0].id) : "");
@@ -176,6 +181,9 @@ export function VolunteersRoom({ rows, committees, canGrant, view }: {
         viewKey={VOLUNTEERS_ROOM.viewKey}
         initialView={view}
         idOf={(v) => v.userId}
+        // **«تصدير» فعلُ اللوح** (لا زرَّ بلا عمل: لا يظهر في كشفٍ فارغ)، **وفعلُ التحديد الوحيد** في الجدول (محمد ٢٠٢٦-١١-٢٤)
+        action={rows.length ? (scope) => ({ label: "تصدير", icon: <DownloadSimple />, onClick: () => openExport(scope, "room") }) : undefined}
+        bulk={(_ids, _pos, scope) => [{ key: "export", label: "تصدير", icon: <DownloadSimple />, onClick: () => openExport(scope, "picked") }]}
         table={{
           // الترتيبُ بالاسم وبالعددين من رؤوسها كجداول الغرف كلّها (لم يكن للغرفة القديمة جدول)
           head: "المتطوّع",
@@ -225,6 +233,8 @@ export function VolunteersRoom({ rows, committees, canGrant, view }: {
       >
         {record ? <VolunteerRecord v={record} /> : null}
       </Modal>
+
+      <ExportWindow open={exp} rows={rows} committees={committees} onClose={() => setExp(null)} run={run} />
 
       {/* الإهداءُ والإنهاء : نافذةُ الغرفة القديمة كما هي — فيها اللجنةُ أو السببُ، ولا يحمل `AdConfirm` حقلًا */}
       <Modal
