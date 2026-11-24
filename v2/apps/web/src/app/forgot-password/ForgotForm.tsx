@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AltLink } from "@/app/_door/parts";
-import { Alert, Button, Field } from "@adeeb/design-system";
+import { AltLink, Btn, DoorAlert } from "@/app/_door/parts";
+import { Field } from "@adeeb/design-system";
 import { At, Envelope } from "@phosphor-icons/react";
+import { PencilSimple } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { logSignin } from "@/lib/signinEvents";
 import { CAPTCHA_PENDING, toArabicAuthError, waitSeconds } from "@/lib/authErrors";
@@ -88,12 +89,12 @@ export function ForgotForm() {
 
   /** رقمُه يتحرّك مع العدّاد، ويرفع نفسَه عند الصفر — فلا يبقى نصٌّ يكذب. */
   const waitAlert =
-    waiting && left > 0 ? <Alert tone="danger">انتظر {left} ثانية ثمّ أعِد المحاولة.</Alert> : null;
+    waiting && left > 0 ? <DoorAlert tone="danger">انتظر {left} ثانية ثمّ أعِد المحاولة.</DoorAlert> : null;
 
   if (sent) {
     return (
       <div className="aauth-form">
-        {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
+        {err ? <DoorAlert tone="danger" onClose={() => setErr(null)}>{err}</DoorAlert> : null}
         {waitAlert}
 
         {/*
@@ -104,11 +105,11 @@ export function ForgotForm() {
         {/* **الشرطُ في الرأس لا في ذيل الجملة** (المالك ٢٠٢٦-١٠-١٩: جرّب بريدًا وهميًّا فقرأها «أُرسل
             إلى الوهميّ»). والردُّ يبقى محايدًا: لا يُعرف من هنا أَلِلبريد حسابٌ أم لا — فالاستعادةُ لا
             تمرّ بالدرع كما يمرّ الرمز، وسؤالٌ عن الحساب بلا درعٍ بابُ تعدادٍ لكلّ من شاء. */}
-        <Alert tone="info" title="إن كان لهذا البريد حسابٌ في أدِيب، فقد وصله الرابط">
+        <DoorAlert tone="info" title="إن كان لهذا البريد حسابٌ في أدِيب، فقد وصله الرابط">
           تفقّد <b className="font-latin" dir="ltr">{email.trim()}</b> واضغط الرابط لتعيين كلمة مرورٍ
           جديدة. صالحٌ {LINK_TTL_MIN} دقائق ولمرّةٍ واحدة. لم يصلك؟ تحقّق من مجلّد المهملات، أو من
           كتابة البريد — أو لعلّه ليس لك حسابٌ بعدُ.
-        </Alert>
+        </DoorAlert>
 
         {/* الدرعُ يبقى بعد الإرسال: إعادةُ الإرسال بريدٌ آخر، فتحتاج رمزًا آخر. */}
         {TURNSTILE_SITE_KEY ? (
@@ -116,7 +117,7 @@ export function ForgotForm() {
         ) : null}
 
         {/* «يعمل الآن» بـ loading، و«غير متاح» بـ disabled — القاعدة ٧، ويجتمعان بلا تعارض */}
-        <Button
+        <Btn
           variant="primary"
           size="lg"
           className="aauth-submit"
@@ -125,17 +126,18 @@ export function ForgotForm() {
           onClick={send}
         >
           {left > 0 ? `أعِد الإرسال بعد ${left} ثانية` : "أعِد إرسال الرابط"}
-        </Button>
+        </Btn>
 
         {/* تصحيحُ البريد يُلغي مهلةَ الوتيرة: حدُّ Supabase لكلّ **مستخدم**، وبريدٌ آخر مستخدمٌ آخر. */}
-        <Button
+        <Btn
           variant="ghost"
           size="md"
+          icon={<PencilSimple />}
           className="aauth-back"
           onClick={() => { setSent(false); setWaiting(false); setLeft(0); setErr(null); }}
         >
           البريد خاطئ؟ عدّله
-        </Button>
+        </Btn>
 
         <AltLink lead="ليس لك حسابٌ بعد؟" href="/signup">أنشئ حسابًا</AltLink>
       </div>
@@ -144,7 +146,7 @@ export function ForgotForm() {
 
   return (
     <form className="aauth-form" onSubmit={submit} noValidate>
-      {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
+      {err ? <DoorAlert tone="danger" onClose={() => setErr(null)}>{err}</DoorAlert> : null}
       {waitAlert}
 
       <Field
@@ -166,7 +168,7 @@ export function ForgotForm() {
         <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} />
       ) : null}
 
-      <Button
+      <Btn
         type="submit"
         variant="primary"
         size="lg"
@@ -175,9 +177,9 @@ export function ForgotForm() {
         className="aauth-submit"
       >
         {waiting && left > 0 ? `أعِد المحاولة بعد ${left} ثانية` : "أرسل رابط الاستعادة"}
-      </Button>
+      </Btn>
 
-      <AltLink lead="تذكّرتَها؟" href="/login">بوّابة أدِيب</AltLink>
+      <AltLink lead="تذكّرتَ كلمةَ المرور؟" href="/login">ادخل بوّابة أدِيب</AltLink>
     </form>
   );
 }

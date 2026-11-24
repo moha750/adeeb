@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Field } from "@adeeb/design-system";
-import { Key, Lock, LockKey } from "@phosphor-icons/react";
-import { CheckCircle } from "@/app/_components/glyphs";
+import { Field } from "@adeeb/design-system";
+import { Btn, DoorAlert, LinkBtn } from "@/app/_door/parts";
+import { HandPalm, Key, Lock, LockKey, SignIn, Browser } from "@phosphor-icons/react";
+import { ArrowClockwise, CheckCircle } from "@/app/_components/glyphs";
 import { createClient } from "@/lib/supabase/client";
 import { isSessionGone, toArabicAuthError } from "@/lib/authErrors";
 import { RESET_WINDOW_SEC, clearResetSent, resetSecondsLeft } from "@/lib/resetWindow";
@@ -207,7 +207,7 @@ export function ResetForm() {
   if (phase === "checking") {
     return (
       <div className="aauth-form">
-        <Alert tone="neutral" title="جارٍ التحقّق من الرابط">لحظة…</Alert>
+        <DoorAlert tone="neutral" title="جارٍ التحقّق من الرابط">لحظة…</DoorAlert>
       </div>
     );
   }
@@ -215,10 +215,10 @@ export function ResetForm() {
   if (phase === "invalid") {
     return (
       <div className="aauth-form">
-        <Alert tone="danger" title="رابطٌ منتهٍ أو غير صالح">
+        <DoorAlert tone="danger" title="رابطٌ منتهٍ أو غير صالح">
           {linkErr ?? "انتهت صلاحية الرابط أو استُعمل من قبل. اطلب رابطًا جديدًا."}
-        </Alert>
-        <Link href="/forgot-password" className="abtn abtn-ghost abtn-md aauth-back">اطلب رابطًا جديدًا</Link>
+        </DoorAlert>
+        <LinkBtn href="/forgot-password" icon={<ArrowClockwise />} className="aauth-back">اطلب رابطًا جديدًا</LinkBtn>
       </div>
     );
   }
@@ -226,10 +226,10 @@ export function ResetForm() {
   if (phase === "done") {
     return (
       <div className="aauth-form">
-        <Alert tone="success" title="تغيّرت كلمة المرور">ادخل الآن بكلمتك الجديدة.</Alert>
-        <Button variant="primary" size="lg" className="aauth-submit" onClick={() => { router.replace("/login"); router.refresh(); }}>
+        <DoorAlert tone="success" title="تغيّرت كلمة المرور">ادخل الآن بكلمتك الجديدة.</DoorAlert>
+        <Btn variant="primary" size="lg" className="aauth-submit" onClick={() => { router.replace("/login"); router.refresh(); }}>
           ادخل إلى بوّابة أدِيب
-        </Button>
+        </Btn>
       </div>
     );
   }
@@ -237,10 +237,10 @@ export function ResetForm() {
   if (saved) {
     return (
       <div className="aauth-form">
-        <Alert tone="success" title="تغيّرت كلمة المرور في نافذةٍ أخرى">
+        <DoorAlert tone="success" title="تغيّرت كلمة المرور في نافذةٍ أخرى">
           أُتِمّ التعيين في نافذةٍ أخرى من هذا المتصفّح، فلا حاجة لإعادته هنا.
-        </Alert>
-        <Link href="/login" className="abtn abtn-ghost abtn-md aauth-back">بوّابة أدِيب</Link>
+        </DoorAlert>
+        <LinkBtn href="/login" icon={<SignIn />} className="aauth-back">ادخل بوّابة أدِيب</LinkBtn>
       </div>
     );
   }
@@ -248,12 +248,12 @@ export function ResetForm() {
   if (stale) {
     return (
       <div className="aauth-form">
-        <Alert tone="warning" title="الشاشة مفتوحةٌ في نافذةٍ أخرى">
+        <DoorAlert tone="warning" title="الشاشة مفتوحةٌ في نافذةٍ أخرى">
           فُتحت شاشة التعيين في نافذةٍ أحدث، وأكملُها هناك. أغلق هذه النافذة، أو أعِد العمل فيها.
-        </Alert>
-        <Button variant="ghost" size="md" className="aauth-back" onClick={claim}>
+        </DoorAlert>
+        <Btn variant="ghost" size="md" icon={<Browser />} className="aauth-back" onClick={claim}>
           أكمِل في هذه النافذة
-        </Button>
+        </Btn>
       </div>
     );
   }
@@ -264,22 +264,22 @@ export function ResetForm() {
 
   return (
     <form className="aauth-form" onSubmit={submit} onFocusCapture={claim} onInput={claim} noValidate>
-      {err ? <Alert tone="danger" onClose={() => setErr(null)}>{err}</Alert> : null}
-      <Alert tone="info" compact>
+      {err ? <DoorAlert tone="danger" onClose={() => setErr(null)}>{err}</DoorAlert> : null}
+      <DoorAlert tone="info" compact>
         أمامك <b className="font-latin">{clock(left)}</b> لإتمام التعيين قبل أن تنتهي المهلة.
-      </Alert>
+      </DoorAlert>
       {spent ? (
-        <Alert
+        <DoorAlert
           tone="warning"
           compact
           actions={
-            <Button variant="ghost-warning" size="sm" loading={stopping} onClick={stopAll}>
+            <Btn variant="ghost" size="sm" icon={<HandPalm />} loading={stopping} onClick={stopAll}>
               لست أنا، أوقِف
-            </Button>
+            </Btn>
           }
         >
           الرابط فُتِح من قبلُ من هذا المتصفّح. إن لم تكن أنت فأوقِف الآن، وإن كنتَ أنت فتستطيع تغيير كلمة المرور.
-        </Alert>
+        </DoorAlert>
       ) : null}
 
       <Field
@@ -313,9 +313,9 @@ export function ResetForm() {
         required
       />
 
-      <Button type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="aauth-submit">
+      <Btn type="submit" variant="primary" size="lg" loading={pending} disabled={!canSubmit} className="aauth-submit">
         حفظ كلمة المرور
-      </Button>
+      </Btn>
     </form>
   );
 }

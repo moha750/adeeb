@@ -387,7 +387,8 @@
   --ad-glass-photo: color-mix(in oklab, var(--navy-900) 58%, transparent);
   --ad-glass-photo-edge: var(--ad-plate-hair);
   --ad-glass-photo-blur: blur(14px) saturate(1.2);
-  --ad-plate-naqsh: .15;
+  /* نصفُ ما كان (.15): على اللوح الكبير طغى النقشُ على كلامه حتى «شبه لا يُقرأ» (محمد ٢٠٢٦-١١-٢٤، (ب) من ثلاث درجاتٍ جُرّبت في المواضع كلّها) */
+  --ad-plate-naqsh: .075;
   --ad-plate-mesh: color-mix(in oklab, var(--steel-50) 15%, transparent);
 
   /* نغماتُ الحالة: نصّ، وأرضٌ باهتة، وحدّ */
@@ -450,7 +451,7 @@
   --ad-field-up-2: var(--ad-hair);
   --ad-plate: linear-gradient(135deg, var(--navy-700), var(--navy-900));
   --ad-plate-edge: color-mix(in oklab, var(--steel-50) 9%, transparent);
-  --ad-plate-naqsh: .1;
+  --ad-plate-naqsh: .05;   /* نصفُ ما كان (.1)، كالفاتح (١١-٢٤) */
   --ad-soft: var(--steel-600);
   --ad-soft-hover: var(--steel-500);
   --ad-on-soft: var(--ad-white);

@@ -18,6 +18,7 @@ import type { RegPreview } from "@/lib/regulations/text";
 import type { RegBlock } from "@/lib/regulations/types";
 import { RegTable } from "./RegTable";
 import { RegStructure } from "./RegStructure";
+import { RegIcon } from "./RegIcon";
 
 export interface RegTextContext {
   here: string;
@@ -49,14 +50,14 @@ export function Marked({ text, terms }: { text: string; terms: string[] }) {
   let at = 0;
   r.forEach(([a, b], i) => {
     if (a > at) out.push(text.slice(at, a));
-    out.push(<mark key={i} className="reg-mark">{text.slice(a, b)}</mark>);
+    out.push(<mark key={i} className="ad-mark">{text.slice(a, b)}</mark>);
     at = b;
   });
   if (at < text.length) out.push(text.slice(at));
   return <>{out}</>;
 }
 
-function RefLink({ slug, no, ch, className = "reg-ref", label, children }: { slug: string; no?: number; ch?: number; className?: string; label?: string; children: ReactNode }) {
+function RefLink({ slug, no, ch, className = "ad-rg-ref", label, children }: { slug: string; no?: number; ch?: number; className?: string; label?: string; children: ReactNode }) {
   const { here, base, previews, go } = useReg();
   const same = slug === here;
   const hash = no ? `#m${no}` : `#b${ch}`;
@@ -126,49 +127,49 @@ function RefLink({ slug, no, ch, className = "reg-ref", label, children }: { slu
           onDismiss={() => setOpen(false)}
           side="above"
           align="center"
-          className="reg-pop"
+          className="ad-rg-pop"
           role="dialog"
           id={id}
           ariaLabelledby={`${id}-h`}
           panelRef={panelRef}
         >
-          <div className="reg-pop-head">
-            <span className="reg-pop-no" aria-hidden>
+          <div className="ad-rg-pop-head">
+            <span className="ad-rg-pop-no" aria-hidden>
               {p.no}
             </span>
-            <span className="reg-pop-ht">
-              <span className="reg-pop-h" id={`${id}-h`}>
-                <span className="sr-only">المادة {p.no}: </span>
+            <span className="ad-rg-pop-ht">
+              <span className="ad-rg-pop-h" id={`${id}-h`}>
+                <span className="ad-sr">المادة {p.no}: </span>
                 {latin(p.title)}
               </span>
-              <span className="reg-pop-doc">{p.doc}</span>
+              <span className="ad-rg-pop-doc">{p.doc}</span>
             </span>
           </div>
-          <p className="reg-pop-x">{latin(p.text)}</p>
-          <div className="reg-pop-foot">
+          <p className="ad-rg-pop-x">{latin(p.text)}</p>
+          <div className="ad-rg-pop-foot">
             {same ? (
               <a
                 href={href}
-                className="abtn abtn-primary abtn-sm"
+                className="ad-btn ad-btn-fill ad-btn-sm ad-btn-end"
                 onClick={(e) => {
                   setOpen(false);
                   if (go?.({ slug, no, ch })) e.preventDefault();
                 }}
               >
                 انتقل إلى المادّة
-                <ArrowLeft size={16} aria-hidden />
+                <ArrowLeft aria-hidden />
               </a>
             ) : (
               <Link
                 href={href}
-                className="abtn abtn-primary abtn-sm"
+                className="ad-btn ad-btn-fill ad-btn-sm ad-btn-end"
                 onClick={(e) => {
                   setOpen(false);
                   if (go?.({ slug, no, ch })) e.preventDefault();
                 }}
               >
                 انتقل إلى المادّة
-                <ArrowLeft size={16} aria-hidden />
+                <ArrowLeft aria-hidden />
               </Link>
             )}
           </div>
@@ -215,7 +216,7 @@ export function RegText({ text }: { text: string }) {
 
 export function RegBlocks({ blocks, lead }: { blocks: RegBlock[]; lead?: ReactNode }) {
   return (
-    <div className="rg-txt">
+    <div className="ad-rg-txt">
       {blocks.map((b, i) => {
         const head = i === 0 ? lead : null;
         if (b.kind === "para") return <p key={i}>{head}<RegText text={b.text} /></p>;
@@ -224,7 +225,7 @@ export function RegBlocks({ blocks, lead }: { blocks: RegBlock[]; lead?: ReactNo
           return (
             <div key={i}>
               {head ? <p>{head}</p> : null}
-              <L className={b.ordered ? "rg-ol" : "rg-ul"}>
+              <L className={b.ordered ? "ad-rg-ol" : "ad-rg-ul"}>
                 {b.items.map((it, j) => <li key={j}><RegText text={it} /></li>)}
               </L>
             </div>
@@ -244,41 +245,38 @@ export function RegBlocks({ blocks, lead }: { blocks: RegBlock[]; lead?: ReactNo
   );
 }
 
-/** «يُحال إليها من ٣ موادّ»: تُفتح فتُرى الموادُّ التي تستند إليها مجموعةً تحت وثائقها، ولكلٍّ معاينتُها. */
-export function CitedBy({ keys }: { keys: string[] }) {
-  const { docNames } = useReg();
-  const groups = useMemo(() => {
-    const out: Array<[slug: string, nos: number[]]> = [];
-    for (const k of keys) {
-      const [s, n] = k.split(":");
-      const g = out.find(([x]) => x === s);
-      if (g) g[1].push(Number(n));
-      else out.push([s, [Number(n)]]);
-    }
-    return out;
-  }, [keys]);
-  const [open, setOpen] = useState(false);
+/**
+ * **«يُحال إليها من ٣ موادّ»** (محمد ٢٠٢٦-١١-٢٣): زرُّ «المزيد» في الهويّة، يُنزل في الورقة تحت المادّة — لا ينبثق — سطورَ الهويّة
+ * (`.ad-line`): رمزُ الوثيقة في مربّعه، واسمُ المادّة، ووثيقتُها تحته. تُعايَن بالمرور كسائر الإحالات وتنقل بالضغط، وواحدةٌ مفتوحةٌ في الصفحة
+ * (`open` من `RegRead`). وعمودٌ واحدٌ أبدًا: العمودان كانا ينكسران في أكثر الموادّ فتتقلّب الصفحةُ بين هيئتين.
+ * (جُرّبت: أرقامًا تنبسط في صبغة، وقائمةَ «المزيد» طافية، ثمّ في الورقة بصندوقها ورؤوسها — «ورقةٌ على ورقة»، واثنا عشر سطرًا لستّ موادّ)
+ */
+export function CitedBy({ keys, open, onToggle }: { keys: string[]; open: boolean; onToggle: () => void }) {
+  const { previews, docNames } = useReg();
   const id = useId();
   return (
-    <div className="reg-cited">
-      <button type="button" className="reg-cited-btn" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
-        يُحال إليها من {arCount(keys.length, AR_ARTICLE_GEN)}
-        <CaretDown size={14} aria-hidden />
+    <div className="ad-rg-cited">
+      <button type="button" className="ad-btn ad-btn-soft ad-btn-sm ad-more" aria-expanded={open} aria-controls={id} onClick={onToggle}>
+        <CaretDown aria-hidden />يُحال إليها من {arCount(keys.length, AR_ARTICLE_GEN)}
       </button>
       {open ? (
-        <ul className="reg-cited-list" id={id}>
-          {groups.map(([s, nos]) => (
-            <li key={s}>
-              <span className="reg-cited-doc">{docNames[s]}</span>
-              <span className="reg-chips">
-                {nos.map((no) => (
-                  <RefLink key={no} slug={s} no={no} className="reg-chip" label={`${docNames[s]}، المادة ${no}`}>
-                    {no}
-                  </RefLink>
-                ))}
-              </span>
-            </li>
-          ))}
+        <ul className="ad-lines ad-rg-citedlines" id={id}>
+          {keys.map((k) => {
+            const [s, n] = k.split(":");
+            const no = Number(n);
+            const p = previews[k];
+            return (
+              <li key={k} className="ad-line">
+                <RefLink slug={s} no={no} className="ad-line-hit" label={`${docNames[s]}، المادة ${no}`}>
+                  <span className="ad-line-ic" aria-hidden><RegIcon slug={s} /></span>
+                  <span className="ad-line-kv">
+                    <span className="ad-line-v">{p ? `المادة ${no}: ${latin(p.title)}` : `المادة ${no}`}</span>
+                    <span className="ad-line-sub">{docNames[s]}</span>
+                  </span>
+                </RefLink>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>

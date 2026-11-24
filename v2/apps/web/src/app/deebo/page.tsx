@@ -1,9 +1,12 @@
+import "@adeeb/design-system/ad.css";
 import { SiteHeader } from "../_components/SiteHeader";
+import { getSessionAdmin } from "@/lib/auth";
 import { clubHour } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { loadDeeboFirstName } from "@/lib/deebo/viewer";
 import { loadDeeboVoice } from "@/lib/deebo/knowledgeSource";
 import { DeeboChat } from "./DeeboChat";
+import { demoTalk } from "./demo";
 import { listMyConversations, openMyConversation } from "./actions";
 
 export const metadata = {
@@ -33,7 +36,7 @@ export const metadata = {
 export default async function DeeboPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; v?: string; preview?: string; look?: string; answer?: string }>;
 }) {
   const rawKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null;
 
@@ -45,7 +48,18 @@ export default async function DeeboPage({
   /* العودةُ من صفحة المحادثات (`?c=`) تُفتح **على الخادم**: تصل الغرفةُ عامرةً من أوّل
      رسم، فلا ومضةَ ترحيبٍ قبلها ولا أثرٌ يضبط حالةً بعده. والسياسةُ تحرسها: صفُّ غيرك
      يرجع فارغًا فتُفتح غرفةٌ جديدة. */
-  const wanted = (await searchParams).c;
+  const sp = await searchParams;
+  const wanted = sp.c;
+  /* ⚠️ **الغرفةُ الجديدة قيدُ البناء** (١١-٢٤، `claude/deebo-page-handoff.md`): تُرى على جهاز التطوير وحده بـ`?v=new`، والموقعُ يبقى على
+     الغرفة المعتمدة (`DeeboScreen`) حتى تُعتمد الجديدةُ ويجهز عقلُ ديبو (`claude/deebo-answer-contract.md`). ومعها للمقارنة:
+     `&preview=1` حوارٌ مكتوبٌ ببطاقاتٍ من بياناتٍ حقيقيّة (`demo.ts`)، و`&look=flat` تحت رأس الموقع، و`&answer=plain` الجوابُ بلا فقاعة. */
+  const dev = process.env.NODE_ENV !== "production";
+  const old = !(dev && sp.v === "new");
+  const preview = !old && sp.preview === "1";
+  const look = sp.look === "flat" ? "flat" : "app";
+  const answer = sp.answer === "plain" ? "plain" : "bubble";
+  // وجهُ السائل في الحوار: صورتُه وجنسُه من هويّته
+  const who = signedIn ? await getSessionAdmin() : null;
   const talk = signedIn && wanted ? await openMyConversation(wanted) : null;
 
   /* **التحيّةُ تُقرَع في الخادم** (٢٠٢٦-٠٨-٢٠): البذرةُ والساعةُ والاسمُ تنزل خواصَّ إلى
@@ -63,8 +77,8 @@ export default async function DeeboPage({
   const voice = await loadDeeboVoice(sb);
 
   return (
-    <div className="dchs-shell">
-      <SiteHeader activeHref="/deebo" />
+    <div className={old ? "dchs-shell" : "ad-db-shell"} data-look={old ? undefined : look}>
+      {old || look === "flat" ? <SiteHeader activeHref="/deebo" /> : null}
       <DeeboChat
         questions={voice.questions}
         unknownAnswer={voice.unknownAnswer}
@@ -75,6 +89,11 @@ export default async function DeeboPage({
         greetingSeed={greetingSeed}
         greetingHour={clubHour()}
         viewerName={viewerName}
+        me={who ? { name: who.fullName ?? null, avatar: who.avatarUrl ?? null, gender: who.gender ?? null } : null}
+        old={old}
+        demo={preview ? await demoTalk(viewerName) : null}
+        look={look}
+        answer={answer}
       />
     </div>
   );

@@ -79,8 +79,8 @@ export async function getMySettings(): Promise<{ settings: MySettings | null; er
   const [sRes, pRes, rRes, vRes] = await Promise.all([
     supabase.rpc("my_sessions"),
     supabase.from("profiles").select("bio, accepts_marketing, public_slug").eq("id", user.id).maybeSingle(),
-    // حدُّ النشر منصبٌ فعّال، فالعنوانُ وحدَه لا يكفي (القاعدةُ نفسُها في `profile/data.ts`)
-    supabase.from("user_roles").select("id").eq("user_id", user.id).eq("is_active", true).limit(1),
+    // **حدُّ النشر من بابه في القاعدة** (`my_public_slug`): منصبٌ قائمٌ أو تطوّعٌ نشط (١١-٢٤) — كان يُعاد هنا سؤالُ المنصب وحده
+    supabase.rpc("my_public_slug"),
     supabase.rpc("my_profile_views"),
   ]);
 
@@ -128,7 +128,7 @@ export async function getMySettings(): Promise<{ settings: MySettings | null; er
       methods,
       marketing: p?.accepts_marketing ?? false,
       bio: p?.bio ?? "",
-      publicSlug: (rRes.data?.length ?? 0) > 0 ? (p?.public_slug ?? null) : null,
+      publicSlug: rRes.error ? null : ((rRes.data as string | null) ?? null),
       pageVisits: vRes.error || !vRes.data ? null : (vRes.data as ProfileVisits),
       sessions,
       sessionsError: sRes.error?.message ?? null,

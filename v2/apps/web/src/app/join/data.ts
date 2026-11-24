@@ -50,6 +50,8 @@ export type ViewerJoinState = {
   isVolunteer: boolean;
   /** رغباتُه مرتّبةً (معرّفاتُ اللجان)، فارغةٌ لمن لم يقدّم بعد. */
   prefs: number[];
+  /** جنسُه كما في ملفّه (`male`/`female`)، لتُخاطَب به التهنئة */
+  gender: string | null;
 };
 
 export async function getViewerJoinState(userId: string): Promise<ViewerJoinState | null> {
@@ -59,12 +61,13 @@ export async function getViewerJoinState(userId: string): Promise<ViewerJoinStat
   const [{ data: vol }, { data: prefs }, { data: profile }] = await Promise.all([
     sb.from("volunteers").select("status").eq("user_id", userId).maybeSingle(),
     sb.from("volunteer_preferences").select("rank, committee_id").eq("user_id", userId).order("rank"),
-    sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
+    sb.from("profiles").select("id, gender").eq("id", userId).maybeSingle(),
   ]);
 
   return {
     hasProfile: !!profile,
     isVolunteer: (vol as { status?: string } | null)?.status === "active",
     prefs: ((prefs ?? []) as { committee_id: number }[]).map((p) => p.committee_id),
+    gender: (profile as { gender?: string | null } | null)?.gender ?? null,
   };
 }

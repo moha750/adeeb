@@ -32,6 +32,10 @@ export type PublicPosition = {
 
 export type PublicProfile = {
   slug: string;
+  /** من تُفتح له الصفحة: العضوُ (له منصبٌ قائم) أو المتطوّعُ النشط (١١-٢٤) */
+  standing: "member" | "volunteer";
+  /** للمتطوّع وحده: منذ متى يتطوّع، وكم فرصةً حضرها، وساعاتُه من شهاداته القائمة */
+  volunteer: { since: string | null; joined: number; hours: number } | null;
   name: string;
   avatar: string | null;
   gender: string | null;

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Footer, Container, Card, CardBody, Alert, LandingHeading } from "@adeeb/design-system";
 import { createAdeebServiceClient } from "@adeeb/core";
 import { awayIfNoSession, getSessionAdmin } from "@/lib/auth";
 import { hasMemberRecord, isAdeebMember } from "@/lib/memberRecord";
-import { CompleteForm } from "./CompleteForm";
+import { DoorShell } from "@/app/_door/DoorShell";
+import { Head, Note } from "@/app/_door/parts";
+import { clubDayKey } from "@/lib/dates";
+import { CompleteFlow } from "./CompleteFlow";
 
-export const metadata: Metadata = { title: "إكمال سجلّك، نادي أدِيب" };
+export const metadata: Metadata = { title: "أكمل سجلّك، نادي أدِيب" };
 export const dynamic = "force-dynamic";
 
 function service() {
@@ -25,8 +27,8 @@ function service() {
  * ومن بلغها ولا سجلَّ له سِيق إليها من تخطيط اللوحة (`dashboard/layout.tsx`)، فهي آخرُ ما يراه
  * حتّى يُكمل. ومن أكمل صُرف عنها — فلا يعود إليها بالرابط.
  *
- * **بلا رأسٍ وحدَها** بين الصفحات العامّة: الرأسُ روابطُ تنقّلٍ وفعلُ انضمام، وهذه شاشةُ خطوةٍ
- * واحدةٍ لا مخرجَ منها إلّا إتمامُها — فمخارجُه تناقض بابَها. والتذييلُ باقٍ (لا يدعو إلى شيء).
+ * **وصارت بابًا من أبواب الحساب** (`CompleteFlow`، اعتمده محمد ١١-٢٤): خطوتان بلا رأس الموقع (كانت بلا رأسٍ أصلًا: شاشةُ خطوةٍ واحدة)،
+ * ومخرجُها «تسجيل الخروج».
  */
 export default async function CompletePage() {
   const me = await getSessionAdmin();
@@ -35,55 +37,31 @@ export default async function CompletePage() {
   const sb = service();
   if (!sb) {
     return (
-      <>
-        <main className="py-14 md:py-20">
-          <Container className="max-w-2xl">
-            <Card>
-              <CardBody className="p-6">
-                <Alert tone="danger" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص. أبلغ الإدارة.</Alert>
-              </CardBody>
-            </Card>
-          </Container>
-        </main>
-        <Footer />
-      </>
+      <DoorShell door="record">
+        <div className="door-step">
+          <Head>أكمل سجلّك</Head>
+          <Note tone="error" title="تعذّر تحميل الصفحة">إعداد الخادم ناقص. أبلغ الإدارة.</Note>
+        </div>
+      </DoorShell>
     );
   }
 
   // ومن ليس عضوًا لا سجلَّ عضويّةٍ يُكمله — بيتُه بوّابةُ أدِيب (بعد توحيد الهويّة في م١)
   if (!(await isAdeebMember(me.id))) redirect("/dashboard");
-
-  // من له سجلٌّ فلا شأن له بهذه الشاشة — وتحريرُ سجلّه في ملفّه الشخصيّ لا ههنا
+  // من له سجلٌّ فلا شأن له بهذه الشاشة — وتحريرُ سجلّه في «حسابي» لا ههنا
   if (await hasMemberRecord(me.id)) redirect("/dashboard");
 
-  const { data: profile } = await sb.from("profiles").select("full_name, phone, email").eq("id", me.id).maybeSingle();
+  const { data: profile } = await sb.from("profiles").select("full_name, phone, gender").eq("id", me.id).maybeSingle();
 
   return (
-    <>
-      <main>
-        {/* «الرأس المُذهّب» كما في كلّ صفحةٍ عامّة (العينُ كلمة والعنوانُ كلمتان)، والنموذجُ
-            تحته في عرضٍ مقيَّد — نفسُ تخطيط `/verify`: العنوانُ يملأ الحاويةَ والمتنُ يضيق. */}
-        <section className="py-16 md:py-24">
-          <Container>
-            <LandingHeading
-              eyebrow="عضويّة"
-              title="أكمل سجلّك"
-              deck="سجلُّك عندنا ناقصٌ، وبعضُ ما ينقص لا يملكه إلّا أنت. أكمله مرّةً واحدة، ثمّ تابع."
-              align="center"
-            />
-            <div style={{ maxWidth: 720, margin: "32px auto 0" }}>
-              <CompleteForm
-                prefill={{
-                  fullName: profile?.full_name ?? me.fullName ?? "",
-                  phone: profile?.phone ?? "",
-                  email: profile?.email ?? me.email ?? "",
-                }}
-              />
-            </div>
-          </Container>
-        </section>
-      </main>
-      <Footer />
-    </>
+    <CompleteFlow
+      // لا ميلادَ بعد اليوم (بتوقيت النادي): التقويمُ يحجب ما بعده
+      today={clubDayKey(new Date().toISOString())}
+      prefill={{
+        fullName: profile?.full_name ?? me.fullName ?? "",
+        phone: profile?.phone ?? "",
+        gender: profile?.gender ?? "",
+      }}
+    />
   );
 }

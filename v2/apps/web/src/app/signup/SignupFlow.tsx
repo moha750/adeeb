@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field } from "@adeeb/design-system";
+import { Field } from "@adeeb/design-system";
 import { At, CalendarCheck, Compass, Envelope, HandHeart, Key, Lock } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { toArabicAuthError } from "@/lib/authErrors";
@@ -11,7 +11,7 @@ import { SIGNUP_EMAIL_KEY } from "@/lib/oauthIntent";
 import { rememberSignin } from "@/lib/lastSignin";
 import { CELEBRATE_MS, setDeeboMood } from "@/lib/deeboMood";
 import { TurnstileWidget } from "@/app/_components/Turnstile";
-import { AltLink, Back, Chip, Fields, Head, Note, Way, Ways } from "@/app/_door/parts";
+import { AltLink, Back, Btn, Chip, Fields, Head, Note, Way, Ways } from "@/app/_door/parts";
 import { DoorWays } from "@/app/_door/DoorWays";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -32,7 +32,7 @@ type Step = "why" | "ways" | "email";
  * كما يُقدَّم «انضمّ إلينا» في رأس الموقع زرًّا ملوّنًا وحيدًا.
  */
 const WHY = [
-  { key: "volunteer", label: "أتطوّع مع أدِيب", Icon: HandHeart, to: "/join#step", reply: "بعد حسابك تجد خطوةَ التطوّع أمامك." },
+  { key: "volunteer", label: "أتطوّع مع أدِيب", Icon: HandHeart, to: "/join/apply", reply: "بعد حسابك تجد خطوةَ التطوّع أمامك." },
   { key: "book", label: "أحجز فعاليّة", Icon: CalendarCheck, to: "/activities", reply: "بعد حسابك تجد الفعاليّات تنتظرك." },
   { key: "explore", label: "أتعرّف على أدِيب", Icon: Compass, to: "/dashboard", reply: "بعد حسابك تجد بوّابتك في أدِيب." },
 ] as const;
@@ -98,7 +98,7 @@ export function SignupFlow({ next: given, askWhy }: { next: string; askWhy: bool
 
   const portalHref = `/login?next=${encodeURIComponent(next)}`;
   const oops = err ? <Note tone="error" title="عذرًا">{err}</Note> : null;
-  const alt = <AltLink lead="لك حسابٌ في أدِيب؟" href={portalHref}>بوّابة أدِيب</AltLink>;
+  const alt = <AltLink lead="لك حسابٌ في أدِيب من قبل؟" href={portalHref}>ادخل بوّابة أدِيب</AltLink>;
 
   return (
     <>
@@ -146,7 +146,7 @@ export function SignupFlow({ next: given, askWhy }: { next: string; askWhy: bool
               value={pw} onChange={(e) => setPw(e.target.value)} {...on("password")} required
             />
             {TURNSTILE_SITE_KEY ? <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTsToken} resetSignal={tsReset} /> : null}
-            <Button type="submit" variant="primary" size="lg" loading={busy}>إنشاء الحساب</Button>
+            <Btn type="submit" variant="primary" size="lg" loading={busy}>إنشاء الحساب</Btn>
           </Fields>
           {alt}
         </form>

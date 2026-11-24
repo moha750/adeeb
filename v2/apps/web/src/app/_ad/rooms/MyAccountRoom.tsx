@@ -212,11 +212,11 @@ export function MyAccountRoom({ account, avatar, standing, settings, member }: {
   const pushLine = (() => {
     if (pwa.stage === "loading") return <AdLine icon={<Bell />} k="إشعاراتُ الجوّال" v="نفحص جهازك…" />;
     if (pwa.stage === "ready" || pwa.stage === "on") {
-      return <AdToggleLine icon={<Bell />} label="إشعاراتُ الجوّال" description="مواعيدُك وقبولُك وشهاداتُك على شاشة القفل"
+      return <AdToggleLine icon={<Bell />} label="إشعاراتُ الجوّال" description="يصلك ما يخصّك إشعارًا على هذا الجهاز"
         checked={pwa.stage === "on"} disabled={pwa.busy !== null} onChange={(on) => (on ? pwa.enable() : pwa.disable())} />;
     }
     const say = {
-      "ios-install": { v: "أضِف أَدِيب إلى شاشتك الرئيسيّة أوّلًا", act: "الخطوات" },
+      "ios-install": { v: "أضِف أدِيب إلى جوّالك أوّلًا", act: "الخطوات" },
       "ios-update": { v: "نظامُ جوّالك أقدمُ من الإشعارات", act: "التفاصيل" },
       unsupported: { v: "متصفّحُك لا يحمل الإشعارات", act: "التفاصيل" },
       denied: { v: "محجوبةٌ على هذا الجهاز", act: "كيف أفتحها؟" },

@@ -12,7 +12,7 @@ import { greetNow } from "@/lib/timeGreeting";
  * الوجوهُ كلُّها مكدَّسةٌ يظهر منها واحد: تُحمَّل مرّةً ويتبدّل الوجهُ بلا وميض. وهي من مجموعة
  * البطل (`/deebo/hero/`، 1024px) لأنّه يقف بطولِ الشاشة — `scripts/deebo-art.mjs --hero`.
  */
-export type Door = "login" | "signup" | "forgot" | "reset";
+export type Door = "login" | "signup" | "forgot" | "reset" | "denied" | "volunteer" | "leaving" | "record";
 
 const BASE: Record<DeeboMood, string> = {
   idle: "waving", email: "listening-carefully", password: "meditating", busy: "thinking",
@@ -23,6 +23,14 @@ const OWN: Record<Door, Partial<Record<DeeboMood, string>>> = {
   signup: { idle: "welcome", email: "writing", success: "congratulations" },
   forgot: { idle: "thinking", success: "thumbs-up" },
   reset: { idle: "idea", success: "thumbs-up" },
+  // بابُ «لا صلاحية»: لا يعرف ما يقول — حائرٌ معك لا عابس
+  denied: { idle: "unsure" },
+  // بابُ التطوّع: يرحّب، ويكتب ما تقول في دفتره، ويهنّئك حين تصير متطوّعًا
+  volunteer: { idle: "welcome", email: "writing", success: "congratulations" },
+  // بابُ مهلة الحذف: ينتظرك أن تبقى، ويحتفل إن بقيت
+  leaving: { idle: "waiting", success: "celebrating" },
+  // بابُ السجلّ: يرحّب بالعضو، ويكتب ما يُمليه عليه، ويهنّئه حين يكتمل
+  record: { idle: "welcome", email: "writing", success: "congratulations" },
 };
 
 export function DeeboFace({ door }: { door: Door }) {

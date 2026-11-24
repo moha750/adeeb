@@ -24,6 +24,15 @@ export function isStandalone(): boolean {
   );
 }
 
+/**
+ * **مفتوحٌ داخل تطبيقٍ آخر لا في متصفّح** (١١-٢٤): انستقرام وفيسبوك وتيك توك وسناب ولنكدإن وإكس وواتساب حين يفتح الرابطَ في داخله.
+ * متصفّحاتُها الداخليّة لا تُضيف إلى الشاشة الرئيسيّة ولا تحمل الإشعارات، فيُقال للزائر أن يفتح الرابطَ في سفاري أو كروم.
+ * (واتساب على آيفون يفتح الروابطَ اليومَ في المتصفّح الأساسيّ، ويختبر متصفّحًا داخليًّا اختياريًّا — أكتوبر ٢٠٢٦)
+ */
+export function inAppBrowser(): boolean {
+  return /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Snapchat|LinkedInApp|Twitter|WhatsApp|Line\//.test(navigator.userAgent);
+}
+
 export function pushSupported(): boolean {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }

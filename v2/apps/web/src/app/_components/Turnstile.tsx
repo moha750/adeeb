@@ -52,10 +52,13 @@ export function TurnstileWidget({
         // **الصندوق لا يُصبَغ** — جوفُه إطارٌ من كلاودفلير (cross-origin) لا تبلغه أوراقُنا.
         // فالمتاحُ ثلاثةُ مقابضَ لا رابع، وهذه ضبطُها كي لا يشذَّ عن الصفحة:
         //   • `interaction-only`: لا يظهر أصلًا إلّا حين يُطلب تحدٍّ حقيقيّ (والرمزُ يجري خفيةً في العادة).
-        //   • `light`: الافتراضُ `auto` يتبع نظامَ الجهاز، فيرى صاحبُ الوضع الداكن صندوقًا أسودَ في صفحةٍ فاتحة.
+        //   • الوضعُ وضعُ **الصفحة** لا الجهاز (٢٠٢٦-١١-٢٣): الافتراضُ `auto` يتبع نظامَ الجهاز، فيرى صاحبُ الجهاز الداكن صندوقًا أسودَ في صفحةٍ
+        //     فاتحة؛ و`light` الثابتُ قبله أبقاه أبيضَ في الصفحة الداكنة. فيُقرأ من `<html data-theme>` (`lib/theme.ts`) عند الرسم.
         //   • `ar-eg`: هكذا تُسمّى العربيّةُ في قائمة كلاودفلير (`ar` وحدها لا تُطابَق).
         appearance: "interaction-only",
-        theme: "light",
+        // بعرض النموذج لا بمقاسه الثابت (300): كان يُرى نصفَ عرض الأزرار تحته وفوقه (محمد ٢٠٢٦-١١-٢٣)
+        size: "flexible",
+        theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
         language: "ar-eg",
         callback: (token: string) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(null),
@@ -129,7 +132,7 @@ export function TurnstileWidget({
 
   // كلاودفلير تُبقي للودجة صندوقًا بمقاسه (300×72) وإن لم تَرسم فيه شيئًا، فيَحفِر في النموذج
   // فجوةً بلا ساكن. فنطويه نحن ما دام خفيًّا، ونبسطه حين يُنادى بالتحدّي.
-  return <div ref={containerRef} className={shown ? "flex justify-center" : "hidden"} />;
+  return <div ref={containerRef} className="ts-box" hidden={!shown} />;
 }
 
 /**

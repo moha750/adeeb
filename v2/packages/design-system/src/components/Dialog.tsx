@@ -14,6 +14,10 @@ const FOCUSABLE =
   'a[href],area[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 // قفل تمرير الخلفية بعدّاد مرجعيّ (نوافذ متراكبة آمنة)
+// ويُعلَن القفلُ على الجذر (`html[data-scroll-locked]`) لمنعِّم الموقع (`SmoothScroll`): طبقةُ Lenis تحرّك الصفحةَ بيدها فلا يوقفها
+// `overflow` الجسم، فكانت العجلةُ فوق رأس النافذة أو عند آخر جسمها تحرّك الصفحةَ خلفها (محمد ٢٠٢٦-١١-٢٢: «هذا مزعج»).
+// فهو يسمع السمةَ ويقف ما دامت قائمة، وجسمُ النافذة يبقى يُمرَّر بنفسه.
+const SCROLL_LOCK_ATTR = "data-scroll-locked";
 let lockCount = 0;
 let prevOverflow = "";
 function lockScroll() {
@@ -21,13 +25,17 @@ function lockScroll() {
   if (lockCount === 0) {
     prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.setAttribute(SCROLL_LOCK_ATTR, "");
   }
   lockCount += 1;
 }
 function unlockScroll() {
   if (typeof document === "undefined") return;
   lockCount = Math.max(0, lockCount - 1);
-  if (lockCount === 0) document.body.style.overflow = prevOverflow;
+  if (lockCount === 0) {
+    document.body.style.overflow = prevOverflow;
+    document.documentElement.removeAttribute(SCROLL_LOCK_ATTR);
+  }
 }
 
 type DialogProps = {

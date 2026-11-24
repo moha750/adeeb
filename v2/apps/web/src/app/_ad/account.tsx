@@ -341,7 +341,8 @@ export function AdDoors({ label, items }: {
 export function AdInvite({ icon, title, sub, points, action, art }: {
   icon: ReactNode; title: string; sub?: string;
   points: { icon: ReactNode; k: string; v: string }[];
-  action: ReactNode;
+  /** فعلُ الدعوة — وبلا فعلٍ هي قولُ اللوح وحده («العضويّةُ تُهدى ولا تُطلب» في صفحة الانضمام) */
+  action?: ReactNode;
   /** رسمٌ في طرف اللوح يقعد على قاعه (ديبو صاحبُ الفكرة في دعوة الصديق) */
   art?: ReactNode;
 }) {
@@ -352,13 +353,15 @@ export function AdInvite({ icon, title, sub, points, action, art }: {
           <span className="ad-invite-ic" aria-hidden>{icon}</span>
           <span className="ad-invite-t"><h2>{title}</h2>{sub ? <p>{sub}</p> : null}</span>
         </header>
-        <ul className="ad-invite-pts">
-          {points.map((x) => (
-            <li key={x.k}><span className="ad-invite-pt-ic" aria-hidden>{x.icon}</span><span><small>{x.k}</small><b>{x.v}</b></span></li>
-          ))}
-        </ul>
+        {points.length ? (
+          <ul className="ad-invite-pts">
+            {points.map((x) => (
+              <li key={x.k}><span className="ad-invite-pt-ic" aria-hidden>{x.icon}</span><span><small>{x.k}</small><b>{x.v}</b></span></li>
+            ))}
+          </ul>
+        ) : null}
         {/* الرسمُ بجانب الفعل في صفّه لا فوق النصّ (على الجوّال طال سطرُ «جهدُك موثّق» فدخل تحته) */}
-        <div className="ad-invite-act">{action}{art ? <span className="ad-invite-art" aria-hidden>{art}</span> : null}</div>
+        {action || art ? <div className="ad-invite-act">{action}{art ? <span className="ad-invite-art" aria-hidden>{art}</span> : null}</div> : null}
       </div>
     </section>
   );
@@ -405,8 +408,14 @@ export function AdCols({ children, aside, asideEnd, asideFirst, top, sticky }: {
  * `tone="bad"` **منطقةُ الخطر** (المالك ٢٠٢٦-١٠-١٣: «لونُه لا يوحي أنّه خطر»): الكرتُ نفسُه يقول «احذر» — حدٌّ أحمر وأرضٌ ورديّةٌ خفيفة
  * وختمُ رأسه ورموزُ سطوره بالأحمر، والنصُّ بحبره كي لا يصرخ كلُّ شيء. ولا كحليَّ فيه: لونٌ مشبعٌ واحدٌ في السطح الواحد.
  */
-export function AdSection({ id, icon, title, sub, media, tone, more, steps, foot, act, children }: {
+export function AdSection({ id, icon, title, sub, media, tone, stamp, more, steps, foot, act, children }: {
   id?: string; icon: ReactNode; title: string; sub?: string; media?: ReactNode; tone?: "bad"; children?: ReactNode;
+  /**
+   * **رأسُ الحكم** (التحقّق من شهادة، اعتمده محمد ٢٠٢٦-١١-٢٤): القسمُ يقول حكمًا («شهادةٌ صحيحة») فيصير ختمُه أخضرَ أو كهرمانيًّا
+   * أو أحمرَ بمادّة شريط «الملاحظة» (النقشُ والشبكة)، ورأسُه بصبغة لونه، ورموزُ سطوره بلونه وقيمُها بحبرها — على اللوح الكحليّ كانت «الملاحظةُ» المصبوغةُ
+   * كلُّها مزعجة. و`tone="bad"` غيرُه: منطقةُ خطرٍ كاملة.
+   */
+  stamp?: "ok" | "bad" | "warn";
   /** **فعلُ القسم في طرف رأسه** («أضف نافذة»، «أضِف شريكًا»): في القاع كان زرًّا وحيدًا على شريطٍ عريضٍ فارغ (محمد ٢٠٢٦-١١-١٧: «مساحة كبيرة والزر بهذا الشكل… قبيح») */
   act?: ReactNode;
   /** **قاعُ القسم**: فعلُه بعد سطوره («احجز مقعدي» تحت المقاعد في صفحة الفعاليّة، ٢٠٢٦-١١-١٥) — مقابلُ `media` الذي يسبقها */
@@ -418,7 +427,7 @@ export function AdSection({ id, icon, title, sub, media, tone, more, steps, foot
 }) {
   return (
     // `tabIndex` لمرساته: الفهرسُ ينقل التركيزَ إلى القسم الذي ساق إليه (كما يفعل الرابطُ بلا تمريرٍ منساب)
-    <section className="ad-sec" id={id} data-tone={tone} tabIndex={id ? -1 : undefined}>
+    <section className="ad-sec" id={id} data-tone={tone} data-stamp={stamp} tabIndex={id ? -1 : undefined}>
       <header className="ad-sec-head">
         <span className="ad-sec-ic" aria-hidden>{icon}</span>
         <span className="ad-sec-t">
@@ -457,6 +466,8 @@ export type AdLineAct = {
    * أخضر والصندوقُ بحبره — كما يأخذ `danger` ختمَه الأحمر. يُعطى حين يكون الفعلُ فعلَ تلك الحال نفسِها.
    */
   tone?: "ok";
+  /** **الختمُ بعد الكلمة** («صفحته ←»، هيكلةُ أدِيب ٢٠٢٦-١١-٢٢): زرُّ الانتقال في السطر بهيئة زرّ «صفحته» على الوجه نفسِه — الختمُ في طرفه يخطو للأمام */
+  end?: boolean;
 };
 
 /**
@@ -464,7 +475,7 @@ export type AdLineAct = {
  * والسطرُ ذو الفعل زرٌّ كلُّه (أو رابط) — فيُفهم على اللمس بلا تصويب. `tone` حالُه بلون نغمته على القيمة (أو الوصف بـ`toneAt`)،
  * و`danger` سطرُ خطرٍ بهيبته (الإلغاء، والحذف).
  */
-export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, external, onClick, danger, ltr, disabled, current, read }: {
+export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, external, onClick, danger, ltr, disabled, current, read, aside, rich }: {
   icon: ReactNode; k?: string; v: string; sub?: string; tone?: AdLineTone; toneAt?: "v" | "sub";
   act?: AdLineAct; href?: string; onClick?: () => void; danger?: boolean; ltr?: boolean; disabled?: boolean;
   /** رابطٌ خارج الموقع (الخريطة في صفحة الفعاليّة، ٢٠٢٦-١١-١٥): يُفتح في تبويبٍ جديد ويقول ذلك لقارئ الشاشة */
@@ -476,18 +487,25 @@ export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, externa
    * لقيمةٍ قصيرة (بريد، تاريخ)، والطويلُ بها متعب (عيبُ محادثة ديبو نفسُه قبل قطعة الحوار).
    */
   read?: boolean;
+  /** **فعلٌ ثانٍ بجانب زرّ السطر خارجَه** (زرٌّ لا يحمل زرًّا، نمطُ سطور المعرض): «إزالة» بجانب «تغيير» في منتقي الواحد (محمد ٢٠٢٦-١١-٢٢) */
+  aside?: ReactNode;
+  /**
+   * **القيمةُ والوصفُ بكلماتٍ معلَّمة** (نتائجُ البحث في «أنظمة أدِيب»، ٢٠٢٦-١١-٢٢): يُرسمان مكانَ `v` و`sub` نصًّا، والنصُّ يبقى
+   * اسمَ السطر لقارئ الشاشة — فالسطرُ هو هو، وكلمةُ البحث مضيئةٌ فيه
+   */
+  rich?: { v?: ReactNode; sub?: ReactNode };
 }) {
   const body = (
     <>
       <span className="ad-line-ic" aria-hidden>{icon}</span>
       <span className="ad-line-kv">
         {k ? <span className="ad-line-k">{k}</span> : null}
-        <span className="ad-line-v" data-tone={toneAt === "v" ? tone : undefined} data-read={read || undefined}>{ltr ? <bdi dir="ltr" className="lat">{ltrBreaks(v)}</bdi> : v}</span>
-        {sub ? <span className="ad-line-sub" data-tone={toneAt === "sub" ? tone : undefined}>{sub}</span> : null}
+        <span className="ad-line-v" data-tone={toneAt === "v" ? tone : undefined} data-read={read || undefined}>{rich?.v ?? (ltr ? <bdi dir="ltr" className="lat">{ltrBreaks(v)}</bdi> : v)}</span>
+        {sub ? <span className="ad-line-sub" data-tone={toneAt === "sub" ? tone : undefined}>{rich?.sub ?? sub}</span> : null}
       </span>
       {act ? (
-        <span className={`ad-btn ${danger || act.danger ? "ad-btn-danger" : "ad-btn-soft"} ad-btn-sm ad-line-act`} data-tone={act.tone} aria-hidden>
-          {act.icon}{act.text}
+        <span className={`ad-btn ${danger || act.danger ? "ad-btn-danger" : "ad-btn-soft"} ad-btn-sm${act.end ? " ad-btn-end" : ""} ad-line-act`} data-tone={act.tone} aria-hidden>
+          {act.end ? <>{act.text}{act.icon}</> : <>{act.icon}{act.text}</>}
         </span>
       ) : null}
     </>
@@ -504,6 +522,7 @@ export function AdLine({ icon, k, v, sub, tone, toneAt = "v", act, href, externa
       ) : (
         <div className="ad-line-hit">{body}</div>
       )}
+      {aside}
     </li>
   );
 }

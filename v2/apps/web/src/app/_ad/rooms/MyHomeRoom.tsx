@@ -147,7 +147,7 @@ export function MyHomeRoom({ view, card, look = "port" }: { view: HomeView; card
     <AdSection icon={<MagnifyingGlass />} title="فرصٌ تناسب رغباتك">
       {view.prefs && !view.waiting.length ? (
         <AdLine icon={<Heart />} k="رغباتك" v={view.prefs.join("، ") || "لم ترتّبها بعد"}
-          act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join" />
+          act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join/apply" />
       ) : null}
       {view.opps.length ? view.opps.map((o) => (
         <AdLine key={o.id} icon={<UsersThree />} k={[o.committee, o.fit ? "من رغباتك" : null].filter(Boolean).join("، ") || "فرصة"} v={o.title} sub={o.sub}
@@ -198,7 +198,7 @@ export function MyHomeRoom({ view, card, look = "port" }: { view: HomeView; card
                   <AdSection icon={<MagnifyingGlass />} title="فرصٌ تناسب رغباتك" more={view.opps.length ? { label: "كل الفرص المفتوحة", href: "/dashboard/volunteer" } : undefined}>
                     {view.prefs && !view.waiting.length ? (
                       <AdLine icon={<Heart />} k="رغباتك" v={view.prefs.join("، ") || "لم ترتّبها بعد"}
-                        act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join" />
+                        act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join/apply" />
                     ) : null}
                     {view.opps.length ? view.opps.map((o) => (
                       <AdLine key={o.id} icon={<UsersThree />} k={[o.committee, o.fit ? "من رغباتك" : null].filter(Boolean).join("، ") || "فرصة"} v={o.title} sub={o.sub}
@@ -283,7 +283,7 @@ export function MyHomeRoom({ view, card, look = "port" }: { view: HomeView; card
         <AdSection icon={<MagnifyingGlass />} title="فرصٌ تناسب رغباتك">
           {view.prefs && !view.waiting.length ? (
             <AdLine icon={<Heart />} k="رغباتك" v={view.prefs.join("، ") || "لم ترتّبها بعد"}
-              act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join" />
+              act={{ icon: <PencilSimple />, text: view.prefs.length ? "تعديل" : "إضافة", label: "رغباتك" }} href="/join/apply" />
           ) : null}
           {restOpps.length ? restOpps.map((o) => (
             <AdLine key={o.id} icon={<UsersThree />} k={[o.committee, o.fit ? "من رغباتك" : null].filter(Boolean).join("، ") || "فرصة"} v={o.title} sub={o.sub}
@@ -364,7 +364,7 @@ export function MyHomeRoom({ view, card, look = "port" }: { view: HomeView; card
     const under = view.volunteer ? (
       view.prefs && !view.waiting.length ? (
         <AdNote tone="info" icon={<Heart />} label="رغباتك" title={view.prefs.length ? view.prefs.join("، ") : "لم ترتّبها بعد"}
-          action={<AdButton href="/join" size="sm" icon={<PencilSimple />}>{view.prefs.length ? "تعديل رغباتك" : "تحديد رغباتك"}</AdButton>} />
+          action={<AdButton href="/join/apply" size="sm" icon={<PencilSimple />}>{view.prefs.length ? "تعديل رغباتك" : "تحديد رغباتك"}</AdButton>} />
       ) : null
     ) : explore;
     return (

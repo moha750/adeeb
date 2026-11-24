@@ -173,12 +173,12 @@ export function MyVolunteerRoom({ view }: { view: VolunteerView }) {
   // «رغباتك» **تنبيهُ القائمة** (`AdNote` الإعلاميّ): الحقيقةُ وسببُ وجودها هنا — ما يوافقها يأتي أوّلًا — وفعلُها صندوقًا بختمه.
   // (كانت كرتًا مستحدَثًا بقلمٍ من اللوح، ثمّ تنبيهًا قديمًا «عاديًّا جدًّا»، حتى حُسم التنبيه ٢٠٢٦-١١-٠٥)
   const wishes = view.prefs.length ? (
-    <AdNote tone="info" icon={<Heart />} label="رغباتك" title={prefsText} action={<AdButton href="/join" size="sm" icon={<PencilSimple />}>تعديل رغباتك</AdButton>}>
+    <AdNote tone="info" icon={<Heart />} label="رغباتك" title={prefsText} action={<AdButton href="/join/apply" size="sm" icon={<PencilSimple />}>تعديل رغباتك</AdButton>}>
       ما يوافقها من الفرص يأتي أوّلًا.
     </AdNote>
   ) : (
     // بلا ضميرٍ مؤنّثٍ أو مذكّر: الغرفةُ لا تعرف هنا جنسَ صاحبها، و«حدّدْ» تخطئ المتطوّعة
-    <AdNote tone="info" icon={<Heart />} label="رغباتك" title="غير محدّدة بعد." action={<AdButton href="/join" size="sm" icon={<PencilSimple />}>تحديد رغباتك</AdButton>}>
+    <AdNote tone="info" icon={<Heart />} label="رغباتك" title="غير محدّدة بعد." action={<AdButton href="/join/apply" size="sm" icon={<PencilSimple />}>تحديد رغباتك</AdButton>}>
       بها نقدّم لك ما يوافقها من الفرص أوّلًا.
     </AdNote>
   );

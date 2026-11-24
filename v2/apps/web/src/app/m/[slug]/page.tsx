@@ -10,8 +10,9 @@ import { MemberPublic } from "@/app/_ad/rooms/MemberPublicRoom";
 
 export const revalidate = 300;
 
-/** سطرُ التعريف: المنصبُ الأوّل (والقيادةُ متقدّمةٌ في الترتيب من القاعدة). */
-function headline(positions: PublicPosition[], gender: string | null) {
+/** سطرُ التعريف: المنصبُ الأوّل (والقيادةُ متقدّمةٌ في الترتيب من القاعدة)، والمتطوّعُ بمنزلته. */
+function headline(positions: PublicPosition[], gender: string | null, volunteer = false) {
+  if (volunteer) return gender === "female" ? "متطوّعةٌ في نادي أدِيب" : "متطوّعٌ في نادي أدِيب";
   const p = positions[0];
   if (!p) return "عضوٌ في نادي أدِيب";
   return personTitle(p.roleAr, p.unitName, gender, p.acting) ?? "عضوٌ في نادي أدِيب";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const me = await getPublicProfile(decodeURIComponent(slug));
   if (!me) return { title: "صفحة عضو، أدِيب" };
 
-  const line = headline(me.positions, me.gender);
+  const line = headline(me.positions, me.gender, me.standing === "volunteer");
   return {
     title: `${me.name}، أدِيب`,
     description: me.bio ?? `${line} في نادي أدِيب.`,
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /**
- * **صفحةُ العضو العلنيّة** — يَنشرها صاحبُها ليُعرَف من هو وما سيرتُه في أدِيب.
+ * **صفحةُ العضو والمتطوّع العلنيّة** (المتطوّعُ منذ ٢٠٢٦-١١-٢٤) — يَنشرها صاحبُها ليُعرَف من هو وما سيرتُه في أدِيب.
  *
  * وقارئُها غريبٌ لا زميل، فما لا يفهمه في ثانيتين لا يدخلها: المنصبُ بالعربيّة لا
  * بمفتاحه، والوحدةُ باسمها، والوسامُ بسببه. ولا بيانَ فيها يخصّ الشخصَ دون المنصب:

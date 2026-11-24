@@ -19,6 +19,8 @@ import { clubHour } from "@/lib/dates";
 import { nextSeed, pickGreeting } from "@/lib/deebo/greeting";
 import { useDeebo } from "@/lib/deebo/useDeebo";
 import { DeeboScreen } from "./DeeboScreen";
+import { DeeboStage } from "./DeeboStage";
+import type { ShownTurn } from "./cards";
 import { deleteMyConversation, listMyConversations, openMyConversation, type ConversationRow, type ConversationTurn } from "./actions";
 
 export function DeeboChat({
@@ -31,6 +33,11 @@ export function DeeboChat({
   viewerName = null,
   questions = [],
   unknownAnswer,
+  me = null,
+  old = false,
+  demo = null,
+  look = "app",
+  answer = "bubble",
 }: {
   siteKey: string | null;
   /** له حساب؟ فسجلُّه في القاعدة، وذاكرةُ الجهاز لا تُستعمل له. */
@@ -46,8 +53,19 @@ export function DeeboChat({
   /** أسئلةُ الشاشة الفارغة وجملةُ «لا أعرف» — من `deebo_persona` عبر الخادم (٢٠٢٦-٠٨-٢٢). */
   questions?: readonly string[];
   unknownAnswer?: string;
+  /** وجهُ السائل في الحوار (صورتُه وجنسُه) لمن له حساب */
+  me?: { name: string | null; avatar: string | null; gender: string | null } | null;
+  /** ⚠️ مؤقّتٌ للمقارنة على جهاز التطوير (١١-٢٤): الغرفةُ القديمة */
+  old?: boolean;
+  /** ⚠️ مؤقّتٌ للمعاينة على جهاز التطوير (١١-٢٤): حوارٌ مكتوبٌ ببطاقاتٍ من بياناتٍ حقيقيّة، لا يُرسَل منه شيء */
+  demo?: ShownTurn[] | null;
+  /** ⚠️ للمقارنة (١١-٢٤) */
+  look?: "app" | "flat";
+  answer?: "plain" | "bubble";
 }) {
   const [token, setToken] = useState<string | null>(null);
+  // ⚠️ المعاينةُ تُخلى بـ«محادثة جديدة» فتُرى الغرفةُ الفارغة (١١-٢٤)
+  const [demoOn, setDemoOn] = useState(true);
   const [draft, setDraft] = useState("");
   /* **تحيّةٌ لا تتكرّر** (طلبُ المالك ٢٠٢٦-٠٨-٢٠: «يرحّب بك بشكلٍ مختلف في كلّ مرّة»):
      القرعةُ الأولى من الخادم، ثمّ تُدار في كلّ «محادثةٍ جديدة» ببذرةٍ مضمونة الاختلاف.
@@ -73,6 +91,53 @@ export function DeeboChat({
   // الدرعُ قائمٌ ولا رمزَ بعد: إمّا لم يصل، وإمّا **انتهى أجلُه** (٣٠٠ث) فأُبطل صامتًا.
   const waitingShield = !!siteKey && shielded && !token;
 
+  if (!old) {
+    const shownDemo = demoOn ? demo : null;
+    return (
+      <DeeboStage
+        look={look}
+        answer={answer}
+        me={me}
+        label={shownDemo ? "معاينة: الحوارُ مكتوبٌ بيدنا لعرض الشكل، والبطاقاتُ من بياناتٍ حقيقيّة في الموقع" : null}
+        questions={questions}
+        unknownAnswer={unknownAnswer}
+        turns={shownDemo ?? turns}
+        greeting={pickGreeting({ seed: greet.seed, hour: greet.hour, name: viewerName })}
+        busy={shownDemo ? false : busy}
+        error={shownDemo ? null : error}
+        blocked={shownDemo ? false : waitingShield}
+        draft={draft}
+        onDraft={setDraft}
+        onSend={shownDemo ? () => {} : send}
+        onStop={stop}
+        onReset={() => {
+          setDemoOn(false);
+          reset();
+          setDraft("");
+          setOpenId(null);
+          setGreet((g) => ({ seed: nextSeed(g.seed), hour: clubHour() }));
+          void refresh();
+        }}
+        conversations={conversations}
+        onOpenDrawer={() => void refresh()}
+        openId={openId}
+        onOpenConversation={async (id) => {
+          if (shownDemo) return;
+          const talk = await openMyConversation(id);
+          if (!talk) return;
+          adopt(id, talk);
+          setOpenId(id);
+        }}
+        onDeleteConversation={shownDemo ? undefined : async (id) => {
+          const res = await deleteMyConversation(id);
+          if (!res.ok) return;
+          if (id === openId) { reset(); setOpenId(null); }
+          setConversations((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
+        }}
+        shield={siteKey && shielded && !shownDemo ? <TurnstileWidget siteKey={siteKey} onToken={setToken} resetSignal={failures} /> : null}
+      />
+    );
+  }
   return (
     <DeeboScreen
       questions={questions}

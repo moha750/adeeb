@@ -1,15 +1,16 @@
+import "@adeeb/design-system/ad.css";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Container, Footer } from "@adeeb/design-system";
+import { Footer } from "@adeeb/design-system";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { irfanPreviewPath } from "@/lib/irfan/whatsapp";
 import { getSharedIrfan } from "./data";
-import { SharedCard } from "./SharedCard";
+import { IrfanShared } from "@/app/_ad/rooms/IrfanSharedRoom";
 
 /**
  * **بطاقةُ «عِرفان» علنيّةً برمزها** (`/irfan/<رمز>`) — الرابطُ الذي يصحب الرسالةَ في واتساب. صفحتُه
  * تعلن صورةَ المعاينة (Open Graph) فيعرضها واتساب فوق الرسالة، ومن فتحه رأى البطاقة نفسَها مرسومةً
- * وحفظها. والرمزُ ١٢٢ بتًّا لا يُخمَّن، والصفحةُ لا تُفهرَس.
+ * وحفظها. والرمزُ ١٢٢ بتًّا لا يُخمَّن، والصفحةُ لا تُفهرَس. على قالب «القراءة» (`IrfanSharedRoom`، اعتمده محمد ١١-٢٤).
  */
 export const dynamic = "force-dynamic";
 
@@ -41,10 +42,10 @@ export default async function SharedIrfanPage({ params }: { params: Promise<{ to
   return (
     <>
       <SiteHeader />
-      <main className="py-12 md:py-20">
-        <Container>
-          <SharedCard id={m.id} card={m.card} look={m.look} />
-        </Container>
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <IrfanShared id={m.id} card={m.card} look={m.look} />
+        </div>
       </main>
       <Footer />
     </>

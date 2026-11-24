@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { Alert, Ambient, Container, Footer, LandingHeading } from "@adeeb/design-system";
+import "@adeeb/design-system/ad.css";
+import { Footer } from "@adeeb/design-system";
+import { AdNote } from "@/app/_ad/primitives";
 import { SiteHeader } from "@/app/_components/SiteHeader";
-import { getPublicStructure } from "./data";
-import { StructureMix } from "./StructureMix";
+import { getPublicOrg } from "./data";
+import { TreeMix } from "./TreeMix";
 
 export const metadata: Metadata = {
   title: "هيكلة أدِيب، نادي أدِيب",
@@ -12,30 +14,25 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 /**
- * **هيكلةُ أدِيب** — صفحةٌ علنيّة (فتحها المالك للعامّة ٢٠٢٦-١٠-١٧ بعد أن كانت محروسةً بقفل
- * غرفة الهيكلة). التصميمُ «المزيج» بخطوط «الوصل»، اعتمده ٢٠٢٦-١٠-١٨، ففُتحت للمحرّكات
- * (أُزيل `noindex`) ودخلت خريطة الموقع، ولها زرٌّ تحت «أهل الدفّة» في الرئيسيّة. ومسارُها `/structure`
- * بعد `/structure-preview` (المالك ٢٠٢٦-١٠-١٨)، بلا تحويلٍ من القديم: لم يُتداوَل.
+ * **هيكلةُ أدِيب** — صفحةٌ علنيّة (فتحها المالك للعامّة ٢٠٢٦-١٠-١٧)، ومسارُها `/structure` (٢٠٢٦-١٠-١٨).
  *
- * البياناتُ من `getPublicStructure` بمفتاح الزائر عبر الدالّة الآمنة `get_public_structure`، فلا يخرج
- * من القاعدة إلّا الحقولُ المنشورة (الاسم، الصورة، الجنس، المسمّى، رابط الصفحة). وخطأُ القاعدة لا يُعرض
- * للزائر: رسالةٌ عامّة، والتفصيلُ في سجلّ الخادم.
+ * **أُعيد بناؤها على الهويّة ٢٠٢٦-١١-٢١/٢٢** (محمد: «نحتاج هدمه بالكامل وبناءه من جديد»): قالبُ الفهرس العامّ رأسًا والمجلسُ
+ * الإداريّ في لوحه، ثمّ **الشجرة** (`TreeMix`) بوجوهها، ونافذةٌ لكلّ وحدةٍ بتعريفها وقيادتها وإشرافها وأعضائها.
+ *
+ * البياناتُ من `getPublicOrg` بمفتاح الزائر عبر الدالّة الآمنة `get_public_structure` (ومعها التعريفاتُ والإشراف منذ
+ * `structure_02`)، فلا يخرج من القاعدة إلّا الحقولُ المنشورة. وخطأُ القاعدة لا يُعرض للزائر: رسالةٌ عامّة، والتفصيلُ في سجلّ الخادم.
  */
 export default async function StructurePage() {
-  const { data, error } = await getPublicStructure();
-  if (error) console.error("[structure] getPublicStructure:", error);
-
+  const { data, error } = await getPublicOrg();
+  if (error) console.error("[structure] getPublicOrg:", error);
   return (
     <>
       <SiteHeader />
-      <main className="amb-host">
-        <Ambient />
-        <section className="py-16 md:py-24">
-          <Container className="max-w-[1320px]">
-            <LandingHeading eyebrow="فريق" title="هيكلة أدِيب" align="center" />
-            {data ? <StructureMix s={data} /> : <Alert tone="danger">تعذّر تحميل الهيكل الآن، أعد المحاولة بعد قليل.</Alert>}
-          </Container>
-        </section>
+      {/* قالبُ الفهرس العامّ (`.ad-pub` ولوحُ `PubIndex`) — البناءُ الجديد ٢٠٢٦-١١-٢١ */}
+      <main className="ad-pub">
+        <div className="ad-pub-wrap is-wide">
+          {data ? <TreeMix org={data} /> : <AdNote tone="bad" title="تعذّر تحميل الهيكل الآن">أعد المحاولة بعد قليل.</AdNote>}
+        </div>
       </main>
       <Footer />
     </>

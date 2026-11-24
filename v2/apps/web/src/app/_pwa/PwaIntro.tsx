@@ -56,7 +56,7 @@ export function PwaIntro() {
       onClose={close}
       busy={pwa.busy === "enable"}
       title="أَدِيب على جوّالك"
-      description="تطبيقٌ على شاشتك الرئيسيّة، وإشعاراتٌ على شاشة القفل"
+      description="أدِيب على جوّالك كأيّ تطبيق، وما يخصّك يصلك إشعارًا"
       footer={
         <Button variant="ghost" onClick={close} disabled={pwa.busy === "enable"}>
           {pwa.stage === "on" ? "تمّ" : "ليس الآن"}

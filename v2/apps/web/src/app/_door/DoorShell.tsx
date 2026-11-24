@@ -1,8 +1,8 @@
+import "@adeeb/design-system/ad.css";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { House } from "@phosphor-icons/react/dist/ssr";
 import { ICON_WEIGHT } from "@/lib/iconWeight";
-import { Ambient } from "@adeeb/design-system";
 import { DeeboFace, type Door } from "./DeeboFace";
 import { Head } from "./parts";
 
@@ -15,8 +15,9 @@ import { Head } from "./parts";
  * ولا رأسَ للموقع فيه (جُرِّب فرفضه المالك: «سيّئٌ جدًّا»).
  * والبابان **لا يُعرفان بلونٍ فاتحٍ وآخرَ غامق** (المالك): بل بالعنوان وبوقفة ديبو.
  *
- * ومن هويّة الموقع: أرضُه (`--color-bg`)، وعنوانُ أقسامه «المذهّب» (عينٌ كبيرةٌ تتلاشى،
- * وعنوانٌ بتدرّج الهويّة على تظليلٍ كقلم التحديد — `LandingHeading`).
+ * **على الهويّة الجديدة** (محمد ٢٠٢٦-١١-٢٣، خطوةً خطوة): أرضُ الصفحات العامّة لا الشبكةُ القديمة، والنموذجُ على ورقة الهويّة مقابلَ اللوح،
+ * والشعارُ أعلى اللوح، ورأسُ الخطوة عنوانُ الهويّة (التحيّةُ تسميةٌ فوقه — كانت الكلمةَ الكبيرة الباهتة)، والطرقُ أزرارُها الكبيرة كتلةً
+ * واحدة، والحقولُ والتنبيهاتُ («الملاحظة») قطعُها، و«ليس لك حساب؟» سطرُ الطريق الآخر. وحركةُ المرور حركتُها وحدها.
  *
  * وفي الشاشة الضيّقة يصير اللوحُ رأسًا قصيرًا — ديبو في جهة البدء والعنوانُ بجانبه — والنموذجُ
  * صفحةٌ بيضاء تعلوه بحافّةٍ مستديرة.
@@ -27,16 +28,29 @@ const SIDE: Record<Door, { big: string; small: string }> = {
   signup: { big: "ابدأ حكايتك مع أدِيب", small: "احجز الفعاليّات، وتطوّع، وكن قريبًا من النادي." },
   forgot: { big: "لا تقلق، نستعيدها معًا", small: "رابطٌ إلى بريدك، وتعود إلى بوّابتك." },
   reset: { big: "خطوةٌ أخيرة وتعود", small: "كلمةٌ جديدة، ثمّ إلى بوّابتك." },
+  // جملةُ الهويّة التي كانت في لوح الباب القديم (`AuthShell`)
+  denied: { big: "بوّابةُ أدِيب", small: "من هنا يُدار نادي أدِيب." },
+  // تكملةُ بابِ الحساب لمن جاء ليتطوّع (١١-٢٤): خطوتان بعد الحساب، ثمّ هو متطوّع
+  volunteer: { big: "خطوتُك إلى التطوّع", small: "دقيقةٌ واحدة، وتصير من متطوّعي أدِيب." },
+  // مهلةُ الحذف (١١-٢٤): البابُ مفتوحٌ حتى يومها
+  leaving: { big: "ننتظر بقاءك", small: "حسابُك في مهلة الحذف، والبابُ مفتوحٌ حتى يومها." },
+  // بابُ السجلّ (١١-٢٤): عضوٌ بلا سجلّ يُكمله مرّةً، ثمّ يدخل بوّابته
+  record: { big: "سجلُّك في أدِيب", small: "دقيقتان، ثمّ إلى بوّابتك." },
 };
 
-export function DoorShell({ door, children }: { door: Door; children: ReactNode }) {
-  const side = SIDE[door];
+/** `say`: قولُ اللوح لحالٍ بعينها داخل الباب (المتطوّعُ في بابه يعيد ترتيب رغباته، لا يخطو إلى التطوّع) */
+export function DoorShell({ door, children, say }: { door: Door; children: ReactNode; say?: { big: string; small: string } }) {
+  const side = say ?? SIDE[door];
   return (
-    <div className="door amb-host">
-      {/* أرضُ الموقع المشبّكة كأغلب صفحاته — من هويّته التي افتقدها المالك هنا */}
-      <Ambient />
+    <div className="door">
       <aside className="door-side">
         <div className="door-side-say">
+          {/* **الشعارُ أعلى اللوح** (محمد ٢٠٢٦-١١-٢٣): من يكتب بريدَه وكلمةَ مروره يطمئنّ أوّلًا أنّه في أدِيب — ولم يكن في الصفحة شعارٌ إلّا ما على صدرية ديبو.
+              وهو رابطُ الرئيسية كشعار رأس الموقع */}
+          <Link href="/" className="door-logo" aria-label="نادي أدِيب، الرئيسية">
+            {/* eslint-disable-next-line @next/next/no-img-element -- شعارٌ متّجه */}
+            <img src="/brand/logo-horizontal-white.svg" alt="" />
+          </Link>
           <p className="door-side-big">{side.big}</p>
           <p className="door-side-small">{side.small}</p>
         </div>
@@ -48,7 +62,7 @@ export function DoorShell({ door, children }: { door: Door; children: ReactNode 
         <div className="door-thread">
           {children}
           {/* العودةُ إلى الموقع (المالك): زرُّ الهويّة الصغير بإطاره، في الوسط */}
-          <Link href="/" className="abtn abtn-sm abtn-ghost door-out">
+          <Link href="/" className="ad-btn ad-btn-line ad-btn-sm door-out">
             <House size={17} weight={ICON_WEIGHT} aria-hidden />
             العودة إلى الموقع
           </Link>

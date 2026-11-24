@@ -1,17 +1,15 @@
 "use client";
 
-import { DataTable } from "@/app/dashboard/_components/DataTable";
+import { AdDataGrid } from "@/app/_ad/grid";
 
-type Row = { id: string; cells: string[] };
-
-/** جدولُ المادّة: الجدولُ عميليٌّ يأخذ دوالَّ عرضه، فيُبنى هنا من بياناتٍ صِرفةٍ تعبر من الخادم. */
+/**
+ * جدولُ المادّة بجدول بيانات الهويّة (`AdDataGrid`، ٢٠٢٦-١١-٢٢؛ كان `DataTable` القديم): عمودُه الأوّل ثابتٌ رأسًا للسطر، ويُمرَّر أفقيًّا
+ * في الضيّق ولا يُقصّ.
+ */
 export function RegTable({ head, rows }: { head: string[]; rows: string[][] }) {
-  const data: Row[] = rows.map((r, j) => ({ id: String(j), cells: r }));
+  const [first, ...rest] = head;
   return (
-    <DataTable<Row>
-      columns={head.map((h, c) => ({ key: String(c), header: h, wrap: true, render: (r: Row) => r.cells[c] }))}
-      rows={data}
-      getRowId={(r) => r.id}
-    />
+    <AdDataGrid label={first ?? "جدول"} head={first ?? ""} columns={rest.map((h, c) => ({ key: String(c), label: h }))}
+      rows={rows.map((r, j) => ({ id: j, head: r[0], cells: r.slice(1) }))} />
   );
 }

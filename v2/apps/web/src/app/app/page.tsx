@@ -1,45 +1,39 @@
+import "@adeeb/design-system/ad.css";
 import type { Metadata } from "next";
-import { Container, Footer, LandingHeading } from "@adeeb/design-system";
+import { Footer } from "@adeeb/design-system";
 import { SiteHeader } from "@/app/_components/SiteHeader";
 import { getSessionAdmin } from "@/lib/auth";
 import { shareOg } from "@/lib/share";
-import { AppGuide } from "./AppGuide";
+import { AppRoom } from "@/app/_ad/rooms/AppRoom";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://adeeb.club";
 const TITLE = "تطبيق أَدِيب";
-const DECK = "بلا متجرٍ ولا تحميل: أضِفه إلى شاشتك الرئيسيّة، وتصلك أخبارُ النادي على شاشة القفل.";
+const SHARE = "أدِيب على جوّالك بلا متجرٍ ولا تحميل، وما يخصّك يصلك إشعارًا.";
 
 export const metadata: Metadata = {
   title: `${TITLE}، نادي أَدِيب`,
-  description: DECK,
-  openGraph: shareOg({ type: "website", title: TITLE, description: DECK }),
+  description: SHARE,
+  openGraph: shareOg({ type: "website", title: TITLE, description: SHARE }),
 };
 
 /**
- * **رابطُ الإعلان عن التطبيق** — `adeeb.club/app` (٢٠٢٦-١٠-٠٣).
+ * **رابطُ الإعلان عن التطبيق** — `adeeb.club/app` (٢٠٢٦-١٠-٠٣)، **أُعيد بناؤه على رحلة زائره** (`AppRoom`، اعتمده محمد ١١-٢٤).
  *
- * بطاقةُ التثبيت والنافذةُ تسكنان خلف الدخول (الحساب واللوحة)، فلا يراهما من لم يدخل بعد.
- * وهذه الصفحةُ للنشر في القروبات والحسابات: من يفتحها من آيفون يرى الخطوات، ومن أندرويد زرَّ
- * التثبيت، ومن الحاسوب رمزًا يمسحه بجوّاله. ولا محتوى جديدًا فيها: البطاقةُ هي المعتمَدة
- * نفسُها (`PwaCard`)، فما يتغيّر هناك يتغيّر هنا.
+ * للنشر في القروبات والحسابات: يقول ما يأخذه الزائر، ثمّ خطوتَه بحسب جهازه — آيفون مرحلتان، وأندرويد التفعيلُ والتثبيت،
+ * والحاسوبُ رمزٌ يُمسح بالجوّال، ومن فتح الرابطَ داخل تطبيقٍ آخر يُقال له أن يفتحه في متصفّحه.
  *
- * والجلسةُ تُسأل كي يُدعى غيرُ الداخل إلى الدخول مكانَ زرّ التفعيل (الإشعارُ لحسابٍ لا لجهاز).
+ * ⚠️ **لا تُنشر قبل اكتمال إشعارات المتطوّعين والأصدقاء** (محمد ١١-٢٤): «ما يخصّك يبلغك» وعدٌ للجميع.
+ * والجلسةُ تُسأل كي يُدعى غيرُ الداخل إلى الدخول خطوةً أولى (الإشعارُ لحسابٍ لا لجهاز).
  */
 export default async function AppPage() {
   const me = await getSessionAdmin();
-
   return (
     <>
       <SiteHeader />
-      <main>
-        <section className="py-16 md:py-24">
-          <Container>
-            <LandingHeading eyebrow="جوّالك" title="تطبيقُ أَدِيب" deck={DECK} align="center" />
-            <div className="mx-auto mt-8 max-w-xl">
-              <AppGuide signedIn={Boolean(me)} url={`${SITE}/app`} />
-            </div>
-          </Container>
-        </section>
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <AppRoom signedIn={Boolean(me)} url={`${SITE}/app`} />
+        </div>
       </main>
       <Footer />
     </>

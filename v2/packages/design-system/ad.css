@@ -20,7 +20,8 @@
    (كحليّ 700 ← 900)، فلا يسطع عمودٌ فاتحٌ بجانب ليلٍ كحليّ. والنقشُ أخفّ كما في اللوح.
    (والورقةُ الصاعدة على الجوّال `.mnsh` تحمل `.ash-side` نفسَه، فتتبعه.) */
 [data-theme="dark"] .ash-side { background: var(--ad-plate); box-shadow: var(--ad-lift), inset 0 0 0 1px var(--ad-plate-edge); }
-[data-theme="dark"] .ash-naqsh { opacity: var(--ad-plate-naqsh); }
+/* الشريطُ بقوّته المعتمدة قبل تخفيف اللوح (١١-٢٤): نقشُه قطعتُه المستقلّة، فلا يتبع الرمزَ المخفَّف */
+[data-theme="dark"] .ash-naqsh { opacity: calc(var(--ad-plate-naqsh) * 2); }
 
 /* **والمكوّناتُ القديمة المشتركة التي تفتحها الغرفُ الجديدة** (نافذةُ التأكيد وأزرارُها): تكتب درجاتِ
    السلّم مباشرةً (أحمرُ 700 للعنوان، و500 لزرّ الإلغاء)، فلا يبلغها جسرُ الرموز، وتغرق في الليل.
@@ -255,6 +256,12 @@
 .ad-btn:disabled, .ad-btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; transform: none; }
 .ad-btn-sm { min-block-size: var(--ad-ctl-sm); padding-inline: var(--space-3); border-radius: var(--ad-r-sm); font-size: var(--ad-t-ui); }
 .ad-btn-sm svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* **سطرُ الطريق الآخر** (`.ad-alt`، معروض ٢٠٢٦-١١-٢٣): «ليس لك حساب؟ [أنشئ حسابًا]» — جملةٌ بحبرٍ ثانٍ وزرٌّ صغيرٌ بجانبها في الوسط، بلا صندوق:
+   طريقٌ جانبيٌّ هادئ لا تنبيهٌ ينافس أفعالَ الصفحة */
+.ad-alt { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2) var(--space-3); margin: var(--space-2) 0 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-2); }
+/* **الزرُّ الكبير** (`AdButton size="lg"`، معروضٌ على محمد ٢٠٢٦-١١-٢٣): حيث يكون الزرُّ هو فعلَ الصفحة الوحيد (طرقُ الدخول في البابين) —
+   أعلى بدرجة (54)، وختمُه متراكزٌ معه بالفسحة نفسِها. لا يُستعمل في الغرف: هناك الزرُّ أداةٌ بين أدوات */
+.ad-btn-lg { min-block-size: calc(var(--ad-ctl) + var(--space-3)); padding-inline: var(--space-5); }
 /* ── الزرُّ بقاعدة الهويّة الواحدة (`tokens.css` §٧) ──
    الأساسيُّ قطعةٌ من اللوح (وشعاعُ الضوء من زرّ البوّابة المعتمد عند المرور). والثانويُّ أداةٌ خطوةً عن أرضها
    بحدٍّ رفيعٍ من الداخل، وحبرُه كحليّ — **ومربّعُ أيقونته قطعةٌ من اللوح**: علامةُ الشريط (`.ash-mark`) مقلوبةً
@@ -314,6 +321,8 @@
 /* ختمُ سطرٍ بحاله الخضراء («عرض تقييمي» على «قيّمت»، محمد ٢٠٢٦-١١-٢٠): الختمُ وحده، والصندوقُ بحبره */
 .ad-btn.ad-line-act[data-tone="ok"] > svg { background: var(--ad-dlg-light), var(--ad-ok-solid); color: var(--ad-on-fill); }
 .ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: calc(var(--space-1) * .75) var(--space-3); }
+.ad-btn-lg:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: calc(var(--space-2) - 1px) var(--space-5); }
+.ad-btn-lg:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger) > svg { inline-size: var(--space-5); block-size: var(--space-5); padding: calc(var(--space-2) + var(--space-1) / 2); }
 .ad-btn-sm:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger) > svg { padding: calc(var(--space-1) * 1.25); border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75); }
 /* الرمزُ بعد الاسم: الحشوُ ينقلب معه */
 .ad-btn-end:is(.ad-btn-line, .ad-btn-soft, .ad-btn-danger):has(> svg) { padding-inline: var(--space-4) var(--space-1); }
@@ -1553,9 +1562,10 @@ button.ad-grip:hover, [data-dragging] .ad-grip { background: var(--ad-veil-2); c
 /* ═══ رسائلُ التنبيه — موضعُها ═══
    كانت في جهة البداية — حيث الشريطُ الجانبيّ في البوّابة — فتغطّي أسفلَه («مركز المساعدة»). فصارت في جهة النهاية فوق
    المحتوى، وفي الجوّال بعرض الشاشة فوق جزيرة التنقّل لا عليها. وشكلُها باقٍ: ختمٌ بنغمتها على صفحةٍ بحدّ الورقة */
-/* محصورٌ في البوّابة (`:has(.ash-content)`): هذا الملفُّ يبقى في المستند بعد التنقّل إلى صفحاتٍ عامّة، ولا جزيرةَ هناك.
-   و860 حدُّ الجزيرة نفسُه في `components.css` (`.ash-content`)، والمتغيّرُ لا يُقرأ في استعلام الوسائط */
-body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end: var(--space-6); }
+/* **وفي الموقع العامّ كذلك** (محمد ٢٠٢٦-١١-٢٣): كانت القاعدةُ محصورةً في البوّابة فبقيت الرسالةُ يمينًا في الصفحات العامّة، فغطّت
+   أسفلَ «الأبواب» في صفحة الوثيقة — العلّةُ نفسُها. والجزيرةُ وحدها للبوّابة (`:has(.ash-content)`): هذا الملفُّ يبقى في المستند بعد
+   التنقّل إلى صفحاتٍ عامّة، ولا جزيرةَ هناك. و860 حدُّ الجزيرة نفسُه في `components.css` (`.ash-content`)، والمتغيّرُ لا يُقرأ في استعلام الوسائط */
+body .toast-stack { inset-inline-start: auto; inset-inline-end: var(--space-6); }
 @media (max-width: 860px) {
   body:has(.ash-content) .toast-stack { inset-inline: var(--space-4); inline-size: auto; bottom: calc(var(--ad-island) + env(safe-area-inset-bottom)); }
 }
@@ -1738,15 +1748,16 @@ body:has(.ash-content) .toast-stack { inset-inline-start: auto; inset-inline-end
    كرتُه في منتصفه بعرض عمودٍ واحد، وعنوانُه في الوسط بخطّين يذوبان إلى الجهتين — رأسٌ مقصودٌ فوق الصفوف كرأس صفحة الهيكلة، لا صفٌّ
    ناقص (ورُدّ إخراجُه من الخريطة: خريطةٌ بلا رأسها قائمةُ لجان، ضدّ تقوية الهيكلة). */
 .ad-seat-group[data-head] { display: grid; grid-column: 1 / -1; row-gap: var(--space-3); }
-.ad-seat-group[data-head] > .ad-gtitle { justify-content: center; }
-.ad-seat-group[data-head] > .ad-gtitle::before {
+/* والعنوانُ نفسُه لوحةُ المجلس في شجرة الهيكلة (`.tr-council`، ٢٠٢٦-١١-٢١): رأسٌ في وسط الشجرة بخطّين يذوبان */
+:is(.ad-seat-group[data-head], .tr-council) > .ad-gtitle { justify-content: center; }
+:is(.ad-seat-group[data-head], .tr-council) > .ad-gtitle::before {
   content: "";
   flex: 1;
   block-size: calc(var(--space-1) / 2);
   border-radius: var(--ad-r-full);
   background: linear-gradient(to right, var(--steel-400), transparent);
 }
-:dir(ltr) .ad-seat-group[data-head] > .ad-gtitle::before { background: linear-gradient(to left, var(--steel-400), transparent); }
+:dir(ltr) :is(.ad-seat-group[data-head], .tr-council) > .ad-gtitle::before { background: linear-gradient(to left, var(--steel-400), transparent); }
 .ad-seat-group[data-head] > .ad-seat-list {
   grid-template-columns: calc((100% - (var(--ad-seats-n, 4) - 1) * var(--space-4)) / var(--ad-seats-n, 4));
   justify-content: center;
@@ -2248,11 +2259,53 @@ a.vz-arch-row:hover { border-color: var(--ad-edge-ctl); }
   inline-size: var(--space-10);
   block-size: var(--space-10);
   border-radius: var(--ad-r-sm);
-  background: var(--ad-pick);
+  background: var(--ad-dlg-light), var(--ad-pick);
   box-shadow: inset 0 0 0 1px var(--ad-pick-hair);
   color: var(--ad-on-pick);
 }
 .ad-sec-ic svg { inline-size: var(--space-5); block-size: var(--space-5); }
+/* **ختمُ الحكم** (`AdSection stamp`، اعتمده محمد ١١-٢٤): الختمُ بلون نغمته بمادّة شريط «الملاحظة» كاملةً، والرأسُ بصبغته، والسطورُ على بياضها */
+.ad-sec[data-stamp] .ad-sec-ic { box-shadow: none; color: var(--ad-on-fill); }
+/* **ولكلّ ختم قسمٍ نقشُه، الكحليُّ معها** (محمد ١١-٢٤ في «فعّل الإشعارات»: «خلفيةُ الأيقونة ليس فيها نقشٌ خلافًا لألوان الحالات الأخرى»):
+   كان النقشُ للأختام الملوّنة وحدها، فبدا الكحليُّ قطعةً من مادّةٍ أخرى بجانبها. فالمادّةُ واحدةٌ لكلّ ختم: ضوءٌ ونقشٌ وشبكة */
+.ad-sec-ic { position: relative; isolation: isolate; overflow: hidden; }
+/* **مادّةُ شريط «الملاحظة» كاملةً لا لونُه وحده** (محمد ١١-٢٤: «لماذا لا يوجد باترن؟»): النقشُ في ركنه والشبكةُ فوق التدرّج، كما في `.ad-note-band` */
+.ad-sec-ic::before {
+  content: ""; position: absolute; inset: 0; z-index: var(--ad-z-under);
+  background: url("/brand/pattern-white.svg") no-repeat 18% 22% / calc(var(--ad-plate-naqsh-size) * .3) auto;
+  opacity: var(--ad-plate-naqsh);
+}
+.ad-sec-ic::after {
+  content: ""; position: absolute; inset: 0; z-index: var(--ad-z-under);
+  background-image:
+    linear-gradient(to bottom, var(--ad-plate-mesh) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--ad-plate-mesh) 0 1px, transparent 1px);
+  background-size: var(--ad-mesh) var(--ad-mesh);
+}
+.ad-sec[data-stamp="ok"] .ad-sec-ic { background: var(--ad-dlg-light), var(--ad-ok-solid); }
+.ad-sec[data-stamp="bad"] .ad-sec-ic { background: var(--ad-dlg-light), var(--ad-bad-solid); }
+.ad-sec[data-stamp="warn"] .ad-sec-ic { background: var(--ad-dlg-light), var(--ad-warn-solid); }
+/* **ورأسُه بصبغة حكمه** (اعتمده محمد ١١-٢٤ من مقارنةٍ بالرأس المحايد): على قاعدة رأس «منطقة الخطر» (`tone="bad"`)، والسطورُ على بياضها */
+.ad-sec[data-stamp="ok"] > .ad-sec-head { background: linear-gradient(var(--ad-ok-soft), var(--ad-ok-soft)), var(--ad-sheet); }
+.ad-sec[data-stamp="warn"] > .ad-sec-head { background: linear-gradient(var(--ad-warn-soft), var(--ad-warn-soft)), var(--ad-sheet); }
+.ad-sec[data-stamp="bad"] > .ad-sec-head { background: linear-gradient(var(--ad-bad-soft), var(--ad-bad-soft)), var(--ad-sheet); }
+.ad-sec[data-stamp="ok"]:has(> .ad-lines) > .ad-sec-head { border-block-end-color: var(--ad-ok-edge); }
+.ad-sec[data-stamp="warn"]:has(> .ad-lines) > .ad-sec-head { border-block-end-color: var(--ad-warn-edge); }
+.ad-sec[data-stamp="bad"]:has(> .ad-lines) > .ad-sec-head { border-block-end-color: var(--ad-bad-edge); }
+/* **ورموزُ سطوره بلونه، وقيمُها بحبرها** (اعتمده محمد ١١-٢٤ من ثلاث: القيمُ ملوّنة، والرموزُ وحدها، والمحايد): قاعدةُ «منطقة الخطر» نفسُها.
+   القيمُ هي ما يُطابَق فتبقى بأوضح حبر، والسطرُ ذو الحال (`tone`) يبقى وحده بقيمته الملوّنة، وسطرُ الخطر (`danger`) بأحمره */
+.ad-sec[data-stamp="ok"] .ad-line:not([data-danger]) .ad-line-ic { color: var(--ad-ok); }
+.ad-sec[data-stamp="warn"] .ad-line:not([data-danger]) .ad-line-ic { color: var(--ad-warn); }
+.ad-sec[data-stamp="bad"] .ad-line:not([data-danger]) .ad-line-ic { color: var(--ad-bad); }
+/* **والقسمُ المختومُ بنغمةٍ واحدة: زرُّ سطره وتمريرُه بلونه** (محمد ١١-٢٤ في «افتحها في سفاري»: «الحالةُ كلُّها كهرمانيّة إلّا الزرّ أزرق،
+   وكذلك التمرير»؛ و«أرسل» في «الإشعاراتُ مفعّلة» أخضر). قاعدةُ «القسمِ الخطِر بنغمةٍ واحدة» نفسُها (١١-١٨) عامّةً لكلّ ختم.
+   وهي استثناءُ «الزرُّ بلون معناه لا بموضعه»: الختمُ حكمٌ على القسم كلّه، فما فيه من فعلٍ فعلُ حاله. وسطرُ الخطر يبقى بأحمره */
+.ad-sec[data-stamp="ok"] .ad-line:not([data-danger]) .ad-line-act:not(.ad-btn-danger) > svg { background: var(--ad-dlg-light), var(--ad-ok-solid); color: var(--ad-on-fill); }
+.ad-sec[data-stamp="warn"] .ad-line:not([data-danger]) .ad-line-act:not(.ad-btn-danger) > svg { background: var(--ad-dlg-light), var(--ad-warn-solid); color: var(--ad-on-fill); }
+.ad-sec[data-stamp="bad"] .ad-line:not([data-danger]) .ad-line-act:not(.ad-btn-danger) > svg { background: var(--ad-dlg-light), var(--ad-bad-solid); color: var(--ad-on-fill); }
+.ad-sec[data-stamp="ok"] .ad-line:not([data-danger]) > :is(a, button).ad-line-hit:not(:has(.ad-btn-danger)):hover { background: var(--ad-ok-veil); }
+.ad-sec[data-stamp="warn"] .ad-line:not([data-danger]) > :is(a, button).ad-line-hit:not(:has(.ad-btn-danger)):hover { background: var(--ad-warn-veil); }
+.ad-sec[data-stamp="bad"] .ad-line:not([data-danger]) > :is(a, button).ad-line-hit:not(:has(.ad-btn-danger)):hover { background: var(--ad-bad-veil); }
 .ad-sec-t { display: grid; gap: 0; min-inline-size: 0; }
 .ad-sec-t h2 { font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
 .ad-sec-t p { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
@@ -4278,7 +4331,7 @@ html:has(.asel-panel[data-side="above"]) .fld:has(.asel-open) > .fld-lbl { borde
 .ad-fsec-body > .ad-tsc-send { display: flex; justify-content: flex-end; margin-block-start: var(--space-3); }
 
 /* **منتقي الأشخاص** (`AdPeoplePicker`، اعتمده محمد ٢٠٢٦-١١-١٣): الحقلُ (ب) للبحث، ثمّ المختارون سطورًا تحته */
-.ad-pp { display: grid; gap: var(--space-2); min-inline-size: 0; }
+.ad-pp { display: grid; gap: var(--space-2); min-inline-size: 0; container: ad-pp / inline-size; }
 /* القائمةُ «امتداد الحقل» تلتصق بالبئر كقائمة الحقل: زاويتا البئر من جهتها قائمتان */
 html:has(.ash-content):has(.ad-pp-panel[data-side="below"]) .ad-pp[data-open] .fld-wrap { border-end-start-radius: 0; border-end-end-radius: 0; }
 html:has(.ash-content):has(.ad-pp-panel[data-side="above"]) .ad-pp[data-open] .fld-lbl { border-start-start-radius: 0; border-start-end-radius: 0; }
@@ -4656,27 +4709,361 @@ html:has(.ad-dframe), html:has(.ad-dframe) body { background: transparent; }
 .ad-table:has(.ad-asg-seat) .ad-th[data-kind="col"] { justify-self: start; text-align: start; }
 .ad-table[data-cols="1"]:has(.ad-asg-seat) { grid-template-columns: var(--ad-tc-pick,) var(--ad-tc-grip,) var(--ad-tc-stub,) max-content minmax(0, 1fr) max-content; }
 .ad-asg-seat > svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-ink-3); }
-/* **شجرةُ الهيكلة** (٢٠٢٦-١١-١٤): لافتةُ الوحدة زرٌّ يفتح تعريفَها حين يُطلب (`StructureMix onUnit`) — يُستعمل حين تُثرى الصفحةُ العلنيّة
-   بتعريف كلّ وحدة (قرار محمد: مع الموقع العامّ). والشجرةُ نفسُها بأوراقها `.sx-*` */
-.sx-cap-hit { display: inline-flex; padding: 0; border: 0; border-radius: var(--ad-r-full); background: none; cursor: pointer; }
-.sx-cap-hit > .sx-cap { gap: var(--space-1); transition: border-color var(--ad-dur) var(--ad-ease-out), color var(--ad-dur) var(--ad-ease-out); }
-.sx-cap-hit > .sx-cap > svg { flex: none; inline-size: var(--space-3); block-size: var(--space-3); }
-.sx-cap-hit:hover > .sx-cap { border-color: var(--ad-brand); color: var(--ad-brand); }
-.sx-cap-hit:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
-/* **الشجرةُ داكنةً** (المراجع ٢٠٢٦-١١-١٤: اللافتاتُ والأسماءُ كحليٌّ على أرضٍ كحليّة): أوراقُ `.sx-*` القديمةُ تكتب درجاتِ الكحليّ مباشرة،
-   فتُعاد درجاتُها داخل الشجرة وحدها إلى أدوار الهويّة في الداكن — سطرٌ مؤقّتٌ حتّى تُنقل الشجرةُ إلى الأدوار (قاعدةُ الإرث في CLAUDE.md) */
-[data-theme="dark"] .sx {
-  --navy-900: var(--ad-ink-head);
-  --navy-800: var(--ad-ink-head);
-  --navy-500: var(--ad-ink-3);
-  --navy-400: var(--ad-ink-3);
-  --navy-300: var(--ad-edge);
-  --navy-200: var(--ad-edge);
-  --navy-100: var(--ad-rule);
-  --navy-50: var(--ad-veil);
-  --steel-600: var(--ad-ink-3);
-  --color-surface: var(--ad-sheet);
+/* ═══ شجرةُ أدِيب (`/structure`، `.tr-*`، ٢٠٢٦-١١-٢١) ═══
+   محمد: «المفروض أن تكون هيكلةُ أدِيب على شكل شجرة… تُبنى شجرةٌ مطابقةٌ للهويّة». الشجرةُ قطعةٌ جديدةٌ من مادّة الهويّة:
+   العقدةُ كرتُ المقعد (`.ad-seat-cell` + `AdCard face`) كما هو، والمجلسُ عنوانُ المجموعة في الوسط، والخطوطُ بحبر الهويّة
+   (`--ad-hair-2`) بزوايا مستديرة. هنا الترتيبُ والخطوطُ وحدها: جذعٌ، ثمّ جسرٌ ينعطف إلى فروعه، ثمّ جذوعُ الفروع.
+   وفي الجوّال واللوح (دون ٦٠rem) جذعٌ واحدٌ نازل. */
+.tr { --tr-ln: var(--ad-hair-2); --tr-lw: 1.5px; --tr-gap: var(--space-8); --tr-cg: var(--space-4); --tr-rad: var(--space-4);
+  display: flex; flex-direction: column; align-items: center; padding-block-start: calc(var(--ad-pi-hang) + var(--space-10)); }
+.tr-col { display: flex; flex-direction: column; align-items: center; inline-size: 100%; }
+.tr-v { display: block; flex: none; inline-size: 0; block-size: var(--tr-gap); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+.tr-node { position: relative; z-index: var(--ad-z-over); inline-size: 100%; max-inline-size: 16.5rem; }
+.tr-col > .tr-node { max-inline-size: 18rem; }
+/* المجلس: عنوانُه في وسط الشجرة بخطّيه، وتعريفُه تحته */
+.tr-council { display: grid; gap: var(--space-3); inline-size: 100%; margin-block: var(--space-10) var(--space-6); }
+.tr-council:first-child { margin-block-start: 0; }
+.tr-council-desc { margin: 0 auto; max-inline-size: 40rem; text-align: center; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+/* الجذعُ النازلُ من رأس الصفّ إلى جسره */
+.tr-col::after, .tr-council::after { content: ""; justify-self: center; inline-size: 0; block-size: var(--tr-gap); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+/* الجسر: حدٌّ علويٌّ وجانبان ينعطفان إلى منتصفَي الفرعين الطرفيّين، وكلُّ فرعٍ أوسطَ جذعٌ من الجسر */
+.tr-fork { --n: 1; position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: var(--tr-cg); inline-size: 100%; padding-block-start: var(--tr-gap); }
+.tr-fork[data-n="2"] { --n: 2; } .tr-fork[data-n="3"] { --n: 3; } .tr-fork[data-n="4"] { --n: 4; } .tr-fork[data-n="5"] { --n: 5; } .tr-fork[data-n="6"] { --n: 6; }
+.tr-fork::before { content: ""; position: absolute; inset-block-start: 0; inset-inline: calc((100% - (var(--n) - 1) * var(--tr-cg)) / (2 * var(--n))); block-size: var(--tr-gap); border: var(--tr-lw) solid var(--tr-ln); border-block-end: 0; border-start-start-radius: var(--tr-rad); border-start-end-radius: var(--tr-rad); }
+.tr-fork[data-n="1"]::before { inset-inline: 50% auto; border-inline-end: 0; border-block-start: 0; border-radius: 0; }
+.tr-branch { position: relative; display: flex; flex-direction: column; align-items: center; min-inline-size: 0; }
+.tr-branch::before { content: ""; position: absolute; inset-block-start: calc(var(--tr-gap) * -1); inset-inline-start: 50%; block-size: var(--tr-gap); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+.tr-branch:first-child::before, .tr-branch:last-child::before { display: none; }
+.tr-step { display: flex; flex-direction: column; align-items: center; inline-size: 100%; }
+/* **صفوفُ الأقسام مشتركة** (محمد ٢٠٢٦-١١-٢٢: لجانُ المرتبة الواحدة لم تكن على خطٍّ واحد): كلُّ فرعٍ يأخذ صفوفَ الجسر نفسَها
+   (`subgrid`)، فالقسمُ في الأوّل ولجانُه في التالية، وما قصُر في صفّه يمدّ جذعَه في الفسحة تحته إلى ما يليه */
+.tr-fork.is-depts { grid-template-rows: repeat(var(--rows, 1), auto); }
+.tr-fork.is-depts[data-rows="2"] { --rows: 2; } .tr-fork.is-depts[data-rows="3"] { --rows: 3; } .tr-fork.is-depts[data-rows="4"] { --rows: 4; }
+.tr-fork.is-depts[data-rows="5"] { --rows: 5; } .tr-fork.is-depts[data-rows="6"] { --rows: 6; }
+.tr-fork.is-depts > .tr-branch { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; justify-items: center; align-items: stretch; align-content: start; }
+.tr-fork.is-depts .tr-step:not(:last-child)::after { content: ""; flex: 1 1 auto; inline-size: 0; border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+.tr-branch.is-exec > .tr-grow { flex: 1 1 auto; }
+/* الإدارةُ التنفيذيّة يمرّ جذعُها إلى المجلس التشغيليّ تحتها: فيصل الشجرةَ نصفَيها */
+.tr-fork:not(.is-depts) + .tr-council::before { content: ""; justify-self: center; inline-size: 0; block-size: var(--space-10); margin-block-start: calc(var(--space-10) * -1); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+/* النافذة: التعريفُ أوّلًا، ثمّ الصفّ والأعضاء */
+.tr-desc { margin: 0; font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink-2); white-space: pre-line; }
+.tr-people { grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); }
+/* الجذعُ الواحد في الجوّال واللوح (دون ٦٠rem). وجُرّب أن يبدأ من ٨٤rem كي لا ينكسر الاسمُ بجانب «صفحتها» فلا يرى الشجرةَ إلّا الشاشاتُ
+   الكبيرة جدًّا (محمد ٢٠٢٦-١١-٢٢)، فنزل الزرُّ تحت الاسم بدله */
+@media (max-width: 60rem) {
+  .tr-fork { display: flex; flex-direction: column; align-items: center; gap: 0; padding-block-start: 0; }
+  .tr-fork::before, .tr-branch.is-exec > .tr-grow { display: none; }
+  .tr-branch { inline-size: 100%; }
+  .tr-fork.is-depts > .tr-branch { display: flex; grid-row: auto; }
+  .tr-fork.is-depts .tr-step:not(:last-child)::after { display: none; }
+  .tr-branch::before, .tr-branch:first-child::before, .tr-branch:last-child::before { position: static; display: block; inline-size: 0; block-size: var(--tr-gap); }
+  .tr-fork > .tr-branch:first-child::before { display: none; }
+  .tr-branch.is-exec { order: 1; }
+  .tr-branch.is-exec::before { display: block; }
+  .tr-fork:not(.is-depts) + .tr-council::before { display: none; }
+  .tr-node, .tr-col > .tr-node { max-inline-size: 22rem; }
 }
+
+/* ═══ شجرةُ أدِيب بتكوينها المعتمد (`/structure`، `.tm-*` على هيكل `.tr-*`، ٢٠٢٦-١١-٢١) ═══
+   محمد: «نظامُ الشجرة القديمة أفضل، ولكن تطبيقُها ليس جميلًا بصريًّا وليس متوافقًا مع الهويّة». التكوينُ المعتمد كما هو،
+   والقطعُ من الهويّة: اسمُ الوحدة لوحةُ الاسم (`.ad-gtitle-name`) زرًّا يفتح نافذتَها، والوجهُ على أرض اللوح بحلقة الورقة (وجهُ كرت
+   الشخص)، والفارغُ الشخصُ المقطَّع، وزرُّ الصفحة المختومُ على حافّة الوجه، والنائبُ والمشرفان شرائطُ على الصبغة، والفريقُ زرٌّ مختوم.
+   اعتمدها محمد ٢٠٢٦-١١-٢٢ («أ» لوحةُ الاسم على الأرض)، ورُدّت الورقةُ واللوحُ وعاءً لكلّ وحدة: «البارزُ فيها الكونتينر». */
+.tm-unit { position: relative; z-index: var(--ad-z-over); display: flex; flex-direction: column; align-items: center; inline-size: 100%; max-inline-size: 21rem; text-align: center; }
+.tm-unit.is-person { max-inline-size: 20rem; }
+/* اسمُ الوحدة: لوحةُ الاسم زرًّا */
+.tm-name { display: inline-flex; max-inline-size: 100%; padding: 0; border: 0; border-radius: var(--ad-r-sm); background: none; font: inherit; cursor: pointer; }
+.tm-name .ad-gtitle-name { font-family: var(--font-display); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); transition: box-shadow var(--ad-dur) var(--ad-ease-out); }
+.tm-name .ad-gtitle-name > span { min-inline-size: 0; text-wrap: balance; }
+.tm-name .ad-gtitle-name > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.tm-name .ad-gtitle-name > .tm-name-c { inline-size: var(--space-3); block-size: var(--space-3); opacity: .8; }
+.tm-name:hover .ad-gtitle-name { box-shadow: 0 0 0 3px color-mix(in oklab, var(--ad-ring) 35%, transparent), var(--ad-rest); }
+.tm-name:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+/* جسمُ الوحدة تحت اسمها، وجذعٌ يصل الاسمَ بالوجه */
+.tm-body { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-3); inline-size: 100%; padding-block-start: var(--space-5); }
+.tm-unit:not(.is-person) > .tm-body::before { content: ""; position: absolute; inset-block-start: 0; inset-inline-start: 50%; block-size: var(--space-5); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+.tm-unit.is-person > .tm-head { padding-block: 0; }
+.tm-head { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.tm-nm { font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.tm-head[data-size="lead"] .tm-nm { font-size: var(--ad-t-room); }
+.tm-nm[data-vacant] { font-weight: var(--ad-w-bold); color: var(--ad-ink-3); }
+.tm-rl { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+/* الوجه: أرضُ اللوح وحلقةُ الورقة (وجهُ كرت الشخص)، والفارغُ الشخصُ المقطَّعُ بحبر اللوح */
+.tm-f { --s: var(--space-20); position: relative; display: grid; flex: none; place-items: center; inline-size: var(--s); block-size: var(--s); border-radius: var(--ad-r-ctl); overflow: hidden; background: var(--ad-plate); color: var(--ad-plate-ink); box-shadow: 0 0 0 var(--space-1) var(--ad-sheet), var(--ad-lift); }
+.tm-f[data-size="lead"] { --s: var(--space-24); }
+.tm-f:is([data-size="sm"], [data-size="xs"]) { border-radius: var(--ad-r-sm); box-shadow: 0 0 0 2px var(--ad-sheet), var(--ad-rest); }
+.tm-f[data-size="sm"] { --s: var(--space-10); }
+.tm-f[data-size="xs"] { --s: var(--space-8); }
+/* النسبةُ المئويّةُ للطول لا تُحلّ داخل شبكةٍ بلا طولٍ صريح (طال رسمُ الجنس إلى ضعف الوجه وانقصّ): فالصورةُ تملأ الوجهَ مطلقةً،
+   والرسمُ عرضٌ ونسبةٌ كرسم الأفتار (`.av-fig`) */
+.tm-f img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
+.tm-f img.is-fig { position: static; inline-size: 85%; block-size: auto; aspect-ratio: 1; object-fit: contain; }
+.tm-f > svg { inline-size: 58%; block-size: 58%; }
+/* الوجهُ بلا زرّ (الفارغ، ومن لا صفحةَ له) يأخذ فسحةَ الزرّ نفسَها، فتتساوى الأسماءُ في الصفّ */
+.tm-fw { position: relative; display: inline-flex; margin-block-end: calc(var(--ad-ctl-sm) / 2 + var(--space-2)); }
+.tm-go { position: absolute; inset-inline: 0; inset-block-end: calc(var(--ad-ctl-sm) / -2); display: flex; justify-content: center; }
+[data-theme="dark"] .tm-go { --ad-field: linear-gradient(var(--ad-veil), var(--ad-veil)), var(--ad-sheet); --ad-field-2: linear-gradient(var(--ad-veil-2), var(--ad-veil-2)), var(--ad-sheet); }
+/* الفريق */
+.tm-team { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); inline-size: 100%; padding-block-start: var(--space-1); }
+.tm-stk { display: inline-flex; }
+
+.tm-stk .tm-f { box-shadow: 0 0 0 2px var(--ad-ground); }
+.tm-stk .tm-f + .tm-f { margin-inline-start: calc(var(--space-2) * -1); }
+.tm-ct { display: inline-flex; align-items: center; gap: var(--space-1); }
+.tm-caret { inline-size: var(--space-4); block-size: var(--space-4); transition: rotate var(--ad-dur) var(--ad-ease-out); }
+.tm-team .ad-btn[aria-pressed="true"] .tm-caret { rotate: 180deg; }
+.tm-team.is-empty .ad-void { min-block-size: 0; padding-block: var(--space-2); }
+/* شبكةُ الأعضاء المفتوحة على الأرض بلا سطح، كسطور النائب والإشراف فوقها (محمد ٢٠٢٦-١١-٢٢: «لماذا يظهر سطحٌ في الأعضاء ولا يظهر في النائب؟») */
+/* **والأعضاءُ على ورقة الهويّة** كالنائب والمشرفين (محمد ٢٠٢٦-١١-٢٢) */
+/* والصفُّ الناقصُ في منتصفه لا على يمينه (محمد ٢٠٢٦-١١-٢٢: عضوُ الرواة التاسعُ وعضوةُ التنفيذيّة الوحيدةُ على اليمين وفراغٌ عن اليسار) */
+.tm-grid { --tm-gx: var(--space-2); display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-5) var(--tm-gx); inline-size: 100%; margin-block-start: var(--space-2); padding: var(--space-4) var(--space-3); border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.tm-m { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.tm-grid > .tm-m { inline-size: calc((100% - var(--tm-gx)) / 2); }
+.tm-mn { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+.tm-m > .ad-btn { margin-block-start: auto; }
+/* هيئةُ النافذة ‹c›: وجوهُ الشجرة في أقسام النافذة — صفُّ القيادة والإشراف، ثمّ شبكةُ الأعضاء */
+.tm-people-row { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-6) var(--space-4); padding-block: var(--space-2); }
+.tm-people-row > .tm-person { inline-size: 9.5rem; }
+.tm-person { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; }
+.tm-person .tm-strip-n { font-family: var(--font-display); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.tm-person .tm-strip-n[data-vacant] { color: var(--ad-ink-3); }
+@media (prefers-reduced-motion: reduce) { .tm-caret, .tm-name .ad-gtitle-name { transition: none; } }
+
+/* **النائبُ والإشرافُ سطورُ الهويّة على الأرض بلا وعاء** (اعتمدها محمد ٢٠٢٦-١١-٢٢، «ب»؛ كانت صبغةً من اجتهادي فرُدّت):
+   `AdLine` في عمود الشجرة — حشوتُه أضيق، وخيطٌ بين السطور كخيوط «حسابي» */
+.tm-lines { inline-size: 100%; text-align: start; }
+.tm-lines .ad-line-hit { padding: var(--space-2) var(--space-3); gap: var(--space-3); }
+/* **«صفحته» تحت الاسم** (محمد ٢٠٢٦-١١-٢٢): كان بجانبه فينكسر الاسمُ إذا ضاق العمود (ورُدّ الختمُ وحده، ورُدّ أن يبدأ الجذعُ الواحد
+   من ٨٤rem فلا يرى الشجرةَ إلّا الشاشاتُ الكبيرة). فالزرُّ سطرٌ ثالثٌ على حدّ النصّ، **والفارغُ مكانَ زرّه طريقُ شغله** («لم يُنتخب بعد»)
+   بارتفاع الزرّ نفسِه، فالسطورُ ثلاثةٌ متساوية (ورُدّ زرٌّ معطّلٌ للفارغ: «غيرُ جميل»). والاسمُ بدرجة الواجهة */
+.tm-lines .ad-line-hit { flex-wrap: wrap; row-gap: var(--space-1); align-items: flex-start; }
+/* الوجهُ على خطٍّ واحدٍ في السطور كلّها (محمد ٢٠٢٦-١١-٢٢): أعلى السطر بجانب الدور والاسم — كان يتوسّط السطرَ فينزل في الفارغ الذي سطرُه الثالثُ نصٌّ */
+.tm-lines .ad-line-ic { margin-block-start: calc(var(--space-1) / 2); }
+.tm-lines .ad-line-kv { flex: 1 1 calc(100% - var(--space-8) - var(--space-3)); min-inline-size: 0; }
+.tm-lines .ad-line-v { font-size: var(--ad-t-ui); }
+.tm-lines .ad-line-act { margin-inline: calc(var(--space-8) + var(--space-3)) 0; }
+.tm-lines .ad-line-sub { display: flex; align-items: center; min-block-size: calc(var(--ad-ctl-sm) + var(--space-1)); }
+/* **على ورقة الهويّة** (اختارها محمد ٢٠٢٦-١١-٢٢): ورقةُ القسم بحدّها وظلّها تجمع النائبَ والمشرفين كتلةً تحت قائدهم.
+   (رُدّت صبغةُ رأس القسم: صُمّمت لتجلس على ورقة، وعلى أرض الصفحة المصبوغة تذوب.) */
+/* والحشوةُ في السطر لا في الورقة: صبغةُ المرور تملأ السطرَ إلى حدَّي الورقة (محمد ٢٠٢٦-١١-٢٢: «على اليمين واليسار لا يحدّد») */
+.tm-lines { overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.tm-lines .ad-line + .ad-line { border-block-start: 1px solid var(--ad-rule); }
+/* الوجهُ في مربّع رمز السطر: يملؤه بزاويته، بلا صبغةٍ خلفه ولا حلقة */
+.ad-line-ic:has(> .tm-f) { background: none; }
+.ad-line-ic > .tm-f { box-shadow: none; }
+/* **المجلسُ قطعةٌ من اللوح** («ب»): مربّعُ رمزه زجاجٌ عليه (علامةُ الشريط)، وعنوانُه، وتعريفُه بحبر اللوح */
+.tm-council { justify-items: center; }
+.tm-council-plate { display: grid; justify-items: center; gap: var(--space-3); inline-size: min(100%, 48rem); padding: var(--space-8) var(--space-6); text-align: center; }
+.tm-council-plate .ad-plate-title { margin: 0; }
+/* **مربّعُ الرمز على اللوح** (`ad-plate-ic`) زجاجٌ عليه (علامةُ الشريط)، و**تعريفُ اللوح** (`ad-plate-lead`) بحبره الثاني وخطّ القراءة — للمجلس
+   في «هيكلة أدِيب» وللدستور في «أنظمة أدِيب» (٢٠٢٦-١١-٢٢: قطعةٌ واحدة لا قطعتان) */
+.ad-plate-ic::before, .ad-plate-ic::after { content: none; } /* زجاجٌ على لوحٍ منقوشٍ أصلًا: لا نقشَ فوق نقش */
+.ad-plate-ic { background: var(--ad-plate-veil-2); box-shadow: inset 0 0 0 1px var(--ad-plate-hair); color: var(--ad-plate-ink); }
+.ad-plate-lead { margin: 0; max-inline-size: 40rem; font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-plate-ink-2); text-wrap: pretty; }
+/* **المجلسُ الإداريّ في لوح الرأس نفسِه** («لوحٌ واحد»، محمد ٢٠٢٦-١١-٢٢): بعد خيطٍ تحت الحقائق — كان لوحُه تحت لوح الرأس فيتتابع
+   لوحان كحليّان (رُدّ لوحٌ أصغر: يخفّف التتابعَ ولا يزيله) */
+/* الشجرةُ لا تتدلّى من اللوح كشبكة الفهرس: فلا يُحجز في قاعه مكانٌ لها، ولا تُسحب إليه */
+.ad-pi:has(.tm) > .ad-pi-mast { padding-block-end: clamp(var(--space-5), 4cqi, var(--space-8)); }
+.ad-pi:has(.tm) > .ad-pi-hang { margin: 0; }
+/* والمجلسُ في اللوح، فجذعٌ ينزل من اللوح إلى رئيسه مباشرةً */
+.ad-pi:has(.tm) .tm { padding-block-start: 0; }
+.tm::before { content: ""; inline-size: 0; block-size: var(--space-10); border-inline-start: var(--tr-lw) solid var(--tr-ln); }
+.ad-pi-after { inline-size: 100%; margin-block-start: var(--space-6); padding-block-start: var(--space-6); border-block-start: 1px solid var(--ad-plate-hair); }
+/* **والدعوةُ بلا خيط** (محمد ١١-٢٤ في «تطبيق أدِيب»: «لا داعيَ للخط الفاصل بين العنوان ووصفه والزر»): الخيطُ يفصل محتوًى ثانيًا في اللوح
+   (المجلس، الدستور)، أمّا زرُّ الدعوة فخاتمةُ ما قاله اللوحُ نفسِه لا بابٌ جديد — فيتلو الوصفَ أو الحقائقَ بمسافةٍ وحدها. ومثلُه «انضمّ إلى أدِيب» */
+.ad-pi-after:has(> .ad-pz-cta) { padding-block-start: 0; border-block-start: 0; }
+/* **صدرٌ في لوح الفهرس بعد خيط** (`PubIndex after` → `.ad-pi-lead`): المجلسُ الإداريّ في «هيكلة أدِيب»، والدستورُ في «أنظمة أدِيب» */
+.ad-pi-lead { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+.ad-pi-lead > .ad-pi-facts { margin-block-start: var(--space-1); }
+.ad-pi-lead > .ad-btn { margin-block-start: var(--space-3); }
+.ad-pi-lead-t { margin: 0; font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-plate-ink); }
+/* **التعريفُ أوّلُ النافذة قسمًا برأسه** (محمد ٢٠٢٦-١١-٢٢؛ رُدّ موضعًا في مبدّل: يملأ جزءًا يسيرًا من نافذةٍ بطول أشخاصها) */
+.tm-desc { margin: 0; font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink-2); white-space: pre-line; text-wrap: pretty; }
+/* **نافذةُ الوحدة** (اعتُمدت): نمطُ نافذة التفصيل (`.ad-evd`)، والأعضاءُ عمودان كمقيِّمي التقييم. ونافذةُ القسم أضيق
+   (`mdl-md`) فلجانُه عمودٌ واحد: سطرُها يحمل زرَّ «عرض»، وفي عمودين ينكسر اسمُ اللجنة */
+.tm-win.mdl-lg .ad-sec:last-child .ad-lines { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-5); }
+.tm-win .ad-line + .ad-line { border-block-start: 1px solid var(--ad-rule); }
+.tm-win.mdl-lg .ad-sec:last-child .ad-line:nth-child(2) { border-block-start: 0; }
+/* وفي العمودين يمتدّ كلٌّ إلى حدّه من النافذة وإلى منتصف الفسحة بينهما، فتلتقي الصبغتان ولا تُبتر إحداهما */
+.tm-win.mdl-lg .ad-sec:last-child .ad-line:nth-child(odd) > :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad) + var(--space-5) / 2); margin-inline: calc(var(--win-pad) * -1) calc(var(--space-5) / -2); padding-inline: var(--win-pad) calc(var(--space-5) / 2); }
+.tm-win.mdl-lg .ad-sec:last-child .ad-line:nth-child(even) > :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad) + var(--space-5) / 2); margin-inline: calc(var(--space-5) / -2) calc(var(--win-pad) * -1); padding-inline: calc(var(--space-5) / 2) var(--win-pad); }
+@media (max-width: 40rem) {
+  .tm-win.mdl-lg .ad-sec:last-child .ad-lines { grid-template-columns: minmax(0, 1fr); }
+  .tm-win.mdl-lg .ad-sec:last-child .ad-line:nth-child(2) { border-block-start: 1px solid var(--ad-rule); }
+  .tm-win.mdl-lg .ad-sec:last-child .ad-line:nth-child(n) > :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad) * 2); margin-inline: calc(var(--win-pad) * -1); padding-inline: var(--win-pad); }
+}
+
+/* ═══ أنظمةُ أدِيب على الهويّة (`/regulations`، `.ad-rg-*`، ٢٠٢٦-١١-٢٢) ═══
+   صُمّمت واعتُمدت (٢٠٢٦-١٠-١٣) فيُنقل داخلُها وحده: البحثُ زجاجُ اللوح ونتائجُه لوحةٌ تطفو، والدستورُ تذكرةٌ عريضة، والأنظمةُ تذاكرُ في عمودين */
+.ad-rg { display: grid; gap: var(--space-8); }
+.ad-rg-grid > .ad-rg-card { display: grid; }
+.ad-rg-grid > .ad-rg-card[data-wide] { grid-column: 1 / -1; }
+.ad-rg-sum { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); text-wrap: pretty; }
+.ad-rg-words { display: grid; gap: var(--space-4); }
+/* بطاقتا القول جنبًا إلى جنب، وفسحةٌ فوقهما لختم الاقتباس الذي يعلو حدَّهما */
+.ad-rg-words-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--space-8) var(--space-4); padding-block-start: var(--space-4); }
+/* **الكلمةُ المعلَّمة** (نتائجُ البحث): المختارُ على الورقة قطعةٌ من اللوح بخفّته — صبغتُه الثانية وحبرُ الرأس، لا لونٌ من خارج الهويّة */
+.ad-mark { padding-inline: calc(var(--space-1) / 4); border-radius: calc(var(--ad-r-sm) / 3); background: var(--ad-veil-2); color: var(--ad-ink-head); font-weight: var(--ad-w-bold); }
+/* ── صفحةُ الوثيقة (`RegRead`): قالبُ «القراءة»، والبابُ لوحُ الفصل، والموادُّ تحته ── */
+/* الجانبُ فهرسُ القراءة يلزم الشاشةَ ويُمرَّر في مكانه: للدستور سبعون مادّة */
+.ad-rg-side { display: grid; gap: var(--space-4); align-content: start; max-block-size: calc(100dvh - var(--space-24) - var(--space-24)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: var(--space-4); }
+/* بلا شريط تمرير كجانب «حسابي» وفهرس النوافذ والقوائم (محمد ٢٠٢٦-١١-٢٣: كان رفيعًا ظاهرًا، وليس من الهويّة) */
+.ad-rg-side::-webkit-scrollbar { display: none; }
+/* ورقةُ الجانب: قسمُ الهويّة برأسه، وما تحته يُمرَّر وحده (الرأسُ ثابت) */
+.ad-rg-sidesheet { display: grid; }
+/* «اطبع الوثيقة» تحت ورقة «الأبواب» بعرضها، كـ«شارك الكتيّب» تحت غلافه (محمد ٢٠٢٦-١١-٢٣؛ جُرّب في اللوح — وليس للوح أفعال — وفي طرف رأس القسم رمزًا).
+   والجانبُ يقصر بقدره فيبقى الزرُّ في الشاشة. وفي الجوّال أوّلَ نافذة «الأبواب» */
+.ad-rg-print > .ad-btn { inline-size: 100%; justify-content: center; }
+.ad-pr-side:has(> .ad-rg-print) .ad-rg-side { max-block-size: calc(100dvh - var(--space-24) - var(--space-24) - var(--space-12) - var(--space-3)); }
+/* والبابُ المقروءُ على الورقة صبغتُها لا ورقةٌ فوق ورقة */
+.ad-rg-sidesheet .ad-acc-index a[aria-current] { background: var(--ad-veil); box-shadow: none; }
+.ad-rg-sidesheet > .ad-rg-side { padding-block-start: var(--space-3); }
+.ad-rg-nav-ch { display: grid; gap: var(--space-2); }
+.ad-rg-nav-ch[data-off] { display: none; }
+.ad-rg-nav-t { flex: 1; min-inline-size: 0; }
+.ad-rg-nav-r { flex: none; font-family: var(--font-latin); font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); color: var(--ad-ink-3); }
+/* أرقامُ الموادّ مربّعاتُ رمز السطر، والمادّةُ تحت العين قطعةٌ من اللوح */
+.ad-rg-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-inline-start: calc(var(--space-3) + var(--space-8) + var(--space-3)); }
+.ad-rg-nav a.ad-rg-chip {
+  display: grid; place-items: center; min-inline-size: var(--space-8); block-size: var(--space-8); padding: 0 var(--space-1); border-radius: var(--ad-r-sm); box-shadow: none;
+  background: var(--ad-veil); color: var(--ad-ink-2); font-family: var(--font-latin); font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); text-decoration: none;
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-rg-nav a.ad-rg-chip:hover { background: var(--ad-veil-2); color: var(--ad-ink-head); }
+.ad-rg-nav a.ad-rg-chip:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-rg-nav a.ad-rg-chip[aria-current] { background: var(--ad-pick); color: var(--ad-on-pick); }
+.ad-rg-nav a.ad-rg-chip[data-off] { opacity: .35; }
+/* في الضيّق لا جانب (القالبُ يُخفي الفهرس): البحثُ أوّلَ المتن، وزرُّ «الأبواب» يفتحه في نافذة */
+.ad-rg-narrow { display: none; }
+@container ad-pr (max-width: 45.99rem) { .ad-rg-narrow { display: block; } }
+.ad-rg-ch { display: grid; }
+.ad-rg-ch > .ad-nr-chap { margin-block: 0 var(--space-3); }
+.ad-pr-main > .ad-rg-ch + .ad-rg-ch { margin-block-start: var(--space-8); }
+/* الموادُّ على ورقة الهويّة تحت لوح بابها (محمد ٢٠٢٦-١١-٢٣، «ب»)، يفصلها خيط. والمادّةُ رقمُها في مربّع السطر، ومتنُها بخطّ القراءة، وأفعالُها تحتها */
+.ad-rg-arts { display: grid; overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.ad-rg-art { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-5); scroll-margin-block-start: calc(var(--space-24) + var(--space-4)); }
+.ad-rg-art + .ad-rg-art { border-block-start: 1px solid var(--ad-rule); }
+.ad-rg-art-no {
+  display: grid; place-items: center; flex: none; min-inline-size: var(--space-10); block-size: var(--space-10); padding-inline: var(--space-1); border-radius: var(--ad-r-sm);
+  background: var(--ad-veil-2); color: var(--ad-ink-head); font-family: var(--font-latin); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight);
+}
+.ad-rg-art-b { flex: 1; min-inline-size: 0; display: grid; gap: var(--space-3); }
+.ad-rg-art-t { margin-inline-end: var(--space-1); font-family: var(--font-display); font-weight: var(--ad-w-black); color: var(--ad-ink-head); }
+.ad-rg-acts { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2); }
+/* في الهاتف يدخل رقمُ المادّة سطرَ اسمها (محمد ٢٠٢٦-١١-٢٣): مربّعُه عمودًا كان يأكل ربعَ العرض، فينكسر المتنُ كلماتٍ ثلاثًا في السطر */
+@container ad-pr (max-width: 30rem) {
+  .ad-rg-art { padding: var(--space-4); }
+  .ad-rg-art-no { display: none; }
+  .ad-rg-art-t::before {
+    content: attr(data-no) / ""; display: inline-grid; place-items: center; min-inline-size: var(--space-7, calc(var(--space-6) + var(--space-1))); block-size: var(--space-7, calc(var(--space-6) + var(--space-1)));
+    margin-inline-end: var(--space-2); padding-inline: var(--space-1); border-radius: var(--ad-r-sm); background: var(--ad-veil-2);
+    font-family: var(--font-latin); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); vertical-align: baseline;
+  }
+}
+@keyframes ad-rg-flash { 0%, 35% { background-color: var(--ad-veil-2); } 100% { background-color: transparent; } }
+.ad-rg-art[data-flash] { animation: ad-rg-flash 1.8s var(--ad-ease-out); }
+@media (prefers-reduced-motion: reduce) { .ad-rg-art[data-flash] { animation: none; background-color: var(--ad-veil); } }
+/* المتن (`RegBlocks`): خطُّ القراءة، والبنودُ نقطةٌ من حبر الهويّة أو رقمٌ لاتينيّ (قرارُ المالك ٢٠٢٦-١٠-١٣) */
+.ad-rg-txt { display: grid; gap: var(--space-3); }
+.ad-rg-txt > * { min-inline-size: 0; }
+.ad-rg-txt p { margin: 0; font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink); text-wrap: pretty; }
+.ad-rg-txt b { font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+.ad-rg-ul, .ad-rg-ol { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ad-rg-ul li, .ad-rg-ol li { position: relative; padding-inline-start: var(--space-6); font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink); }
+.ad-rg-ul li::before { content: ""; position: absolute; inset-inline-start: var(--space-2); inset-block-start: .85em; inline-size: var(--space-2); block-size: var(--space-2); border-radius: var(--ad-r-full); background: var(--ad-ink-3); }
+.ad-rg-ol { counter-reset: adrg; }
+.ad-rg-ol li { counter-increment: adrg; }
+.ad-rg-ol li::before { content: counter(adrg) "."; position: absolute; inset-inline-start: var(--space-1); font-family: var(--font-latin); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+/* الإحالةُ رابطٌ يُقرأ قبل أن يُتبَع: خطٌّ منقّطٌ بحبر الهويّة، يصلب بالمرور */
+.ad-rg-ref { color: var(--ad-ink-head); border-radius: calc(var(--ad-r-sm) / 3); text-decoration: underline dotted var(--ad-ink-3); text-decoration-thickness: 1.5px; text-underline-offset: .4em; transition: text-decoration-color var(--ad-dur-press) var(--ad-ease-out); }
+.ad-rg-ref:hover { text-decoration-style: solid; text-decoration-color: var(--ad-ink-head); }
+.ad-rg-ref:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+/* معاينةُ المادّة: ورقةُ الهويّة المنبثقة — رأسُها رقمُ المادّة في مربّعه واسمُها ووثيقتُها، ثمّ نصُّها، ثمّ «انتقل إلى المادّة» */
+.ad-rg-pop { display: grid; inline-size: min(24rem, calc(100vw - var(--space-4))); overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-float); }
+.ad-rg-pop-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-block-end: 1px solid var(--ad-rule); }
+.ad-rg-pop-no { display: grid; place-items: center; flex: none; min-inline-size: var(--space-10); block-size: var(--space-10); border-radius: var(--ad-r-sm); background: var(--ad-pick); color: var(--ad-on-pick); font-family: var(--font-latin); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); }
+.ad-rg-pop-ht { display: grid; gap: calc(var(--space-1) / 2); min-inline-size: 0; }
+.ad-rg-pop-h { font-family: var(--font-display); font-size: var(--ad-t-body); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-rg-pop-doc { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-rg-pop-x { margin: 0; padding: var(--space-3) var(--space-4); font-size: var(--ad-t-ui); line-height: var(--ad-lh-read); color: var(--ad-ink); }
+.ad-rg-pop-foot { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-4); border-block-start: 1px solid var(--ad-rule); }
+/* «يُحال إليها من»: زرُّ «المزيد» يُنزل تحت المادّة سطورَ الهويّة بعرضها، عمودًا واحدًا، والخيطُ فوقها يفصلها عن الأزرار (محمد ٢٠٢٦-١١-٢٣) */
+.ad-rg-cited { display: contents; }
+.ad-rg-citedlines { flex-basis: 100%; border-block-start: 1px solid var(--ad-rule); }
+.ad-rg-next { margin-block-start: var(--space-6); }
+/* شكلُ هيكل أدِيب (الدستور م١٩، `RegStructure`) على الهويّة (٢٠٢٦-١١-٢٣): صورةٌ مصغّرةٌ من «هيكلة أدِيب» بمادّتها — المجلسان قسما الهويّة،
+   والوحداتُ لوحةُ الاسم، والمقاعدُ شاراتٌ، والخطوطُ خطوطُ الشجرة (`--tr-ln`)، على أرضٍ مصبوغة. ويأخذ عرضَ المادّة كلَّه (يخرج إلى عمود رقمها).
+   والشبكةُ ثلاثةُ أعمدةٍ على كلّ عرض (`subgrid`)، فكلُّ خطٍّ تحت إدارته على الجوّال كما على الحاسوب. الصلبُ تبعيّة والمتقطّعُ إشراف. */
+.ad-rg-org {
+  --org-gap: var(--space-4); --org-ln: var(--ad-hair-2); --org-lw: calc(var(--space-1) * .375);
+  display: grid; gap: var(--space-3); margin: 0; margin-inline-start: calc((var(--space-10) + var(--space-4)) * -1);
+}
+.ad-rg-org figcaption { text-align: center; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-rg-org-chart { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--org-gap); padding: var(--space-5); border-radius: var(--ad-r-plate); background: var(--ad-veil); }
+.ad-rg-org-panel { grid-column: 1 / -1; display: grid; }
+.ad-rg-org-panel > .ad-sec-head { padding: var(--space-3) var(--space-4); background: none; }
+.ad-rg-org-h { font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-rg-org-sub { font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-rg-org-seats { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ad-rg-org-panel > .ad-rg-org-seats { padding: 0 var(--space-4) var(--space-4); }
+.ad-rg-org-seats > li[data-opt] > .ad-badge { border-style: dashed; background: none; }
+/* لوحةُ الاسم في الشكل درجةٌ أصغر من الشجرة، ويلتفّ اسمُها في العمود الضيّق */
+.ad-rg-org-name { font-family: var(--font-display); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); text-wrap: balance; text-align: start; }
+.ad-rg-org-v { grid-column: 1 / -1; justify-self: center; block-size: var(--space-4); border-inline-start: var(--org-lw) solid var(--org-ln); }
+.ad-rg-org-ceo { grid-column: 1 / -1; justify-self: center; display: flex; }
+/* الشعبةُ: ساقٌ من الرئيس التنفيذيّ، ثمّ عارضةٌ من وسط العمود الأوّل إلى وسط الأخير، ومنها النزولُ إلى كلّ إدارة */
+.ad-rg-org-fork { grid-column: 1 / -1; position: relative; block-size: var(--space-6); }
+.ad-rg-org-fork::before { content: ""; position: absolute; inset-block-start: 0; inset-inline-start: 50%; block-size: 50%; border-inline-start: var(--org-lw) solid var(--org-ln); }
+.ad-rg-org-fork::after { content: ""; position: absolute; inset-block-start: 50%; inset-inline: calc((100% - var(--org-gap) * 2) / 6); border-block-start: var(--org-lw) solid var(--org-ln); }
+.ad-rg-org-dirs, .ad-rg-org-links { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; margin: 0; padding: 0; list-style: none; }
+.ad-rg-org-dir { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
+.ad-rg-org-dir::before { content: ""; position: absolute; inset-block-end: 100%; inset-inline-start: 50%; block-size: calc(var(--space-6) / 2); border-inline-start: var(--org-lw) solid var(--org-ln); }
+.ad-rg-org-dir > small { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-rg-org-links { block-size: var(--space-10); }
+.ad-rg-org-ln { position: relative; display: grid; place-items: center; }
+.ad-rg-org-ln::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 50%; border-inline-start: var(--org-lw) solid var(--org-ln); }
+.ad-rg-org-ln[data-line="dashed"]::before { border-inline-start-style: dashed; }
+.ad-rg-org-ln > i { position: relative; padding-inline: var(--space-2); border-radius: var(--ad-r-full); background: var(--ad-sheet); box-shadow: inset 0 0 0 1px var(--ad-edge); font-style: normal; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-2); }
+.ad-rg-org-ops { grid-template-columns: subgrid; row-gap: 0; }
+.ad-rg-org-ops > .ad-sec-head { grid-column: 1 / -1; }
+.ad-rg-org-unit { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); margin: 0 0 var(--space-4); padding: var(--space-3); border-radius: var(--ad-r-sm); background: var(--ad-veil); }
+.ad-rg-org-unit:first-of-type { margin-inline-start: var(--space-4); }
+.ad-rg-org-coms { position: relative; grid-column: 2 / -1; margin-inline-end: var(--space-4); }
+/* والأقسامُ تجمع اللجان: وصلةٌ في الفجوة بينهما */
+.ad-rg-org-coms::before { content: ""; position: absolute; inset-block-start: 50%; inset-inline-start: calc(var(--org-gap) * -1); inline-size: var(--org-gap); border-block-start: var(--org-lw) solid var(--org-ln); }
+@container ad-pr (max-width: 40rem) {
+  .ad-rg-org { --org-gap: var(--space-2); }
+  .ad-rg-org-chart { padding: var(--space-3); }
+  .ad-rg-org-name > svg { display: none; }
+  .ad-rg-org-name { padding-inline: var(--space-2); font-size: var(--ad-t-meta); }
+  .ad-rg-org-unit { padding: var(--space-2); }
+}
+/* زرُّ «الأبواب» العائم في الضيّق، ويغيب بعد آخر مادّة */
+.ad-rg-fab { position: fixed; z-index: var(--ad-z-over); inset-block-end: var(--space-5); inset-inline-start: 50%; translate: 50% 0; display: none; }
+@media (max-width: 46rem) { .ad-rg-fab { display: block; } }
+.ad-rg-fab[data-off] { display: none; }
+.ad-rg-fab > .ad-btn { box-shadow: var(--ad-lift); }
+@media print {
+  body:has(.ad-rg-doc) :is(.shdr, .sftr, .toast-stack) { display: none; }
+  body:has(.ad-rg-doc) .ad-pub { padding: 0; }
+  .ad-rg-doc :is(.ad-pr-back, .ad-pr-plate, .ad-pr-side, .ad-rg-narrow, .ad-rg-acts, .ad-rg-next, .ad-note), .ad-rg-fab { display: none; }
+  .ad-rg-doc .ad-pr-body { display: block; margin: 0; }
+  .ad-rg-doc .ad-pr-main { display: block; inline-size: auto; }
+  .ad-rg-ch { display: block; margin-block-start: 6mm; }
+  .ad-rg-ch > .ad-nr-chap { display: block; min-block-size: 0; margin: 0; padding: var(--space-2) 0; border-block: 1pt solid var(--neutral-900); border-radius: 0; background: none; box-shadow: none; color: var(--neutral-900); text-align: center; font-size: var(--ad-t-section); break-after: avoid; }
+  .ad-rg-ch > .ad-nr-chap::before, .ad-rg-ch > .ad-nr-chap :is(.ad-nr-chap-n, .ad-nr-chap-t, .ad-badge) { display: none; }
+  .ad-rg-arts { border: 0; border-radius: 0; background: none; box-shadow: none; }
+  .ad-rg-art { display: block; padding: var(--space-3) 0; border: 0; break-inside: avoid; }
+  .ad-rg-art-no { display: none; }
+  .ad-rg-art-t, .ad-rg-txt b { color: var(--neutral-900); }
+  .ad-rg-txt { gap: var(--space-2); }
+  .ad-rg-txt p, .ad-rg-ul li, .ad-rg-ol li { font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--neutral-900); }
+  .ad-rg-ref { color: inherit; text-decoration: none; }
+  .ad-mark { background: none; font-weight: inherit; }
+}
+
+/* صفحةُ الهيكلة أعرضُ من سائر الصفحات العامّة: أربعةُ أقسامٍ في صفٍّ على الحاسوب */
+.ad-pub-wrap.is-wide { max-inline-size: 90rem; }
 
 /* ═══ قالبُ «الفهرس» في الموقع العامّ (٢٠٢٦-١١-١٥، `_ad/public.tsx`) ═══
    «الشُّرفةُ المقلوبة» (ترويسةُ الأخبار المعتمدة ٢٠٢٦-١٠-١٤) بمادّة اللوح نفسِها: لوحٌ يقول اسمَ المجموعة وحقائقَها ومرشّحَها،
@@ -4687,8 +5074,12 @@ html:has(.ad-dframe), html:has(.ad-dframe) body { background: transparent; }
 body:has(.ad-pub) { background: var(--ad-ground); }
 /* حلقةُ التركيز حلقةُ الهويّة في الصفحات العامّة كما في غرف البوّابة (`.ad-room :focus-visible`) — كانت أزرارُ الهويّة وسطورُها هنا بحلقة المتصفّح */
 .ad-pub :focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
-.ad-pub { min-block-size: 70vh; padding-block: clamp(var(--space-6), 4vw, var(--space-12)) clamp(var(--space-16), 8vw, var(--space-24)); background: var(--ad-ground); color: var(--ad-ink); }
+/* **وأعلاها ٢٤ ثابتة** (محمد ١١-٢٤): الرأسُ عائمٌ بظلّه وفسحته، فكانت ٤٨ تحته تُرى ستّين وأكثر — والآن ٣٦ بين الرأس واللوح في كلّ شاشة */
+.ad-pub { min-block-size: 70vh; padding-block: var(--space-6) clamp(var(--space-10), 6vw, var(--space-16)); background: var(--ad-ground); color: var(--ad-ink); }
 .ad-pub-wrap { inline-size: 100%; max-inline-size: 72rem; margin-inline: auto; padding-inline: var(--space-4); }
+/* **قاعُ الصفحة فسحةٌ واحدة** (محمد ١١-٢٤: «مسافةٌ ضخمةٌ بين الفوتر وما فوقه»): كان حشوتين — حشوةُ `.ad-pub` (حتى ٩٦) وهامشُ التذييل
+   القديم (`.sftr` ٩٦) — فصار ١٩٢. فالفسحةُ للصفحة وحدها بإيقاع ما بين أقسامها (٤٠ إلى ٦٤)، والتذييلُ بعد قالبٍ لا هامشَ له */
+.ad-pub + .sftr { margin-top: 0; }
 @media (min-width: 40rem) { .ad-pub-wrap { padding-inline: var(--space-6); } }
 
 .ad-pi {
@@ -4744,6 +5135,51 @@ body:has(.ad-pub) { background: var(--ad-ground); }
 .ad-pi-hang { position: relative; z-index: var(--ad-z-over); margin: calc(-1 * var(--ad-pi-hang)) clamp(var(--space-3), 3cqi, var(--space-8)) 0; }
 /* المرشّحُ الطويل في اللوح: زرُّ مرشّح الهويّة (`AdFilterMenu`) بثوب الحبّات الزجاجيّ — وقائمتُه المنبثقة قائمةُ الهويّة كما هي */
 .ad-pi-tools { display: grid; justify-items: center; inline-size: fit-content; max-inline-size: 100%; }
+/* **البحثُ في اللوح** (`PubSearch`): خانةُ بحث الشريط الجانبيّ بمادّة اللوح — حجابٌ من سلّمه وحلقةٌ داخليّة، والتركيزُ زيادةُ ضوء.
+   بعد الحقائق في كتلتها، بعرضٍ يُكتب فيه سطرٌ كامل */
+.ad-pi-search {
+  position: relative; display: flex; align-items: center; gap: var(--space-3);
+  justify-self: stretch; block-size: var(--ad-ctl); margin-block-start: clamp(var(--space-4), 3cqi, var(--space-6)); padding-inline: var(--space-4);
+  border-radius: var(--ad-r-ctl); background: var(--ad-plate-veil); box-shadow: inset 0 0 0 1px var(--ad-plate-hair);
+  transition: background-color var(--ad-dur-press) var(--ad-ease-out), box-shadow var(--ad-dur-press) var(--ad-ease-out);
+}
+.ad-pi-tools:has(> .ad-pi-search) { inline-size: min(36rem, 100%); }
+.ad-pi-search:focus-within { background: var(--ad-plate-veil-2); box-shadow: inset 0 0 0 1px var(--ad-plate-hair-2); }
+.ad-pi-search-ic { flex: none; inline-size: var(--space-5); block-size: var(--space-5); color: var(--ad-plate-ink-2); }
+.ad-pi-search-in { flex: 1; min-inline-size: 0; block-size: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; outline: none; box-shadow: none; -webkit-appearance: none; appearance: none; font: inherit; font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); color: var(--ad-plate-ink); }
+/* التركيزُ يقوله ضوءُ الخانة كلِّها (`:focus-within`)، لا حلقةُ الحقل داخلها */
+.ad-pi-search-in:focus-visible { outline: none; }
+.ad-pi-search-in::placeholder { color: var(--ad-plate-ink-2); font-weight: var(--ad-w-medium); }
+.ad-pi-search-in::-webkit-search-cancel-button, .ad-pi-search-in::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.ad-pi-search-x { display: grid; place-items: center; flex: none; inline-size: var(--ad-ctl); block-size: 100%; margin-inline-end: calc(var(--space-4) * -1); padding: 0; border: 0; background: none; color: var(--ad-plate-ink-2); cursor: pointer; }
+.ad-pi-search-x:hover { color: var(--ad-plate-ink); }
+.ad-pi-search-x svg { inline-size: var(--space-4); block-size: var(--space-4); }
+
+/* **قائمةُ البحث** (`PubSearch`): ورقةُ قوائم الحقول بحدّها وظلّها بعرض الخانة، تأخذ ما تحت الخانة إلى قاع الشاشة المرئيّة (`--sp-room`، يقيسه
+   المكوّن) وتُمرَّر فيه، فلا تقفز الصفحة. الحالُ في رأسها، ثمّ الموادُّ تحت رؤوس مجموعات القوائم، ولكلٍّ اسمُها ومسارُها في سطرٍ ومقتطفُها في
+   سطرين. والمضيءُ (بالأسهم أو المؤشّر) صبغةُ المرور */
+.ad-sp { display: flex; flex-direction: column; max-block-size: min(32rem, var(--sp-room, 12rem)); overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); box-shadow: var(--ad-float); }
+/* الحالُ عددٌ في طرف الخانة بجانب ✕ (محمد ٢٠٢٦-١١-٢٣): كان سطرًا وحده في رأس القائمة وما بعده فراغ */
+.ad-pi-search-n { flex: none; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-2); white-space: nowrap; }
+.ad-sp-list { flex: 1; min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; padding-block-end: var(--space-2); }
+/* رأسُ المجموعة رأسُ مجموعات القوائم المنبثقة: كلمةٌ صغيرةٌ بحبرٍ ثالث، وخيطٌ يمتدّ، وعددُها في طرفه */
+.ad-sp-gh { position: sticky; inset-block-start: 0; z-index: var(--ad-z-over); display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-3) var(--space-4) var(--space-1); background: var(--ad-sheet); font-size: var(--ad-t-badge); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-sp-gh::after { content: ""; flex: 1; order: 1; block-size: 1px; background: var(--ad-rule); }
+.ad-sp-gn { order: 2; font-weight: var(--ad-w-medium); }
+/* **وهي قائمةُ الحقل نفسُها** (محمد ٢٠٢٦-١١-٢٢: «جميل… لكن في شيءٍ بنفسي»): رمزُ الوثيقة قبل اسمها في رأس مجموعتها كرأس مجموعة قائمة الحقل
+   (٢٠٢٦-١١-١٢)، والقائمةُ امتدادُ الخانة تلتصق بها وزاويتا الالتقاء قائمتان، وتُمرَّر بلا شريطٍ ظاهر — كانت ورقةً منفصلةً تحت الخانة بفسحة */
+.ad-sp-gi { display: inline-grid; place-items: center; flex: none; color: var(--ad-ink-2); }
+.ad-sp-gi > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+.apop.ad-sp[data-side="below"] { margin-block-start: calc(var(--space-1) * -1.5 - 1px); border-start-start-radius: 0; border-start-end-radius: 0; }
+html:has(.ad-sp[data-side="below"]) .ad-pi-search:has(> input[aria-expanded="true"]) { border-end-start-radius: 0; border-end-end-radius: 0; }
+.ad-sp-list { scrollbar-width: none; }
+.ad-sp-list::-webkit-scrollbar { display: none; }
+.ad-sp-hit { display: grid; gap: calc(var(--space-1) / 2); margin-inline: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--ad-r-sm); color: inherit; text-decoration: none; }
+.ad-sp-hit[aria-selected="true"] { background: var(--ad-veil); }
+.ad-sp-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--space-2); }
+.ad-sp-t { font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+.ad-sp-crumb { font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-sp-x { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
 .ad-pi-filter { justify-self: stretch; margin-block-start: clamp(var(--space-4), 3cqi, var(--space-6)); }
 .ad-pi-filter .ad-filter { display: flex; inline-size: 100%; }
 .ad-pi-filter .ad-filter-btn { justify-content: center; }
@@ -5459,7 +5895,7 @@ html[lang] .ad-rich ol { list-style: decimal; }
 }
 
 /* رقمُ المادّة في صفحة النظام العامّة داكنةً (سطرٌ مؤقّت حتى تُنقل الصفحةُ إلى الهويّة): كان رقمًا فاتحًا على رقاقةٍ فاتحة، تباينُه 1:1 */
-[data-theme="dark"] .reg-no, [data-theme="dark"] .reg-hit-no { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
+[data-theme="dark"] .reg-no { background: var(--ad-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); color: var(--ad-on-pick); }
 
 
 /* ═══ نوافذُ صفحة الانتخاب (`_ad/rooms/ElectionWindows.tsx`، ٢٠٢٦-١١-١٧) ═══
@@ -5613,6 +6049,15 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 .ad-evd .ad-sec:has(> .ad-lines) > .ad-sec-head { border-block-end: 0; }
 .ad-evd .ad-sec-media { padding: 0 0 var(--space-3); border-block-end: 0; }
 .ad-evd .ad-sec .ad-line-hit { padding-inline: 0; }
+/* **والسطرُ الذي يُضغط يُصبغ إلى حدَّي النافذة** (محمد ٢٠٢٦-١١-٢٢: المرورُ «مقصوصٌ بطريقةٍ بشعة»، في نافذة الهيكلة ثمّ «نعم» لنافذة
+   التقييم): بلا حشوةٍ كانت صبغتُه تلتصق بالوجه والزرّ مستطيلًا مبتورًا. فيمتدّ إلى حدَّي الورقة كما يمتدّ الخيطُ بين الأقسام، ويبقى نصُّه
+   في مكانه — قاعدةُ سطور الشجرة نفسُها */
+.ad-evd .ad-sec :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad) * 2); margin-inline: calc(var(--win-pad) * -1); padding-inline: var(--win-pad); }
+/* ومقيِّمو التقييم في عمودين بلا فسحةٍ بينهما: كلٌّ يمتدّ إلى حدّه من النافذة وحده، فيلتقيان في المنتصف */
+@media (width > 40rem) {
+  .ad-evd-raters:not([data-seen]) .ad-line:nth-child(odd) > :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad)); margin-inline: calc(var(--win-pad) * -1) 0; padding-inline: var(--win-pad) 0; }
+  .ad-evd-raters:not([data-seen]) .ad-line:nth-child(even) > :is(a, button).ad-line-hit { inline-size: calc(100% + var(--win-pad)); margin-inline: 0 calc(var(--win-pad) * -1); padding-inline: 0 var(--win-pad); }
+}
 .ad-evd .mdl-body > :is(.ad-sec, .ad-evd-raters) + :is(.ad-sec, .ad-evd-raters) {
   margin-inline: calc(var(--win-pad) * -1);
   padding-inline: var(--win-pad);
@@ -5640,6 +6085,7 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
    بحبر الورق لا مربّعًا من اللوح؛ والحكمُ لصقَ رقمه بلونه لا شارةً في الطرف الآخر؛ وطريقةُ الحساب حاشيةٌ خافتة لا سطرٌ بمربّع */
 /* والرمزُ على **المربّع المصبوغ** لا مربّعِ اللوح (محمد ٢٠٢٦-١١-٢٠: «نعم»): مربّعُ سطور «حسابي» نفسُه (`.ad-line-ic`) ومربّعُ رمز المعلومة في
    الكرت (٢٠٢٦-١٠-٣٠) — فكلُّ رمزٍ في النافذة على مربّعٍ من مادّة الورقة، والكحليُّ للّوح والتبويب المختار وحدهما */
+.ad-evd .ad-sec-ic::before, .ad-evd .ad-sec-ic::after { content: none; }
 .ad-evd .ad-sec-ic { inline-size: var(--space-8); block-size: var(--space-8); background: color-mix(in oklab, currentColor 12%, transparent); box-shadow: none; color: var(--ad-ink-2); }
 .ad-evd .ad-figure dt > svg {
   box-sizing: content-box;
@@ -5733,4 +6179,343 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 @media (max-width: 40rem) {
   .ad-mine-figs .ad-figures { flex-direction: column; gap: var(--space-3); }
   .ad-mine-figs .ad-figure { padding-inline: 0; border-inline-start: 0; }
+}
+
+/* ═══ بابا الحساب («القسمان»، `.door`) على الهويّة الجديدة (٢٠٢٦-١١-٢٣) — التكوينُ المعتمد (١٠-١٨) كما هو، والمادّةُ من الهويّة.
+   هيكلُ اللوح والنموذج في `components.css`، وهذه مادّتُه؛ والبادئةُ `.door` لتغلب أصنافَ الهويّة العامّة (`.ad-btn`) أيًّا كان ترتيبُ التحميل ═══ */
+/* الأرضُ أرضُ الصفحات العامّة لا الشبكةُ القديمة (`Ambient` سقط مع الانتقال، قرارُ قالب الفهرس ١١-١٥) */
+.door { background: var(--ad-ground); }
+@media (max-width: 899.98px) { .door .door-main { background: var(--ad-ground); } }
+/* **النموذجُ على ورقة الهويّة** بجانب اللوح (معروض ٢٠٢٦-١١-٢٣): كان صغيرًا يطفو في فراغ نصف الشاشة واللوحُ بجانبه أثقلُ منه بكثير — فصارا قطعتين
+   متقابلتين بالارتفاع والزاوية والفسحة نفسِها: اللوحُ الكحليّ والورقةُ البيضاء، وما عليها من أزرارٍ وحقولٍ مصبوغٌ كعلى كلّ ورقة (`--ad-field`). وفي الضيّق هي الورقةُ التي تعلو رأسَ اللوح كما كانت */
+@media (min-width: 900px) {
+  .door .door-main { min-block-size: calc(100dvh - var(--space-3) * 2); margin: var(--space-3); margin-inline-start: 0; border: 1px solid var(--ad-edge); border-radius: calc(var(--ad-r-plate) * 2); background: var(--ad-sheet); box-shadow: var(--ad-rest); --ad-field: var(--ad-veil); --ad-field-2: var(--ad-veil-2); }
+}
+/* المحتوى أعرضُ قليلًا ليملأ الورقة (كان ٤٠٠) */
+.door .door-thread { inline-size: 100%; max-inline-size: 27.5rem; }
+/* الشعارُ أعلى اللوح بلونه الأبيض، فوق عنوان الباب (٢٠٢٦-١١-٢٣، معروض) */
+.door-logo { display: inline-flex; margin-block-end: var(--space-6); border-radius: var(--ad-r-sm); }
+.door-logo img { display: block; block-size: calc(var(--space-12) + var(--space-2)); inline-size: auto; }
+.door-logo:focus-visible { outline: 2px solid var(--ad-plate-ink); outline-offset: var(--space-1); }
+@media (max-width: 899.98px) { .door-logo { margin-block-end: var(--space-3); } .door-logo img { block-size: var(--space-8); } }
+/* الرجوعُ خطوةً زرُّ الهويّة الصغير في أوّل السطر لا بعرض الخطوة، وما اخترتَه سطرُ «حسابي» على ورقة الهويّة بحدّها (٢٠٢٦-١١-٢٣، معروض) */
+.door .door-back-ad { align-self: flex-start; }
+.door .door-pick { overflow: hidden; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+/* **رأسُ الخطوة عنوانُ الهويّة** (معروض ٢٠٢٦-١١-٢٣): التحيّةُ تسميةٌ صغيرةٌ فوق العنوان (لغةُ «التسمية فوق القيمة»)، والعنوانُ بخطّ العرض وحبر العناوين
+   بمقاس اسم الغرفة، وسطرُه تحته — بلا الكلمة الكبيرة الباهتة ولا قلم التحديد (`LandingHeading` القديم). واللوحُ بجانبه يحمل العنوانَ الكبير */
+.door .door-head { margin-block-end: var(--space-2); }
+.door .door-kicker { margin: 0 0 var(--space-1); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.door .door-title { font-family: var(--font-display); font-size: var(--ad-t-room); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); text-wrap: balance; }
+.door .door-sub { margin-block-start: var(--space-2); font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+/* **الطرقُ كتلةٌ واحدة** (محمد ٢٠٢٦-١١-٢٣): محتوى الأزرار بعرض أطول اسمٍ فيها وفي وسطها — الأختامُ عمودٌ واحد، وكلُّ اسمٍ يبدأ بعد ختمه من خطٍّ
+   واحد (`subgrid`: عمودا الختم والاسم مشتركان بين الأزرار). فلا يتفاوت موضعُ الختم باختلاف الأسماء طولًا، ولا ينفصل عن كلمته.
+   (جُرّب الختمُ بجانب اسمه في وسط كلّ زرّ فتفاوتت المواضع، ثمّ على حافّة الزرّ والاسمُ في الوسط فانفصل عن كلمته)
+   وحركةُ المرور حركةُ الهويّة وحدها (لونٌ، ولمعةُ الأساسيّ، وانضغاطُ النقر): لا يكبر الزرُّ ولا يتقدّم السهم (محمد ٢٠٢٦-١١-٢٣) */
+.door .door-ways { display: grid; grid-template-columns: 1fr auto auto 1fr; column-gap: 0; }
+.door .door-way-wrap { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+.door .door-way.ad-btn { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: var(--space-2); inline-size: 100%; padding-inline: var(--space-5); }
+.door .door-way > :is(svg, .ad-spin) { grid-column: 2; justify-self: center; }
+.door .door-way > span:not(.sr-only, .ad-spin) { grid-column: 3; justify-self: start; }
+.door .door-way:disabled { cursor: default; opacity: .65; }
+/* صندوقُ التحقّق تحت الخطوة بفسحتها، ثمّ «ليس لك حساب؟» (يخرج من الخطوة في البوّابة ليلي الصندوقَ لا يعلوه — محمد ١١-٢٣) */
+.door .door-shield:has(> .ts-box:not([hidden])) { margin-block-start: var(--space-4); }
+.door .door-thread > .ad-alt { margin-block-start: var(--space-5); }
+/* «العودة إلى الموقع» في الوسط: زرُّ الهويّة `inline-flex` فلا تتوسّطه الهوامشُ الآليّة */
+.door .door-out { display: flex; }
+/* المسافةُ بين الطرق تتّسع للّسان ظهر أم لم يظهر، فيبقى إيقاعُ الكتلة واحدًا (رُدّت ٣٢: فكّكت الكتلة) */
+.door .door-ways { row-gap: var(--space-6); padding-block-start: var(--space-4); }
+/* «آخر دخول» **لسانٌ يخرج من حافّة الزرّ العليا** (محمد ٢٠٢٦-١١-٢٣): لونُه لونُ الزرّ وخطُّه خطُّه، ويتبعه في المرور والضغط، فهما جسمٌ واحد.
+   يعبر خطَّ الزرّ بنقطةٍ فيغطّيه، فأرضُه معتمة: صبغةُ الحقل فوق الورقة، كما يُرى الزرُّ نفسُه */
+.door .door-way-wrap { position: relative; transition: transform var(--ad-dur) var(--ad-ease-out); }
+.door .door-way-wrap:has(.door-way:active:not(:disabled)) { transform: scale(.97); }
+.door .door-way-wrap .door-way:active { transform: none; }
+/* الحاملُ بعرض الزرّ (حاويةٌ لمقاسه)، واللسانُ فيه من جهة البدء */
+.door .door-last {
+  position: absolute; z-index: var(--ad-z-over); inset-inline: 0; inset-block-end: calc(100% - 1px);
+  display: flex; padding-inline-start: var(--space-4); pointer-events: none; container-type: inline-size;
+}
+.door .door-last > span {
+  padding: calc(var(--space-1) / 2) var(--space-3) calc(var(--space-1) / 2 + 1px); border-radius: var(--ad-r-sm) var(--ad-r-sm) 0 0;
+  font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-tight); color: var(--ad-ink-2);
+  background: linear-gradient(var(--ad-field), var(--ad-field)), var(--ad-sheet);
+  box-shadow: inset 1px 1px 0 var(--ad-hair), inset -1px 0 0 var(--ad-hair);
+  transition: background var(--ad-dur) var(--ad-ease-out), box-shadow var(--ad-dur) var(--ad-ease-out), color var(--ad-dur) var(--ad-ease-out);
+}
+.door .door-way-wrap:has(.ad-btn-line:hover:not(:disabled)) > .door-last > span { color: var(--ad-ink-head); background: linear-gradient(var(--ad-field-2), var(--ad-field-2)), var(--ad-sheet); box-shadow: inset 1px 1px 0 var(--ad-hair-2), inset -1px 0 0 var(--ad-hair-2); }
+/* على الزرّ الأساسيّ: **تدرّجُ الزرّ نفسُه** (`--ad-pick`) بعرض الزرّ (`100cqw` من الحامل) وطوله، مثبَّتًا بطرفه — فيرى اللسانُ من التدرّج
+   ما تحته من الزرّ بالضبط، في الفاتح والداكن والمرور، بلا لونٍ يُضبط باليد */
+.door .door-way-wrap:has(.ad-btn-fill) > .door-last > span {
+  color: var(--ad-on-pick); box-shadow: inset 1px 1px 0 var(--ad-pick-hair), inset -1px 0 0 var(--ad-pick-hair);
+  background: var(--ad-pick) no-repeat right calc(-1 * var(--space-4)) top / 100cqw calc(100% + var(--ad-ctl) + var(--space-3) - 1px);
+}
+.door .door-way-wrap:has(.ad-btn-fill:hover:not(:disabled)) > .door-last > span { background-image: var(--ad-fill-hover); }
+
+/* ═══ قالبُ «الإقناع» (`.ad-pz`، ٢٠٢٦-١١-٢٣، أوّلُه صفحةُ الانضمام — اعتمده محمد ١١-٢٤) ═══
+   لوحُ الفهرس بالدعوة ونداءَيها، ثمّ ورقاتُ «ما تنال» تتدلّى منه، ثمّ أقسامٌ برؤوس الهويّة (`AdGroupTitle`)، ثمّ «الدعوة» (`AdInvite`) فعلًا أخيرًا */
+.ad-pz { display: grid; gap: clamp(var(--space-10), 6vw, var(--space-16)); }
+.ad-pz-sec, .ad-pz-step { display: grid; gap: var(--space-4); scroll-margin-block-start: calc(var(--space-24) + var(--space-2)); }
+.ad-pz-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
+/* ورقةُ «ما تنال»: ورقةُ الأبواب برمزها، واسمُها وجملتُها */
+.ad-pz-perks .ad-door-t { gap: var(--space-2); }
+.ad-door-t p { margin: 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+/* **المحطّات** (قطعةٌ جديدة): ثلاثٌ على ورقة، ختمُ كلٍّ قطعةٌ من اللوح، ويصلها خطُّ شجرة الهيكلة متّصلًا (كان متقطّعًا، ١١-٢٤) */
+.ad-pz-path { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); margin: 0; padding: var(--space-6); list-style: none; border: 1px solid var(--ad-edge); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest); }
+.ad-pz-path > li { position: relative; display: grid; align-content: start; gap: var(--space-1); min-inline-size: 0; }
+.ad-pz-stamp { display: grid; place-items: center; inline-size: var(--space-12); block-size: var(--space-12); margin-block-end: var(--space-3); border-radius: var(--ad-r-ctl); background: var(--ad-pick); color: var(--ad-on-pick); box-shadow: inset 0 0 0 1px var(--ad-pick-hair); }
+.ad-pz-stamp svg { inline-size: var(--space-6); block-size: var(--space-6); }
+.ad-pz-path > li:not(:last-child)::after { content: ""; position: absolute; inset-block-start: calc(var(--space-12) / 2); inset-inline: calc(var(--space-12) + var(--space-3)) calc(var(--space-3) - var(--space-6)); border-block-start: calc(var(--space-1) * .375) solid var(--ad-hair-2); }
+.ad-pz-path small { font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+.ad-pz-path b { font-family: var(--font-display); font-size: var(--ad-t-title); font-weight: var(--ad-w-black); line-height: var(--ad-lh-tight); color: var(--ad-ink-head); }
+.ad-pz-path p { margin: var(--space-1) 0 0; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+@media (max-width: 47.99rem) {
+  .ad-pz-path { grid-template-columns: minmax(0, 1fr); padding: var(--space-5); }
+  .ad-pz-path > li { grid-template-columns: var(--space-12) minmax(0, 1fr); column-gap: var(--space-4); }
+  .ad-pz-path > li > :not(.ad-pz-stamp) { grid-column: 2; }
+  .ad-pz-stamp { grid-row: 1 / span 3; margin-block-end: 0; }
+  .ad-pz-path > li:not(:last-child)::after { inset-block: calc(var(--space-12) + var(--space-2)) calc(var(--space-2) - var(--space-6)); inset-inline: calc(var(--space-12) / 2) auto; border-block-start: 0; border-inline-start: calc(var(--space-1) * .375) solid var(--ad-hair-2); }
+}
+.ad-pz-acts { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.ad-pz-coms { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); align-items: start; gap: var(--space-3); }
+/* «البابُ للجميع» ورقاتُ الأبواب باسمها وحده: الاسمُ في وسط ختمه */
+.ad-pz-who .ad-door-body { align-items: center; }
+/* «ابدأ الآن» على أرض «العضويّة» نفسِها (محمد ١١-٢٤): لوحٌ بلا ظلّ الدعوة الداكن، فالقطعتان في الصفحة من مادّةٍ واحدة */
+.ad-pz .ad-invite-body { background: none; }
+.ad-pz .ad-invite-t p { max-inline-size: 46rem; line-height: var(--ad-lh-body); }
+/* أربعُ ورقاتٍ صفّان من اثنتين، لا ثلاثٌ وواحدةٌ يتيمة */
+.ad-pz-four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
+/* **بين المتطوّع والعضو** (١١-٢٤): **جدولُ الهويّة** بلغة قوائم البوّابة (`.ad-table`) — السؤالُ بعرضه، والمنزلتان عمودان متساويان.
+   (رُدّ قبله جدولٌ عاديّ «لا يقول هذا أدِيب»، ثمّ ورقتا «القسم» متجاورتين: «لماذا لا يكون جدولًا؟») */
+.ad-pz-cmp.ad-table { grid-template-columns: max-content minmax(0, 1fr) minmax(0, 1fr); }
+.ad-pz-cmp .ad-thead { position: static; }
+.ad-pz-cmp .ad-tr { align-items: start; padding-block: var(--space-4); }
+.ad-pz-cmp .ad-tr:not(.ad-thead):hover { background: none; }
+.ad-pz-cmp-h { gap: var(--space-2); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+.ad-pz-cmp-h svg { inline-size: var(--space-5); block-size: var(--space-5); color: var(--ad-ink-2); }
+.ad-pz-cmp-q { display: flex; align-items: center; gap: var(--space-3); font-size: var(--ad-t-body); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); white-space: nowrap; }
+.ad-pz-cmp-v { align-self: center; font-size: var(--ad-t-ui); line-height: var(--ad-lh-body); color: var(--ad-ink); }
+@media (max-width: 47.99rem) {
+  .ad-pz-cmp.ad-table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--space-4); }
+  .ad-pz-cmp .ad-tr { padding-inline: var(--space-4); row-gap: var(--space-2); }
+  .ad-pz-cmp .ad-thead > :first-child { display: none; }
+  .ad-pz-cmp-q { grid-column: 1 / -1; }
+}
+/* اللجان: ورقاتُ «الأبواب» — القسمُ تسميةٌ فوق اسمها، وتعريفُها في أربعة أسطر، و«عن اللجنة» تفتح نافذتَها كاملةً */
+.ad-pz-com-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; white-space: pre-line; }
+.ad-pz-coms .ad-door-act { margin-block-start: var(--space-1); }
+
+/* ═══ قالبُ «الأداة» (`.ad-vf`/`.ad-vr`، ٢٠٢٦-١١-٢٤، أوّلُه «التحقّق من شهادة» — اعتمد محمد الخانةَ في اللوح) ═══ */
+/* (أ) الخانةُ في اللوح: خانةُ البحث نفسُها (`.ad-pi-search`) وبجانبها زرُّ اللوح، وفي الضيّق يتراكبان */
+/* **الأداةُ والجوابُ بعرضٍ واحد** (محمد ١١-٢٤: كانت الخانةُ أقصرَ من الجواب تحتها): ٤٨ لكليهما، فيتحاذى طرفاهما */
+.ad-vf { display: flex; align-items: center; gap: var(--space-3); inline-size: min(48rem, 100%); margin-block-start: clamp(var(--space-4), 3cqi, var(--space-6)); }
+.ad-pi-tools:has(> .ad-vf) { inline-size: min(48rem, 100%); }
+.ad-vf > .ad-pi-search { flex: 1; min-inline-size: 0; margin: 0; }
+/* الرقمُ لاتينيٌّ طويل (26 حرفًا): بخطّ اللاتينيّة، ويصغر في الضيّق فيُرى كاملًا */
+.ad-vf .ad-pi-search-in { text-align: end; font-family: var(--font-latin); letter-spacing: .02em; }
+.ad-vf > .ad-btn { flex: none; block-size: var(--ad-ctl); }
+/* في العمود يعود الحقلُ إلى ارتفاعه: `flex: 1` كان يجعل أساسَه صفرًا على المحور الرأسيّ فيُعصر إلى ٢٠ تحت زرٍّ بـ٤٢ */
+@container ad-pi (max-width: 36rem) { .ad-vf { flex-direction: column; align-items: stretch; } .ad-vf > .ad-pi-search { flex: none; } .ad-vf .ad-pi-search-in { font-size: var(--ad-t-meta); letter-spacing: 0; } }
+/* الجوابُ يتدلّى من اللوح بعرض القراءة: الملاحظةُ ثمّ السطور */
+.ad-vr { display: grid; gap: var(--space-4); inline-size: min(48rem, 100%); margin-inline: auto; }
+/* صفحةُ التطبيق (`AppRoom`، ١١-٢٤): رمزُ الجوّال في وسط قسمه، وعنوانُه تحته بخطّ اللاتينيّة */
+.ad-app-qr { display: grid; justify-items: center; gap: var(--space-3); padding-block: var(--space-2); }
+.ad-app-qr svg { display: block; }
+.ad-app-url { font-family: var(--font-latin); font-size: var(--ad-t-ui); color: var(--ad-ink-3); }
+/* الخطوةُ بعرض الورقات فوقها (محمد ١١-٢٤): عمودٌ واحدٌ للصفحة، والقسمُ وتنبيهُه بفسحة الجواب */
+.ad-app-step { display: grid; gap: var(--space-4); }
+
+/* ════════════════════════════════════════════════════════════════════
+   **غرفةُ ديبو** (`deebo/DeeboStage.tsx`، بُنيت من جديد ١١-٢٤): ديبو شخصيّةٌ في **لوح الهويّة** يعيش المحادثة، والمحادثةُ على **ورقة**.
+   على الحاسوب اللوحُ عمودٌ في جهة البدء (ديبو، ثمّ أفعالُه، ثمّ محادثاتُك كشريط البوّابة)؛ وعلى الجوّال رأسٌ قصيرٌ فوق الورقة.
+   والغرفةُ ملءُ ما تحت رأس الموقع، والمتنُ وحدَه يمرّر بين أعلى الورقة ومُنشئها.
+   ════════════════════════════════════════════════════════════════════ */
+.ad-db-shell { display: flex; flex-direction: column; block-size: 100dvh; overflow: hidden; background: var(--ad-ground); color: var(--ad-ink); }
+.ad-db {
+  flex: 1 1 auto; min-block-size: 0; display: grid; grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr); gap: var(--space-4);
+  inline-size: 100%; max-inline-size: 72rem; margin-inline: auto; padding: var(--space-3) var(--space-6) var(--space-5);
+}
+/* ── اللوح ── */
+.ad-db-side { display: flex; flex-direction: column; gap: var(--space-4); min-block-size: 0; padding: var(--space-5); }
+.ad-db-who { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+/* ديبو بطوله: يصغر في الشاشة القصيرة ولا يُعصر */
+.ad-db-figure { display: block; flex: none; inline-size: clamp(calc(var(--space-16) * 2), 26dvh, calc(var(--space-16) * 3.5)); aspect-ratio: 1; }
+.ad-db-figure > img { display: block; inline-size: 100%; block-size: 100%; object-fit: contain; filter: drop-shadow(0 var(--space-3) var(--space-5) color-mix(in oklab, var(--navy-900) 40%, transparent)); animation: ad-db-face var(--ad-dur) var(--ad-ease-out); }
+/* الوجهُ الجديدُ يأتي بحركة: ديبو يتحرّك لأنّ شيئًا حدث، لا يتبدّل صامتًا */
+@keyframes ad-db-face { from { opacity: .35; transform: translateY(var(--space-1)) scale(.97); } }
+.ad-db-id { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.ad-db-name { font-family: var(--font-display); font-size: var(--ad-t-room); font-weight: var(--ad-w-black); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink); }
+.ad-db-role { font-size: var(--ad-t-ui); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-2); }
+/* ما يفعله الآن بكلمة («يُصغي إليك…»، «يفكّر…»): مكانُه محفوظٌ فلا يقفز اللوحُ حين يظهر */
+.ad-db-doing { min-block-size: calc(var(--ad-t-meta) * var(--ad-lh-ui)); font-size: var(--ad-t-meta); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-3); }
+.ad-db-side-acts { display: grid; gap: var(--space-2); }
+.ad-db-side-acts .ad-btn { justify-content: center; }
+.ad-db-num { margin-inline-start: var(--space-2); font-family: var(--font-latin); opacity: .75; }
+.ad-db-only-narrow { display: none; }
+/* محادثاتُك: سطورُ شريط البوّابة على اللوح، والحذفُ يظهر عند المرور (ودائمًا في اللمس) */
+.ad-db-hist { flex: 1 1 auto; min-block-size: 0; display: grid; align-content: start; gap: var(--space-3); margin-inline: calc(var(--space-5) * -1); padding: var(--space-4) var(--space-5) 0; overflow-y: auto; border-block-start: 1px solid var(--ad-plate-hair); scrollbar-width: thin; scrollbar-color: var(--ad-plate-hair) transparent; }
+.ad-db-hist-t { margin: 0; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink); }
+.ad-db-hist-g { display: grid; gap: var(--space-1); }
+.ad-db-hist-when { margin: 0; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-3); }
+.ad-db-hist ul { display: grid; gap: calc(var(--space-1) / 2); margin: 0; padding: 0; list-style: none; }
+.ad-db-hist li { display: flex; align-items: center; border-radius: var(--ad-r-sm); transition: background-color var(--ad-dur-press) var(--ad-ease-out); }
+.ad-db-hist li:hover { background: var(--ad-plate-veil); }
+.ad-db-hist li[data-on] { background: var(--ad-plate-veil-2); }
+.ad-db-hist-open { flex: 1; min-inline-size: 0; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 0; background: none; color: var(--ad-plate-ink); font: inherit; font-size: var(--ad-t-ui); line-height: var(--ad-lh-ui); text-align: start; cursor: pointer; }
+.ad-db-hist-open > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-db-hist-open > svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-plate-ink-3); }
+.ad-db-hist-open:focus-visible, .ad-db-hist-x:focus-visible { outline: 2px solid var(--ad-plate-ink); outline-offset: -2px; border-radius: var(--ad-r-sm); }
+.ad-db-hist-x { flex: none; display: grid; place-items: center; inline-size: var(--space-8); block-size: var(--space-8); margin-inline-end: var(--space-1); border: 0; border-radius: var(--ad-r-sm); background: none; color: var(--ad-plate-ink-3); opacity: 0; cursor: pointer; transition: opacity var(--ad-dur-press) var(--ad-ease-out); }
+.ad-db-hist li:hover .ad-db-hist-x, .ad-db-hist li[data-on] .ad-db-hist-x, .ad-db-hist-x:focus-visible { opacity: 1; }
+.ad-db-hist-x:hover { background: var(--ad-plate-veil-2); color: var(--ad-plate-ink); }
+.ad-db-hist-x > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+@media (hover: none) { .ad-db-hist-x { opacity: 1; } }
+.ad-db-hist-note { margin: 0; padding-block-end: var(--space-4); font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-plate-ink-3); }
+/* ── الورقة ── */
+.ad-db-main { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; min-block-size: 0; overflow: hidden; border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-rest), inset 0 0 0 1px var(--ad-hair); }
+.ad-db-col { inline-size: 100%; max-inline-size: calc(44rem + var(--space-12)); margin-inline: auto; padding-inline: var(--space-6); }
+.ad-db-scroll { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ad-hair-2) transparent; }
+.ad-db-scroll > .ad-db-col { display: flex; flex-direction: column; gap: var(--space-4); min-block-size: 100%; padding-block: var(--space-8) var(--space-6); }
+/* الغرفةُ الفارغة تقول ما يعرفه قبل أن يُسأل */
+.ad-db-hello { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: var(--space-4); }
+.ad-db-greet { margin: 0; font-family: var(--font-display); font-size: var(--ad-t-room); font-weight: var(--ad-w-black); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); text-wrap: balance; }
+.ad-db-lede { margin: 0; max-inline-size: 36rem; font-size: var(--ad-t-title); line-height: var(--ad-lh-body); color: var(--ad-ink-2); }
+.ad-db-asks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-block-start: var(--space-2); }
+.ad-db-ask { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: 0; border-radius: var(--ad-r-ctl); background: var(--ad-field); box-shadow: inset 0 0 0 1px var(--ad-hair); color: var(--ad-ink-head); font: inherit; font-size: var(--ad-t-ui); font-weight: var(--ad-w-medium); line-height: var(--ad-lh-ui); text-align: start; cursor: pointer; transition: background-color var(--ad-dur-press) var(--ad-ease-out), box-shadow var(--ad-dur-press) var(--ad-ease-out); }
+.ad-db-ask:hover:not(:disabled) { background: var(--ad-veil); box-shadow: inset 0 0 0 1px var(--ad-hair-2); }
+.ad-db-ask:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-db-ask:disabled { opacity: .55; cursor: default; }
+.ad-db-ask > svg { flex: none; inline-size: var(--space-5); block-size: var(--space-5); color: var(--ad-brand); }
+/* ════════════════════════════════════════════════════════════════════
+   **عائلةُ ديبو** (`.ad-dc-*`، اعتمد محمد ١١-٢٤ أن تكون لديبو قطعُه: «المكوّناتُ التي لدينا لا تناسبه كصفحة محادثة»).
+   على أساس الهويّة نفسِه (الأدوارُ والسلّمُ والمسافاتُ واللوحُ والنقش)، وقطعُها: السؤالُ، والجوابُ ونصُّه وأفعالُه، وبطاقةُ المحادثة،
+   وأسئلةُ البداية، والمُنشئ، وقائمةُ المحادثات على اللوح، وحالُ ديبو الحيّة.
+   ════════════════════════════════════════════════════════════════════ */
+.ad-dc-thread { display: grid; gap: var(--space-8); margin: 0; padding: 0; list-style: none; }
+/* **السؤال**: فقاعةٌ من ورقٍ في جهة النهاية، ركنُها الأقربُ إلى حافّتها حادٌّ كأنّها خرجت منها */
+.ad-dc-q { display: flex; justify-content: flex-end; }
+.ad-dc-q > p { margin: 0; max-inline-size: min(32rem, 82%); padding: var(--space-3) var(--space-4); border-radius: var(--ad-r-plate); border-start-end-radius: var(--ad-r-sm); background: var(--ad-field); box-shadow: inset 0 0 0 1px var(--ad-hair); font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink-head); white-space: pre-line; overflow-wrap: anywhere; }
+/* **الجواب**: وجهُه بحال الجواب في صدره بحلقةٍ من اللوح، ثمّ اسمُه، ثمّ الكلامُ بعرض العمود */
+.ad-dc-a { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); align-items: start; }
+.ad-dc-a-face { inline-size: var(--space-10); block-size: var(--space-10); border-radius: var(--ad-r-full); background: var(--ad-tint); box-shadow: 0 0 0 2px var(--ad-sheet), 0 0 0 3px var(--ad-hair-2); object-fit: cover; }
+.ad-dc-a-body { display: grid; gap: var(--space-3); min-inline-size: 0; justify-items: start; }
+.ad-dc-a-who { padding-block-start: var(--space-2); font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+.ad-dc-a-say { inline-size: 100%; }
+/* (للمقارنة) الجوابُ على قطعةٍ من اللوح — «قطعةُ الحوار» في البوّابة */
+.ad-db[data-answer="bubble"] .ad-dc-a-say { inline-size: auto; max-inline-size: 100%; padding: var(--space-3) var(--space-4); border-radius: var(--ad-r-plate); border-start-start-radius: var(--ad-r-sm); background: var(--ad-plate); box-shadow: inset 0 0 0 1px var(--ad-plate-hair); color: var(--ad-plate-ink); }
+.ad-db[data-answer="bubble"] .ad-dc-a-say .ad-dc-prose { color: var(--ad-plate-ink); }
+.ad-db[data-answer="bubble"] .ad-dc-a-say .ad-dc-prose :is(strong, a) { color: var(--ad-plate-ink); }
+.ad-db[data-answer="bubble"] .ad-dc-a-say .ad-dc-prose li::before { background: var(--ad-plate-ink-2); }
+/* **نصُّ الجواب**: بوزن القراءة، وفقراتٌ متقاربةٌ كالكلام لا كالمقالة، وقائمةٌ بنقاط الهويّة المربّعة */
+.ad-dc-prose { display: grid; gap: var(--space-3); font-size: var(--ad-t-body); line-height: var(--ad-lh-read); color: var(--ad-ink); overflow-wrap: anywhere; }
+.ad-dc-prose p { margin: 0; }
+.ad-dc-prose :is(ul, ol) { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ad-dc-prose li { position: relative; padding-inline-start: var(--space-5); }
+.ad-dc-prose li::before { content: ""; position: absolute; inset-inline-start: calc(var(--space-1) / 2); inset-block-start: .8em; inline-size: calc(var(--space-2) - 1px); block-size: calc(var(--space-2) - 1px); border-radius: calc(var(--space-1) / 2); background: var(--ad-brand); }
+.ad-dc-prose ol { counter-reset: ad-dc; }
+.ad-dc-prose ol > li { counter-increment: ad-dc; }
+.ad-dc-prose ol > li::before { content: counter(ad-dc); inset-block-start: 0; inline-size: auto; block-size: auto; border-radius: 0; background: none; font-family: var(--font-latin); font-weight: var(--ad-w-bold); color: var(--ad-brand); }
+.ad-dc-prose strong { font-weight: var(--ad-w-bold); color: var(--ad-ink-head); }
+.ad-dc-prose a { color: var(--ad-brand); text-decoration: underline; text-underline-offset: .2em; }
+/* **أفعالُ الجواب**: رموزٌ هادئة، تُرى بلونها حين يُمرّ عليها */
+.ad-dc-acts { display: flex; gap: var(--space-1); margin-inline-start: calc(var(--space-2) * -1); }
+.ad-dc-act { display: grid; place-items: center; inline-size: var(--space-8); block-size: var(--space-8); border: 0; border-radius: var(--ad-r-sm); background: none; color: var(--ad-ink-3); cursor: pointer; transition: background-color var(--ad-dur-press) var(--ad-ease-out), color var(--ad-dur-press) var(--ad-ease-out); }
+.ad-dc-act:hover { background: var(--ad-veil); color: var(--ad-ink-head); }
+.ad-dc-act[data-done] { color: var(--ad-ok); }
+.ad-dc-act:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 1px; }
+.ad-dc-act > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* انتظارُ الحرف الأوّل: ثلاثُ نقاطٍ في موضع الكلام */
+.ad-dc-wait { display: inline-flex; align-items: center; gap: var(--space-1); padding-block: var(--space-2); color: var(--ad-ink-3); }
+.ad-dc-wait > i { inline-size: var(--space-2); block-size: var(--space-2); border-radius: var(--ad-r-full); background: currentColor; opacity: .35; animation: ad-dc-pulse 1.1s var(--ad-ease-out) infinite; }
+.ad-dc-wait > i:nth-child(2) { animation-delay: .18s; }
+.ad-dc-wait > i:nth-child(3) { animation-delay: .36s; }
+@keyframes ad-dc-pulse { 40% { opacity: 1; transform: translateY(calc(var(--space-1) * -.5)); } }
+@media (prefers-reduced-motion: reduce) { .ad-dc-wait > i, .ad-db-figure > img { animation: none; } }
+/* **بطاقةُ المحادثة**: سطرٌ يُقرأ وسط الكلام — صدرٌ مصوَّر، ثمّ ما هو واسمُه وسطرُه، ثمّ ما تفعله به في طرفه. اثنتان في الصفّ، وواحدةٌ في الضيّق */
+.ad-dc-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-2); inline-size: 100%; }
+.ad-dc-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); block-size: 100%; padding: var(--space-2); padding-inline-end: var(--space-3); border-radius: var(--ad-r-ctl); background: var(--ad-sheet); box-shadow: var(--ad-rest), inset 0 0 0 1px var(--ad-hair); color: inherit; text-decoration: none; transition: box-shadow var(--ad-dur) var(--ad-ease-out), background-color var(--ad-dur-press) var(--ad-ease-out); }
+a.ad-dc-card:hover { box-shadow: var(--ad-lift), inset 0 0 0 1px var(--ad-hair-2); }
+.ad-dc-card:focus-visible { outline: 2px solid var(--ad-ring); outline-offset: 2px; }
+.ad-dc-card-media { display: grid; place-items: center; overflow: hidden; inline-size: var(--space-16); block-size: var(--space-16); border-radius: calc(var(--ad-r-ctl) - var(--space-2)); background: var(--ad-tint); color: var(--ad-brand); }
+.ad-dc-card-media > img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.ad-dc-card-media > svg { inline-size: var(--space-6); block-size: var(--space-6); }
+/* الكتابُ غلافٌ قائم، والشخصُ وجهٌ مستدير، والصفحةُ ختمُ القسم بنقشه */
+.ad-dc-card[data-kind="book"] .ad-dc-card-media { inline-size: calc(var(--space-12) - var(--space-1)); block-size: var(--space-16); border-radius: var(--ad-r-sm); }
+.ad-dc-card[data-kind="person"] .ad-dc-card-media { border-radius: var(--ad-r-full); background: none; }
+.ad-dc-card[data-kind="person"] .ad-dc-card-media > .av { inline-size: 100%; block-size: 100%; }
+.ad-dc-card[data-kind="page"] .ad-dc-card-media { background: none; }
+.ad-dc-card[data-kind="page"] .ad-dc-card-media > .ad-sec-ic { inline-size: var(--space-12); block-size: var(--space-12); }
+.ad-dc-card-t { display: grid; gap: calc(var(--space-1) / 2); min-inline-size: 0; }
+.ad-dc-card-t > small { overflow: hidden; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); text-overflow: ellipsis; white-space: nowrap; }
+.ad-dc-card-t > b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font-size: var(--ad-t-ui); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-head); }
+.ad-dc-card-sub { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; overflow: hidden; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); color: var(--ad-ink-2); white-space: nowrap; text-overflow: ellipsis; }
+.ad-dc-card-sub > svg { flex: none; inline-size: var(--space-4); block-size: var(--space-4); }
+/* الطرف: الفعلُ وسمٌ من مادّة الزرّ الأساسيّ، والحالُ وسمٌ هادئ، والسهمُ للذهاب وحده */
+.ad-dc-card-end { padding: var(--space-1) var(--space-3); border-radius: var(--ad-r-full); font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); white-space: nowrap; }
+.ad-dc-card-end[data-kind="act"] { background: var(--ad-dlg-light), var(--ad-fill); color: var(--ad-on-fill); }
+.ad-dc-card-end[data-kind="state"] { background: var(--ad-veil); color: var(--ad-ink-3); }
+.ad-dc-card-go { inline-size: var(--space-4); block-size: var(--space-4); color: var(--ad-ink-3); transition: transform var(--ad-dur) var(--ad-ease-out); }
+a.ad-dc-card:hover .ad-dc-card-go { transform: translateX(calc(var(--space-1) * -1)); color: var(--ad-brand); }
+/* ── القاع: المُنشئُ ── */
+.ad-db-dock { position: relative; }
+.ad-db-dock > .ad-db-col { padding-block: var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom)); }
+.ad-db-note { margin: var(--space-2) 0 0; font-size: var(--ad-t-meta); line-height: var(--ad-lh-ui); text-align: center; color: var(--ad-ink-3); }
+/* **المُنشئ** — قطعةٌ من عائلة ديبو: كبسولةٌ من ورقٍ مرفوعةٌ عن القاع (لا حقلُ نموذج)، رمزُه في صدرها وزرُّ الإرسال يسكن طرفَها.
+   **وتكبر بكبر الكلام** بمرآتها (`data-val`) إلى ستّة أسطر — قياسٌ في الورقة لا في JavaScript: المرآةُ والخانةُ بحشوٍ واحدٍ وخطٍّ واحد */
+.ad-db-comp { --db-pad: calc(var(--space-3) + var(--space-1) / 2); --db-lead: calc(var(--space-10) + var(--space-1)); --db-tail: calc(var(--space-12) + var(--space-2)); position: relative; font-family: var(--font-latin); font-feature-settings: "ss06" 1, "ss07" 1, "salt" 1; }
+.ad-db-well { position: relative; display: grid; grid-template-areas: "ta"; max-block-size: calc(var(--ad-lh-body) * 6em + var(--db-pad) * 2); border-radius: var(--ad-r-plate); background: var(--ad-sheet); box-shadow: var(--ad-lift), inset 0 0 0 1px var(--ad-hair-2); transition: box-shadow var(--ad-dur-press) var(--ad-ease-out); }
+.ad-db-well:focus-within { box-shadow: var(--ad-lift), inset 0 0 0 2px var(--ad-ring); }
+.ad-db-well::after { content: attr(data-val); grid-area: ta; visibility: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--ad-t-body); line-height: var(--ad-lh-body); padding-block: var(--db-pad); padding-inline: var(--db-lead) var(--db-tail); }
+.ad-db-ta { grid-area: ta; block-size: 100%; min-block-size: 0; margin: 0; border: 0; outline: 0; resize: none; overflow-y: auto; background: none; color: var(--ad-ink-head); font: inherit; font-size: var(--ad-t-body); line-height: var(--ad-lh-body); padding-block: var(--db-pad); padding-inline: var(--db-lead) var(--db-tail); }
+.ad-db-ta::placeholder { color: var(--ad-ink-3); }
+.ad-db-spark { position: absolute; inset-inline-start: var(--space-4); inset-block-start: calc(var(--db-pad) + (var(--ad-t-body) * var(--ad-lh-body) - var(--space-5)) / 2); display: grid; color: var(--ad-brand); pointer-events: none; }
+.ad-db-spark > svg { inline-size: var(--space-5); block-size: var(--space-5); }
+/* زرُّ الإرسال يسكن قاعَ الكبسولة لا وسطها (فلا يصعد مع نموّها)، وزاويتُه متراكزةٌ مع زاويتها */
+.ad-db-send { position: absolute; inset-inline-end: var(--space-2); inset-block-end: var(--space-2); z-index: var(--ad-z-over); inline-size: var(--space-10); block-size: var(--space-10); padding: 0; justify-content: center; border-radius: calc(var(--ad-r-plate) - var(--space-2)); }
+.ad-db-send > svg { inline-size: var(--space-5); block-size: var(--space-5); }
+.ad-db-down { position: absolute; inset-block-start: calc(var(--space-10) * -1 - var(--space-1)); inset-inline-start: 50%; translate: -50% 0; z-index: var(--ad-z-over); inline-size: calc(var(--space-8) + var(--space-1)); block-size: calc(var(--space-8) + var(--space-1)); padding: 0; justify-content: center; box-shadow: var(--ad-rest); }
+.ad-db-down > svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* ── «محادثاتي» في نافذة (الجوّال) ── */
+.ad-dk-group { display: grid; gap: var(--space-2); }
+.ad-dk-when { margin: 0; font-size: var(--ad-t-meta); font-weight: var(--ad-w-bold); line-height: var(--ad-lh-ui); color: var(--ad-ink-3); }
+/* ── الجوّال: اللوحُ رأسٌ قصيرٌ فوق الورقة، والأفعالُ رموزٌ فيه، و«محادثاتي» نافذة ── */
+@media (max-width: 56rem) {
+  .ad-db { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) var(--space-3) var(--space-3); }
+  .ad-db-side { flex-direction: row; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+  .ad-db-who { display: flex; flex: 1; align-items: center; gap: var(--space-3); min-inline-size: 0; text-align: start; }
+  .ad-db-figure { inline-size: calc(var(--space-16) + var(--space-2)); }
+  .ad-db-name { font-size: var(--ad-t-title); }
+  .ad-db-role { font-size: var(--ad-t-meta); }
+  .ad-db-doing:empty { display: none; }
+  .ad-db-side-acts { display: flex; gap: var(--space-2); }
+  .ad-db-side-acts .ad-db-lbl { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .ad-db-side-acts .ad-btn { padding-inline: var(--space-3); }
+  .ad-db-hist { display: none; }
+  .ad-db-only-narrow { display: contents; }
+  .ad-db-col { padding-inline: var(--space-4); }
+  .ad-db-scroll > .ad-db-col { padding-block: var(--space-5) var(--space-4); }
+  .ad-db-greet { font-size: var(--ad-t-section); }
+  .ad-db-lede { font-size: var(--ad-t-body); }
+  .ad-db-asks { grid-template-columns: minmax(0, 1fr); }
+}
+/* ── ⚠️ للمقارنة (١١-٢٤، «كأنّها صفحةٌ داخل صفحة»): `app` غرفةٌ بملء الشاشة على هندسة أبواب الحساب، و`flat` المحادثةُ بلا ورقة ── */
+.ad-db[data-look="app"] { max-inline-size: none; padding: var(--space-3); gap: var(--space-3); grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); }
+.ad-db[data-look="app"] .ad-db-side { border-radius: calc(var(--ad-r-plate) * 2); }
+.ad-db[data-look="app"] .ad-db-main { border-radius: calc(var(--ad-r-plate) * 2); border: 1px solid var(--ad-edge); box-shadow: var(--ad-rest); }
+/* اللوحُ يحمل الشعارَ فوق ديبو، فديبو أقصرُ قليلًا لتتّسع المحادثاتُ تحته */
+.ad-db[data-look="app"] .ad-db-figure { inline-size: clamp(calc(var(--space-16) * 2), 22dvh, calc(var(--space-16) * 3.5)); }
+.ad-db-logo { display: block; flex: none; inline-size: calc(var(--space-16) * 2); }
+.ad-db-logo > img { display: block; inline-size: 100%; block-size: auto; }
+.ad-db-out { display: flex; flex: none; justify-content: center; }
+.ad-db-out:first-child, .ad-db-side:not(:has(.ad-db-hist)) .ad-db-out { margin-block-start: auto; }
+.ad-db[data-look="flat"] .ad-db-main { overflow: visible; border-radius: 0; background: none; box-shadow: none; }
+.ad-db[data-look="flat"] .ad-db-dock { border-block-start: 0; }
+.ad-db[data-look="flat"] .ad-db-well { background: var(--ad-sheet); box-shadow: var(--ad-lift); border-radius: var(--ad-r-ctl); }
+@media (max-width: 56rem) {
+  .ad-db[data-look="app"] { grid-template-columns: minmax(0, 1fr); padding: var(--space-2); gap: var(--space-2); }
+  .ad-db[data-look="app"] .ad-db-side { border-radius: var(--ad-r-plate); }
+  .ad-db[data-look="app"] .ad-db-main { border-radius: var(--ad-r-plate); }
+  .ad-db[data-look="app"] .ad-db-logo { display: none; }
+  .ad-db-out, .ad-db-side:not(:has(.ad-db-hist)) .ad-db-out { order: 9; margin: 0; }
+  .ad-db[data-look="app"] .ad-db-figure { inline-size: calc(var(--space-16) + var(--space-2)); }
+  .ad-db-out .ad-db-lbl { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .ad-db-out .ad-btn { padding-inline: var(--space-3); }
 }

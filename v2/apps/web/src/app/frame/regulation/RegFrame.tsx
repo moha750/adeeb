@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Container } from "@adeeb/design-system";
 import { ToastProvider } from "@/app/dashboard/_components/ToastProvider";
-import { RegDoc } from "@/app/regulations/_parts/RegDoc";
+import { RegRead } from "@/app/regulations/_parts/RegRead";
 import type { RegStageDraft } from "@/app/_ad/rooms/RegEditorRoom";
 import { useStageDraft } from "../useStageDraft";
 
@@ -27,7 +27,7 @@ export function RegFrame() {
     <main className="ad-sframe ad-nframe">
       <Container>
         <ToastProvider>
-          <RegDoc doc={draft.doc} base="/regulations" previews={draft.ctx.previews} cited={draft.ctx.cited} docNames={draft.ctx.docNames} counts={draft.ctx.counts} next={draft.ctx.next} />
+          <RegRead preview doc={draft.doc} base="/regulations" previews={draft.ctx.previews} cited={draft.ctx.cited} docNames={draft.ctx.docNames} counts={draft.ctx.counts} next={draft.ctx.next} />
         </ToastProvider>
       </Container>
     </main>

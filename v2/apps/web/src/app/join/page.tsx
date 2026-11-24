@@ -1,3 +1,4 @@
+import "@adeeb/design-system/ad.css";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Footer } from "@adeeb/design-system";
@@ -6,11 +7,12 @@ import { getSessionAdmin } from "@/lib/auth";
 import { isAdeebMember } from "@/lib/memberRecord";
 import { shareOg } from "@/lib/share";
 import { getCommittees, getViewerJoinState } from "./data";
-import { JoinView, type JoinStep } from "./JoinView";
+import { JoinRoom, type JoinStage } from "./JoinRoom";
+import { getPublicOrg } from "@/app/structure/data";
 
 export const metadata: Metadata = {
   title: "الانضمام إلى أدِيب",
-  description: "طريقُك إلى نادي أَدِيب: حسابٌ، ثمّ تطوّعٌ في لجانِنا، ثمّ عضويّةٌ تُهدى لمن رأينا عملَه.",
+  description: "بلا ترشيحٍ ولا مقابلةٍ ولا موعدٍ للتسجيل: تبدأ متى شئت، وتصير متطوّعًا في أدِيب في دقيقة.",
   openGraph: shareOg({
     title: "الانضمام إلى نادي أَدِيب",
     description: "حسابٌ، ثمّ تطوّعٌ في لجانِنا، ثمّ عضويّةٌ تُهدى لمن رأينا عملَه.",
@@ -31,48 +33,38 @@ export const dynamic = "force-dynamic";
  * يأتي الحسابُ **خطوةً في آخرها**. وثلاثةُ مكاسبَ تبعت: رابطٌ يُنشَر فيفتح على دعوةٍ لا على
  * نموذج، ولجانٌ تُقرأ فتكون هي الإعلان، ومترّددٌ ينصرف بلا حسابٍ فارغٍ يتركه خلفه.
  *
- * **والصفحةُ واحدةٌ لا أربع**: متنُها ثابتٌ للجميع (الطريقُ واللجان)، وآخرُها وحدَه يتبدّل
- * بمنزلة قارئه — وكلٌّ يُساق إلى خطوته:
+ * **والصفحةُ إقناعٌ خالصٌ للجميع** (محمد ٢٠٢٦-١١-٢٤): متنُها واحدٌ لكلّ قارئ، ولا نموذجَ في ذيلها — كان فيه ترتيبُ الرغبات، فرجع
+ * من فتح حسابَه إلى صفحةٍ كُتبت لتقنعه ثمّ رُمي إلى آخرها. فصارت الخطوتان صفحةً منفصلة (`/join/apply`) بهيئة أبواب الحساب،
+ * وفعلُ هذه الصفحة يقود إليها:
  *
- * | القاصد | خطوتُه | آخرُ الصفحة |
- * |---|---|---|
- * | بلا جلسة | `account` | زرّان: «أنشئ حسابَك» و«بوّابة أدِيب»، ويعودان إلى هنا |
- * | صاحبُ حسابٍ بلا بيانات | `data` | بياناتُه — لا متطوّعَ بلا جوّالٍ يُتواصل به ولا جنسٍ تُقاس به فرصُه |
- * | صاحبُ حسابٍ لم يقدّم | `apply` | ترتيبُ الرغبات، وبه يصير متطوّعًا |
- * | متطوّع | `edit` | الرغباتُ نفسُها يعيد ترتيبها |
- * | عضوٌ في النادي | — | `/dashboard`: هو فوق هذه المحطّة لا دونها |
- *
- * **والبياناتُ تُسأل في `data` لا عند إنشاء الحساب** (قرار المالك ١٥ أغسطس ٢٠٢٦): الحسابُ
- * يُفتح بنقرةٍ من قوقل، فلا يُثقَل بابُه بستّة حقولٍ يهرب منها إلى المزوّد.
+ * | القاصد | فعلُ الصفحة |
+ * |---|---|
+ * | بلا جلسة (`guest`) | «أنشئ حسابَك» و«بوّابة أدِيب»، ويعودان إلى `/join/apply` |
+ * | صاحبُ حسابٍ لم يتطوّع (`friend`) | «أكمِل خطوتك» إلى `/join/apply` |
+ * | متطوّع (`volunteer`) | «حدّث رغباتك» إلى `/join/apply`، و«بوّابتك» |
+ * | عضوٌ في النادي | `/dashboard`: هو فوق هذه المحطّة لا دونها |
  */
 export default async function JoinPage() {
   const me = await getSessionAdmin();
   // العضوُ فوق هذه المحطّة لا دونها — ويُسأل قبل أيّ قراءةٍ أخرى فلا تُقرأ لمن لا يراها
   if (me && (await isAdeebMember(me.id))) redirect("/dashboard");
 
-  const [committees, viewer] = await Promise.all([
+  const [committees, viewer, org] = await Promise.all([
     getCommittees(),
     me ? getViewerJoinState(me.id) : Promise.resolve(null),
+    // اللجانُ تفتح نوافذَها من «هيكلة أدِيب» نفسِها: التعريفُ، ومن يقودها ومن فيها (١١-٢٤)
+    getPublicOrg().then((r) => r.data ?? null),
   ]);
-
-  const step: JoinStep = !me
-    ? "account"
-    : !viewer?.hasProfile
-      ? "data"
-      : viewer.isVolunteer
-        ? "edit"
-        : "apply";
+  const stage: JoinStage = !me ? "guest" : viewer?.isVolunteer ? "volunteer" : "friend";
 
   return (
     <>
       <SiteHeader />
-      <JoinView
-        committees={committees}
-        step={step}
-        prefs={viewer?.prefs ?? []}
-        isVolunteer={!!viewer?.isVolunteer}
-        hasProfile={!!viewer?.hasProfile}
-      />
+      <main className="ad-pub">
+        <div className="ad-pub-wrap">
+          <JoinRoom org={org} committees={committees} stage={stage} />
+        </div>
+      </main>
       <Footer />
     </>
   );
