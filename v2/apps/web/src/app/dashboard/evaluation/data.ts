@@ -2,6 +2,7 @@ import "server-only";
 import { evaluationService } from "@/lib/evaluation/db";
 import { createClient } from "@/lib/supabase/server";
 import type { Branch, Cancelled, CycleStatus, EvaluatedRole, Excluded, Part, Verdict } from "./vocab";
+import { COUNCIL_ITEM_LIST, MEMBER_ITEM_LIST } from "./vocab";
 
 /**
  * **قراءاتُ تقييم القيادات.** غرفةُ الإدارة بعميل الخدمة بعد أن يسأل الخادمُ عن القدرة (دوالُّها بلا منح)،
@@ -68,6 +69,8 @@ export type TargetRow = {
   returned_to: number | null;
   awaiting_return: boolean;
   restored_at: string | null;
+  /** مكلَّفٌ يُقيَّم للتطوير وحده: لا استبعاد له أبدًا (محمد ٢٠٢٦-١١-٢٧؛ `20261127141547`). */
+  acting?: boolean;
   /**
    * **ما يُخفى من الأرقام عن قائدَي الموارد والضمان** (الكشف، محمد ٢٠٢٦-١١-٢٣): هما يريان من قيّم،
    * فشقٌّ قيّم فيه واحدٌ أو اثنان يكشف رقمُه تقييمَ صاحبه. فيُخفى الشقّان كلاهما، وتبقى النهائيّةُ والحكم (محمد ٢٠٢٦-١١-٢٣).
@@ -238,6 +241,8 @@ export type MyResultRow = {
    *  اختياريّان: الحكمُ وحده يُكتب إن لم يعودا. */
   returned_unit?: string | null;
   awaiting_return?: boolean | null;
+  /** مكلَّفٌ: تقييمُه للتطوير ولا يُستبعَد به. */
+  acting?: boolean | null;
 };
 
 export async function getMyResults(): Promise<Read<MyResultRow[]>> {
@@ -280,4 +285,40 @@ export async function getCorrectionPeople(): Promise<{ id: string; name: string 
     .or("account_status.is.null,account_status.neq.suspended")
     .order("full_name");
   return ((data ?? []) as { id: string; full_name: string }[]).map((p) => ({ id: p.id, name: p.full_name }));
+}
+
+/**
+ * **تفصيلُ التقييم لصاحبه** (محمد ٢٠٢٦-١١-٢٦: «التقييمُ غرضُه أن يتطوّر القائد، فلا بدّ من إظهار التقييمات كلِّها»): بنودُ
+ * الشقّين معًا قائمةً واحدة (البندُ المشتركُ «التفعيل» مرّةً بوزني الشقّين ٧٠/٣٠)، وكلُّ بندٍ بدرجته من خمس. بلا أسماء، وبلا
+ * حدٍّ أدنى بقرار محمد. **الحسابُ كلُّه في القاعدة** (`evaluation_my_stands`، `20261127141421`): تقرأ صاحبَ الجلسة من
+ * `auth.uid()` وحده، فلا تُعطي إلّا لصاحب الهدف ولا تُعطي دورةً لم تُنفَّذ؛ فلا ورقةَ تبلغ الخادمَ هنا ولا مفتاحَ خدمة.
+ * وتبقى هنا الأسماءُ والتلميحاتُ من `vocab.ts` (حارسٌ يطابق مفاتيحَ الدالّة بمفاتيحها).
+ */
+export type ItemStand = { key: string; label: string; hint: string; level: 1 | 2 | 3 | 4 | 5 };
+export type MyStands = { items: ItemStand[] };
+
+const ITEM_TEXT = new Map<string, { label: string; hint: string }>(
+  [...MEMBER_ITEM_LIST, ...COUNCIL_ITEM_LIST].map((it) => [it.key, { label: it.label, hint: it.hint }]),
+);
+
+export async function getMyStands(targetIds: number[]): Promise<Record<number, MyStands>> {
+  if (targetIds.length === 0) return {};
+  const sb = await createClient();
+  const rows = await Promise.all(
+    targetIds.map(async (id) => {
+      const { data, error } = await sb.rpc("evaluation_my_stands", { p_target: id });
+      return { id, data: error ? [] : ((data ?? []) as { item_key: string; level: number }[]) };
+    }),
+  );
+  const out: Record<number, MyStands> = {};
+  for (const { id, data } of rows) {
+    const items: ItemStand[] = [];
+    for (const r of data) {
+      const t = ITEM_TEXT.get(r.item_key);
+      if (!t) continue;
+      items.push({ key: r.item_key, ...t, level: Math.min(5, Math.max(1, r.level)) as ItemStand["level"] });
+    }
+    if (items.length) out[id] = { items };
+  }
+  return out;
 }

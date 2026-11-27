@@ -200,3 +200,35 @@ describe("recordFor: ما يُسلَّم للقاعدة", () => {
     expect(r.verdict).toBe("no_result");
   });
 });
+
+describe("المكلَّف يُقيَّم للتطوير بلا استبعاد (محمد ٢٠٢٦-١١-٢٧)", () => {
+  it("40% بالضبط ← باقٍ لا مستبعَد، والنتيجةُ هي نفسُها", () => {
+    const r = evaluate({ members: members(40, 1, 2), council: council(40, 1), acting: true });
+    expect(r.final).toEqual({ num: 2, den: 5 });
+    expect(r.verdict).toBe("kept");
+  });
+
+  it("أدنى النتائج (20%) ← باقٍ، وغيرُ المكلَّف بالنتيجة نفسِها مستبعَد", () => {
+    const low = { members: members(20, 1, 2), council: council(20, 1) };
+    expect(evaluate({ ...low, acting: true }).verdict).toBe("kept");
+    expect(evaluate(low).verdict).toBe("removed");
+  });
+
+  it("فوق الحدّ ← باقٍ كغيره، ولا أثرَ للعلامة على الحساب", () => {
+    const high = { members: members(80, 1, 2), council: council(60, 1) };
+    expect(evaluate({ ...high, acting: true })).toEqual(evaluate(high));
+  });
+
+  it("خلا الشقّان ← بلا نتيجة، فلا «باقٍ» على لا شيء", () => {
+    const r = evaluate({ members: { sum: 0, ballots: 0, eligible: 3 }, council: EMPTY_COUNCIL, acting: true });
+    expect(r.verdict).toBe("no_result");
+    expect(r.final).toBeNull();
+  });
+
+  it("recordFor يقرأ `acting` من صفّ المجاميع: يُسلَّم للقاعدة «باقٍ» وهي تقبله بقيدها", () => {
+    const row = { target_id: 3, m_sum: 7, m_ballots: 1, m_eligible: 2, c_sum: 5, c_ballots: 1, c_eligible: 4 };
+    expect(recordFor({ ...row, acting: true }).verdict).toBe("kept");
+    expect(recordFor({ ...row, acting: false }).verdict).toBe("removed");
+    expect(recordFor(row).verdict).toBe("removed");
+  });
+});

@@ -70,6 +70,8 @@ export type MineProps = {
   /** إجاباتُ السؤال المفتوح لكلّ دورة (بمعرّف المقيَّم فيها)، بلا أسماء وبترتيبٍ عشوائيّ (م١٠/2). */
   comments: Record<number, { keep_text: string | null; change_text: string | null }[]>;
   gender: "male" | "female" | null;
+  /** «أين تقف» لكلّ دورة: من `evaluation_my_stands` بجلسة صاحبها (`getMyStands`) */
+  stands?: Record<number, import("./data").MyStands>;
 };
 
 /** الحكمُ جملةً بجنس صاحبه. */

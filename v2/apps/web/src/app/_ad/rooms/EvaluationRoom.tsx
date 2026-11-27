@@ -99,12 +99,14 @@ export function EvaluationRoom(props: RoomProps) {
     // (محمد ٢٠٢٦-١١-٢٠: «لماذا في عمود النتيجة gap؟»). والحكمُ شارةُ السطر، فلا كلمةَ مكانَ النسبة
     return [...base, {
       label: "النتيجة", value: f ? `${percentText(f)}%` : "—", ltr: true,
-      of: { now: f ? (f.num / f.den) * 100 : 0, max: 100, word: "", mark: { at: 40, label: "الحدّ" } },
+      of: { now: f ? (f.num / f.den) * 100 : 0, max: 100, word: "", ...(t.acting ? {} : { mark: { at: 40, label: "الحدّ" } }) },
     }];
   };
   const badgeOf = (t: TargetRow) => {
     if (t.excluded) return <AdBadge icon={<CalendarX />}>خارج تقييم هذا الشهر</AdBadge>;
     if (!results || !t.verdict) return null;
+    // المكلَّفُ يُقيَّم للتطوير: لا حكمَ له، فشارتُه «للتطوير» لا «باقٍ» (محمد ٢٠٢٦-١١-٢٧)
+    if (t.acting) return <AdBadge>للتطوير</AdBadge>;
     // «ينتظر لجنة» لمن يختارها وحده (الرئيسان وقائد الموارد)؛ وقائدةُ الجودة لا تحكم فيها، فترى الحكمَ وحده (محمد ٢٠٢٦-١١-٢٣)
     return t.awaiting_return && canManage
       ? <AdBadge tone="warn" icon={<UserSwitch />}>ينتظر لجنة</AdBadge>

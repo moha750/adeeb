@@ -683,9 +683,9 @@ export const CATALOG = {
   /**
    * **نتيجتك** (م١٠/2) — لكلّ مقيَّمٍ نتيجتُه وحده، باقيًا كان أو بلا نتيجة. والمستبعَدُ خبرُه في الاستبعاد.
    */
-  "evaluation.result": defineKind<Seat & { userId: string; targetId: number; cycleId: number; verdict: "kept" | "no_result"; final: [number, number] | null }>({
+  "evaluation.result": defineKind<Seat & { userId: string; targetId: number; cycleId: number; verdict: "kept" | "no_result"; final: [number, number] | null; acting?: boolean }>({
     section: "evaluation",
-    when: "صدرت نتيجةُ مقيَّمٍ وبقي في منصبه، أو لم تُحسب له نتيجة",
+    when: "صدرت نتيجةُ مقيَّمٍ وبقي في منصبه، أو لم تُحسب له نتيجة، أو قُيِّم مكلَّفٌ للتطوير",
     sample: { userId: SAMPLE_USER, targetId: 1, cycleId: 1, rank: "نائب", unit: "لجنة التصوير", verdict: "kept", final: [11, 25] },
     audiences: [
       {
@@ -693,7 +693,10 @@ export const CATALOG = {
         level: "important",
         to: (f) => [{ user: f.userId }],
         text: (f, g) =>
-          f.verdict === "kept" && f.final
+          // **المكلَّفُ يُقيَّم للتطوير** (محمد ٢٠٢٦-١١-٢٧): يصله خبرُ نتيجته بلا «باقٍ في منصبك» (لا استبعادَ له)، وبما يخصّه وحده
+          f.verdict === "kept" && f.final && f.acting
+            ? { title: `${fm(g, "نتيجتك", "نتيجتكِ")} في تقييم القيادات ${percentText({ num: f.final[0], den: f.final[1] })}%`, body: `${fm(g, "تقييمُك للتطوير، ولا أثرَ له على تكليفك", "تقييمُكِ للتطوير، ولا أثرَ له على تكليفكِ")} في منصب «${seat(f, g)}».` }
+            : f.verdict === "kept" && f.final
             ? { title: `${fm(g, "نتيجتك", "نتيجتكِ")} في تقييم القيادات ${percentText({ num: f.final[0], den: f.final[1] })}%`, body: `${fm(g, "وأنت باقٍ", "وأنتِ باقيةٌ")} في منصب «${seat(f, g)}».` }
             : { title: `لا نتيجةَ ${fm(g, "لك", "لكِ")} في تقييم القيادات هذا الشهر`, body: "لم يكتمل ما تُحسب به." },
         href: () => "/dashboard/evaluation/mine",

@@ -107,8 +107,14 @@ export function atOrBelowThreshold(f: Fraction): boolean {
   return BigInt(f.num) * B5 <= BigInt(f.den) * B2;
 }
 
-/** الحكمُ كلُّه لمقيَّمٍ واحد: من مجاميع الشقّين إلى الفرع والنتيجة والحكم. */
-export function evaluate(input: { members: PartTally; council: PartTally }): Outcome {
+/**
+ * الحكمُ كلُّه لمقيَّمٍ واحد: من مجاميع الشقّين إلى الفرع والنتيجة والحكم.
+ *
+ * **`acting`: المكلَّفُ يُقيَّم للتطوير بلا استبعاد** (محمد ٢٠٢٦-١١-٢٧): نتيجتُه تُحسب كغيره بالشقّين والنصاب، لكنّ حكمَه «باقٍ» ولو كانت
+ * 40% أو أقلّ، فالتكليفُ ليس مقعدًا يُنتزع بالحدّ. والقاعدةُ تحرس ذلك بقيدها (`evaluation_targets_verdict_matches`: «مستبعَد» لا يقبل مكلَّفًا).
+ * ولا نتيجةَ له (`no_result`) كغيره حين يخلو الشقّان.
+ */
+export function evaluate(input: { members: PartTally; council: PartTally; acting?: boolean }): Outcome {
   assertTally(input.members, MEMBER_ITEMS, "الأعضاء");
   assertTally(input.council, COUNCIL_ITEMS, "المجلس");
 
@@ -135,7 +141,7 @@ export function evaluate(input: { members: PartTally; council: PartTally }): Out
     final = null;
   }
 
-  const verdict: Verdict = final === null ? "no_result" : atOrBelowThreshold(final) ? "removed" : "kept";
+  const verdict: Verdict = final === null ? "no_result" : atOrBelowThreshold(final) && !input.acting ? "removed" : "kept";
   return { branch, membersQuorum: quorum, members: m, council: c, final, verdict };
 }
 
@@ -177,6 +183,8 @@ export type TallyRow = {
   c_sum: number;
   c_ballots: number;
   c_eligible: number;
+  /** مكلَّفٌ بالمقعد: يُقيَّم للتطوير بلا استبعاد (`evaluation_targets.acting`) */
+  acting?: boolean;
 };
 
 /**
@@ -200,6 +208,7 @@ export function recordFor(row: TallyRow): RecordResult {
   const o = evaluate({
     members: { sum: row.m_sum, ballots: row.m_ballots, eligible: row.m_eligible },
     council: { sum: row.c_sum, ballots: row.c_ballots, eligible: row.c_eligible },
+    acting: row.acting,
   });
   return {
     targetId: row.target_id,
