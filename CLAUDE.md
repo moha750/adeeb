@@ -288,9 +288,12 @@ method and its decision log live in the Claude project doc `identity-method.md`.
   - `ITC Eras` (woff2 since 2026-10-27, 300/500/600/700) — Latin. `--font-latin: "Eras", "Lyon Arabic", sans-serif`,
     ordered so glyphs Eras lacks (Arabic letters, Arabic-Indic digits, `٪`) fall back to Lyon, never
     to a browser font.
-  - Western digits `U+0030-0039` are re-declared **inside the `Lyon Arabic` family** pointing at
-    digit-only Eras subsets (`eras-*-digits.woff2`, ~3 KB each), so numbers render in Eras while
-    surrounding Arabic stays Lyon. Those `@font-face`
+  - Western digits **and the Latin percent sign** (`U+0025,U+0030-0039`, widened 2026-11-27) are
+    re-declared **inside the `Lyon Arabic` family** pointing at digit-only Eras subsets
+    (`eras-*-digits.woff2`, ~3 KB each), so `71%` renders entirely in Eras while surrounding Arabic
+    stays Lyon. The Arabic percent `٪` (`U+066A`) is not in the subset and stays Lyon: write `%` with
+    Latin digits, never mix the two. The pre-change subsets are in
+    `Claude outputs/fonts-digits-backup-2026-11-27`. Those `@font-face`
     rules must stay **after** the Lyon faces. Do not use `unicode-range` on the Lyon faces
     themselves — it breaks Lyon loading.
   - `Twemoji Country Flags` (76 KB subset, `U+1F1E6-1F1FF`) applied only via the `.cflag` class.

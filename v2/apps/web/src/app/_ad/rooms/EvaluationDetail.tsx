@@ -96,7 +96,8 @@ function ResultCard({ t }: { t: TargetRow }) {
           <div className="ad-evd-final" data-verdict={t.verdict ?? undefined}>
             <AdFigureRow figures={[{
               icon: <Gauge />, label: "النتيجة النهائية", ltr: true, value: f ? `${percentText(f)}%` : "—",
-              of: { now: fracPct(f), max: 100, word: t.verdict ? verdictWord(t.verdict, t.gender) : "", mark: { at: 40, label: <>حدّ الاستبعاد {P(40)}</> } },
+              // المكلَّفُ للتطوير: لا حدَّ استبعادٍ على شريطه ولا كلمةَ حكم (محمد ٢٠٢٦-١١-٢٧)
+              of: { now: fracPct(f), max: 100, word: t.verdict && !t.acting ? verdictWord(t.verdict, t.gender) : t.acting ? "للتطوير" : "", ...(t.acting ? {} : { mark: { at: 40, label: <>حدّ الاستبعاد {P(40)}</> } }) },
             }]} />
           </div>
           <AdFigureRow figures={(["members", "council"] as const).map((p) => {

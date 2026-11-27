@@ -19,12 +19,14 @@
    مُعلَنة بعد وجوه Lyon فتفوز على الأرقام فقط (U+0030-0039)، ويبقى بقية النص Lyon.
    **ملفّاتُها أرقامٌ وحدها** (٢٠٢٦-١٠-٢٧، قياسُ جوّالٍ على 4G): كانت تشير إلى خطوط Eras كاملةً (~43KB
    مضغوطةً للوزن)، فكانت كلُّ صفحةٍ فيها رقمٌ تُنزّل ثلاثةً منها بأولويّةٍ عليا لعشرة رموز. والآن
-   `eras-*-digits.woff2` (~3KB للوزن): رسومُ الأرقام العشرة نفسُها وخصائصُها، مقتطعةً من الأصل بـpyftsubset. */
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light-digits.woff2") format("woff2");  unicode-range:U+0030-0039; font-weight:300; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0030-0039; font-weight:400; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
-@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold-digits.woff2") format("woff2");   unicode-range:U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
+   `eras-*-digits.woff2` (~3KB للوزن): رسومُ الأرقام العشرة نفسُها وخصائصُها، مقتطعةً من الأصل بـpyftsubset.
+   **وعلامةُ «%» معها** (محمد ٢٠٢٦-١١-٢٧: «الرقمُ بخطّ الإنجليزيّة والنسبةُ بالعربيّة»): كانت «84%» رقمين من Eras وعلامةً من Lyon،
+   فأُعيد اقتطاعُ الأربعة بـ`U+0025,U+0030-0039` (الأصلُ قبلها في `Claude outputs/fonts-digits-backup-2026-11-27`). و«٪» العربيّةُ تبقى من Lyon. */
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-light-digits.woff2") format("woff2");  unicode-range:U+0025,U+0030-0039; font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0025,U+0030-0039; font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-medium-digits.woff2") format("woff2"); unicode-range:U+0025,U+0030-0039; font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-demi-digits.woff2") format("woff2");   unicode-range:U+0025,U+0030-0039; font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Lyon Arabic"; src:url("./fonts/eras-bold-digits.woff2") format("woff2");   unicode-range:U+0025,U+0030-0039; font-weight:900; font-style:normal; font-display:swap; }
 
 /* ===== والحروفُ اللاتينيّة كذلك بخطّ Eras (محمد ٢٠٢٦-١١-٠١) — بالطريقة نفسِها =====
    كان «Lyon Arabic» يرسم الحروفَ اللاتينيّة بلاتينيّته المذيّلة، والأرقامُ فوقها من Eras، فاجتمع خطّان في كلمةٍ واحدة:

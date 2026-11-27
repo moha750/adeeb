@@ -15,6 +15,7 @@ import { Alert, Button, Modal, Textarea } from "@adeeb/design-system";
 import { ChatCircleText, Compass, Lightbulb, NotePencil, PaperPlaneTilt, Scales, StarHalf, ThumbsUp, UsersThree } from "@phosphor-icons/react";
 import { Check, DuotoneZone, Eye, PencilSimple, Star } from "@/app/_components/glyphs";
 import { useDraft } from "@/lib/useDraft";
+import { ITEM_ICON } from "@/app/dashboard/evaluation/itemIcons";
 import { useToast } from "@/app/dashboard/_components/ToastProvider";
 import type { MyBallot } from "@/app/dashboard/evaluation/actions";
 import type { SheetRow } from "@/app/dashboard/evaluation/data";
@@ -91,7 +92,8 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
             // على صبغة الخطر، **وجملتُه تحت المقياس** كما يقع الخطأُ تحت البئر — لا لونٌ وحده لا يقول ما الناقص
             <li key={it.key} className="ad-rate-q" data-state={v !== null ? "done" : bad ? "bad" : undefined} ref={setRef(i)}>
               <div className="ad-rate-qh">
-                <span className="ad-rate-n" aria-hidden>{v !== null ? <Check /> : <span className="lat">{i + 1}</span>}</span>
+                {/* رمزُ المعيار على المربّع المصبوغ (محمد ٢٠٢٦-١١-٢٧: «ضعها بالأيقونات نفسها»): الرمزُ نفسُه في «نتيجتي»، فيعرف القائدُ البندَ به من شهرٍ إلى شهر، وعلامةٌ إذا أُجيب */}
+                <span className="ad-rate-n" aria-hidden>{v !== null ? <Check /> : (ITEM_ICON[it.key] ?? <span className="lat">{i + 1}</span>)}</span>
                 <span className="ad-rate-qt"><b id={id}>{it.label}</b><span>{it.hint}</span></span>
               </div>
               <div className="ad-switch ad-rate-scale" role="radiogroup" aria-labelledby={id} aria-invalid={bad || undefined} aria-describedby={bad ? `${id}-err` : undefined}>
@@ -102,7 +104,7 @@ function SheetBody({ sheet, s }: { sheet: SheetRow; s: SheetState }) {
                   </button>
                 ))}
               </div>
-              {bad ? <p className="ad-rate-err" id={`${id}-err`}>اختر درجةً لهذا البند</p> : null}
+              {bad ? <p className="ad-rate-err" id={`${id}-err`}>اختر درجةً لهذا المعيار</p> : null}
             </li>
           );
         })}
@@ -165,6 +167,7 @@ export function BallotList({ part, ballot: b }: { part: SheetRow["part"]; ballot
         const v = b.scores[i] as 1 | 2 | 3 | 4 | 5;
         return (
           <li key={it.key} className="ad-rate-v">
+            {ITEM_ICON[it.key] ? <span className="ad-line-ic" aria-hidden>{ITEM_ICON[it.key]}</span> : null}
             <span className="ad-rate-qt"><b>{it.label}</b><span>{it.hint}</span></span>
             {/* الكلمةُ وحدها تحت الدرجات: الرقمُ يكرّر ما يقوله عددُ الممتلئ (محمد ٢٠٢٦-١١-٢٠)، ويبقى لقارئ الشاشة في وسمها */}
             <AdStepsBar steps={{ now: v, max: 5, label: SCALE_LABELS[v] }} />

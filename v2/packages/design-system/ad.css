@@ -6189,26 +6189,32 @@ html[lang] .fld .fld-wrap:has(.fld-dt):not(:has(.fld-in:disabled, .fld-in[readon
 .ad-rate-say > .ad-rate-qt .ad-rate-say-a { margin-block-start: var(--space-1); font-size: var(--ad-t-body); line-height: var(--ad-lh-body); color: var(--ad-ink); white-space: pre-line; }
 .ad-rate-say[data-empty] > .ad-rate-qt .ad-rate-say-a { color: var(--ad-ink-3); }
 
-/* ═══ نتيجتي (`MineRoom`، ٢٠٢٦-١١-٢٠، مسوّدةٌ للعرض) ═══
-   الأرقامُ أرقامُ نافذة التفاصيل بشرائطها في جسم القسم، والحكمُ لصقَ رقمه بلونه */
+/* ═══ نتيجتي (`MineRoom`، الشكلُ «ز» وحده، اعتمده محمد ٢٠٢٦-١١-٢٧) ═══
+   قائمةُ أشهرٍ بتذاكرها، وصفحةُ الشهر بقالب السجلّ: بنودٌ في قسمٍ مقسومٍ وكلامُ المقيِّمين بجانبها */
 .ad-mine { display: grid; gap: var(--space-5); }
-.ad-mine-figs .ad-figures { border-block-start: 0; padding-block-start: 0; }
-.ad-mine-figs .ad-meter-row { display: block; }
-.ad-mine-figs .ad-meter-row > .ad-meter { inline-size: 100%; }
-.ad-mine-figs .ad-figure { align-content: start; }
-.ad-mine-figs .ad-figures:has(.ad-meter-wrap) .ad-meter-row > .ad-meter { margin-block-end: calc(var(--ad-t-meta) * 1.4); }
-.ad-mine-figs .ad-evd-final .ad-figure dt { display: none; }
-/* رمزا الشقّين على المربّع المصبوغ، كنافذة التفاصيل (محمد ٢٠٢٦-١١-٢٠: «خلفيّةٌ وراء الأيقونة») */
-.ad-mine-figs .ad-figure dt > svg {
-  box-sizing: content-box;
-  padding: calc(var(--space-1) * 1.25);
-  border-radius: calc(var(--ad-r-sm) - var(--space-1) * .75);
-  background: color-mix(in oklab, currentColor 12%, transparent);
-}
+.ad-mine-q { font-size: var(--ad-t-body); color: var(--ad-ink-head); }
+/* رمزُ الشريط في مربّعه مصغّرًا إلى سطره (مربّعُ رمز المعلومة في السطر، قاعدةُ الجدول) لا رمزًا سائبًا قبل الاسم */
+.ad-mine .ad-log-day > span:first-child { display: inline-flex; align-items: center; gap: var(--space-2); }
+.ad-mine .ad-log-day .ad-line-ic { inline-size: var(--space-6); block-size: var(--space-6); }
+.ad-mine .ad-log-day .ad-line-ic svg { inline-size: var(--space-4); block-size: var(--space-4); }
+/* حالُ البند عن الشهر السابق بلونه كلُّه، رمزًا وكلمة («سطرُ الحال بلون حاله»): كان شرحُ البند يُطفئ كلمتَه رماديّةً ويبقى الرمزُ وحده أخضر */
+.ad-mine .ad-rate-qt > .ad-row-info > span { color: inherit; }
+/* «نتيجتي» مقسومةٌ بالمنصب: لوحةُ المسار ثمّ تذاكرُه، وبين المنصبين مسافةُ قسم */
+.ad-mine-seat { display: grid; gap: var(--space-5); }
+/* **الشارةُ مقابلَ العنوان في سطره** (اقتراحُ محمد ٢٠٢٦-١١-٢٧): «الأحدث» و«مستبعَد» كانتا سطرًا فوق العنوان فصارت تذكرتُهما أطولَ من أخواتها.
+   فالعنوانُ والشارةُ سطرٌ واحد، والشارةُ في طرفه المقابل، وما بعدهما بعرض الكرت — فالتذاكرُ كلُّها بارتفاعٍ واحد */
+.ad-mine-cards .ad-card-body { grid-template-columns: minmax(0, 1fr) auto; }
+.ad-mine-cards .ad-card-body > .ad-card-title { grid-column: 1; grid-row: 1; }
+.ad-mine-cards .ad-card-body > .ad-chips { grid-column: 2; grid-row: 1; align-self: center; }
+.ad-mine-cards .ad-card-body > :not(.ad-card-title, .ad-chips) { grid-column: 1 / -1; }
+/* البندُ على الجوّال: الدرجاتُ سطرٌ تحت شرحه بمحاذاته، لا عمودٌ بجانبه يعصر الشرحَ إلى كلمتين في السطر */
 @media (max-width: 40rem) {
-  .ad-mine-figs .ad-figures { flex-direction: column; gap: var(--space-3); }
-  .ad-mine-figs .ad-figure { padding-inline: 0; border-inline-start: 0; }
+  .ad-mine .ad-lines > .ad-rate-v:has(> .ad-line-ic) { flex-wrap: wrap; row-gap: var(--space-2); }
+  .ad-mine .ad-lines > .ad-rate-v:has(> .ad-line-ic) > .ad-steps { flex-basis: 100%; padding-inline-start: calc(var(--space-8) + var(--space-4)); grid-auto-flow: column; justify-content: start; justify-items: start; align-items: center; column-gap: var(--space-3); }
 }
+/* **القسمُ المقسوم** (معاينة ٢٠٢٦-١١-٢٦): شريطُ «سجلّ الأحداث» رأسًا للنصف، والسطورُ سطورُ القسم بحشوته، والخيطُ بين السطر والشريط من قاعدة السجلّ */
+.ad-mine .ad-lines > .ad-rate-v { padding-inline: var(--space-5); }
+.ad-mine .ad-lines > .ad-rate-v + .ad-log-day, .ad-mine .ad-lines > .ad-log-day + .ad-rate-v, .ad-mine .ad-lines > .ad-rate-v + .ad-rate-v { border-block-start: 1px solid var(--ad-rule); }
 
 /* ═══ بابا الحساب («القسمان»، `.door`) على الهويّة الجديدة (٢٠٢٦-١١-٢٣) — التكوينُ المعتمد (١٠-١٨) كما هو، والمادّةُ من الهويّة.
    هيكلُ اللوح والنموذج في `components.css`، وهذه مادّتُه؛ والبادئةُ `.door` لتغلب أصنافَ الهويّة العامّة (`.ad-btn`) أيًّا كان ترتيبُ التحميل ═══ */

@@ -9,7 +9,7 @@ import type { MyResultRow } from "../data";
 import type { MineProps } from "../shared";
 
 /** نتيجتي على الهويّة (`_ad/rooms/MineRoom`، اعتمدها محمد ٢٠٢٦-١١-٢٠)، وكانت «ميزان» (`_views/MineA`). */
-export function MineView({ results, comments, gender, error }: MineProps & { results: MyResultRow[]; error: string | null }) {
+export function MineView({ results, comments, gender, error, stands }: MineProps & { results: MyResultRow[]; error: string | null }) {
   if (error || results.length === 0) {
     return (
       <AccountRoom navPath="/dashboard/evaluation/mine" title="نتيجتي">
@@ -19,5 +19,5 @@ export function MineView({ results, comments, gender, error }: MineProps & { res
       </AccountRoom>
     );
   }
-  return <MineRoom results={results} comments={comments} gender={gender} />;
+  return <MineRoom results={results} comments={comments} gender={gender} stands={stands} />;
 }

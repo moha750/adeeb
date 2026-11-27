@@ -56,7 +56,7 @@ export async function submitSheet(input: {
     input.scores.length !== items ||
     input.scores.some((s) => !Number.isInteger(s) || s < 1 || s > 5)
   ) {
-    return { ok: false, message: "قيّم كلَّ البنود من 1 إلى 5." };
+    return { ok: false, message: "قيّم كلَّ المعايير من 1 إلى 5." };
   }
   // السؤالُ المفتوح للشقّين (م٦/4 وم٧/3 المعدّلة، محمد ٢٠٢٦-١١-٢٢)
   const keep = input.keep?.trim() || null;
